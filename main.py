@@ -1,10 +1,91 @@
 from cryptography.hazmat.primitives import asymmetric, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-import os
+from cryptography.hazmat.primitives.ciphers import algorithms
+from cryptography.hazmat.primitives.ciphers.algorithms import AES
 import base64
 import time
+import json
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, modes
+from cryptography.hazmat.primitives.asymmetric.padding import PSS
+
+import os
+
+def decrypt_text(user_id, password):
+
+    input_file = f'key_{user_id}.json'
+    with open(input_file, 'r') as f:
+        # Читаем соль, вектор и зашифрованный текст из файла
+        saltn, ivn, nciphertext = json.load(f)
+    iv = base64.b64decode(ivn)
+    salt = base64.b64decode(saltn)
+    ciphertext = base64.b64decode(nciphertext)
+
+    # Создаем ключевой производный от пароля
+    backend = default_backend()
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,  # 256 битов для ключа AES-256
+        salt=salt,
+        iterations=100000,
+        backend=backend
+    )
+    key = kdf.derive(password.encode())
+
+    # Создаем объект шифра AES с режимом CBC
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+
+    # Создаем дешифратор и дешифруем текст
+    decryptor = cipher.decryptor()
+    decrypted_text = decryptor.update(ciphertext) + decryptor.finalize()
+    print(decrypted_text)
+    return decrypted_text.decode()
+
+
+def encrypt_text(password, input_text, output_file):
+    # Преобразовать текст в байты
+    input_bytes = input_text.encode()
+
+    # Вычислить остаток от деления длины данных на длину блока
+    padding_length = AES.block_size - len(input_bytes) % AES.block_size
+
+    # Добавить дополнительные байты, чтобы сделать длину данных кратной длине блока
+    input_bytes += bytes([padding_length] * padding_length)
+
+    # Генерировать случайную соль
+    salt = os.urandom(16)
+
+    # Создать объект PBKDF2 для генерации ключа из пароля
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,  # Длина ключа
+        salt=salt,
+        iterations=100000,
+        backend=default_backend()
+    )
+    # Получить ключ из пароля
+    key = kdf.derive(password.encode())
+
+    # Генерировать случайный вектор инициализации
+    iv = os.urandom(16)
+
+    # Создать объект шифра AES в режиме CBC
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+
+    # Создать шифратор и зашифровать текст
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(input_bytes) + encryptor.finalize()
+    ciphertextn=base64.b64encode(ciphertext).decode()
+    saltn=base64.b64encode(salt).decode()
+    niv=base64.b64encode(iv).decode()
+    # Записать соль, вектор инициализации и зашифрованный текст в файл
+    with open(output_file, 'w') as f:
+        json.dump([saltn, niv, ciphertextn], f)
+
+
+
 
 def generate_keys():
     private_key = rsa.generate_private_key(
@@ -13,6 +94,30 @@ def generate_keys():
     )
     public_key = private_key.public_key()
     return private_key, public_key
+
+def from_json(json_file):
+    with open(json_file, 'r') as f:
+        json_data = json.load(f)
+    sorted_chats = {}
+    for chat, messages in json_data['messages'].items():
+        decoded_messages = []
+        for msg in messages:
+            iv = base64.b64decode(msg['message']['iv'])
+            ciphertext = base64.b64decode(msg['message']['ciphertext'])
+            tag = base64.b64decode(msg['message']['tag'])
+            encrypted_sym_key = base64.b64decode(msg['message']['encrypted_sym_key'])
+            encrypted_sym_key_for_sender = base64.b64decode(msg['message']['encrypted_sym_key_for_sender'])
+            signature = base64.b64decode(msg['signature'])
+            time = msg['time']
+            t_time = msg['t_time']
+            decoded_messages.append(Transaction(msg['sender'], msg['recipient'], (iv, ciphertext, tag, encrypted_sym_key, encrypted_sym_key_for_sender), signature, time, t_time))
+        sorted_chats[chat] = decoded_messages
+    return (sorted_chats,json_data['last_id'])
+
+def get_public_key(private_key_str):
+    private_key = str_private_key_to_class(private_key_str)
+    public_key = private_key.public_key()
+    return public_key_to_str(public_key)
 
 def private_key_to_str(private_key):
     private_key_bytes = private_key.private_bytes(
@@ -48,29 +153,57 @@ class Transaction:
         self.time = time
         self.t_time = t_time
 
+
+    def to_dict(self):
+        return {
+            "sender": self.sender,
+            "recipient": self.recipient,
+            "message": {
+                "iv": base64.b64encode(self.message[0]).decode(),
+                "ciphertext": base64.b64encode(self.message[1]).decode(),
+                "tag": base64.b64encode(self.message[2]).decode(),
+                "encrypted_sym_key": base64.b64encode(self.message[3]).decode(),
+                "encrypted_sym_key_for_sender": base64.b64encode(self.message[4]).decode()
+            },
+            "signature": base64.b64encode(self.signature).decode(),
+            "time": self.time,
+            "t_time": self.t_time
+        }
 class Blockchain:
     def __init__(self):
         self.chain = []
+        self.users = {}
+        self.keys = {}
+        self.last_id = -1
+    def create_user(self):
+        user_id = None
+        a=True
+        while a:
+            user_id=input("Введите имя пользователя: ")
+            if user_id not in self.users.keys():a=False
+            else:print('Имя пользователя занято, попробуйте другое имя')
+        password= input("Введите пароль: ")
+        private_key, public_key=generate_keys()
+        private_key_str = private_key_to_str(private_key)
+        public_key_str = public_key_to_str(public_key)
+        encrypt_text(password,private_key_str,f'key_{user_id}.json')
+        self.register_user(public_key_str,user_id)
 
-    def add_transaction(self, user_public_key_str, user_private_key_str, recipient_public_key_str, message):
+    def register_user(self,user_public_key_str,user_id ):
+        self.users[user_id] = user_public_key_str
+        self.keys[user_public_key_str] = user_id
+
+
+    def add_transaction(self, user_private_key_str, recipient_id, message):
         user_private_key = str_private_key_to_class(user_private_key_str)
-        user_public_key = str_public_key_to_class(user_public_key_str)
-        recipient_public_key = str_public_key_to_class(recipient_public_key_str)
-
+        user_public_key = get_public_key(user_private_key_str)
+        recipient_public_key = str_public_key_to_class(self.users[recipient_id])
+        user_public_key_cls= str_public_key_to_class(user_public_key)
         sym_key = os.urandom(32)
         iv = os.urandom(12)
         cipher = Cipher(algorithms.AES(sym_key), modes.GCM(iv))
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(message.encode()) + encryptor.finalize()
-        
-        encrypted_sym_key = recipient_public_key.encrypt(
-            sym_key,
-            asymmetric.padding.OAEP(
-                mgf=asymmetric.padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
-        )
 
         signature = user_private_key.sign(
             message.encode(),
@@ -80,57 +213,203 @@ class Blockchain:
             ),
             hashes.SHA256()
         )
-        
-        transaction = Transaction(
-            sender=user_public_key,
-            recipient=recipient_public_key,
-            message=(iv, ciphertext, encryptor.tag, encrypted_sym_key),
-            signature=signature,
-            time=time.ctime(),
-            t_time=time.time()
-        )
-        
-        self.chain.append(transaction)
 
-    def get_transactions_for_user(self, user_public_key_str, user_private_key_str):
-        messages = []
-        user_private_key = str_private_key_to_class(user_private_key_str)
-        user_public_key = str_public_key_to_class(user_public_key_str)
-
-        for transaction in self.chain:
-            if transaction.recipient == user_public_key:
-                message = self.decrypt_message(
-                    recipient_private_key=user_private_key,
-                    sender_public_key=transaction.sender,
-                    iv=transaction.message[0],
-                    ciphertext=transaction.message[1],
-                    tag=transaction.message[2],
-                    encrypted_sym_key=transaction.message[3]
-                )
-                is_valid = self.verify_signature(
-                    public_key=transaction.sender,
-                    message=message,
-                    signature=transaction.signature
-                )
-                if is_valid:
-                    messages.append((transaction.sender, message, transaction.time))
-        return messages
-
-    def decrypt_message(self, recipient_private_key, sender_public_key, iv, ciphertext, tag, encrypted_sym_key):
-        sym_key = recipient_private_key.decrypt(
-            encrypted_sym_key,
+        encrypted_sym_key = recipient_public_key.encrypt(
+            sym_key,
             asymmetric.padding.OAEP(
                 mgf=asymmetric.padding.MGF1(algorithm=hashes.SHA256()),
                 algorithm=hashes.SHA256(),
                 label=None
             )
         )
-        
-        cipher = Cipher(algorithms.AES(sym_key), modes.GCM(iv, tag))
-        decryptor = cipher.decryptor()
-        plaintext = decryptor.update(ciphertext) + decryptor.finalize()
-        
-        return plaintext.decode()
+
+        encrypted_sym_key_for_sender = user_public_key_cls.encrypt(
+            sym_key,
+            asymmetric.padding.OAEP(
+                mgf=asymmetric.padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+
+        transaction = Transaction(
+            sender=self.keys[user_public_key],
+            recipient=recipient_id,
+            message=(iv, ciphertext, encryptor.tag, encrypted_sym_key, encrypted_sym_key_for_sender),
+            signature=signature,
+            t_time=time.time(),
+            time=time.ctime()
+        )
+
+        self.chain.append(transaction)
+        self.last_id += 1
+
+    def reseive_message(self, transaction, user_private_key_str):
+        user_private_key = str_private_key_to_class(user_private_key_str)
+        sender_public_key = str_public_key_to_class(self.users[transaction.sender])
+        iv, ciphertext, tag, encrypted_sym_key, encrypted_sym_key_for_sender = transaction.message
+        if user_private_key.public_key()==sender_public_key:
+            message = self.decrypt_message(
+                recipient_private_key=user_private_key,
+                sender_public_key=sender_public_key,
+                iv=iv,
+                ciphertext=ciphertext,
+                tag=tag,
+                encrypted_sym_key = encrypted_sym_key_for_sender
+            )
+        else:
+            message = self.decrypt_message(
+                recipient_private_key=user_private_key,
+                sender_public_key=sender_public_key,
+                iv=iv,
+                ciphertext=ciphertext,
+                tag=tag,
+                encrypted_sym_key=encrypted_sym_key
+            )
+        if message:
+            is_valid = self.verify_signature(
+                public_key=sender_public_key,
+                message=message,
+                signature=transaction.signature
+            )
+            if is_valid:
+                return (transaction.sender, message, transaction.time)
+        return None
+
+    def get_all_transactions_for_user(self, user_private_key_str):
+        messages = []
+        user_public_key = self.keys[get_public_key(user_private_key_str)]
+
+        for transaction in self.chain:
+            if transaction.recipient == user_public_key or transaction.sender == user_public_key:
+                messages.append(transaction)
+        return messages
+
+    def sort_to_chats(self, messages, user_id_key):
+        chats = {}
+        user_public_key_str=self.keys[user_id_key]
+        for transaction in messages:
+            if transaction.sender not in chats.keys() and transaction.recipient not in chats.keys():
+                if transaction.recipient == user_public_key_str:
+                    chats[transaction.sender] = []
+                    chats[transaction.sender].append(transaction)
+                elif transaction.sender == user_public_key_str:
+                    chats[transaction.recipient] = []
+                    chats[transaction.recipient].append(transaction)
+            else:
+                if transaction.recipient == user_public_key_str:
+                    chats[transaction.sender].append(transaction)
+                elif transaction.sender == user_public_key_str:
+                    chats[transaction.recipient].append(transaction)
+        new_chats={}
+        for chat in chats.keys():
+            sorted_transactions = sorted(chats[chat], key=lambda x: x.t_time)
+            new_chats[chat] = sorted_transactions
+        return new_chats
+
+    def decrypt_chats(self, chats, user_private_key_str):
+        user_private_key = str_private_key_to_class(user_private_key_str)
+        new_chats = {}
+        for chat in chats.keys():
+            new_chats[chat] = []
+            for transaction in chats[chat]:
+                message = self.reseive_message(transaction, user_private_key_str)
+                if message:
+                    new_chats[chat].append(message)
+        return new_chats
+
+    def decrypt_message(self, recipient_private_key, sender_public_key, iv, ciphertext, tag, encrypted_sym_key):
+        try:
+            sym_key = recipient_private_key.decrypt(
+                encrypted_sym_key,
+                asymmetric.padding.OAEP(
+                    mgf=asymmetric.padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
+            )
+
+            cipher = Cipher(algorithms.AES(sym_key), modes.GCM(iv, tag))
+            decryptor = cipher.decryptor()
+            plaintext = decryptor.update(ciphertext) + decryptor.finalize()
+
+            return plaintext.decode()
+        except Exception as e:
+            print(f"Error decrypting message: {e}")
+            return None
+
+    def get_all_chats(self, user_private_key_str):
+        user_private_key = str_private_key_to_class(user_private_key_str)
+        this_user = get_public_key(user_private_key_str)
+        output_file= f"{self.keys[get_public_key(user_private_key_str)]}_chats.json"
+        last_id=self.last_id
+        user_messages = blockchain.get_all_transactions_for_user(user_private_key_str)
+
+        sorted_chats = blockchain.sort_to_chats(user_messages, this_user)
+
+        serialized_chats = {chat: [msg.to_dict() for msg in messages] for chat, messages in sorted_chats.items()}
+        data={'last_id':last_id, 'messages': serialized_chats}
+        # Сохранение отсортированных чатов в JSON
+        with open(output_file, 'w') as f:
+            json.dump(data, f, indent=4)
+
+        return (output_file, sorted_chats)
+
+    def show_chats(self, sorted_chats, user_private_key_str, create_nsf=True):
+        decrypted_chats = self.decrypt_chats(sorted_chats, user_private_key_str)
+
+        this_user = get_public_key(user_private_key_str)
+        user_id=self.keys[this_user]
+        decrypted_chats_s = {'this_user':user_id, 'messages': decrypted_chats}
+        # Вывод расшифрованных сообщений
+        if create_nsf:
+            with open(f'{user_id}_not_safety_chats.json','w') as f:
+                json.dump(decrypted_chats_s, f, indent=4)
+
+        for chat, messages in decrypted_chats.items():
+            print(f"Чат с {chat}:\n")
+            for message in messages:
+                print(f"{message[2]}: ({'companion' if message[0] != this_user else 'you'}) {message[1]}")
+            print("------\n\n")
+        return f'{user_id}_not_safety_chats.json'
+
+    def show_chats_from_not_safety(self,not_safety_file):
+        with open(not_safety_file,'r') as f:
+            decrypted_chats_s = json.load(f)
+        this_user, decrypted_chats= decrypted_chats_s['this_user'],decrypted_chats_s['messages']
+        for chat, messages in decrypted_chats.items():
+            print(f"Чат с {chat}:\n")
+            for message in messages:
+                print(f"{message[2]}: ({'companion' if message[0] != this_user else 'you'}) {message[1]}")
+            print("------\n\n")
+
+    def update_chats(self, json_file, user_private_key_str):
+        sorted_chats, last_id =from_json(json_file)
+
+        all_id=self.last_id
+
+        messages = []
+        user_public_key = get_public_key(user_private_key_str)
+        user_id=self.keys[user_public_key]
+        while last_id < all_id:
+            transaction=self.chain[last_id+1]
+            if transaction.recipient == user_id or transaction.sender == user_id:
+                messages.append(transaction)
+            last_id+=1
+        sorted_new_chats = blockchain.sort_to_chats(messages, user_public_key)
+        for chat in sorted_new_chats.keys():
+            if chat in sorted_chats.keys():
+                sorted_chats[chat].extend(sorted_new_chats[chat])
+            else:
+                sorted_chats[chat]=sorted_new_chats[chat]
+
+
+        serialized_chats = {chat: [msg.to_dict() for msg in messages] for chat, messages in sorted_chats.items()}
+        data={'last_id':last_id, 'messages': serialized_chats}
+        # Сохранение отсортированных чатов в JSON
+        with open(json_file, 'w') as f:
+            json.dump(data, f, indent=4)
+        return (json_file,sorted_chats)
 
     def verify_signature(self, public_key, message, signature):
         try:
@@ -147,33 +426,41 @@ class Blockchain:
         except Exception as e:
             return False
 
-if __name__ == "__main__":
-    # Генерация ключей для двух пользователей
-    alice_private_key, alice_public_key = generate_keys()
-    bob_private_key, bob_public_key = generate_keys()
+# Создание блокчейна
+blockchain = Blockchain()
 
-    # Преобразование ключей в строковое представление
-    alice_private_key_str = private_key_to_str(alice_private_key)
-    alice_public_key_str = public_key_to_str(alice_public_key)
-    bob_private_key_str = private_key_to_str(bob_private_key)
-    bob_public_key_str = public_key_to_str(bob_public_key)
+# Генерация ключей для пользователей
+keys = {}
+for i in range(4):
+    private_key, public_key = generate_keys()
+    private_key_str = private_key_to_str(private_key)
+    public_key_str = public_key_to_str(public_key)
+    user_id = f"user_{i+1}"
+    blockchain.register_user(public_key_str, user_id)
+    keys[user_id] = private_key_str
 
-    # Отправка сообщения от Alice к Bob
-    message_from_alice = "Hello, Bob!"
-    blockchain = Blockchain()
-    blockchain.add_transaction(
-        alice_public_key_str,
-        alice_private_key_str,
-        bob_public_key_str,
-        message_from_alice
-    )
+# Пользователи отправляют сообщения друг другу
+blockchain.add_transaction(keys['user_1'], 'user_2', 'Привет, пользователь 2!')
+blockchain.add_transaction(keys['user_2'], 'user_1', 'Привет, пользователь 1!')
+blockchain.add_transaction(keys['user_1'], 'user_2', 'Как дела?')
+blockchain.add_transaction(keys['user_2'], 'user_1', 'Хорошо, а у тебя?')
 
-    # Получение сообщений для Bob
-    received_messages = blockchain.get_transactions_for_user(
-        bob_public_key_str,
-        bob_private_key_str
-    )
+blockchain.add_transaction(keys['user_3'], 'user_1', 'Привет, пользователь 1 от пользователя 3!')
+blockchain.add_transaction(keys['user_1'], 'user_3', 'Привет, пользователь 3 от пользователя 1!')
+blockchain.add_transaction(keys['user_3'], 'user_1', 'Что нового?')
+blockchain.add_transaction(keys['user_1'], 'user_3', 'Ничего особенного, а у тебя?')
 
-    print("Received Messages for Bob:")
-    for sender, message, time in received_messages:
-        print(f"From:\n\n{public_key_to_str(sender)}\n\nat {time}:\n\n{message}")
+blockchain.add_transaction(keys['user_4'], 'user_2', 'Привет, пользователь 2 от пользователя 4!')
+blockchain.add_transaction(keys['user_2'], 'user_4', 'Привет, пользователь 4 от пользователя 2!')
+blockchain.add_transaction(keys['user_4'], 'user_2', 'Как погода?')
+blockchain.add_transaction(keys['user_2'], 'user_4', 'Погода хорошая!')
+
+json_file,sorted_chats= blockchain.get_all_chats(keys['user_1'])
+blockchain.show_chats(sorted_chats,keys['user_1'])
+json_file, sorted_chats= blockchain.update_chats(json_file, keys['user_1'])
+not_s= blockchain.show_chats(sorted_chats, keys['user_1'])
+blockchain.show_chats_from_not_safety(not_s)
+
+blockchain.create_user()
+
+key = decrypt_text(input(), input())
