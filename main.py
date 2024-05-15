@@ -377,7 +377,6 @@ class Blockchain:
 
     def show_chats(self, sorted_chats, user_private_key_str, create_nsf=True):
         decrypted_chats = self.decrypt_chats(sorted_chats, user_private_key_str)
-
         this_user = get_public_key(user_private_key_str)
         user_id=self.keys[this_user]
         decrypted_chats_s = {'this_user':user_id, 'messages': decrypted_chats}
@@ -389,7 +388,7 @@ class Blockchain:
         for chat, messages in decrypted_chats.items():
             print(f"Чат с {chat}:\n")
             for message in messages:
-                print(f"{message[2]}: ({'companion' if message[0] != this_user else 'you'}) {message[1]}")
+                print(f"{message[2]}: ({'companion' if message[0] != user_id else 'you'}) {message[1]}")
             print("------\n\n")
         return f'{user_id}_not_safety_chats.json'
 
