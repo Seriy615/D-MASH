@@ -102,15 +102,15 @@ def from_json(json_file):
     for chat, messages in json_data['messages'].items():
         decoded_messages = []
         for msg in messages:
-            iv = base64.b64decode(msg['message']['iv'])
-            ciphertext = base64.b64decode(msg['message']['ciphertext'])
-            tag = base64.b64decode(msg['message']['tag'])
-            encrypted_sym_key = base64.b64decode(msg['message']['encrypted_sym_key'])
-            encrypted_sym_key_for_sender = base64.b64decode(msg['message']['encrypted_sym_key_for_sender'])
+            iv = base64.b64decode(msg['iv'])
+            ciphertext = base64.b64decode(msg['ciphertext'])
+            tag = base64.b64decode(msg['tag'])
+            encrypted_sym_key = base64.b64decode(msg['encrypted_sym_key'])
+            encrypted_sym_key_for_sender = base64.b64decode(msg['encrypted_sym_key_for_sender'])
             signature = base64.b64decode(msg['signature'])
             time = msg['time']
             t_time = msg['t_time']
-            decoded_messages.append(Transaction(msg['sender'], msg['recipient'], msg['message_hash'],(iv, ciphertext, tag, encrypted_sym_key, encrypted_sym_key_for_sender), signature, time, t_time))
+            decoded_messages.append(Transaction(msg['sender'], msg['recipient'], msg['message_hash'], iv, ciphertext, tag, encrypted_sym_key, encrypted_sym_key_for_sender, signature, time, t_time))
         sorted_chats[chat] = decoded_messages
     return (sorted_chats,json_data['last_id'])
 
@@ -145,11 +145,15 @@ def str_private_key_to_class(private_key_str):
     return private_key
 
 class Transaction:
-    def __init__(self, sender, recipient, message_hash, message, signature, time, t_time):
+    def __init__(self, sender, recipient, message_hash,  iv, ciphertext, tag, encrypted_sym_key, encrypted_sym_key_for_sender, signature, time, t_time):
         self.sender = sender
         self.recipient = recipient
-        self.message_hash=message_hash
-        self.message = message
+        self.message_hash = message_hash
+        self.iv = iv
+        self.ciphertext = ciphertext
+        self.tag = tag
+        self.encrypted_sym_key = encrypted_sym_key
+        self.encrypted_sym_key_for_sender =encrypted_sym_key_for_sender
         self.signature = signature
         self.time = time
         self.t_time = t_time
@@ -160,13 +164,11 @@ class Transaction:
             "sender": self.sender,
             "recipient": self.recipient,
             "message_hash":self.message_hash,
-            "message": {
-                "iv": base64.b64encode(self.message[0]).decode(),
-                "ciphertext": base64.b64encode(self.message[1]).decode(),
-                "tag": base64.b64encode(self.message[2]).decode(),
-                "encrypted_sym_key": base64.b64encode(self.message[3]).decode(),
-                "encrypted_sym_key_for_sender": base64.b64encode(self.message[4]).decode()
-            },
+            "iv": base64.b64encode(self.iv).decode(),
+            "ciphertext": base64.b64encode(self.ciphertext).decode(),
+            "tag": base64.b64encode(self.tag).decode(),
+            "encrypted_sym_key": base64.b64encode(self.encrypted_sym_key).decode(),
+            "encrypted_sym_key_for_sender": base64.b64encode(self.encrypted_sym_key_for_sender).decode(),
             "signature": base64.b64encode(self.signature).decode(),
             "time": self.time,
             "t_time": self.t_time
@@ -240,7 +242,11 @@ class Blockchain:
             sender=self.keys[user_public_key],
             recipient=recipient_id,
             message_hash=message_hash,
-            message=(iv, ciphertext, encryptor.tag, encrypted_sym_key, encrypted_sym_key_for_sender),
+            iv=iv,
+            ciphertext=ciphertext,
+            tag=encryptor.tag,
+            encrypted_sym_key=encrypted_sym_key,
+            encrypted_sym_key_for_sender=encrypted_sym_key_for_sender,
             signature=signature,
             t_time=time.time(),
             time=time.ctime()
@@ -252,7 +258,11 @@ class Blockchain:
     def reseive_message(self, transaction, user_private_key_str):
         user_private_key = str_private_key_to_class(user_private_key_str)
         sender_public_key = str_public_key_to_class(self.users[transaction.sender])
-        iv, ciphertext, tag, encrypted_sym_key, encrypted_sym_key_for_sender = transaction.message
+        iv = transaction.iv
+        ciphertext = transaction.ciphertext
+        tag = transaction.tag
+        encrypted_sym_key = transaction.encrypted_sym_key
+        encrypted_sym_key_for_sender = transaction.encrypted_sym_key_for_sender
         if user_private_key.public_key()==sender_public_key:
             message = self.decrypt_message(
                 recipient_private_key=user_private_key,
