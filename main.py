@@ -10,7 +10,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, modes
 from cryptography.hazmat.primitives.asymmetric.padding import PSS
-
+import hashlib
 import os
 
 def decrypt_text(user_id, password):
@@ -40,7 +40,7 @@ def decrypt_text(user_id, password):
     # Создаем дешифратор и дешифруем текст
     decryptor = cipher.decryptor()
     decrypted_text = decryptor.update(ciphertext) + decryptor.finalize()
-    print(decrypted_text)
+    print(decrypted_text.decode())
     return decrypted_text.decode()
 
 
@@ -110,7 +110,7 @@ def from_json(json_file):
             signature = base64.b64decode(msg['signature'])
             time = msg['time']
             t_time = msg['t_time']
-            decoded_messages.append(Transaction(msg['sender'], msg['recipient'], (iv, ciphertext, tag, encrypted_sym_key, encrypted_sym_key_for_sender), signature, time, t_time))
+            decoded_messages.append(Transaction(msg['sender'], msg['recipient'], msg['message_hash'],(iv, ciphertext, tag, encrypted_sym_key, encrypted_sym_key_for_sender), signature, time, t_time))
         sorted_chats[chat] = decoded_messages
     return (sorted_chats,json_data['last_id'])
 
@@ -145,9 +145,10 @@ def str_private_key_to_class(private_key_str):
     return private_key
 
 class Transaction:
-    def __init__(self, sender, recipient, message, signature, time, t_time):
+    def __init__(self, sender, recipient, message_hash, message, signature, time, t_time):
         self.sender = sender
         self.recipient = recipient
+        self.message_hash=message_hash
         self.message = message
         self.signature = signature
         self.time = time
@@ -158,6 +159,7 @@ class Transaction:
         return {
             "sender": self.sender,
             "recipient": self.recipient,
+            "message_hash":self.message_hash,
             "message": {
                 "iv": base64.b64encode(self.message[0]).decode(),
                 "ciphertext": base64.b64encode(self.message[1]).decode(),
@@ -204,9 +206,11 @@ class Blockchain:
         cipher = Cipher(algorithms.AES(sym_key), modes.GCM(iv))
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(message.encode()) + encryptor.finalize()
-
+        hm = hashlib.sha256()
+        hm.update(message.encode())
+        message_hash= hm.hexdigest()
         signature = user_private_key.sign(
-            message.encode(),
+            message_hash.encode(),
             asymmetric.padding.PSS(
                 mgf=asymmetric.padding.MGF1(hashes.SHA256()),
                 salt_length=asymmetric.padding.PSS.MAX_LENGTH
@@ -235,6 +239,7 @@ class Blockchain:
         transaction = Transaction(
             sender=self.keys[user_public_key],
             recipient=recipient_id,
+            message_hash=message_hash,
             message=(iv, ciphertext, encryptor.tag, encrypted_sym_key, encrypted_sym_key_for_sender),
             signature=signature,
             t_time=time.time(),
@@ -267,11 +272,16 @@ class Blockchain:
                 encrypted_sym_key=encrypted_sym_key
             )
         if message:
-            is_valid = self.verify_signature(
+            hm = hashlib.sha256()
+            hm.update(message.encode())
+            message_hash_from_plaintext= hm.hexdigest()
+            first_valid= message_hash_from_plaintext == transaction.message_hash
+            sec_valid = self.verify_signature(
                 public_key=sender_public_key,
-                message=message,
+                message=transaction.message_hash,
                 signature=transaction.signature
             )
+            is_valid= first_valid and sec_valid
             if is_valid:
                 return (transaction.sender, message, transaction.time)
         return None
