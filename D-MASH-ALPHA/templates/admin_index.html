@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>       
+    a {
+        color: #000000;
+        text-decoration: none;
+        background-color: lavender;
+        border-radius: 30px;
+        padding: 5px;
+        vertical-align: -webkit-baseline-middle;
+    }
+    li{
+        margin: inherit;
+    }
+</style>
+</head>
+<body>
+    <h1 style="text-align: center">СВУ мессенджер</h1>
+    <div class="container">
+        <h1>Панель администратора</h1>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Выйти</a>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">На главную</a>
+        <h2>Администратирование базы данных</h2>
+        <ul>
+            <li><a href="{{ url_for('admin_tables') }} ">Показать таблицы</a></li>
+            <li><a href="{{ url_for('admin_sql') }}">Выполнить SQL запрос</a></li>
+        </ul>
+    </div>
+</body>
+</html>

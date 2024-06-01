@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таблица Администратора</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>       
+    a {
+        color: #000000;
+        text-decoration: none;
+        background-color: lavender;
+        border-radius: 30px;
+        padding: 5px;
+        vertical-align: -webkit-baseline-middle;
+    }
+</style>
+</head>
+<body>
+    <h1 style="text-align: center">СВУ мессенджер</h1>
+    <div class="container">
+        <h1>Table: {{ table_name }}</h1>
+        <table class="table table-striped" style="width: 80%">
+            <thead>
+                <tr>
+                    {% for column_name in column_names %}
+                        <th>{{ column_name }}</th>
+                    {% endfor %}
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        {% for value in row %}
+                            <td>{{ value }}</td>
+                        {% endfor %}
+                        <td>
+                            <a href="{{ url_for('admin_edit_record', table_name=table_name, record_id=row[0]) }}" class="btn btn-primary btn-sm">Изменить</a>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete('{{ table_name }}', {{ row[0] }})">Удалить</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="{{ url_for('admin_add_record', table_name=table_name) }}" class="btn btn-success">Добавить новую запись</a>
+        <a href="{{ url_for('admin_tables') }}" class="btn btn-secondary">вернуться к таблицам</a>
+    </div>
+    <script>
+        function confirmDelete(table_name, record_id) {
+            if (confirm("Are you sure you want to delete this record?")) {
+                window.location.href = "/admin/table/" + table_name + "/delete/" + record_id;
+            }
+        }
+    </script>
+    
+</body>
+</html>

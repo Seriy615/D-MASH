@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>СВУ месенджер</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<style>	
+    .list-group-item{
+	width: -webkit-fill-available;
+    position: relative;
+    display: block;
+    padding: .75rem 1.25rem;
+    margin-bottom: -1px;
+    text-align: center;
+    background-color: #fff;
+    border: 1px solid rgba(0, 0, 0, .125);
+}
+a {
+    color: #000000;
+    text-decoration: none;
+    background-color: lavender;
+    border-radius: 30px;
+    padding: 5px;
+    vertical-align: -webkit-baseline-middle;
+
+}
+.create_group{
+    background-color: blueviolet;
+}
+</style>
+</head>
+<body>
+<h1 style="text-align: center">СВУ мессенджер</h1>
+    <h1 style="text-align: center">Добро пожаловать, {{ current_user }}</h1>
+
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul>
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Выйти</a>
+         {% if current_user == "admin" %}
+            <a href="admin" class="btn btn-primary">Панель администратора</a>
+            {% endif %}
+        <div class="row">
+            <div class="col-3">
+                <h2>Пользователи</h2>
+                <ul class="list-group">
+                    {% for user in users %}
+                        <li class="list-group-item">
+                            <a href="{{ url_for('chat', recipient=user.username) }}">{{ user.username }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+                <div class="col-3">
+            <h2>Группы</h2>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <a class="create_group" href="{{ url_for('create_group') }}">Создать группу</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="{{ url_for('chat', recipient='general') }}">Общий чат</a>
+                    </li>
+                    {% for group in groups %}
+                        <li class="list-group-item">
+                            <a href="{{ url_for('chat', recipient=group.groupname) }}">{{ group.groupname }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-9">
+                
+            </div>
+            <h2>Выберите чат, чтобы начать <br> (уведомления приходят только когда вы в каком-либо чате)</h2>
+
+        </div>
+    </div>
+</body>
+</html>
