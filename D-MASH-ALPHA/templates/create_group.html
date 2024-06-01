@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать группу</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .selectable-item {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .selected {
+            background-color: lightgreen;
+        }
+     
+    a {
+        color: #000000;
+        text-decoration: none;
+        background-color: lavender;
+        border-radius: 30px;
+        padding: 5px;
+        vertical-align: -webkit-baseline-middle;
+    }
+
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center">СВУ мессенджер</h1>
+    <div class="container">
+        <h1>Создать группу</h1>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul>
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        <form id="myForm" method="POST" action="/create_group">
+            <div class="form-group">
+                <label for="group_name">Название группы:</label>
+                <input type="text" class="form-control" id="group_name" name="group_name" required>
+            </div>
+            <fieldset>
+                <legend>Выберите пользователей:</legend>
+                {% for user in users %}
+                    <div class="selectable-item" data-value="{{ user.username }}">{{ user.username }}</div>
+                {% endfor %}
+            </fieldset>
+            <input type="hidden" id="selectedItems" name="users" value="">
+            <br>
+            <button type="button" onclick="submitForm()">Создать</button>
+        </form>
+
+        <div id="result"></div>
+
+        <script>
+            document.querySelectorAll('.selectable-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                });
+            });
+
+            function submitForm() {
+                var selectedItems = document.querySelectorAll('.selected');
+                var selectedValues = Array.from(selectedItems).map(item => item.getAttribute('data-value'));
+                document.getElementById('selectedItems').value = JSON.stringify(selectedValues);
+                document.getElementById('myForm').submit();
+            }
+        </script>
+    </div>
+</body>
+</html>

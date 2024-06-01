@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки группы</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .selectable-item {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+                .selectable-item-n {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .selected {
+            background-color: lightgreen;
+        }
+                .selected-n {
+            background-color: indianred;
+        }
+        .buu{
+            margin-bottom: 30px ;
+            border-radius:20px ;
+        }
+    </style>
+</head>
+<body>
+<h1 style="text-align: center">СВУ мессенджер</h1>
+    <div class="container">
+        <h1>Настройки группы: {{ groupname }}</h1>
+                {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul>
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        <form id="groupSettingsForm" method="POST" action="{{ url_for('group_settings', groupname=groupname) }}">
+            <fieldset>
+                <legend>Добавить пользователей в группу:</legend>
+                {% for user in non_members %}
+                    <div class="selectable-item" data-value="{{ user.username }}">{{ user.username }}</div>
+                {% endfor %}
+            </fieldset>
+            <fieldset>
+                <legend>Удалить пользователей из группы:</legend>
+                {% for user in members %}
+                    <div class="selectable-item-n" data-value="{{ user.username }}">{{ user.username }}</div>
+                {% endfor %}
+            </fieldset>
+            <input type="hidden" id="addUsers" name="addUsers" value="">
+            <input type="hidden" id="removeUsers" name="removeUsers" value="">
+            <br>
+            <button class='buu' type="button" onclick="submitSettingsForm()">Сохранить изменения</button>
+        </form>
+
+        <form method="POST" action="{{ url_for('delete_group', groupname=groupname) }}">
+            <button class='buu' type="submit">Удалить группу</button>
+        </form>
+
+        <form method="POST" action="{{ url_for('delete_group_messages', groupname=groupname) }}">
+            <button class='buu' type="submit">Удалить все сообщения группы</button>
+        </form>
+
+        <div id="result"></div>
+
+        <script>
+            document.querySelectorAll('.selectable-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                });
+            });
+            document.querySelectorAll('.selectable-item-n').forEach(item => {
+                item.addEventListener('click', function() {
+                    this.classList.toggle('selected-n');
+                });
+            });
+            function submitSettingsForm() {
+                var addUsers = document.querySelectorAll('fieldset:nth-of-type(1) .selected');
+                var addUserValues = Array.from(addUsers).map(item => item.getAttribute('data-value'));
+                document.getElementById('addUsers').value = JSON.stringify(addUserValues);
+
+                var removeUsers = document.querySelectorAll('fieldset:nth-of-type(2) .selected-n');
+                var removeUserValues = Array.from(removeUsers).map(item => item.getAttribute('data-value'));
+                document.getElementById('removeUsers').value = JSON.stringify(removeUserValues);
+
+                document.getElementById('groupSettingsForm').submit();
+            }
+        </script>
+    </div>
+</body>
+</html>
