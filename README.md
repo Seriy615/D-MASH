@@ -4,7 +4,7 @@
 
 D-MASH (Decentralized Anonymous Secure Hashing) — это экспериментальный P2P-мессенджер, разработанный с максимальным упором на безопасность и приватность. В отличие от традиционных мессенджеров, D-MASH не только шифрует содержимое ваших сообщений (End-to-End Encryption), но и скрывает **метаданные** о том, кто, с кем и когда общается, благодаря протоколу слепой маршрутизации.
 
-![D-MASH Logo](D-MASH/assets/logo.png)
+![D-MASH Logo](D-MASH/client/frontend/logo.png)
 ![UI Screenshot](D-MASH/chatUI.png)
 
 ## Ключевые идеи
