@@ -13,6 +13,7 @@ from nacl.signing import SigningKey, VerifyKey
 from nacl.encoding import HexEncoder, Base64Encoder
 import blake3
 
+
 MAX_MESSAGE_AGE = 300 
 NODE_POW_PREFIX = "0520" # Префикс для Proof-of-Work ноды
 
@@ -400,3 +401,46 @@ class CryptoManager:
             return plaintext.decode('utf-8')
         except:
             return "[DB DECRYPT FAIL]"
+        
+# --- OFFLINE T-RATCHET (PCP/GVP) ---
+
+    def get_offline_key(self, target_pub_hex: str, offset: int = 0) -> bytes:
+        """
+        Публичная обертка для получения 'сырого' ключа T-Ratchet.
+        Используется для GVP/PCP, где нет рукопожатия, а есть только Время.
+        """
+        # Используем ту же логику, что и для E2EE, но возвращаем байты
+        return self._get_time_based_key(target_pub_hex, offset)
+
+    def get_gvp_session_key(self, base_key: bytes, salt: str) -> bytes:
+        """
+        GVP: SessionKey = SHA256(BaseKey + Salt)
+        """
+        return hashlib.sha256(base_key + salt.encode('utf-8')).digest()
+
+    def encrypt_pcp_payload(self, target_pub_hex: str, text: str) -> dict:
+        """
+        Шифрует текст для PCP.
+        Возвращает: {ciphertext_b64, epoch_offset=0}
+        """
+        key = self.get_offline_key(target_pub_hex, 0)
+        # Используем SecretBox для простоты (хотя в реальном PCP это был бы AES-CTR)
+        box = nacl.secret.SecretBox(key)
+        encrypted = box.encrypt(text.encode('utf-8'))
+        return base64.b64encode(encrypted).decode('utf-8')
+
+    def decrypt_pcp_payload(self, sender_pub_hex: str, ciphertext_b64: str) -> str:
+        """
+        Пытается расшифровать PCP, перебирая эпохи [0, -1, 1].
+        """
+        encrypted_bytes = base64.b64decode(ciphertext_b64)
+        
+        for offset in [0, -1, 1]:
+            try:
+                key = self.get_offline_key(sender_pub_hex, offset)
+                box = nacl.secret.SecretBox(key)
+                plaintext = box.decrypt(encrypted_bytes)
+                return plaintext.decode('utf-8') + f" [Key Epoch: {offset}]"
+            except:
+                continue
+        return "[PCP DECRYPT FAILED]"

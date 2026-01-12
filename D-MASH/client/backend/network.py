@@ -6,6 +6,9 @@ from datetime import datetime
 from websockets.server import serve
 from websockets.client import connect as ws_connect
 from database import DatabaseManager
+import base64
+# Добавьте в начало
+from dsp import AudioProcessor
 
 class P2PNode:
     def __init__(self, system_db: DatabaseManager):
@@ -27,14 +30,16 @@ class P2PNode:
 
     async def start_server(self, port: int):
         print(f"🌐 [P2P] Daemon listening on port {port}")
-        async with serve(self._handle_incoming, "0.0.0.0", port):
+        # Увеличиваем max_size до 10MB и пинг-таймаут до 60 секунд
+        async with serve(self._handle_incoming, "0.0.0.0", port, max_size=10*1024*1024, ping_timeout=60, ping_interval=20):
             await asyncio.Future()
 
     async def connect_to(self, address: str):
         try:
             uri = f"ws://{address}"
-            ws = await ws_connect(uri, open_timeout=5)
-            
+            # Те же лимиты для клиента
+            ws = await ws_connect(uri, open_timeout=5, max_size=10*1024*1024, ping_timeout=60, ping_interval=20)
+                
             # Handshake: обмениваемся ID
             my_id_handshake = self.active_user_id if self.active_user_id else "daemon_node"
             # В новой версии лучше использовать ID ноды, но пока оставим совместимость
@@ -252,92 +257,164 @@ class P2PNode:
             await self.system_db.conn.commit()
 
     async def _deliver_to_active_user(self, packet, sender_id_hint):
-        """
-        Финальная доставка с оптимизацией по Tag (Alias).
-        Больше никакого Brute-force перебора контактов.
-        """
         if not self.active_crypto or not self.active_user_db: return
 
         try:
-            # 1. ИЗВЛЕЧЕНИЕ ТЕГА И ШИФРОТЕКСТА
-            # Мы ожидаем, что теперь content - это JSON-структура {"tag": "...", "ciphertext": "..."}
             raw_content = packet.get("content")
             delivery_tag = None
-            ciphertext = raw_content # По дефолту считаем, что это старый формат (только текст)
-
-            # Пробуем достать тег, если контент пришел словарем или JSON-строкой
-            if isinstance(raw_content, dict):
-                delivery_tag = raw_content.get("tag")
-                ciphertext = raw_content.get("ciphertext")
-            elif isinstance(raw_content, str):
-                # Пробуем распарсить строку, вдруг это JSON-обертка
-                if raw_content.strip().startswith('{'):
-                    try:
-                        parsed = json.loads(raw_content)
-                        if isinstance(parsed, dict) and "tag" in parsed:
+            ciphertext = raw_content
+            
+            # --- ПРОВЕРКА НА СПЕЦ-ПРОТОКОЛЫ (SIMULATION) ---
+            sim_type = None
+            sim_data = None
+            
+            # Пытаемся распарсить JSON, вдруг это PCP/GVP или новый формат с тегом
+            try:
+                if isinstance(raw_content, str) and raw_content.strip().startswith('{'):
+                    parsed = json.loads(raw_content)
+                    if isinstance(parsed, dict):
+                        if "sim_type" in parsed:
+                            sim_type = parsed["sim_type"]
+                            sim_data = parsed
+                        elif "tag" in parsed:
                             delivery_tag = parsed["tag"]
                             ciphertext = parsed["ciphertext"]
-                    except:
-                        pass # Значит это обычный Base64 (старая версия)
+            except: pass
 
+            # --- ПОИСК ОТПРАВИТЕЛЯ (КАНДИДАТЫ) ---
             candidates = []
-
-            # 2. БЫСТРЫЙ ПОИСК (Fast Path) - O(1)
             if delivery_tag:
-                # Ищем контакт, у которого вычисленный Alias совпадает с пришедшим
-                # ВАЖНО: Убедись, что колонка delivery_tag существует в таблице contacts!
                 try:
-                    async with self.active_user_db.conn.execute(
-                        "SELECT user_id FROM contacts WHERE delivery_tag = ?", (delivery_tag,)
-                    ) as cursor:
+                    async with self.active_user_db.conn.execute("SELECT user_id FROM contacts WHERE delivery_tag = ?", (delivery_tag,)) as cursor:
                         row = await cursor.fetchone()
-                        if row:
-                            candidates.append(row['user_id'])
-                        else:
-                            print(f"⚠️ [MAIL] Tag '{delivery_tag}' not found in contacts. Ignoring.")
-                            return # Если тег есть, но контакта нет - это спам или чужой пакет
-                except Exception as db_e:
-                    print(f"⚠️ [MAIL] DB Error (Schema update needed?): {db_e}")
-                    # Фолбэк, если базу еще не обновили
+                        if row: candidates.append(row['user_id'])
+                except: pass
             
-            # 3. РЕЗЕРВНЫЙ ПУТЬ (Fallback) - Если тега в пакете нет
-            # Используем подсказку из роутинга или (в крайнем случае) старый перебор
-            if not candidates and not delivery_tag:
-                if sender_id_hint:
-                    candidates.append(sender_id_hint)
+            if not candidates:
+                if sender_id_hint: candidates.append(sender_id_hint)
                 else:
-                    # Это самый тяжелый вариант, оставим для обратной совместимости
-                    # или для первого сообщения "из ниоткуда" (хотя теги должны быть всегда)
                     async with self.active_user_db.conn.execute("SELECT user_id FROM contacts") as cursor:
                         rows = await cursor.fetchall()
                         for r in rows: candidates.append(r['user_id'])
 
-            if not candidates:
-                return
+            if not candidates: return
 
-            # 4. РАСШИФРОВКА
-            decrypted_text = None
+            # --- ОБРАБОТКА В ЗАВИСИМОСТИ ОТ ТИПА ---
+            
+            decrypted_content_for_db = None
             real_sender = None
-            
-            # Теперь candidates обычно содержит всего 1 запись -> мгновенное выполнение
+
             for sid in candidates:
-                # Здесь внутри decrypt_message уже работает T-Ratchet (подбор по времени)
-                res = self.active_crypto.decrypt_message(sid, ciphertext)
-                if not res.startswith("[ERROR"):
-                    decrypted_text = res
-                    real_sender = sid
-                    break
-            
-            if not decrypted_text:
-                print(f"❌ [MAIL] Decryption failed. Sender tag: {delivery_tag}, Candidate: {real_sender}")
+                if sim_type == "PCP":
+                    # --- PHANTOM CALL (HONEST MODE) ---
+                    print(f"🔍 [PCP] Receiving MFSK Audio from {sid}...")
+                    
+                    # 1. Достаем аудио из пакета
+                    audio_b64 = sim_data.get("audio_preview", "")
+                    if not audio_b64:
+                        print("❌ [PCP] No audio data found!")
+                        continue
+                        
+                    audio_bytes = base64.b64decode(audio_b64)
+                    
+                    # 2. ЗАПУСКАЕМ ЧЕСТНЫЙ ДЕКОДЕР (FFT)
+                    # Это тяжелая операция, запускаем в пуле процессов
+                    import core
+                    loop = asyncio.get_running_loop()
+                    
+                    decoded_text = await loop.run_in_executor(
+                        core.state.process_pool,
+                        AudioProcessor.decode_pcp_audio,
+                        audio_bytes
+                    )
+                    
+                    if decoded_text:
+                        print(f"✅ [PCP] Successfully decoded via FFT: '{decoded_text}'")
+                        real_sender = sid
+                        
+                        # 3. (Опционально) Если текст был зашифрован T-Ratchet, расшифровываем его
+                        # В текущей реализации api.py мы кладем в звук ИСХОДНЫЙ текст для наглядности.
+                        # Если бы мы клали шифротекст, тут надо было бы вызвать decrypt_pcp_payload(decoded_text)
+                        
+                        ui_json = {
+                            "protocol": "PCP",
+                            "text": decoded_text, # Результат работы FFT!
+                            "audio": audio_b64
+                        }
+                        decrypted_content_for_db = json.dumps(ui_json)
+                        break
+                    else:
+                        print("❌ [PCP] FFT Decoding failed (CRC mismatch or noise)")
+                        # Fallback: можно попробовать взять из ciphertext, если звук не прошел
+                        # Но мы хотим честно, поэтому если звук битый - пакет потерян.
+                        continue
+
+                elif sim_type == "GVP":
+                    print(f"🔍 [GVP DEBUG] Processing GVP from {sid}...") # DEBUG
+                    try:
+                        # 1. Декодируем Base64
+                        scrambled_wav = base64.b64decode(sim_data["blob"])
+                        print(f"   > Blob size: {len(scrambled_wav)} bytes") # DEBUG
+
+                        # 2. Получаем ключи
+                        salt = sim_data["salt"]
+                        base_key = self.active_crypto.get_offline_key(sid, 0)
+                        session_key = self.active_crypto.get_gvp_session_key(base_key, salt)
+                        
+                        # 3. Импорт Core (для пула процессов)
+                        import core
+                        
+                        print("   > Starting DSP process...") # DEBUG
+                        loop = asyncio.get_running_loop()
+                        
+                        # 4. Запуск DSP
+                        restored_wav = await loop.run_in_executor(
+                            core.state.process_pool,
+                            AudioProcessor.scramble_audio,
+                            scrambled_wav, 
+                            session_key, 
+                            False 
+                        )
+                        
+                        print(f"   > DSP finished. Result size: {len(restored_wav)}") # DEBUG
+                        
+                        if not restored_wav:
+                            print("❌ [GVP ERROR] DSP returned empty bytes! (FFMPEG failed?)")
+                            continue
+
+                        real_sender = sid
+                        ui_json = {
+                            "protocol": "GVP",
+                            "salt": salt,
+                            "scrambled": sim_data["blob"], 
+                            "restored": base64.b64encode(restored_wav).decode('utf-8') 
+                        }
+                        decrypted_content_for_db = json.dumps(ui_json)
+                        print("✅ [GVP SUCCESS] JSON prepared for DB") # DEBUG
+                        break
+                        
+                    except Exception as e:
+                        import traceback
+                        print(f"❌ [GVP CRITICAL FAIL]: {e}")
+                        traceback.print_exc() # Покажет полную ошибку в консоли
+                        continue
+                    
+                else:
+                    # --- STANDARD E2EE ---
+                    res = self.active_crypto.decrypt_message(sid, ciphertext)
+                    if not res.startswith("[ERROR"):
+                        decrypted_content_for_db = res
+                        real_sender = sid
+                        break
+
+            if not decrypted_content_for_db:
+                print(f"❌ [MAIL] Decryption failed. Type: {sim_type}")
                 return
 
+            # --- СОХРАНЕНИЕ ---
             msg_uuid = packet.get('id')
-            
-            # 5. СОХРАНЕНИЕ (User Layer)
             try:
-                # Шифруем локальным "вечным" ключом для истории
-                local_content = self.active_crypto.encrypt_db_field(decrypted_text)
+                local_content = self.active_crypto.encrypt_db_field(decrypted_content_for_db)
                 
                 await self.active_user_db.conn.execute("""
                     INSERT INTO messages (packet_id, chat_id, sender_id, content, timestamp, is_outgoing, is_read) 
@@ -350,11 +427,9 @@ class P2PNode:
                 """, (real_sender, datetime.now().isoformat()))
                 
                 await self.active_user_db.conn.commit()
-                print(f"📨 [MAIL] Verified & Delivered from {real_sender[:8]}")
+                print(f"📨 [MAIL] Delivered {sim_type or 'TEXT'} from {real_sender[:8]}")
             except Exception as e:
-                # Игнорируем дубликаты пакетов (UNIQUE constraint)
-                if "UNIQUE constraint failed" not in str(e):
-                    print(f"Save error: {e}")
+                if "UNIQUE constraint failed" not in str(e): print(f"Save error: {e}")
 
         except Exception as e:
             print(f"Critical delivery error: {e}")
