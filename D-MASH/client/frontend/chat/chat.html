@@ -74,9 +74,23 @@
                 TACT PROTOCOL ACTIVE<br>WAITING FOR PACKETS...
             </div>
         </div>
-        <div class="input-area">
-            <input type="text" id="msgInput" placeholder="Type encrypted message..." onkeypress="if(event.key==='Enter') send()">
-            <button onclick="send()">SEND</button>
+        <div class="input-area" style="flex-direction: column; gap: 5px;">
+            <!-- Панель выбора режима -->
+            <div style="display: flex; gap: 10px; font-size: 12px;">
+                <label><input type="radio" name="mode" value="TEXT" checked onclick="toggleMode()"> 💬 STANDARD</label>
+                <label><input type="radio" name="mode" value="PCP" onclick="toggleMode()"> 📟 PCP (Phantom)</label>
+                <label><input type="radio" name="mode" value="GVP" onclick="toggleMode()"> 🎙️ GVP (Ghost)</label>
+            </div>
+
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <!-- Текстовый ввод (для TEXT и PCP) -->
+                <input type="text" id="msgInput" placeholder="Type message..." onkeypress="if(event.key==='Enter') send()">
+                
+                <!-- Файловый ввод (для GVP) - скрыт по умолчанию -->
+                <input type="file" id="fileInput" accept="audio/*" style="display: none; color: #fff;">
+                
+                <button onclick="send()" id="sendBtn">SEND</button>
+            </div>
         </div>
         <div class="status" id="statusBar"></div>
     </div>

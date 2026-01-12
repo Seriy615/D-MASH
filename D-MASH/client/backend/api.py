@@ -14,6 +14,10 @@ import asyncio
 from core import state
 from database import DatabaseManager
 from crypto import CryptoManager
+from fastapi.concurrency import run_in_threadpool
+# Добавьте в начало
+import base64
+from dsp import AudioProcessor
 
 router = APIRouter()
 
@@ -25,7 +29,9 @@ class ConnectData(BaseModel):
     address: str
 class SendData(BaseModel):
     target_id: str
-    text: str
+    text: str = "" # Делаем опциональным или пустым по умолчанию
+    msg_type: str = "TEXT" # "TEXT", "PCP", "GVP"
+    file_data: Optional[str] = None # Base64 для GVP
 class RenameData(BaseModel):
     target_id: str
     name: Optional[str] = None
@@ -168,33 +174,101 @@ async def connect_peer(data: ConnectData):
 async def send_message(data: SendData):
     if not state.db: raise HTTPException(400)
     
-    # 1. ШИФРОВАНИЕ (E2EE + T-Ratchet)
-    # Метод теперь возвращает JSON-строку: {"tag": "...", "ciphertext": "..."}
-    try: 
-        enc_net = state.crypto.encrypt_message(data.target_id, data.text)
-    except Exception as e: 
-        print(f"Encrypt error: {e}")
-        raise HTTPException(400, "Invalid Target ID or Encryption Fail")
-    
     pkt_uuid = str(uuid.uuid4())
-    enc_local = state.crypto.encrypt_db_field(data.text)
+    p_type = "DATA"
+    status = "sent"
     
-    # 2. СОХРАНЕНИЕ В ЛОКАЛЬНУЮ БД (User Layer)
+    # --- ЛОГИКА ФОРМИРОВАНИЯ ПАКЕТА ---
     
-    # Вычисляем Tag для этого контакта, чтобы когда он ответит, 
-    # мы нашли его мгновенно, без перебора ключей.
+    if data.msg_type == "TEXT":
+        # СТАНДАРТНЫЙ E2EE
+        try: 
+            enc_net = state.crypto.encrypt_message(data.target_id, data.text)
+        except Exception as e: 
+            raise HTTPException(400, "Encryption Fail")
+        
+        # Локально сохраняем текст
+        enc_local = state.crypto.encrypt_db_field(data.text)
+        content_to_send = enc_net # Это строка (JSON stringified inside Base64 inside encrypt)
+
+    elif data.msg_type == "PCP":
+        # 1. Шифруем текст (T-Ratchet)
+        cipher_b64 = state.crypto.encrypt_pcp_payload(data.target_id, data.text)
+        
+        # 2. Генерируем ЧЕСТНЫЙ MFSK звук из ЗАШИФРОВАННОГО текста
+        # (Мы передаем в звук именно шифротекст, чтобы в эфире был хаос)
+        # Или можно передавать открытый текст в звук для теста, но правильнее шифрованный.
+        # Давай для наглядности передадим в звук исходный текст (чтобы ты мог его декодировать своим скриптом pcp.py)
+        # А в JSON положим шифрованный для автоматики.
+        
+        real_audio_wav = await run_in_threadpool(
+            AudioProcessor.generate_pcp_audio,
+            data.text
+        )
+        audio_b64 = base64.b64encode(real_audio_wav).decode('utf-8')
+        
+        pcp_packet = {
+            "sim_type": "PCP",
+            "ciphertext": cipher_b64,
+            "audio_preview": audio_b64 
+        }
+        content_to_send = json.dumps(pcp_packet)
+        enc_local = state.crypto.encrypt_db_field(f"[PCP] {data.text}")
+
+    elif data.msg_type == "GVP":
+        # GHOST VOICE PROTOCOL
+        if not data.file_data: raise HTTPException(400, "No file for GVP")
+        
+        # 1. Декодируем входящий файл
+        try:
+            # data.file_data приходит как "data:audio/wav;base64,....."
+            header, encoded = data.file_data.split(",", 1)
+            raw_audio = base64.b64decode(encoded)
+        except:
+            raw_audio = base64.b64decode(data.file_data)
+
+        # 2. Генерируем Соль и Ключ
+        salt = os.urandom(16).hex()
+        base_key = state.crypto.get_offline_key(data.target_id, 0)
+        session_key = state.crypto.get_gvp_session_key(base_key, salt)
+        
+        loop = asyncio.get_running_loop()
+        
+        # Функция для запуска в процессе (обертка, чтобы передать аргументы)
+        # AudioProcessor.scramble_audio - это staticmethod, он пиклится (picklable), все ок.
+        scrambled_wav = await loop.run_in_executor(
+            state.process_pool,  # Наш пул процессов
+            AudioProcessor.scramble_audio, # Функция
+            raw_audio,      # Аргумент 1
+            session_key,    # Аргумент 2
+            True            # Аргумент 3 (is_encrypt)
+        )
+        scrambled_b64 = base64.b64encode(scrambled_wav).decode('utf-8')
+        
+        # 4. Пакуем: Соль (открыто) + Скремблированный блоб
+        gvp_packet = {
+            "sim_type": "GVP",
+            "salt": salt,
+            "blob": scrambled_b64
+        }
+        content_to_send = json.dumps(gvp_packet)
+        
+        # Локально сохраняем маркер
+        enc_local = state.crypto.encrypt_db_field("[GVP Audio Sent]")
+
+    else:
+        raise HTTPException(400, "Unknown Type")
+
+    # --- ДАЛЕЕ СТАНДАРТНАЯ ЛОГИКА СОХРАНЕНИЯ И ОТПРАВКИ ---
+    
     contact_tag = state.crypto.get_delivery_tag(data.target_id)
     
-    # Обновляем/Создаем контакт с учетом Тега
     await state.db.conn.execute("""
         INSERT INTO contacts (user_id, last_seen, delivery_tag) 
         VALUES (?, ?, ?) 
-        ON CONFLICT(user_id) DO UPDATE SET 
-            last_seen=excluded.last_seen,
-            delivery_tag=excluded.delivery_tag
+        ON CONFLICT(user_id) DO UPDATE SET last_seen=excluded.last_seen, delivery_tag=excluded.delivery_tag
     """, (data.target_id, datetime.now().isoformat(), contact_tag))
 
-    # Сохраняем сообщение
     await state.db.conn.execute("""
         INSERT INTO messages (packet_id, chat_id, sender_id, content, timestamp, is_outgoing, is_read) 
         VALUES (?, ?, ?, ?, ?, 1, 1)
@@ -202,58 +276,30 @@ async def send_message(data: SendData):
     
     await state.db.conn.commit()
 
-    # 3. МАРШРУТИЗАЦИЯ (Daemon Layer)
+    # Маршрутизация (без изменений)
     route_id = state.crypto.get_route_id(state.user_id, data.target_id)
     rev_id = state.crypto.get_route_id(data.target_id, state.user_id)
-    
-    # Получаем лучший маршрут (расшифрованный из Blind Storage)
     route = await state.system_db.get_best_route(route_id)
 
     if route and not route['is_local']:
-        # --- DATA MODE (Маршрут известен) ---
-        packet = {"type": "DATA", "id": pkt_uuid, "route_id": route_id, "content": enc_net, "ttl": 20}
-        
-        # Blind-дедупликация
+        packet = {"type": "DATA", "id": pkt_uuid, "route_id": route_id, "content": content_to_send, "ttl": 20}
         await state.system_db.mark_packet_seen(pkt_uuid)
-        
-        # BLIND OUTBOX: Хешируем next_hop перед записью
         next_hop = route['next_hop_id']
         nh_hash = state.node_crypto.get_blind_hash(next_hop)
-        
-        await state.system_db.conn.execute("""
-            INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) 
-            VALUES (?, ?, ?, NULL)
-        """, (pkt_uuid, nh_hash, json.dumps(packet)))
+        await state.system_db.conn.execute("INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) VALUES (?, ?, ?, NULL)", (pkt_uuid, nh_hash, json.dumps(packet)))
         p_type, status = "DATA", "sent"
     else:
-        # --- PROBE MODE (Ищем маршрут) ---
-        
-        # Метим ВХОДЯЩИЙ канал (Reverse Route) как локальный, чтобы принять ответ PROBE_RESP
+        # PROBE logic (без изменений, просто передаем content_to_send)
         await state.system_db.add_route(rev_id, "LOCAL", 0, is_local=True, remote_user_id=data.target_id)
-        
         sig = state.crypto.sign_data(state.user_id + data.target_id)
-        # Auth-часть шифруется асимметрично (SealedBox), чтобы её прочитал только получатель
         auth = state.crypto.encrypt_for_probe(data.target_id, json.dumps({"sid": state.user_id}))
-        
         probe = {
-            "type": "PROBE", 
-            "id": pkt_uuid, 
-            "route_id": route_id, 
-            "rev_id": rev_id, 
-            "target_hash": state.crypto.get_target_hash(data.target_id), 
-            "auth": auth, 
-            "sig": sig, 
-            "content": enc_net, # Теперь здесь JSON {tag, ciphertext}
-            "metric": 0, 
-            "ttl": 20
+            "type": "PROBE", "id": pkt_uuid, "route_id": route_id, "rev_id": rev_id, 
+            "target_hash": state.crypto.get_target_hash(data.target_id), "auth": auth, "sig": sig, 
+            "content": content_to_send, "metric": 0, "ttl": 20
         }
         await state.system_db.mark_packet_seen(pkt_uuid)
-        
-        # Broadcast (next_hop_hash is NULL -> льем всем соседям)
-        await state.system_db.conn.execute("""
-            INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) 
-            VALUES (?, NULL, ?, NULL)
-        """, (pkt_uuid, json.dumps(probe)))
+        await state.system_db.conn.execute("INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) VALUES (?, NULL, ?, NULL)", (pkt_uuid, json.dumps(probe)))
         p_type, status = "PROBE", "finding_route"
 
     await state.system_db.conn.commit()

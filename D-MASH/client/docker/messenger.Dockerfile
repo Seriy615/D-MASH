@@ -1,7 +1,7 @@
 FROM python:3.10-slim
 
 # Устанавливаем системные зависимости
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openssl ffmpeg && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -10,8 +10,7 @@ COPY requirements.txt /app/
 
 # 1. Обновляем pip
 # 2. Устанавливаем зависимости с увеличенным таймаутом
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir --default-timeout=100 -r requirements.txt
+RUN pip install --no-cache-dir --default-timeout=100 -r requirements.txt
 
 # Создаем папку для сертификатов
 RUN mkdir -p /app/certs

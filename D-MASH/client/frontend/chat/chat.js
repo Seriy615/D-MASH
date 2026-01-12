@@ -122,29 +122,54 @@ async function refreshMessages() {
 
     const newHtml = msgs.map(m => {
         const time = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const status = m.is_outgoing ? '✓' : '';
+        const isMe = m.is_outgoing;
+        
+        let contentHtml = m.content;
+        
+        // Пытаемся понять, спец-протокол ли это
+        try {
+            if (m.content.startsWith('{')) {
+                const json = JSON.parse(m.content);
+                
+                if (json.protocol === 'PCP') {
+                    contentHtml = `
+                        <div style="border: 1px solid #457b9d; background: #001d3d; padding: 10px; font-family: monospace; color: #4cc9f0;">
+                            <div style="font-weight: bold; border-bottom: 1px solid #457b9d; margin-bottom: 5px;">📟 PHANTOM CALL</div>
+                            <div>${json.text}</div>
+                            ${json.audio ? `<button onclick="playAudio('${json.audio}')" style="margin-top:5px; font-size:10px;">▶ PLAY NOISE</button>` : ''}
+                        </div>
+                    `;
+                } else if (json.protocol === 'GVP') {
+                    contentHtml = `
+                        <div style="border: 1px solid #e63946; background: #2b0505; padding: 10px;">
+                            <div style="font-weight: bold; color: #e63946; margin-bottom: 5px;">🎙️ GHOST VOICE</div>
+                            <div style="font-size: 10px; color: #aaa;">SALT: ${json.salt.substring(0,16)}...</div>
+                            <div style="display: flex; gap: 5px; margin-top: 5px;">
+                                <button onclick="playAudio('${json.scrambled}')" style="background:#555; color:#fff; border:none; padding:5px;">🔊 NOISE</button>
+                                <button onclick="playAudio('${json.restored}')" style="background:#e63946; color:#fff; border:none; padding:5px;">🔓 VOICE</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        } catch(e) {}
+
         return `
-            <div class="msg ${m.is_outgoing ? 'me' : 'other'}">
-                ${m.content}
-                <div style="font-size: 9px; opacity: 0.5; text-align: right; margin-top: 3px;">${time} ${status}</div>
+            <div class="msg ${isMe ? 'me' : 'other'}">
+                ${contentHtml}
+                <div style="font-size: 9px; opacity: 0.5; text-align: right; margin-top: 3px;">${time}</div>
             </div>
         `;
     }).join('');
 
-    // Проверяем, есть ли новые сообщения (простая проверка по количеству)
-    const hasNewMessages = container.querySelectorAll('.msg').length < msgs.length;
-
     if (container.innerHTML.length !== newHtml.length) {
         container.innerHTML = newHtml;
-        if (isAtBottom) {
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-        // Если мы в этом чате и появились новые сообщения,
-        // немедленно сообщаем бекенду, что мы их прочитали.
+        if (isAtBottom) container.scrollTop = container.scrollHeight;
+        
+        // Mark as read logic...
+        const hasNewMessages = container.querySelectorAll('.msg').length < msgs.length;
         if (hasNewMessages) {
-            await fetch('/api/read_chat', {
+             await fetch('/api/read_chat', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ chat_id: currentChatId })
@@ -189,20 +214,54 @@ async function submitRename() {
 }
 
 async function send() {
-    const txt = document.getElementById('msgInput').value;
-    if(!txt || !currentChatId) return;
+    const mode = document.querySelector('input[name="mode"]:checked').value;
     
-    await fetch('/api/send', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({target_id: currentChatId, text: txt})
-    });
-    
-    document.getElementById('msgInput').value = '';
-    refreshMessages();
-    setTimeout(updateState, 500);
+    if (mode === 'GVP') {
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput.files.length === 0) return alert("Select audio file!");
+        
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64Data = e.target.result; // "data:audio/wav;base64,..."
+            
+            await fetch('/api/send', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    target_id: currentChatId, 
+                    text: "", 
+                    msg_type: "GVP",
+                    file_data: base64Data
+                })
+            });
+            fileInput.value = '';
+            refreshMessages();
+        };
+        reader.readAsDataURL(file);
+        
+    } else {
+        const txt = document.getElementById('msgInput').value;
+        if(!txt || !currentChatId) return;
+        
+        await fetch('/api/send', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                target_id: currentChatId, 
+                text: txt,
+                msg_type: mode // TEXT or PCP
+            })
+        });
+        document.getElementById('msgInput').value = '';
+        refreshMessages();
+    }
 }
-
+// Вспомогательная функция для воспроизведения Base64 аудио
+function playAudio(b64) {
+    const audio = new Audio("data:audio/wav;base64," + b64);
+    audio.play();
+}
 // ДОБАВЬ ЭТУ ФУНКЦИЮ В КОНЕЦ
 function copyId() {
     if (!myId) return;
@@ -221,6 +280,32 @@ function copyId() {
         // Если не сработало (например, нет HTTPS), покажем полный ID чтобы скопировать руками
         prompt("Copy your full ID:", myId);
     });
+}
+
+function toggleMode() {
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    const txtInput = document.getElementById('msgInput');
+    const fileInput = document.getElementById('fileInput');
+    const btn = document.getElementById('sendBtn');
+
+    if (mode === 'GVP') {
+        txtInput.style.display = 'none';
+        fileInput.style.display = 'block';
+        btn.innerText = 'ENCRYPT & SEND';
+        btn.style.background = '#e63946'; // Red for Ghost
+    } else if (mode === 'PCP') {
+        txtInput.style.display = 'block';
+        fileInput.style.display = 'none';
+        txtInput.placeholder = "Enter text for Phantom Call...";
+        btn.innerText = 'TRANSMIT';
+        btn.style.background = '#457b9d'; // Blue for Phantom
+    } else {
+        txtInput.style.display = 'block';
+        fileInput.style.display = 'none';
+        txtInput.placeholder = "Type encrypted message...";
+        btn.innerText = 'SEND';
+        btn.style.background = '#0f0';
+    }
 }
 
 init();

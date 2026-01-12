@@ -6,6 +6,7 @@ import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from concurrent.futures import ProcessPoolExecutor
 
 from database import DatabaseManager
 from network import P2PNode
@@ -31,6 +32,8 @@ class AppState:
     user_id: str = ""
     is_logged_in: bool = False
     background_tasks: Set[asyncio.Task] = set()
+
+    process_pool: Optional[ProcessPoolExecutor] = None # <--- ДОБАВИТЬ
 
 state = AppState()
 
@@ -61,7 +64,7 @@ async def lifespan(app: FastAPI):
     node_signing_key = ensure_node_identity()
     state.node_crypto = NodeCryptoManager(node_signing_key)
     print(f"🌐 [CORE] Node ID: {state.node_crypto.node_id}")
-
+    state.process_pool = ProcessPoolExecutor(max_workers=2)
     # 2. Запускаем Системную БД
     # Используем system.db вместо bootstrap_peers.db для новой архитектуры
     state.system_db = DatabaseManager("system.db")
@@ -87,6 +90,7 @@ async def lifespan(app: FastAPI):
     
     print("🛑 [CORE] Shutting down...")
     for task in state.background_tasks: task.cancel()
+    state.process_pool.shutdown(wait=False) # <--- НЕ ЗАБУДЬТЕ ЗАКРЫТЬ
     if state.db: await state.db.close()
     if state.system_db: await state.system_db.close()
 
