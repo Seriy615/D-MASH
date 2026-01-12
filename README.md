@@ -2,7 +2,7 @@
 
 ---
 
-# 🕸️ D-MASH (Decentralized Mesh Messenger)
+# 🕸️ D-MASH (DECENTRALIZED MESSENGER WITH ASYMMETRIC-KEY ENCRYPTION AND SECURITY HARDENING)
 
 > **High-Privacy P2P Network / Anti-Forensic Messenger / DSP Overlay**
 
