@@ -9,7 +9,8 @@ from database import DatabaseManager
 import base64
 # Добавьте в начало
 from dsp import AudioProcessor
-
+from crypto import NodeCryptoManager # <-- Импортируем для статических методов
+HANDSHAKE_TIMEOUT = 10.0
 class P2PNode:
     def __init__(self, system_db: DatabaseManager):
         self.system_db = system_db
@@ -35,61 +36,124 @@ class P2PNode:
             await asyncio.Future()
 
     async def connect_to(self, address: str):
+        """
+        Инициирует подключение к другому узлу с криптографическим рукопожатием.
+        Процесс: A -> B
+        1. A -> B: { "id": A_id, "challenge": random_string }
+        2. B -> A: { "id": B_id, "signature": sign(random_string) }
+        3. A проверяет PoW(B_id) и подпись.
+        """
         try:
             uri = f"ws://{address}"
-            # Те же лимиты для клиента
-            ws = await ws_connect(uri, open_timeout=5, max_size=10*1024*1024, ping_timeout=60, ping_interval=20)
+            async with ws_connect(uri, open_timeout=5, max_size=10*1024*1024, ping_timeout=60, ping_interval=20) as ws:
+                my_node_id = self.system_db.node_crypto.node_id
                 
-            # Handshake: обмениваемся ID
-            my_id_handshake = self.active_user_id if self.active_user_id else "daemon_node"
-            # В новой версии лучше использовать ID ноды, но пока оставим совместимость
-            if self.system_db.node_crypto:
-                my_id_handshake = self.system_db.node_crypto.node_id
+                # --- Шаг 1: Отправляем challenge ---
+                challenge = str(uuid.uuid4())
+                handshake_init_payload = json.dumps({
+                    "id": my_node_id,
+                    "challenge": challenge
+                })
+                print(f"🤝 [P2P OUT] -> {address}: Sending handshake challenge...")
+                await ws.send(handshake_init_payload)
 
-            await ws.send(my_id_handshake)
-            peer_id = await ws.recv()
-            
-            if peer_id == my_id_handshake:
-                 await ws.close()
-                 return False
+                # --- Шаг 2: Ждем ответ с подписью ---
+                response_json = await asyncio.wait_for(ws.recv(), timeout=HANDSHAKE_TIMEOUT)
+                response_data = json.loads(response_json)
+                
+                peer_id = response_data.get("id")
+                signature = response_data.get("signature")
 
-            self.active_connections[peer_id] = ws
-            print(f"✅ [P2P] Connected to neighbor {peer_id[:8]}")
-            
-            # BLIND STORAGE: Используем метод менеджера, а не SQL
-            await self.system_db.add_neighbor(peer_id, address)
-            
-            asyncio.create_task(self._listen_socket(ws, peer_id))
-            return True
+                if not peer_id or not signature or peer_id == my_node_id:
+                    raise ValueError("Invalid handshake response")
+
+                # --- Шаг 3: Верификация ---
+                # 3.1 Проверка Proof-of-Work (PoW) собеседника
+                if not NodeCryptoManager.verify_node_pow(peer_id):
+                    print(f"☠️ [P2P REJECT] Peer {peer_id[:8]} failed PoW verification!")
+                    raise ConnectionRefusedError("PoW verification failed")
+
+                # 3.2 Проверка подписи (доказательство владения ключом)
+                if not NodeCryptoManager.verify_challenge_signature(peer_id, challenge, signature):
+                    print(f"☠️ [P2P REJECT] Peer {peer_id[:8]} failed challenge signature!")
+                    raise ConnectionRefusedError("Signature verification failed")
+
+                # --- Успех ---
+                print(f"✅ [P2P] Handshake with {peer_id[:8]} successful!")
+                self.active_connections[peer_id] = ws
+                await self.system_db.add_neighbor(peer_id, address)
+                
+                # Запускаем прослушивание в фоне, пока ws существует
+                await self._listen_socket(ws, peer_id)
+            return True # Соединение было успешно установлено и закрыто
+        except asyncio.TimeoutError:
+            print(f"❌ [P2P] Handshake with {address} timed out.")
+        except (ConnectionRefusedError, ValueError) as e:
+            print(f"❌ [P2P] Handshake with {address} failed: {e}")
         except Exception as e:
-            print(f"❌ [P2P] Connection failed: {e}")
-            return False
-
+            print(f"❌ [P2P] Connection to {address} failed: {e}")
+        return False
+    
     async def _handle_incoming(self, websocket):
+        """
+        Обрабатывает входящее соединение с криптографическим рукопожатием.
+        Процесс: A -> B (Мы - B)
+        1. A -> B: { "id": A_id, "challenge": random_string }
+        2. B проверяет PoW(A_id).
+        3. B -> A: { "id": B_id, "signature": sign(random_string) }
+        """
+        peer_id = None
         try:
-            peer_id = await websocket.recv()
+            # --- Шаг 1: Получаем challenge ---
+            request_json = await asyncio.wait_for(websocket.recv(), timeout=HANDSHAKE_TIMEOUT)
+            request_data = json.loads(request_json)
+            peer_id = request_data.get("id")
+            challenge = request_data.get("challenge")
+            my_node_id = self.system_db.node_crypto.node_id
+
+            if not peer_id or not challenge or peer_id == my_node_id:
+                raise ValueError("Invalid handshake request")
+            print(f"🤝 [P2P IN] <- {peer_id[:8]}: Received handshake challenge...")
             
-            my_id_handshake = "daemon_node"
-            if self.system_db.node_crypto:
-                my_id_handshake = self.system_db.node_crypto.node_id
+            # --- Шаг 2: Верификация PoW ---
+            if not NodeCryptoManager.verify_node_pow(peer_id):
+                print(f"☠️ [P2P REJECT] Incoming peer {peer_id[:8]} failed PoW verification!")
+                raise ConnectionRefusedError("PoW verification failed")
             
-            await websocket.send(my_id_handshake)
-            
+            # --- Шаг 3: Подписываем challenge и отправляем ответ ---
+            signature = self.system_db.node_crypto.sign_challenge(challenge)
+            response_payload = json.dumps({
+                "id": my_node_id,
+                "signature": signature
+            })
+            await websocket.send(response_payload)
+
+            # --- Успех ---
+            print(f"✅ [P2P] Handshake with {peer_id[:8]} successful!")
             self.active_connections[peer_id] = websocket
-            print(f"🔗 [P2P] Neighbor connected: {peer_id[:8]}")
-            
-            # BLIND STORAGE
             await self.system_db.add_neighbor(peer_id, "incoming")
             
             await self._listen_socket(websocket, peer_id)
-        except Exception: pass
+        
+        except asyncio.TimeoutError:
+             if websocket.open: await websocket.close(code=1008, reason="Handshake timeout")
+        except (ConnectionRefusedError, ValueError) as e:
+             if websocket.open: await websocket.close(code=1008, reason=str(e))
+        except Exception:
+            if peer_id and peer_id in self.active_connections:
+                del self.active_connections[peer_id]
+
 
     async def _listen_socket(self, websocket, peer_id):
+        # Этот метод теперь остается без изменений, но его вызов обернут в async with
         try:
             async for message in websocket:
                 await self._process_envelope(message, from_peer=peer_id)
-        except:
-            if peer_id in self.active_connections: del self.active_connections[peer_id]
+        finally:
+            # Соединение закрылось (нормально или с ошибкой), удаляем из активных
+            if peer_id in self.active_connections:
+                del self.active_connections[peer_id]
+            print(f"🔌 [P2P] Connection with {peer_id[:8]} closed.")
 
     async def _process_envelope(self, envelope_json: str, from_peer: str):
         try:
