@@ -112,6 +112,38 @@ class NodeCryptoManager:
             return json.loads(plaintext.decode('utf-8'))
         except Exception:
             return None
+        
+    def sign_challenge(self, challenge: str) -> str:
+        """Подписывает challenge-строку своим приватным ключом ноды."""
+        if not self.signing_key:
+            return ""
+        signed = self.signing_key.sign(challenge.encode('utf-8'))
+        return base64.b64encode(signed.signature).decode('utf-8')
+
+    @staticmethod
+    def verify_node_pow(node_id: str) -> bool:
+        """
+        Статический метод для проверки Proof-of-Work любого node_id.
+        Проверяет, что blake3(node_id) начинается с нужного префикса.
+        """
+        if len(node_id) != 64: # Ed25519 public key is 32 bytes = 64 hex chars
+            return False
+        pow_hash = blake3.blake3(node_id.encode()).hexdigest()
+        return pow_hash.startswith(NODE_POW_PREFIX)
+
+    @staticmethod
+    def verify_challenge_signature(node_id: str, challenge: str, signature_b64: str) -> bool:
+        """
+        Статический метод для проверки подписи challenge.
+        Использует публичный ключ (node_id) для верификации.
+        """
+        try:
+            verify_key = VerifyKey(node_id, encoder=HexEncoder)
+            sig_bytes = base64.b64decode(signature_b64)
+            verify_key.verify(challenge.encode('utf-8'), sig_bytes)
+            return True
+        except Exception:
+            return False
 
 
 class CryptoManager:
