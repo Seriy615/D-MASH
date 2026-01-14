@@ -15,6 +15,12 @@ async function init() {
     setInterval(refreshMessages, 1000);
 }
 
+function sanitizeHTML(str) {
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
+}
+
 async function logout() {
     await fetch('/api/logout', { method: 'POST' });
     localStorage.removeItem('my_id');
@@ -113,37 +119,45 @@ async function startChat(targetId = null) {
 
 async function refreshMessages() {
     if(!currentChatId) return;
-    
+
     const res = await fetch(`/api/messages/${currentChatId}`);
+    if (!res.ok) return; // Добавлена проверка на случай ошибки сети
     const msgs = await res.json();
     
     const container = document.getElementById('messages');
+    // Прокрутка к новым сообщениям будет работать лучше, если проверять до обновления
     const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
 
     const newHtml = msgs.map(m => {
         const time = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         const isMe = m.is_outgoing;
         
-        let contentHtml = m.content;
-        
-        // Пытаемся понять, спец-протокол ли это
+        // --- ГЛАВНОЕ ИЗМЕНЕНИЕ ---
+        // 1. Устанавливаем безопасное значение по умолчанию: отображение санитизированного текста.
+        let contentHtml = sanitizeHTML(m.content);
+
+        // 2. Пытаемся обработать как спец-протокол, ПЕРЕОПРЕДЕЛЯЯ contentHtml.
         try {
-            if (m.content.startsWith('{')) {
+            // Проверяем, что это не пустая строка и начинается с '{'
+            if (m.content && m.content.trim().startsWith('{')) {
                 const json = JSON.parse(m.content);
                 
                 if (json.protocol === 'PCP') {
+                    // Санитизируем только ту часть, что пришла от пользователя!
+                    const sanitizedText = sanitizeHTML(json.text);
                     contentHtml = `
                         <div style="border: 1px solid #457b9d; background: #001d3d; padding: 10px; font-family: monospace; color: #4cc9f0;">
                             <div style="font-weight: bold; border-bottom: 1px solid #457b9d; margin-bottom: 5px;">📟 PHANTOM CALL</div>
-                            <div>${json.text}</div>
+                            <div>${sanitizedText}</div>
                             ${json.audio ? `<button onclick="playAudio('${json.audio}')" style="margin-top:5px; font-size:10px;">▶ PLAY NOISE</button>` : ''}
                         </div>
                     `;
                 } else if (json.protocol === 'GVP') {
+                    // Здесь нет пользовательского текста для санитизации, Salt - это hex, он безопасен.
                     contentHtml = `
                         <div style="border: 1px solid #e63946; background: #2b0505; padding: 10px;">
                             <div style="font-weight: bold; color: #e63946; margin-bottom: 5px;">🎙️ GHOST VOICE</div>
-                            <div style="font-size: 10px; color: #aaa;">SALT: ${json.salt.substring(0,16)}...</div>
+                            <div style="font-size: 10px; color: #aaa;">SALT: ${sanitizeHTML(json.salt.substring(0,16))}...</div>
                             <div style="display: flex; gap: 5px; margin-top: 5px;">
                                 <button onclick="playAudio('${json.scrambled}')" style="background:#555; color:#fff; border:none; padding:5px;">🔊 NOISE</button>
                                 <button onclick="playAudio('${json.restored}')" style="background:#e63946; color:#fff; border:none; padding:5px;">🔓 VOICE</button>
@@ -151,8 +165,12 @@ async function refreshMessages() {
                         </div>
                     `;
                 }
+                // Если это какой-то другой JSON, мы его просто отобразим как санитизированный текст (поведение по умолчанию).
             }
-        } catch(e) {}
+        } catch(e) {
+            // Если парсинг JSON не удался, значит это обычный текст.
+            // contentHtml уже содержит безопасное значение, так что здесь ничего делать не нужно.
+        }
 
         return `
             <div class="msg ${isMe ? 'me' : 'other'}">
@@ -162,18 +180,11 @@ async function refreshMessages() {
         `;
     }).join('');
 
-    if (container.innerHTML.length !== newHtml.length) {
+    // Обновляем DOM, только если есть реальные изменения.
+    if (container.innerHTML !== newHtml) {
         container.innerHTML = newHtml;
-        if (isAtBottom) container.scrollTop = container.scrollHeight;
-        
-        // Mark as read logic...
-        const hasNewMessages = container.querySelectorAll('.msg').length < msgs.length;
-        if (hasNewMessages) {
-             await fetch('/api/read_chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ chat_id: currentChatId })
-            });
+        if (isAtBottom) {
+            container.scrollTop = container.scrollHeight;
         }
     }
 }
