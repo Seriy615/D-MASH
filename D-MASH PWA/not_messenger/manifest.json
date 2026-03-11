@@ -1,0 +1,19 @@
+{
+  "name": "MathPro Utility Professional",
+  "short_name": "MathPro",
+  "description": "High-precision scientific calculator for engineering.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "calc_icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
