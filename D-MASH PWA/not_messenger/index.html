@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="calc_icon.png">
+    <link rel="shortcut icon" href="calc_icon.png">
+    <link rel="icon" type="image/png" href="calc_icon.png">
+    <!-- Убираем translucent (прозрачность), ставим жесткий черный цвет -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <!-- theme-color тоже должен быть четким -->
+    <meta name="theme-color" content="#000000">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MathPro</title>
+<style>
+    /* =========================================
+       1. БАЗОВЫЕ НАСТРОЙКИ И ПЕРЕМЕННЫЕ
+       ========================================= */
+    :root { 
+        --bg: #000; 
+        --main: #00ff41; 
+        --accent: #ff003c; 
+        --btn: #1c1c1c; 
+        --op: #ff9f0a; 
+        --sys: #a5a5a5; 
+        --panel: #0a0a0a;
+        --border: #1a1a1a;
+        --safe-top: env(safe-area-inset-top); 
+        --safe-bottom: env(safe-area-inset-bottom); 
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+
+    /* ФИКС ВЬЮПОРТА: Занимаем весь экран, но без фиксированной высоты */
+    html, body {
+        height: 100%; width: 100%; margin: 0; padding: 0;
+        background: #000; color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        overflow: hidden;
+        /* Важно: это заставляет браузер пересчитывать высоту при открытии клавы */
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    }
+
+    /* =========================================
+       2. ГЛАВНЫЙ КОНТЕЙНЕР (FLEX-КОЛОННА)
+       ========================================= */
+    #app-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* Займет всё доступное место (даже с клавой) */
+        width: 100%;
+        background: #000;
+        z-index: 10;
+        padding-top: var(--safe-top); 
+        /* Убираем padding-bottom здесь, он будет в самом нижнем элементе */
+    }
+
+    /* =========================================
+       3. КАЛЬКУЛЯТОР (ДЕКОЙ)
+       ========================================= */
+    #calc-view {
+        display: flex;
+        flex-direction: column;
+        flex: 1; /* Растягивается */
+        height: 100%;
+    }
+    
+    #display-area { 
+        flex: 1; /* Забирает свободное место */
+        display: flex; flex-direction: column; 
+        justify-content: flex-end; align-items: flex-end; 
+        padding: 20px; 
+        overflow: hidden;
+    }
+
+    #history { color: #888; font-size: 1.2rem; font-family: monospace; min-height: 1.5rem; }
+    
+    #current { 
+        color: #fff; font-size: 4.5rem; font-weight: 200; 
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        width: 100%; text-align: right; font-variant-numeric: tabular-nums;
+    }
+
+    #keypad { 
+        height: 60%; /* Кнопки всегда занимают 60% высоты */
+        display: grid; grid-template-columns: repeat(4, 1fr); 
+        gap: 1px; background: #333; 
+        padding-bottom: var(--safe-bottom);
+    }
+
+    .btn { 
+        border: none; background: var(--btn); color: #fff; 
+        font-size: 1.8rem; display: flex; align-items: center; 
+        justify-content: center; cursor: pointer; transition: background 0.1s;
+    }
+    .btn:active { background: #444; }
+    .btn.op { background: var(--op); font-size: 2.2rem; }
+    .btn.sys { background: var(--sys); color: #000; }
+    .btn.zero { grid-column: span 2; justify-content: flex-start; padding-left: 10vw; }
+    
+    /* Микро-отступ для нижнего ряда кнопок */
+    .btn.zero, .btn.op[onclick*="eval"] { padding-bottom: 0; }
+
+    /* =========================================
+       4. ГЕЙТ (ВХОД В СИСТЕМУ)
+       ========================================= */
+    #settings-layer { 
+        display: none !important; /* Управляется из JS */
+        position: fixed; 
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: #050505; 
+        z-index: 100; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px; 
+        overflow: hidden;
+        padding-top: var(--safe-top);
+        padding-bottom: var(--safe-bottom);
+    }
+
+    .gate-container { 
+        width: 100%; max-width: 350px; 
+        border: 1px solid var(--main); padding: 30px; 
+        box-shadow: 0 0 20px rgba(0,255,65,0.2); 
+        background: #000;
+    }
+
+    .gate-input { 
+        width: 100%; background: #000; border: 1px solid var(--border); 
+        color: var(--main); padding: 15px; margin-bottom: 20px; 
+        font-family: inherit; font-size: 1rem; border-radius: 0; 
+    }
+
+    .gate-btn { 
+        width: 100%; background: var(--main); color: #000; 
+        border: none; padding: 15px; font-weight: bold; cursor: pointer; 
+    }
+
+    /* =========================================
+       5. МЕССЕНДЖЕР (WORKSPACE)
+       ========================================= */
+    #workspace { 
+        display: none; /* Скрыт по умолчанию */
+        flex-direction: column;
+        height: 100%; width: 100%;
+        background: #000; 
+        overflow: hidden;
+    }
+
+    .terminal-grid { 
+        display: flex; width: 100%; height: 100%; 
+        background: #000; position: relative; 
+    }
+
+    /* САЙДБАР (СПИСОК КОНТАКТОВ) */
+    .sidebar { 
+        width: 320px; border-right: 1px solid var(--border); 
+        display: flex; flex-direction: column; 
+        background: #080808; flex-shrink: 0; height: 100%;
+        transition: transform 0.3s ease;
+    }
+
+    .side-header { 
+        font-size: 0.9rem; border-bottom: 1px solid var(--main); 
+        padding: 15px; font-weight: bold; text-align: center; 
+    }
+
+    .my-id-card { 
+        font-size: 0.6rem; background: #111; padding: 12px; 
+        margin: 10px; cursor: pointer; border: 1px dashed #333; word-break: break-all; 
+    }
+
+    .nav-tools { display: flex; gap: 5px; margin: 0 10px 10px 10px; }
+    .nav-tools button { 
+        flex: 1; background: #111; color: var(--main); 
+        border: 1px solid var(--border); padding: 12px 5px; 
+        font-size: 0.7rem; font-weight: bold; cursor: pointer; 
+    }
+
+    .peer-list { 
+        flex-grow: 1; overflow-y: auto; padding: 0 10px; 
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .peer-item { 
+        padding: 15px; border: 1px solid var(--border); 
+        margin-bottom: 8px; cursor: pointer; background: #0a0a0a; border-radius: 4px;
+    }
+    .peer-item.active { background: #001a00; border-color: var(--main); }
+    
+    /* Кнопка удаления чата */
+    .chat-del-btn {
+        width: 40px; height: 40px;
+        display: flex; align-items: center; justify-content: center;
+        margin: -10px; cursor: pointer; color: #333; font-size: 1.6rem; transition: 0.2s;
+    }
+    .peer-item:hover .chat-del-btn { color: var(--accent); }
+    .chat-del-btn:active { transform: scale(1.3); }
+
+    .exit-btn { 
+        width: 100%; padding: 20px; background: #200; color: var(--accent); 
+        border: none; font-weight: bold; text-transform: uppercase;
+        margin-top: auto; cursor: pointer;
+    }
+
+    /* ОСНОВНОЙ ЧАТ */
+    .chat-main { 
+        display: flex; flex-direction: column; 
+        height: 100%; width: 100%;
+        background: #050505; overflow: hidden;
+        min-width: 0; transition: transform 0.3s ease;
+    }
+
+    #chat-header { 
+        flex-shrink: 0; height: 60px; padding: 0 15px; 
+        background: #0a0a0a; border-bottom: 1px solid var(--border); 
+        display: flex; align-items: center; 
+    }
+
+    #chat-title { 
+        flex-grow: 1; overflow: hidden; text-overflow: ellipsis; 
+        padding: 0 15px; font-size: 1rem; font-weight: bold; 
+    }
+    #back-btn { display: none; }
+
+    .chat-log { 
+        flex: 1; overflow-y: auto; padding: 15px; 
+        display: flex; flex-direction: column; gap: 10px;
+        background: #050505; -webkit-overflow-scrolling: touch;
+    }
+
+    /* СООБЩЕНИЯ */
+    .msg { 
+        min-width: 60px; max-width: 85%; padding: 10px 15px; 
+        border-radius: 8px; font-size: 1rem; line-height: 1.4; 
+        word-wrap: break-word;
+    }
+    .msg.out { align-self: flex-end; background: #002b00; border-right: 3px solid var(--main); }
+    .msg.in { align-self: flex-start; background: #161616; border-left: 3px solid #444; }
+    .m-ts { display: block; font-size: 0.65rem; opacity: 0.4; margin-top: 6px; text-align: right; }
+
+    /* Кнопка удаления сообщения */
+    .msg-del-btn {
+        display: flex; align-items: center; justify-content: center;
+        width: 30px; height: 30px; float: right; margin: -5px -5px 0 10px;
+        cursor: pointer; color: #444; font-size: 1.4rem; border-radius: 50%; transition: 0.2s;
+    }
+    .msg:hover .msg-del-btn { color: var(--accent); }
+    .msg-del-btn:active { background: rgba(255,0,0,0.2); transform: scale(1.2); }
+
+    /* ПАНЕЛЬ ВВОДА */
+    .chat-input-area { 
+        flex-shrink: 0; padding: 10px; 
+        background: #0a0a0a; border-top: 1px solid var(--border);
+        /* Паддинг под клаву/жесты */
+        padding-bottom: max(10px, var(--safe-bottom));
+        display: flex; gap: 8px; align-items: flex-end;
+    }
+
+    #msgInput { 
+        flex-grow: 1; background: #000; border: 1px solid #333; 
+        color: var(--main); padding: 10px; border-radius: 4px;
+        font-size: 16px; min-height: 40px; max-height: 120px; resize: none;
+        font-family: inherit;
+    }
+
+    .action-btn { 
+        width: 40px; height: 40px; background: #111; border: 1px solid #333; 
+        color: var(--main); display: flex; align-items: center; justify-content: center;
+        border-radius: 4px; flex-shrink: 0; font-size: 1.1rem; cursor: pointer;
+    }
+    .action-btn:active { background: var(--main); color: #000; }
+    .send-btn { width: auto; padding: 0 12px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+
+    /* =========================================
+       6. МЕДИА И ЗВОНКИ
+       ========================================= */
+    /* Убираем глобальный овал */
+    .msg .media-stub video, .msg .media-stub img, .img-attachment, .video-attachment {
+        border-radius: 8px !important;
+        width: 100%; max-width: 300px; height: auto; display: block;
+    }
+
+    /* Кружки (Video Notes) — только для них круг */
+    .circle-note-container {
+        width: 200px !important; height: 200px !important;
+        border-radius: 50% !important; overflow: hidden;
+        border: 2px solid var(--main); background: #000; position: relative;
+    }
+    .circle-note-container video {
+        width: 100% !important; height: 100% !important;
+        border-radius: 50% !important; object-fit: cover !important;
+    }
+
+    /* Зеркало для фронталки */
+    .mirrored { transform: scaleX(-1); }
+
+    /* Скрываем видео при переходе на ухо */
+    #remoteVideo.hidden { display: none !important; }
+
+    /* Кнопки в звонке */
+    .call-action-btn { 
+        width: 65px; height: 65px; border-radius: 50%; 
+        background: rgba(30,30,30,0.9); border: 1px solid #444; 
+        color: #fff; font-size: 1.4rem; cursor: pointer; 
+        display: flex; align-items: center; justify-content: center;
+    }
+    .call-action-btn.small { width: 50px; height: 50px; font-size: 1.1rem; }
+    .call-action-btn.off { background: var(--accent) !important; border-color: #fff; }
+
+    /* Анимация записи */
+    .action-btn.recording { 
+        background: var(--accent) !important; color: #fff !important; 
+        border-color: var(--accent) !important; animation: pulse-red 1s infinite;
+    }
+    @keyframes pulse-red { 0% {opacity: 1} 50% {opacity: 0.5} 100% {opacity: 1} }
+
+    /* =========================================
+       7. МОДАЛКИ И УВЕДОМЛЕНИЯ
+       ========================================= */
+    #sys-modal { 
+        display: none; position: fixed; inset: 0; 
+        background: rgba(0,0,0,0.95); z-index: 9999; 
+        justify-content: center; align-items: center; padding: 20px; 
+    }
+    .sys-modal-box { 
+        background: #000; border: 1px solid var(--main); 
+        padding: 25px; width: 100%; max-width: 320px; text-align: center; 
+    }
+    .sys-modal-input {
+        width: 100%; background: #000; border: 1px solid var(--main);
+        color: var(--main); padding: 12px; margin: 15px 0;
+        font-family: inherit; font-size: 1rem; text-align: center; border-radius: 0;
+    }
+    .sys-modal-btn { 
+        width: 100%; padding: 12px; margin-top: 10px; 
+        background: transparent; border: 1px solid var(--main); 
+        color: var(--main); font-weight: bold; cursor: pointer; text-transform: uppercase;
+    }
+    .sys-modal-btn.primary { background: var(--main); color: #000; }
+
+    /* Красный маяк */
+    .unread-badge {
+        background: #ff003c; color: #fff; border-radius: 10px;
+        padding: 1px 6px; font-size: 10px; font-weight: bold;
+        margin-right: 10px; line-height: 14px; vertical-align: middle;
+        box-shadow: 0 0 8px #ff003c; display: inline-block;
+    }
+    /* Подсветка контакта */
+    .peer-item.has-unread { border-left: 3px solid var(--accent) !important; }
+
+    /* QR и Сканер */
+    #qr-target { background: #fff; padding: 10px; display: inline-block; margin: 15px 0; border-radius: 4px; }
+    #reader { width: 100%; aspect-ratio: 1/1; background: #000; overflow: hidden; border: 1px solid #333; }
+
+    /* =========================================
+       8. МОБИЛЬНАЯ АДАПТАЦИЯ
+       ========================================= */
+    @media (max-width: 768px) {
+        .sidebar { width: 100%; position: absolute; left: 0; top: 0; z-index: 1; }
+        .chat-main { width: 100%; position: absolute; left: 0; top: 0; z-index: 2; transform: translateX(100%); }
+        .terminal-grid.chat-active .chat-main { transform: translateX(0); }
+        .terminal-grid.chat-active .sidebar { transform: translateX(-20%); }
+        #back-btn { display: flex !important; }
+        #current { font-size: 3.5rem; }
+    }
+</style>
+</head>
+<body oncontextmenu="return false;">
+    <input type="file" id="file-input" style="display: none;">
+    <div id="app-container">
+        <div id="display-area"><div id="history"></div><div id="current">0</div></div>
+        <div id="keypad">
+            <button class="btn sys" onclick="ui.cmd('AC')">AC</button><button class="btn sys" onclick="ui.cmd('±')">±</button><button class="btn sys" onclick="ui.cmd('%')">%</button><button class="btn op" onclick="ui.cmd('/')">÷</button>
+            <button class="btn" onclick="ui.num('7')">7</button><button class="btn" onclick="ui.num('8')">8</button><button class="btn" onclick="ui.num('9')">9</button><button class="btn op" onclick="ui.cmd('*')">×</button>
+            <button class="btn" onclick="ui.num('4')">4</button><button class="btn" onclick="ui.num('5')">5</button><button class="btn" onclick="ui.num('6')">6</button><button class="btn op" onclick="ui.cmd('-')">−</button>
+            <button class="btn" onclick="ui.num('1')">1</button><button class="btn" onclick="ui.num('2')">2</button><button class="btn" onclick="ui.num('3')">3</button><button class="btn op" onclick="ui.cmd('+')">+</button>
+            <button class="btn zero" onclick="ui.num('0')">0</button><button class="btn" onclick="ui.num('.')">,</button><button class="btn op" onclick="ui.eval()">=</button>
+        </div>
+    </div>
+    <div id="settings-layer">
+            <div class="gate-container">
+            <!-- СРАЗУ НА РУССКОМ, ЧТОБ НЕ ПРЫГАЛО -->
+            <div id="gate-status-text" style="color:var(--main); font-size:0.7rem; margin-bottom:10px;">ДОСТУП ОГРАНИЧЕН</div>
+            <input type="text" id="p1" class="gate-input" placeholder="ИДЕНТИФИКАТОР" spellcheck="false" autocomplete="off">
+            <input type="password" id="p2" class="gate-input" placeholder="КЛЮЧ ДОСТУПА" autocomplete="off">
+            <button class="gate-btn" onclick="sys.init()">ВОЙТИ В СИСТЕМУ</button>
+        </div>
+    </div>
+    <div id="workspace" style="display:none;"></div>
+    <div id="sys-modal"></div>
+<!-- ОБНОВЛЕННЫЙ call-overlay -->
+<div id="call-overlay" style="display:none; position:fixed; inset:0; background:#000; z-index:9999; flex-direction:column; font-family:monospace; overflow:hidden;">
+    <video id="remoteVideo" autoplay playsinline style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;"></video>
+    <audio id="remoteAudio" autoplay playsinline></audio>
+    <video id="localVideo" autoplay playsinline muted style="position:absolute; top:20px; right:20px; width:90px; height:120px; border:1px solid var(--main); object-fit:cover; z-index:10001; background:#111;"></video>
+    <!-- Внутри call-overlay, рядом с видео -->
+    <!-- ИНФО -->
+    <div style="position:relative; z-index:10005; text-align:center; padding-top:50px;">
+        <div id="call-name" style="font-size:1.8rem; color:var(--main); text-shadow: 0 2px 10px #000;">...</div>
+        <div id="call-status" style="font-size:0.8rem; color:#fff; text-transform:uppercase; margin:10px 0;">СВЯЗЬ</div>
+        <div id="call-timer" style="font-size:1.2rem; color:var(--main); display:none;">00:00</div>
+    </div>
+
+    <!-- НОВЫЙ БЛОК КНОПОК -->
+    <div style="position:absolute; bottom:40px; width:100%; display:flex; flex-direction:column; align-items:center; gap:20px; z-index:10010;">
+        <div style="display:flex; gap:20px;">
+            <button onclick="Core.switchCamera()" class="call-action-btn small">🔄</button>
+            <button onclick="Core.shareScreen()" class="call-action-btn small">🖥️</button>
+            <button id="btn-speaker-toggle" onclick="Core.toggleSpeaker()" class="call-action-btn small">🔊</button>
+        </div>
+        <div style="display:flex; gap:35px;">
+            <button id="btn-vid-toggle" onclick="Core.toggleVideo()" class="call-action-btn off">📷</button>
+            <button onclick="Core.endCall()" style="width:80px; height:80px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:2rem; cursor:pointer;">🛑</button>
+            <button id="btn-mic-toggle" onclick="Core.toggleMic()" class="call-action-btn">🎤</button>
+        </div>
+    </div>
+
+    <div id="proximity-blind" style="display:none; position:fixed; inset:0; background:#000; z-index:20000;"></div>
+</div>
+
+<style>
+.call-action-btn { width:65px; height:65px; border-radius:50%; background:rgba(30,30,30,0.9); border:1px solid #444; color:#fff; font-size:1.4rem; cursor:pointer; }
+.call-action-btn.small { width:50px; height:50px; font-size:1.1rem; }
+.call-action-btn.off { background: var(--accent) !important; }
+</style>
+<!-- Находишь в конце index.html подключение ui_logic -->
+<script>
+    // Грузим ui_logic с кастетом против кэша
+    const s = document.createElement('script');
+    s.src = "js/ui_logic.js?v=" + Date.now();
+    document.body.appendChild(s);
+</script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            // updateViaCache: 'none' — приказ браузеру не верить кэшу при проверке sw.js
+            navigator.serviceWorker.register('sw.js?v=' + Date.now(), { updateViaCache: 'none' }).then(reg => {
+                console.log('D-MASH V21: ACTIVE');
+                
+                // Будильник для воркера
+                setInterval(() => {
+                    if (reg.active) reg.active.postMessage({ type: 'PING' });
+                }, 15000);
+            });
+        });
+    }
+
+        // Блокировка стандартного поведения PWA (чтобы не палиться лишний раз)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // e.preventDefault(); // Можно скрыть системный баннер "Установить"
+            console.log('PWA Ready for injection');
+        });
+    </script>
+    </body>
+</html>

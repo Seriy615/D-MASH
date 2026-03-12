@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>D-MASH // THE_GHOST_CODE</title>
+    <style>
+        :root {
+            --bg: #05010a;
+            --main: #00ff41;
+            --neon: #bc13fe;
+            --cyan: #00f0ff;
+            --blood: #ff003c;
+            --acid: #dfff11;
+            --hydra-dark: #0d0221;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Rubik+Glitch&display=swap');
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg);
+            color: #fff;
+            font-family: 'Fira Code', monospace;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
+            /* Психоделический фон "Гидра" */
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(188, 19, 254, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(223, 255, 17, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.05) 0%, transparent 100%);
+            background-attachment: fixed;
+            animation: liquid-bg 20s infinite alternate linear;
+        }
+
+        @keyframes liquid-bg {
+            0% { filter: hue-rotate(0deg); background-position: 0% 0%; }
+            100% { filter: hue-rotate(360deg); background-position: 100% 100%; }
+        }
+
+        /* Эффект шума/зерна */
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .terminal {
+            width: 100%;
+            max-width: 850px;
+            background: rgba(13, 2, 33, 0.9);
+            border: 2px solid rgba(188, 19, 254, 0.3);
+            border-top: 8px solid var(--neon);
+            padding: 35px;
+            margin: 40px 10px;
+            box-shadow: 0 0 60px rgba(188, 19, 254, 0.2), inset 0 0 20px rgba(0, 240, 255, 0.1);
+            position: relative;
+            backdrop-filter: blur(15px);
+            animation: terminal-glow 4s infinite alternate;
+        }
+
+        @keyframes terminal-glow {
+            from { box-shadow: 0 0 40px rgba(188, 19, 254, 0.2); border-color: rgba(188, 19, 254, 0.3); }
+            to { box-shadow: 0 0 70px rgba(0, 240, 255, 0.3); border-color: rgba(0, 240, 255, 0.5); }
+        }
+
+        header {
+            font-size: 0.75rem;
+            color: var(--cyan);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 5px var(--cyan);
+        }
+
+        .hero-title {
+            font-family: 'Rubik Glitch', sans-serif;
+            font-size: clamp(3rem, 12vw, 6rem);
+            color: #fff;
+            text-align: center;
+            margin: 10px 0;
+            background: linear-gradient(to bottom, #fff, var(--neon));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px var(--neon));
+        }
+
+        .intro-text {
+            color: #ddd;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 45px;
+            border-left: 4px solid var(--blood);
+            padding-left: 20px;
+            background: rgba(255, 0, 60, 0.03);
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+        .intro-text b { color: var(--acid); font-size: 1.1rem; text-shadow: 0 0 10px var(--acid); }
+
+        h2 { color: var(--neon); text-transform: uppercase; border-bottom: 2px solid var(--neon); padding-bottom: 10px; margin-top: 50px; font-size: 1.4rem; letter-spacing: 5px; }
+        
+        /* FEATURE GRID */
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin: 25px 0; }
+        .f-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            padding: 20px; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .f-card::before {
+            content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            transition: 0.5s;
+        }
+        .f-card:hover::before { left: 100%; }
+        .f-card:hover { 
+            background: rgba(255, 255, 255, 0.07); 
+            border-color: var(--cyan); 
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .f-title { color: var(--acid); font-weight: 700; margin-bottom: 8px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .f-desc { color: #aaa; font-size: 0.9rem; line-height: 1.5; }
+
+        /* STEPS */
+        .steps { counter-reset: step; }
+        .step { 
+            position: relative; margin-bottom: 25px; padding-left: 60px; 
+            background: rgba(188,19,254,0.05); padding: 20px 20px 20px 70px; 
+            border-radius: 2px; border-right: 2px solid transparent;
+            transition: 0.3s;
+        }
+        .step:hover { border-right-color: var(--neon); background: rgba(188,19,254,0.1); }
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+            width: 35px; height: 35px; background: var(--neon); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem;
+            box-shadow: 0 0 15px var(--neon);
+        }
+
+        .highlight { color: #fff; text-shadow: 0 0 5px #fff; background: rgba(0, 255, 65, 0.2); padding: 2px 6px; }
+        .alert { 
+            background: rgba(255, 0, 60, 0.1); border: 1px solid var(--blood); color: #ff9d9d; 
+            padding: 20px; font-size: 0.85rem; margin: 40px 0; position: relative;
+            animation: alert-pulse 2s infinite alternate;
+        }
+        @keyframes alert-pulse { from { border-color: var(--blood); } to { border-color: var(--acid); } }
+
+        .btn-link {
+            display: block; width: 100%; padding: 30px; margin-top: 50px;
+            background: #000; border: 3px solid var(--main);
+            color: var(--main); font-family: 'Rubik Glitch', monospace;
+            font-size: 2.2rem; text-align: center;
+            text-decoration: none; transition: 0.2s;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+        .btn-link:hover { 
+            background: var(--main); color: #000; 
+            box-shadow: 0 0 50px var(--main); 
+            transform: translateY(-5px) rotate(-1deg);
+        }
+
+        /* Мобильные фиксы */
+        @media (max-width: 600px) {
+            .terminal { padding: 20px; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .hero-title { font-size: 3.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="terminal">
+        <header>
+            <div>NODE: <span style="color:var(--main)">DARK_PROMETHEUS</span></div>
+            <div>STATUS: <span style="color:var(--acid)">UNTRACEABLE</span></div>
+        </header>
+
+        <h1 class="hero-title">D-MASH</h1>
+
+        <div class="intro-text">
+            <b>Слышь, пацан: централизация — это ошейник.</b> Телеграм хранит твои ключи, Signal требует номер, а корпорации продают твою переписку рекламным ботам. Пока твоя жизнь лежит на чужих серверах — ты не хозяин своего слова. <br><br>
+            <b>D-MASH Gamma</b> — это цифровой оффшор. Мы стерли понятие "аккаунт". Мы выжгли возможность слежки. Здесь только чистая математика, постквантовая броня и твое право на тишину.
+        </div>
+
+        <h2>ТЕХНИЧЕСКИЙ ПАСПОРТ</h2>
+        <div class="feature-grid">
+            <div class="f-card">
+                <div class="f-title">> Quantum Handshake (ML-KEM-768)</div>
+                <div class="f-desc">Каждая сессия — это квантовая крепость. Мы используем инкапсуляцию секрета CRYSTALS-Kyber. Это броня против компьютеров будущего: никто не сможет расшифровать твой базар завтра, записав его сегодня.</div>
+            </div>
+            <div class="f-card">
+                <div class="f-title">> Per-Second T-Ratchet</div>
+                <div class="f-desc">Твой ключ меняется каждую секунду. Шифр прибит к таймстампу внутри пакета. Подделать время малявы невозможно — Ed25519 подпись защищает каждый бит от вброса или повтора.</div>
+            </div>
+            <div class="f-card">
+                <div class="f-title">> Dual WASM Engine (Native C)</div>
+                <div class="f-desc">Внутри калькулятора бьется пульс двух Си-ядер. Argon2id выковывает мастер-ключи в RAM, а Kyber управляет квантовой защитой на скорости "в пол". Максимальный профит без тормозов.</div>
+            </div>
+            <div class="f-card">
+                <div class="f-title">> Blind Storage Logic</div>
+                <div class="f-desc">База данных слепа. Она не видит имен, связей и маршрутов — только обезличенные хеши. Мастер-соль живет только в RAM. Выключил девайс — и вся история превратилась в радиоактивную пыль.</div>
+            </div>
+            <div class="f-card">
+                <div class="f-title">> Plausible Deniability</div>
+                <div class="f-desc">Ты не ставишь мессенджер — ты ставишь "MathPro". Приложение мимикрирует под инженерный калькулятор. Ни одна ищейка не поймет, что это терминал связи, пока не увидит твой мастер-код.</div>
+            </div>
+            <div class="f-card" style="border-left-color: var(--blood)">
+                <div class="f-title">> G-Force Wipe Trigger</div>
+                <div class="f-desc">Датчики ловя резкое ускорение. Если телефон вырвали из рук или ты его кинул — система мгновенно затирает ключи в RAM и лочит терминал. Мусора найдут только зашифрованный кусок кирпича.</div>
+            </div>
+        </div>
+
+        <h2>ПОРЯДОК РАЗВЕРТЫВАНИЯ</h2>
+        <div class="steps">
+            <div class="step">
+                <b>МАСКИРОВКА:</b> Зайди с браузера и нажми <span class="highlight">"На экран Домой"</span>. D-MASH встанет как PWA под видом калькулятора. В истории покупок и приложений — чистота.
+            </div>
+            <div class="step">
+                <b>АКТИВАЦИЯ:</b> В строке вычислений вбей свой Master PIN и жми <span class="highlight"> [ = ] </span>. Только после этого проснутся WASM-ядра и откроется доступ в бункер.
+            </div>
+            <div class="step">
+                <b>СВЯЗЬ:</b> Покажи QR кенту. Мы зашили туда только 64 знака (ID). Обмен квантовыми секретами и сдвигами времени (Shift) произойдет автоматом в фоне при первом контакте.
+            </div>
+            <div class="step">
+                <b>ТЕРМИНАЦИЯ:</b> Если пахнет жареным — вводи <b>Wipe PIN</b>. Весь архив маляв и ключи аннигилируются физически за доли секунды. Восстановления нет.
+            </div>
+        </div>
+
+        <div class="alert">
+            🚨 <b>ВНИМАНИЕ ПО КАССЕ:</b> <br>
+            Здесь нет службы поддержки и кнопки "забыл пароль". Весь твой базар и доступ зависят только от твоей головы. Потерял ключи — потерял хату.
+        </div>
+
+        <a href="not_messenger/index.html" class="btn-link">ENTER THE VOID</a>
+    </div>
+
+</body>
+</html>
