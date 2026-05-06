@@ -2,8 +2,8 @@
 // D-MASH SILENT V3.8 - INSTANT NOTIFY + BLINKING MODE
 declare(strict_types=1);
 
-define('TG_BOT_TOKEN', '8564655749:AAEI-sHz13gJPzY_-bN9bN4wlWBs6Gqidjo');
-define('DB_PATH', __DIR__ . '/../../shadow_data/relay_vault.db');
+define('TG_BOT_TOKEN', 'ТВОЙ ТОКЕН СЮДА');
+define('DB_PATH', __DIR__ . 'YOUR_PATH/relay_vault.db');
 
 // --- РАСШИРЯЕМ ДОПУСКИ ---
 ini_set('memory_limit', '512M');
