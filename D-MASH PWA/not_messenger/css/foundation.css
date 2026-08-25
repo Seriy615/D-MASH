@@ -1,0 +1,67 @@
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --surface-canvas: #0b0d12;
+  --surface-raised: #121722;
+  --surface-sunken: #090b0f;
+  --surface-overlay: rgba(8, 11, 16, .92);
+  --surface-hover: #1a2230;
+  --text-primary: #f3f6fb;
+  --text-secondary: #a9b4c4;
+  --text-muted: #6f7b8c;
+  --text-on-action: #06110b;
+  --border-subtle: #253044;
+  --border-strong: #3b4b66;
+  --action-primary: #67d99a;
+  --action-primary-hover: #8cebb6;
+  --action-secondary: #26364e;
+  --action-danger: #d85e6a;
+  --status-success: #69d89b;
+  --status-warning: #e3b65c;
+  --status-danger: #e87882;
+  --status-secure: #71d9c1;
+  --status-unverified: #e3b65c;
+  --status-offline: #7f8a9a;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --shadow-overlay: 0 24px 80px rgba(0, 0, 0, .42);
+  --z-nav: 20;
+  --z-dialog: 50;
+  --focus-ring: 0 0 0 3px rgba(103, 217, 154, .45);
+}
+
+html[data-theme="light"] {
+  --surface-canvas: #f7f9fc;
+  --surface-raised: #ffffff;
+  --surface-sunken: #edf1f6;
+  --surface-overlay: rgba(255, 255, 255, .94);
+  --surface-hover: #e9eef6;
+  --text-primary: #172131;
+  --text-secondary: #526176;
+  --text-muted: #718097;
+  --border-subtle: #d9e0ea;
+  --border-strong: #b7c3d4;
+}
+
+.dmash-ui { font-family: var(--font-ui); color: var(--text-primary); }
+.dmash-ui button, .dmash-ui input, .dmash-ui textarea { font: inherit; }
+.dmash-ui button:focus-visible, .dmash-ui input:focus-visible, .dmash-ui textarea:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.dmash-ui [data-mono] { font-family: var(--font-mono); }
+.dmash-ui [hidden] { display: none !important; }
+
+.dmash-screen { min-block-size: 0; }
+.dmash-status { display: inline-flex; align-items: center; gap: var(--space-2); border-radius: 999px; padding: 5px 9px; font-size: .78rem; font-weight: 650; }
+.dmash-status::before { content: ""; inline-size: 8px; block-size: 8px; border-radius: 50%; background: currentColor; }
+.dmash-status--connected { color: var(--status-success); background: color-mix(in srgb, var(--status-success) 13%, transparent); }
+.dmash-status--connecting, .dmash-status--reconnecting { color: var(--status-warning); background: color-mix(in srgb, var(--status-warning) 13%, transparent); }
+.dmash-status--offline { color: var(--status-offline); background: color-mix(in srgb, var(--status-offline) 13%, transparent); }
+.dmash-status--error { color: var(--status-danger); background: color-mix(in srgb, var(--status-danger) 13%, transparent); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
