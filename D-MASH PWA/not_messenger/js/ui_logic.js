@@ -110,7 +110,6 @@ async renderAccountSelector(accs) {
             <div id="gate-status-text" style="color:#0f0; font-size:0.7rem; margin-bottom:15px; text-align:center;">КТО ЗАХОДИТ?</div>
             <div class="acc-list-scroll" style="max-height:250px; overflow-y:auto; width:100%;">${listHtml}</div>
             <button class="gate-btn" onclick="ui.renderLoginForm()">+ НОВЫЙ ВХОД</button>
-            <button class="gate-btn" style="margin-top:10px;background:#07120a;color:#b8ffca;border:1px solid #00ff41" onclick="NodeManager.renderSettings()">🌐 D-MASH NODES / NETWORK</button>
         `;
     },
     /**
@@ -121,13 +120,13 @@ async renderAccountSelector(accs) {
         if (box) {
             box.innerHTML = `
                 <div id="gate-status-text" style="color:#0f0; font-size:0.7rem; margin-bottom:10px; text-align:center;">ДОСТУП ОГРАНИЧЕН</div>
-                <form onsubmit="event.preventDefault(); sys.init();">
+                <form onsubmit="event.preventDefault(); sys.loginAndSave();">
                     <input type="text" id="p1" class="gate-input" placeholder="ИДЕНТИФИКАТОР" value="${prefillId}" spellcheck="false" autocomplete="username">
                     <input type="password" id="p2" class="gate-input" placeholder="КЛЮЧ ДОСТУПА" autocomplete="current-password">
-                    <button type="submit" class="gate-btn">ВОЙТИ В СИСТЕМУ</button>
+                    <button type="submit" class="gate-btn">СОХРАНИТЬ В РЕЕСТРЕ</button>
                 </form>
+                <button type="button" class="gate-btn" style="margin-top:10px;background:#111;color:#b8ffca;border:1px solid #00ff41" onclick="sys.loginAndBindHardware()">ПРИБИТЬ К ЖЕЛЕЗУ</button>
                 <button class="gate-btn" style="margin-top:10px; background:transparent; color:#444;" onclick="ui.show_gate()">К СПИСКУ</button>
-                <button class="gate-btn" style="margin-top:10px;background:#07120a;color:#b8ffca;border:1px solid #00ff41" onclick="NodeManager.renderSettings()">🌐 D-MASH NODES / NETWORK</button>
             `;
         }
     },
@@ -234,7 +233,7 @@ const sys = {
 // В ui_logic.js
 async loadAllLibs() {
     try {
-        const ver = window.DMASH_RELEASE?.id || "m1.5-browser-20260825.2";
+        const ver = window.DMASH_RELEASE?.id || "ui-foundation-20260825.1";
         window.Module = { wasmBinaryFile: 'js/vendor/argon2.wasm' };
 
         window.KyberModule = {
@@ -308,7 +307,21 @@ async loadAllLibs() {
         const v1 = document.getElementById('p1').value;
         const v2 = document.getElementById('p2').value;
         // Вызываем Core.boot (Gamma-1 Standard)
-        if (v1 && v2 && typeof Core !== 'undefined') Core.boot(v1, v2);
+        if (!v1 || !v2 || typeof Core === 'undefined') return false;
+        await Core.boot(v1, v2);
+        return Boolean(Core.keys?.sign);
+    },
+
+    // Реестр создаётся Core.boot после успешной разблокировки. Это действие
+    // идемпотентно и не сохраняет пароль или ключи в localStorage.
+    async loginAndSave() {
+        await this.init();
+    },
+
+    // WebAuthn привязывает вход к доступному authenticator после обычной
+    // разблокировки. Данные «звуковой карты» не являются устойчивым секретом.
+    async loginAndBindHardware() {
+        if (await this.init()) await Core.setupBiometrics();
     }
 };
 

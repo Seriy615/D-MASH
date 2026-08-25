@@ -1,12 +1,12 @@
 {
-  "name": "MathPro Utility Professional",
-  "short_name": "MathPro",
-  "description": "High-precision scientific calculator for engineering.",
+  "name": "D-MASH Private Messenger",
+  "short_name": "D-MASH",
+  "description": "A privacy-first messenger and network client.",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "orientation": "portrait",
+  "background_color": "#0b0d12",
+  "theme_color": "#0b0d12",
+  "orientation": "any",
   "scope": "./",
   "icons": [
     {

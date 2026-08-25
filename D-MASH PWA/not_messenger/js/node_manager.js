@@ -18,6 +18,7 @@ const NodeManager = {
     originKey: 'dmash_origin_notifications_v1',
     endpoints: [], active: null, socket: null,
     state: 'disconnected', error: null, reconnectAttempt: 0, reconnectTimer: null,
+    pingTimer: null, pendingPings: new Map(), lastLatencyMs: null, lastConnectedAt: null,
 
     load() {
         try {
@@ -69,7 +70,15 @@ const NodeManager = {
         clearTimeout(this.reconnectTimer); this.setState('connecting');
         const socket = new WebSocket(this.active.url); this.socket = socket;
         socket.onmessage = event => this.onMessage(event);
-        socket.onclose = () => { if (this.socket === socket) { this.socket = null; this.setState('disconnected'); this.scheduleReconnect(); } };
+        socket.onclose = () => {
+            if (this.socket !== socket) return;
+            this.socket = null;
+            this.stopPings();
+            if (this.active) {
+                this.setState('reconnecting');
+                this.scheduleReconnect();
+            } else this.setState('disconnected');
+        };
         socket.onerror = () => this.setState('error', 'connection failed');
     },
     onMessage(event) {
@@ -82,8 +91,18 @@ const NodeManager = {
                 signature: this.toBase64(signature)
             }));
         } else if (message.type === 'AUTH_OK') {
-            this.reconnectAttempt = 0; this.setState('connected');
+            this.reconnectAttempt = 0;
+            this.lastConnectedAt = Date.now();
+            this.setState('connected');
             this.socket.send(JSON.stringify({ type: 'STATUS', request_id: crypto.randomUUID() }));
+            this.startPings();
+        } else if (message.type === 'PONG') {
+            const started = this.pendingPings.get(message.request_id);
+            if (started) {
+                this.pendingPings.delete(message.request_id);
+                this.lastLatencyMs = Math.round(performance.now() - started);
+                this.setState('connected');
+            }
         } else if (message.type === 'ERROR') this.setState('error', message.code || 'node error');
     },
     toBase64(bytes) {
@@ -128,8 +147,25 @@ const NodeManager = {
     async removePersonalBot() {
         return this.signedOriginRequest('PERSONAL_BOT_REMOVE', '/v1/personal-bots/remove');
     },
+    ping() {
+        if (this.state !== 'connected' || this.socket?.readyState !== WebSocket.OPEN) return;
+        const requestId = crypto.randomUUID();
+        this.pendingPings.set(requestId, performance.now());
+        this.socket.send(JSON.stringify({ type: 'PING', request_id: requestId }));
+    },
+    startPings() {
+        this.stopPings();
+        this.ping();
+        this.pingTimer = setInterval(() => this.ping(), 15000);
+    },
+    stopPings() {
+        clearInterval(this.pingTimer);
+        this.pingTimer = null;
+        this.pendingPings.clear();
+    },
     disconnect(reconnect = false) {
         clearTimeout(this.reconnectTimer); this.reconnectTimer = null;
+        this.stopPings();
         const socket = this.socket; this.socket = null;
         if (socket) socket.close(1000, 'client disconnect');
         this.setState('disconnected');

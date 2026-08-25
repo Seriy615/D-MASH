@@ -212,7 +212,10 @@ const Core = {
         const ws = document.getElementById('workspace');
         ws.style.display = 'flex'; // Включаем Flex, чтоб растянулся
         
-        // 3. Рисуем внутрянку
+        // 3. Рисуем внутрянку. Новый shell сохраняет обязательные DOM-точки Core.
+        if (window.DMashApp?.mountWorkspace) {
+            window.DMashApp.mountWorkspace(this);
+        } else {
         ws.innerHTML = `
             <div class="terminal-grid" id="main-grid" style="width:100%; height:100%; display:flex;">
                 <div class="sidebar">
@@ -250,6 +253,7 @@ const Core = {
                     </div>
                 </div>
             </div>`;
+        }
 
         // 4. Вешаем события (как и раньше)
         const chatLog = document.getElementById('log');
@@ -788,23 +792,55 @@ const Core = {
         const peers = await Storage.loadPeersGamma();
         const list = document.getElementById('contact-list');
         if (!list) return;
-        if (peers.length === 0) { list.innerHTML = '<div style="text-align:center; color:#444; margin-top:30px;">НЕТ СВЯЗЕЙ</div>'; return; }
-        
-        list.innerHTML = peers.map(p => {
-            const act = this.activePeerId === p.id ? 'active' : '';
-            const unr = p.unread ? 'has-unread' : '';
-            return `
-                <div class="peer-item ${act} ${unr}" onclick="Core.selectPeer('${p.id}')">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div>
-                            <b>${p.name}</b><br>
-                            <small>${p.id.substring(0, 8)}...</small>
-                        </div>
-                        <span class="chat-del-btn" onclick="event.stopPropagation(); Core.deleteChatFlow('${p.id}', '${p.name}')">×</span>
-                    </div>
-                    ${p.unread ? '<span class="unread-dot"></span>' : ''}
-                </div>`;
-        }).join('');
+        list.replaceChildren();
+        if (peers.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'dmash-muted';
+            empty.textContent = window.DMashI18n?.t('chats.emptyTitle') || 'No conversations yet';
+            list.append(empty);
+            return;
+        }
+
+        for (const peer of peers) {
+            const item = document.createElement('article');
+            item.className = `peer-item${this.activePeerId === peer.id ? ' active' : ''}${peer.unread ? ' has-unread' : ''}`;
+            item.setAttribute('role', 'listitem');
+            item.tabIndex = 0;
+            item.addEventListener('click', () => this.selectPeer(peer.id));
+            item.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.selectPeer(peer.id);
+                }
+            });
+
+            const row = document.createElement('div');
+            row.className = 'dmash-peer-row';
+            const copy = document.createElement('div');
+            const name = document.createElement('b');
+            name.textContent = peer.name || (window.DMashI18n?.t('contacts.unverified') || 'Contact');
+            const identifier = document.createElement('small');
+            identifier.textContent = `${String(peer.id).substring(0, 8)}…`;
+            copy.append(name, identifier);
+
+            const remove = document.createElement('button');
+            remove.className = 'chat-del-btn';
+            remove.type = 'button';
+            remove.setAttribute('aria-label', window.DMashI18n?.t('common.remove') || 'Remove');
+            remove.textContent = '×';
+            remove.addEventListener('click', event => {
+                event.stopPropagation();
+                this.deleteChatFlow(peer.id, peer.name);
+            });
+            row.append(copy, remove);
+            if (peer.unread) {
+                const unread = document.createElement('span');
+                unread.className = 'unread-dot';
+                unread.setAttribute('aria-label', 'Unread');
+                item.append(row, unread);
+            } else item.append(row);
+            list.append(item);
+        }
     },
     // Core.selectPeer         - Открытие чата, проверка готовности квантового канала
     async selectPeer(id) {

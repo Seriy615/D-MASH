@@ -17,9 +17,13 @@
     <!-- theme-color тоже должен быть четким -->
     <meta name="theme-color" content="#000000">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MathPro</title>
+    <title>D-MASH</title>
     <script src="js/release.js"></script>
+    <script src="js/locales/en.js"></script>
+    <script src="js/locales/ru.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/node_manager.js"></script>
+    <script src="js/app_shell.js"></script>
 <style>
     /* =========================================
        1. БАЗОВЫЕ НАСТРОЙКИ И ПЕРЕМЕННЫЕ
@@ -375,6 +379,8 @@
         #current { font-size: 3.5rem; }
     }
 </style>
+<link rel="stylesheet" href="css/foundation.css">
+<link rel="stylesheet" href="css/app_shell.css">
 </head>
 <body oncontextmenu="return false;">
     <input type="file" id="file-input" style="display: none;">
@@ -449,23 +455,40 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(async reg => {
-                await reg.update();
-                const showRelease = (text) => {
+                const showRelease = (worker) => {
                     const notice = document.getElementById('dmash-release-notice');
                     if (!notice) return;
-                    notice.textContent = text;
+                    notice.replaceChildren();
+                    const copy = document.createElement('span');
+                    copy.textContent = `D-MASH build ${window.DMASH_RELEASE.id} is ready.`;
+                    const action = document.createElement('button');
+                    action.type = 'button';
+                    action.textContent = 'Reload update';
+                    action.style.cssText = 'margin-inline-start:10px;padding:5px 9px;border:1px solid #8dff9f;background:#8dff9f;color:#06150a;font:inherit;font-weight:700;cursor:pointer';
+                    action.addEventListener('click', () => worker.postMessage({ type: 'DMASH_ACTIVATE_RELEASE' }));
+                    notice.append(copy, action);
                     notice.style.display = 'block';
                 };
-                if (reg.waiting) showRelease(`D-MASH build ${window.DMASH_RELEASE.id} ready. Reloading…`);
+                const detectWaiting = () => { if (reg.waiting) showRelease(reg.waiting); };
+                if (reg.waiting) detectWaiting();
+                reg.addEventListener('updatefound', () => {
+                    const installing = reg.installing;
+                    installing?.addEventListener('statechange', () => {
+                        if (installing.state === 'installed' && navigator.serviceWorker.controller) detectWaiting();
+                    });
+                });
                 navigator.serviceWorker.addEventListener('message', event => {
                     if (event.data?.type === 'DMASH_RELEASE_ACTIVATED') {
-                        showRelease(`D-MASH build ${event.data.release} active. Reloading…`);
+                        const notice = document.getElementById('dmash-release-notice');
+                        if (notice) { notice.textContent = `D-MASH build ${event.data.release} is active. Reloading…`; notice.style.display = 'block'; }
                     }
                 });
                 let reloaded = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
                     if (!reloaded) { reloaded = true; window.location.reload(); }
                 });
+                await reg.update();
+                detectWaiting();
             }).catch(() => {
                 const notice = document.getElementById('dmash-release-notice');
                 if (notice) { notice.textContent = 'D-MASH update check failed. Network features may be unavailable.'; notice.style.display = 'block'; }
