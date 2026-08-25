@@ -205,7 +205,18 @@ const NodeManager = {
         }
         const add = this.makeButton('ADD NODE', () => this.openPrompt('ADD NODE ENDPOINT', 'wss://node.example/dmp-c/v1', value => { this.add(value); this.renderSettings(); }));
         const refresh = this.makeButton('REFRESH ORIGIN NODE LIST', async () => { try { await this.loadOriginList(); this.renderSettings(); } catch (error) { this.showMessage(error, true); } });
-        const connect = this.makeButton('CONNECT ACTIVE NODE', async () => { try { await this.connect(); } catch (error) { this.showMessage(error, true); } }, true);
+        const unlocked = Boolean(window.Core?.keys?.sign);
+        const connect = this.makeButton(
+            unlocked ? 'CONNECT ACTIVE NODE' : 'UNLOCK IDENTITY TO CONNECT',
+            async () => {
+                if (!window.Core?.keys?.sign) {
+                    this.showMessage('Unlock your D-MASH identity first. Node endpoint selection is already saved.', false);
+                    return;
+                }
+                try { await this.connect(); } catch (error) { this.showMessage(error, true); }
+            },
+            unlocked
+        );
         const disconnect = this.makeButton('DISCONNECT', () => { this.disconnect(false); this.renderSettings(); });
         const diagnostics = this.makeButton('RUNTIME DIAGNOSTICS', () => this.renderDiagnostics());
         const origin = this.makeButton('ORIGIN NOTIFICATION URL', () => this.openPrompt('ORIGIN NOTIFICATIONS', 'https://origin.example', value => { const url = new URL(value); if (url.protocol !== 'https:') throw new Error('Origin must use HTTPS'); localStorage.setItem(this.originKey, url.href.replace(/\/$/, '')); this.renderSettings(); }));

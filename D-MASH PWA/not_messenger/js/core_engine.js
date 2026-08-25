@@ -1854,6 +1854,13 @@ const Core = {
     Вспомогательные инструменты и UI-компоненты.
     */
     // Core.openSettings       - Главное меню настроек
+    saveActiveAccountToRegistry: async function() {
+        if (!Core.activeIdentity || !Core.keys?.pub_hex) {
+            return Core.customAlert("ОШИБКА", "Сначала разблокируйте личность.");
+        }
+        await Storage.registerAccount(Core.activeIdentity, Core.keys.pub_hex);
+        Core.customAlert("РЕЕСТР", "Аккаунт сохранён в реестре устройства.");
+    },
     openSettings: function() {
         const flipOff = localStorage.getItem('cfg_flip_off') === 'true';
         const hideList = localStorage.getItem('cfg_hide_list') === 'true';
@@ -1863,7 +1870,9 @@ const Core = {
                 <button class="sys-modal-btn" onclick="NodeManager.renderSettings()">🌐 D-MASH NODES: ${window.NodeManager?.state || 'unavailable'}</button>
                 <button class="sys-modal-btn" onclick="Core.toggleFlipper()">ФЛИП-ЛОК: ${flipOff ? 'ВЫКЛ' : 'ВКЛ'}</button>
                 <button class="sys-modal-btn" onclick="Core.toggleAccountList()">СПИСОК АККАУНТОВ: ${hideList ? 'СКРЫТ' : 'ВИДЕН'}</button>
+                <button class="sys-modal-btn primary" onclick="Core.saveActiveAccountToRegistry()">💾 СОХРАНИТЬ В РЕЕСТРЕ</button>
                 <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🧬 ПРИВЯЗАТЬ ОТПЕЧАТОК/FACE</button>
+                <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🔩 ПРИБИТЬ К ЖЕЛЕЗУ</button>
                 <button class="sys-modal-btn" onclick="Core.setupLazyLogin()">💤 ВКЛЮЧИТЬ БЕСПАРОЛЬНЫЙ ВХОД</button>
                 <button class="sys-modal-btn primary" onclick="Core.openAccountManager()">👥 РЕЕСТР УСТРОЙСТВА</button>
                 <button class="sys-modal-btn" onclick="Core.changePinFlow('M')">СМЕНИТЬ MASTER-КОД</button>

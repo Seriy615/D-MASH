@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user data lives.
  */
 
-const RELEASE_ID = 'm1.5-browser-20260825.1';
+const RELEASE_ID = 'm1.5-browser-20260825.2';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './js/release.js', './js/ui_logic.js', './js/node_manager.js',

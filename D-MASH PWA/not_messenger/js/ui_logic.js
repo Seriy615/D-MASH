@@ -234,7 +234,7 @@ const sys = {
 // В ui_logic.js
 async loadAllLibs() {
     try {
-        const ver = window.DMASH_RELEASE?.id || "m1.5-browser-20260825.1";
+        const ver = window.DMASH_RELEASE?.id || "m1.5-browser-20260825.2";
         window.Module = { wasmBinaryFile: 'js/vendor/argon2.wasm' };
 
         window.KyberModule = {
@@ -254,6 +254,10 @@ async loadAllLibs() {
             this.loadScript(`js/vendor/qrcode.min.js`),
             this.loadScript(`js/vendor/nacl-util.min.js`)
         ]);
+        // The direct runtime loader makes NodeManager available before unlock.
+        // Repeat the refresh after deferred modules settle to recover safely if
+        // an older application shell reached this code first.
+        await window.NodeManager?.loadOriginList('nodes.json').catch(() => {});
 
         let wait = 0;
         while (wait < 100) {
