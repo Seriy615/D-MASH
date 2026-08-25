@@ -82,16 +82,12 @@ const KyberWasm = {
     shmon: (t, m) => console.log(`%c[KyberWasm][${t}] %c${m}`, "color:cyan;font-weight:bold;", "color:white;")
 };
 
-// iceConfig               - Настройки STUN/TURN для обхода NAT
+// TURN credentials must be short-lived and supplied at runtime after authentication.
+const runtimeIceServers = window.DMASH_RUNTIME_CONFIG?.iceServers;
 const iceConfig = {
-    iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { 
-            urls: 'turn:85.198.64.183:3478', 
-            username: 'dmash_turn', 
-            credential: '&fV+CJ2_0l7Ji^EzWPf^#nRvbkIqe6' 
-        }
-    ],
+    iceServers: Array.isArray(runtimeIceServers)
+        ? runtimeIceServers
+        : [{ urls: 'stun:stun.l.google.com:19302' }],
     iceCandidatePoolSize: 10
 };
 
@@ -119,6 +115,11 @@ const Core = {
     keys: { sign: null, box: null, pub_hex: null },
     isSyncing: false, chatOffset: 0, chatLimit: 50, isLoadingHistory: false,
     hex_lut: Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0')),
+    randomInt32: () => {
+        const value = new Int32Array(1);
+        window.crypto.getRandomValues(value);
+        return value[0];
+    },
     peerConnection: null,
     callState: 'idle', // idle, calling, receiving, connected
     iceQueue: [],
@@ -495,7 +496,7 @@ const Core = {
                 const k = KyberWasm.encapsulate(this.hexToBytes(payload.k_pub));
                 // НОВЫЙ ШИФТ: в миллисекундах до +-2^32
                 const newPSK = window.nacl.randomBytes(32);
-                const newShift = Math.floor(Math.random() * 4294967296) - 2147483648; 
+                const newShift = this.randomInt32();
                 await Storage.putBox('blind_secrets', { 
                     alias: aliasL1, 
                     data: { staticShared: this.bytesToHex(k.ss), psk: this.bytesToHex(newPSK), epochShift: newShift, msgCount: 0 } 
@@ -610,7 +611,7 @@ const Core = {
     deriveSharedKey: async (pid) => Core.hexToBytes(await Core.fastHash([Core.keys.pub_hex, pid].sort().join('') + "STATIC_SHARED_SECRET_V11")),
     // Core.initHandshake         - Принудительное обновление PSK и временного сдвига (Epoch Shift) 
     initHandshake: async function() {
-        const newShift = Math.floor(Math.random() * 1000000);
+        const newShift = this.randomInt32();
         const newPSK = this.bytesToHex(window.nacl.randomBytes(32));
         
         // Шлем спец-пакет кенту
@@ -701,7 +702,7 @@ const Core = {
             mts.set(new TextEncoder().encode(ts), this.hexToBytes(myServerId).length);
             const sig = window.nacl.sign.detached(mts, this.keys.sign.secretKey);
             
-            const rnd = Math.random().toString(36).substring(7);
+            const rnd = this.bytesToHex(window.crypto.getRandomValues(new Uint8Array(8)));
             const res = await fetch(`../api/pidorskiy_api.php?h=${h}&pub=${myServerId}&ts=${ts}&sig=${this.bytesToHex(sig)}&_=${rnd}`, { 
                 headers: { 'X-DMASH-AGENT': 'V1Silent-Node' }, cache: 'no-store'
             });
@@ -713,7 +714,21 @@ const Core = {
                 let needRefresh = false;
                 for (let env of data) {
                     const sid = env.s_pub; // ID отправителя (64 знака)
-                    
+                    // Relay is untrusted storage. Verify the outer transport signature
+                    // before creating peer state, decrypting or rendering its payload.
+                    let relaySignatureValid = false;
+                    try {
+                        const senderKey = this.hexToBytes(sid);
+                        const blobBytes = this.hexToBytes(env.blob);
+                        const signatureBytes = this.hexToBytes(env.sig);
+                        relaySignatureValid = senderKey.length === 32 && signatureBytes.length === 64
+                            && window.nacl.sign.detached.verify(blobBytes, signatureBytes, senderKey);
+                    } catch (_) {}
+                    if (!relaySignatureValid) {
+                        this.shmon("WARN", "Relay envelope rejected: invalid signature");
+                        continue;
+                    }
+
                     // Проверяем, знаем ли мы этого пацана
                     const aliasL1 = await Storage.getAlias(sid, "L1");
                     let peer = await Storage.getBox('blind_peers', aliasL1);
@@ -1845,6 +1860,7 @@ const Core = {
         const h = `
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <button class="sys-modal-btn" onclick="Core.setupTelegram()">✈️ ПРИВЯЗАТЬ ТЕЛЕГРАМ-МАЯК</button>
+                <button class="sys-modal-btn" onclick="NodeManager.renderSettings()">🌐 D-MASH NODES: ${window.NodeManager?.state || 'unavailable'}</button>
                 <button class="sys-modal-btn" onclick="Core.toggleFlipper()">ФЛИП-ЛОК: ${flipOff ? 'ВЫКЛ' : 'ВКЛ'}</button>
                 <button class="sys-modal-btn" onclick="Core.toggleAccountList()">СПИСОК АККАУНТОВ: ${hideList ? 'СКРЫТ' : 'ВИДЕН'}</button>
                 <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🧬 ПРИВЯЗАТЬ ОТПЕЧАТОК/FACE</button>

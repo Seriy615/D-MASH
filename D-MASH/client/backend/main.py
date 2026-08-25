@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 # Импортируем обновленный lifespan из core (где происходит PoW и инициализация БД)
 from core import lifespan
 from api import router
+from client_gateway import router as client_gateway_router
 
 # --- СОЗДАЕМ ПРИЛОЖЕНИЕ ---
 app = FastAPI(lifespan=lifespan)
@@ -21,6 +22,7 @@ app.add_middleware(
 
 # 2. API Роуты
 app.include_router(router)
+app.include_router(client_gateway_router)
 
 # 3. Статика (Frontend)
 frontend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
@@ -44,10 +46,13 @@ if __name__ == "__main__":
         ssl_key = None
         ssl_cert = None
 
+    host = os.getenv("DMASH_HTTP_HOST", "0.0.0.0")
+    port = int(os.getenv("DMASH_HTTP_PORT", "8000"))
+
     uvicorn.run(
-        "main:app", 
-        host="0.0.0.0", 
-        port=8000, 
+        "main:app",
+        host=host,
+        port=port,
         reload=False,
         ssl_keyfile=ssl_key, 
         ssl_certfile=ssl_cert

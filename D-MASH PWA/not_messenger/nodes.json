@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "label": "D-MASH EMS staging",
+      "url": "wss://stage-api-ems.d-mash.ru/dmash-client/v1"
+    }
+  ]
+}

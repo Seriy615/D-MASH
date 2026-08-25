@@ -1,6 +1,7 @@
 import aiosqlite
 import time
 import json
+import secrets
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
@@ -17,6 +18,7 @@ class DatabaseManager:
         self.conn = None
         self.crypto = None       # User Layer (CryptoManager)
         self.node_crypto = None  # Daemon Layer (NodeCryptoManager)
+        self.notification_trigger = None
 
     def set_crypto(self, crypto_manager):
         """Установка криптографии пользователя (для чтения переписки)"""
@@ -25,6 +27,32 @@ class DatabaseManager:
     def set_node_crypto(self, node_crypto_manager):
         """Установка криптографии ноды (для маршрутизации и соседей)"""
         self.node_crypto = node_crypto_manager
+
+    def set_notification_trigger(self, trigger):
+        """Attach an opaque notification scheduler without exposing user data."""
+        self.notification_trigger = trigger
+
+    async def rehydrate_notifications(self):
+        """Restore delayed opaque notifications from durable mailbox records."""
+        if not self.notification_trigger:
+            return
+        async with self.conn.execute("""
+            SELECT notification_id, CAST(strftime('%s', received_at) AS INTEGER) AS created_at
+            FROM offline_mailbox WHERE notification_id IS NOT NULL
+        """) as cursor:
+            rows = await cursor.fetchall()
+        now = int(time.time())
+        for row in rows:
+            created_at = int(row['created_at'] or now)
+            expires_at = created_at + self.notification_trigger.ttl_seconds
+            # Expiry applies to notification, not to retention of the opaque
+            # message itself. The mailbox packet remains available for pickup.
+            if expires_at <= now:
+                continue
+            self.notification_trigger.schedule(
+                row['notification_id'], row['notification_id'],
+                created_at=created_at, expires_at=expires_at,
+            )
 
     async def connect(self):
         self.conn = await aiosqlite.connect(self.db_path)
@@ -117,9 +145,13 @@ class DatabaseManager:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 target_hash TEXT,
                 packet_json TEXT,
+                notification_id TEXT,
                 received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        columns = await (await self.conn.execute("PRAGMA table_info(offline_mailbox)")).fetchall()
+        if "notification_id" not in {column["name"] for column in columns}:
+            await self.conn.execute("ALTER TABLE offline_mailbox ADD COLUMN notification_id TEXT")
         
         await self.conn.commit()
 
@@ -274,18 +306,25 @@ class DatabaseManager:
         Сохраняет недоставленный пакет в общий ящик.
         """
         # Просто сохраняем пакет как есть. Разберемся при логине.
+        notification_id = secrets.token_hex(16)
         await self.conn.execute(
-            "INSERT INTO offline_mailbox (packet_json) VALUES (?)", 
-            (packet_json,)
+            "INSERT INTO offline_mailbox (packet_json, notification_id) VALUES (?, ?)",
+            (packet_json, notification_id)
         )
         await self.conn.commit()
+        if self.notification_trigger:
+            try:
+                self.notification_trigger.schedule(notification_id, notification_id)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                # A malformed opaque packet is retained for normal mailbox diagnostics.
+                pass
 
     async def process_mailbox(self, delivery_callback):
         """
         Перебирает ящик и пытается доставить сообщения, используя переданную функцию (callback).
         Если callback возвращает True (успех), сообщение удаляется.
         """
-        async with self.conn.execute("SELECT id, packet_json FROM offline_mailbox") as cursor:
+        async with self.conn.execute("SELECT id, packet_json, notification_id FROM offline_mailbox") as cursor:
             rows = await cursor.fetchall()
             
         if not rows: return
@@ -302,6 +341,8 @@ class DatabaseManager:
                 
                 if is_delivered:
                     ids_to_delete.append(row['id'])
+                    if self.notification_trigger:
+                        self.notification_trigger.cancel(row['notification_id'])
             except Exception as e:
                 print(f"Mailbox process error: {e}")
 
@@ -334,10 +375,13 @@ class DatabaseManager:
     async def fetch_mailbox(self, user_id: str):
         if not self.node_crypto: return []
         target_hash = self.node_crypto.get_blind_hash(user_id)
-        async with self.conn.execute("SELECT id, packet_json FROM offline_mailbox WHERE target_hash = ?", (target_hash,)) as cursor:
+        async with self.conn.execute("SELECT id, packet_json, notification_id FROM offline_mailbox WHERE target_hash = ?", (target_hash,)) as cursor:
             rows = await cursor.fetchall()
         if rows:
             ids = [row['id'] for row in rows]
+            if self.notification_trigger:
+                for row in rows:
+                    self.notification_trigger.cancel(row['notification_id'])
             await self.conn.execute(f"DELETE FROM offline_mailbox WHERE id IN ({','.join(['?']*len(ids))})", ids)
             await self.conn.commit()
         return [row['packet_json'] for row in rows]

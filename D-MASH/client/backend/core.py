@@ -6,17 +6,19 @@ import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 
 from database import DatabaseManager
 from network import P2PNode
 from tact import TactEngine
 from crypto import CryptoManager, NodeCryptoManager
+from notification import NotificationTrigger, OriginNotificationClient
 
 # --- D-MASH CONFIGURATION ---
 TACT_INTERVAL = 1.5
 PACKET_SIZE = 4096
 P2P_PORT = int(os.getenv("P2P_PORT", 9000))
+P2P_HOST = os.getenv("P2P_HOST", "0.0.0.0")
 NODE_KEY_FILE = "node_identity.key" # Файл для хранения ключа ноды
 
 class AppState:
@@ -33,9 +35,25 @@ class AppState:
     is_logged_in: bool = False
     background_tasks: Set[asyncio.Task] = set()
 
-    process_pool: Optional[ProcessPoolExecutor] = None # <--- ДОБАВИТЬ
+    process_pool: Optional[Executor] = None
 
 state = AppState()
+
+
+def create_crypto_executor() -> Executor:
+    """Prefer process isolation, with an explicit/automatic hosting fallback."""
+    mode = os.getenv("DMASH_EXECUTOR", "auto").lower()
+    if mode not in {"auto", "process", "thread"}:
+        raise ValueError("DMASH_EXECUTOR must be auto, process, or thread")
+    if mode == "thread":
+        return ThreadPoolExecutor(max_workers=2, thread_name_prefix="dmash-crypto")
+    try:
+        return ProcessPoolExecutor(max_workers=2)
+    except OSError:
+        if mode == "process":
+            raise
+        print("⚠️ [CORE] Process executor unavailable; using thread fallback.")
+        return ThreadPoolExecutor(max_workers=2, thread_name_prefix="dmash-crypto")
 
 def ensure_node_identity():
     """
@@ -64,15 +82,19 @@ async def lifespan(app: FastAPI):
     node_signing_key = ensure_node_identity()
     state.node_crypto = NodeCryptoManager(node_signing_key)
     print(f"🌐 [CORE] Node ID: {state.node_crypto.node_id}")
-    state.process_pool = ProcessPoolExecutor(max_workers=2)
+    state.process_pool = create_crypto_executor()
     # 2. Запускаем Системную БД
     # Используем system.db вместо bootstrap_peers.db для новой архитектуры
     state.system_db = DatabaseManager("system.db")
     
     # ВАЖНО: Подключаем криптографию ноды к БД для работы Blind Storage
     state.system_db.set_node_crypto(state.node_crypto)
+    origin_client = OriginNotificationClient.from_env()
+    if origin_client:
+        state.system_db.set_notification_trigger(NotificationTrigger(origin_client.send))
     
     await state.system_db.connect()
+    await state.system_db.rehydrate_notifications()
 
     # 3. Запускаем Демона
     state.node = P2PNode(state.system_db) 
@@ -80,7 +102,7 @@ async def lifespan(app: FastAPI):
     # 4. Запускаем Tact Engine
     state.tact = TactEngine(state.system_db, state.node, TACT_INTERVAL, PACKET_SIZE)
     
-    t1 = asyncio.create_task(state.node.start_server(P2P_PORT))
+    t1 = asyncio.create_task(state.node.start_server(P2P_PORT, P2P_HOST))
     t2 = asyncio.create_task(state.tact.start())
     state.background_tasks.update([t1, t2])
     t1.add_done_callback(state.background_tasks.discard)
@@ -105,6 +127,8 @@ app.add_middleware(
 
 from api import router as api_router
 app.include_router(api_router)
+from client_gateway import router as client_gateway_router
+app.include_router(client_gateway_router)
 
 frontend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
 app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
