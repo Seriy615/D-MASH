@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user data lives.
  */
 
-const RELEASE_ID = 'm1.5-legacy-stabilization-20260825.8';
+const RELEASE_ID = 'm1.5-legacy-stabilization-20260825.9';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',
@@ -53,6 +53,22 @@ self.addEventListener('fetch', (event) => {
     
     // Если это АПИ — воркер вообще не лезет, пусть идет напрямую в сеть
     if (url.pathname.includes('/api/')) return;
+
+    // The shell and release marker must be able to discover a new deployment
+    // while an older worker is still controlling the page. Other static assets
+    // remain cache-first inside the atomic release cache.
+    const networkFirst = event.request.mode === 'navigate'
+        || url.pathname.endsWith('/index.html')
+        || url.pathname.endsWith('/js/release.js');
+    if (networkFirst) {
+        event.respondWith(
+            fetch(event.request, { cache: 'no-store' }).then(response => {
+                if (response?.ok) caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
+                return response;
+            }).catch(() => caches.match(event.request))
+        );
+        return;
+    }
 
     // Cache first inside the active generation. New assets become visible only
     // when the fully cached waiting worker is explicitly activated.
