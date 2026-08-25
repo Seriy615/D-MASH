@@ -646,6 +646,11 @@ const Core = {
         const pid = targetPid || this.activePeerId;
         if (!pid) return;
 
+        if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
+            this.shmon("WARN", "D-MASH Mesh transport is not implemented for this build; legacy relay was not used");
+            return;
+        }
+
         let p = c; 
         const inp = document.getElementById('msgInput');
         if (!p) { p = inp.value.trim(); if (!p) return; }
@@ -690,7 +695,8 @@ const Core = {
     },
     // Core.syncNetwork        - Опрос сервера (PULL), получение и сортировка новых маляв
     async syncNetwork() {
-        if (this.isSyncing) return; 
+        if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') return;
+        if (this.isSyncing) return;
         this.isSyncing = true;
         try {
             const myServerId = this.keys.server_id; // Это наши 64 знака Ed

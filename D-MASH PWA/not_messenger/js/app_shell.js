@@ -183,6 +183,7 @@
             for (const endpoint of manager?.endpoints || []) nodes.append(this.nodeItem(endpoint, manager));
             const actions = make("div", { className: "dmash-action-row" }, [
                 make("button", { className: "dmash-button dmash-button--primary", type: "button", text: state === "connected" ? text("network.disconnect") : text("network.connect"), onClick: () => this.connectOrDisconnect(manager) }),
+                make("button", { className: "dmash-button dmash-button--secondary", type: "button", text: manager?.transportMode === "legacy" ? "Legacy Relay (explicit)" : "D-MASH Mesh (default)", onClick: () => { manager.setTransportMode(manager.transportMode === "legacy" ? "mesh" : "legacy"); this.renderNetwork(core); } }),
                 make("button", { className: "dmash-button dmash-button--secondary", type: "button", text: text("network.refresh"), onClick: async () => { try { await manager.loadOriginList(); this.renderNetwork(core); } catch (error) { this.showToast(error.message, true); } } })
             ]);
             screen.replaceChildren(
@@ -282,6 +283,7 @@
         networkHint(manager) {
             if (!manager?.active) return text("network.selectHint");
             if (!window.Core?.keys?.sign) return text("network.unlockHint");
+            if (manager.transportMode !== "legacy") return "D-MASH Mesh mode: message bridge is not active yet; legacy relay is blocked";
             if (manager.state === "reconnecting") return text("network.reconnectingHint");
             if (manager.error) return text("network.errorHint");
             if (Number.isFinite(manager.lastLatencyMs)) return `${text("network.readyHint")} ${text("network.latency", { value: manager.lastLatencyMs })}`;

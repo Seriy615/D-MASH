@@ -16,7 +16,9 @@ const NodeManager = {
     storageKey: 'dmash_node_endpoints_v1',
     activeKey: 'dmash_active_node_v1',
     originKey: 'dmash_origin_notifications_v1',
+    transportModeKey: 'dmash_transport_mode_v1',
     endpoints: [], active: null, socket: null,
+    transportMode: 'mesh',
     state: 'disconnected', error: null, reconnectAttempt: 0, reconnectTimer: null,
     pingTimer: null, pendingPings: new Map(), lastLatencyMs: null, lastConnectedAt: null,
 
@@ -27,6 +29,13 @@ const NodeManager = {
         } catch (_) { this.endpoints = []; }
         const activeUrl = localStorage.getItem(this.activeKey);
         this.active = this.endpoints.find(item => item.url === activeUrl) || null;
+        this.transportMode = localStorage.getItem(this.transportModeKey) === 'legacy' ? 'legacy' : 'mesh';
+    },
+    setTransportMode(mode) {
+        if (!['mesh', 'legacy'].includes(mode)) throw new Error('Unknown transport mode');
+        this.transportMode = mode;
+        localStorage.setItem(this.transportModeKey, mode);
+        window.dispatchEvent(new CustomEvent('dmash-transport-mode', { detail: { mode } }));
     },
     save() {
         localStorage.setItem(this.storageKey, JSON.stringify(this.endpoints));
