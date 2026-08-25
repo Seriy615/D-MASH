@@ -194,8 +194,8 @@ const NodeManager = {
         const box = document.createElement('div'); box.className = 'sys-modal-box';
         const title = document.createElement('h4'); title.textContent = titleText;
         const input = document.createElement('input'); input.className = 'sys-modal-input'; input.placeholder = placeholder;
-        const submit = document.createElement('button'); submit.className = 'sys-modal-btn primary'; submit.textContent = 'SAVE';
-        const cancel = document.createElement('button'); cancel.className = 'sys-modal-btn'; cancel.textContent = 'BACK';
+        const submit = document.createElement('button'); submit.className = 'sys-modal-btn primary'; submit.textContent = 'ДОБАВИТЬ';
+        const cancel = document.createElement('button'); cancel.className = 'sys-modal-btn'; cancel.textContent = 'НАЗАД';
         submit.onclick = () => { try { Promise.resolve(onSubmit(input.value.trim())).catch(error => this.showMessage(error, true)); } catch (error) { this.showMessage(error, true); } };
         cancel.onclick = () => this.renderSettings();
         box.append(title, input, submit, cancel); modal.appendChild(box); input.focus();
@@ -243,6 +243,13 @@ const NodeManager = {
         endpoint.style.cssText = 'margin:0 0 18px;color:#ccc;word-break:break-word;text-align:left;font-size:0.8rem';
         endpoint.textContent = this.active ? `${this.active.label}: ${this.active.url}` : 'Узел пока не выбран.';
         box.appendChild(endpoint);
+        const add = this.makeButton('ДОБАВИТЬ УЗЕЛ', () => {
+            this.openPrompt('ДОБАВИТЬ УЗЕЛ', 'wss://node.example/dmp-c/v1', (url) => {
+                const endpoint = this.add(url);
+                this.select(endpoint.url);
+                this.renderSettings();
+            });
+        });
         const connect = this.makeButton('ПОДКЛЮЧИТЬСЯ', async () => {
             try { await this.connect(); } catch (error) {
                 this.showMessage(error.message === 'User identity is not unlocked' ? 'Сессия не готова. Выйдите и войдите с ключом доступа.' : error, true);
@@ -250,7 +257,7 @@ const NodeManager = {
         }, true);
         const disconnect = this.makeButton('ОТКЛЮЧИТЬСЯ', () => { this.disconnect(false); this.renderSettings(); });
         const close = this.makeButton('НАЗАД', () => { if (window.Core?.openSettings) Core.openSettings(); else modal.style.display = 'none'; });
-        box.append(connect, disconnect, close); modal.appendChild(box);
+        box.append(add, connect, disconnect, close); modal.appendChild(box);
     },
     openStartLink(url) {
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
