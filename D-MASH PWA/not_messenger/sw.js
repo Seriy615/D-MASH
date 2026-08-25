@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user data lives.
  */
 
-const RELEASE_ID = 'm1.5-legacy-stabilization-20260825.17';
+const RELEASE_ID = 'm1.5-legacy-stabilization-20260825.18';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',

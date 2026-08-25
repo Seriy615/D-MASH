@@ -359,8 +359,9 @@ const Core = {
         const THRESHOLD = 18;
 
         window.addEventListener('devicemotion', (e) => {
-            // Если флиплок вырублен в настройках или мы в звонке — не дергаемся
-            if (localStorage.getItem('cfg_flip_off') === 'true' || this.callState !== 'idle') return;
+            // Panic gestures are deliberately opt-in. Moving a phone while
+            // scanning a QR must never destroy an unlocked session.
+            if (localStorage.getItem('cfg_panic_gesture') !== 'true' || this.callState !== 'idle') return;
 
             let accel = e.accelerationIncludingGravity;
             if (accel && lastX !== undefined) {
@@ -379,8 +380,9 @@ const Core = {
     // Core.initProximity      - Детектор переворота экрана вниз (Flip-Lock)
     initProximity: async function() {
         window.addEventListener('deviceorientation', (e) => {
-            // Если в звонке или пишем кружок — не лочим (чтоб не вылететь случайно)
-            if (this.callState !== 'idle' || this.isRecordingCircle || localStorage.getItem('cfg_flip_off') === 'true') return;
+            // Flip-Lock is an explicit opt-in safety control. QR scanning and
+            // normal phone rotation must not silently return to calculator.
+            if (localStorage.getItem('cfg_panic_gesture') !== 'true' || this.callState !== 'idle' || this.isRecordingCircle) return;
 
             // Если телефон перевернут (угол больше 110 градусов)
             if (e.beta !== null && Math.abs(e.beta) > 110) {
@@ -2056,8 +2058,8 @@ const Core = {
     },
     // Core.toggleFlipper         - Переключатель Flip-Lock (блокировка при перевороте экрана)
     toggleFlipper: function() {
-        const cur = localStorage.getItem('cfg_flip_off') === 'true';
-        localStorage.setItem('cfg_flip_off', !cur);
+        const cur = localStorage.getItem('cfg_panic_gesture') === 'true';
+        localStorage.setItem('cfg_panic_gesture', String(!cur));
         Core.openSettings();
     },
     // Core.toggleAccountList     - Скрытие/показ списка аккаунтов на стартовом экране
@@ -2105,12 +2107,12 @@ const Core = {
         Core.customAlert("РЕЕСТР", "Аккаунт сохранён в реестре устройства.");
     },
     openSettings: function() {
-        const flipOff = localStorage.getItem('cfg_flip_off') === 'true';
+        const panicGestureEnabled = localStorage.getItem('cfg_panic_gesture') === 'true';
         const h = `
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <button class="sys-modal-btn" onclick="Core.setupTelegram()">✈️ ПРИВЯЗАТЬ ТЕЛЕГРАМ-МАЯК</button>
                 <button class="sys-modal-btn" onclick="NodeManager.renderSettings()">🌐 ПОДКЛЮЧЕНИЕ К УЗЛУ</button>
-                <button class="sys-modal-btn" onclick="Core.toggleFlipper()">ФЛИП-ЛОК: ${flipOff ? 'ВЫКЛ' : 'ВКЛ'}</button>
+                <button class="sys-modal-btn" onclick="Core.toggleFlipper()">ЭКСТРЕННЫЙ ФЛИП-ЛОК: ${panicGestureEnabled ? 'ВКЛ' : 'ВЫКЛ'}</button>
                 <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🧬 ПРИВЯЗАТЬ ОТПЕЧАТОК/FACE</button>
                 <button class="sys-modal-btn" onclick="Core.setupLazyLogin()">💤 ВКЛЮЧИТЬ БЕСПАРОЛЬНЫЙ ВХОД</button>
                 <button class="sys-modal-btn" onclick="Core.changePinFlow('M')">СМЕНИТЬ MASTER-КОД</button>
