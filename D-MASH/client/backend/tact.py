@@ -44,7 +44,13 @@ class TactEngine:
         # 3. Читаем очередь (Outbox)
         async with self.db.conn.execute("""
             SELECT id, next_hop_hash, packet_json, exclude_peer_hash 
-            FROM outbox ORDER BY created_at ASC LIMIT 5
+            FROM outbox
+            -- Mesh packets are independently sealed in the persistent
+            -- outbox. Do not let a historical legacy backlog delay a newly
+            -- armed opaque route and make PWA report ROUTE_NOT_ARMED.
+            ORDER BY CASE WHEN packet_json LIKE '%"sealed_dmp_c"%' THEN 0 ELSE 1 END,
+                     created_at ASC
+            LIMIT 5
         """) as cursor:
             rows = await cursor.fetchall()
 
