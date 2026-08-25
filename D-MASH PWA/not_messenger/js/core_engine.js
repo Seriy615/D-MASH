@@ -647,7 +647,11 @@ const Core = {
         if (!pid) return;
 
         if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
-            this.shmon("WARN", "D-MASH Mesh transport is not implemented for this build; legacy relay was not used");
+            const message = forceHandshake
+                ? "Обмен ключами через Mesh пока заблокирован: для контакта ещё не привязан opaque route locator. Legacy Relay можно включить явно в настройках сети."
+                : "D-MASH Mesh transport is not implemented for this build; legacy relay was not used";
+            this.shmon("WARN", message);
+            if (forceHandshake && this.customAlert) this.customAlert("D-MASH MESH", message);
             return;
         }
 
