@@ -114,6 +114,31 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
             row = await cursor.fetchone()
         self.assertEqual(row["cnt"], 0)
 
+    async def test_destination_probe_records_candidate_hops_plus_one(self):
+        packet = {
+            "type": "DMP_C_PROBE",
+            "id": "probe-short",
+            "route_alias": "route-b",
+            "back_route_alias": "back-a",
+            "hops": 2,
+            "ttl": 10,
+        }
+        await self.transport.receive_probe(packet, "peer-n2", is_destination=True)
+        route = await self.db.get_best_route_alias("route-b")
+        self.assertEqual(route["hops"], 3)
+        self.assertEqual(route["next_hop_id"], "LOCAL")
+
+    async def test_transit_packet_has_no_recipient_identity_or_plaintext(self):
+        await self.db.add_route_alias("route-transit", "peer-next", 1)
+        envelope = {"version": 1, "ciphertext": "sealed-by-pwa"}
+        result = await self.transport.submit_envelope("route-transit", envelope)
+        packet = self.node.calls[-1]["packet"]
+        self.assertEqual(result.state, "SUBMITTED_TO_ENTRY")
+        self.assertNotIn("recipient", packet)
+        self.assertNotIn("recipient_id", packet)
+        self.assertNotIn("plaintext", packet)
+        self.assertEqual(packet["envelope"]["ciphertext"], "sealed-by-pwa")
+
 
 if __name__ == "__main__":
     unittest.main()
