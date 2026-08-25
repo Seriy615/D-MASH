@@ -96,6 +96,10 @@ def verify_personal_request(db: sqlite3.Connection, payload: dict, action: str) 
     except sqlite3.IntegrityError:
         raise HTTPException(409, "replayed user authentication")
     db.execute("DELETE FROM personal_auth_nonces WHERE expires_at < ?", (int(time.time()),))
+    # A valid signed request must consume its nonce even if a later provider
+    # call rejects the bot token or times out. Otherwise a captured request
+    # could be replayed while the surrounding transaction rolls back.
+    db.commit()
     return auth["public_key"]
 
 
