@@ -267,10 +267,12 @@ class P2PNode:
         # Raw route_id exists only in this transient packet. Persistent route
         # state is keyed by the node-local blind alias.
         is_destination = await self.system_db.is_armed_locator(packet.get("route_id"))
-        await self.transport.receive_probe(packet, from_peer, is_destination=is_destination)
+        route_updated = await self.transport.receive_probe(packet, from_peer, is_destination=is_destination)
         if is_destination:
             return
-        if not is_new_probe or packet.get("ttl", 0) <= 0:
+        # A duplicate probe may still improve the hop gradient through a
+        # different peer. Forward only when the local best candidate changed.
+        if not route_updated or packet.get("ttl", 0) <= 0:
             return
         next_packet = dict(packet)
         next_packet["hops"] = int(packet.get("hops", 0)) + 1

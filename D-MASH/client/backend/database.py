@@ -297,6 +297,8 @@ class DatabaseManager:
             row = await cursor.fetchone()
         if row:
             current = self.node_crypto.decrypt_from_self(row["routing_blob"]) or current
+        was_local = bool(current.get("is_local"))
+        before = [dict(candidate) for candidate in current.get("candidates", [])]
         candidates = [candidate for candidate in current.get("candidates", []) if candidate.get("next_hop") != next_hop_id]
         candidates.append({"next_hop": next_hop_id, "hops": int(hops), "health": float(health)})
         candidates.sort(key=lambda candidate: (candidate["hops"], -candidate.get("health", 0.0)))
@@ -308,6 +310,9 @@ class DatabaseManager:
             (route_alias, blob, expiry),
         )
         await self.conn.commit()
+        before_best = min(before, key=lambda c: (c.get("hops", 10**9), -c.get("health", 0.0)), default=None)
+        after_best = min(candidates, key=lambda c: (c.get("hops", 10**9), -c.get("health", 0.0)), default=None)
+        return before_best != after_best or bool(is_local and not was_local)
 
     async def get_best_route_alias(self, route_alias: str) -> Optional[Dict]:
         """Read a blind route by alias. Raw locators never enter this method."""

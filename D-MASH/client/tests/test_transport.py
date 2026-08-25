@@ -143,6 +143,19 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("plaintext", packet)
         self.assertEqual(packet["envelope"]["ciphertext"], "sealed-by-pwa")
 
+    async def test_probe_convergence_replaces_first_long_path_with_short_path(self):
+        long_probe = {
+            "type": "DMP_C_PROBE", "id": "probe-graph",
+            "route_id": "route-graph", "back_route_id": "back-graph",
+            "hops": 4, "ttl": 10,
+        }
+        short_probe = {**long_probe, "hops": 2}
+        self.assertTrue(await self.transport.receive_probe(long_probe, "peer-long", is_destination=True))
+        self.assertTrue(await self.transport.receive_probe(short_probe, "peer-short", is_destination=True))
+        route = await self.db.get_best_route_alias(self.db.node_crypto.get_blind_hash("route-graph"))
+        self.assertEqual(route["hops"], 3)
+        self.assertEqual(route["next_hop_id"], "LOCAL")
+
 
 if __name__ == "__main__":
     unittest.main()

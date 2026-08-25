@@ -131,15 +131,17 @@ class NodeTransportService:
         await self.system_db.conn.commit()
         return True
 
-    async def receive_probe(self, packet: Dict[str, Any], from_peer: str, *, is_destination: bool = False) -> None:
+    async def receive_probe(self, packet: Dict[str, Any], from_peer: str, *, is_destination: bool = False) -> bool:
         back_route_alias = packet.get("back_route_id") or packet.get("back_route_alias")
         route_alias = packet.get("route_id") or packet.get("route_alias")
         hops = int(packet.get("hops", 0))
         candidate_hops = hops + 1
+        updated = False
         if back_route_alias:
-            await self.system_db.add_route_alias(self._blind(back_route_alias), from_peer, candidate_hops, is_local=False)
+            updated = await self.system_db.add_route_alias(self._blind(back_route_alias), from_peer, candidate_hops, is_local=False) or updated
         if is_destination and route_alias:
-            await self.system_db.add_route_alias(self._blind(route_alias), "LOCAL", candidate_hops, is_local=True)
+            updated = await self.system_db.add_route_alias(self._blind(route_alias), "LOCAL", candidate_hops, is_local=True) or updated
+        return updated
 
     async def receive_data(self, packet: Dict[str, Any], from_peer: str) -> Optional[TransportSubmission]:
         route_alias = packet.get("route_id") or packet.get("route_alias")
