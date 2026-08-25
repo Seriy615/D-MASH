@@ -48,6 +48,29 @@ const NodeManager = {
     getMeshRoute(peerId) {
         return this.getRouteConfig()[peerId] || null;
     },
+    setMeshRoute(peerId, routeLocator, backRouteLocator) {
+        const routes = this.getRouteConfig();
+        routes[peerId] = { routeLocator, backRouteLocator };
+        sessionStorage.setItem(this.routeConfigKey, JSON.stringify(routes));
+    },
+    async armMeshRoute(peerId, routeLocator, backRouteLocator) {
+        this.setMeshRoute(peerId, routeLocator, backRouteLocator);
+        if (this.state !== 'connected') return { armed: false, state: 'NODE_NOT_CONNECTED' };
+        const result = await this.registerInboundLocator(backRouteLocator);
+        sessionStorage.setItem(this.inboundHandleKey, result.locator_handle);
+        return { armed: true, locator_handle: result.locator_handle };
+    },
+    async armStoredRoutes() {
+        if (this.state !== 'connected') return;
+        const routes = this.getRouteConfig();
+        for (const route of Object.values(routes)) {
+            if (!route?.backRouteLocator) continue;
+            try {
+                const result = await this.registerInboundLocator(route.backRouteLocator);
+                sessionStorage.setItem(this.inboundHandleKey, result.locator_handle);
+            } catch (error) { this.showMessage(`Mesh locator arm failed: ${error.message}`, true); }
+        }
+    },
     async configureInboundLocator() {
         this.openPrompt('ARM MESH LOCATOR', 'opaque locator from mutual offline pairing', async locator => {
             if (!locator) throw new Error('Locator is required');
@@ -63,9 +86,7 @@ const NodeManager = {
                 if (!routeLocator) throw new Error('Forward locator is required');
                 this.openPrompt('MESH ROUTE: BACK LOCATOR', 'opaque route locator B→A', backRouteLocator => {
                     if (!backRouteLocator) throw new Error('Back locator is required');
-                    const routes = this.getRouteConfig();
-                    routes[peerId] = { routeLocator, backRouteLocator };
-                    sessionStorage.setItem(this.routeConfigKey, JSON.stringify(routes));
+                    this.setMeshRoute(peerId, routeLocator, backRouteLocator);
                     this.showMessage('Opaque Mesh route saved for this browser session. Start PROBE before sending.');
                 });
             });
@@ -145,6 +166,7 @@ const NodeManager = {
             this.lastConnectedAt = Date.now();
             this.setState('connected');
             this.socket.send(JSON.stringify({ type: 'STATUS', request_id: crypto.randomUUID() }));
+            this.armStoredRoutes();
             this.startPings();
         } else if (message.type === 'PONG') {
             const started = this.pendingPings.get(message.request_id);

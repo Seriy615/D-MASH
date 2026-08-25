@@ -6,7 +6,7 @@ const Storage = {
     registry_instance: null,
     masterKey: null, // AES-GCM ключ (32 байта из Argon2)
     REGISTRY_DB: 'dm_registry_v1',
-    REG_VER: 21, 
+    REG_VER: 22,
 
     /**
      * ИНИЦИАЛИЗАЦИЯ СЛЕПОГО СЕЙФА (Gamma-1)
@@ -20,7 +20,7 @@ const Storage = {
                 );
                 
                 // Открываем теневое хранилище
-                const request = indexedDB.open("dm_gamma_vault", 1); 
+                const request = indexedDB.open("dm_gamma_vault", this.REG_VER);
                 
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
@@ -35,6 +35,9 @@ const Storage = {
                     // L3: Сами малявы (Алиасы L3)
                     if (!db.objectStoreNames.contains('blind_messages')) {
                         db.createObjectStore('blind_messages', { keyPath: 'alias' });
+                    }
+                    if (!db.objectStoreNames.contains('pairing_material')) {
+                        db.createObjectStore('pairing_material', { keyPath: 'alias' });
                     }
                 };
                 

@@ -193,6 +193,38 @@ const Core = {
             if (statusEl) statusEl.innerText = "ОШИБКА ЯДРА: " + e.message; 
         }
     },
+    async ensurePairingContribution() {
+        let material = await Storage.getBox('pairing_material', 'self');
+        if (!material?.contribution) {
+            material = { contribution: this.bytesToHex(window.nacl.randomBytes(32)), version: 1 };
+            await Storage.putBox('pairing_material', { alias: 'self', data: material });
+        }
+        return material.contribution;
+    },
+    async derivePairingLocators(peerId, peerContribution) {
+        const ownId = this.keys.server_id;
+        const ownContribution = await this.ensurePairingContribution();
+        const entries = [
+            { id: ownId, contribution: ownContribution },
+            { id: peerId, contribution: peerContribution }
+        ].sort((a, b) => a.id.localeCompare(b.id));
+        const transcript = `D-MASH-PAIRING-COMPAT-V1|${entries[0].id}|${entries[1].id}|${entries[0].contribution}|${entries[1].contribution}`;
+        const root = await this.fastHash(transcript);
+        const forwardLabel = ownId === entries[0].id ? 'A_TO_B' : 'B_TO_A';
+        const reverseLabel = forwardLabel === 'A_TO_B' ? 'B_TO_A' : 'A_TO_B';
+        return {
+            routeLocator: await this.fastHash(`${root}|${forwardLabel}`),
+            backRouteLocator: await this.fastHash(`${root}|${reverseLabel}`),
+            version: 1
+        };
+    },
+    async ensureAutomaticMeshRoute(peerId, peerContribution) {
+        if (!peerContribution || !window.NodeManager) return null;
+        const locators = await this.derivePairingLocators(peerId, peerContribution);
+        await window.NodeManager.armMeshRoute(peerId, locators.routeLocator, locators.backRouteLocator);
+        this.shmon('INFO', 'Opaque Mesh locator привязан автоматически после pairing QR.');
+        return locators;
+    },
     // Core.deriveRootKey      - (Удален повтор/Legacy) Генерация хеша пароля
     deriveRootKey: (id, pwd) => new Promise((res, rej) => {
         if (typeof window.argon2 === 'undefined') return rej(new Error("Argon2 missing"));
@@ -1034,8 +1066,13 @@ const Core = {
     },
     // Core.addPeerFlow        - Логика добавления нового кента в базу
     async addPeerFlow(id) {
-        // 1. ЧИСТИМ СТРОКУ (убираем пробелы, переносы и всё кроме HEX)
-        const cleanId = id.trim().replace(/[^a-f0-9]/gi, '');
+        let pairing = null;
+        try {
+            const parsed = JSON.parse(id);
+            if (parsed?.type === 'DMASH_PAIRING_V1' && parsed.user_id && parsed.contribution) pairing = parsed;
+        } catch (_) { /* legacy plain-ID import remains supported */ }
+        // Pairing metadata is parsed locally and is never sent as routing metadata.
+        const cleanId = (pairing?.user_id || id).trim().replace(/[^a-f0-9]/gi, '');
         
         this.shmon("INFO", `Попытка добавить ID. Длина: ${cleanId.length}`);
 
@@ -1064,11 +1101,13 @@ const Core = {
                     name: alias, 
                     last_ts: Date.now(), 
                     unread: false, 
-                    securityAlert: false 
+                    securityAlert: false,
+                    pairingContribution: pairing?.contribution || null
                 } 
             });
             
             this.shmon("INFO", `Кент ${alias} добавлен в базу.`);
+            if (pairing?.contribution) await this.ensureAutomaticMeshRoute(cleanId, pairing.contribution);
             await this.renderPeers();
         });
     },
@@ -2089,7 +2128,7 @@ const Core = {
         }
     },
     // Core.showMyQR           - Показ своего ID в виде QR
-    showMyQR: function() {
+    showMyQR: async function() {
         // 1. ПРОВЕРКА КЛЮЧЕЙ
         // Убедимся, что у нас есть ServerID (Ed25519)
         const myId = this.keys.server_id || (this.keys.sign ? this.bytesToHex(this.keys.sign.publicKey) : null);
@@ -2100,13 +2139,17 @@ const Core = {
             return;
         }
 
-        this.shmon("INFO", "Генерация QR для ID: " + myId.substring(0,8));
+        const contribution = await this.ensurePairingContribution();
+        const pairingPackage = JSON.stringify({
+            type: 'DMASH_PAIRING_V1', version: 1, user_id: myId, contribution
+        });
+        this.shmon("INFO", "Генерация pairing QR для ID: " + myId.substring(0,8));
 
         const c = `
             <div style="text-align:center;">
                 <div id="qr-target" style="background:#fff; padding:15px; margin:10px auto; display:inline-block; border-radius:8px; box-shadow: 0 0 20px rgba(0,255,65,0.3);"></div>
                 <div style="font-size:0.65rem; color:#0f0; margin-bottom:15px; word-break:break-all; font-family:monospace; background:#111; padding:10px; border:1px solid #333;">
-                    ${myId.substring(0,32)}<br>${myId.substring(32)}
+                    PAIRING V1<br>${myId.substring(0,32)}<br>${myId.substring(32)}
                 </div>
                 <div style="display:flex; gap:10px;">
                     <button class="sys-modal-btn primary" style="flex:1;" onclick="Core.copyMyId()">КОПИРОВАТЬ</button>
@@ -2125,7 +2168,7 @@ const Core = {
         try {
             if (typeof QRCode !== 'undefined') {
                 new QRCode(container, { 
-                    text: myId, 
+                    text: pairingPackage,
                     width: 200, 
                     height: 200,
                     colorDark : "#000000",
