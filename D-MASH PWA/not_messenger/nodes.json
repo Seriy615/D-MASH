@@ -4,6 +4,10 @@
     {
       "label": "D-MASH EMS staging",
       "url": "wss://stage-api-ems.d-mash.ru/dmash-client/v1"
+    },
+    {
+      "label": "D-MASH forge test",
+      "url": "wss://forgeai.isgood.host/dmash-client/v1"
     }
   ]
 }
