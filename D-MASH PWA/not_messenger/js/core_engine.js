@@ -524,6 +524,7 @@ const Core = {
 
         if (type === 0x01) { // Принят ECDH
             this.shmon("CRYPTO", "Вскрытие 0x01 оболочки...");
+            if (secrets?.staticShared) return null;
             const nonce = raw.slice(1, 25); const ephPub = raw.slice(25, 57);
             const opened = window.nacl.box.open(raw.slice(57), nonce, ephPub, this.keys.box.secretKey);
             if (opened) {
@@ -548,6 +549,7 @@ const Core = {
 
         if (type === 0x03) { // Финал квантового моста
             this.shmon("CRYPTO", "Финализация квантового моста...");
+            if (secrets?.staticShared) return null;
             const encapsulated = raw.slice(1, 1089); const ss = (KyberWasm.decapsulate(encapsulated, this.keys.kyber.secretKey)).ss;
             const opened = window.nacl.secretbox.open(raw.slice(1113), raw.slice(1089, 1113), ss);
             if (opened) {
@@ -558,7 +560,6 @@ const Core = {
                 });
                 this.shmon("INFO", "КВАНТОВЫЙ КАНАЛ УСТАНОВЛЕН!");
                 if (this.activePeerId === pid) this.selectPeer(pid);
-                setTimeout(() => this.sendMessage("🤝 Квантовый мост наведен. Базар открыт.", false, pid), 500);
                 return null;
             }
         }
@@ -819,15 +820,42 @@ const Core = {
             try {
                 const result = await window.NodeManager.pull(inboundHandle);
                 const peerIds = Object.keys(window.NodeManager.getRouteConfig());
+                this._processedMeshDeliveries ||= new Set();
                 for (const packet of (result.packets || [])) {
+                    if (this._processedMeshDeliveries.has(packet.id)) {
+                        await window.NodeManager.ack(packet.id);
+                        continue;
+                    }
                     const envelope = packet.envelope || {};
                     for (const peerId of peerIds) {
+                        let signatureValid = false;
+                        try {
+                            signatureValid = Boolean(envelope.sender_proof)
+                                && window.nacl.sign.detached.verify(
+                                    this.hexToBytes(envelope.ciphertext),
+                                    this.hexToBytes(envelope.sender_proof),
+                                    this.hexToBytes(peerId)
+                                );
+                        } catch (_) { /* candidate does not match this envelope */ }
+                        if (!signatureValid) continue;
                         const plaintext = await this.decrypt(envelope.ciphertext, peerId).catch(() => null);
-                        if (plaintext === null) continue;
+                        const packetKind = Number.parseInt(envelope.ciphertext?.slice(0, 2), 16);
+                        if (plaintext === null) {
+                            // 0x01/0x02/0x03 mutate local E2EE state but do not
+                            // render a chat message. ACK them so PULL does not
+                            // replay the same handshake forever.
+                            if ([1, 2, 3].includes(packetKind)) {
+                                this._processedMeshDeliveries.add(packet.id);
+                                await window.NodeManager.ack(packet.id);
+                                break;
+                            }
+                            continue;
+                        }
                         let message = plaintext;
                         try { message = JSON.parse(plaintext); } catch (_) { /* text */ }
                         await Storage.saveMessageGamma(peerId, message, true, false);
                         if (this.activePeerId === peerId) await this.selectPeer(peerId);
+                        this._processedMeshDeliveries.add(packet.id);
                         await window.NodeManager.ack(packet.id);
                         break;
                     }
