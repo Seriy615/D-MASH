@@ -56,6 +56,11 @@ const NodeManager = {
     },
     setState(state, error = null) {
         this.state = state; this.error = error;
+        const panel = document.getElementById('dmash-node-panel-status');
+        if (panel) {
+            panel.textContent = `STATE: ${state.toUpperCase()} | ACTIVE: ${this.active?.label || 'NONE'}${error ? ` | ${error}` : ''}`;
+            panel.style.color = error ? '#ff7b7b' : '#b8ffca';
+        }
         window.dispatchEvent(new CustomEvent('dmash-node-state', { detail: { state, error, active: this.active } }));
     },
     async connect() {
@@ -135,28 +140,99 @@ const NodeManager = {
         const delay = Math.min(30000, 1000 * (2 ** this.reconnectAttempt++));
         this.reconnectTimer = setTimeout(() => { this.reconnectTimer = null; this.connect().catch(e => this.setState('error', e.message)); }, delay);
     },
+    showMessage(value, isError = false) {
+        const message = value instanceof Error ? value.message : String(value);
+        const status = document.getElementById('dmash-node-panel-status');
+        if (status) { status.textContent = `${isError ? 'ERROR' : 'INFO'}: ${message}`; status.style.color = isError ? '#ff7b7b' : '#b8ffca'; }
+        else window.alert(message);
+    },
+    openPrompt(titleText, placeholder, onSubmit) {
+        const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
+        const box = document.createElement('div'); box.className = 'sys-modal-box';
+        const title = document.createElement('h4'); title.textContent = titleText;
+        const input = document.createElement('input'); input.className = 'sys-modal-input'; input.placeholder = placeholder;
+        const submit = document.createElement('button'); submit.className = 'sys-modal-btn primary'; submit.textContent = 'SAVE';
+        const cancel = document.createElement('button'); cancel.className = 'sys-modal-btn'; cancel.textContent = 'BACK';
+        submit.onclick = () => { try { Promise.resolve(onSubmit(input.value.trim())).catch(error => this.showMessage(error, true)); } catch (error) { this.showMessage(error, true); } };
+        cancel.onclick = () => this.renderSettings();
+        box.append(title, input, submit, cancel); modal.appendChild(box); input.focus();
+    },
+    makeButton(label, handler, primary = false) {
+        const button = document.createElement('button'); button.className = `sys-modal-btn${primary ? ' primary' : ''}`;
+        button.textContent = label;
+        button.onclick = handler;
+        return button;
+    },
+    async renderDiagnostics() {
+        const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
+        const box = document.createElement('div'); box.className = 'sys-modal-box';
+        const title = document.createElement('h4'); title.textContent = 'D-MASH RUNTIME DIAGNOSTICS';
+        const details = document.createElement('pre'); details.style.cssText = 'white-space:pre-wrap;word-break:break-all;text-align:left;font-size:10px;color:#b8ffca;max-height:48vh;overflow:auto';
+        details.textContent = 'Collecting runtime state…';
+        const back = this.makeButton('BACK TO NODES', () => this.renderSettings());
+        box.append(title, details, back); modal.appendChild(box);
+        const scriptUrls = performance.getEntriesByType('resource')
+            .map(entry => entry.name).filter(url => /\/(ui_logic|core_engine|node_manager|release)\.js(?:\?|$)/.test(url));
+        let cacheKeys = [];
+        try { cacheKeys = await caches.keys(); } catch (_) { cacheKeys = ['CacheStorage unavailable']; }
+        details.textContent = [
+            `release=${window.DMASH_RELEASE?.id || 'missing'}`,
+            `href=${location.href}`,
+            `origin=${location.origin}`,
+            `serviceWorker=${navigator.serviceWorker.controller?.scriptURL || 'none'}`,
+            `nodeManager=${Boolean(window.NodeManager)}`,
+            `nodeState=${this.state}`,
+            `activeNode=${this.active?.url || 'none'}`,
+            `caches=${cacheKeys.join(', ') || 'none'}`,
+            'scripts=', ...scriptUrls
+        ].join('\n');
+    },
     renderSettings() {
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
         const box = document.createElement('div'); box.className = 'sys-modal-box';
-        const title = document.createElement('h4'); title.textContent = `D-MASH NODES: ${this.state.toUpperCase()}`; box.appendChild(title);
+        const title = document.createElement('h4'); title.textContent = 'D-MASH NODES / NETWORK'; box.appendChild(title);
+        const status = document.createElement('div'); status.id = 'dmash-node-panel-status';
+        status.style.cssText = 'margin:0 0 10px;text-align:center;font:12px monospace;color:#b8ffca';
+        status.textContent = `STATE: ${this.state.toUpperCase()} | ACTIVE: ${this.active?.label || 'NONE'}`;
+        box.appendChild(status);
         for (const endpoint of this.endpoints) {
-            const row = document.createElement('div'); row.style.marginBottom = '8px';
-            const choose = document.createElement('button'); choose.className = 'sys-modal-btn';
-            choose.textContent = `${this.active?.url === endpoint.url ? '● ' : ''}${endpoint.label} (${endpoint.url})`;
-            choose.onclick = () => { this.select(endpoint.url); this.renderSettings(); }; row.appendChild(choose);
+            const row = document.createElement('div'); row.style.cssText = 'margin-bottom:8px;border:1px solid #333;padding:7px;text-align:left';
+            const label = document.createElement('div'); label.style.cssText = 'font-size:11px;word-break:break-all;margin-bottom:6px';
+            label.textContent = `${this.active?.url === endpoint.url ? '● ACTIVE ' : ''}${endpoint.label}: ${endpoint.url}`;
+            const choose = this.makeButton(this.active?.url === endpoint.url ? 'SELECTED' : 'SELECT NODE', () => { this.select(endpoint.url); this.renderSettings(); }, this.active?.url === endpoint.url);
+            choose.style.cssText = 'margin:0;padding:7px;font-size:11px'; row.append(label, choose);
             box.appendChild(row);
         }
-        const add = document.createElement('button'); add.className = 'sys-modal-btn'; add.textContent = 'ДОБАВИТЬ NODE';
-        add.onclick = () => Core.customPrompt('NODE ENDPOINT', 'WSS URL:', value => { try { this.add(value); this.renderSettings(); } catch (e) { Core.customAlert('ОШИБКА', e.message); } });
-        const connect = document.createElement('button'); connect.className = 'sys-modal-btn primary'; connect.textContent = 'ПОДКЛЮЧИТЬСЯ'; connect.onclick = () => this.connect().catch(e => Core.customAlert('ОШИБКА', e.message));
-        const origin = document.createElement('button'); origin.className = 'sys-modal-btn'; origin.textContent = 'ORIGIN УВЕДОМЛЕНИЙ'; origin.onclick = () => Core.customPrompt('ORIGIN', 'HTTPS URL:', value => { try { const url = new URL(value); if (url.protocol !== 'https:') throw new Error('HTTPS required'); localStorage.setItem(this.originKey, url.href.replace(/\/$/, '')); this.renderSettings(); } catch (e) { Core.customAlert('ОШИБКА', e.message); } });
-        const personalBot = document.createElement('button'); personalBot.className = 'sys-modal-btn'; personalBot.textContent = 'ПОДКЛЮЧИТЬ ЛИЧНЫЙ TELEGRAM BOT'; personalBot.onclick = () => Core.customPrompt('TELEGRAM BOT', 'Bot Token:', token => this.enrollPersonalBot(token).then(result => Core.customAlert('ПРИВЯЗКА', `Откройте: ${result.start_link}`)).catch(e => Core.customAlert('ОШИБКА', e.message)));
-        const botStatus = document.createElement('button'); botStatus.className = 'sys-modal-btn'; botStatus.textContent = 'СТАТУС TELEGRAM BOT'; botStatus.onclick = () => this.personalBotStatus().then(result => Core.customAlert('TELEGRAM BOT', result.configured ? `Сохранён: ••••${result.token_suffix}\n${result.enabled ? 'Уведомления включены' : 'Уведомления выключены'}\n${result.chat_bound ? 'Telegram привязан' : 'Откройте start-ссылку'}` : 'Личный bot не подключён')).catch(e => Core.customAlert('ОШИБКА', e.message));
-        const testBot = document.createElement('button'); testBot.className = 'sys-modal-btn'; testBot.textContent = 'ТЕСТ УВЕДОМЛЕНИЯ'; testBot.onclick = () => this.testPersonalBot().then(() => Core.customAlert('TELEGRAM BOT', 'Тестовое уведомление отправлено')).catch(e => Core.customAlert('ОШИБКА', e.message));
-        const disableBot = document.createElement('button'); disableBot.className = 'sys-modal-btn'; disableBot.textContent = 'ОТКЛЮЧИТЬ УВЕДОМЛЕНИЯ'; disableBot.onclick = () => Core.customConfirm('TELEGRAM BOT', 'Отключить личные Telegram-уведомления?', () => this.disablePersonalBot().then(() => Core.customAlert('TELEGRAM BOT', 'Уведомления отключены')).catch(e => Core.customAlert('ОШИБКА', e.message)));
-        const removeBot = document.createElement('button'); removeBot.className = 'sys-modal-btn'; removeBot.textContent = 'УДАЛИТЬ ЛИЧНЫЙ BOT'; removeBot.onclick = () => Core.customConfirm('TELEGRAM BOT', 'Удалить сохранённый token и привязку? Это действие необратимо.', () => this.removePersonalBot().then(() => Core.customAlert('TELEGRAM BOT', 'Личный bot удалён')).catch(e => Core.customAlert('ОШИБКА', e.message)));
-        const close = document.createElement('button'); close.className = 'sys-modal-btn'; close.textContent = 'НАЗАД'; close.onclick = () => Core.openSettings();
-        box.append(add, connect, origin, personalBot, botStatus, testBot, disableBot, removeBot, close); modal.appendChild(box);
+        const add = this.makeButton('ADD NODE', () => this.openPrompt('ADD NODE ENDPOINT', 'wss://node.example/dmp-c/v1', value => { this.add(value); this.renderSettings(); }));
+        const refresh = this.makeButton('REFRESH ORIGIN NODE LIST', async () => { try { await this.loadOriginList(); this.renderSettings(); } catch (error) { this.showMessage(error, true); } });
+        const connect = this.makeButton('CONNECT ACTIVE NODE', async () => { try { await this.connect(); } catch (error) { this.showMessage(error, true); } }, true);
+        const disconnect = this.makeButton('DISCONNECT', () => { this.disconnect(false); this.renderSettings(); });
+        const diagnostics = this.makeButton('RUNTIME DIAGNOSTICS', () => this.renderDiagnostics());
+        const origin = this.makeButton('ORIGIN NOTIFICATION URL', () => this.openPrompt('ORIGIN NOTIFICATIONS', 'https://origin.example', value => { const url = new URL(value); if (url.protocol !== 'https:') throw new Error('Origin must use HTTPS'); localStorage.setItem(this.originKey, url.href.replace(/\/$/, '')); this.renderSettings(); }));
+        const personalBot = this.makeButton('CONNECT PERSONAL TELEGRAM BOT', () => this.openPrompt('PERSONAL TELEGRAM BOT', 'Bot Token', value => this.enrollPersonalBot(value).then(result => { this.openStartLink(result.start_link); }).catch(error => this.showMessage(error, true))));
+        const botStatus = this.makeButton('PERSONAL BOT STATUS', () => this.personalBotStatus().then(result => this.showPersonalStatus(result)).catch(error => this.showMessage(error, true)));
+        const testBot = this.makeButton('SEND TEST NOTIFICATION', () => this.testPersonalBot().then(() => this.showMessage('Test notification accepted.')).catch(error => this.showMessage(error, true)));
+        const disableBot = this.makeButton('DISABLE PERSONAL BOT', () => this.disablePersonalBot().then(() => this.renderSettings()).catch(error => this.showMessage(error, true)));
+        const removeBot = this.makeButton('REMOVE PERSONAL BOT', () => { if (window.confirm('Remove encrypted token and Telegram binding?')) this.removePersonalBot().then(() => this.renderSettings()).catch(error => this.showMessage(error, true)); });
+        const close = this.makeButton('BACK', () => { if (window.Core?.openSettings) Core.openSettings(); else modal.style.display = 'none'; });
+        box.append(add, refresh, connect, disconnect, diagnostics, origin, personalBot, botStatus, testBot, disableBot, removeBot, close); modal.appendChild(box);
+    },
+    openStartLink(url) {
+        const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
+        const box = document.createElement('div'); box.className = 'sys-modal-box';
+        const title = document.createElement('h4'); title.textContent = 'TELEGRAM START REQUIRED';
+        const text = document.createElement('p'); text.textContent = 'Open this one-time link in Telegram, press Start, then return here for status.';
+        const link = document.createElement('a'); link.href = url; link.target = '_blank'; link.rel = 'noopener'; link.className = 'sys-modal-btn primary'; link.textContent = 'OPEN TELEGRAM';
+        const back = this.makeButton('BACK TO NODES', () => this.renderSettings());
+        box.append(title, text, link, back); modal.appendChild(box);
+    },
+    showPersonalStatus(result) {
+        const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
+        const box = document.createElement('div'); box.className = 'sys-modal-box';
+        const title = document.createElement('h4'); title.textContent = 'PERSONAL TELEGRAM BOT';
+        const value = document.createElement('p');
+        value.textContent = result.configured ? `TOKEN: ••••${result.token_suffix}\nSTATE: ${result.enabled ? 'ENABLED' : 'DISABLED'}\nTELEGRAM: ${result.chat_bound ? 'BOUND' : 'START REQUIRED'}` : 'NOT CONFIGURED';
+        value.style.whiteSpace = 'pre-line'; box.append(title, value, this.makeButton('BACK TO NODES', () => this.renderSettings())); modal.appendChild(box);
     }
 };
 NodeManager.load();

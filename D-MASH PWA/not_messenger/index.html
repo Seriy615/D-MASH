@@ -18,6 +18,8 @@
     <meta name="theme-color" content="#000000">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MathPro</title>
+    <script src="js/release.js"></script>
+    <script src="js/node_manager.js"></script>
 <style>
     /* =========================================
        1. БАЗОВЫЕ НАСТРОЙКИ И ПЕРЕМЕННЫЕ
@@ -397,6 +399,8 @@
     </div>
     <div id="workspace" style="display:none;"></div>
     <div id="sys-modal"></div>
+    <div id="dmash-build-id" aria-live="polite" style="position:fixed;right:8px;bottom:6px;z-index:10001;color:#6d6d6d;font:10px monospace;pointer-events:none"></div>
+    <div id="dmash-release-notice" role="status" style="display:none;position:fixed;left:12px;right:12px;bottom:28px;z-index:10002;background:#06150a;border:1px solid #00ff41;color:#d7ffe0;padding:10px;font:12px monospace;text-align:center"></div>
 <!-- ОБНОВЛЕННЫЙ call-overlay -->
 <div id="call-overlay" style="display:none; position:fixed; inset:0; background:#000; z-index:9999; flex-direction:column; font-family:monospace; overflow:hidden;">
     <video id="remoteVideo" autoplay playsinline style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;"></video>
@@ -434,23 +438,37 @@
 </style>
 <!-- Находишь в конце index.html подключение ui_logic -->
 <script>
-    // Грузим ui_logic с кастетом против кэша
+    // Release IDs are stable per deployment. They make runtime cache state
+    // observable without creating a different service-worker URL per page load.
     const s = document.createElement('script');
-    s.src = "js/ui_logic.js?v=" + Date.now();
+    s.src = "js/ui_logic.js?r=" + encodeURIComponent(window.DMASH_RELEASE.id);
     document.body.appendChild(s);
 </script>
 
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            // updateViaCache: 'none' — приказ браузеру не верить кэшу при проверке sw.js
-            navigator.serviceWorker.register('sw.js?v=' + Date.now(), { updateViaCache: 'none' }).then(reg => {
-                console.log('D-MASH V21: ACTIVE');
-                
-                // Будильник для воркера
-                setInterval(() => {
-                    if (reg.active) reg.active.postMessage({ type: 'PING' });
-                }, 15000);
+            navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(async reg => {
+                await reg.update();
+                const showRelease = (text) => {
+                    const notice = document.getElementById('dmash-release-notice');
+                    if (!notice) return;
+                    notice.textContent = text;
+                    notice.style.display = 'block';
+                };
+                if (reg.waiting) showRelease(`D-MASH build ${window.DMASH_RELEASE.id} ready. Reloading…`);
+                navigator.serviceWorker.addEventListener('message', event => {
+                    if (event.data?.type === 'DMASH_RELEASE_ACTIVATED') {
+                        showRelease(`D-MASH build ${event.data.release} active. Reloading…`);
+                    }
+                });
+                let reloaded = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!reloaded) { reloaded = true; window.location.reload(); }
+                });
+            }).catch(() => {
+                const notice = document.getElementById('dmash-release-notice');
+                if (notice) { notice.textContent = 'D-MASH update check failed. Network features may be unavailable.'; notice.style.display = 'block'; }
             });
         });
     }
