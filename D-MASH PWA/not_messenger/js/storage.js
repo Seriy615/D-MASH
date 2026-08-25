@@ -18,10 +18,10 @@ const Storage = {
                 this.masterKey = await window.crypto.subtle.importKey(
                     "raw", keyBytes, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]
                 );
-                
+
                 // Открываем теневое хранилище
                 const request = indexedDB.open("dm_gamma_vault", this.REG_VER);
-                
+
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
                     // L1: Список кентов (Алиасы L1)
@@ -40,12 +40,12 @@ const Storage = {
                         db.createObjectStore('pairing_material', { keyPath: 'alias' });
                     }
                 };
-                
-                request.onsuccess = (e) => { 
-                    this.db = e.target.result; 
-                    resolve(); 
+
+                request.onsuccess = (e) => {
+                    this.db = e.target.result;
+                    resolve();
                 };
-                
+
                 request.onerror = (e) => reject(e);
             } catch (e) { reject(e); }
         });
@@ -70,12 +70,12 @@ const Storage = {
 // В storage.js измени saveMessageGamma:
     saveMessageGamma: async function(peerID, text, inbound, isRead) {
         const aliasL1 = await this.getAlias(peerID, "L1");
-        
+
         let secrets = await this.getBox('blind_secrets', aliasL1);
         if (!secrets) {
             secrets = { msgCount: 0, psk: this.uint8ToHex(window.nacl.randomBytes(32)), epochShift: 0, staticShared: null };
         }
-        
+
         const seqNum = (secrets.msgCount || 0) + 1;
         secrets.msgCount = seqNum;
         await this.putBox('blind_secrets', { alias: aliasL1, data: secrets });
@@ -104,7 +104,7 @@ const Storage = {
         // Считаем границы: от старых к новым
         const end = Math.max(1, total - offset);
         const start = Math.max(1, end - limit + 1);
-        
+
         const messages = [];
         for (let i = start; i <= end; i++) {
             const aliasL3 = await this.getAlias(aliasL1 + i, "L3");
@@ -161,19 +161,30 @@ deleteMessageGamma: async function(peerID, msgId) {
     deleteChatGamma: async function(peerID) {
         const aliasL1 = await this.getAlias(peerID, "L1");
         const secrets = await this.getBox('blind_secrets', aliasL1);
-        
+
         if (secrets && secrets.msgCount) {
+            const messageAliases = [];
+            for (let i = 1; i <= secrets.msgCount; i++) {
+                messageAliases.push(await this.getAlias(aliasL1 + i, "L3"));
+            }
             const tx = this.db.transaction('blind_messages', 'readwrite');
             const store = tx.objectStore('blind_messages');
-            for (let i = 1; i <= secrets.msgCount; i++) {
-                const aliasL3 = await this.getAlias(aliasL1 + i, "L3");
-                store.delete(aliasL3);
-            }
+            messageAliases.forEach(aliasL3 => store.delete(aliasL3));
+            await new Promise((resolve, reject) => {
+                tx.oncomplete = resolve;
+                tx.onerror = () => reject(tx.error || new Error('message deletion failed'));
+                tx.onabort = () => reject(tx.error || new Error('message deletion aborted'));
+            });
         }
-        
-        const tx2 = this.db.transaction(['blind_peers', 'blind_secrets'], 'readwrite');
-        tx2.objectStore('blind_peers').delete(aliasL1);
-        tx2.objectStore('blind_secrets').delete(aliasL1);
+
+        await new Promise((resolve, reject) => {
+            const tx2 = this.db.transaction(['blind_peers', 'blind_secrets'], 'readwrite');
+            tx2.objectStore('blind_peers').delete(aliasL1);
+            tx2.objectStore('blind_secrets').delete(aliasL1);
+            tx2.oncomplete = resolve;
+            tx2.onerror = () => reject(tx2.error || new Error('peer deletion failed'));
+            tx2.onabort = () => reject(tx2.error || new Error('peer deletion aborted'));
+        });
     },
 
     /**
