@@ -15,6 +15,7 @@ class NodeEndpoint {
 const NodeManager = {
     storageKey: 'dmash_node_endpoints_v1',
     activeKey: 'dmash_active_node_v1',
+    originKey: 'dmash_origin_notifications_v1',
     endpoints: [], active: null, socket: null,
     state: 'disconnected', error: null, reconnectAttempt: 0, reconnectTimer: null,
 
@@ -84,6 +85,28 @@ const NodeManager = {
         let binary = ''; for (const byte of bytes) binary += String.fromCharCode(byte);
         return btoa(binary);
     },
+    originUrl() {
+        const configured = window.DMASH_RUNTIME_CONFIG?.originNotificationUrl || localStorage.getItem(this.originKey);
+        if (!configured) throw new Error('Configure HTTPS Origin notification URL first');
+        const url = new URL(configured, window.location.href);
+        if (url.protocol !== 'https:') throw new Error('Origin notification URL must use HTTPS');
+        return url.href.replace(/\/$/, '');
+    },
+    async enrollPersonalBot(botToken) {
+        if (!window.Core?.keys?.sign) throw new Error('User identity is not unlocked');
+        const payload = { bot_token: botToken };
+        const timestamp = Math.floor(Date.now() / 1000);
+        const nonce = crypto.randomUUID();
+        const canonical = new TextEncoder().encode(`DMP-ORIGIN|1|PERSONAL_BOT_ENROLL|${timestamp}|${nonce}|${JSON.stringify(payload)}`);
+        payload.auth = {
+            public_key: window.Core.bytesToHex(window.Core.keys.sign.publicKey), timestamp, nonce,
+            signature: this.toBase64(window.nacl.sign.detached(canonical, window.Core.keys.sign.secretKey))
+        };
+        const response = await fetch(`${this.originUrl()}/v1/personal-bots/enroll`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || `Origin HTTP ${response.status}`);
+        return data;
+    },
     disconnect(reconnect = false) {
         clearTimeout(this.reconnectTimer); this.reconnectTimer = null;
         const socket = this.socket; this.socket = null;
@@ -110,8 +133,10 @@ const NodeManager = {
         const add = document.createElement('button'); add.className = 'sys-modal-btn'; add.textContent = 'ДОБАВИТЬ NODE';
         add.onclick = () => Core.customPrompt('NODE ENDPOINT', 'WSS URL:', value => { try { this.add(value); this.renderSettings(); } catch (e) { Core.customAlert('ОШИБКА', e.message); } });
         const connect = document.createElement('button'); connect.className = 'sys-modal-btn primary'; connect.textContent = 'ПОДКЛЮЧИТЬСЯ'; connect.onclick = () => this.connect().catch(e => Core.customAlert('ОШИБКА', e.message));
+        const origin = document.createElement('button'); origin.className = 'sys-modal-btn'; origin.textContent = 'ORIGIN УВЕДОМЛЕНИЙ'; origin.onclick = () => Core.customPrompt('ORIGIN', 'HTTPS URL:', value => { try { const url = new URL(value); if (url.protocol !== 'https:') throw new Error('HTTPS required'); localStorage.setItem(this.originKey, url.href.replace(/\/$/, '')); this.renderSettings(); } catch (e) { Core.customAlert('ОШИБКА', e.message); } });
+        const personalBot = document.createElement('button'); personalBot.className = 'sys-modal-btn'; personalBot.textContent = 'ПОДКЛЮЧИТЬ ЛИЧНЫЙ TELEGRAM BOT'; personalBot.onclick = () => Core.customPrompt('TELEGRAM BOT', 'Bot Token:', token => this.enrollPersonalBot(token).then(result => Core.customAlert('ПРИВЯЗКА', `Откройте: ${result.start_link}`)).catch(e => Core.customAlert('ОШИБКА', e.message)));
         const close = document.createElement('button'); close.className = 'sys-modal-btn'; close.textContent = 'НАЗАД'; close.onclick = () => Core.openSettings();
-        box.append(add, connect, close); modal.appendChild(box);
+        box.append(add, connect, origin, personalBot, close); modal.appendChild(box);
     }
 };
 NodeManager.load();
