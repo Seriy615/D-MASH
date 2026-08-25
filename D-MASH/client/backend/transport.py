@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import secrets
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 
 @dataclass(slots=True)
@@ -25,6 +25,9 @@ class NodeTransportService:
         self.system_db = system_db
         self.node = node
         self._inbound_locators: Dict[str, str] = {}
+        # Runtime-only registry.  It contains blind locator handles and live
+        # DMP-C sessions, never user IDs or raw locators.
+        self._local_delivery_sessions: Dict[str, Set[Any]] = {}
 
     def _blind(self, locator: str) -> str:
         if not isinstance(locator, str) or not locator or not self.system_db.node_crypto:
@@ -38,10 +41,23 @@ class NodeTransportService:
         self._inbound_locators[locator_handle] = locator_handle
         return locator_handle
 
+    def attach_local_delivery_session(self, locator_handle: str, session: Any) -> None:
+        if locator_handle:
+            self._local_delivery_sessions.setdefault(locator_handle, set()).add(session)
+
+    def detach_local_delivery_session(self, session: Any) -> None:
+        for locator_handle in list(self._local_delivery_sessions):
+            sessions = self._local_delivery_sessions[locator_handle]
+            sessions.discard(session)
+            if not sessions:
+                self._local_delivery_sessions.pop(locator_handle, None)
+
     async def unregister_inbound_locator(self, locator: str) -> bool:
         """Remove a local inbound locator and data addressed to its blind alias."""
         removed = await self.system_db.disarm_inbound_locator(locator)
-        self._inbound_locators.pop(self._blind(locator), None)
+        locator_handle = self._blind(locator)
+        self._inbound_locators.pop(locator_handle, None)
+        self._local_delivery_sessions.pop(locator_handle, None)
         return removed
 
     async def start_probe(
@@ -89,8 +105,9 @@ class NodeTransportService:
         }
         route = await self.system_db.get_best_route_alias(self._blind(route_alias))
         if route and route.get("is_local"):
-            await self._store_mailbox(self._blind(route_alias), packet)
-            return TransportSubmission(delivery_id=delivery_id, state="DELIVERED_TO_DESTINATION_NODE", packet=packet)
+            delivered_to_session = await self._store_mailbox(self._blind(route_alias), packet)
+            state = "DELIVERED_TO_DESTINATION_PWA_SESSION" if delivered_to_session else "DELIVERED_TO_DESTINATION_NODE"
+            return TransportSubmission(delivery_id=delivery_id, state=state, packet=packet)
         if not route:
             await self._dispatch_mesh_packet(packet, origin_peer_id=origin_peer_id)
             return TransportSubmission(delivery_id=delivery_id, state="ROUTE_NOT_ARMED", packet=packet)
@@ -113,12 +130,20 @@ class NodeTransportService:
                 continue
         return packets
 
-    async def ack(self, delivery_id: str) -> bool:
+    async def ack(self, delivery_id: str, *, allowed_locator_handles: Set[str] | None = None) -> bool:
         if not delivery_id:
             raise ValueError("delivery id is required")
         if not getattr(self.system_db, "conn", None):
             return False
-        async with self.system_db.conn.execute("SELECT id, packet_json FROM offline_mailbox") as cursor:
+        if allowed_locator_handles is not None and not allowed_locator_handles:
+            return False
+        query = "SELECT id, packet_json FROM offline_mailbox"
+        parameters: list[str] = []
+        if allowed_locator_handles is not None:
+            placeholders = ",".join("?" for _ in allowed_locator_handles)
+            query += f" WHERE target_hash IN ({placeholders})"
+            parameters = list(allowed_locator_handles)
+        async with self.system_db.conn.execute(query, parameters) as cursor:
             rows = await cursor.fetchall()
         ids_to_delete = []
         for row in rows:
@@ -157,12 +182,13 @@ class NodeTransportService:
         if not route:
             return None
         if route.get("is_local"):
-            await self._store_mailbox(self._blind(route_alias), packet)
-            return TransportSubmission(delivery_id=packet.get("id", ""), state="DELIVERED_TO_DESTINATION_NODE", packet=packet)
+            delivered_to_session = await self._store_mailbox(self._blind(route_alias), packet)
+            state = "DELIVERED_TO_DESTINATION_PWA_SESSION" if delivered_to_session else "DELIVERED_TO_DESTINATION_NODE"
+            return TransportSubmission(delivery_id=packet.get("id", ""), state=state, packet=packet)
         await self._dispatch_mesh_packet(packet, next_hop_id=route["next_hop_id"], origin_peer_id=from_peer)
         return TransportSubmission(delivery_id=packet.get("id", ""), state="ROUTED_IN_D_MASH", packet=packet)
 
-    async def _store_mailbox(self, locator_handle: str, packet: Dict[str, Any]) -> None:
+    async def _store_mailbox(self, locator_handle: str, packet: Dict[str, Any]) -> bool:
         notification_id = packet.get("id") or secrets.token_hex(16)
         mailbox_packet = dict(packet)
         # The raw route locator is transient mesh metadata and is not needed
@@ -176,6 +202,20 @@ class NodeTransportService:
             (locator_handle, json.dumps(mailbox_packet), notification_id),
         )
         await self.system_db.conn.commit()
+        # Mailbox remains the source of truth until PWA ACK. The live session
+        # only receives an opaque availability signal, then PULLs ciphertext.
+        delivered = False
+        for session in list(self._local_delivery_sessions.get(locator_handle, set())):
+            try:
+                await session.send_json({
+                    "type": "DELIVERY_AVAILABLE",
+                    "locator_handle": locator_handle,
+                    "delivery_id": packet.get("id"),
+                })
+                delivered = True
+            except Exception:
+                self.detach_local_delivery_session(session)
+        return delivered
 
     async def _dispatch_mesh_packet(
         self,

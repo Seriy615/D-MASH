@@ -56,6 +56,8 @@ async def dmp_client(websocket: WebSocket):
         "nonce": nonce,
         "expires_in": AUTH_TIMEOUT_SECONDS,
     })
+    state = None
+    session_locator_handles = set()
     try:
         raw = await asyncio.wait_for(websocket.receive_text(), AUTH_TIMEOUT_SECONDS)
         auth = json.loads(raw)
@@ -105,6 +107,8 @@ async def dmp_client(websocket: WebSocket):
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
                     continue
                 await websocket.send_json({"type": "REGISTER_INBOUND_LOCATOR_RESULT", "request_id": request_id, "locator_handle": handle})
+                state.node.transport.attach_local_delivery_session(handle, websocket)
+                session_locator_handles.add(handle)
             elif operation == "UNREGISTER_INBOUND_LOCATOR":
                 locator = request.get("locator")
                 if not isinstance(locator, str) or not locator:
@@ -140,6 +144,9 @@ async def dmp_client(websocket: WebSocket):
                 if not isinstance(locator_handle, str) or not locator_handle:
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_LOCATOR_HANDLE"})
                     continue
+                if locator_handle not in session_locator_handles:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "LOCATOR_NOT_REGISTERED"})
+                    continue
                 packets = await state.node.transport.pull(locator_handle)
                 await websocket.send_json({"type": "PULL_RESULT", "request_id": request_id, "packets": packets})
             elif operation == "ACK":
@@ -147,9 +154,14 @@ async def dmp_client(websocket: WebSocket):
                 if not isinstance(delivery_id, str) or not delivery_id:
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_DELIVERY_ID"})
                     continue
-                acknowledged = await state.node.transport.ack(delivery_id)
+                acknowledged = await state.node.transport.ack(
+                    delivery_id, allowed_locator_handles=session_locator_handles,
+                )
                 await websocket.send_json({"type": "ACK_RESULT", "request_id": request_id, "acknowledged": acknowledged})
             else:
                 await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "UNSUPPORTED_OPERATION"})
     except (WebSocketDisconnect, TimeoutError, json.JSONDecodeError):
         return
+    finally:
+        if state and state.node:
+            state.node.transport.detach_local_delivery_session(websocket)

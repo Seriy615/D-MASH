@@ -204,6 +204,10 @@ const NodeManager = {
             this.socket.send(JSON.stringify({ type: 'STATUS', request_id: crypto.randomUUID() }));
             this.armStoredRoutes();
             this.startPings();
+        } else if (message.type === 'DELIVERY_AVAILABLE') {
+            // The ciphertext stays in the Node mailbox until ACK. This signal
+            // merely wakes the authenticated local PWA to perform PULL.
+            window.dispatchEvent(new CustomEvent('dmash-delivery-available', { detail: message }));
         } else if (message.type === 'PONG') {
             const started = this.pendingPings.get(message.request_id);
             if (started) {

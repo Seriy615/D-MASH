@@ -36,6 +36,14 @@ class FakeNode:
         })
 
 
+class FakeDeliverySession:
+    def __init__(self):
+        self.messages = []
+
+    async def send_json(self, message):
+        self.messages.append(message)
+
+
 class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         fd, self.path = tempfile.mkstemp(prefix="dmash-transport-", suffix=".db")
@@ -141,6 +149,21 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(await self.db.get_best_route_alias(keep_handle))
         self.assertEqual(await self.transport.pull(locator_handle), [])
         self.assertEqual([packet["id"] for packet in await self.transport.pull(keep_handle)], ["keep"])
+
+    async def test_active_local_session_gets_opaque_delivery_signal_before_pull(self):
+        locator = "online-pwa-locator"
+        handle = await self.transport.register_inbound_locator(locator)
+        await self.db.add_route_alias(handle, "LOCAL", 0, is_local=True)
+        session = FakeDeliverySession()
+        self.transport.attach_local_delivery_session(handle, session)
+
+        result = await self.transport.submit_envelope(locator, {"packet_id": "online-delivery", "ciphertext": "sealed"})
+
+        self.assertEqual(result.state, "DELIVERED_TO_DESTINATION_PWA_SESSION")
+        self.assertEqual(session.messages, [{
+            "type": "DELIVERY_AVAILABLE", "locator_handle": handle, "delivery_id": "online-delivery",
+        }])
+        self.assertEqual([packet["id"] for packet in await self.transport.pull(handle)], ["online-delivery"])
 
     async def test_destination_probe_records_candidate_hops_plus_one(self):
         packet = {

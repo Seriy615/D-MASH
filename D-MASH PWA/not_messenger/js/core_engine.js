@@ -299,6 +299,7 @@ const Core = {
                 });
             }
         });
+        window.addEventListener('dmash-delivery-available', () => Core.syncNetwork());
 
         const msgInp = document.getElementById('msgInput');
         msgInp.addEventListener('keydown', (e) => {
