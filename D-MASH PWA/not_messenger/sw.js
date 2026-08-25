@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user data lives.
  */
 
-const RELEASE_ID = 'm1.5-legacy-stabilization-20260825.1';
+const RELEASE_ID = 'm1.5-legacy-stabilization-20260825.2';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',
@@ -19,6 +19,9 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => cache.addAll(CORE_ASSETS))
+            // This release is a compatibility rollback. Activate the fully
+            // cached legacy shell without requiring the user to clear data.
+            .then(() => self.skipWaiting())
     );
 });
 
