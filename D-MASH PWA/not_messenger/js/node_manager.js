@@ -114,6 +114,11 @@ const NodeManager = {
         for (const item of (data.nodes || [])) this.add(item.url, item.label);
         return this.endpoints;
     },
+    async autoConnect() {
+        if (!this.endpoints.length) await this.loadOriginList();
+        if (!this.active && this.endpoints.length) this.select(this.endpoints[0].url);
+        if (this.active && this.state === 'disconnected') await this.connect();
+    },
     select(url) {
         const endpoint = this.endpoints.find(item => item.url === url);
         if (!endpoint) throw new Error('Unknown node endpoint');

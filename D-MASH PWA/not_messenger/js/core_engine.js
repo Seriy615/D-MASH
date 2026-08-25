@@ -313,6 +313,12 @@ const Core = {
         if (fileInp) fileInp.onchange = (e) => Core.handleFileSelect(e);
 
         // 5. Запускаем процессы
+        try {
+            await NodeManager.autoConnect();
+            this.shmon("INFO", `Entry Node auto-connect: ${NodeManager.active?.label || 'selected node'}`);
+        } catch (error) {
+            this.shmon("WARN", `Entry Node auto-connect failed: ${error.message}`);
+        }
         await Core.renderPeers();
         Core.syncNetwork(); 
         if (Core.syncInterval) clearInterval(Core.syncInterval);
@@ -1086,6 +1092,11 @@ const Core = {
         // Проверка на дубли
         const existing = await Storage.getBox('blind_peers', aliasL1);
         if (existing) {
+            if (pairing?.contribution) {
+                existing.pairingContribution = pairing.contribution;
+                await Storage.putBox('blind_peers', { alias: aliasL1, data: existing });
+                await this.ensureAutomaticMeshRoute(cleanId, pairing.contribution);
+            }
             return this.customAlert("ИНФО", "Этот пацан уже прописан в хате.");
         }
 
