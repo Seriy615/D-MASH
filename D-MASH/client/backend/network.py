@@ -10,15 +10,17 @@ import base64
 # Добавьте в начало
 from dsp import AudioProcessor
 from crypto import NodeCryptoManager # <-- Импортируем для статических методов
+from transport import NodeTransportService
 HANDSHAKE_TIMEOUT = 10.0
 class P2PNode:
     def __init__(self, system_db: DatabaseManager):
         self.system_db = system_db
-        self.active_connections = {} 
+        self.active_connections = {}
         self.active_user_id = None
         self.active_user_db = None
         self.active_crypto = None
         self.connection_tasks = set()
+        self.transport = NodeTransportService(system_db, self)
 
     def set_active_user(self, user_id, user_db, crypto):
         self.active_user_id = user_id
@@ -49,7 +51,7 @@ class P2PNode:
             uri = f"ws://{address}"
             ws = await ws_connect(uri, open_timeout=5, max_size=10*1024*1024, ping_timeout=60, ping_interval=20)
             my_node_id = self.system_db.node_crypto.node_id
-                
+
                 # --- Шаг 1: Отправляем challenge ---
             challenge = str(uuid.uuid4())
             handshake_init_payload = json.dumps({"id": my_node_id, "challenge": challenge})
@@ -59,7 +61,7 @@ class P2PNode:
                 # --- Шаг 2: Ждем ответ с подписью ---
             response_json = await asyncio.wait_for(ws.recv(), timeout=HANDSHAKE_TIMEOUT)
             response_data = json.loads(response_json)
-                
+
             peer_id = response_data.get("id")
             signature = response_data.get("signature")
 
@@ -95,7 +97,7 @@ class P2PNode:
         if ws is not None:
             await ws.close()
         return False
-    
+
     async def _handle_incoming(self, websocket):
         """
         Обрабатывает входящее соединение с криптографическим рукопожатием.
@@ -116,12 +118,12 @@ class P2PNode:
             if not peer_id or not challenge or peer_id == my_node_id:
                 raise ValueError("Invalid handshake request")
             print(f"🤝 [P2P IN] <- {peer_id[:8]}: Received handshake challenge...")
-            
+
             # --- Шаг 2: Верификация PoW ---
             if not NodeCryptoManager.verify_node_pow(peer_id):
                 print(f"☠️ [P2P REJECT] Incoming peer {peer_id[:8]} failed PoW verification!")
                 raise ConnectionRefusedError("PoW verification failed")
-            
+
             # --- Шаг 3: Подписываем challenge и отправляем ответ ---
             signature = self.system_db.node_crypto.sign_challenge(challenge)
             response_payload = json.dumps({
@@ -134,9 +136,9 @@ class P2PNode:
             print(f"✅ [P2P] Handshake with {peer_id[:8]} successful!")
             self.active_connections[peer_id] = websocket
             await self.system_db.add_neighbor(peer_id, "incoming")
-            
+
             await self._listen_socket(websocket, peer_id)
-        
+
         except asyncio.TimeoutError:
              if websocket.open: await websocket.close(code=1008, reason="Handshake timeout")
         except (ConnectionRefusedError, ValueError) as e:
@@ -157,6 +159,23 @@ class P2PNode:
                 del self.active_connections[peer_id]
             print(f"🔌 [P2P] Connection with {peer_id[:8]} closed.")
 
+    async def enqueue_transport_packet(self, packet, *, next_hop_id: str | None = None, exclude_peer_id: str | None = None):
+        payload = json.dumps(packet)
+        if next_hop_id:
+            nh_hash = self.system_db.node_crypto.get_blind_hash(next_hop_id)
+            ex_hash = self.system_db.node_crypto.get_blind_hash(exclude_peer_id) if exclude_peer_id else None
+            await self.system_db.conn.execute(
+                "INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) VALUES (?, ?, ?, ?)",
+                (packet["id"], nh_hash, payload, ex_hash),
+            )
+        else:
+            ex_hash = self.system_db.node_crypto.get_blind_hash(exclude_peer_id) if exclude_peer_id else None
+            await self.system_db.conn.execute(
+                "INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) VALUES (?, NULL, ?, ?)",
+                (packet["id"], payload, ex_hash),
+            )
+        await self.system_db.conn.commit()
+
     async def _process_envelope(self, envelope_json: str, from_peer: str):
         try:
             envelope = json.loads(envelope_json)
@@ -171,6 +190,12 @@ class P2PNode:
                 # Регистрируем пакет (внутри используется хеширование ID)
                 is_new = await self.system_db.mark_packet_seen(pkt_id)
 
+                if pkt_type == "DMP_C_PROBE":
+                    await self._handle_dmp_c_probe(packet, from_peer, is_new)
+                elif pkt_type == "DMP_C_DATA":
+                    if is_new:
+                        await self._handle_dmp_c_data(packet, from_peer)
+
                 if pkt_type == "PROBE":
                     await self._handle_probe(packet, from_peer, is_new)
                 elif pkt_type == "DATA":
@@ -181,15 +206,15 @@ class P2PNode:
 
     async def _handle_probe(self, packet, from_peer, is_new_probe):
         probe_id = packet['id']
-        route_id = packet['route_id']   
-        rev_id = packet['rev_id']       
+        route_id = packet['route_id']
+        rev_id = packet['rev_id']
         target_hash = packet['target_hash']
         metric = packet['metric']
 
         # 1. ЗАПИСЬ МАРШРУТА
         # Проверяем, есть ли уже маршрут назад
         existing_rev = await self.system_db.get_best_route(rev_id)
-        
+
         # Если маршрута нет или он не локальный, обновляем таблицу
         if not (existing_rev and existing_rev['is_local']):
             # BLIND STORAGE: add_route сама зашифрует данные
@@ -204,51 +229,89 @@ class P2PNode:
                         try:
                             sender_data = json.loads(sender_id_json)
                             sender_id = sender_data.get('sid')
-                            
+
                             sig_data = sender_id + self.active_user_id
                             if self.active_crypto.verify_sig(sender_id, sig_data, packet['sig']):
                                 print(f"🎯 [PROBE] Validated source: {sender_id[:8]}")
-                                
+
                                 # Боб метит ВХОДЯЩИЙ канал как LOCAL
                                 await self.system_db.add_route(route_id, "LOCAL", 0, is_local=True, remote_user_id=sender_id)
 
                                 if packet.get('content'):
                                     await self._deliver_to_active_user(packet, sender_id)
-                                
+
                                 if existing_rev and existing_rev['is_local']:
-                                    return 
+                                    return
 
                                 await self._send_probe_response(sender_id)
                         except Exception as e:
                             print(f"Probe validation error: {e}")
-                return 
+                return
 
         # 3. РЕТРАНСЛЯЦИЯ
         if is_new_probe and packet['ttl'] > 0:
             packet['ttl'] -= 1
             packet['metric'] += 1
-            
+
             # BLIND OUTBOX: Хешируем exclude_peer перед записью
             ex_hash = self.system_db.node_crypto.get_blind_hash(from_peer)
-            
+
             await self.system_db.conn.execute("""
-                INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) 
+                INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash)
                 VALUES (?, NULL, ?, ?)
             """, (probe_id, json.dumps(packet), ex_hash))
+            await self.system_db.conn.commit()
+
+    async def _handle_dmp_c_probe(self, packet, from_peer, is_new_probe):
+        # The route alias is already blinded at the client boundary. A local
+        # binding is an edge, so this branch must not flood the probe onward.
+        is_destination = await self.system_db.is_armed_locator_alias(packet.get("route_alias"))
+        await self.transport.receive_probe(packet, from_peer, is_destination=is_destination)
+        if is_destination:
+            return
+        if not is_new_probe or packet.get("ttl", 0) <= 0:
+            return
+        next_packet = dict(packet)
+        next_packet["hops"] = int(packet.get("hops", 0)) + 1
+        next_packet["ttl"] = int(packet.get("ttl", 0)) - 1
+        await self.system_db.conn.execute(
+            "INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) VALUES (?, NULL, ?, ?)",
+            (packet["id"], json.dumps(next_packet), self.system_db.node_crypto.get_blind_hash(from_peer)),
+        )
+        await self.system_db.conn.commit()
+
+    async def _handle_dmp_c_data(self, packet, from_peer):
+        route_alias = packet.get("route_alias")
+        if not route_alias:
+            return
+        route = await self.system_db.get_best_route_alias(route_alias)
+        if not route:
+            return
+        if route.get("is_local"):
+            await self.transport.receive_data(packet, from_peer)
+            return
+        next_hop = route["next_hop_id"]
+        if next_hop in self.active_connections:
+            nh_hash = self.system_db.node_crypto.get_blind_hash(next_hop)
+            ex_hash = self.system_db.node_crypto.get_blind_hash(from_peer)
+            await self.system_db.conn.execute(
+                "INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) VALUES (?, ?, ?, ?)",
+                (packet['id'], nh_hash, json.dumps(packet), ex_hash),
+            )
             await self.system_db.conn.commit()
 
     async def _send_probe_response(self, requester_id):
         """Боб отправляет свою пробу Алисе в ответ"""
         print(f"🔄 [PROBE] Sending symmetric response to {requester_id[:8]}")
-        
+
         route_id = self.active_crypto.get_route_id(self.active_user_id, requester_id)
         rev_id = self.active_crypto.get_route_id(requester_id, self.active_user_id)
-        
+
         signature = self.active_crypto.sign_data(self.active_user_id + requester_id)
         auth_payload = self.active_crypto.encrypt_for_probe(requester_id, json.dumps({"sid": self.active_user_id}))
-        
+
         e2e_content = self.active_crypto.encrypt_message(requester_id, "🤝 [System] Connection established")
-        
+
         probe_pkt_id = str(uuid.uuid4())
         probe_packet = {
             "type": "PROBE",
@@ -262,13 +325,13 @@ class P2PNode:
             "sig": signature,
             "content": e2e_content
         }
-        
+
         # Боб метит СВОЙ исходящий канал как LOCAL
         await self.system_db.add_route(route_id, "LOCAL", 0, is_local=True, remote_user_id=requester_id)
         await self.system_db.mark_packet_seen(probe_pkt_id)
-        
+
         await self.system_db.conn.execute("""
-            INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) 
+            INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash)
             VALUES (?, NULL, ?, NULL)
         """, (probe_pkt_id, json.dumps(probe_packet)))
         await self.system_db.conn.commit()
@@ -276,11 +339,11 @@ class P2PNode:
     async def _handle_data(self, packet, from_peer):
         """Пересылка данных"""
         route_id = packet.get('route_id')
-        
+
         # BLIND ROUTING: Получаем расшифрованный лучший маршрут
         route = await self.system_db.get_best_route(route_id)
-        
-        if not route: return 
+
+        if not route: return
 
         if route['is_local']:
             # Если маршрут локальный, пытаемся доставить юзеру
@@ -288,7 +351,7 @@ class P2PNode:
             # Но надежнее достать sender_id из самого пакета при расшифровке
             # Здесь мы просто передаем пакет на попытку расшифровки
             # (sender_id будет извлечен внутри _deliver_to_active_user из подписи)
-            
+
             # ВАЖНО: В текущей реализации _deliver_to_active_user требует sender_id
             # Но мы его не знаем, пока не расшифруем.
             # Поэтому мы пробуем расшифровать, перебирая известных контактов или (в будущем)
@@ -296,13 +359,13 @@ class P2PNode:
             # В Phase 1 мы упростим: мы знаем remote_user_id из таблицы маршрутизации (если сохранили)
             # Но в blind_routes мы сохраняли remote_user_id только для LOCAL маршрутов?
             # Да, в _handle_probe мы делали: add_route(..., remote_user_id=sender_id)
-            
+
             # Однако get_best_route возвращает dict. Проверим, есть ли там remote_user_id?
             # В database.py мы его не возвращали явно в dict, надо проверить.
             # В database.py get_best_route возвращает next_hop_id, metric, is_local, prev_hop_id.
             # remote_user_id там нет. Это баг Phase 1, который мы исправим позже.
             # Пока попробуем доставить, используя prev_hop_id как hint, или просто перебором.
-            
+
             # Временный хак: передаем packet, а sender_id извлечем внутри
             # Но сигнатура метода требует sender_id.
             # Исправим это: передадим None, а метод пусть разбирается.
@@ -320,16 +383,16 @@ class P2PNode:
                 # доставка будет выполнена при следующем входе пользователя.
                 await self.system_db.save_to_mailbox(json.dumps(packet))
             return
-        
+
         # Если маршрут транзитный
         next_hop = route['next_hop_id']
         if next_hop in self.active_connections:
             # BLIND OUTBOX: Хешируем next_hop и exclude_peer
             nh_hash = self.system_db.node_crypto.get_blind_hash(next_hop)
             ex_hash = self.system_db.node_crypto.get_blind_hash(from_peer)
-            
+
             await self.system_db.conn.execute("""
-                INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) 
+                INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash)
                 VALUES (?, ?, ?, ?)
             """, (packet['id'], nh_hash, json.dumps(packet), ex_hash))
             await self.system_db.conn.commit()
@@ -342,11 +405,11 @@ class P2PNode:
             raw_content = packet.get("content")
             delivery_tag = None
             ciphertext = raw_content
-            
+
             # --- ПРОВЕРКА НА СПЕЦ-ПРОТОКОЛЫ (SIMULATION) ---
             sim_type = None
             sim_data = None
-            
+
             # Пытаемся распарсить JSON, вдруг это PCP/GVP или новый формат с тегом
             try:
                 if isinstance(raw_content, str) and raw_content.strip().startswith('{'):
@@ -368,7 +431,7 @@ class P2PNode:
                         row = await cursor.fetchone()
                         if row: candidates.append(row['user_id'])
                 except: pass
-            
+
             if not candidates:
                 if sender_id_hint: candidates.append(sender_id_hint)
                 else:
@@ -380,7 +443,7 @@ class P2PNode:
                 return False
 
             # --- ОБРАБОТКА В ЗАВИСИМОСТИ ОТ ТИПА ---
-            
+
             decrypted_content_for_db = None
             real_sender = None
 
@@ -388,34 +451,34 @@ class P2PNode:
                 if sim_type == "PCP":
                     # --- PHANTOM CALL (HONEST MODE) ---
                     print(f"🔍 [PCP] Receiving MFSK Audio from {sid}...")
-                    
+
                     # 1. Достаем аудио из пакета
                     audio_b64 = sim_data.get("audio_preview", "")
                     if not audio_b64:
                         print("❌ [PCP] No audio data found!")
                         continue
-                        
+
                     audio_bytes = base64.b64decode(audio_b64)
-                    
+
                     # 2. ЗАПУСКАЕМ ЧЕСТНЫЙ ДЕКОДЕР (FFT)
                     # Это тяжелая операция, запускаем в пуле процессов
                     import core
                     loop = asyncio.get_running_loop()
-                    
+
                     decoded_text = await loop.run_in_executor(
                         core.state.process_pool,
                         AudioProcessor.decode_pcp_audio,
                         audio_bytes
                     )
-                    
+
                     if decoded_text:
                         print(f"✅ [PCP] Successfully decoded via FFT: '{decoded_text}'")
                         real_sender = sid
-                        
+
                         # 3. (Опционально) Если текст был зашифрован T-Ratchet, расшифровываем его
                         # В текущей реализации api.py мы кладем в звук ИСХОДНЫЙ текст для наглядности.
                         # Если бы мы клали шифротекст, тут надо было бы вызвать decrypt_pcp_payload(decoded_text)
-                        
+
                         ui_json = {
                             "protocol": "PCP",
                             "text": decoded_text, # Результат работы FFT!
@@ -440,24 +503,24 @@ class P2PNode:
                         salt = sim_data["salt"]
                         base_key = self.active_crypto.get_offline_key(sid, 0)
                         session_key = self.active_crypto.get_gvp_session_key(base_key, salt)
-                        
+
                         # 3. Импорт Core (для пула процессов)
                         import core
-                        
+
                         print("   > Starting DSP process...") # DEBUG
                         loop = asyncio.get_running_loop()
-                        
+
                         # 4. Запуск DSP
                         restored_wav = await loop.run_in_executor(
                             core.state.process_pool,
                             AudioProcessor.scramble_audio,
-                            scrambled_wav, 
-                            session_key, 
-                            False 
+                            scrambled_wav,
+                            session_key,
+                            False
                         )
-                        
+
                         print(f"   > DSP finished. Result size: {len(restored_wav)}") # DEBUG
-                        
+
                         if not restored_wav:
                             print("❌ [GVP ERROR] DSP returned empty bytes! (FFMPEG failed?)")
                             continue
@@ -466,19 +529,19 @@ class P2PNode:
                         ui_json = {
                             "protocol": "GVP",
                             "salt": salt,
-                            "scrambled": sim_data["blob"], 
-                            "restored": base64.b64encode(restored_wav).decode('utf-8') 
+                            "scrambled": sim_data["blob"],
+                            "restored": base64.b64encode(restored_wav).decode('utf-8')
                         }
                         decrypted_content_for_db = json.dumps(ui_json)
                         print("✅ [GVP SUCCESS] JSON prepared for DB") # DEBUG
                         break
-                        
+
                     except Exception as e:
                         import traceback
                         print(f"❌ [GVP CRITICAL FAIL]: {e}")
                         traceback.print_exc() # Покажет полную ошибку в консоли
                         continue
-                    
+
                 else:
                     # --- STANDARD E2EE ---
                     res = self.active_crypto.decrypt_message(sid, ciphertext)
@@ -495,17 +558,17 @@ class P2PNode:
             msg_uuid = packet.get('id')
             try:
                 local_content = self.active_crypto.encrypt_db_field(decrypted_content_for_db)
-                
+
                 await self.active_user_db.conn.execute("""
-                    INSERT INTO messages (packet_id, chat_id, sender_id, content, timestamp, is_outgoing, is_read) 
+                    INSERT INTO messages (packet_id, chat_id, sender_id, content, timestamp, is_outgoing, is_read)
                     VALUES (?, ?, ?, ?, ?, 0, 0)
                 """, (msg_uuid, real_sender, real_sender, local_content, datetime.now().isoformat()))
-                
+
                 await self.active_user_db.conn.execute("""
-                    INSERT INTO contacts (user_id, last_seen) VALUES (?, ?) 
+                    INSERT INTO contacts (user_id, last_seen) VALUES (?, ?)
                     ON CONFLICT(user_id) DO UPDATE SET last_seen=excluded.last_seen
                 """, (real_sender, datetime.now().isoformat()))
-                
+
                 await self.active_user_db.conn.commit()
                 print(f"📨 [MAIL] Delivered {sim_type or 'TEXT'} from {real_sender[:8]}")
                 return True

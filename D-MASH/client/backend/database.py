@@ -274,6 +274,15 @@ class DatabaseManager:
         ) as cursor:
             return await cursor.fetchone() is not None
 
+    async def is_armed_locator_alias(self, locator_alias: str) -> bool:
+        """Check a node-local blind alias without accepting or storing a raw locator."""
+        if not locator_alias:
+            return False
+        async with self.conn.execute(
+            "SELECT 1 FROM local_bindings WHERE binding_hash = ?", (locator_alias,)
+        ) as cursor:
+            return await cursor.fetchone() is not None
+
     async def add_route_alias(self, route_alias: str, next_hop_id: str, hops: int, *, is_local: bool = False, health: float = 0.0, expires_at: float | None = None):
         """Store a node-local blind route alias and keep the shortest candidate."""
         if not route_alias or not next_hop_id or hops < 0:

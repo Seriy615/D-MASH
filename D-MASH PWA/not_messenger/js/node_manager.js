@@ -20,7 +20,7 @@ const NodeManager = {
     endpoints: [], active: null, socket: null,
     transportMode: 'mesh',
     state: 'disconnected', error: null, reconnectAttempt: 0, reconnectTimer: null,
-    pingTimer: null, pendingPings: new Map(), lastLatencyMs: null, lastConnectedAt: null,
+    pingTimer: null, pendingPings: new Map(), pendingRequests: new Map(), lastLatencyMs: null, lastConnectedAt: null,
 
     load() {
         try {
@@ -119,6 +119,11 @@ const NodeManager = {
                 this.lastLatencyMs = Math.round(performance.now() - started);
                 this.setState('connected');
             }
+        } else if (message.request_id && this.pendingRequests.has(message.request_id)) {
+            const pending = this.pendingRequests.get(message.request_id);
+            this.pendingRequests.delete(message.request_id);
+            if (message.type === 'ERROR') pending.reject(new Error(message.code || 'node error'));
+            else pending.resolve(message);
         } else if (message.type === 'ERROR') this.setState('error', message.code || 'node error');
     },
     toBase64(bytes) {
@@ -179,10 +184,50 @@ const NodeManager = {
         this.pingTimer = null;
         this.pendingPings.clear();
     },
+    request(type, payload = {}) {
+        if (this.state !== 'connected' || this.socket?.readyState !== WebSocket.OPEN) {
+            return Promise.reject(new Error('D-MASH node is not connected'));
+        }
+        const requestId = crypto.randomUUID();
+        const message = { ...payload, type, request_id: requestId };
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                this.pendingRequests.delete(requestId);
+                reject(new Error(`${type} timed out`));
+            }, 15000);
+            this.pendingRequests.set(requestId, {
+                resolve: value => { clearTimeout(timeout); resolve(value); },
+                reject: error => { clearTimeout(timeout); reject(error); }
+            });
+            try { this.socket.send(JSON.stringify(message)); }
+            catch (error) {
+                clearTimeout(timeout); this.pendingRequests.delete(requestId); reject(error);
+            }
+        });
+    },
+    registerInboundLocator(locator) {
+        return this.request('REGISTER_INBOUND_LOCATOR', { locator });
+    },
+    startProbe(routeAlias, backRouteAlias, options = {}) {
+        return this.request('START_PROBE', {
+            route_alias: routeAlias, back_route_alias: backRouteAlias, ...options
+        });
+    },
+    submitEnvelope(routeAlias, envelope) {
+        return this.request('SUBMIT_ENVELOPE', { route_alias: routeAlias, envelope });
+    },
+    pull(locatorHandle) {
+        return this.request('PULL', { locator_handle: locatorHandle });
+    },
+    ack(deliveryId) {
+        return this.request('ACK', { delivery_id: deliveryId });
+    },
     disconnect(reconnect = false) {
         clearTimeout(this.reconnectTimer); this.reconnectTimer = null;
         this.stopPings();
         const socket = this.socket; this.socket = null;
+        for (const pending of this.pendingRequests.values()) pending.reject(new Error('D-MASH node disconnected'));
+        this.pendingRequests.clear();
         if (socket) socket.close(1000, 'client disconnect');
         this.setState('disconnected');
         if (reconnect) this.scheduleReconnect();

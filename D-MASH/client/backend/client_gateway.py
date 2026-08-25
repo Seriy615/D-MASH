@@ -9,6 +9,7 @@ import asyncio
 import json
 import secrets
 import time
+from dataclasses import asdict
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from nacl.exceptions import BadSignatureError
@@ -71,7 +72,10 @@ async def dmp_client(websocket: WebSocket):
             "version": VERSION,
             "node_id": state.node_crypto.node_id if state.node_crypto else None,
             "server_time": int(time.time()),
-            "capabilities": ["PING", "STATUS"],
+            "capabilities": [
+                "PING", "STATUS", "REGISTER_INBOUND_LOCATOR", "START_PROBE",
+                "SUBMIT_ENVELOPE", "PULL", "ACK",
+            ],
         })
 
         while True:
@@ -87,6 +91,46 @@ async def dmp_client(websocket: WebSocket):
                     "node_id": state.node_crypto.node_id if state.node_crypto else None,
                     "mesh_peers": len(state.node.active_connections) if state.node else 0,
                 })
+            elif operation == "REGISTER_INBOUND_LOCATOR":
+                locator = request.get("locator")
+                if not isinstance(locator, str) or not locator:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_LOCATOR"})
+                    continue
+                handle = await state.node.transport.register_inbound_locator(locator)
+                await websocket.send_json({"type": "REGISTER_INBOUND_LOCATOR_RESULT", "request_id": request_id, "locator_handle": handle})
+            elif operation == "START_PROBE":
+                route_alias = request.get("route_alias")
+                back_route_alias = request.get("back_route_alias")
+                if not isinstance(route_alias, str) or not isinstance(back_route_alias, str) or not route_alias or not back_route_alias:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_ROUTE_HANDLE"})
+                    continue
+                submission = await state.node.transport.start_probe(
+                    route_alias, back_route_alias,
+                    hops=request.get("hops", 0), ttl=request.get("ttl", 20),
+                )
+                await websocket.send_json({"type": "START_PROBE_RESULT", "request_id": request_id, **asdict(submission)})
+            elif operation == "SUBMIT_ENVELOPE":
+                route_alias = request.get("route_alias")
+                envelope = request.get("envelope")
+                if not isinstance(route_alias, str) or not route_alias or not isinstance(envelope, dict):
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_ENVELOPE"})
+                    continue
+                submission = await state.node.transport.submit_envelope(route_alias, envelope)
+                await websocket.send_json({"type": "SUBMIT_ENVELOPE_RESULT", "request_id": request_id, **asdict(submission)})
+            elif operation == "PULL":
+                locator_handle = request.get("locator_handle")
+                if not isinstance(locator_handle, str) or not locator_handle:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_LOCATOR_HANDLE"})
+                    continue
+                packets = await state.node.transport.pull(locator_handle)
+                await websocket.send_json({"type": "PULL_RESULT", "request_id": request_id, "packets": packets})
+            elif operation == "ACK":
+                delivery_id = request.get("delivery_id")
+                if not isinstance(delivery_id, str) or not delivery_id:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_DELIVERY_ID"})
+                    continue
+                acknowledged = await state.node.transport.ack(delivery_id)
+                await websocket.send_json({"type": "ACK_RESULT", "request_id": request_id, "acknowledged": acknowledged})
             else:
                 await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "UNSUPPORTED_OPERATION"})
     except (WebSocketDisconnect, TimeoutError, json.JSONDecodeError):
