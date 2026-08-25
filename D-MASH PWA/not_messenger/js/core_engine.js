@@ -212,10 +212,8 @@ const Core = {
         const ws = document.getElementById('workspace');
         ws.style.display = 'flex'; // Включаем Flex, чтоб растянулся
         
-        // 3. Рисуем внутрянку. Новый shell сохраняет обязательные DOM-точки Core.
-        if (window.DMashApp?.mountWorkspace) {
-            window.DMashApp.mountWorkspace(this);
-        } else {
+        // 3. Рисуем проверенную legacy-оболочку. Новая оболочка отключена,
+        // пока не пройдёт отдельную browser acceptance-проверку.
         ws.innerHTML = `
             <div class="terminal-grid" id="main-grid" style="width:100%; height:100%; display:flex;">
                 <div class="sidebar">
@@ -227,7 +225,7 @@ const Core = {
                     <div class="nav-tools">
                         <button onclick="Core.openScanner()">[ QR ]</button>
                         <button onclick="Core.addPeerPrompt()">[ + ]</button>
-                        <button onclick="Core.openSettings()">[ НАСТРОЙКИ ]</button>
+                        <button class="settings-tool" type="button" aria-label="Настройки" title="Настройки" onclick="Core.openSettings()">⚙</button>
                     </div>
                     <div id="contact-list" class="peer-list"></div>
                     <button class="exit-btn" onclick="Core.terminateSession()">[ ВЫХОД ]</button>
@@ -253,7 +251,6 @@ const Core = {
                     </div>
                 </div>
             </div>`;
-        }
 
         // 4. Вешаем события (как и раньше)
         const chatLog = document.getElementById('log');
@@ -796,7 +793,7 @@ const Core = {
         if (peers.length === 0) {
             const empty = document.createElement('p');
             empty.className = 'dmash-muted';
-            empty.textContent = window.DMashI18n?.t('chats.emptyTitle') || 'No conversations yet';
+            empty.textContent = 'НЕТ СВЯЗЕЙ';
             list.append(empty);
             return;
         }
@@ -819,9 +816,7 @@ const Core = {
             const copy = document.createElement('div');
             const name = document.createElement('b');
             name.textContent = peer.name || (window.DMashI18n?.t('contacts.unverified') || 'Contact');
-            const identifier = document.createElement('small');
-            identifier.textContent = `${String(peer.id).substring(0, 8)}…`;
-            copy.append(name, identifier);
+            copy.append(name);
 
             const remove = document.createElement('button');
             remove.className = 'chat-del-btn';
@@ -1748,7 +1743,7 @@ const Core = {
                     Core.customAlert("УСПЕХ", hardwareKey ? "Ключ прибит к железу Knox!" : "Палец привязан (Software mode).");
                 }
             } catch (e) { Core.customAlert("ОТКАЗ", "Knox не ответил: " + e.message); }
-        });
+        }, { inputType: 'password' });
     },
     // Core.biometricLogin     - Вход в аккаунт через палец/лицо без ввода пароля
     biometricLogin: async function(id) {
@@ -1823,7 +1818,7 @@ const Core = {
             const encryptedKey = await Core.encryptForBio(key); // Тоже шифруем Мастер-кодом
             await Storage.updateAccountAuth(Core.activeIdentity, { lazy: true, lazy_key: encryptedKey });
             Core.customAlert("ГОТОВО", "Теперь вход для этого акка — в один тап.");
-        });
+        }, { inputType: 'password' });
     },
     // Core.lazyLogin          - Вход в один тап через Master PIN
     lazyLogin: async function(id) {
@@ -1903,14 +1898,11 @@ const Core = {
         const h = `
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <button class="sys-modal-btn" onclick="Core.setupTelegram()">✈️ ПРИВЯЗАТЬ ТЕЛЕГРАМ-МАЯК</button>
-                <button class="sys-modal-btn" onclick="NodeManager.renderSettings()">🌐 D-MASH NODES: ${window.NodeManager?.state || 'unavailable'}</button>
+                <button class="sys-modal-btn" onclick="NodeManager.renderSettings()">🌐 ПОДКЛЮЧЕНИЕ К УЗЛУ</button>
                 <button class="sys-modal-btn" onclick="Core.toggleFlipper()">ФЛИП-ЛОК: ${flipOff ? 'ВЫКЛ' : 'ВКЛ'}</button>
                 <button class="sys-modal-btn" onclick="Core.toggleAccountList()">СПИСОК АККАУНТОВ: ${hideList ? 'СКРЫТ' : 'ВИДЕН'}</button>
-                <button class="sys-modal-btn primary" onclick="Core.saveActiveAccountToRegistry()">💾 СОХРАНИТЬ В РЕЕСТРЕ</button>
                 <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🧬 ПРИВЯЗАТЬ ОТПЕЧАТОК/FACE</button>
-                <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🔩 ПРИБИТЬ К ЖЕЛЕЗУ</button>
                 <button class="sys-modal-btn" onclick="Core.setupLazyLogin()">💤 ВКЛЮЧИТЬ БЕСПАРОЛЬНЫЙ ВХОД</button>
-                <button class="sys-modal-btn primary" onclick="Core.openAccountManager()">👥 РЕЕСТР УСТРОЙСТВА</button>
                 <button class="sys-modal-btn" onclick="Core.changePinFlow('M')">СМЕНИТЬ MASTER-КОД</button>
                 <button class="sys-modal-btn danger" onclick="sys.wipe()">ПОЛНАЯ ОЧИСТКА</button>
                 <button class="sys-modal-btn primary" onclick="Core.closeModal()">ЗАКРЫТЬ</button>
@@ -2112,9 +2104,13 @@ const Core = {
     // Core.customAlert/Prompt/Confirm - Кастомные диалоги в стиле системы
     customAlert: (t, tx) => Core.openModal(t, `<div>${tx}</div><button class="sys-modal-btn primary" onclick="Core.closeModal()">OK</button>`),
     
-    customPrompt: (t, tx, cb) => {
-        Core.openModal(t, `<div>${tx}</div><input type="text" id="p-in" class="sys-modal-input"><button class="sys-modal-btn primary" id="p-ok">OK</button><button class="sys-modal-btn" onclick="Core.closeModal()">ОТМЕНА</button>`);
-        document.getElementById('p-ok').onclick = () => { const v = document.getElementById('p-in').value; Core.closeModal(); cb(v); };
+    customPrompt: (t, tx, cb, options = {}) => {
+        const inputType = options.inputType === 'password' ? 'password' : 'text';
+        Core.openModal(t, `<div>${tx}</div><input type="${inputType}" id="p-in" class="sys-modal-input"><button class="sys-modal-btn primary" id="p-ok">OK</button><button class="sys-modal-btn" onclick="Core.closeModal()">ОТМЕНА</button>`);
+        const input = document.getElementById('p-in');
+        input.value = typeof options.value === 'string' ? options.value : '';
+        input.readOnly = Boolean(options.readOnly);
+        document.getElementById('p-ok').onclick = () => { const v = input.value; Core.closeModal(); cb(v); };
     },
 
     customConfirm: function(t, tx, onYes) {
@@ -2207,7 +2203,11 @@ const Core = {
 
 };
 
-Core.initProximity();    
+// NodeManager is loaded as a separate classic script. A top-level const is not
+// exposed on window in every browser, therefore both modules must share this
+// exact active Core instance.
+window.Core = Core;
+Core.initProximity();
 window.boot_sequence = (id, pwd) => Core.boot(id, pwd);
 window.addEventListener('popstate', (event) => {
     if (Core.activePeerId) {

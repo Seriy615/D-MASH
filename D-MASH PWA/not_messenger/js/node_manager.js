@@ -59,7 +59,14 @@ const NodeManager = {
         this.state = state; this.error = error;
         const panel = document.getElementById('dmash-node-panel-status');
         if (panel) {
-            panel.textContent = `STATE: ${state.toUpperCase()} | ACTIVE: ${this.active?.label || 'NONE'}${error ? ` | ${error}` : ''}`;
+            const labels = {
+                connected: 'Подключено',
+                connecting: 'Подключение…',
+                reconnecting: 'Восстанавливаем соединение…',
+                disconnected: 'Не подключено',
+                error: 'Не удалось подключиться'
+            };
+            panel.textContent = error ? `${labels[state] || 'Ошибка'}: ${error}` : (labels[state] || 'Не подключено');
             panel.style.color = error ? '#ff7b7b' : '#b8ffca';
         }
         window.dispatchEvent(new CustomEvent('dmash-node-state', { detail: { state, error, active: this.active } }));
@@ -226,43 +233,24 @@ const NodeManager = {
     renderSettings() {
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
         const box = document.createElement('div'); box.className = 'sys-modal-box';
-        const title = document.createElement('h4'); title.textContent = 'D-MASH NODES / NETWORK'; box.appendChild(title);
+        const title = document.createElement('h4'); title.textContent = 'ПОДКЛЮЧЕНИЕ К УЗЛУ'; box.appendChild(title);
         const status = document.createElement('div'); status.id = 'dmash-node-panel-status';
-        status.style.cssText = 'margin:0 0 10px;text-align:center;font:12px monospace;color:#b8ffca';
-        status.textContent = `STATE: ${this.state.toUpperCase()} | ACTIVE: ${this.active?.label || 'NONE'}`;
+        status.style.cssText = 'margin:0 0 14px;text-align:center;color:#b8ffca';
+        const labels = { connected: 'Подключено', connecting: 'Подключение…', reconnecting: 'Восстанавливаем соединение…', disconnected: 'Не подключено', error: 'Не удалось подключиться' };
+        status.textContent = this.error ? `${labels[this.state] || 'Ошибка'}: ${this.error}` : (labels[this.state] || 'Не подключено');
         box.appendChild(status);
-        for (const endpoint of this.endpoints) {
-            const row = document.createElement('div'); row.style.cssText = 'margin-bottom:8px;border:1px solid #333;padding:7px;text-align:left';
-            const label = document.createElement('div'); label.style.cssText = 'font-size:11px;word-break:break-all;margin-bottom:6px';
-            label.textContent = `${this.active?.url === endpoint.url ? '● ACTIVE ' : ''}${endpoint.label}: ${endpoint.url}`;
-            const choose = this.makeButton(this.active?.url === endpoint.url ? 'SELECTED' : 'SELECT NODE', () => { this.select(endpoint.url); this.renderSettings(); }, this.active?.url === endpoint.url);
-            choose.style.cssText = 'margin:0;padding:7px;font-size:11px'; row.append(label, choose);
-            box.appendChild(row);
-        }
-        const add = this.makeButton('ADD NODE', () => this.openPrompt('ADD NODE ENDPOINT', 'wss://node.example/dmp-c/v1', value => { this.add(value); this.renderSettings(); }));
-        const refresh = this.makeButton('REFRESH ORIGIN NODE LIST', async () => { try { await this.loadOriginList(); this.renderSettings(); } catch (error) { this.showMessage(error, true); } });
-        const unlocked = Boolean(window.Core?.keys?.sign);
-        const connect = this.makeButton(
-            unlocked ? 'CONNECT ACTIVE NODE' : 'UNLOCK IDENTITY TO CONNECT',
-            async () => {
-                if (!window.Core?.keys?.sign) {
-                    this.showMessage('Unlock your D-MASH identity first. Node endpoint selection is already saved.', false);
-                    return;
-                }
-                try { await this.connect(); } catch (error) { this.showMessage(error, true); }
-            },
-            unlocked
-        );
-        const disconnect = this.makeButton('DISCONNECT', () => { this.disconnect(false); this.renderSettings(); });
-        const diagnostics = this.makeButton('RUNTIME DIAGNOSTICS', () => this.renderDiagnostics());
-        const origin = this.makeButton('ORIGIN NOTIFICATION URL', () => this.openPrompt('ORIGIN NOTIFICATIONS', 'https://origin.example', value => { const url = new URL(value); if (url.protocol !== 'https:') throw new Error('Origin must use HTTPS'); localStorage.setItem(this.originKey, url.href.replace(/\/$/, '')); this.renderSettings(); }));
-        const personalBot = this.makeButton('CONNECT PERSONAL TELEGRAM BOT', () => this.openPrompt('PERSONAL TELEGRAM BOT', 'Bot Token', value => this.enrollPersonalBot(value).then(result => { this.openStartLink(result.start_link); }).catch(error => this.showMessage(error, true))));
-        const botStatus = this.makeButton('PERSONAL BOT STATUS', () => this.personalBotStatus().then(result => this.showPersonalStatus(result)).catch(error => this.showMessage(error, true)));
-        const testBot = this.makeButton('SEND TEST NOTIFICATION', () => this.testPersonalBot().then(() => this.showMessage('Test notification accepted.')).catch(error => this.showMessage(error, true)));
-        const disableBot = this.makeButton('DISABLE PERSONAL BOT', () => this.disablePersonalBot().then(() => this.renderSettings()).catch(error => this.showMessage(error, true)));
-        const removeBot = this.makeButton('REMOVE PERSONAL BOT', () => { if (window.confirm('Remove encrypted token and Telegram binding?')) this.removePersonalBot().then(() => this.renderSettings()).catch(error => this.showMessage(error, true)); });
-        const close = this.makeButton('BACK', () => { if (window.Core?.openSettings) Core.openSettings(); else modal.style.display = 'none'; });
-        box.append(add, refresh, connect, disconnect, diagnostics, origin, personalBot, botStatus, testBot, disableBot, removeBot, close); modal.appendChild(box);
+        const endpoint = document.createElement('p');
+        endpoint.style.cssText = 'margin:0 0 18px;color:#ccc;word-break:break-word;text-align:left;font-size:0.8rem';
+        endpoint.textContent = this.active ? `${this.active.label}: ${this.active.url}` : 'Узел пока не выбран.';
+        box.appendChild(endpoint);
+        const connect = this.makeButton('ПОДКЛЮЧИТЬСЯ', async () => {
+            try { await this.connect(); } catch (error) {
+                this.showMessage(error.message === 'User identity is not unlocked' ? 'Сессия не готова. Выйдите и войдите с ключом доступа.' : error, true);
+            }
+        }, true);
+        const disconnect = this.makeButton('ОТКЛЮЧИТЬСЯ', () => { this.disconnect(false); this.renderSettings(); });
+        const close = this.makeButton('НАЗАД', () => { if (window.Core?.openSettings) Core.openSettings(); else modal.style.display = 'none'; });
+        box.append(connect, disconnect, close); modal.appendChild(box);
     },
     openStartLink(url) {
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';

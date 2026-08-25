@@ -125,7 +125,6 @@ async renderAccountSelector(accs) {
                     <input type="password" id="p2" class="gate-input" placeholder="КЛЮЧ ДОСТУПА" autocomplete="current-password">
                     <button type="submit" class="gate-btn">СОХРАНИТЬ В РЕЕСТРЕ</button>
                 </form>
-                <button type="button" class="gate-btn" style="margin-top:10px;background:#111;color:#b8ffca;border:1px solid #00ff41" onclick="sys.loginAndBindHardware()">ПРИБИТЬ К ЖЕЛЕЗУ</button>
                 <button class="gate-btn" style="margin-top:10px; background:transparent; color:#444;" onclick="ui.show_gate()">К СПИСКУ</button>
             `;
         }
@@ -318,11 +317,6 @@ async loadAllLibs() {
         await this.init();
     },
 
-    // WebAuthn привязывает вход к доступному authenticator после обычной
-    // разблокировки. Данные «звуковой карты» не являются устойчивым секретом.
-    async loginAndBindHardware() {
-        if (await this.init()) await Core.setupBiometrics();
-    }
 };
 
 ui.init();
