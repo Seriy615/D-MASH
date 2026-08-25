@@ -74,7 +74,7 @@ async def dmp_client(websocket: WebSocket):
             "server_time": int(time.time()),
             "capabilities": [
                 "PING", "STATUS", "REGISTER_INBOUND_LOCATOR", "START_PROBE",
-                "SUBMIT_ENVELOPE", "PULL", "ACK",
+                "UNREGISTER_INBOUND_LOCATOR", "SUBMIT_ENVELOPE", "PULL", "ACK",
             ],
         })
 
@@ -96,8 +96,26 @@ async def dmp_client(websocket: WebSocket):
                 if not isinstance(locator, str) or not locator:
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_LOCATOR"})
                     continue
-                handle = await state.node.transport.register_inbound_locator(locator)
+                try:
+                    handle = await state.node.transport.register_inbound_locator(locator)
+                except Exception:
+                    # A storage failure must be visible to the authenticated
+                    # client, rather than leaving it to wait for its timeout.
+                    # Do not serialize the locator or backend exception.
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
+                    continue
                 await websocket.send_json({"type": "REGISTER_INBOUND_LOCATOR_RESULT", "request_id": request_id, "locator_handle": handle})
+            elif operation == "UNREGISTER_INBOUND_LOCATOR":
+                locator = request.get("locator")
+                if not isinstance(locator, str) or not locator:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_LOCATOR"})
+                    continue
+                try:
+                    removed = await state.node.transport.unregister_inbound_locator(locator)
+                except Exception:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
+                    continue
+                await websocket.send_json({"type": "UNREGISTER_INBOUND_LOCATOR_RESULT", "request_id": request_id, "removed": removed})
             elif operation == "START_PROBE":
                 route_locator = request.get("route_locator")
                 back_route_locator = request.get("back_route_locator")

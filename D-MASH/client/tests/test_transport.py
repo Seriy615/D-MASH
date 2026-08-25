@@ -117,6 +117,31 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
             row = await cursor.fetchone()
         self.assertEqual(row["cnt"], 0)
 
+    async def test_disarming_locator_removes_only_its_blind_route_and_mailbox(self):
+        locator = "locator-to-forget"
+        keep_locator = "locator-to-keep"
+        locator_handle = await self.transport.register_inbound_locator(locator)
+        keep_handle = await self.transport.register_inbound_locator(keep_locator)
+        await self.db.add_route_alias(locator_handle, "LOCAL", 0, is_local=True)
+        await self.db.add_route_alias(keep_handle, "LOCAL", 0, is_local=True)
+        await self.db.conn.execute(
+            "INSERT INTO offline_mailbox (target_hash, packet_json, notification_id) VALUES (?, ?, ?)",
+            (locator_handle, json.dumps({"id": "forget"}), "notification-forget"),
+        )
+        await self.db.conn.execute(
+            "INSERT INTO offline_mailbox (target_hash, packet_json, notification_id) VALUES (?, ?, ?)",
+            (keep_handle, json.dumps({"id": "keep"}), "notification-keep"),
+        )
+        await self.db.conn.commit()
+
+        self.assertTrue(await self.transport.unregister_inbound_locator(locator))
+        self.assertFalse(await self.db.is_armed_locator(locator))
+        self.assertTrue(await self.db.is_armed_locator(keep_locator))
+        self.assertIsNone(await self.db.get_best_route_alias(locator_handle))
+        self.assertIsNotNone(await self.db.get_best_route_alias(keep_handle))
+        self.assertEqual(await self.transport.pull(locator_handle), [])
+        self.assertEqual([packet["id"] for packet in await self.transport.pull(keep_handle)], ["keep"])
+
     async def test_destination_probe_records_candidate_hops_plus_one(self):
         packet = {
             "type": "DMP_C_PROBE",

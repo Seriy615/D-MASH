@@ -265,6 +265,31 @@ class DatabaseManager:
         await self.conn.commit()
         return alias
 
+    async def disarm_inbound_locator(self, locator: str) -> bool:
+        """Forget every local record indexed by an inbound opaque locator.
+
+        ``locator`` exists only for the duration of this call.  SQLite receives
+        its node-local blind alias, never the raw locator.  Queued transit
+        packets and deduplication records are deliberately not scanned because
+        neither is attributable without decrypting unrelated opaque packets.
+        """
+        if not self.node_crypto or not isinstance(locator, str) or not locator:
+            raise ValueError("invalid inbound locator")
+        alias = self.node_crypto.get_blind_hash(locator)
+        async with self.conn.execute(
+            "SELECT notification_id FROM offline_mailbox WHERE target_hash = ?", (alias,)
+        ) as cursor:
+            mailbox_rows = await cursor.fetchall()
+        await self.conn.execute("DELETE FROM local_bindings WHERE binding_hash = ?", (alias,))
+        await self.conn.execute("DELETE FROM blind_routes WHERE route_in_hash = ?", (alias,))
+        await self.conn.execute("DELETE FROM offline_mailbox WHERE target_hash = ?", (alias,))
+        await self.conn.commit()
+        if self.notification_trigger:
+            for row in mailbox_rows:
+                if row["notification_id"]:
+                    self.notification_trigger.cancel(row["notification_id"])
+        return True
+
     async def is_armed_locator(self, locator: str) -> bool:
         if not self.node_crypto or not isinstance(locator, str) or not locator:
             return False

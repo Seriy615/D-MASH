@@ -40,7 +40,15 @@ const NodeManager = {
         window.dispatchEvent(new CustomEvent('dmash-transport-mode', { detail: { mode } }));
     },
     getInboundLocatorHandle() {
-        return sessionStorage.getItem(this.inboundHandleKey) || localStorage.getItem(this.inboundHandleKey);
+        return this.getInboundLocatorHandles()[0] || null;
+    },
+    getInboundLocatorHandles() {
+        const handles = Object.values(this.getRouteConfig())
+            .map(route => route?.locatorHandle)
+            .filter(Boolean);
+        const legacyHandle = sessionStorage.getItem(this.inboundHandleKey) || localStorage.getItem(this.inboundHandleKey);
+        if (legacyHandle && !handles.includes(legacyHandle)) handles.push(legacyHandle);
+        return handles;
     },
     getRouteConfig() {
         try { return JSON.parse(sessionStorage.getItem(this.routeConfigKey) || '{}'); } catch (_) { return {}; }
@@ -50,26 +58,49 @@ const NodeManager = {
     },
     setMeshRoute(peerId, routeLocator, backRouteLocator) {
         const routes = this.getRouteConfig();
-        routes[peerId] = { routeLocator, backRouteLocator };
+        routes[peerId] = { ...routes[peerId], routeLocator, backRouteLocator };
         sessionStorage.setItem(this.routeConfigKey, JSON.stringify(routes));
+    },
+    setLocatorHandle(peerId, locatorHandle) {
+        const routes = this.getRouteConfig();
+        if (!routes[peerId]) return;
+        routes[peerId] = { ...routes[peerId], locatorHandle };
+        sessionStorage.setItem(this.routeConfigKey, JSON.stringify(routes));
+        sessionStorage.setItem(this.inboundHandleKey, locatorHandle);
     },
     async armMeshRoute(peerId, routeLocator, backRouteLocator) {
         this.setMeshRoute(peerId, routeLocator, backRouteLocator);
         if (this.state !== 'connected') return { armed: false, state: 'NODE_NOT_CONNECTED' };
         const result = await this.registerInboundLocator(backRouteLocator);
-        sessionStorage.setItem(this.inboundHandleKey, result.locator_handle);
+        this.setLocatorHandle(peerId, result.locator_handle);
         return { armed: true, locator_handle: result.locator_handle };
     },
     async armStoredRoutes() {
         if (this.state !== 'connected') return;
         const routes = this.getRouteConfig();
-        for (const route of Object.values(routes)) {
+        for (const [peerId, route] of Object.entries(routes)) {
             if (!route?.backRouteLocator) continue;
             try {
                 const result = await this.registerInboundLocator(route.backRouteLocator);
-                sessionStorage.setItem(this.inboundHandleKey, result.locator_handle);
+                this.setLocatorHandle(peerId, result.locator_handle);
             } catch (error) { this.showMessage(`Mesh locator arm failed: ${error.message}`, true); }
         }
+    },
+    async removeMeshRoute(peerId) {
+        const routes = this.getRouteConfig();
+        const route = routes[peerId];
+        if (!route) return { removed: false, nodeRemoved: false };
+        delete routes[peerId];
+        sessionStorage.setItem(this.routeConfigKey, JSON.stringify(routes));
+        const remainingHandles = Object.values(routes).map(item => item?.locatorHandle).filter(Boolean);
+        if (remainingHandles[0]) sessionStorage.setItem(this.inboundHandleKey, remainingHandles[0]);
+        else sessionStorage.removeItem(this.inboundHandleKey);
+
+        if (!route.backRouteLocator || this.state !== 'connected') {
+            return { removed: true, nodeRemoved: false, state: 'NODE_NOT_CONNECTED' };
+        }
+        await this.request('UNREGISTER_INBOUND_LOCATOR', { locator: route.backRouteLocator });
+        return { removed: true, nodeRemoved: true };
     },
     async configureInboundLocator() {
         this.openPrompt('ARM MESH LOCATOR', 'opaque locator from mutual offline pairing', async locator => {
@@ -268,6 +299,9 @@ const NodeManager = {
     },
     registerInboundLocator(locator) {
         return this.request('REGISTER_INBOUND_LOCATOR', { locator });
+    },
+    unregisterInboundLocator(locator) {
+        return this.request('UNREGISTER_INBOUND_LOCATOR', { locator });
     },
     startProbe(routeLocator, backRouteLocator, options = {}) {
         return this.request('START_PROBE', {

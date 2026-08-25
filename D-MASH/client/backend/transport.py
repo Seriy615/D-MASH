@@ -38,6 +38,12 @@ class NodeTransportService:
         self._inbound_locators[locator_handle] = locator_handle
         return locator_handle
 
+    async def unregister_inbound_locator(self, locator: str) -> bool:
+        """Remove a local inbound locator and data addressed to its blind alias."""
+        removed = await self.system_db.disarm_inbound_locator(locator)
+        self._inbound_locators.pop(self._blind(locator), None)
+        return removed
+
     async def start_probe(
         self,
         route_alias: str,

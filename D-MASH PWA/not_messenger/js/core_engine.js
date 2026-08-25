@@ -814,14 +814,15 @@ const Core = {
     // Core.syncNetwork        - Опрос сервера (PULL), получение и сортировка новых маляв
     async syncNetwork() {
         if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
-            const inboundHandle = window.NodeManager?.getInboundLocatorHandle();
-            if (!inboundHandle || this._meshPulling) return;
+            const inboundHandles = window.NodeManager?.getInboundLocatorHandles?.() || [];
+            if (!inboundHandles.length || this._meshPulling) return;
             this._meshPulling = true;
             try {
-                const result = await window.NodeManager.pull(inboundHandle);
                 const peerIds = Object.keys(window.NodeManager.getRouteConfig());
                 this._processedMeshDeliveries ||= new Set();
-                for (const packet of (result.packets || [])) {
+                for (const inboundHandle of inboundHandles) {
+                    const result = await window.NodeManager.pull(inboundHandle);
+                    for (const packet of (result.packets || [])) {
                     if (this._processedMeshDeliveries.has(packet.id)) {
                         await window.NodeManager.ack(packet.id);
                         continue;
@@ -859,6 +860,7 @@ const Core = {
                         await window.NodeManager.ack(packet.id);
                         break;
                     }
+                }
                 }
             } catch (error) { this.shmon("ERR", `D-MASH pull failed: ${error.message}`); }
             finally { this._meshPulling = false; }
@@ -1206,10 +1208,24 @@ const Core = {
     // Core.deleteChatFlow     - Полное удаление переписки и ключей кента
     deleteChatFlow: function(id, name) {
         Core.customConfirm("СНОС ЧАТА", `Ликвидировать всю переписку с ${name}?`, async () => {
+            let nodeCleanup = null;
+            try {
+                nodeCleanup = await window.NodeManager?.removeMeshRoute?.(id);
+            } catch (error) {
+                // Browser state is still erased below. Do not retain route
+                // material locally merely because its Entry Node is offline.
+                this.shmon("WARN", `Node locator cleanup failed: ${error.message}`);
+            }
             await Storage.deleteChatGamma(id);
             if (Core.activePeerId === id) Core.closeChat();
             await Core.renderPeers();
-            Core.customAlert("ГОТОВО", "Хата зачищена.");
+            if (nodeCleanup?.state === 'NODE_NOT_CONNECTED') {
+                Core.customAlert("ЗАЧИСТКА", "Данные контакта удалены с устройства. Entry Node была недоступна, её blind locator истечёт по TTL.");
+            } else if (!nodeCleanup?.nodeRemoved && window.NodeManager?.transportMode === 'mesh') {
+                Core.customAlert("ЗАЧИСТКА", "Данные контакта удалены с устройства. Не удалось подтвердить очистку locator на Entry Node.");
+            } else {
+                Core.customAlert("ГОТОВО", "Хата, ключи и Mesh locator зачищены.");
+            }
         });
     },
     // Core.deleteMessageFlow  - Удаление конкретной малявы (локально)
