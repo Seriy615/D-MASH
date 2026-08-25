@@ -225,6 +225,21 @@ const Core = {
         this.shmon('INFO', 'Opaque Mesh locator привязан автоматически после pairing QR.');
         return locators;
     },
+    async restoreAutomaticMeshRoutes(onlyPeerId = null) {
+        if (!window.NodeManager || (window.NodeManager.transportMode || 'mesh') === 'legacy') return;
+        const peers = await Storage.loadPeersGamma();
+        for (const peer of peers) {
+            if (!peer?.pairingContribution || (onlyPeerId && peer.id !== onlyPeerId)) continue;
+            try {
+                // The pairing contribution is encrypted in the local vault.
+                // Routes themselves remain session-only and are re-derived
+                // after an ordinary PWA reload or a completed panic lock.
+                await this.ensureAutomaticMeshRoute(peer.id, peer.pairingContribution);
+            } catch (error) {
+                this.shmon('WARN', `Mesh route restore deferred: ${error.message}`);
+            }
+        }
+    },
     // Core.deriveRootKey      - (Удален повтор/Legacy) Генерация хеша пароля
     deriveRootKey: (id, pwd) => new Promise((res, rej) => {
         if (typeof window.argon2 === 'undefined') return rej(new Error("Argon2 missing"));
@@ -317,6 +332,7 @@ const Core = {
         try {
             await NodeManager.autoConnect();
             this.shmon("INFO", `Entry Node auto-connect: ${NodeManager.active?.label || 'selected node'}`);
+            await this.restoreAutomaticMeshRoutes();
         } catch (error) {
             this.shmon("WARN", `Entry Node auto-connect failed: ${error.message}`);
         }
@@ -624,9 +640,13 @@ const Core = {
 
         this.shmon("INFO", `Сброс квантового финала для ${pid.substring(0,8)}...`);
         if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
-            const meshRoute = window.NodeManager?.getMeshRoute(pid);
+            let meshRoute = window.NodeManager?.getMeshRoute(pid);
             if (!meshRoute) {
-                this.shmon("ERR", "Mesh route is not configured for Kyber final");
+                await this.restoreAutomaticMeshRoutes(pid);
+                meshRoute = window.NodeManager?.getMeshRoute(pid);
+            }
+            if (!meshRoute) {
+                this.shmon("WARN", "Mesh route is restoring from pairing data. Wait for Entry Node connection.");
                 return;
             }
             try {
@@ -711,7 +731,11 @@ const Core = {
         if (!pid) return;
 
         if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
-            const meshRoute = window.NodeManager?.getMeshRoute(pid);
+            let meshRoute = window.NodeManager?.getMeshRoute(pid);
+            if (!meshRoute) {
+                await this.restoreAutomaticMeshRoutes(pid);
+                meshRoute = window.NodeManager?.getMeshRoute(pid);
+            }
             if (meshRoute) {
                 // Route setup is deliberately explicit. A probe is idempotent
                 // and may be repeated while the mesh converges.
@@ -756,8 +780,8 @@ const Core = {
                 return;
             }
             const message = forceHandshake
-                ? "Обмен ключами через Mesh пока заблокирован: для контакта ещё не привязан opaque route locator. Legacy Relay можно включить явно в настройках сети."
-                : "D-MASH Mesh transport is not implemented for this build; legacy relay was not used";
+                ? "Mesh route для контакта ещё восстанавливается из pairing. Дождитесь подключения к Entry Node. Legacy Relay не использовался."
+                : "Mesh route для контакта ещё восстанавливается из pairing. Legacy Relay не использовался.";
             this.shmon("WARN", message);
             if (forceHandshake && this.customConfirm) {
                 this.customConfirm(
