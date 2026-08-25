@@ -69,6 +69,29 @@ def telegram_send(chat_id: str) -> bool:
     return bool(telegram_call(TOKEN, "sendMessage", {"chat_id": chat_id, "text": MESSAGE}))
 
 
+def personal_delivery_target(db: sqlite3.Connection, owner: str) -> tuple[str, str] | None:
+    """Resolve a user's own encrypted bot and bound chat only inside Origin.
+
+    The return value is deliberately local to this process. It is never sent to
+    a D-MASH node, included in a mesh packet, or returned by an HTTP response.
+    """
+    if not VAULT_KEY:
+        return None
+    chat_id = EnrollmentStore().chat_id_for_owner(db, owner)
+    if not chat_id:
+        return None
+    token = PersonalBotVault(VAULT_KEY).decrypt_for_delivery(db, owner)
+    return None if not token else (token, chat_id)
+
+
+def send_personal_test(db: sqlite3.Connection, owner: str) -> bool | None:
+    target = personal_delivery_target(db, owner)
+    if target is None:
+        return None
+    token, chat_id = target
+    return bool(telegram_call(token, "sendMessage", {"chat_id": chat_id, "text": MESSAGE}))
+
+
 def verify_personal_request(db: sqlite3.Connection, payload: dict, action: str) -> str:
     auth = payload.pop("auth", None)
     if not isinstance(auth, dict):
@@ -133,6 +156,77 @@ async def enroll_personal_bot(request: Request):
             raise HTTPException(502, "Telegram webhook setup failed")
         db.commit()
     return {"status": "awaiting_start", "bot_username": bot["username"], "start_link": f"https://t.me/{bot['username']}?start={enrollment.start_code}", "token_suffix": stored.token_suffix, "expires_at": enrollment.expires_at}
+
+
+async def signed_personal_action(request: Request, action: str) -> tuple[sqlite3.Connection, str]:
+    """Parse one fresh signed PWA request. Callers must close the returned DB."""
+    try:
+        payload = await request.json()
+    except json.JSONDecodeError:
+        raise HTTPException(400, "invalid JSON")
+    if not isinstance(payload, dict):
+        raise HTTPException(400, "invalid request")
+    db = connect_db()
+    try:
+        owner = verify_personal_request(db, payload, action)
+    except Exception:
+        db.close()
+        raise
+    return db, owner
+
+
+@app.post("/v1/personal-bots/status")
+async def personal_bot_status(request: Request):
+    db, owner = await signed_personal_action(request, "PERSONAL_BOT_STATUS")
+    try:
+        stored = PersonalBotVault(VAULT_KEY).status(db, owner) if VAULT_KEY else None
+        bound = EnrollmentStore().chat_id_for_owner(db, owner) is not None
+        return {
+            "configured": stored is not None,
+            "enabled": bool(stored and stored.enabled),
+            "token_suffix": stored.token_suffix if stored else None,
+            "updated_at": stored.updated_at if stored else None,
+            "chat_bound": bound,
+        }
+    finally:
+        db.close()
+
+
+@app.post("/v1/personal-bots/test")
+async def test_personal_bot(request: Request):
+    db, owner = await signed_personal_action(request, "PERSONAL_BOT_TEST")
+    try:
+        result = send_personal_test(db, owner)
+        if result is None:
+            raise HTTPException(409, "personal bot is not enabled and bound")
+        if not result:
+            raise HTTPException(502, "Telegram notification failed")
+        return {"status": "test_sent"}
+    finally:
+        db.close()
+
+
+@app.post("/v1/personal-bots/disable")
+async def disable_personal_bot(request: Request):
+    db, owner = await signed_personal_action(request, "PERSONAL_BOT_DISABLE")
+    try:
+        changed = PersonalBotVault(VAULT_KEY).disable(db, owner) if VAULT_KEY else False
+        db.commit()
+        return {"status": "disabled" if changed else "not_configured"}
+    finally:
+        db.close()
+
+
+@app.post("/v1/personal-bots/remove")
+async def remove_personal_bot(request: Request):
+    db, owner = await signed_personal_action(request, "PERSONAL_BOT_REMOVE")
+    try:
+        removed_bot = PersonalBotVault(VAULT_KEY).remove(db, owner) if VAULT_KEY else False
+        removed_enrollment = EnrollmentStore().remove_for_owner(db, owner)
+        db.commit()
+        return {"status": "removed" if removed_bot or removed_enrollment else "not_configured"}
+    finally:
+        db.close()
 
 
 @app.post("/v1/telegram/personal-webhook")

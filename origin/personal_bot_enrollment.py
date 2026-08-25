@@ -58,3 +58,15 @@ class EnrollmentStore:
             return None
         db.execute("UPDATE bot_enrollments SET chat_id=?, consumed_at=? WHERE owner_alias=?", (str(chat_id), int(time.time()), row[0]))
         return row[0]
+
+    def chat_id_for_owner(self, db: sqlite3.Connection, owner_handle: str) -> str | None:
+        """Return only the already-bound Telegram destination for this owner."""
+        row = db.execute(
+            "SELECT chat_id FROM bot_enrollments WHERE owner_alias=? AND consumed_at IS NOT NULL",
+            (owner_alias(owner_handle),),
+        ).fetchone()
+        return None if row is None or row[0] is None else str(row[0])
+
+    def remove_for_owner(self, db: sqlite3.Connection, owner_handle: str) -> bool:
+        result = db.execute("DELETE FROM bot_enrollments WHERE owner_alias=?", (owner_alias(owner_handle),))
+        return result.rowcount == 1
