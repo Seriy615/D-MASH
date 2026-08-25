@@ -1,0 +1,22 @@
+[Unit]
+Description=D-MASH isolated Origin notification service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dmash-notify
+Group=dmash-notify
+WorkingDirectory=/opt/dmash-origin-notify
+EnvironmentFile=/etc/dmash-origin-notify.env
+ExecStart=/opt/dmash-origin-notify/.venv/bin/uvicorn notification_service:app --host 127.0.0.1 --port 18081
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/dmash-notify
+
+[Install]
+WantedBy=multi-user.target
