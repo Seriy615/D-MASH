@@ -651,7 +651,16 @@ const Core = {
                 ? "Обмен ключами через Mesh пока заблокирован: для контакта ещё не привязан opaque route locator. Legacy Relay можно включить явно в настройках сети."
                 : "D-MASH Mesh transport is not implemented for this build; legacy relay was not used";
             this.shmon("WARN", message);
-            if (forceHandshake && this.customAlert) this.customAlert("D-MASH MESH", message);
+            if (forceHandshake && this.customConfirm) {
+                this.customConfirm(
+                    "D-MASH MESH",
+                    `${message}<br><br>Переключить режим на <b>Legacy Relay (explicit)</b> и повторить обмен ключами?`,
+                    () => {
+                        window.NodeManager.setTransportMode('legacy');
+                        this.sendMessage(c, forceHandshake, targetPid);
+                    }
+                );
+            } else if (forceHandshake && this.customAlert) this.customAlert("D-MASH MESH", message);
             return;
         }
 
