@@ -252,6 +252,78 @@ class DatabaseManager:
         """, (route_hash, blob, expires))
         await self.conn.commit()
 
+    async def arm_inbound_locator(self, locator: str) -> str:
+        """Register a local opaque locator without persisting its raw value."""
+        if not self.node_crypto or not isinstance(locator, str) or not locator:
+            raise ValueError("invalid inbound locator")
+        alias = self.node_crypto.get_blind_hash(locator)
+        blob = self.node_crypto.encrypt_for_self({"kind": "inbound_locator", "armed": True})
+        await self.conn.execute(
+            "INSERT OR REPLACE INTO local_bindings (binding_hash, user_blob) VALUES (?, ?)",
+            (alias, blob),
+        )
+        await self.conn.commit()
+        return alias
+
+    async def is_armed_locator(self, locator: str) -> bool:
+        if not self.node_crypto or not isinstance(locator, str) or not locator:
+            return False
+        alias = self.node_crypto.get_blind_hash(locator)
+        async with self.conn.execute(
+            "SELECT 1 FROM local_bindings WHERE binding_hash = ?", (alias,)
+        ) as cursor:
+            return await cursor.fetchone() is not None
+
+    async def add_route_alias(self, route_alias: str, next_hop_id: str, hops: int, *, is_local: bool = False, health: float = 0.0, expires_at: float | None = None):
+        """Store a node-local blind route alias and keep the shortest candidate."""
+        if not route_alias or not next_hop_id or hops < 0:
+            raise ValueError("invalid blind route")
+        now = time.time()
+        expiry = expires_at or now + 1800
+        current = {"candidates": [], "is_local": False}
+        async with self.conn.execute(
+            "SELECT routing_blob FROM blind_routes WHERE route_in_hash = ? AND expires_at > ?",
+            (route_alias, now),
+        ) as cursor:
+            row = await cursor.fetchone()
+        if row:
+            current = self.node_crypto.decrypt_from_self(row["routing_blob"]) or current
+        candidates = [candidate for candidate in current.get("candidates", []) if candidate.get("next_hop") != next_hop_id]
+        candidates.append({"next_hop": next_hop_id, "hops": int(hops), "health": float(health)})
+        candidates.sort(key=lambda candidate: (candidate["hops"], -candidate.get("health", 0.0)))
+        current["candidates"] = candidates[:3]
+        current["is_local"] = bool(current.get("is_local") or is_local)
+        blob = self.node_crypto.encrypt_for_self(current)
+        await self.conn.execute(
+            "INSERT OR REPLACE INTO blind_routes (route_in_hash, routing_blob, expires_at) VALUES (?, ?, ?)",
+            (route_alias, blob, expiry),
+        )
+        await self.conn.commit()
+
+    async def get_best_route_alias(self, route_alias: str) -> Optional[Dict]:
+        """Read a blind route by alias. Raw locators never enter this method."""
+        if not self.node_crypto or not route_alias:
+            return None
+        async with self.conn.execute(
+            "SELECT routing_blob, expires_at FROM blind_routes WHERE route_in_hash = ? AND expires_at > ?",
+            (route_alias, time.time()),
+        ) as cursor:
+            row = await cursor.fetchone()
+        if not row:
+            return None
+        data = self.node_crypto.decrypt_from_self(row["routing_blob"])
+        candidates = (data or {}).get("candidates", [])
+        if not candidates:
+            return None
+        best = min(candidates, key=lambda candidate: (candidate.get("hops", 10**9), -candidate.get("health", 0.0)))
+        return {
+            "next_hop_id": best["next_hop"],
+            "hops": best.get("hops", 0),
+            "health": best.get("health", 0.0),
+            "is_local": bool((data or {}).get("is_local")),
+            "expires_at": row["expires_at"],
+        }
+
     async def get_best_route(self, route_id: str) -> Optional[Dict]:
         """
         Возвращает лучший маршрут.
@@ -301,15 +373,15 @@ class DatabaseManager:
 
 # ВНУТРИ class DatabaseManager:
 
-    async def save_to_mailbox(self, packet_json: str):
+    async def save_to_mailbox(self, packet_json: str, target_alias: str = None):
         """
         Сохраняет недоставленный пакет в общий ящик.
         """
         # Просто сохраняем пакет как есть. Разберемся при логине.
         notification_id = secrets.token_hex(16)
         await self.conn.execute(
-            "INSERT INTO offline_mailbox (packet_json, notification_id) VALUES (?, ?)",
-            (packet_json, notification_id)
+            "INSERT INTO offline_mailbox (target_hash, packet_json, notification_id) VALUES (?, ?, ?)",
+            (target_alias, packet_json, notification_id)
         )
         await self.conn.commit()
         if self.notification_trigger:
