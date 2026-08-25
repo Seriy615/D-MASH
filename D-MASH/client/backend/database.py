@@ -181,6 +181,17 @@ class DatabaseManager:
         if not self.node_crypto: return
 
         alias_hash = self.node_crypto.get_blind_hash(node_id)
+        # An inbound connection does not tell us a dialable endpoint. Preserve
+        # a previously learned outbound address so startup reconnect can work.
+        if address == "incoming":
+            async with self.conn.execute(
+                "SELECT secured_blob FROM peer_directory WHERE alias_hash = ?", (alias_hash,)
+            ) as cursor:
+                row = await cursor.fetchone()
+            if row:
+                previous = self.node_crypto.decrypt_from_self(row["secured_blob"])
+                if previous and previous.get("address") not in (None, "incoming"):
+                    address = previous["address"]
         data = {
             "real_node_id": node_id,
             "address": address,

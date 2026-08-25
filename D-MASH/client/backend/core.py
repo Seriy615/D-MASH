@@ -40,6 +40,24 @@ class AppState:
 state = AppState()
 
 
+async def maintain_mesh_peers() -> None:
+    """Reconnect known dialable mesh peers without involving PWA identities."""
+    while True:
+        try:
+            for peer in await state.system_db.get_all_neighbors():
+                peer_id = peer.get("real_node_id")
+                address = peer.get("address")
+                if not peer_id or not isinstance(address, str) or address == "incoming" or ":" not in address:
+                    continue
+                if peer_id not in state.node.active_connections:
+                    await state.node.connect_to(address)
+        except Exception:
+            # Neighbor addresses are node-local encrypted state. Keep retrying
+            # without logging a social graph or a raw routing locator.
+            pass
+        await asyncio.sleep(10)
+
+
 def create_crypto_executor() -> Executor:
     """Prefer process isolation, with an explicit/automatic hosting fallback."""
     mode = os.getenv("DMASH_EXECUTOR", "auto").lower()
@@ -104,7 +122,8 @@ async def lifespan(app: FastAPI):
     
     t1 = asyncio.create_task(state.node.start_server(P2P_PORT, P2P_HOST))
     t2 = asyncio.create_task(state.tact.start())
-    state.background_tasks.update([t1, t2])
+    t3 = asyncio.create_task(maintain_mesh_peers())
+    state.background_tasks.update([t1, t2, t3])
     t1.add_done_callback(state.background_tasks.discard)
     t2.add_done_callback(state.background_tasks.discard)
     
