@@ -42,6 +42,12 @@ class EnrollmentStore:
         """, (owner_alias(owner_handle), _digest(start_code), _digest(webhook_secret), expires_at))
         return EnrollmentSecrets(start_code, webhook_secret, expires_at)
 
+    def has_webhook_secret(self, db: sqlite3.Connection, webhook_secret: str) -> bool:
+        if not isinstance(webhook_secret, str) or not webhook_secret:
+            return False
+        row = db.execute("SELECT 1 FROM bot_enrollments WHERE webhook_secret_hash = ?", (_digest(webhook_secret),)).fetchone()
+        return row is not None
+
     def bind_from_webhook(self, db: sqlite3.Connection, webhook_secret: str, chat_id: str, command: str) -> str | None:
         row = db.execute("SELECT owner_alias,start_code_hash,expires_at,consumed_at FROM bot_enrollments WHERE webhook_secret_hash = ?", (_digest(webhook_secret),)).fetchone()
         if row is None:
