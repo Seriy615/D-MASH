@@ -1096,11 +1096,14 @@ const Core = {
                 existing.pairingContribution = pairing.contribution;
                 await Storage.putBox('blind_peers', { alias: aliasL1, data: existing });
                 await this.ensureAutomaticMeshRoute(cleanId, pairing.contribution);
+                await this.renderPeers();
+                return this.customAlert("PAIRING", "Pairing locator обновлён автоматически.");
             }
             return this.customAlert("ИНФО", "Этот пацан уже прописан в хате.");
         }
 
-        this.customPrompt("ПСЕВДОНИМ", "Как назовем кента?", async (name) => {
+        const savePeer = async (name) => {
+          try {
             const alias = name || `Peer-${cleanId.substring(0, 4)}`;
             
             await Storage.putBox('blind_peers', { 
@@ -1120,7 +1123,13 @@ const Core = {
             this.shmon("INFO", `Кент ${alias} добавлен в базу.`);
             if (pairing?.contribution) await this.ensureAutomaticMeshRoute(cleanId, pairing.contribution);
             await this.renderPeers();
-        });
+          } catch (error) {
+            this.shmon("ERR", `Pairing QR import failed: ${error.message}`);
+            this.customAlert("ОШИБКА QR", `Контакт не добавлен: ${error.message}`);
+          }
+        };
+        if (pairing?.contribution) await savePeer(`Peer-${cleanId.substring(0, 4)}`);
+        else this.customPrompt("ПСЕВДОНИМ", "Как назовем кента?", savePeer);
     },
     // Core.addPeerPrompt      - Вызов окна для ручного ввода ID
     addPeerPrompt: function() {
@@ -2248,7 +2257,11 @@ const Core = {
         const input = document.getElementById('p-in');
         input.value = typeof options.value === 'string' ? options.value : '';
         input.readOnly = Boolean(options.readOnly);
-        document.getElementById('p-ok').onclick = () => { const v = input.value; Core.closeModal(); cb(v); };
+        document.getElementById('p-ok').onclick = () => {
+            const v = input.value; Core.closeModal();
+            try { Promise.resolve(cb(v)).catch(error => Core.customAlert("ОШИБКА", error.message)); }
+            catch (error) { Core.customAlert("ОШИБКА", error.message); }
+        };
     },
 
     customConfirm: function(t, tx, onYes) {
