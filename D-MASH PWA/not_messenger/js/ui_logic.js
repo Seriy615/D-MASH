@@ -23,11 +23,6 @@ const ui = {
             this.hist = "";
         }
 
-        // Запрос прав на уведомления
-        if ("Notification" in window && Notification.permission === "default") {
-            Notification.requestPermission();
-        }
-
         // Фикс клавиатуры для мобил
         window.addEventListener('focusin', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
@@ -288,7 +283,7 @@ async loadAllLibs() {
     loadScript(src) {
         return new Promise((resolve, reject) => {
             const baseSrc = src.split('?')[0];
-            if (document.querySelector(`script[src^="${baseSrc}"]`)) return resolve();
+            if (document.querySelector(`script[src="${src}"]`)) return resolve();
             const s = document.createElement('script');
             s.src = src; s.async = true; s.onload = resolve;
             s.onerror = () => {

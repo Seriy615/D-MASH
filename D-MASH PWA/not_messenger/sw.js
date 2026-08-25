@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user data lives.
  */
 
-const RELEASE_ID = 'm1.5-legacy-stabilization-20260825.12';
+const RELEASE_ID = 'm1.5-legacy-stabilization-20260825.13';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',
@@ -59,7 +59,8 @@ self.addEventListener('fetch', (event) => {
     // remain cache-first inside the atomic release cache.
     const networkFirst = event.request.mode === 'navigate'
         || url.pathname.endsWith('/index.html')
-        || url.pathname.endsWith('/js/release.js');
+        || url.pathname.endsWith('/js/release.js')
+        || url.pathname.endsWith('.js');
     if (networkFirst) {
         event.respondWith(
             fetch(event.request, { cache: 'no-store' }).then(response => {
