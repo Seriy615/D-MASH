@@ -99,23 +99,23 @@ async def dmp_client(websocket: WebSocket):
                 handle = await state.node.transport.register_inbound_locator(locator)
                 await websocket.send_json({"type": "REGISTER_INBOUND_LOCATOR_RESULT", "request_id": request_id, "locator_handle": handle})
             elif operation == "START_PROBE":
-                route_alias = request.get("route_alias")
-                back_route_alias = request.get("back_route_alias")
-                if not isinstance(route_alias, str) or not isinstance(back_route_alias, str) or not route_alias or not back_route_alias:
+                route_locator = request.get("route_locator")
+                back_route_locator = request.get("back_route_locator")
+                if not isinstance(route_locator, str) or not isinstance(back_route_locator, str) or not route_locator or not back_route_locator:
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_ROUTE_HANDLE"})
                     continue
                 submission = await state.node.transport.start_probe(
-                    route_alias, back_route_alias,
+                    route_locator, back_route_locator,
                     hops=request.get("hops", 0), ttl=request.get("ttl", 20),
                 )
                 await websocket.send_json({"type": "START_PROBE_RESULT", "request_id": request_id, **asdict(submission)})
             elif operation == "SUBMIT_ENVELOPE":
-                route_alias = request.get("route_alias")
+                route_locator = request.get("route_locator")
                 envelope = request.get("envelope")
-                if not isinstance(route_alias, str) or not route_alias or not isinstance(envelope, dict):
+                if not isinstance(route_locator, str) or not route_locator or not isinstance(envelope, dict):
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_ENVELOPE"})
                     continue
-                submission = await state.node.transport.submit_envelope(route_alias, envelope)
+                submission = await state.node.transport.submit_envelope(route_locator, envelope)
                 await websocket.send_json({"type": "SUBMIT_ENVELOPE_RESULT", "request_id": request_id, **asdict(submission)})
             elif operation == "PULL":
                 locator_handle = request.get("locator_handle")

@@ -160,7 +160,8 @@ class P2PNode:
             print(f"🔌 [P2P] Connection with {peer_id[:8]} closed.")
 
     async def enqueue_transport_packet(self, packet, *, next_hop_id: str | None = None, exclude_peer_id: str | None = None):
-        payload = json.dumps(packet)
+        sealed = self.system_db.node_crypto.encrypt_for_self(packet)
+        payload = json.dumps({"sealed_dmp_c": sealed})
         if next_hop_id:
             nh_hash = self.system_db.node_crypto.get_blind_hash(next_hop_id)
             ex_hash = self.system_db.node_crypto.get_blind_hash(exclude_peer_id) if exclude_peer_id else None
@@ -263,9 +264,9 @@ class P2PNode:
             await self.system_db.conn.commit()
 
     async def _handle_dmp_c_probe(self, packet, from_peer, is_new_probe):
-        # The route alias is already blinded at the client boundary. A local
-        # binding is an edge, so this branch must not flood the probe onward.
-        is_destination = await self.system_db.is_armed_locator_alias(packet.get("route_alias"))
+        # Raw route_id exists only in this transient packet. Persistent route
+        # state is keyed by the node-local blind alias.
+        is_destination = await self.system_db.is_armed_locator(packet.get("route_id"))
         await self.transport.receive_probe(packet, from_peer, is_destination=is_destination)
         if is_destination:
             return
@@ -274,31 +275,10 @@ class P2PNode:
         next_packet = dict(packet)
         next_packet["hops"] = int(packet.get("hops", 0)) + 1
         next_packet["ttl"] = int(packet.get("ttl", 0)) - 1
-        await self.system_db.conn.execute(
-            "INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) VALUES (?, NULL, ?, ?)",
-            (packet["id"], json.dumps(next_packet), self.system_db.node_crypto.get_blind_hash(from_peer)),
-        )
-        await self.system_db.conn.commit()
+        await self.enqueue_transport_packet(next_packet, exclude_peer_id=from_peer)
 
     async def _handle_dmp_c_data(self, packet, from_peer):
-        route_alias = packet.get("route_alias")
-        if not route_alias:
-            return
-        route = await self.system_db.get_best_route_alias(route_alias)
-        if not route:
-            return
-        if route.get("is_local"):
-            await self.transport.receive_data(packet, from_peer)
-            return
-        next_hop = route["next_hop_id"]
-        if next_hop in self.active_connections:
-            nh_hash = self.system_db.node_crypto.get_blind_hash(next_hop)
-            ex_hash = self.system_db.node_crypto.get_blind_hash(from_peer)
-            await self.system_db.conn.execute(
-                "INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) VALUES (?, ?, ?, ?)",
-                (packet['id'], nh_hash, json.dumps(packet), ex_hash),
-            )
-            await self.system_db.conn.commit()
+        await self.transport.receive_data(packet, from_peer)
 
     async def _send_probe_response(self, requester_id):
         """Боб отправляет свою пробу Алисе в ответ"""

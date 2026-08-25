@@ -17,6 +17,8 @@ const NodeManager = {
     activeKey: 'dmash_active_node_v1',
     originKey: 'dmash_origin_notifications_v1',
     transportModeKey: 'dmash_transport_mode_v1',
+    inboundHandleKey: 'dmash_mesh_inbound_handle_v1',
+    routeConfigKey: 'dmash_mesh_route_config_v1',
     endpoints: [], active: null, socket: null,
     transportMode: 'mesh',
     state: 'disconnected', error: null, reconnectAttempt: 0, reconnectTimer: null,
@@ -36,6 +38,38 @@ const NodeManager = {
         this.transportMode = mode;
         localStorage.setItem(this.transportModeKey, mode);
         window.dispatchEvent(new CustomEvent('dmash-transport-mode', { detail: { mode } }));
+    },
+    getInboundLocatorHandle() {
+        return sessionStorage.getItem(this.inboundHandleKey) || localStorage.getItem(this.inboundHandleKey);
+    },
+    getRouteConfig() {
+        try { return JSON.parse(sessionStorage.getItem(this.routeConfigKey) || '{}'); } catch (_) { return {}; }
+    },
+    getMeshRoute(peerId) {
+        return this.getRouteConfig()[peerId] || null;
+    },
+    async configureInboundLocator() {
+        this.openPrompt('ARM MESH LOCATOR', 'opaque locator from mutual offline pairing', async locator => {
+            if (!locator) throw new Error('Locator is required');
+            const result = await this.registerInboundLocator(locator);
+            sessionStorage.setItem(this.inboundHandleKey, result.locator_handle);
+            this.showMessage('Inbound locator armed on this Entry Node.');
+        });
+    },
+    configurePeerRoute() {
+        this.openPrompt('MESH ROUTE: PEER ID', 'local contact ID (not sent to Node)', peerId => {
+            if (!peerId) throw new Error('Peer ID is required for local contact lookup');
+            this.openPrompt('MESH ROUTE: FORWARD LOCATOR', 'opaque route locator A→B', routeLocator => {
+                if (!routeLocator) throw new Error('Forward locator is required');
+                this.openPrompt('MESH ROUTE: BACK LOCATOR', 'opaque route locator B→A', backRouteLocator => {
+                    if (!backRouteLocator) throw new Error('Back locator is required');
+                    const routes = this.getRouteConfig();
+                    routes[peerId] = { routeLocator, backRouteLocator };
+                    sessionStorage.setItem(this.routeConfigKey, JSON.stringify(routes));
+                    this.showMessage('Opaque Mesh route saved for this browser session. Start PROBE before sending.');
+                });
+            });
+        });
     },
     save() {
         localStorage.setItem(this.storageKey, JSON.stringify(this.endpoints));
@@ -208,13 +242,13 @@ const NodeManager = {
     registerInboundLocator(locator) {
         return this.request('REGISTER_INBOUND_LOCATOR', { locator });
     },
-    startProbe(routeAlias, backRouteAlias, options = {}) {
+    startProbe(routeLocator, backRouteLocator, options = {}) {
         return this.request('START_PROBE', {
-            route_alias: routeAlias, back_route_alias: backRouteAlias, ...options
+            route_locator: routeLocator, back_route_locator: backRouteLocator, ...options
         });
     },
-    submitEnvelope(routeAlias, envelope) {
-        return this.request('SUBMIT_ENVELOPE', { route_alias: routeAlias, envelope });
+    submitEnvelope(routeLocator, envelope) {
+        return this.request('SUBMIT_ENVELOPE', { route_locator: routeLocator, envelope });
     },
     pull(locatorHandle) {
         return this.request('PULL', { locator_handle: locatorHandle });
@@ -310,8 +344,10 @@ const NodeManager = {
             }
         }, true);
         const disconnect = this.makeButton('ОТКЛЮЧИТЬСЯ', () => { this.disconnect(false); this.renderSettings(); });
+        const arm = this.makeButton('ARM MESH LOCATOR', () => this.configureInboundLocator());
+        const route = this.makeButton('CONFIGURE MESH ROUTE', () => this.configurePeerRoute());
         const close = this.makeButton('НАЗАД', () => { if (window.Core?.openSettings) Core.openSettings(); else modal.style.display = 'none'; });
-        box.append(add, connect, disconnect, close); modal.appendChild(box);
+        box.append(add, connect, disconnect, arm, route, close); modal.appendChild(box);
     },
     openStartLink(url) {
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';

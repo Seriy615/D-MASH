@@ -647,6 +647,50 @@ const Core = {
         if (!pid) return;
 
         if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
+            const meshRoute = window.NodeManager?.getMeshRoute(pid);
+            if (meshRoute) {
+                // Route setup is deliberately explicit. A probe is idempotent
+                // and may be repeated while the mesh converges.
+                try {
+                    const probe = await window.NodeManager.startProbe(
+                        meshRoute.routeLocator, meshRoute.backRouteLocator
+                    );
+                    this.shmon("INFO", `D-MASH: ${probe.state}`);
+                } catch (error) {
+                    this.shmon("ERR", `D-MASH probe failed: ${error.message}`);
+                    return;
+                }
+            }
+            if (meshRoute) {
+                let p = c;
+                const inp = document.getElementById('msgInput');
+                if (!p) { p = inp.value.trim(); if (!p) return; }
+                const isVoip = typeof p === 'object' && p.type?.startsWith('voip_');
+                const dataToEncrypt = (typeof p === 'object') ? JSON.stringify(p) : p;
+                try {
+                    const blob = await this.encrypt(dataToEncrypt, pid, forceHandshake);
+                    if (!blob) return;
+                    const signature = window.nacl.sign.detached(this.hexToBytes(blob), this.keys.sign.secretKey);
+                    const result = await window.NodeManager.submitEnvelope(meshRoute.routeLocator, {
+                        version: 1,
+                        packet_id: crypto.randomUUID(),
+                        ciphertext: blob,
+                        sender_proof: this.bytesToHex(signature)
+                    });
+                    this.shmon("INFO", `D-MASH: ${result.state}`);
+                    if (!isVoip && pid === this.activePeerId) {
+                        const seqId = await Storage.saveMessageGamma(pid, p, false, true);
+                        const log = document.getElementById('log');
+                        if (log) {
+                            if (log.innerHTML.includes("НЕТ СООБЩЕНИЙ") || log.innerHTML.includes("КАНАЛ НЕ ПОДГОТОВЛЕН")) log.innerHTML = "";
+                            log.insertAdjacentHTML('beforeend', this.buildMsgHtml({ text: p, inbound: false }, Date.now(), seqId));
+                            log.scrollTop = log.scrollHeight;
+                        }
+                        if (inp && !c) { inp.value = ""; inp.style.height = '45px'; }
+                    }
+                } catch (error) { this.shmon("ERR", `D-MASH send failed: ${error.message}`); }
+                return;
+            }
             const message = forceHandshake
                 ? "Обмен ключами через Mesh пока заблокирован: для контакта ещё не привязан opaque route locator. Legacy Relay можно включить явно в настройках сети."
                 : "D-MASH Mesh transport is not implemented for this build; legacy relay was not used";
@@ -708,7 +752,30 @@ const Core = {
     },
     // Core.syncNetwork        - Опрос сервера (PULL), получение и сортировка новых маляв
     async syncNetwork() {
-        if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') return;
+        if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
+            const inboundHandle = window.NodeManager?.getInboundLocatorHandle();
+            if (!inboundHandle || this._meshPulling) return;
+            this._meshPulling = true;
+            try {
+                const result = await window.NodeManager.pull(inboundHandle);
+                const peerIds = Object.keys(window.NodeManager.getRouteConfig());
+                for (const packet of (result.packets || [])) {
+                    const envelope = packet.envelope || {};
+                    for (const peerId of peerIds) {
+                        const plaintext = await this.decrypt(envelope.ciphertext, peerId).catch(() => null);
+                        if (plaintext === null) continue;
+                        let message = plaintext;
+                        try { message = JSON.parse(plaintext); } catch (_) { /* text */ }
+                        await Storage.saveMessageGamma(peerId, message, true, false);
+                        if (this.activePeerId === peerId) await this.selectPeer(peerId);
+                        await window.NodeManager.ack(packet.id);
+                        break;
+                    }
+                }
+            } catch (error) { this.shmon("ERR", `D-MASH pull failed: ${error.message}`); }
+            finally { this._meshPulling = false; }
+            return;
+        }
         if (this.isSyncing) return;
         this.isSyncing = true;
         try {

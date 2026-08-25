@@ -26,6 +26,11 @@ class NodeTransportService:
         self.node = node
         self._inbound_locators: Dict[str, str] = {}
 
+    def _blind(self, locator: str) -> str:
+        if not isinstance(locator, str) or not locator or not self.system_db.node_crypto:
+            raise ValueError("invalid route locator")
+        return self.system_db.node_crypto.get_blind_hash(locator)
+
     async def register_inbound_locator(self, locator: str) -> str:
         if not locator:
             raise ValueError("invalid inbound locator")
@@ -48,12 +53,15 @@ class NodeTransportService:
         packet = {
             "type": "DMP_C_PROBE",
             "id": probe_id or secrets.token_hex(16),
-            "route_alias": route_alias,
-            "back_route_alias": back_route_alias,
+            "route_id": route_alias,
+            "back_route_id": back_route_alias,
             "hops": int(hops),
             "ttl": int(ttl),
         }
-        await self.system_db.add_route_alias(back_route_alias, origin_peer_id or "LOCAL", int(hops), is_local=origin_peer_id is None)
+        await self.system_db.add_route_alias(
+            self._blind(back_route_alias), origin_peer_id or "LOCAL", int(hops),
+            is_local=origin_peer_id is None,
+        )
         await self._dispatch_mesh_packet(packet, origin_peer_id=origin_peer_id)
         return TransportSubmission(delivery_id=packet["id"], state="SUBMITTED_TO_ENTRY", packet=packet)
 
@@ -70,12 +78,12 @@ class NodeTransportService:
         packet = {
             "type": "DMP_C_DATA",
             "id": delivery_id,
-            "route_alias": route_alias,
+            "route_id": route_alias,
             "envelope": envelope,
         }
-        route = await self.system_db.get_best_route_alias(route_alias)
+        route = await self.system_db.get_best_route_alias(self._blind(route_alias))
         if route and route.get("is_local"):
-            await self._store_mailbox(route_alias, packet)
+            await self._store_mailbox(self._blind(route_alias), packet)
             return TransportSubmission(delivery_id=delivery_id, state="DELIVERED_TO_DESTINATION_NODE", packet=packet)
         if not route:
             await self._dispatch_mesh_packet(packet, origin_peer_id=origin_peer_id)
@@ -124,33 +132,40 @@ class NodeTransportService:
         return True
 
     async def receive_probe(self, packet: Dict[str, Any], from_peer: str, *, is_destination: bool = False) -> None:
-        back_route_alias = packet.get("back_route_alias")
-        route_alias = packet.get("route_alias")
+        back_route_alias = packet.get("back_route_id") or packet.get("back_route_alias")
+        route_alias = packet.get("route_id") or packet.get("route_alias")
         hops = int(packet.get("hops", 0))
         candidate_hops = hops + 1
         if back_route_alias:
-            await self.system_db.add_route_alias(back_route_alias, from_peer, candidate_hops, is_local=False)
+            await self.system_db.add_route_alias(self._blind(back_route_alias), from_peer, candidate_hops, is_local=False)
         if is_destination and route_alias:
-            await self.system_db.add_route_alias(route_alias, "LOCAL", candidate_hops, is_local=True)
+            await self.system_db.add_route_alias(self._blind(route_alias), "LOCAL", candidate_hops, is_local=True)
 
     async def receive_data(self, packet: Dict[str, Any], from_peer: str) -> Optional[TransportSubmission]:
-        route_alias = packet.get("route_alias")
+        route_alias = packet.get("route_id") or packet.get("route_alias")
         if not route_alias:
             return None
-        route = await self.system_db.get_best_route_alias(route_alias)
+        route = await self.system_db.get_best_route_alias(self._blind(route_alias))
         if not route:
             return None
         if route.get("is_local"):
-            await self._store_mailbox(route_alias, packet)
+            await self._store_mailbox(self._blind(route_alias), packet)
             return TransportSubmission(delivery_id=packet.get("id", ""), state="DELIVERED_TO_DESTINATION_NODE", packet=packet)
         await self._dispatch_mesh_packet(packet, next_hop_id=route["next_hop_id"], origin_peer_id=from_peer)
         return TransportSubmission(delivery_id=packet.get("id", ""), state="ROUTED_IN_D_MASH", packet=packet)
 
     async def _store_mailbox(self, locator_handle: str, packet: Dict[str, Any]) -> None:
         notification_id = packet.get("id") or secrets.token_hex(16)
+        mailbox_packet = dict(packet)
+        # The raw route locator is transient mesh metadata and is not needed
+        # after the destination edge has been selected.
+        mailbox_packet.pop("route_id", None)
+        mailbox_packet.pop("back_route_id", None)
+        mailbox_packet.pop("route_alias", None)
+        mailbox_packet.pop("back_route_alias", None)
         await self.system_db.conn.execute(
             "INSERT INTO offline_mailbox (target_hash, packet_json, notification_id) VALUES (?, ?, ?)",
-            (locator_handle, json.dumps(packet), notification_id),
+            (locator_handle, json.dumps(mailbox_packet), notification_id),
         )
         await self.system_db.conn.commit()
 

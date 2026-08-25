@@ -62,6 +62,13 @@ class TactEngine:
             target_hash = row['next_hop_hash']
             exclude_hash = row['exclude_peer_hash']
             payload = row['packet_json']
+            try:
+                stored = json.loads(payload)
+                if 'sealed_dmp_c' in stored:
+                    packet = self.db.node_crypto.decrypt_from_self(stored['sealed_dmp_c'])
+                    payload = json.dumps(packet)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                pass
             
             envelope = self._create_envelope(payload, is_dummy=False)
             

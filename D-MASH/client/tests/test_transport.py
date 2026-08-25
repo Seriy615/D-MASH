@@ -51,7 +51,8 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
         os.unlink(self.path)
 
     async def test_probe_propagation_updates_back_route_and_marks_destination_local(self):
-        await self.db.add_route_alias("route-handle-b", "peer-b", 2, health=0.2)
+        route_handle = self.db.node_crypto.get_blind_hash("route-handle-b")
+        await self.db.add_route_alias(route_handle, "peer-b", 2, health=0.2)
 
         submission = await self.transport.start_probe(
             "route-handle-b",
@@ -62,15 +63,16 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(submission.state, "SUBMITTED_TO_ENTRY")
         self.assertEqual(self.node.calls[0]["packet"]["type"], "DMP_C_PROBE")
+        self.assertEqual(self.node.calls[0]["packet"]["route_id"], "route-handle-b")
         self.assertEqual(self.node.calls[0]["exclude_peer_id"], "peer-a")
 
         await self.transport.receive_probe(self.node.calls[0]["packet"], "peer-a", is_destination=True)
 
-        back_route = await self.db.get_best_route_alias("back-route-a")
+        back_route = await self.db.get_best_route_alias(self.db.node_crypto.get_blind_hash("back-route-a"))
         self.assertEqual(back_route["next_hop_id"], "peer-a")
         self.assertFalse(back_route["is_local"])
 
-        destination_route = await self.db.get_best_route_alias("route-handle-b")
+        destination_route = await self.db.get_best_route_alias(route_handle)
         self.assertEqual(destination_route["next_hop_id"], "LOCAL")
         self.assertTrue(destination_route["is_local"])
 
@@ -80,7 +82,7 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
 
         await self.db.add_route_alias(locator_handle, "LOCAL", 0, is_local=True)
         result = await self.transport.submit_envelope(
-            locator_handle,
+            raw_locator,
             {"packet_id": "packet-1", "ciphertext": "abc"},
         )
 
@@ -96,14 +98,15 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn(raw_locator, row["packet_json"])
 
     async def test_pull_and_ack_keep_envelopes_opaque_until_ack(self):
-        await self.db.add_route_alias("inbound-handle", "LOCAL", 0, is_local=True)
+        inbound_handle = await self.transport.register_inbound_locator("inbound-locator")
+        await self.db.add_route_alias(inbound_handle, "LOCAL", 0, is_local=True)
         await self.db.conn.execute(
             "INSERT INTO offline_mailbox (target_hash, packet_json, notification_id) VALUES (?, ?, ?)",
-            ("inbound-handle", json.dumps({"id": "delivery-9", "route_alias": "inbound-handle", "envelope": {"ciphertext": "payload"}}), "notif-9"),
+            (inbound_handle, json.dumps({"id": "delivery-9", "envelope": {"ciphertext": "payload"}}), "notif-9"),
         )
         await self.db.conn.commit()
 
-        packets = await self.transport.pull("inbound-handle")
+        packets = await self.transport.pull(inbound_handle)
         self.assertEqual(packets[0]["id"], "delivery-9")
         async with self.db.conn.execute("SELECT COUNT(*) AS cnt FROM offline_mailbox") as cursor:
             row = await cursor.fetchone()
@@ -118,18 +121,19 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
         packet = {
             "type": "DMP_C_PROBE",
             "id": "probe-short",
-            "route_alias": "route-b",
-            "back_route_alias": "back-a",
+            "route_id": "route-b",
+            "back_route_id": "back-a",
             "hops": 2,
             "ttl": 10,
         }
         await self.transport.receive_probe(packet, "peer-n2", is_destination=True)
-        route = await self.db.get_best_route_alias("route-b")
+        route = await self.db.get_best_route_alias(self.db.node_crypto.get_blind_hash("route-b"))
         self.assertEqual(route["hops"], 3)
         self.assertEqual(route["next_hop_id"], "LOCAL")
 
     async def test_transit_packet_has_no_recipient_identity_or_plaintext(self):
-        await self.db.add_route_alias("route-transit", "peer-next", 1)
+        route_handle = self.db.node_crypto.get_blind_hash("route-transit")
+        await self.db.add_route_alias(route_handle, "peer-next", 1)
         envelope = {"version": 1, "ciphertext": "sealed-by-pwa"}
         result = await self.transport.submit_envelope("route-transit", envelope)
         packet = self.node.calls[-1]["packet"]
