@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+source_root=/srv/messenger-stage/public_html/not_messenger
+production_root=/srv/messenger.d-mash.ru/public_html/not_messenger
+backup_root=/srv/messenger.d-mash.ru/backups
+stamp=$(date -u +%Y%m%dT%H%M%SZ)
+backup="$backup_root/pwa-$stamp"
+lock=/run/lock/dmash-promote-pwa.lock
+
+if [[ ! -d "$source_root" ]]; then
+  echo "stage PWA not found: $source_root" >&2
+  exit 1
+fi
+if [[ ! -f "$source_root/index.html" || ! -f "$source_root/sw.js" ]]; then
+  echo "stage PWA is incomplete" >&2
+  exit 1
+fi
+
+exec 9>"$lock"
+flock -n 9 || { echo "another promotion is running" >&2; exit 1; }
+
+install -d -m 0700 "$backup_root" "$backup"
+rsync -a --delete \
+  --exclude='.well-known/' \
+  --exclude='.rollback*' \
+  --exclude='rollback-*' \
+  "$production_root/" "$backup/"
+
+staging="$(mktemp -d /srv/.dmash-pwa.XXXXXX)"
+cleanup() { rm -rf "$staging"; }
+trap cleanup EXIT
+rsync -a --delete \
+  --exclude='.well-known/' \
+  --exclude='.rollback*' \
+  --exclude='rollback-*' \
+  "$source_root/" "$staging/"
+
+# Keep data and the live directory out of the replacement window.
+find "$staging" -type f -exec chmod 0644 {} +
+find "$staging" -type d -exec chmod 0755 {} +
+rsync -a --delete \
+  --exclude='.well-known/' \
+  --exclude='.rollback*' \
+  --exclude='rollback-*' \
+  "$staging/" "$production_root/"
+
+nginx -t >/dev/null
+systemctl reload nginx
+release=$(grep -oE 'm[0-9]+[^"'"'"' ]*' "$production_root/js/release.js" 2>/dev/null | head -1 || true)
+echo "PROMOTION_OK release=${release:-unknown} backup=$backup"
