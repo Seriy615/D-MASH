@@ -130,11 +130,36 @@ A passing unit or synthetic integration test does not replace browser acceptance
 
 Development runs on the stage environment. Only a tested build is promoted to production. Runtime services should be managed by a service supervisor such as systemd so they continue after an SSH session closes.
 
+### EMS deployment boundaries
+
+The physical EMS host serves several distinct applications. Keep their nginx
+virtual hosts and web roots separate:
+
+- **D-MASH Messenger PWA:** `https://messenger.d-mash.ru/not_messenger/`.
+- **EMS application/frontend:** a separate application boundary;
+  `stage-ems.d-mash.ru` is an EMS React frontend and is **not** the Messenger
+  PWA.
+- **EMS D-MASH Node / DMP-C gateway:** the configured test entry endpoint is
+  `wss://stage-api-ems.d-mash.ru/dmash-client/v1`.
+- **Forge:** contains a separate D-MASH Node only. Never deploy the Messenger
+  PWA to Forge unless explicitly required.
+
+Before a PWA promotion, inspect the actual `server_name messenger.d-mash.ru`
+nginx block and establish its root/alias, `index`, `try_files`, Service Worker
+scope and cache behavior. Do not infer those details from a different EMS
+frontend virtual host.
+
 The production PWA promotion utility is:
 
 ```bash
 tools/dmash-promote-pwa
 ```
+
+The script promotes only the Messenger PWA from
+`/srv/messenger-stage/public_html/not_messenger` to
+`/srv/messenger.d-mash.ru/public_html/not_messenger`, creating a backup below
+`/srv/messenger.d-mash.ru/backups`. It is not a deployment path for the EMS
+application frontend or Forge.
 
 Do not commit private keys, node identities, databases, tokens, certificates, virtual environments, or runtime logs. Keep deployment secrets in the server secret store or environment configuration.
 
