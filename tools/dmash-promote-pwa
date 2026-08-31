@@ -4,9 +4,85 @@ set -Eeuo pipefail
 source_root=/srv/messenger-stage/public_html/not_messenger
 production_root=/srv/messenger.d-mash.ru/public_html/not_messenger
 backup_root=/srv/messenger.d-mash.ru/backups
+public_base=https://messenger.d-mash.ru/not_messenger
+nginx_user=www-data
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 backup="$backup_root/pwa-$stamp"
 lock=/run/lock/dmash-promote-pwa.lock
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "required command unavailable: $1" >&2
+    exit 1
+  }
+}
+
+verify_nginx_read_access() {
+  local path
+  # Ancestors are traversal-only. `not_messenger` itself remains non-listable;
+  # individual public directories/files receive only the permissions nginx needs.
+  setfacl -m "u:${nginx_user}:--x" \
+    /srv/messenger.d-mash.ru \
+    /srv/messenger.d-mash.ru/public_html \
+    "$production_root"
+
+  # Historical rollback directories are deliberately not web-visible. Remove a
+  # prior recursive ACL if one was applied manually, without changing modes or
+  # ownership of those private artifacts.
+  while IFS= read -r -d '' path; do
+    setfacl -R -x "u:${nginx_user}" "$path" 2>/dev/null || true
+  done < <(find "$production_root" -mindepth 1 -type d \( -name '.rollback' -o -name '.rollbacks' -o -name 'rollback-*' \) -print0)
+
+  while IFS= read -r -d '' path; do
+    setfacl -m "u:${nginx_user}:r-x" "$path"
+  done < <(find "$production_root" \
+    \( -name '.rollback' -o -name '.rollbacks' -o -name 'rollback-*' \) -prune -o \
+    -type d -print0)
+  while IFS= read -r -d '' path; do
+    setfacl -m "u:${nginx_user}:r--" "$path"
+    sudo -u "$nginx_user" test -r "$path" || {
+      echo "nginx cannot read deployed asset: ${path#$production_root/}" >&2
+      return 1
+    }
+  done < <(find "$production_root" \
+    \( -name '.rollback' -o -name '.rollbacks' -o -name 'rollback-*' \) -prune -o \
+    -type f -print0)
+
+  sudo -u "$nginx_user" test -r "$production_root/index.html" || {
+    echo "nginx cannot read deployed index.html" >&2
+    return 1
+  }
+}
+
+verify_public_https() {
+  local asset
+  local -a assets=(
+    index.html manifest.json nodes.json sw.js calc_icon.png
+    css/foundation.css css/app_shell.css
+    js/release.js js/i18n.js js/app_shell.js js/ui_logic.js js/node_manager.js
+    js/core_engine.js js/storage.js js/device_root.js
+    js/locales/en.js js/locales/ru.js
+    js/vendor/argon2-bundled.min.js js/vendor/argon2.wasm
+    js/vendor/html5-qrcode.min.js js/vendor/kyber768.js js/vendor/kyber768.wasm
+    js/vendor/nacl-fast.min.js js/vendor/nacl-util.min.js js/vendor/qrcode.min.js
+  )
+
+  for asset in "${assets[@]}"; do
+    [[ -f "$production_root/$asset" ]] || {
+      echo "required deployed asset missing: $asset" >&2
+      return 1
+    }
+    curl --fail --silent --show-error --location --max-time 20 \
+      --output /dev/null "$public_base/$asset" || {
+      echo "public HTTPS smoke failed: $asset" >&2
+      return 1
+    }
+  done
+}
+
+require_command setfacl
+require_command curl
+require_command sudo
 
 if [[ ! -d "$source_root" ]]; then
   echo "stage PWA not found: $source_root" >&2
@@ -36,7 +112,8 @@ rsync -a --delete \
   --exclude='rollback-*' \
   "$source_root/" "$staging/"
 
-# Keep data and the live directory out of the replacement window.
+# Make the release normally readable without granting writes; ACL verification
+# below protects deployments where ownership/mode inheritance is restrictive.
 find "$staging" -type f -exec chmod 0644 {} +
 find "$staging" -type d -exec chmod 0755 {} +
 rsync -a --delete \
@@ -47,5 +124,7 @@ rsync -a --delete \
 
 nginx -t >/dev/null
 systemctl reload nginx
-release=$(grep -oE 'm[0-9]+[^"'"'"' ]*' "$production_root/js/release.js" 2>/dev/null | head -1 || true)
+verify_nginx_read_access
+verify_public_https
+release=$(grep -oE "m[0-9]+[^\"' ]*" "$production_root/js/release.js" 2>/dev/null | head -1 || true)
 echo "PROMOTION_OK release=${release:-unknown} backup=$backup"
