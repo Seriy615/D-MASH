@@ -2407,7 +2407,7 @@ const Core = {
                             ${content}
                             <span class="msg-del-btn" onclick="Core.deleteMessageFlow('${id || ts}')">×</span>
                         </div>
-                        <small class="m-ts">${time}</small>
+                        <small class="m-ts">${time}${this.messageStatusHtml(msg)}</small>
                     </div>`;
             }
         }
@@ -2425,8 +2425,19 @@ const Core = {
                     ${content}
                     <span class="msg-del-btn" onclick="Core.deleteMessageFlow('${id || ts}')">×</span>
                 </div>
-                <small class="m-ts">${time}</small>
+                <small class="m-ts">${time}${this.messageStatusHtml(msg)}</small>
             </div>`;
+    },
+    // Receipts are not implemented yet. Never render optimistic delivered/read
+    // ticks: only an explicit transport state may be presented to the user.
+    messageStatusHtml(msg) {
+        if (msg.inbound || !msg.transportState) return "";
+        const states = {
+            SENT: " <span class=\"m-state\" title=\"Sent to transport\">✓</span>",
+            DELIVERED: " <span class=\"m-state\" title=\"Delivered to device\">✓✓</span>",
+            READ: " <span class=\"m-state m-state--read\" title=\"Read by account\">✓✓</span>"
+        };
+        return states[msg.transportState] || "";
     },
     // Core.bytesToHex/hexToBytes - Конвертеры форматов данных
     bytesToHex: (b) => Array.from(b).map(x => Core.hex_lut[x]).join(''),

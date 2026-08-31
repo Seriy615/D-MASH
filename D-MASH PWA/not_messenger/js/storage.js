@@ -81,7 +81,12 @@ const Storage = {
         await this.putBox('blind_secrets', { alias: aliasL1, data: secrets });
 
         const aliasL3 = await this.getAlias(aliasL1 + seqNum, "L3");
-        await this.putBox('blind_messages', { alias: aliasL3, data: { text, ts: Date.now(), inbound } });
+        await this.putBox('blind_messages', {
+            alias: aliasL3,
+            // Outgoing data has only entered local transport at this point.
+            // Do not claim DELIVERED or READ without authenticated receipts.
+            data: { text, ts: Date.now(), inbound, transportState: inbound ? null : 'SENT' }
+        });
 
         const peerInfo = await this.getBox('blind_peers', aliasL1) || { id: peerID, name: `Peer-${peerID.substring(0,4)}` };
         peerInfo.last_ts = Date.now();
