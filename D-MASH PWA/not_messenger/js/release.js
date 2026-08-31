@@ -2,7 +2,7 @@
 
 // Bump this ID for every deployed PWA release. It is intentionally visible so
 // a support screenshot identifies the code a browser actually executes.
-window.DMASH_RELEASE = Object.freeze({ id: "m1.5-legacy-stabilization-20260831.20" });
+window.DMASH_RELEASE = Object.freeze({ id: "m1.5-legacy-stabilization-20260831.21" });
 
 window.addEventListener("DOMContentLoaded", () => {
     const badge = document.getElementById("dmash-build-id");
