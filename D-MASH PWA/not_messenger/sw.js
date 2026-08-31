@@ -10,7 +10,7 @@ const CORE_ASSETS = [
     './css/foundation.css', './css/app_shell.css',
     './js/release.js', './js/locales/en.js', './js/locales/ru.js', './js/i18n.js',
     './js/app_shell.js', './js/ui_logic.js', './js/node_manager.js',
-    './js/core_engine.js', './js/storage.js'
+    './js/core_engine.js', './js/storage.js', './js/device_root.js'
 ];
 
 // 1. Установка: новая полная оболочка кэшируется отдельно и не активируется,

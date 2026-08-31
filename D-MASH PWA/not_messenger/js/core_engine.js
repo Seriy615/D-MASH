@@ -113,6 +113,10 @@ const Core = {
     isDrawing: false,
     gammaKeys: { master: null, sign: null, box: null },
     keys: { sign: null, box: null, pub_hex: null },
+    // Device identity is intentionally separate from this legacy Account
+    // identity.  It is not yet sent on DMP-C while device-only wire auth is
+    // designed; keeping it here prevents accidental Account-vault coupling.
+    device: null,
     isSyncing: false, chatOffset: 0, chatLimit: 50, isLoadingHistory: false,
     hex_lut: Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0')),
     randomInt32: () => {
@@ -145,6 +149,13 @@ const Core = {
         try {
             if (statusEl) statusEl.innerText = "КУЗНИЦА КЛЮЧЕЙ (1024 bit)...";
 
+            // Bootstrap or unlock the installation-scoped root first.  The
+            // existing p2 calculator secret serves as the local wrapping PIN
+            // for this foundation; it is never a DeviceRoot derivation input.
+            // A legacy Gamma vault without an explicit migration is rejected
+            // rather than silently replacing its established Account identity.
+            const deviceState = await window.DeviceRoot.bootstrap(passphrase);
+
             // 1. Выжимаем 128 байт энтропии через Argon2id
             const result = await window.argon2.hash({
                 pass: passphrase, salt: identity + "D_MASH_GAMMA_V1_STABLE",
@@ -163,7 +174,19 @@ const Core = {
             this.keys.box = window.nacl.box.keyPair.fromSecretKey(seedBox);
 
     KyberWasm.init();
-    const quantum = KyberWasm.generateKeys();
+    const serializedKyber = deviceState.legacy ? null : await window.DeviceRoot.deviceMaterial("ml-kem-768-v1", () => {
+        const generated = KyberWasm.generateKeys();
+        if (!generated.success) throw new Error("WASM Квантовая кузница выдала брак!");
+        const serialized = new Uint8Array(generated.pk.length + generated.sk.length);
+        serialized.set(generated.pk);
+        serialized.set(generated.sk, generated.pk.length);
+        return serialized;
+    });
+    if (serializedKyber && serializedKyber.length !== 3584) throw new Error("Device ML-KEM material is corrupt; it was not regenerated.");
+    const quantum = serializedKyber
+        ? { pk: serializedKyber.slice(0, 1184), sk: serializedKyber.slice(1184), success: true }
+        : KyberWasm.generateKeys();
+    if (!quantum.success) throw new Error("WASM Квантовая кузница выдала брак!");
 
     if (quantum.success) {
         this.keys.kyber = { publicKey: quantum.pk, secretKey: quantum.sk };
@@ -179,6 +202,14 @@ const Core = {
     this.keys.pub_hex = edPubHex + curvePubHex + kyberPubHex;
 
             this.keys.server_id = edPubHex;
+            this.device = deviceState.legacy ? null : Object.freeze({
+                id: deviceState.identity.deviceId,
+                fingerprints: deviceState.identity.fingerprints,
+                // These are device-scoped algorithm keys.  Existing Account
+                // crypto remains frozen in this prerequisite milestone.
+                signing: deviceState.identity.signing,
+                agreement: deviceState.identity.agreement
+            });
             this.activeIdentity = identity;
             this.shmon("INFO", `Система готова. ID: ${this.keys.server_id.substring(0,8)}`);
 
@@ -354,6 +385,8 @@ const Core = {
         // 2. Сносим ключи и ксивы
         this.gammaKeys = null;
         this.keys = { master: null, alias: null, sign: null, box: null, pub_hex: null };
+        this.device = null;
+        window.DeviceRoot?.lock();
         this.activeIdentity = null;
         this.activePeerId = null;
 

@@ -239,6 +239,7 @@ async loadAllLibs() {
         await Promise.all([
             this.loadScript(`js/vendor/argon2-bundled.min.js?v=${ver}`),
             this.loadScript(`js/vendor/kyber768.js?v=${ver}`),
+            this.loadScript(`js/device_root.js?v=${ver}`),
             this.loadScript(`js/storage.js?v=${ver}`),
             this.loadScript(`js/node_manager.js?v=${ver}`),
             this.loadScript(`js/core_engine.js?v=${ver}`),
