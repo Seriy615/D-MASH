@@ -73,9 +73,10 @@ class NodeCapabilities:
     def advertised_operations(self) -> FrozenSet[str]:
         """Return only implemented legacy operations allowed by local policy.
 
-        DMP-C is legacy Account-derived compatibility.  The Device-only
-        operations are deliberately not advertised here: capability flags are
-        policy, not a protocol grant, and DMP-D is not implemented.
+        DMP-C v2 authenticates a node-scoped Device transport principal. The
+        Device-only routing operations remain deliberately unadvertised here:
+        capability flags are policy, not a protocol grant, and DMP-D is not
+        implemented.
         """
         if not self.can_route or not self.can_accept_devices:
             return frozenset({"PING", "STATUS"})

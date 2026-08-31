@@ -21,7 +21,8 @@ except ModuleNotFoundError:  # Package tests import ``backend.client_gateway``.
 
 router = APIRouter()
 PROTOCOL = "DMP-C"
-VERSION = 1
+VERSION = 2
+LEGACY_VERSION = 1
 AUTH_TIMEOUT_SECONDS = 15
 
 
@@ -32,7 +33,16 @@ def runtime_state():
 
 
 def auth_transcript(session_id: str, nonce: str) -> bytes:
-    return f"{PROTOCOL}|{VERSION}|AUTH|{session_id}|{nonce}".encode("utf-8")
+    """Legacy v1 transcript retained only for explicit compatibility tests."""
+    return f"{PROTOCOL}|{LEGACY_VERSION}|AUTH|{session_id}|{nonce}".encode("utf-8")
+
+
+def device_auth_transcript(node_id: str, session_id: str, server_nonce: str,
+                           client_nonce: str, expires_at: int) -> bytes:
+    """Canonical DEVICE_AUTH_V1 challenge transcript; all fields are public."""
+    fields = (PROTOCOL, str(VERSION), "DEVICE_AUTH_V1", node_id.lower(),
+              session_id, server_nonce, client_nonce, str(expires_at))
+    return "|".join(fields).encode("utf-8")
 
 
 def verify_auth(public_key_hex: str, signature_b64: str, session_id: str, nonce: str) -> bool:
@@ -47,37 +57,64 @@ def verify_auth(public_key_hex: str, signature_b64: str, session_id: str, nonce:
         return False
 
 
+def verify_device_auth(public_key_hex: str, signature_b64: str, node_id: str,
+                       session_id: str, server_nonce: str, client_nonce: str,
+                       expires_at: int) -> bool:
+    if not isinstance(client_nonce, str) or not 16 <= len(client_nonce) <= 256:
+        return False
+    try:
+        public_key = bytes.fromhex(public_key_hex)
+        signature = base64.b64decode(signature_b64, validate=True)
+        if len(public_key) != 32 or len(signature) != 64:
+            return False
+        VerifyKey(public_key).verify(device_auth_transcript(
+            node_id, session_id, server_nonce, client_nonce, expires_at
+        ), signature)
+        return True
+    except (ValueError, BadSignatureError):
+        return False
+
+
 @router.websocket("/dmp-c/v1")
 async def dmp_client(websocket: WebSocket):
     await websocket.accept()
+    state = runtime_state()
+    node_id = state.node_crypto.node_id if state.node_crypto else None
+    if not node_id:
+        await websocket.close(code=1011, reason="node identity unavailable")
+        return
     session_id = secrets.token_hex(16)
     nonce = secrets.token_urlsafe(32)
+    expires_at = int(time.time()) + AUTH_TIMEOUT_SECONDS
     await websocket.send_json({
         "type": "CHALLENGE",
         "protocol": PROTOCOL,
         "version": VERSION,
+        "auth_mode": "DEVICE_AUTH_V1",
+        "node_id": node_id,
         "session_id": session_id,
         "nonce": nonce,
         "expires_in": AUTH_TIMEOUT_SECONDS,
+        "expires_at": expires_at,
     })
     state = None
     session_locator_handles = set()
     try:
         raw = await asyncio.wait_for(websocket.receive_text(), AUTH_TIMEOUT_SECONDS)
         auth = json.loads(raw)
-        if auth.get("type") != "AUTH" or not verify_auth(
-            auth.get("public_key", ""), auth.get("signature", ""), session_id, nonce
+        if auth.get("type") != "AUTH" or auth.get("auth_mode") != "DEVICE_AUTH_V1" or not verify_device_auth(
+            auth.get("public_key", ""), auth.get("signature", ""), node_id,
+            session_id, nonce, auth.get("client_nonce", ""), expires_at
         ):
             await websocket.close(code=1008, reason="authentication failed")
             return
 
-        state = runtime_state()
         operations = allowed_operations(state)
         await websocket.send_json({
             "type": "AUTH_OK",
             "protocol": PROTOCOL,
-            "version": VERSION,
-            "node_id": state.node_crypto.node_id if state.node_crypto else None,
+            "version": VERSION, "auth_mode": "DEVICE_AUTH_V1",
+            "node_id": node_id,
             "server_time": int(time.time()),
             "capabilities": sorted(operations),
         })

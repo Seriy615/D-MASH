@@ -173,7 +173,7 @@ const NodeManager = {
     },
     async connect() {
         if (!this.active) throw new Error('Select a node first');
-        if (!window.Core?.keys?.sign) throw new Error('User identity is not unlocked');
+        if (!window.Core?.device?.signing || !window.DeviceRoot?.state?.root) throw new Error('Device identity is not unlocked');
         clearTimeout(this.reconnectTimer); this.setState('connecting');
         const socket = new WebSocket(this.active.url); this.socket = socket;
         socket.onmessage = event => this.onMessage(event);
@@ -191,13 +191,32 @@ const NodeManager = {
     onMessage(event) {
         const message = JSON.parse(event.data);
         if (message.type === 'CHALLENGE') {
-            const transcript = new TextEncoder().encode(`DMP-C|1|AUTH|${message.session_id}|${message.nonce}`);
-            const signature = window.nacl.sign.detached(transcript, window.Core.keys.sign.secretKey);
-            this.socket.send(JSON.stringify({
-                type: 'AUTH', public_key: window.Core.bytesToHex(window.Core.keys.sign.publicKey),
-                signature: this.toBase64(signature)
-            }));
+            if (message.protocol !== 'DMP-C' || message.version !== 2 || message.auth_mode !== 'DEVICE_AUTH_V1' ||
+                !/^[0-9a-f]{64}$/i.test(message.node_id || '') || !message.session_id || !message.nonce ||
+                !Number.isInteger(message.expires_at) || message.expires_at <= Math.floor(Date.now() / 1000)) {
+                this.socket.close(1008, 'invalid device auth challenge');
+                this.setState('error', 'invalid device-auth challenge');
+                return;
+            }
+            window.DeviceRoot.transportIdentity(message.node_id).then(transport => {
+                const clientNonce = this.toBase64(crypto.getRandomValues(new Uint8Array(32)));
+                const transcript = new TextEncoder().encode(
+                    `DMP-C|2|DEVICE_AUTH_V1|${transport.nodeId}|${message.session_id}|${message.nonce}|${clientNonce}|${message.expires_at}`
+                );
+                const signature = window.nacl.sign.detached(transcript, transport.signing.secretKey);
+                this.socket.send(JSON.stringify({
+                    type: 'AUTH', auth_mode: 'DEVICE_AUTH_V1',
+                    public_key: window.Core.bytesToHex(transport.signing.publicKey), client_nonce: clientNonce,
+                    signature: this.toBase64(signature)
+                }));
+            }).catch(error => {
+                this.socket.close(1008, 'device auth unavailable');
+                this.setState('error', error.message);
+            });
         } else if (message.type === 'AUTH_OK') {
+            if (message.auth_mode !== 'DEVICE_AUTH_V1' || message.version !== 2) {
+                this.socket.close(1008, 'unexpected auth mode'); this.setState('error', 'unexpected auth mode'); return;
+            }
             this.reconnectAttempt = 0;
             this.lastConnectedAt = Date.now();
             this.setState('connected');

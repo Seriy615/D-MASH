@@ -57,10 +57,10 @@
             });
             return this.db;
         }
-        async get() {
+        async get(id = RECORD_KEY) {
             const db = await this.open();
             return new Promise((resolve, reject) => {
-                const request = db.transaction(STORE, "readonly").objectStore(STORE).get(RECORD_KEY);
+                const request = db.transaction(STORE, "readonly").objectStore(STORE).get(id);
                 request.onsuccess = () => resolve(request.result || null);
                 request.onerror = () => reject(new DeviceRootError("STORAGE_CORRUPT", "Device identity storage cannot be read."));
             });
@@ -163,6 +163,75 @@
                 agreement,
                 fingerprints: Object.freeze({ signing: b64(signing.publicKey), agreement: b64(agreement.publicKey) })
             });
+        },
+        async transportIdentity(nodeId) {
+            if (!this.state?.root || !/^[0-9a-f]{64}$/i.test(nodeId || "")) {
+                throw new DeviceRootError("INVALID_NODE_CONTEXT", "A verified Ed25519 NodeID is required for device transport authentication.");
+            }
+            const context = `DMP-C|2|${nodeId.toLowerCase()}`;
+            const seed = await this.derive(this.state.root, this.domains.transportAuth, VERSION, context);
+            if (!global.nacl?.sign?.keyPair?.fromSeed) throw new DeviceRootError("NACL_UNAVAILABLE", "Device transport primitives are unavailable.");
+            const signing = global.nacl.sign.keyPair.fromSeed(seed);
+            return Object.freeze({ mode: "DEVICE_AUTH_V1", nodeId: nodeId.toLowerCase(), signing });
+        },
+        bindingTranscript(binding) {
+            const fields = ["D-MASH-DEVICE-BINDING", "1", binding.account_public_key, binding.device_signing_public_key, binding.device_agreement_public_key, String(binding.created_at)];
+            if (!fields.every((value) => typeof value === "string" && value.length)) throw new DeviceRootError("INVALID_BINDING", "Device binding fields are invalid.");
+            return utf8(fields.join("|"));
+        },
+        verifyBinding(binding) {
+            try {
+                if (!binding || binding.version !== 1 || !/^[0-9a-f]{64}$/i.test(binding.account_public_key || "") ||
+                    !/^[A-Za-z0-9+/]+={0,2}$/.test(binding.device_signing_public_key || "") ||
+                    !/^[A-Za-z0-9+/]+={0,2}$/.test(binding.device_agreement_public_key || "") ||
+                    !/^[A-Za-z0-9+/]+={0,2}$/.test(binding.signature || "")) return false;
+                return global.nacl.sign.detached.verify(this.bindingTranscript(binding), unb64(binding.signature), new Uint8Array(this.hexToBytes(binding.account_public_key)));
+            } catch (_) { return false; }
+        },
+        hexToBytes(value) { return new Uint8Array(value.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))); },
+        async migrateLegacy(masterPin, accountPublicKey, accountSecretKey) {
+            this._requireCrypto();
+            if (!/^[0-9a-f]{64}$/i.test(accountPublicKey || "") || !(accountSecretKey instanceof Uint8Array) || accountSecretKey.length < 64) {
+                throw new DeviceRootError("LEGACY_ACCOUNT_UNVERIFIED", "Legacy Account identity must be unlocked and verified before DeviceRoot migration.");
+            }
+            const store = this._store();
+            let marker = await store.get("migration");
+            let record = await store.get();
+            if (marker?.state === "complete" && !record) throw new DeviceRootError("MIGRATION_INCONSISTENT", "Migration marker has no DeviceRoot record.");
+            if (!record) {
+                await store.put({ id: "migration", version: 1, state: "in_progress" });
+                const root = this._crypto.getRandomValues(new Uint8Array(ROOT_BYTES));
+                const wrapSalt = this._crypto.getRandomValues(new Uint8Array(WRAP_SALT_BYTES));
+                const wrapped = await this._encryptRoot(root, masterPin, wrapSalt);
+                record = { id: RECORD_KEY, version: VERSION, wrapSalt: b64(wrapSalt), materials: {}, migration: { version: 1, state: "in_progress" }, ...wrapped };
+                await store.put(record);
+                root.fill(0);
+            }
+            const root = await this._decryptRoot(record, masterPin);
+            const identity = await this.deviceIdentity(root);
+            const existing = record.migration?.binding;
+            if (existing && !this.verifyBinding(existing)) throw new DeviceRootError("BINDING_INVALID", "Stored DeviceBinding is invalid and migration cannot continue.");
+            const binding = existing || (() => {
+                const candidate = {
+                    version: 1, account_public_key: accountPublicKey.toLowerCase(),
+                    device_signing_public_key: b64(identity.signing.publicKey), device_agreement_public_key: b64(identity.agreement.publicKey),
+                    created_at: Date.now()
+                };
+                candidate.signature = b64(global.nacl.sign.detached(this.bindingTranscript(candidate), accountSecretKey));
+                return candidate;
+            })();
+            if (binding.account_public_key !== accountPublicKey.toLowerCase() || !this.verifyBinding(binding)) {
+                root.fill(0); throw new DeviceRootError("BINDING_INVALID", "DeviceBinding did not verify against the unlocked Account identity.");
+            }
+            // Verify persistence before commit. A restart seeing in_progress
+            // reuses this exact root/binding; it never makes a second device.
+            const reopened = await this._decryptRoot(record, masterPin);
+            reopened.fill(0);
+            record.migration = { version: 1, state: "complete", binding };
+            await store.put(record);
+            await store.put({ id: "migration", version: 1, state: "complete" });
+            this.state = { root, identity, created: false, record };
+            return this.state;
         },
         async _legacyVaultExists() {
             // A missing DeviceRoot must not silently overwrite an established

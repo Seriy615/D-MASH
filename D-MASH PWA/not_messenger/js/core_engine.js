@@ -154,7 +154,7 @@ const Core = {
             // for this foundation; it is never a DeviceRoot derivation input.
             // A legacy Gamma vault without an explicit migration is rejected
             // rather than silently replacing its established Account identity.
-            const deviceState = await window.DeviceRoot.bootstrap(passphrase);
+            let deviceState = await window.DeviceRoot.bootstrap(passphrase);
 
             // 1. Выжимаем 128 байт энтропии через Argon2id
             const result = await window.argon2.hash({
@@ -172,6 +172,15 @@ const Core = {
             // --- 3. ГЕНЕРАЦИЯ КЛЮЧЕЙ ---
             this.keys.sign = window.nacl.sign.keyPair.fromSeed(seedSign);
             this.keys.box = window.nacl.box.keyPair.fromSecretKey(seedBox);
+
+            // Legacy migration starts only after the pre-existing Account key
+            // has been deterministically unlocked. It signs a local binding;
+            // neither Account identity nor binding is sent to an Entry Node.
+            if (deviceState.legacy || deviceState.record?.migration?.state === 'in_progress') {
+                deviceState = await window.DeviceRoot.migrateLegacy(
+                    passphrase, this.bytesToHex(this.keys.sign.publicKey), this.keys.sign.secretKey
+                );
+            }
 
     KyberWasm.init();
     const serializedKyber = deviceState.legacy ? null : await window.DeviceRoot.deviceMaterial("ml-kem-768-v1", () => {
