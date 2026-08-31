@@ -77,6 +77,30 @@ class ClientGatewayAuthTests(unittest.TestCase):
         self.assertEqual(websocket.sent[1]["type"], "AUTH_OK")
         self.assertEqual(websocket.sent[1]["auth_mode"], "DEVICE_AUTH_V1")
 
+    def test_v2_websocket_keeps_runtime_state_for_post_auth_status(self):
+        client_key = SigningKey.generate()
+
+        def valid_auth(sent):
+            challenge = sent[0]
+            client_nonce = "client-nonce-status-012345"
+            transcript = device_auth_transcript(
+                challenge["node_id"], challenge["session_id"], challenge["nonce"],
+                client_nonce, challenge["expires_at"],
+            )
+            return __import__("json").dumps({
+                "type": "AUTH", "auth_mode": "DEVICE_AUTH_V1",
+                "public_key": client_key.verify_key.encode().hex(), "client_nonce": client_nonce,
+                "signature": base64.b64encode(client_key.sign(transcript).signature).decode("ascii"),
+            })
+
+        websocket = self.GatewaySocket([valid_auth, __import__("json").dumps({"type": "STATUS", "request_id": "status-1"}), "__DISCONNECT__"])
+        asyncio.run(gateway.dmp_client(websocket))
+        self.assertEqual(websocket.sent[1]["type"], "AUTH_OK")
+        self.assertEqual(websocket.sent[2], {
+            "type": "STATUS", "request_id": "status-1",
+            "node_id": self.node_key.verify_key.encode().hex(), "mesh_peers": 0,
+        })
+
     def test_v2_rejects_legacy_or_replayed_challenge_signature(self):
         client_key = SigningKey.generate()
         def replayed_auth(sent):

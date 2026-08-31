@@ -97,7 +97,9 @@ async def dmp_client(websocket: WebSocket):
         "expires_in": AUTH_TIMEOUT_SECONDS,
         "expires_at": expires_at,
     })
-    state = None
+    # Keep the runtime state for the authenticated operation loop below.  The
+    # challenge itself exposes only `node_id`; clearing this reference here
+    # makes the PWA's immediate STATUS request crash the gateway after AUTH_OK.
     session_locator_handles = set()
     try:
         raw = await asyncio.wait_for(websocket.receive_text(), AUTH_TIMEOUT_SECONDS)
