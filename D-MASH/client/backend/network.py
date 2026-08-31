@@ -13,14 +13,18 @@ from crypto import NodeCryptoManager # <-- Импортируем для ста�
 from transport import NodeTransportService
 HANDSHAKE_TIMEOUT = 10.0
 class P2PNode:
-    def __init__(self, system_db: DatabaseManager):
+    def __init__(self, system_db: DatabaseManager, *, can_route: bool = False, can_accept_devices: bool = False):
         self.system_db = system_db
         self.active_connections = {}
         self.active_user_id = None
         self.active_user_db = None
         self.active_crypto = None
         self.connection_tasks = set()
-        self.transport = NodeTransportService(system_db, self)
+        self.can_route = can_route
+        self.can_accept_devices = can_accept_devices
+        self.transport = NodeTransportService(
+            system_db, self, can_route=can_route, can_accept_devices=can_accept_devices,
+        )
 
     def set_active_user(self, user_id, user_db, crypto):
         self.active_user_id = user_id
@@ -108,6 +112,11 @@ class P2PNode:
         """
         peer_id = None
         try:
+            # A non-routing Node has no P2P data-plane role. Reject before
+            # handshake, neighbor persistence, or a live connection exists.
+            if not self.can_route:
+                await websocket.close(code=1008, reason="routing disabled")
+                return
             # --- Шаг 1: Получаем challenge ---
             request_json = await asyncio.wait_for(websocket.recv(), timeout=HANDSHAKE_TIMEOUT)
             request_data = json.loads(request_json)
@@ -160,6 +169,8 @@ class P2PNode:
             print(f"🔌 [P2P] Connection with {peer_id[:8]} closed.")
 
     async def enqueue_transport_packet(self, packet, *, next_hop_id: str | None = None, exclude_peer_id: str | None = None):
+        if not self.can_route:
+            raise PermissionError("routing is disabled by local Node policy")
         sealed = self.system_db.node_crypto.encrypt_for_self(packet)
         payload = json.dumps({"sealed_dmp_c": sealed})
         if next_hop_id:
@@ -187,6 +198,11 @@ class P2PNode:
                 packet = json.loads(inner_json)
                 pkt_type = packet.get("type")
                 pkt_id = packet.get("id")
+
+                # Do not mark, learn, route, or enqueue real transport traffic
+                # when this universal Python Node has routing disabled.
+                if pkt_type in {"DMP_C_PROBE", "DMP_C_DATA", "PROBE", "DATA"} and not self.can_route:
+                    return
 
                 # Регистрируем пакет (внутри используется хеширование ID)
                 is_new = await self.system_db.mark_packet_seen(pkt_id)

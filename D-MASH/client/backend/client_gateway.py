@@ -14,6 +14,10 @@ from dataclasses import asdict
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from nacl.exceptions import BadSignatureError
 from nacl.signing import VerifyKey
+try:  # Runtime scripts import backend modules as top-level modules.
+    from capabilities import allowed_operations
+except ModuleNotFoundError:  # Package tests import ``backend.client_gateway``.
+    from .capabilities import allowed_operations
 
 router = APIRouter()
 PROTOCOL = "DMP-C"
@@ -68,22 +72,23 @@ async def dmp_client(websocket: WebSocket):
             return
 
         state = runtime_state()
+        operations = allowed_operations(state)
         await websocket.send_json({
             "type": "AUTH_OK",
             "protocol": PROTOCOL,
             "version": VERSION,
             "node_id": state.node_crypto.node_id if state.node_crypto else None,
             "server_time": int(time.time()),
-            "capabilities": [
-                "PING", "STATUS", "REGISTER_INBOUND_LOCATOR", "START_PROBE",
-                "UNREGISTER_INBOUND_LOCATOR", "SUBMIT_ENVELOPE", "PULL", "ACK",
-            ],
+            "capabilities": sorted(operations),
         })
 
         while True:
             request = json.loads(await websocket.receive_text())
             operation = request.get("type")
             request_id = request.get("request_id")
+            if operation not in operations:
+                await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "UNSUPPORTED_OPERATION"})
+                continue
             if operation == "PING":
                 await websocket.send_json({"type": "PONG", "request_id": request_id})
             elif operation == "STATUS":
@@ -126,10 +131,14 @@ async def dmp_client(websocket: WebSocket):
                 if not isinstance(route_locator, str) or not isinstance(back_route_locator, str) or not route_locator or not back_route_locator:
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_ROUTE_HANDLE"})
                     continue
-                submission = await state.node.transport.start_probe(
-                    route_locator, back_route_locator,
-                    hops=request.get("hops", 0), ttl=request.get("ttl", 20),
-                )
+                try:
+                    submission = await state.node.transport.start_probe(
+                        route_locator, back_route_locator,
+                        hops=request.get("hops", 0), ttl=request.get("ttl", 20),
+                    )
+                except (PermissionError, ValueError):
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
+                    continue
                 await websocket.send_json({"type": "START_PROBE_RESULT", "request_id": request_id, **asdict(submission)})
             elif operation == "SUBMIT_ENVELOPE":
                 route_locator = request.get("route_locator")
@@ -137,7 +146,11 @@ async def dmp_client(websocket: WebSocket):
                 if not isinstance(route_locator, str) or not route_locator or not isinstance(envelope, dict):
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_ENVELOPE"})
                     continue
-                submission = await state.node.transport.submit_envelope(route_locator, envelope)
+                try:
+                    submission = await state.node.transport.submit_envelope(route_locator, envelope)
+                except (PermissionError, ValueError):
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
+                    continue
                 await websocket.send_json({"type": "SUBMIT_ENVELOPE_RESULT", "request_id": request_id, **asdict(submission)})
             elif operation == "PULL":
                 locator_handle = request.get("locator_handle")

@@ -52,7 +52,7 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
         self.db.set_node_crypto(NonLeakingFakeNodeCrypto())
         await self.db.connect()
         self.node = FakeNode()
-        self.transport = NodeTransportService(self.db, self.node)
+        self.transport = NodeTransportService(self.db, self.node, can_route=True, can_accept_devices=True)
 
     async def asyncTearDown(self):
         await self.db.close()

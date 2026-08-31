@@ -21,9 +21,11 @@ class TransportSubmission:
 
 
 class NodeTransportService:
-    def __init__(self, system_db, node=None):
+    def __init__(self, system_db, node=None, *, can_route: bool = False, can_accept_devices: bool = False):
         self.system_db = system_db
         self.node = node
+        self.can_route = can_route
+        self.can_accept_devices = can_accept_devices
         self._inbound_locators: Dict[str, str] = {}
         # Runtime-only registry.  It contains blind locator handles and live
         # DMP-C sessions, never user IDs or raw locators.
@@ -35,6 +37,8 @@ class NodeTransportService:
         return self.system_db.node_crypto.get_blind_hash(locator)
 
     async def register_inbound_locator(self, locator: str) -> str:
+        if not self.can_accept_devices:
+            raise PermissionError("device acceptance is disabled by local Node policy")
         if not locator:
             raise ValueError("invalid inbound locator")
         locator_handle = await self.system_db.arm_inbound_locator(locator)
@@ -42,6 +46,8 @@ class NodeTransportService:
         return locator_handle
 
     def attach_local_delivery_session(self, locator_handle: str, session: Any) -> None:
+        if not self.can_accept_devices:
+            return
         if locator_handle:
             self._local_delivery_sessions.setdefault(locator_handle, set()).add(session)
 
@@ -54,6 +60,8 @@ class NodeTransportService:
 
     async def unregister_inbound_locator(self, locator: str) -> bool:
         """Remove a local inbound locator and data addressed to its blind alias."""
+        if not self.can_accept_devices:
+            raise PermissionError("device acceptance is disabled by local Node policy")
         removed = await self.system_db.disarm_inbound_locator(locator)
         locator_handle = self._blind(locator)
         self._inbound_locators.pop(locator_handle, None)
@@ -70,6 +78,8 @@ class NodeTransportService:
         probe_id: str | None = None,
         ttl: int = 20,
     ) -> TransportSubmission:
+        if not self.can_route or not self.can_accept_devices:
+            raise PermissionError("routing is disabled by local Node policy")
         if not route_alias or not back_route_alias:
             raise ValueError("route aliases are required")
         packet = {
@@ -94,6 +104,8 @@ class NodeTransportService:
         *,
         origin_peer_id: str | None = None,
     ) -> TransportSubmission:
+        if not self.can_route or not self.can_accept_devices:
+            raise PermissionError("routing is disabled by local Node policy")
         if not route_alias:
             raise ValueError("route alias is required")
         delivery_id = envelope.get("delivery_id") or envelope.get("packet_id") or secrets.token_hex(16)
@@ -115,6 +127,8 @@ class NodeTransportService:
         return TransportSubmission(delivery_id=delivery_id, state="SUBMITTED_TO_ENTRY", packet=packet)
 
     async def pull(self, locator_handle: str) -> list[dict[str, Any]]:
+        if not self.can_accept_devices:
+            raise PermissionError("device acceptance is disabled by local Node policy")
         if not locator_handle:
             raise ValueError("locator handle is required")
         async with self.system_db.conn.execute(
@@ -131,6 +145,8 @@ class NodeTransportService:
         return packets
 
     async def ack(self, delivery_id: str, *, allowed_locator_handles: Set[str] | None = None) -> bool:
+        if not self.can_accept_devices:
+            raise PermissionError("device acceptance is disabled by local Node policy")
         if not delivery_id:
             raise ValueError("delivery id is required")
         if not getattr(self.system_db, "conn", None):
@@ -163,6 +179,8 @@ class NodeTransportService:
         return True
 
     async def receive_probe(self, packet: Dict[str, Any], from_peer: str, *, is_destination: bool = False) -> bool:
+        if not self.can_route:
+            return False
         back_route_alias = packet.get("back_route_id") or packet.get("back_route_alias")
         route_alias = packet.get("route_id") or packet.get("route_alias")
         hops = int(packet.get("hops", 0))
@@ -175,6 +193,8 @@ class NodeTransportService:
         return updated
 
     async def receive_data(self, packet: Dict[str, Any], from_peer: str) -> Optional[TransportSubmission]:
+        if not self.can_route:
+            return None
         route_alias = packet.get("route_id") or packet.get("route_alias")
         if not route_alias:
             return None
@@ -224,6 +244,8 @@ class NodeTransportService:
         next_hop_id: str | None = None,
         origin_peer_id: str | None = None,
     ) -> None:
+        if not self.can_route:
+            raise PermissionError("routing is disabled by local Node policy")
         if not self.node:
             return
         await self.node.enqueue_transport_packet(packet, next_hop_id=next_hop_id, exclude_peer_id=origin_peer_id)

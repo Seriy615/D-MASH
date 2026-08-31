@@ -25,6 +25,10 @@ class TactEngine:
             await asyncio.sleep(sleep_time)
 
     async def _tick(self):
+        # A non-routing Node must not flush stale outbox data or emit cover
+        # traffic as a routing side effect.
+        if not self.node.can_route:
+            return
         # 1. Получаем список активных соединений
         # active_connections хранит { real_peer_id: websocket }
         if not self.node.active_connections: return

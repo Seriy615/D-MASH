@@ -13,6 +13,10 @@ from network import P2PNode
 from tact import TactEngine
 from crypto import CryptoManager, NodeCryptoManager
 from notification import NotificationTrigger, OriginNotificationClient
+try:  # Runtime scripts import backend modules as top-level modules.
+    from capabilities import NodeCapabilities
+except ModuleNotFoundError:  # Package tests import ``backend.core``.
+    from .capabilities import NodeCapabilities
 
 # --- D-MASH CONFIGURATION ---
 TACT_INTERVAL = 1.5
@@ -36,6 +40,7 @@ class AppState:
     background_tasks: Set[asyncio.Task] = set()
 
     process_pool: Optional[Executor] = None
+    capabilities: Optional[NodeCapabilities] = None
 
 state = AppState()
 
@@ -99,6 +104,7 @@ async def lifespan(app: FastAPI):
     # 1. Инициализация Identity Ноды (Синхронно, блокирует старт до завершения PoW)
     node_signing_key = ensure_node_identity()
     state.node_crypto = NodeCryptoManager(node_signing_key)
+    state.capabilities = NodeCapabilities.from_env()
     print(f"🌐 [CORE] Node ID: {state.node_crypto.node_id}")
     state.process_pool = create_crypto_executor()
     # 2. Запускаем Системную БД
@@ -115,7 +121,11 @@ async def lifespan(app: FastAPI):
     await state.system_db.rehydrate_notifications()
 
     # 3. Запускаем Демона
-    state.node = P2PNode(state.system_db) 
+    state.node = P2PNode(
+        state.system_db,
+        can_route=state.capabilities.can_route,
+        can_accept_devices=state.capabilities.can_accept_devices,
+    )
     
     # 4. Запускаем Tact Engine
     state.tact = TactEngine(state.system_db, state.node, TACT_INTERVAL, PACKET_SIZE)
@@ -149,5 +159,12 @@ app.include_router(api_router)
 from client_gateway import router as client_gateway_router
 app.include_router(client_gateway_router)
 
-frontend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
+backend_path = os.path.dirname(os.path.abspath(__file__))
+# Canonical checkout: ``client/frontend``. Docker/Compose: ``backend/frontend``.
+# Prefer a present mount so either supported runtime layout starts correctly.
+frontend_candidates = (
+    os.path.join(backend_path, "frontend"),
+    os.path.join(os.path.dirname(backend_path), "frontend"),
+)
+frontend_path = next((path for path in frontend_candidates if os.path.isdir(path)), frontend_candidates[-1])
 app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
