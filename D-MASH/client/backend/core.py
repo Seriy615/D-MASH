@@ -15,8 +15,12 @@ from crypto import CryptoManager, NodeCryptoManager
 from notification import NotificationTrigger, OriginNotificationClient
 try:  # Runtime scripts import backend modules as top-level modules.
     from capabilities import NodeCapabilities
+    from fallback_store import FallbackStore
+    from fallback_runtime import initialize_fallback_store
 except ModuleNotFoundError:  # Package tests import ``backend.core``.
     from .capabilities import NodeCapabilities
+    from .fallback_store import FallbackStore
+    from .fallback_runtime import initialize_fallback_store
 
 # --- D-MASH CONFIGURATION ---
 TACT_INTERVAL = 1.5
@@ -41,6 +45,7 @@ class AppState:
 
     process_pool: Optional[Executor] = None
     capabilities: Optional[NodeCapabilities] = None
+    fallback_store: Optional[FallbackStore] = None
 
 state = AppState()
 
@@ -118,6 +123,7 @@ async def lifespan(app: FastAPI):
         state.system_db.set_notification_trigger(NotificationTrigger(origin_client.send))
     
     await state.system_db.connect()
+    await initialize_fallback_store(state.system_db.conn, state)
     await state.system_db.rehydrate_notifications()
 
     # 3. Запускаем Демона
@@ -143,6 +149,7 @@ async def lifespan(app: FastAPI):
     for task in state.background_tasks: task.cancel()
     state.process_pool.shutdown(wait=False) # <--- НЕ ЗАБУДЬТЕ ЗАКРЫТЬ
     if state.db: await state.db.close()
+    state.fallback_store = None
     if state.system_db: await state.system_db.close()
 
 app = FastAPI(lifespan=lifespan)
