@@ -215,3 +215,40 @@ async def dmp_client(websocket: WebSocket):
     finally:
         if state and state.node:
             state.node.transport.detach_local_delivery_session(websocket)
+
+
+@router.websocket("/dmp-c/legacy-v1")
+async def legacy_dmp_client(websocket: WebSocket):
+    """Explicit temporary compatibility boundary for pre-cutover clients.
+
+    New PWA code never selects this route and DEVICE_AUTH_V1 never falls back
+    to it. It remains until a separately accepted legacy-retirement milestone.
+    """
+    await websocket.accept()
+    session_id = secrets.token_hex(16)
+    nonce = secrets.token_urlsafe(32)
+    await websocket.send_json({
+        "type": "CHALLENGE", "protocol": PROTOCOL, "version": LEGACY_VERSION,
+        "auth_mode": "LEGACY_AUTH_V1", "session_id": session_id, "nonce": nonce,
+        "expires_in": AUTH_TIMEOUT_SECONDS,
+    })
+    try:
+        raw = await asyncio.wait_for(websocket.receive_text(), AUTH_TIMEOUT_SECONDS)
+        auth = json.loads(raw)
+        if auth.get("type") != "AUTH" or auth.get("auth_mode") != "LEGACY_AUTH_V1" or not verify_auth(
+            auth.get("public_key", ""), auth.get("signature", ""), session_id, nonce
+        ):
+            await websocket.close(code=1008, reason="legacy authentication failed")
+            return
+        state = runtime_state()
+        await websocket.send_json({
+            "type": "AUTH_OK", "protocol": PROTOCOL, "version": LEGACY_VERSION,
+            "auth_mode": "LEGACY_AUTH_V1",
+            "node_id": state.node_crypto.node_id if state.node_crypto else None,
+            "server_time": int(time.time()), "capabilities": sorted(allowed_operations(state)),
+        })
+        # Compatibility acknowledgement only: no mixed post-auth operation
+        # surface survives beside the DEVICE_AUTH_V1 endpoint.
+        await websocket.close(code=1000, reason="legacy compatibility acknowledged")
+    except (WebSocketDisconnect, TimeoutError, json.JSONDecodeError):
+        return

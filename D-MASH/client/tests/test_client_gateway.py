@@ -8,10 +8,16 @@ from backend.client_gateway import (
     device_auth_transcript,
     verify_auth,
     verify_device_auth,
+    router,
 )
 
 
 class ClientGatewayAuthTests(unittest.TestCase):
+    def test_legacy_compatibility_is_explicit_not_a_v2_fallback(self):
+        paths = {route.path for route in router.routes}
+        self.assertIn("/dmp-c/v1", paths)
+        self.assertIn("/dmp-c/legacy-v1", paths)
+
     def test_legacy_transcript_helper_remains_verifiable_but_is_not_device_auth(self):
         signing_key = SigningKey.generate()
         public_key = signing_key.verify_key.encode().hex()
