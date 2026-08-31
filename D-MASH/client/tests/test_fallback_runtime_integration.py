@@ -37,6 +37,30 @@ class FallbackRuntimeIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(await initialize_fallback_store(self.database.conn, runtime))
         self.assertIsNone(runtime.fallback_store)
 
+    async def test_acknowledged_envelope_survives_database_restart_until_device_pulls_it(self):
+        runtime = SimpleNamespace(capabilities=NodeCapabilities(
+            can_route=True, can_accept_devices=True, can_fallback_store=True
+        ))
+        store = await initialize_fallback_store(self.database.conn, runtime)
+        self.assertTrue(await store.store(
+            "device-handle", "restart-envelope", "opaque-ciphertext",
+            expires_at=int(time.time()) + 300,
+        ))
+        await self.database.close()
+
+        self.database = DatabaseManager(self.path)
+        await self.database.connect()
+        recovered_runtime = SimpleNamespace(capabilities=runtime.capabilities)
+        recovered = await initialize_fallback_store(self.database.conn, recovered_runtime)
+        batch = await recovered.pull_batch("device-handle")
+        self.assertEqual(
+            batch.envelopes,
+            [{"envelope_id": "restart-envelope", "opaque_payload": "opaque-ciphertext"}],
+        )
+        self.assertTrue(await recovered.acknowledge(
+            "device-handle", batch.batch_id, ["restart-envelope"]
+        ))
+
 
 if __name__ == "__main__":
     unittest.main()
