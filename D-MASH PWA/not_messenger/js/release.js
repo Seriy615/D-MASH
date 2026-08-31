@@ -2,7 +2,7 @@
 
 // Bump this ID for every deployed PWA release. It is intentionally visible so
 // a support screenshot identifies the code a browser actually executes.
-window.DMASH_RELEASE = Object.freeze({ id: "m1.5-device-auth-v2-20260831.22" });
+window.DMASH_RELEASE = Object.freeze({ id: "m1.5-device-auth-v2-20260831.23" });
 
 window.addEventListener("DOMContentLoaded", () => {
     const badge = document.getElementById("dmash-build-id");
