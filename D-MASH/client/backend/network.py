@@ -16,6 +16,9 @@ class P2PNode:
     def __init__(self, system_db: DatabaseManager, *, can_route: bool = False, can_accept_devices: bool = False):
         self.system_db = system_db
         self.active_connections = {}
+        # DMP-C packets carry raw opaque locators only while in flight.  Keep
+        # them RAM-only rather than making even an encrypted copy durable.
+        self.transient_transport_outbox = []
         self.active_user_id = None
         self.active_user_db = None
         self.active_crypto = None
@@ -171,22 +174,10 @@ class P2PNode:
     async def enqueue_transport_packet(self, packet, *, next_hop_id: str | None = None, exclude_peer_id: str | None = None):
         if not self.can_route:
             raise PermissionError("routing is disabled by local Node policy")
-        sealed = self.system_db.node_crypto.encrypt_for_self(packet)
-        payload = json.dumps({"sealed_dmp_c": sealed})
-        if next_hop_id:
-            nh_hash = self.system_db.node_crypto.get_blind_hash(next_hop_id)
-            ex_hash = self.system_db.node_crypto.get_blind_hash(exclude_peer_id) if exclude_peer_id else None
-            await self.system_db.conn.execute(
-                "INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) VALUES (?, ?, ?, ?)",
-                (packet["id"], nh_hash, payload, ex_hash),
-            )
-        else:
-            ex_hash = self.system_db.node_crypto.get_blind_hash(exclude_peer_id) if exclude_peer_id else None
-            await self.system_db.conn.execute(
-                "INSERT INTO outbox (packet_id, next_hop_hash, packet_json, exclude_peer_hash) VALUES (?, NULL, ?, ?)",
-                (packet["id"], payload, ex_hash),
-            )
-        await self.system_db.conn.commit()
+        self.transient_transport_outbox.append({
+            "packet": dict(packet), "next_hop_id": next_hop_id,
+            "exclude_peer_id": exclude_peer_id,
+        })
 
     async def _process_envelope(self, envelope_json: str, from_peer: str):
         try:

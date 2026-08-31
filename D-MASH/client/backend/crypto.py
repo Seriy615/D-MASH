@@ -23,7 +23,12 @@ class NodeCryptoManager:
     Отвечает за Identity ноды, PoW и 'ослепление' данных (Blind Storage).
     """
     def __init__(self, signing_key_hex: str = None):
-        self.secret_salt = os.urandom(32) # Соль живет только в RAM
+        # The blind-index key must be node-local *and stable*: route aliases
+        # are persisted, so a fresh random key here would orphan every route
+        # and inbound binding on restart.  It is derived only in RAM from the
+        # already-persistent private node identity with an explicit domain;
+        # neither the key nor raw locators are written to the database.
+        self.secret_salt: Optional[bytes] = None
         self.signing_key: Optional[SigningKey] = None
         self.verify_key: Optional[VerifyKey] = None
         self.private_key: Optional[PrivateKey] = None # Curve25519 (для расшифровки SealedBox)
@@ -42,6 +47,9 @@ class NodeCryptoManager:
         # Конвертация Ed25519 -> Curve25519 для шифрования
         self.private_key = self.signing_key.to_curve25519_private_key()
         self.public_key = self.verify_key.to_curve25519_public_key()
+        self.secret_salt = hashlib.sha256(
+            b"D-MASH|NODE_BLIND_ALIAS_KEY|V1\x00" + self.signing_key.encode()
+        ).digest()
 
     @staticmethod
     def generate_node_identity() -> Tuple[str, str]:
@@ -75,6 +83,8 @@ class NodeCryptoManager:
         Blake3(data, key=secret_salt).
         Без соли (которая в RAM) восстановить связь невозможно.
         """
+        if not self.secret_salt:
+            raise ValueError("node blind-index key is unavailable")
         return blake3.blake3(data.encode(), key=self.secret_salt).hexdigest()
 
 

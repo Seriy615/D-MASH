@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 
+from backend.crypto import NodeCryptoManager
 from backend.database import DatabaseManager
 
 
@@ -51,6 +52,16 @@ class BlindRouteStorageTests(unittest.IsolatedAsyncioTestCase):
             row = await cursor.fetchone()
         self.assertEqual(row["route_in_hash"], alias)
         self.assertNotIn("route-a", row["routing_blob"])
+
+    def test_real_node_blind_alias_is_stable_but_identity_scoped(self):
+        locator = "opaque-routing-locator"
+        node_a = NodeCryptoManager("11" * 32)
+        restarted_node_a = NodeCryptoManager("11" * 32)
+        node_b = NodeCryptoManager("22" * 32)
+
+        self.assertEqual(node_a.get_blind_hash(locator), restarted_node_a.get_blind_hash(locator))
+        self.assertNotEqual(node_a.get_blind_hash(locator), node_b.get_blind_hash(locator))
+        self.assertNotIn(locator, node_a.get_blind_hash(locator))
 
 
 if __name__ == "__main__":

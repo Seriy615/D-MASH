@@ -45,6 +45,26 @@ class TactEngine:
             # Если криптография не инициализирована, мы не можем маршрутизировать
             return
 
+        # DMP-C locator-bearing packets are intentionally transient: their
+        # opaque locators must never enter SQLite.  Flush them over the current
+        # authenticated peer graph before looking at the legacy durable queue.
+        transient_packets = self.node.transient_transport_outbox
+        self.node.transient_transport_outbox = []
+        for item in transient_packets:
+            envelope = self._create_envelope(json.dumps(item["packet"]), is_dummy=False)
+            next_hop_id = item.get("next_hop_id")
+            exclude_peer_id = item.get("exclude_peer_id")
+            if next_hop_id:
+                ws = active_hashes.get(self.db.node_crypto.get_blind_hash(next_hop_id))
+                targets = [ws] if ws else []
+            else:
+                targets = [ws for peer_id, ws in self.node.active_connections.items() if peer_id != exclude_peer_id]
+            for ws in targets:
+                try:
+                    await ws.send(envelope)
+                except Exception:
+                    pass
+
         # 3. Читаем очередь (Outbox)
         async with self.db.conn.execute("""
             SELECT id, next_hop_hash, packet_json, exclude_peer_hash 
