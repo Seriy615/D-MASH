@@ -100,11 +100,14 @@ const Core = {
     Объект Core и системные переменные.
     */
     activePeerId: null,
+    openingPeerId: null,
+    pendingInboundByPeer: new Map(),
     activeIdentity: null,
     scanner: null,
     blobURLs: [],
     chatOffset: 0,
     chatLimit: 50,
+    historyPrefetch: new Map(),
     isLoadingHistory: false,
     mediaRecorder: null,
     audioChunks: [],
@@ -128,6 +131,10 @@ const Core = {
     callState: 'idle', // idle, calling, receiving, connected
     iceQueue: [],
     activeCallId: null,
+    // Stable per-call nonce. It is transport metadata only (never message
+    // content) and lets the destination/Origin collapse offer, ICE and hangup
+    // packets into one notification.
+    callNotificationNonce: null,
     callTimer: null,
     callPeerId: null,
     callSeconds: 0,
@@ -144,7 +151,7 @@ const Core = {
     Запуск приложения, генерация мастер-ключей и выход.
     */
     // Core.boot               - Главная функция входа: Argon2id, генерация ключей и запуск
-    async boot(identity, passphrase) {
+    async boot(identity, passphrase, options = {}) {
         const statusEl = document.getElementById('gate-status-text');
         try {
             if (statusEl) statusEl.innerText = "КУЗНИЦА КЛЮЧЕЙ (1024 bit)...";
@@ -156,7 +163,8 @@ const Core = {
             // rather than silently replacing its established Account identity.
             let deviceState = await window.DeviceRoot.bootstrap(passphrase);
 
-            // 1. Выжимаем 128 байт энтропии через Argon2id
+            // 1. Выжимаем 128 байт энтропии через Argon2id.  This is the
+            // session KDF; credential bindings must validate against it.
             const result = await window.argon2.hash({
                 pass: passphrase, salt: identity + "D_MASH_GAMMA_V1_STABLE",
                 time: 3, mem: 65536, hashLen: 128, type: window.argon2.argon2id
@@ -224,7 +232,7 @@ const Core = {
 
             // 5. Инициализация хранилища и запуск
             await Storage.initGamma(this.gammaKeys.master);
-            await Storage.registerAccount(identity, this.keys.pub_hex);
+            if (options.register === true) await Storage.registerAccount(identity, this.keys.pub_hex);
 
             this.launchWorkspace();
 
@@ -242,25 +250,46 @@ const Core = {
         return material.contribution;
     },
     async derivePairingLocators(peerId, peerContribution) {
-        const ownId = this.keys.server_id;
         const ownContribution = await this.ensurePairingContribution();
-        const entries = [
-            { id: ownId, contribution: ownContribution },
-            { id: peerId, contribution: peerContribution }
-        ].sort((a, b) => a.id.localeCompare(b.id));
-        const transcript = `D-MASH-PAIRING-COMPAT-V1|${entries[0].id}|${entries[1].id}|${entries[0].contribution}|${entries[1].contribution}`;
-        const root = await this.fastHash(transcript);
-        const forwardLabel = ownId === entries[0].id ? 'A_TO_B' : 'B_TO_A';
+        // Pairing contributions are authenticated locally by the pairing flow.
+        // They are the only inputs to routing material: public Account IDs are
+        // deliberately excluded from both the routing root and locators.
+        if (!/^[0-9a-f]{64}$/i.test(ownContribution || "") || !/^[0-9a-f]{64}$/i.test(peerContribution || "")) {
+            throw new Error("Pairing contribution is invalid");
+        }
+        const own = ownContribution.toLowerCase();
+        const peer = peerContribution.toLowerCase();
+        if (own === peer) throw new Error("Pairing contributions must differ");
+        const ordered = [own, peer].sort();
+        const hex = value => Uint8Array.from(value.match(/../g).map(byte => parseInt(byte, 16)));
+        const text = value => new TextEncoder().encode(value);
+        const join = (...parts) => {
+            const size = parts.reduce((total, part) => total + part.length, 0);
+            const bytes = new Uint8Array(size); let offset = 0;
+            for (const part of parts) { bytes.set(part, offset); offset += part.length; }
+            return bytes;
+        };
+        const hkdf = async (ikm, info) => {
+            const key = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
+            return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt: new Uint8Array(32), info: text(info) }, key, 256));
+        };
+        // HKDF extracts a pair-scoped 256-bit secret from two independent
+        // 256-bit contributions. This is not DeviceRoot or message material.
+        const routingRoot = await hkdf(join(hex(ordered[0]), hex(ordered[1])), "D-MASH|ROUTING_ROOT|V1");
+        const locator = async label => Array.from(await hkdf(routingRoot, `D-MASH|ROUTE_LOCATOR|V1|${label}`), byte => byte.toString(16).padStart(2, "0")).join("");
+        const forwardLabel = own === ordered[0] ? 'A_TO_B' : 'B_TO_A';
         const reverseLabel = forwardLabel === 'A_TO_B' ? 'B_TO_A' : 'A_TO_B';
         return {
-            routeLocator: await this.fastHash(`${root}|${forwardLabel}`),
-            backRouteLocator: await this.fastHash(`${root}|${reverseLabel}`),
+            routeLocator: await locator(forwardLabel),
+            backRouteLocator: await locator(reverseLabel),
             version: 1
         };
     },
     async ensureAutomaticMeshRoute(peerId, peerContribution) {
         if (!peerContribution || !window.NodeManager) return null;
         const locators = await this.derivePairingLocators(peerId, peerContribution);
+        // armMeshRoute registers the local inbound locator and, when connected,
+        // starts discovery without submitting a message envelope.
         await window.NodeManager.armMeshRoute(peerId, locators.routeLocator, locators.backRouteLocator);
         this.shmon('INFO', 'Opaque Mesh locator привязан автоматически после pairing QR.');
         return locators;
@@ -334,6 +363,7 @@ const Core = {
                         <textarea id="msgInput" placeholder="Сообщение..." rows="1" spellcheck="false"></textarea>
                         <button class="action-btn" id="circle-btn" onclick="Core.uiCircle()">⭕</button>
                         <button class="action-btn" id="voice-btn" onclick="Core.uiVoice()">🎤</button>
+                        <span id="recording-timer" class="recording-timer" aria-live="polite" hidden>00:00</span>
                         <button class="action-btn send-btn" onmousedown="event.preventDefault()" onclick="Core.sendMessage()">SEND</button>
                     </div>
                 </div>
@@ -385,6 +415,11 @@ const Core = {
     terminateSession: function() {
         console.log("[!!!] ШУХЕР! ГАСИМ ПРИБОРЫ...");
 
+        const zero = value => {
+            if (value instanceof Uint8Array) value.fill(0);
+            else if (value && typeof value === 'object') Object.values(value).forEach(zero);
+        };
+
         // 1. Выжигаем SecretSalt (забиваем нулями Uint8Array)
         if (this.blindSalt) {
             this.blindSalt.fill(0);
@@ -392,6 +427,9 @@ const Core = {
         }
 
         // 2. Сносим ключи и ксивы
+        zero(this.gammaKeys);
+        zero(this.keys);
+        zero(this.device);
         this.gammaKeys = null;
         this.keys = { master: null, alias: null, sign: null, box: null, pub_hex: null };
         this.device = null;
@@ -402,9 +440,23 @@ const Core = {
         // 3. Чистим сессионный мусор
         sessionStorage.clear();
 
-        // 4. Уходим в глухую несознанку (релоад на чистый калькулятор)
-        // replace юзаем, чтоб нельзя было кнопкой "Назад" вернуться
-        window.location.replace(window.location.origin + window.location.pathname);
+        if (this.syncInterval) { clearInterval(this.syncInterval); this.syncInterval = null; }
+        // Authenticated DMP-C connections must not outlive their unlocked
+        // DeviceRoot/session, even momentarily after the decoy is shown.
+        window.NodeManager?.disconnect(false);
+        this.killAllMedia();
+        if (this.peerConnection) { this.peerConnection.close(); this.peerConnection = null; }
+        // Do not reload: a reload can briefly expose a stale workspace. Return
+        // synchronously to the decoy after RAM/session destruction.
+        const workspace = document.getElementById('workspace');
+        const calculator = document.getElementById('app-container');
+        const settings = document.getElementById('settings-layer');
+        if (workspace) workspace.style.display = 'none';
+        if (settings) settings.style.display = 'none';
+        // The calculator is the app-container itself (there is no calc-view).
+        // show_gate hides it, so restore both display and opacity explicitly.
+        if (calculator) { calculator.style.display = 'flex'; calculator.style.opacity = '1'; }
+        if (window.ui) { ui.unlockGeneration = (ui.unlockGeneration || 0) + 1; ui.mode = 0; ui.curr = '0'; ui.hist = ''; ui.op = null; ui.update(); }
     },
     // Core.initRyvokDetector  - Детектор физического рывка телефона (акселерометр)
     initRyvokDetector() {
@@ -440,7 +492,7 @@ const Core = {
         window.addEventListener('deviceorientation', (e) => {
             // Flip-Lock is an explicit opt-in safety control. QR scanning and
             // normal phone rotation must not silently return to calculator.
-            if (localStorage.getItem('cfg_panic_gesture') !== 'true' || this.callState !== 'idle' || this.isRecordingCircle) return;
+            if (localStorage.getItem('cfg_panic_gesture') !== 'true' || this.callState !== 'idle' || this.isRecordingCircle || this.flipLockSuppressed) return;
 
             // Если телефон перевернут (угол больше 110 градусов)
             if (e.beta !== null && Math.abs(e.beta) > 110) {
@@ -766,7 +818,9 @@ const Core = {
     */
     // Core.sendMessage        - Отправка данных на сервер (с поддержкой VOIP и Silent режимов)
     async sendMessage(c = null, forceHandshake = false, targetPid = null) {
-        if (this.isRecordingCircle && !c) { this.cancelRecording = false; this.stopCircleUI(); return; }
+        // SEND is the sole commit control for captured media.  Recording
+        // controls cancel only; neither voice nor circle auto-sends on stop.
+        if (this.isRecording && !c) { this.commitRecording(); return; }
 
         // ВАЖНО: Определяем, кому реально летит малява
         const pid = targetPid || this.activePeerId;
@@ -796,20 +850,36 @@ const Core = {
                 const inp = document.getElementById('msgInput');
                 if (!p) { p = inp.value.trim(); if (!p) return; }
                 const isVoip = typeof p === 'object' && p.type?.startsWith('voip_');
-                const dataToEncrypt = (typeof p === 'object') ? JSON.stringify(p) : p;
+                const isReceipt = typeof p === 'object' && p.type === 'dmash_receipt';
+                // Assign an opaque per-message ID before E2EE encryption. It
+                // is referenced only by encrypted receipts; Entry Nodes never
+                // see it as routing or identity metadata.
+                const wireId = (!isVoip && !isReceipt && !forceHandshake) ? crypto.randomUUID() : null;
+                const outbound = wireId ? { type: 'dmash_message', id: wireId, body: p } : p;
+                const dataToEncrypt = (typeof outbound === 'object') ? JSON.stringify(outbound) : outbound;
                 try {
                     const blob = await this.encrypt(dataToEncrypt, pid, forceHandshake);
                     if (!blob) return;
                     const signature = window.nacl.sign.detached(this.hexToBytes(blob), this.keys.sign.secretKey);
-                    const result = await window.NodeManager.submitEnvelope(meshRoute.routeLocator, {
+                    const envelope = {
                         version: 1,
                         packet_id: crypto.randomUUID(),
                         ciphertext: blob,
                         sender_proof: this.bytesToHex(signature)
-                    });
+                    };
+                    if (isVoip && this.callNotificationNonce) {
+                        envelope.notification_nonce = this.callNotificationNonce;
+                        envelope.notification_event = 'INCOMING_BAZAR';
+                    }
+                    const result = await window.NodeManager.submitEnvelope(meshRoute.routeLocator, envelope);
                     this.shmon("INFO", `D-MASH: ${result.state}`);
-                    if (!isVoip && pid === this.activePeerId) {
-                        const seqId = await Storage.saveMessageGamma(pid, p, false, true);
+                    if (!isVoip && !isReceipt && pid === this.activePeerId) {
+                        // A DMP-C submission result is an authenticated node
+                        // acknowledgement, not a read receipt.  It is safe to
+                        // show delivery only when the node explicitly reports
+                        // that the destination node/session was reached.
+                        const delivered = /^DELIVERED_TO_DESTINATION_(NODE|PWA_SESSION)$/.test(result.state || '');
+                        const seqId = await Storage.saveMessageGamma(pid, p, false, true, delivered ? 'DELIVERED' : 'SENT', wireId);
                         const log = document.getElementById('log');
                         if (log) {
                             if (log.innerHTML.includes("НЕТ СООБЩЕНИЙ") || log.innerHTML.includes("КАНАЛ НЕ ПОДГОТОВЛЕН")) log.innerHTML = "";
@@ -843,10 +913,13 @@ const Core = {
         if (!p) { p = inp.value.trim(); if (!p) return; }
 
         const isVoip = typeof p === 'object' && p.type?.startsWith('voip_');
+        const isReceipt = typeof p === 'object' && p.type === 'dmash_receipt';
+        const wireId = (!isVoip && !isReceipt && !forceHandshake) ? crypto.randomUUID() : null;
+        const outbound = wireId ? { type: 'dmash_message', id: wireId, body: p } : p;
         const isSilent = isVoip && (p.type === 'voip_ice' || p.type === 'voip_answer' || p.type === 'voip_hangup');
 
         try {
-            const dataToEncrypt = (typeof p === 'object') ? JSON.stringify(p) : p;
+            const dataToEncrypt = (typeof outbound === 'object') ? JSON.stringify(outbound) : outbound;
 
             // Передаем pid в encrypt, чтобы он взял правильные ключи из базы
             const blob = await this.encrypt(dataToEncrypt, pid, forceHandshake);
@@ -868,8 +941,8 @@ const Core = {
             });
 
             // Сохраняем и обновляем UI только если это не системный сигнал и это текущий открытый чат
-            if (!isVoip && pid === this.activePeerId) {
-                const seqId = await Storage.saveMessageGamma(pid, p, false, true);
+            if (!isVoip && !isReceipt && pid === this.activePeerId) {
+                const seqId = await Storage.saveMessageGamma(pid, p, false, true, 'SENT', wireId);
                 const log = document.getElementById('log');
                 if (log) {
                     if (log.innerHTML.includes("НЕТ СООБЩЕНИЙ") || log.innerHTML.includes("КАНАЛ НЕ ПОДГОТОВЛЕН")) log.innerHTML = "";
@@ -889,11 +962,12 @@ const Core = {
             try {
                 const peerIds = Object.keys(window.NodeManager.getRouteConfig());
                 this._processedMeshDeliveries ||= new Set();
+                let refreshPeers = false;
                 for (const inboundHandle of inboundHandles) {
                     const result = await window.NodeManager.pull(inboundHandle);
                     for (const packet of (result.packets || [])) {
                     if (this._processedMeshDeliveries.has(packet.id)) {
-                        await window.NodeManager.ack(packet.id);
+                        await window.NodeManager.ack(packet.id, packet._nodeUrl);
                         continue;
                     }
                     const envelope = packet.envelope || {};
@@ -916,20 +990,52 @@ const Core = {
                             // replay the same handshake forever.
                             if ([1, 2, 3].includes(packetKind)) {
                                 this._processedMeshDeliveries.add(packet.id);
-                                await window.NodeManager.ack(packet.id);
+                                await window.NodeManager.ack(packet.id, packet._nodeUrl);
                                 break;
                             }
                             continue;
                         }
                         let message = plaintext;
                         try { message = JSON.parse(plaintext); } catch (_) { /* text */ }
-                        await Storage.saveMessageGamma(peerId, message, true, false);
-                        if (this.activePeerId === peerId) await this.selectPeer(peerId);
+                        const isVoip = typeof message === 'object' && message.type?.startsWith('voip_');
+                        const isReceipt = typeof message === 'object' && message.type === 'dmash_receipt';
+                        const isMessageEnvelope = typeof message === 'object' && message.type === 'dmash_message' && typeof message.id === 'string';
+                        if (isReceipt) {
+                            await Storage.updateMessageTransportState(peerId, message.id, message.state);
+                        } else if (isVoip) {
+                            // Signalling is authenticated by sender_proof and decrypted above,
+                            // but must never become chat history or an unread chat message.
+                            await this.handleVoipSignal(message, peerId);
+                        } else {
+                            const content = isMessageEnvelope ? message.body : message;
+                            const isCurrent = this.activePeerId === peerId;
+                            // The same E2EE envelope can legitimately arrive
+                            // through two nodes.  packet.id is node-local, so
+                            // suppress by the sender's encrypted wire ID too.
+                            if (isMessageEnvelope && await Storage.hasMessageWireId(peerId, message.id)) {
+                                this._processedMeshDeliveries.add(packet.id);
+                                await window.NodeManager.ack(packet.id, packet._nodeUrl);
+                                break;
+                            }
+                            const seqId = await Storage.saveMessageGamma(peerId, content, true, isCurrent, null, isMessageEnvelope ? message.id : null);
+                            if (isMessageEnvelope) {
+                                // Delivery is asserted only after the encrypted
+                                // payload was authenticated, decrypted, and
+                                // committed to the recipient's local vault.
+                                await this.sendMessage({ type: 'dmash_receipt', id: message.id, state: 'DELIVERED' }, false, peerId);
+                            }
+                            if (isCurrent) {
+                                if (this.openingPeerId === peerId) this.queueInboundMessage(peerId, content, seqId);
+                                else this.appendInboundMessage(content, seqId);
+                            }
+                            else refreshPeers = true;
+                        }
                         this._processedMeshDeliveries.add(packet.id);
-                        await window.NodeManager.ack(packet.id);
+                        await window.NodeManager.ack(packet.id, packet._nodeUrl);
                         break;
                     }
                 }
+                if (refreshPeers) await this.renderPeers();
                 }
             } catch (error) { this.shmon("ERR", `D-MASH pull failed: ${error.message}`); }
             finally { this._meshPulling = false; }
@@ -995,16 +1101,21 @@ const Core = {
                             let msgData;
                             try { msgData = JSON.parse(dec); } catch(e) { msgData = dec; }
 
-                            if (typeof msgData === 'object' && msgData.type?.startsWith('voip_')) {
+                            if (typeof msgData === 'object' && msgData.type === 'dmash_receipt') {
+                                await Storage.updateMessageTransportState(sid, msgData.id, msgData.state);
+                            } else if (typeof msgData === 'object' && msgData.type?.startsWith('voip_')) {
                                 this.handleVoipSignal(msgData, sid);
                             } else {
+                                const content = typeof msgData === 'object' && msgData.type === 'dmash_message' ? msgData.body : msgData;
+                                const wireId = typeof msgData === 'object' && msgData.type === 'dmash_message' ? msgData.id : null;
                                 const isCurrent = (this.activePeerId === sid);
-                                await Storage.saveMessageGamma(sid, dec, true, isCurrent);
+                                await Storage.saveMessageGamma(sid, content, true, isCurrent, null, wireId);
+                                if (wireId) await this.sendMessage({ type: 'dmash_receipt', id: wireId, state: 'DELIVERED' }, false, sid);
                                 if (isCurrent) {
                                     // Прямой впрыск в лог, если хата открыта
                                     const log = document.getElementById('log');
                                     if (log) {
-                                        log.insertAdjacentHTML('beforeend', this.buildMsgHtml({ text: dec, inbound: true }, Date.now()));
+                                    log.insertAdjacentHTML('beforeend', this.buildMsgHtml({ text: content, inbound: true }, Date.now()));
                                         log.scrollTop = log.scrollHeight;
                                     }
                                 } else {
@@ -1022,6 +1133,26 @@ const Core = {
             this.shmon("WARN", "Sync failed: " + e.message);
         }
         this.isSyncing = false;
+    },
+    appendInboundMessage: function(content, seqId) {
+        const log = document.getElementById('log');
+        if (!log) return;
+        if (log.innerHTML.includes('НЕТ СООБЩЕНИЙ') || log.innerHTML.includes('БАЗАР ПУСТ')) log.replaceChildren();
+        const html = this.buildMsgHtml({ text: content, inbound: true }, Date.now(), seqId);
+        if (html) log.insertAdjacentHTML('beforeend', html);
+        log.scrollTop = log.scrollHeight;
+    },
+    queueInboundMessage: function(peerId, content, seqId) {
+        const queue = this.pendingInboundByPeer.get(peerId) || [];
+        // seqId is local and monotonically increasing; it also protects a
+        // render race from drawing the same already-persisted message twice.
+        if (!queue.some(item => item.seqId === seqId)) queue.push({ content, seqId });
+        this.pendingInboundByPeer.set(peerId, queue);
+    },
+    flushInboundQueue: function(peerId) {
+        const queue = this.pendingInboundByPeer.get(peerId) || [];
+        this.pendingInboundByPeer.delete(peerId);
+        for (const item of queue.sort((a, b) => a.seqId - b.seqId)) this.appendInboundMessage(item.content, item.seqId);
     },
     /*
     ================================================================
@@ -1076,7 +1207,9 @@ const Core = {
             if (peer.unread) {
                 const unread = document.createElement('span');
                 unread.className = 'unread-dot';
-                unread.setAttribute('aria-label', 'Unread');
+                unread.setAttribute('aria-label', 'Непрочитанное сообщение');
+                unread.title = 'Непрочитанное сообщение';
+                unread.textContent = 'НЕПРОЧИТАННОЕ';
                 item.append(row, unread);
             } else item.append(row);
             list.append(item);
@@ -1087,6 +1220,7 @@ const Core = {
         this.shmon("INFO", `Открываю хату: ${id.substring(0,8)}`);
         try {
             this.activePeerId = id;
+            this.openingPeerId = id;
             const aliasL1 = await Storage.getAlias(id, "L1");
             const peer = await Storage.getBox('blind_peers', aliasL1);
             const secrets = await Storage.getBox('blind_secrets', aliasL1);
@@ -1095,6 +1229,13 @@ const Core = {
             if (peer && peer.unread) {
                 peer.unread = false;
                 await Storage.putBox('blind_peers', { alias: aliasL1, data: peer });
+            }
+            // Opening the conversation, not merely transport delivery, is the
+            // user-visible read event.  Each receipt remains E2EE and refers
+            // only to the sender's opaque random message ID.
+            const readWireIds = await Storage.markInboundMessagesRead(id);
+            for (const wireId of readWireIds) {
+                await this.sendMessage({ type: 'dmash_receipt', id: wireId, state: 'READ' }, false, id);
             }
 
             // 3. РИСУЕМ ХЕДЕР (С копированием ID)
@@ -1119,6 +1260,7 @@ const Core = {
 
             // 4. ЗАГРУЗКА ИСТОРИИ И ПРОВЕРКА КЛЮЧЕЙ
             const msgs = await Storage.loadMessagesGamma(id, 50, 0);
+            this.chatOffset = msgs.length;
 
             if (!secrets || !secrets.staticShared) {
                 // КЛЮЧЕЙ НЕТ — ПОКАЗЫВАЕМ КНОПКУ ХЕНДШЕЙКА
@@ -1135,20 +1277,48 @@ const Core = {
                 // КЛЮЧИ ЕСТЬ — ВКЛЮЧАЕМ ОБЫЧНЫЙ ВВОД
                 if (inputArea) inputArea.style.display = 'flex';
                 if (msgs.length > 0) {
-                    msgs.forEach(m => {
-                        const html = this.buildMsgHtml(m, m.ts, m.id);
-                        if (html) log.insertAdjacentHTML('beforeend', html);
-                    });
+                    // Build one DOM update instead of inserting message by
+                    // message. This prevents the browser from painting the
+                    // early page first and then visibly shifting it as newer
+                    // records are appended.
+                    // Storage pages are normally chronological, but preserve
+                    // that contract here explicitly: the newest record is at
+                    // the bottom and older history is only ever inserted
+                    // above it during upward pagination.
+                    const initialHtml = [...msgs]
+                        .sort((a, b) => (a.id || 0) - (b.id || 0))
+                        .map(m => this.buildMsgHtml(m, m.ts, m.id)).filter(Boolean).join('');
+                    log.innerHTML = initialHtml;
                 } else {
                     log.innerHTML = '<div style="text-align:center; color:#333; margin-top:50px;">БАЗАР ПУСТ</div>';
                 }
             }
 
+            // Only after the complete initial page is painted may concurrent
+            // inbound traffic append at the bottom.  Older history is added
+            // above solely by explicit upward-pagination.
+            if (this.openingPeerId === id) {
+                this.openingPeerId = null;
+                this.flushInboundQueue(id);
+            }
             await this.renderPeers();
             setTimeout(() => { log.scrollTop = log.scrollHeight; }, 100);
+            // Keep the initial viewport strictly on the newest page.  Older
+            // history may be prepared in RAM, but is never inserted until the
+            // user explicitly scrolls upward.
+            if (msgs.length === this.chatLimit) this.prefetchOlderHistory(id, this.chatOffset);
             if (window.history.state?.view !== 'chat') window.history.pushState({ view: 'chat' }, "");
 
         } catch (e) { this.shmon("ERR", "Сбой открытия чата", e); }
+        finally { if (this.openingPeerId === id) this.openingPeerId = null; }
+    },
+    prefetchOlderHistory: async function(peerId, offset) {
+        const key = `${peerId}:${offset}`;
+        if (this.historyPrefetch.has(key)) return;
+        try {
+            const page = await Storage.loadMessagesGamma(peerId, this.chatLimit, offset);
+            this.historyPrefetch.set(key, page);
+        } catch (_) { /* pagination remains available on demand */ }
     },
     // Core.loadChat           - Пагинация истории из IndexedDB (Gamma Storage)
     loadChat: async function(prepend = false) {
@@ -1166,7 +1336,9 @@ const Core = {
         }
 
         // ВЫЗОВ НОВОЙ ФУНКЦИИ ИЗ STORAGE
-        const rawBatch = await Storage.loadMessagesGamma(Core.activePeerId, Core.chatLimit, Core.chatOffset);
+        const key = `${Core.activePeerId}:${Core.chatOffset}`;
+        const rawBatch = Core.historyPrefetch.get(key) || await Storage.loadMessagesGamma(Core.activePeerId, Core.chatLimit, Core.chatOffset);
+        Core.historyPrefetch.delete(key);
 
         if (rawBatch.length === 0) {
             if (!prepend) log.innerHTML = '<div style="text-align:center; color:#333; margin-top:50px;">НЕТ СООБЩЕНИЙ</div>';
@@ -1189,6 +1361,7 @@ const Core = {
         }
 
         Core.chatOffset += rawBatch.length;
+        if (rawBatch.length === Core.chatLimit) Core.prefetchOlderHistory(Core.activePeerId, Core.chatOffset);
         Core.isLoadingHistory = false; Core.isDrawing = false;
     },
     // Core.addPeerFlow        - Логика добавления нового кента в базу
@@ -1343,32 +1516,77 @@ const Core = {
             Core.sendMessage({ type: t, name: f.name, data: e.target.result });
         }; r.readAsDataURL(f);
     },
-    // Core.uiVoice            - Запись и отправка голосового сообщения
+    setRecordingToolbar: function(kind) {
+        const voice = document.getElementById('voice-btn');
+        const circle = document.getElementById('circle-btn');
+        if (kind === 'voice') {
+            if (voice) { voice.textContent = '✕'; voice.classList.add('recording'); voice.onclick = () => Core.cancelRecordingCapture(); }
+            if (circle) circle.style.display = 'none';
+            return;
+        }
+        // Circle capture owns its own cancel affordance; the microphone is
+        // unavailable until this recording is committed with SEND or canceled.
+        if (voice) voice.style.display = 'none';
+        if (circle) { circle.textContent = '✕'; circle.classList.add('recording'); circle.onclick = () => Core.cancelRecordingCapture(); }
+    },
+    startRecordingTimer: function() {
+        this.stopRecordingTimer();
+        this.recordingStartedAt = Date.now();
+        const timer = document.getElementById('recording-timer');
+        const render = () => {
+            const seconds = Math.floor((Date.now() - this.recordingStartedAt) / 1000);
+            const minutes = Math.floor(seconds / 60);
+            if (timer) { timer.hidden = false; timer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
+        };
+        render(); this.recordingTimer = setInterval(render, 250);
+    },
+    stopRecordingTimer: function() {
+        clearInterval(this.recordingTimer); this.recordingTimer = null; this.recordingStartedAt = null;
+        const timer = document.getElementById('recording-timer');
+        if (timer) { timer.hidden = true; timer.textContent = '00:00'; }
+    },
+    resetRecordingToolbar: function() {
+        const voice = document.getElementById('voice-btn');
+        const circle = document.getElementById('circle-btn');
+        if (voice) { voice.textContent = '🎤'; voice.style.display = ''; voice.classList.remove('recording'); voice.onclick = () => Core.uiVoice(); }
+        if (circle) { circle.textContent = '⭕'; circle.style.display = ''; circle.classList.remove('recording'); circle.onclick = () => Core.uiCircle(); }
+        this.stopRecordingTimer();
+    },
+    commitRecording: function() {
+        if (!this.isRecording || !this.mediaRecorder || this.mediaRecorder.state === 'inactive') return;
+        this.commitRecordingOnStop = true;
+        this.mediaRecorder.stop();
+    },
+    cancelRecordingCapture: function() {
+        if (!this.isRecording || !this.mediaRecorder) return;
+        this.commitRecordingOnStop = false;
+        if (this.mediaRecorder.state !== 'inactive') this.mediaRecorder.stop();
+    },
+    // Core.uiVoice            - Record locally; SEND commits it.
     uiVoice: async function() {
-        const btn = document.getElementById('voice-btn');
         if (!Core.isRecording) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 Core.mediaRecorder = new MediaRecorder(stream); Core.audioChunks = [];
                 Core.mediaRecorder.ondataavailable = e => Core.audioChunks.push(e.data);
                 Core.mediaRecorder.onstop = () => {
-                    const r = new FileReader(); r.onload = (e) => Core.sendMessage({ type: 'voice', name: 'voice_msg', data: e.target.result });
-                    r.readAsDataURL(new Blob(Core.audioChunks)); stream.getTracks().forEach(t => t.stop());
+                    const commit = Core.commitRecordingOnStop;
+                    Core.isRecording = false; Core.commitRecordingOnStop = false;
+                    stream.getTracks().forEach(t => t.stop()); Core.resetRecordingToolbar();
+                    if (!commit || !Core.audioChunks.length) return;
+                    const r = new FileReader(); r.onload = e => Core.sendMessage({ type: 'voice', name: 'voice_msg', data: e.target.result });
+                    r.readAsDataURL(new Blob(Core.audioChunks, { type: 'audio/webm' }));
                 };
-                Core.mediaRecorder.start(); Core.isRecording = true; btn.classList.add('recording'); btn.innerText = '⬛';
+                Core.commitRecordingOnStop = false; Core.isRecordingCircle = false;
+                Core.mediaRecorder.start(); Core.isRecording = true; Core.setRecordingToolbar('voice'); Core.startRecordingTimer();
             } catch (e) { Core.customAlert("МИКРОФОН", "ОТКАЗАНО"); }
-        } else { Core.mediaRecorder.stop(); Core.isRecording = false; btn.classList.remove('recording'); btn.innerText = '🎤'; }
+        }
     },
     // Core.uiCircle           - Логика записи видео-кружка (с выбором камеры)
     uiCircle: async function() {
         const cBtn = document.getElementById('circle-btn');
 
-        // Если уже пишем — кнопка работает как ОТМЕНА
-        if (Core.isRecording) {
-            Core.cancelRecording = true;
-            if (Core.mediaRecorder && Core.mediaRecorder.state !== 'inactive') Core.mediaRecorder.stop();
-            return;
-        }
+        if (Core.isRecording) return;
 
         try {
             // 1. Получаем список всех камер
@@ -1401,7 +1619,7 @@ const Core = {
 
         try {
             Core.isRecordingCircle = true;
-            Core.cancelRecording = false;
+            Core.commitRecordingOnStop = false;
 
             const constraints = {
                 audio: true,
@@ -1425,19 +1643,20 @@ const Core = {
             Core.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) Core.audioChunks.push(e.data); };
 
             Core.mediaRecorder.onstop = () => {
-                if (!Core.cancelRecording && Core.audioChunks.length > 0) {
+                if (Core.commitRecordingOnStop && Core.audioChunks.length > 0) {
                     const reader = new FileReader();
                     reader.onload = (e) => Core.sendMessage({ type: 'video_note', name: 'circle', data: e.target.result });
                     reader.readAsDataURL(new Blob(Core.audioChunks, { type: 'video/webm' }));
                 }
                 Core.killAllMedia();
                 document.getElementById('circle-preview')?.remove();
-                Core.resetCircleUI();
+                Core.isRecording = false; Core.isRecordingCircle = false; Core.commitRecordingOnStop = false; Core.resetRecordingToolbar();
             };
 
             Core.mediaRecorder.start();
             Core.isRecording = true;
-            cBtn.innerText = "❌"; // Кнопка кружка теперь отмена
+            Core.setRecordingToolbar('circle');
+            Core.startRecordingTimer();
         } catch (e) {
             console.error(e);
             Core.killAllMedia(); Core.resetCircleUI();
@@ -1457,11 +1676,9 @@ const Core = {
             Core.localStream = null;
         }
 
-        const cBtn = document.getElementById('circle-btn');
-        const vBtn = document.getElementById('voice-btn');
-        cBtn.innerText = "⭕";
-        vBtn.innerText = "🎤";
-        vBtn.onclick = () => Core.uiVoice();
+        Core.isRecordingCircle = false;
+        Core.commitRecordingOnStop = false;
+        Core.resetRecordingToolbar();
         document.getElementById('circle-preview')?.remove();
     },
     // Core.killAllMedia       - Жесткая остановка всех камер и микрофонов (освобождение ресурсов)
@@ -1559,16 +1776,9 @@ const Core = {
     resetCircleUI: function() {
         Core.isRecording = false;
         Core.isRecordingCircle = false;
+        Core.commitRecordingOnStop = false;
         Core.localStream = null;
-
-        const cBtn = document.getElementById('circle-btn');
-        const vBtn = document.getElementById('voice-btn');
-
-        if (cBtn) cBtn.innerText = "⭕";
-        if (vBtn) {
-            vBtn.innerText = "🎤";
-            vBtn.onclick = () => Core.uiVoice(); // Возвращаем микрофон
-        }
+        Core.resetRecordingToolbar();
         console.log("[*] UI кружка сброшен.");
     },
     /*
@@ -1581,6 +1791,9 @@ const Core = {
     async initVoip() {
         if (this.callState !== 'idle') return;
         this.callPeerId = this.activePeerId;
+        if (!this.callPeerId) return;
+        this.activeCallId = crypto.randomUUID();
+        this.callNotificationNonce = crypto.randomUUID();
         this.callState = 'calling';
         this.updateCallUI('calling');
 
@@ -1596,7 +1809,7 @@ const Core = {
             this.localStream.getTracks().forEach(track => this.peerConnection.addTrack(track, this.localStream));
 
             this.peerConnection.onicecandidate = (e) => {
-                if (e.candidate) this.sendMessage({ type: "voip_ice", candidate: e.candidate });
+                if (e.candidate) this.sendVoipSignal({ type: "voip_ice", candidate: e.candidate });
             };
 
             this.peerConnection.ontrack = (e) => {
@@ -1612,7 +1825,7 @@ const Core = {
             await this.peerConnection.setLocalDescription(offer);
 
             // Шлем оффер через sendMessage (он сам решит: 0x01 или 0x00)
-            this.sendMessage({
+            this.sendVoipSignal({
                 type: "voip_offer",
                 sdp: this.peerConnection.localDescription,
                 call_psk: callPSK
@@ -1626,6 +1839,10 @@ const Core = {
         if (data.type === 'voip_offer') {
             if (this.callState !== 'idle') return;
             this.callPeerId = fromId;
+            this.activeCallId = data.call_id || crypto.randomUUID();
+            // The sender's external notification nonce is carried by the
+            // transport envelope and is intentionally not part of plaintext.
+            this.callNotificationNonce = null;
             this.activeCallPSK = data.call_psk;
 
             this.showIncomingCall(fromId, async () => {
@@ -1639,7 +1856,7 @@ const Core = {
                     this.localStream.getTracks().forEach(track => this.peerConnection.addTrack(track, this.localStream));
 
                     this.peerConnection.onicecandidate = (e) => {
-                        if (e.candidate) this.sendMessage({ type: "voip_ice", candidate: e.candidate });
+                        if (e.candidate) this.sendVoipSignal({ type: "voip_ice", candidate: e.candidate });
                     };
 
                     this.peerConnection.ontrack = (e) => {
@@ -1655,7 +1872,7 @@ const Core = {
                     const answer = await this.peerConnection.createAnswer();
                     await this.peerConnection.setLocalDescription(answer);
 
-                    this.sendMessage({ type: "voip_answer", sdp: this.peerConnection.localDescription });
+                    this.sendVoipSignal({ type: "voip_answer", sdp: this.peerConnection.localDescription });
 
                     // Обрабатываем ICE-кандидатов, если они пришли раньше оффера
                     while (this.iceQueue.length > 0) {
@@ -1744,10 +1961,7 @@ const Core = {
 
         // Шлем отбой ТОЛЬКО тому, с кем базарили
         if (sendSignal && this.callPeerId) {
-            const oldActive = this.activePeerId;
-            this.activePeerId = this.callPeerId;
-            this.sendMessage({ type: "voip_hangup" });
-            this.activePeerId = oldActive;
+            this.sendVoipSignal({ type: "voip_hangup" });
         }
 
         if (this.peerConnection) { this.peerConnection.close(); this.peerConnection = null; }
@@ -1755,6 +1969,8 @@ const Core = {
         clearInterval(this.callTimer);
         this.callState = 'idle';
         this.callPeerId = null;
+        this.activeCallId = null;
+        this.callNotificationNonce = null;
         this.updateCallUI('idle');
     },
     // Core.showIncomingCall   - Модальное окно входящего вызова
@@ -1831,11 +2047,9 @@ const Core = {
     // Core.sendVoipSignal     - Хелпер отправки сигнальных данных
     sendVoipSignal: async function(data) {
         if (!Core.callPeerId) return;
-        // Юзаем стандартный sendMessage, но подменяем временный ID, если надо
-        const oldActive = Core.activePeerId;
-        Core.activePeerId = Core.callPeerId;
-        await Core.sendMessage(data);
-        Core.activePeerId = oldActive;
+        // Pass the call target explicitly: chat focus can change while ICE or
+        // hangup signals are still being emitted.
+        await Core.sendMessage(data, false, Core.callPeerId);
     },
     // Core.switchCamera       - Переключение между фронталкой и основой во время боя
     switchCamera: async function() {
@@ -1981,6 +2195,7 @@ const Core = {
         Core.customPrompt("KNOX HARDWARE", "Введи КЛЮЧ ДОСТУПА для привязки к железу:", async (key) => {
             if (!key) return;
             try {
+                if (!(await Core.verifySessionPassphrase(key))) throw new Error("Ключ доступа не совпадает с текущей сессией");
                 const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
                 const userId = new Uint8Array(16); window.crypto.getRandomValues(userId);
 
@@ -2095,6 +2310,7 @@ const Core = {
     setupLazyLogin: function() {
         Core.customPrompt("БЕСПАРОЛЬНЫЙ ВХОД", "Введи КЛЮЧ ДОСТУПА для сохранения:", async (key) => {
             if (!key) return;
+            if (!(await Core.verifySessionPassphrase(key))) throw new Error("Ключ доступа не совпадает с текущей сессией");
             const encryptedKey = await Core.encryptForBio(key); // Тоже шифруем Мастер-кодом
             await Storage.updateAccountAuth(Core.activeIdentity, { lazy: true, lazy_key: encryptedKey });
             Core.customAlert("ГОТОВО", "Теперь вход для этого акка — в один тап.");
@@ -2122,6 +2338,16 @@ const Core = {
             return Core.bytesToHex(res);
         } catch (e) { return null; }
     },
+    verifySessionPassphrase: async function(passphrase) {
+        if (!this.activeIdentity || !this.gammaKeys?.master || typeof window.argon2 === 'undefined') return false;
+        const result = await window.argon2.hash({
+            pass: passphrase, salt: this.activeIdentity + "D_MASH_GAMMA_V1_STABLE",
+            time: 3, mem: 65536, hashLen: 128, type: window.argon2.argon2id
+        });
+        const expected = this.gammaKeys.master;
+        const actual = result.hash.slice(0, 32);
+        return expected.length === actual.length && expected.every((value, index) => value === actual[index]);
+    },
     // Core.toggleFlipper         - Переключатель Flip-Lock (блокировка при перевороте экрана)
     toggleFlipper: function() {
         const cur = localStorage.getItem('cfg_panic_gesture') === 'true';
@@ -2136,12 +2362,10 @@ const Core = {
     },
     // Core.changePinFlow         - Интерфейс смены Master-кода или Wipe-кода (самоликвидация)
     changePinFlow: function(type) {
-        Core.customPrompt(type === 'M' ? "MASTER-КОД" : "WIPE-КОД", "Введите новый цифровой код:", async (v) => {
-            if (v && !isNaN(v)) {
-                if (type === 'M') await sys.changeMasterPin(v); else await sys.changeWipePin(v);
-                Core.customAlert("УСПЕХ", "Код изменен");
-            }
-        });
+        if (type === 'M' && window.ui?.startMasterReconfiguration) return ui.startMasterReconfiguration();
+        Core.customPrompt("WIPE-КОД", "Введите новый цифровой код:", async (v) => {
+            if (v && /^\d+$/.test(v)) { localStorage.setItem('sys_w', await sys.fastHash(v)); Core.customAlert("УСПЕХ", "Код изменен"); }
+        }, { inputType: 'password' });
     },
     // Core.removeAccountFlow     - Полная очистка: удаление акка из реестра + физический снос БД сообщений
     removeAccountFlow: function(id) {
@@ -2177,12 +2401,12 @@ const Core = {
         const h = `
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <button class="sys-modal-btn" onclick="Core.setupTelegram()">✈️ ПРИВЯЗАТЬ ТЕЛЕГРАМ-МАЯК</button>
+                <button class="sys-modal-btn" onclick="Core.disableTelegramBeacon()">⛔ ОТКЛЮЧИТЬ МАЯК</button>
                 <button class="sys-modal-btn" onclick="NodeManager.renderSettings()">🌐 ПОДКЛЮЧЕНИЕ К УЗЛУ</button>
                 <button class="sys-modal-btn" onclick="Core.toggleFlipper()">ЭКСТРЕННЫЙ ФЛИП-ЛОК: ${panicGestureEnabled ? 'ВКЛ' : 'ВЫКЛ'}</button>
                 <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🧬 ПРИВЯЗАТЬ ОТПЕЧАТОК/FACE</button>
                 <button class="sys-modal-btn" onclick="Core.setupLazyLogin()">💤 ВКЛЮЧИТЬ БЕСПАРОЛЬНЫЙ ВХОД</button>
-                <button class="sys-modal-btn" onclick="Core.changePinFlow('M')">СМЕНИТЬ MASTER-КОД</button>
-                <button class="sys-modal-btn danger" onclick="sys.wipe()">ПОЛНАЯ ОЧИСТКА</button>
+                <button class="sys-modal-btn" onclick="ui.startMasterReconfiguration()">СМЕНИТЬ MASTER-КОД</button>
                 <button class="sys-modal-btn primary" onclick="Core.closeModal()">ЗАКРЫТЬ</button>
             </div>`;
         Core.openModal("НАСТРОЙКИ", h);
@@ -2231,22 +2455,38 @@ const Core = {
     },
     // Core.setupTelegram      - Привязка уведомлений через бота
     async setupTelegram() {
-        // Привязываемся строго к ServerID (Ed25519), по которому сервер ищет малявы
-        const h = await this.fastHash(this.keys.server_id);
+        // Beacon identity is device-scoped, never derived from the Account key.
+        const h = await window.DeviceRoot.notificationBeaconHandle();
+        const enabledNodes = window.NodeManager?.endpoints?.filter(node => node.notificationEnabled === true) || [];
+        let nodeState = enabledNodes.length
+            ? 'Маяк передаётся только на узлы с разрешёнными уведомлениями.'
+            : 'Выберите узел и включите «Разрешить уведомления» в его настройках.';
+        try {
+            await window.NodeManager?.syncNotificationBeacon();
+        } catch (_) { }
         const botUrl = `https://t.me/D_mash_notice_bot?start=${h}`;
 
         const h_html = `
             <div style="margin-bottom:20px; font-size:0.9rem; color:#ccc;">
                 Жми кнопку и в Телеге нажми <b>"СТАРТ"</b>.<br>
-                <small style="color:#555;">Hash: ${h.substring(0,16)}...</small>
+                <small style="color:#555;">${nodeState}<br>Hash: ${h.substring(0,16)}...</small>
             </div>
             <a href="${botUrl}" target="_blank" class="sys-modal-btn primary" style="text-decoration:none; display:block; text-align:center;">ОТКРЫТЬ БОТА</a>
             <button class="sys-modal-btn" onclick="Core.closeModal()" style="margin-top:10px;">ГОТОВО</button>
         `;
         this.openModal("TELEGRAM МАЯК", h_html);
     },
+    async disableTelegramBeacon() {
+        const h = await window.DeviceRoot.notificationBeaconHandle();
+        window.NodeManager?.setNotificationBeaconEnabled(false);
+        try { await window.NodeManager?.removeNotificationBeacon(h); } catch (_) { }
+        try { await window.NodeManager?.unregisterNotificationBeacon(h); } catch (_) { }
+        this.shmon('INFO', 'Маяк отключён на доступных узлах.');
+        this.openSettings();
+    },
     // Core.openScanner        - Запуск сканера QR-кодов
     openScanner() {
+        this.flipLockSuppressed = true;
         const c = `
             <div id="reader" style="width:100%; min-height:250px; background:#000; overflow:hidden; border:1px solid #333;"></div>
             <button class="sys-modal-btn" onclick="Core.closeScanner()">ОТМЕНА</button>
@@ -2276,14 +2516,15 @@ const Core = {
         if (this.scanner) {
             this.scanner.stop().then(() => {
                 this.scanner.clear();
-                this.closeModal();
-            }).catch(() => this.closeModal());
+                this.flipLockSuppressed = false; this.closeModal();
+            }).catch(() => { this.flipLockSuppressed = false; this.closeModal(); });
         } else {
-            this.closeModal();
+            this.flipLockSuppressed = false; this.closeModal();
         }
     },
     // Core.showMyQR           - Показ своего ID в виде QR
     showMyQR: async function() {
+        this.flipLockSuppressed = true;
         // 1. ПРОВЕРКА КЛЮЧЕЙ
         // Убедимся, что у нас есть ServerID (Ed25519)
         const myId = this.keys.server_id || (this.keys.sign ? this.bytesToHex(this.keys.sign.publicKey) : null);
@@ -2339,7 +2580,7 @@ const Core = {
         }, 200); // Даем модалке время открыться
     },
     // Core.copyMyId           - Копирование своего 64-значного ID
-    copyMyId: function() {
+    copyMyId: async function() {
         // Берем строго ServerID (64 знака Ed25519)
         const myPublicId = this.keys.server_id;
 
@@ -2348,11 +2589,13 @@ const Core = {
             return;
         }
 
-        navigator.clipboard.writeText(myPublicId).then(() => {
-            this.customAlert("УСПЕХ", "Твой публичный ID (64 знака) скопирован.");
+        const contribution = await this.ensurePairingContribution();
+        const pairingPackage = JSON.stringify({ type: 'DMASH_PAIRING_V1', version: 1, user_id: myPublicId, contribution });
+        navigator.clipboard.writeText(pairingPackage).then(() => {
+            this.customAlert("УСПЕХ", "Pairing package с contribution скопирован.");
         }).catch(() => {
             // Fallback если браузер запретил буфер обмена
-            this.customPrompt("ТВОЙ ID", "Скопируй вручную:", () => {}, myPublicId);
+            this.customPrompt("PAIRING PACKAGE", "Скопируй вручную:", () => {}, pairingPackage);
         });
     },
     // Core.copyPeerId         - Копирование ID собеседника
@@ -2381,6 +2624,7 @@ const Core = {
             m.style.display = 'none';
             m.innerHTML = "";
         }
+        this.flipLockSuppressed = false;
         // ВЫЗЫВАЕМ ФИКСАТОР
     },
     // Core.customAlert/Prompt/Confirm - Кастомные диалоги в стиле системы

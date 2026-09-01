@@ -37,7 +37,7 @@ class DatabaseManager:
         if not self.notification_trigger:
             return
         async with self.conn.execute("""
-            SELECT notification_id, CAST(strftime('%s', received_at) AS INTEGER) AS created_at
+            SELECT notification_id, target_hash, packet_json, CAST(strftime('%s', received_at) AS INTEGER) AS created_at
             FROM offline_mailbox WHERE notification_id IS NOT NULL
         """) as cursor:
             rows = await cursor.fetchall()
@@ -49,8 +49,18 @@ class DatabaseManager:
             # message itself. The mailbox packet remains available for pickup.
             if expires_at <= now:
                 continue
+            notification_handle = await self.notification_handle_for_alias(row['target_hash'])
+            if not notification_handle:
+                continue
+            event_type = 'MALYAVA'
+            try:
+                event_type = (json.loads(row['packet_json']).get('envelope') or {}).get('notification_event', event_type)
+            except (TypeError, json.JSONDecodeError):
+                pass
+            if event_type not in {'MALYAVA', 'INCOMING_BAZAR'}:
+                event_type = 'MALYAVA'
             self.notification_trigger.schedule(
-                row['notification_id'], row['notification_id'],
+                notification_handle, row['notification_id'], event_type=event_type,
                 created_at=created_at, expires_at=expires_at,
             )
 
@@ -147,6 +157,11 @@ class DatabaseManager:
                 packet_json TEXT,
                 notification_id TEXT,
                 received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        await self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS notification_beacons (
+                beacon_alias TEXT PRIMARY KEY, beacon_blob TEXT NOT NULL
             )
         """)
         columns = await (await self.conn.execute("PRAGMA table_info(offline_mailbox)")).fetchall()
@@ -262,6 +277,70 @@ class DatabaseManager:
             VALUES (?, ?, ?)
         """, (route_hash, blob, expires))
         await self.conn.commit()
+
+    async def register_notification_beacon(self, beacon_handle: str) -> str:
+        """Store only a node-blinded alias and encrypted beacon handle."""
+        if not self.node_crypto or not isinstance(beacon_handle, str) or not beacon_handle:
+            raise ValueError("invalid notification beacon")
+        alias = self.node_crypto.get_blind_hash(beacon_handle)
+        blob = self.node_crypto.encrypt_for_self({"beacon_handle": beacon_handle})
+        await self.conn.execute("INSERT OR REPLACE INTO notification_beacons (beacon_alias, beacon_blob) VALUES (?, ?)", (alias, blob))
+        await self.conn.commit()
+        return alias
+
+    async def unregister_notification_beacon(self, beacon_handle: str) -> bool:
+        if not self.node_crypto or not isinstance(beacon_handle, str) or not beacon_handle:
+            raise ValueError("invalid notification beacon")
+        alias = self.node_crypto.get_blind_hash(beacon_handle)
+        result = await self.conn.execute("DELETE FROM notification_beacons WHERE beacon_alias = ?", (alias,))
+        async with self.conn.execute("SELECT binding_hash, user_blob FROM local_bindings") as cursor:
+            bindings = await cursor.fetchall()
+        for binding_row in bindings:
+            binding = self.node_crypto.decrypt_from_self(binding_row["user_blob"])
+            if binding and binding.get("notification_beacon_alias") == alias:
+                binding.pop("notification_beacon_alias", None)
+                await self.conn.execute(
+                    "UPDATE local_bindings SET user_blob = ? WHERE binding_hash = ?",
+                    (self.node_crypto.encrypt_for_self(binding), binding_row["binding_hash"]),
+                )
+        await self.conn.commit()
+        return result.rowcount == 1
+
+    async def notification_handle_for_alias(self, beacon_alias: str) -> str | None:
+        async with self.conn.execute("SELECT beacon_blob FROM notification_beacons WHERE beacon_alias = ?", (beacon_alias,)) as cursor:
+            row = await cursor.fetchone()
+        value = self.node_crypto.decrypt_from_self(row["beacon_blob"]) if row and self.node_crypto else None
+        return value.get("beacon_handle") if value else None
+
+    async def bind_locator_notification_beacon(self, locator: str, beacon_handle: str) -> bool:
+        """Persist a node-blind, encrypted locator→beacon edge."""
+        if not self.node_crypto or not isinstance(locator, str) or not locator or not isinstance(beacon_handle, str) or not beacon_handle:
+            raise ValueError("invalid notification binding")
+        locator_alias = self.node_crypto.get_blind_hash(locator)
+        beacon_alias = self.node_crypto.get_blind_hash(beacon_handle)
+        if not await self.notification_handle_for_alias(beacon_alias):
+            raise ValueError("notification beacon is not registered")
+        async with self.conn.execute("SELECT user_blob FROM local_bindings WHERE binding_hash = ?", (locator_alias,)) as cursor:
+            row = await cursor.fetchone()
+        if not row:
+            return False
+        binding = self.node_crypto.decrypt_from_self(row["user_blob"]) or {}
+        if binding.get("kind") != "inbound_locator":
+            return False
+        binding["notification_beacon_alias"] = beacon_alias
+        await self.conn.execute(
+            "UPDATE local_bindings SET user_blob = ? WHERE binding_hash = ?",
+            (self.node_crypto.encrypt_for_self(binding), locator_alias),
+        )
+        await self.conn.commit()
+        return True
+
+    async def notification_handle_for_locator_alias(self, locator_alias: str) -> str | None:
+        async with self.conn.execute("SELECT user_blob FROM local_bindings WHERE binding_hash = ?", (locator_alias,)) as cursor:
+            row = await cursor.fetchone()
+        binding = self.node_crypto.decrypt_from_self(row["user_blob"]) if row and self.node_crypto else None
+        beacon_alias = binding.get("notification_beacon_alias") if binding else None
+        return await self.notification_handle_for_alias(beacon_alias) if beacon_alias else None
 
     async def arm_inbound_locator(self, locator: str) -> str:
         """Register a local opaque locator without persisting its raw value."""
@@ -436,7 +515,18 @@ class DatabaseManager:
         await self.conn.commit()
         if self.notification_trigger:
             try:
-                self.notification_trigger.schedule(notification_id, notification_id)
+                notification_handle = await self.notification_handle_for_alias(target_alias) if target_alias else None
+                if notification_handle:
+                    self.notification_trigger.schedule(notification_handle, notification_id, event_type="MALYAVA")
+                elif target_alias is None:
+                    # Compatibility for older in-process trigger adapters only;
+                    # the production trigger requires a registered beacon and
+                    # therefore never receives this opaque pending ID as a
+                    # notification handle.
+                    try:
+                        self.notification_trigger.schedule(notification_id, notification_id, event_type="MALYAVA")
+                    except TypeError:
+                        self.notification_trigger.schedule(notification_id, notification_id)
             except (TypeError, ValueError, json.JSONDecodeError):
                 # A malformed opaque packet is retained for normal mailbox diagnostics.
                 pass

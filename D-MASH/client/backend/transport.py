@@ -45,6 +45,21 @@ class NodeTransportService:
         self._inbound_locators[locator_handle] = locator_handle
         return locator_handle
 
+    async def register_notification_beacon(self, beacon_handle: str) -> str:
+        if not self.can_accept_devices:
+            raise PermissionError("device acceptance is disabled by local Node policy")
+        return await self.system_db.register_notification_beacon(beacon_handle)
+
+    async def unregister_notification_beacon(self, beacon_handle: str) -> bool:
+        if not self.can_accept_devices:
+            raise PermissionError("device acceptance is disabled by local Node policy")
+        return await self.system_db.unregister_notification_beacon(beacon_handle)
+
+    async def bind_locator_notification_beacon(self, locator: str, beacon_handle: str) -> bool:
+        if not self.can_accept_devices:
+            raise PermissionError("device acceptance is disabled by local Node policy")
+        return await self.system_db.bind_locator_notification_beacon(locator, beacon_handle)
+
     def attach_local_delivery_session(self, locator_handle: str, session: Any) -> None:
         if not self.can_accept_devices:
             return
@@ -209,7 +224,15 @@ class NodeTransportService:
         return TransportSubmission(delivery_id=packet.get("id", ""), state="ROUTED_IN_D_MASH", packet=packet)
 
     async def _store_mailbox(self, locator_handle: str, packet: Dict[str, Any]) -> bool:
-        notification_id = packet.get("id") or secrets.token_hex(16)
+        envelope = packet.get("envelope") or {}
+        # A call has many encrypted signaling packets (offer/ICE/hangup), but
+        # they deliberately share one opaque transport nonce.  Use it as the
+        # durable notification identity; ordinary packets keep their delivery
+        # ID.  Neither value contains message content or a user identifier.
+        notification_id = envelope.get("notification_nonce") or packet.get("id") or secrets.token_hex(16)
+        notification_event = envelope.get("notification_event", "MALYAVA")
+        if notification_event not in {"MALYAVA", "INCOMING_BAZAR"}:
+            notification_event = "MALYAVA"
         mailbox_packet = dict(packet)
         # The raw route locator is transient mesh metadata and is not needed
         # after the destination edge has been selected.
@@ -235,6 +258,15 @@ class NodeTransportService:
                 delivered = True
             except Exception:
                 self.detach_local_delivery_session(session)
+        # The node must not notify a beacon while the PWA has an active local
+        # delivery session. The session signal above is intentionally opaque;
+        # notification is scheduled only after all live delivery attempts fail.
+        if not delivered and self.system_db.notification_trigger:
+            notification_handle = await self.system_db.notification_handle_for_locator_alias(locator_handle)
+            if notification_handle:
+                self.system_db.notification_trigger.schedule(
+                    notification_handle, notification_id, event_type=notification_event
+                )
         return delivered
 
     async def _dispatch_mesh_packet(

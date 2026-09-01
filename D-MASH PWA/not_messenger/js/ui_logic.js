@@ -9,6 +9,7 @@ const ui = {
     hist: "",
     op: null,
     mode: 0, // 0: Калькулятор, 1: Master PIN, 2: Wipe PIN
+    unlockGeneration: 0,
 
     /**
      * СТАРТ СИСТЕМЫ
@@ -70,26 +71,11 @@ async renderAccountSelector(accs) {
         const gateBox = document.querySelector('.gate-container');
         if (!gateBox) return;
 
-        // ФИКС: Берем только первые 64 символа (ServerID) для проверки на сервере!
-        const hashes = await Promise.all(accs.map(a => sys.fastHash(a.pk.substring(0, 64))));
-
-        let stats = [];
-        try {
-            const res = await fetch('../api/pidorskiy_api.php', {
-                method: 'POST',
-                headers: { 'X-DMASH-AGENT': 'V1Silent-Node', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ check_batch: true, hashes: hashes })
-            });
-            stats = await res.json();
-        } catch (e) {}
-
         const listHtml = accs.map((a, idx) => {
-            const h = hashes[idx];
-            const info = (Array.isArray(stats) ? stats.find(s => s.r_hash === h) : null) || { msgs: 0, calls: 0 };
-            
-            let badges = "";
-            if (parseInt(info.msgs) > 0) badges += `<span class="unread-badge">${info.msgs}</span>`;
-            if (parseInt(info.calls) > 0) badges += `<span class="unread-badge" style="background:#ff9f0a; box-shadow:0 0 8px #ff9f0a;">📞</span>`;
+            // Login is strictly local.  Do not poll the retired legacy Relay
+            // API here: it creates a privacy leak and must never make account
+            // selection fail when that separate service is unavailable.
+            const badges = "";
             
             let icons = a.bio ? ' 🧬' : ''; if (a.lazy) icons += ' ⚡';
             
@@ -118,7 +104,10 @@ async renderAccountSelector(accs) {
                 <form onsubmit="event.preventDefault(); sys.loginAndSave();">
                     <input type="text" id="p1" class="gate-input" placeholder="ИДЕНТИФИКАТОР" value="${prefillId}" spellcheck="false" autocomplete="username">
                     <input type="password" id="p2" class="gate-input" placeholder="КЛЮЧ ДОСТУПА" autocomplete="current-password">
-                    <button type="submit" class="gate-btn">СОХРАНИТЬ В РЕЕСТРЕ</button>
+                    <label style="display:flex; gap:8px; align-items:center; color:#aaa; font-size:.8rem; margin-bottom:12px;">
+                        <input type="checkbox" id="save-in-registry"> СОХРАНИТЬ В РЕЕСТРЕ
+                    </label>
+                    <button type="submit" class="gate-btn">ВОЙТИ</button>
                 </form>
                 <button class="gate-btn" style="margin-top:10px; background:transparent; color:#444;" onclick="ui.show_gate()">К СПИСКУ</button>
             `;
@@ -178,13 +167,32 @@ async renderAccountSelector(accs) {
             this.mode = 0; this.curr = "0"; this.hist = "СИСТЕМА ГОТОВА";
             this.update(); setTimeout(() => { this.cmd('AC'); }, 1000); return;
         }
+        if (this.mode === 3) {
+            if (await sys.fastHash(this.curr) !== localStorage.getItem('sys_m')) { this.curr = '0'; this.hist = 'НЕВЕРНЫЙ MASTER-КОД'; this.update(); return; }
+            this.curr = '0'; this.mode = 4; this.hist = 'НОВЫЙ MASTER-КОД'; this.update(); return;
+        }
+        if (this.mode === 4) {
+            if (!/^\d{4,}$/.test(this.curr)) { this.hist = 'MASTER-КОД: МИНИМУМ 4 ЦИФРЫ'; this.update(); return; }
+            this.pendingMasterHash = await sys.fastHash(this.curr); this.curr = '0'; this.mode = 5; this.hist = 'НОВЫЙ WIPE-КОД'; this.update(); return;
+        }
+        if (this.mode === 5) {
+            if (!/^\d{4,}$/.test(this.curr)) { this.hist = 'WIPE-КОД: МИНИМУМ 4 ЦИФРЫ'; this.update(); return; }
+            localStorage.setItem('sys_m', this.pendingMasterHash); localStorage.setItem('sys_w', await sys.fastHash(this.curr));
+            this.pendingMasterHash = null; this.mode = 0; this.curr = '0'; this.hist = 'КОДЫ ОБНОВЛЕНЫ'; this.update(); setTimeout(() => this.cmd('AC'), 1000); return;
+        }
 
         const inputHash = await sys.fastHash(this.curr);
         if (inputHash === localStorage.getItem('sys_m')) {
+            const generation = ++this.unlockGeneration;
             this.cmd('AC');
-            this.hist = "ЗАГРУЗКА ЯДРА...";
+            // Keep the calculator display neutral while the libraries load.
+            // Showing a fake calculation status here makes the decoy visibly
+            // jump to “ЗАГРУЗКА ЯДРА...” after flip-lock or password entry.
+            this.hist = "";
             this.update();
-            if (await sys.loadAllLibs()) this.show_gate();
+            const loaded = await sys.loadAllLibs();
+            if (generation !== this.unlockGeneration) return;
+            if (loaded) this.show_gate();
             else { this.hist = "ОШИБКА СЕТИ"; this.update(); }
             return;
         }
@@ -206,6 +214,15 @@ async renderAccountSelector(accs) {
         if (curEl) curEl.innerText = this.curr;
         if (histEl) histEl.innerText = this.hist;
     }
+};
+
+ui.startMasterReconfiguration = function() {
+    Core.closeModal();
+    document.getElementById('workspace')?.style && (document.getElementById('workspace').style.display = 'none');
+    document.getElementById('settings-layer')?.style.setProperty('display', 'none', 'important');
+    const calculator = document.getElementById('app-container');
+    if (calculator) { calculator.style.display = 'flex'; calculator.style.opacity = '1'; }
+    this.mode = 3; this.curr = '0'; this.op = null; this.hist = 'ПОВТОРИТЕ ТЕКУЩИЙ MASTER-КОД'; this.update();
 };
 
 const sys = {
@@ -303,7 +320,7 @@ async loadAllLibs() {
         const v2 = document.getElementById('p2').value;
         // Вызываем Core.boot (Gamma-1 Standard)
         if (!v1 || !v2 || typeof Core === 'undefined') return false;
-        await Core.boot(v1, v2);
+        await Core.boot(v1, v2, { register: Boolean(document.getElementById('save-in-registry')?.checked) });
         return Boolean(Core.keys?.sign);
     },
 
