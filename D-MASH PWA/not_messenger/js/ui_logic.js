@@ -131,6 +131,16 @@ async renderAccountSelector(accs) {
         } catch (e) { return []; }
     },
 
+    // Return the decoy calculator to its neutral display without changing the
+    // current flow mode. Device unlock must not carry a PIN or calculation
+    // into the account-selection surface.
+    resetCalculator() {
+        this.curr = "0";
+        this.hist = "";
+        this.op = null;
+        this.update();
+    },
+
     /**
      * МАТЕМАТИКА КАЛЬКУЛЯТОРА
      */
@@ -199,7 +209,8 @@ async renderAccountSelector(accs) {
             if (loaded) {
                 try {
                     await Core.unlockDevice(devicePin);
-                    this.show_gate();
+                    this.resetCalculator();
+                    await this.show_gate();
                 } catch (error) {
                     this.hist = "ОШИБКА УСТРОЙСТВА: " + error.message;
                     this.update();
