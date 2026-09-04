@@ -3,6 +3,11 @@
 The registry stores only a keyed, node-scoped blind hash of DNSS.  EntryGrant
 ownership is verified by the Route signing key (RouteID); the local NodeID is
 only a signed binding target and never a Route authority.
+
+One DEVICE<->NODE DNSS can authorize multiple Routes.  The durable key is
+therefore ``(blind_dnss, route_id)``, never a per-Route DNSS.  This preserves the
+protocol invariant that DNSS identifies a device/node registration context and
+RouteID identifies an independently owned routing resource.
 """
 
 from __future__ import annotations
@@ -13,10 +18,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Optional, Union
 
-if __package__:  # Package imports must share backend's EntryGrantV1 identity.
+if __package__:
     from .dnss import node_blind_hash
     from .entry_grant import EntryGrantV1
-else:  # Runtime scripts import backend modules as top-level modules.
+else:
     from dnss import node_blind_hash
     from entry_grant import EntryGrantV1
 
@@ -26,8 +31,6 @@ DNSS = Union[bytes, bytearray, memoryview]
 
 @dataclass(frozen=True)
 class RegistrationRecord:
-    """The non-secret, verified data held for one DNSS registration."""
-
     node_id: str
     route_id: str
     route_public_key: str
@@ -63,17 +66,7 @@ class RegistrationRecord:
 
 
 class RegistrationRegistry:
-    """A SQLite-backed registry cryptographically scoped to one local Node.
-
-    ``node_crypto`` must expose ``node_id`` and a stable 32-byte ``secret_salt``.
-    The salt is used only in memory as the keyed blind-index secret.  The DB
-    contains neither raw DNSS nor the blind key.
-
-    Existing pre-cutover rows are schema-migrated in place with default
-    ``generation=1``/``created_at=0``.  Their old Node-signed signatures no
-    longer verify under Route-owned EntryGrantV1 and are removed on lookup.
-    This is intentional fail-closed invalidation rather than legacy acceptance.
-    """
+    """SQLite registry cryptographically scoped to one local Node."""
 
     def __init__(self, database_path: Union[str, Path], node_crypto: Any):
         self.database_path = str(database_path)
@@ -102,34 +95,85 @@ class RegistrationRegistry:
                 )
                 """
             )
+
+            # If an old one-row-per-DNSS table exists, add the metadata columns
+            # first and then migrate to a composite primary key. SQLite cannot
+            # ALTER a primary key in place, so use an atomic copy/rename.
+            exists = self._connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='registration_registry'"
+            ).fetchone()
+            if exists:
+                columns = {
+                    row[1]: row for row in self._connection.execute(
+                        "PRAGMA table_info(registration_registry)"
+                    ).fetchall()
+                }
+                if "generation" not in columns:
+                    self._connection.execute(
+                        "ALTER TABLE registration_registry ADD COLUMN generation INTEGER NOT NULL DEFAULT 1"
+                    )
+                if "created_at" not in columns:
+                    self._connection.execute(
+                        "ALTER TABLE registration_registry ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0"
+                    )
+                pk_columns = [
+                    row[1] for row in sorted(
+                        self._connection.execute("PRAGMA table_info(registration_registry)").fetchall(),
+                        key=lambda item: item[5] or 99,
+                    ) if row[5]
+                ]
+                if pk_columns == ["dnss_hash"]:
+                    self._connection.execute("DROP TABLE IF EXISTS registration_registry_v2")
+                    self._connection.execute(
+                        """
+                        CREATE TABLE registration_registry_v2 (
+                            dnss_hash TEXT NOT NULL,
+                            node_id TEXT NOT NULL,
+                            route_id TEXT NOT NULL,
+                            route_public_key TEXT NOT NULL,
+                            generation INTEGER NOT NULL DEFAULT 1,
+                            created_at INTEGER NOT NULL DEFAULT 0,
+                            expires_at INTEGER NOT NULL,
+                            signature TEXT NOT NULL,
+                            registered_at INTEGER NOT NULL,
+                            PRIMARY KEY (dnss_hash, route_id)
+                        )
+                        """
+                    )
+                    self._connection.execute(
+                        """
+                        INSERT OR REPLACE INTO registration_registry_v2
+                            (dnss_hash,node_id,route_id,route_public_key,generation,created_at,expires_at,signature,registered_at)
+                        SELECT dnss_hash,node_id,route_id,route_public_key,generation,created_at,expires_at,signature,registered_at
+                        FROM registration_registry
+                        """
+                    )
+                    self._connection.execute("DROP TABLE registration_registry")
+                    self._connection.execute("ALTER TABLE registration_registry_v2 RENAME TO registration_registry")
+            else:
+                self._connection.execute(
+                    """
+                    CREATE TABLE registration_registry (
+                        dnss_hash TEXT NOT NULL,
+                        node_id TEXT NOT NULL,
+                        route_id TEXT NOT NULL,
+                        route_public_key TEXT NOT NULL,
+                        generation INTEGER NOT NULL DEFAULT 1,
+                        created_at INTEGER NOT NULL DEFAULT 0,
+                        expires_at INTEGER NOT NULL,
+                        signature TEXT NOT NULL,
+                        registered_at INTEGER NOT NULL,
+                        PRIMARY KEY (dnss_hash, route_id)
+                    )
+                    """
+                )
+
             self._connection.execute(
-                """
-                CREATE TABLE IF NOT EXISTS registration_registry (
-                    dnss_hash TEXT PRIMARY KEY,
-                    node_id TEXT NOT NULL,
-                    route_id TEXT NOT NULL,
-                    route_public_key TEXT NOT NULL,
-                    generation INTEGER NOT NULL DEFAULT 1,
-                    created_at INTEGER NOT NULL DEFAULT 0,
-                    expires_at INTEGER NOT NULL,
-                    signature TEXT NOT NULL,
-                    registered_at INTEGER NOT NULL
-                )
-                """
+                "CREATE INDEX IF NOT EXISTS registration_registry_dnss_idx ON registration_registry(dnss_hash)"
             )
-            columns = {
-                row[1] for row in self._connection.execute(
-                    "PRAGMA table_info(registration_registry)"
-                ).fetchall()
-            }
-            if "generation" not in columns:
-                self._connection.execute(
-                    "ALTER TABLE registration_registry ADD COLUMN generation INTEGER NOT NULL DEFAULT 1"
-                )
-            if "created_at" not in columns:
-                self._connection.execute(
-                    "ALTER TABLE registration_registry ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0"
-                )
+            self._connection.execute(
+                "CREATE INDEX IF NOT EXISTS registration_registry_expiry_idx ON registration_registry(expires_at)"
+            )
 
             row = self._connection.execute(
                 "SELECT node_id FROM registration_registry_node WHERE singleton = 1"
@@ -152,7 +196,6 @@ class RegistrationRegistry:
         return value
 
     def blind_hash(self, dnss: DNSS) -> str:
-        """Return the stable, node-scoped opaque index for a raw DNSS."""
         return node_blind_hash(self._node_id, self._blind_key, self._dnss_bytes(dnss))
 
     @staticmethod
@@ -166,7 +209,6 @@ class RegistrationRegistry:
     def register(
         self, dnss: DNSS, grant: Union[EntryGrantV1, Mapping[str, Any]], *, now: Optional[int] = None
     ) -> RegistrationRecord:
-        """Verify and atomically register a Route-owned grant for ``dnss``."""
         current_time = int(time.time()) if now is None else int(now)
         entry_grant = self._coerce_grant(grant)
         if not entry_grant.verify(expected_node_id=self._node_id, now=current_time):
@@ -185,55 +227,77 @@ class RegistrationRegistry:
             self._connection.execute(
                 """
                 INSERT INTO registration_registry
-                    (dnss_hash, node_id, route_id, route_public_key,
-                     generation, created_at, expires_at, signature, registered_at)
+                    (dnss_hash,node_id,route_id,route_public_key,generation,created_at,expires_at,signature,registered_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(dnss_hash) DO UPDATE SET
-                    node_id = excluded.node_id,
-                    route_id = excluded.route_id,
-                    route_public_key = excluded.route_public_key,
-                    generation = excluded.generation,
-                    created_at = excluded.created_at,
-                    expires_at = excluded.expires_at,
-                    signature = excluded.signature,
-                    registered_at = excluded.registered_at
+                ON CONFLICT(dnss_hash, route_id) DO UPDATE SET
+                    node_id=excluded.node_id,
+                    route_public_key=excluded.route_public_key,
+                    generation=excluded.generation,
+                    created_at=excluded.created_at,
+                    expires_at=excluded.expires_at,
+                    signature=excluded.signature,
+                    registered_at=excluded.registered_at
                 """,
-                (
-                    self.blind_hash(dnss),
-                    record.node_id,
-                    record.route_id,
-                    record.route_public_key,
-                    record.generation,
-                    record.created_at,
-                    record.expires_at,
-                    record.signature,
-                    record.registered_at,
-                ),
+                (self.blind_hash(dnss), record.node_id, record.route_id,
+                 record.route_public_key, record.generation, record.created_at,
+                 record.expires_at, record.signature, record.registered_at),
             )
         return record
 
-    def lookup(self, dnss: DNSS, *, now: Optional[int] = None) -> Optional[RegistrationRecord]:
-        """Return current verified metadata, deleting expired/legacy-invalid rows."""
+    def lookup(
+        self, dnss: DNSS, *, route_id: Optional[str] = None, now: Optional[int] = None
+    ) -> Optional[RegistrationRecord]:
+        """Return one valid record, optionally for an exact RouteID.
+
+        Invalid/expired legacy rows are deleted as they are encountered.  A raw
+        DNSS is never persisted or returned.
+        """
         current_time = int(time.time()) if now is None else int(now)
         dnss_hash = self.blind_hash(dnss)
-        row = self._connection.execute(
-            "SELECT node_id, route_id, route_public_key, generation, created_at, "
-            "expires_at, signature, registered_at FROM registration_registry WHERE dnss_hash = ?",
-            (dnss_hash,),
-        ).fetchone()
-        if row is None:
-            return None
-        record = RegistrationRecord(**dict(row))
-        if not record.grant.verify(expected_node_id=self._node_id, now=current_time):
+        sql = (
+            "SELECT node_id,route_id,route_public_key,generation,created_at,expires_at,signature,registered_at "
+            "FROM registration_registry WHERE dnss_hash = ?"
+        )
+        params: list[Any] = [dnss_hash]
+        if route_id is not None:
+            sql += " AND route_id = ?"
+            params.append(route_id)
+        sql += " ORDER BY registered_at DESC"
+        rows = self._connection.execute(sql, params).fetchall()
+        for row in rows:
+            record = RegistrationRecord(**dict(row))
+            if record.grant.verify(expected_node_id=self._node_id, now=current_time):
+                return record
             with self._connection:
                 self._connection.execute(
-                    "DELETE FROM registration_registry WHERE dnss_hash = ?", (dnss_hash,)
+                    "DELETE FROM registration_registry WHERE dnss_hash = ? AND route_id = ?",
+                    (dnss_hash, record.route_id),
                 )
-            return None
-        return record
+        return None
+
+    def list_for_dnss(self, dnss: DNSS, *, now: Optional[int] = None) -> list[RegistrationRecord]:
+        """Return all currently valid Route grants for this blinded DNSS."""
+        current_time = int(time.time()) if now is None else int(now)
+        dnss_hash = self.blind_hash(dnss)
+        rows = self._connection.execute(
+            "SELECT node_id,route_id,route_public_key,generation,created_at,expires_at,signature,registered_at "
+            "FROM registration_registry WHERE dnss_hash = ? ORDER BY registered_at DESC",
+            (dnss_hash,),
+        ).fetchall()
+        valid: list[RegistrationRecord] = []
+        for row in rows:
+            record = RegistrationRecord(**dict(row))
+            if record.grant.verify(expected_node_id=self._node_id, now=current_time):
+                valid.append(record)
+            else:
+                with self._connection:
+                    self._connection.execute(
+                        "DELETE FROM registration_registry WHERE dnss_hash = ? AND route_id = ?",
+                        (dnss_hash, record.route_id),
+                    )
+        return valid
 
     def purge_expired(self, *, now: Optional[int] = None) -> int:
-        """Delete rows whose grant expiry has passed and return their count."""
         current_time = int(time.time()) if now is None else int(now)
         with self._connection:
             cursor = self._connection.execute(
