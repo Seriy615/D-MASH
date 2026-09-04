@@ -47,11 +47,14 @@ const ui = {
         const gateBox = document.querySelector('.gate-container');
         const app = document.getElementById('app-container');
         
-        if (gateBox) gateBox.innerHTML = '<div style="color:var(--main); text-align:center; font-family:monospace;">ПОДГОТОВКА ТЕРМИНАЛА...</div>';
-        
+        if (gateBox) gateBox.innerHTML = '<div style="color:var(--main); text-align:center; font-family:monospace;">ДОСТУП ОГРАНИЧЕН</div>';
         app.style.opacity = '0';
-        
-        setTimeout(async () => {
+
+        // Do not hold the decoy behind an arbitrary 200 ms timeout after a
+        // flip-lock. The libraries are loaded on demand by the PIN path; once
+        // they are ready, showing the gate should be immediate.
+        await new Promise(requestAnimationFrame);
+        {
             app.style.display = 'none';
             container.style.setProperty('display', 'flex', 'important');
 
@@ -64,7 +67,7 @@ const ui = {
                 this.renderLoginForm();
             }
             window.scrollTo(0, 0);
-        }, 200);
+        }
     },
 
 async renderAccountSelector(accs) {
@@ -183,16 +186,25 @@ async renderAccountSelector(accs) {
 
         const inputHash = await sys.fastHash(this.curr);
         if (inputHash === localStorage.getItem('sys_m')) {
+            const devicePin = this.curr;
             const generation = ++this.unlockGeneration;
             this.cmd('AC');
-            // Keep the calculator display neutral while the libraries load.
-            // Showing a fake calculation status here makes the decoy visibly
-            // jump to “ЗАГРУЗКА ЯДРА...” after flip-lock or password entry.
-            this.hist = "";
+            // Show the loading status only for an intentional unlock.  The
+            // flip-lock path resets the calculator directly and therefore
+            // never passes through this branch.
+            this.hist = "ЗАГРУЗКА ЯДРА...";
             this.update();
             const loaded = await sys.loadAllLibs();
             if (generation !== this.unlockGeneration) return;
-            if (loaded) this.show_gate();
+            if (loaded) {
+                try {
+                    await Core.unlockDevice(devicePin);
+                    this.show_gate();
+                } catch (error) {
+                    this.hist = "ОШИБКА УСТРОЙСТВА: " + error.message;
+                    this.update();
+                }
+            }
             else { this.hist = "ОШИБКА СЕТИ"; this.update(); }
             return;
         }

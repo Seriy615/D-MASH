@@ -120,6 +120,7 @@ const Core = {
     // identity.  It is not yet sent on DMP-C while device-only wire auth is
     // designed; keeping it here prevents accidental Account-vault coupling.
     device: null,
+    deviceState: null,
     isSyncing: false, chatOffset: 0, chatLimit: 50, isLoadingHistory: false,
     hex_lut: Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0')),
     randomInt32: () => {
@@ -151,6 +152,22 @@ const Core = {
     Запуск приложения, генерация мастер-ключей и выход.
     */
     // Core.boot               - Главная функция входа: Argon2id, генерация ключей и запуск
+    async unlockDevice(masterPin) {
+        // DeviceRoot is unlocked by the calculator/master PIN, before an
+        // Account credential is requested.  Keep this boundary explicit: an
+        // account password must never become the device-unlock credential.
+        const deviceState = await window.DeviceRoot.bootstrap(masterPin);
+        this.deviceState = deviceState;
+        if (!deviceState.legacy && deviceState.identity) {
+            this.device = Object.freeze({
+                id: deviceState.identity.deviceId,
+                fingerprints: deviceState.identity.fingerprints,
+                signing: deviceState.identity.signing,
+                agreement: deviceState.identity.agreement
+            });
+        }
+        return deviceState;
+    },
     async boot(identity, passphrase, options = {}) {
         const statusEl = document.getElementById('gate-status-text');
         try {
@@ -161,7 +178,10 @@ const Core = {
             // for this foundation; it is never a DeviceRoot derivation input.
             // A legacy Gamma vault without an explicit migration is rejected
             // rather than silently replacing its established Account identity.
-            let deviceState = await window.DeviceRoot.bootstrap(passphrase);
+            // DeviceRoot was unlocked at the calculator gate.  Account login
+            // must not unlock, replace, or relock the installation root.
+            let deviceState = this.deviceState || window.DeviceRoot?.state;
+            if (!deviceState) throw new Error("УСТРОЙСТВО НЕ РАЗБЛОКИРОВАНО");
 
             // 1. Выжимаем 128 байт энтропии через Argon2id.  This is the
             // session KDF; credential bindings must validate against it.
@@ -333,18 +353,22 @@ const Core = {
         ws.innerHTML = `
             <div class="terminal-grid" id="main-grid" style="width:100%; height:100%; display:flex;">
                 <div class="sidebar">
-                    <div class="side-header">D-MASH PWA Beta 3</div>
+                    <div class="side-header">D-MASH Gamma PWA</div>
                     <div class="my-id-card" onclick="Core.showMyQR()">
                         <div style="color:#888; font-size:0.6rem; margin-bottom:4px;">МОЙ ID:</div>
                         <b style="color:#fff; font-size:0.75rem;">${Core.keys.pub_hex.substring(0, 24)}...</b>
                     </div>
+                    <button class="my-id-card network-card" type="button" onclick="NodeManager.renderSettings()">
+                        <div style="color:#888; font-size:0.6rem; margin-bottom:4px;">СЕТЬ:</div>
+                        <b id="network-summary" style="color:#fff; font-size:0.75rem;">ПОДКЛЮЧИТЕСЬ К MESH СЕТИ!</b>
+                    </button>
                     <div class="nav-tools">
                         <button onclick="Core.openScanner()">[ QR ]</button>
                         <button onclick="Core.addPeerPrompt()">[ + ]</button>
                         <button class="settings-tool" type="button" aria-label="Настройки" title="Настройки" onclick="Core.openSettings()">⚙</button>
                     </div>
                     <div id="contact-list" class="peer-list"></div>
-                    <button class="exit-btn" onclick="Core.terminateSession()">[ ВЫХОД ]</button>
+                    <button class="exit-btn" onclick="Core.accountLogout()">[ ВЫХОД ]</button>
                 </div>
                 <div class="chat-main">
                     <div id="chat-header">
@@ -371,6 +395,13 @@ const Core = {
 
         // 4. Вешаем события (как и раньше)
         const chatLog = document.getElementById('log');
+        // The chat surface is not a dismissible backdrop.  In particular, a
+        // click/tap on empty space must never behave like Back or close the
+        // selected conversation; only the explicit back button does that.
+        document.querySelector('.chat-main')?.addEventListener('click', event => event.stopPropagation());
+        document.querySelector('.sidebar')?.addEventListener('click', event => {
+            if (event.target === event.currentTarget) event.stopPropagation();
+        });
         chatLog.addEventListener('scroll', () => {
             if (chatLog.scrollTop < 50 && !Core.isLoadingHistory && Core.chatOffset >= Core.chatLimit) {
                 Core.loadChat(true);
@@ -384,6 +415,11 @@ const Core = {
                 });
             }
         });
+        window.addEventListener('dmash-node-state', () => this.updateNetworkSummary());
+        window.addEventListener('dmash-node-state', event => {
+            if (event.detail?.state === 'connected') this.flushOutboundQueue();
+        });
+        this.updateNetworkSummary();
         window.addEventListener('dmash-delivery-available', () => Core.syncNetwork());
 
         const msgInp = document.getElementById('msgInput');
@@ -411,6 +447,69 @@ const Core = {
         if (Core.syncInterval) clearInterval(Core.syncInterval);
         Core.syncInterval = setInterval(() => Core.syncNetwork(), 7000);
     },
+    // Account logout clears only the active Account session. DeviceRoot and
+    // NodeManager deliberately survive so another local account can be chosen
+    // without a device lock or transport reconnect.
+    async accountLogout() {
+        const zero = value => {
+            if (value instanceof Uint8Array) value.fill(0);
+            else if (value && typeof value === 'object') Object.values(value).forEach(zero);
+        };
+        if (this.callState !== 'idle' || this.peerConnection || this.localStream) this.endCall?.();
+        this.killAllMedia();
+        if (this.peerConnection) { this.peerConnection.close(); this.peerConnection = null; }
+        if (this.syncInterval) { clearInterval(this.syncInterval); this.syncInterval = null; }
+        if (this.blobURLs) { this.blobURLs.forEach(url => URL.revokeObjectURL(url)); this.blobURLs = []; }
+        zero(this.gammaKeys); zero(this.keys);
+        this.gammaKeys = { master: null, sign: null, box: null };
+        this.keys = { sign: null, box: null, pub_hex: null };
+        this.blindSalt?.fill?.(0); this.blindSalt = null;
+        this.activeIdentity = null; this.activePeerId = null; this.openingPeerId = null;
+        this.deviceState = null;
+        this.pendingInboundByPeer?.clear?.(); this.historyPrefetch?.clear?.();
+        this.isSyncing = false; this.chatOffset = 0; this.isLoadingHistory = false;
+        sessionStorage.clear();
+        this.closeModal?.();
+        const workspace = document.getElementById('workspace');
+        if (workspace) { workspace.replaceChildren(); workspace.style.display = 'none'; }
+        const calculator = document.getElementById('app-container');
+        if (calculator) { calculator.style.display = 'none'; calculator.style.opacity = '1'; }
+        if (window.ui) { ui.curr = '0'; ui.hist = ''; ui.op = null; ui.mode = 0; ui.update(); }
+        await window.ui?.show_gate?.();
+    },
+    updateNetworkSummary() {
+        const el = document.getElementById('network-summary');
+        if (!el || !window.NodeManager) return;
+        const connected = NodeManager.connectedConnections();
+        if (!connected.length) { el.textContent = 'ПОДКЛЮЧИТЕСЬ К MESH СЕТИ!'; return; }
+        const pings = connected.map(item => item.lastLatencyMs).filter(value => Number.isFinite(value));
+        el.textContent = `${connected.length} УЗЛ. · PING ${pings.length ? `${Math.min(...pings)}–${Math.max(...pings)} ms` : '…'}`;
+    },
+    async queueOutbound(peerId, content, forceHandshake = false) {
+        const isControl = typeof content === 'object' && (content.type?.startsWith('voip_') || content.type === 'dmash_receipt');
+        if (forceHandshake || isControl || !peerId || content == null) return null;
+        const alias = await Storage.getAlias(`outbox:${crypto.randomUUID()}`, 'L3');
+        await Storage.putBox('blind_outbox', { alias, data: { peerID: peerId, content, createdAt: Date.now() } });
+        const seqId = await Storage.saveMessageGamma(peerId, content, false, true, 'QUEUED');
+        if (peerId === this.activePeerId) {
+            const log = document.getElementById('log');
+            if (log) { log.insertAdjacentHTML('beforeend', this.buildMsgHtml({ text: content, inbound: false, transportState: 'QUEUED' }, Date.now(), seqId)); log.scrollTop = log.scrollHeight; }
+        }
+        const input = document.getElementById('msgInput');
+        if (input && typeof content === 'string') { input.value = ''; input.style.height = '45px'; }
+        this.shmon('WARN', 'Связи нет. Маляву придержали — улетит при первой возможности.');
+        return alias;
+    },
+    async flushOutboundQueue() {
+        if (this._flushingOutbox || !window.NodeManager?.connectedConnections().length) return;
+        this._flushingOutbox = true;
+        try {
+            for (const item of await Storage.getAllBoxes('blind_outbox')) {
+                const sent = await this.sendMessage(item.content, false, item.peerID, item.alias, true);
+                if (sent) await Storage.deleteBox('blind_outbox', item.alias);
+            }
+        } finally { this._flushingOutbox = false; }
+    },
     // Core.terminateSession   - Экстренное затирание ключей в RAM и выход в "калькулятор"
     terminateSession: function() {
         console.log("[!!!] ШУХЕР! ГАСИМ ПРИБОРЫ...");
@@ -433,6 +532,7 @@ const Core = {
         this.gammaKeys = null;
         this.keys = { master: null, alias: null, sign: null, box: null, pub_hex: null };
         this.device = null;
+        this.deviceState = null;
         window.DeviceRoot?.lock();
         this.activeIdentity = null;
         this.activePeerId = null;
@@ -817,7 +917,7 @@ const Core = {
     Взаимодействие с API и доставка данных.
     */
     // Core.sendMessage        - Отправка данных на сервер (с поддержкой VOIP и Silent режимов)
-    async sendMessage(c = null, forceHandshake = false, targetPid = null) {
+    async sendMessage(c = null, forceHandshake = false, targetPid = null, queuedAlias = null, suppressQueue = false) {
         // SEND is the sole commit control for captured media.  Recording
         // controls cancel only; neither voice nor circle auto-sends on stop.
         if (this.isRecording && !c) { this.commitRecording(); return; }
@@ -832,6 +932,9 @@ const Core = {
                 await this.restoreAutomaticMeshRoutes(pid);
                 meshRoute = window.NodeManager?.getMeshRoute(pid);
             }
+            let p = c;
+            const inp = document.getElementById('msgInput');
+            if (!p) { p = inp?.value.trim(); if (!p) return false; }
             if (meshRoute) {
                 // Route setup is deliberately explicit. A probe is idempotent
                 // and may be repeated while the mesh converges.
@@ -842,13 +945,11 @@ const Core = {
                     this.shmon("INFO", `D-MASH: ${probe.state}`);
                 } catch (error) {
                     this.shmon("ERR", `D-MASH probe failed: ${error.message}`);
-                    return;
+                    if (!suppressQueue) await this.queueOutbound(pid, p, forceHandshake);
+                    return false;
                 }
             }
             if (meshRoute) {
-                let p = c;
-                const inp = document.getElementById('msgInput');
-                if (!p) { p = inp.value.trim(); if (!p) return; }
                 const isVoip = typeof p === 'object' && p.type?.startsWith('voip_');
                 const isReceipt = typeof p === 'object' && p.type === 'dmash_receipt';
                 // Assign an opaque per-message ID before E2EE encryption. It
@@ -873,7 +974,7 @@ const Core = {
                     }
                     const result = await window.NodeManager.submitEnvelope(meshRoute.routeLocator, envelope);
                     this.shmon("INFO", `D-MASH: ${result.state}`);
-                    if (!isVoip && !isReceipt && pid === this.activePeerId) {
+                    if (!isVoip && !isReceipt && !queuedAlias && pid === this.activePeerId) {
                         // A DMP-C submission result is an authenticated node
                         // acknowledgement, not a read receipt.  It is safe to
                         // show delivery only when the node explicitly reports
@@ -888,13 +989,15 @@ const Core = {
                         }
                         if (inp && !c) { inp.value = ""; inp.style.height = '45px'; }
                     }
-                } catch (error) { this.shmon("ERR", `D-MASH send failed: ${error.message}`); }
-                return;
+                    return true;
+                } catch (error) { this.shmon("ERR", `D-MASH send failed: ${error.message}`); if (!suppressQueue) await this.queueOutbound(pid, p, forceHandshake); }
+                return false;
             }
             const message = forceHandshake
                 ? "Mesh route для контакта ещё восстанавливается из pairing. Дождитесь подключения к Entry Node. Legacy Relay не использовался."
                 : "Mesh route для контакта ещё восстанавливается из pairing. Legacy Relay не использовался.";
             this.shmon("WARN", message);
+            if (!suppressQueue) await this.queueOutbound(pid, p, forceHandshake);
             if (forceHandshake && this.customConfirm) {
                 this.customConfirm(
                     "D-MASH MESH",
@@ -905,7 +1008,7 @@ const Core = {
                     }
                 );
             } else if (forceHandshake && this.customAlert) this.customAlert("D-MASH MESH", message);
-            return;
+            return false;
         }
 
         let p = c;
@@ -1256,6 +1359,11 @@ const Core = {
 
             const log = document.getElementById('log');
             log.innerHTML = "";
+            // History is loaded asynchronously. Keep this surface invisible
+            // until its complete first page has been rendered and positioned
+            // at the newest message; otherwise desktop/mobile can flash the
+            // top of the conversation for one frame.
+            log.style.visibility = 'hidden';
             const inputArea = document.getElementById('input-area');
 
             // 4. ЗАГРУЗКА ИСТОРИИ И ПРОВЕРКА КЛЮЧЕЙ
@@ -1302,7 +1410,15 @@ const Core = {
                 this.flushInboundQueue(id);
             }
             await this.renderPeers();
-            setTimeout(() => { log.scrollTop = log.scrollHeight; }, 100);
+            // The initial page is painted atomically. Set the scroll position
+            // before yielding to the browser so the user never sees the top
+            // of the history before being moved to the newest message.
+            log.scrollTop = log.scrollHeight;
+            requestAnimationFrame(() => {
+                // Do not reveal a chat superseded while its IndexedDB request
+                // was in flight.
+                if (this.activePeerId === id) log.style.visibility = '';
+            });
             // Keep the initial viewport strictly on the newest page.  Older
             // history may be prepared in RAM, but is never inserted until the
             // user explicitly scrolls upward.
@@ -1494,10 +1610,16 @@ const Core = {
             window.history.back();
         }
 
+        // closeChat is intentionally an explicit navigation operation.  It is
+        // never called by generic document/backdrop click handling.
         Core.activePeerId = null;
         document.getElementById('main-grid').classList.remove('chat-active');
         document.getElementById('input-area').style.display = 'none';
         document.getElementById('voip-btn').style.display = 'none';
+        // Do not leave the deleted/previous conversation visible behind the
+        // contact list, notably on desktop where both panes are shown.
+        const log = document.getElementById('log');
+        if (log) { log.replaceChildren(); log.style.visibility = ''; }
         Core.renderPeers();
     },
     /*
@@ -1562,20 +1684,25 @@ const Core = {
         this.commitRecordingOnStop = false;
         if (this.mediaRecorder.state !== 'inactive') this.mediaRecorder.stop();
     },
+    supportedRecorderMime(types) {
+        if (!window.MediaRecorder?.isTypeSupported) return '';
+        return types.find(type => MediaRecorder.isTypeSupported(type)) || '';
+    },
     // Core.uiVoice            - Record locally; SEND commits it.
     uiVoice: async function() {
         if (!Core.isRecording) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                Core.mediaRecorder = new MediaRecorder(stream); Core.audioChunks = [];
+                const mimeType = Core.supportedRecorderMime(['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus']);
+                Core.mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined); Core.audioChunks = [];
                 Core.mediaRecorder.ondataavailable = e => Core.audioChunks.push(e.data);
                 Core.mediaRecorder.onstop = () => {
                     const commit = Core.commitRecordingOnStop;
                     Core.isRecording = false; Core.commitRecordingOnStop = false;
                     stream.getTracks().forEach(t => t.stop()); Core.resetRecordingToolbar();
                     if (!commit || !Core.audioChunks.length) return;
-                    const r = new FileReader(); r.onload = e => Core.sendMessage({ type: 'voice', name: 'voice_msg', data: e.target.result });
-                    r.readAsDataURL(new Blob(Core.audioChunks, { type: 'audio/webm' }));
+                    const r = new FileReader(); r.onload = e => Core.sendMessage({ type: 'voice', name: 'voice_msg', data: e.target.result, mime: Core.mediaRecorder?.mimeType || mimeType });
+                    r.readAsDataURL(new Blob(Core.audioChunks, { type: Core.mediaRecorder?.mimeType || mimeType || 'application/octet-stream' }));
                 };
                 Core.commitRecordingOnStop = false; Core.isRecordingCircle = false;
                 Core.mediaRecorder.start(); Core.isRecording = true; Core.setRecordingToolbar('voice'); Core.startRecordingTimer();
@@ -1627,7 +1754,8 @@ const Core = {
             };
 
             Core.localStream = await navigator.mediaDevices.getUserMedia(constraints);
-            Core.mediaRecorder = new MediaRecorder(Core.localStream, { mimeType: 'video/webm;codecs=vp8,opus' });
+            const mimeType = Core.supportedRecorderMime(['video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm']);
+            Core.mediaRecorder = new MediaRecorder(Core.localStream, mimeType ? { mimeType } : undefined);
             Core.audioChunks = [];
 
             const preview = document.createElement('video');
@@ -1645,8 +1773,8 @@ const Core = {
             Core.mediaRecorder.onstop = () => {
                 if (Core.commitRecordingOnStop && Core.audioChunks.length > 0) {
                     const reader = new FileReader();
-                    reader.onload = (e) => Core.sendMessage({ type: 'video_note', name: 'circle', data: e.target.result });
-                    reader.readAsDataURL(new Blob(Core.audioChunks, { type: 'video/webm' }));
+                    reader.onload = (e) => Core.sendMessage({ type: 'video_note', name: 'circle', data: e.target.result, mime: Core.mediaRecorder?.mimeType || mimeType });
+                    reader.readAsDataURL(new Blob(Core.audioChunks, { type: Core.mediaRecorder?.mimeType || mimeType || 'application/octet-stream' }));
                 }
                 Core.killAllMedia();
                 document.getElementById('circle-preview')?.remove();
@@ -1723,18 +1851,22 @@ const Core = {
         stub.innerHTML = '<span style="color:var(--op); font-size:0.7rem;">РАСШИФРОВКА...</span>';
 
         try {
-            const parts = rawData.data.split(',');
-            const byteString = atob(parts[1]);
-            const mimeString = parts[0].split(':')[1].split(';')[0];
-            const ia = new Uint8Array(byteString.length);
-            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-            const url = URL.createObjectURL(new Blob([ia], {type: mimeString}));
-
-            if (!this.blobURLs) this.blobURLs = [];
-            this.blobURLs.push(url);
+            if (!rawData?.data || typeof rawData.data !== 'string') throw new Error('Некорректные данные медиа');
+            const match = rawData.data.match(/^data:([^;,]+)(?:;[^,]*)?,([\s\S]+)$/);
+            if (!match) throw new Error('Неизвестный формат медиа');
+            // The FileReader data URL is already the decrypted media payload.
+            // Feeding it directly to the media element avoids a second atob()
+            // pass, which Safari rejects for some valid large recorded blobs.
+            const url = rawData.data;
 
             if (rawData.type === 'video_note') {
-                stub.innerHTML = `<div class="circle-note-container"><video src="${url}" controls autoplay></video></div>`;
+                stub.innerHTML = `<div class="circle-note-container"><video src="${url}" playsinline preload="metadata"></video></div>`;
+                const video = stub.querySelector('video');
+                video.addEventListener('click', event => {
+                    event.preventDefault();
+                    if (video.paused) video.play().catch(() => {}); else video.pause();
+                });
+                video.addEventListener('ended', () => { video.currentTime = 0; });
             } else if (rawData.type === 'video') {
                 stub.innerHTML = `<div class="video-attachment"><video src="${url}" controls autoplay style="width:100%; border-radius:8px;"></video></div>`;
             } else if (rawData.type === 'image') {
@@ -1744,7 +1876,24 @@ const Core = {
             } else {
                 stub.innerHTML = `<a href="${url}" download="${rawData.name}" class="file-attachment">СКАЧАТЬ ${rawData.name}</a>`;
             }
-        } catch (e) { stub.innerHTML = '<span style="color:var(--accent)">ОШИБКА</span>'; }
+        } catch (e) {
+            this.shmon('ERR', `Media decode failed: ${e.message}`);
+            stub.innerHTML = `<span style="color:var(--accent)">ОШИБКА РАСШИФРОВКИ</span><button class="sys-modal-btn" style="padding:5px; font-size:.6rem; margin-top:8px;" onclick="Core.decryptMediaEncoded('${id}', '${this.encodeMediaPayload(rawData)}')">ПОВТОРИТЬ</button>`;
+        }
+    },
+    // Media arrives inside encrypted JSON. Encode it once for the HTML handler
+    // so a data URL or a filename cannot corrupt an inline JSON attribute.
+    encodeMediaPayload(data) {
+        return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    },
+    decryptMediaEncoded(id, encoded) {
+        try {
+            return this.decryptMedia(id, JSON.parse(decodeURIComponent(escape(atob(encoded)))));
+        } catch (error) {
+            this.shmon('ERR', `Media payload parse failed: ${error.message}`);
+            const stub = document.getElementById(`stub-${id}`);
+            if (stub) stub.innerHTML = '<span style="color:var(--accent)">ОШИБКА ДАННЫХ МЕДИА</span>';
+        }
     },
     // Core.renderStub         - Отрисовка заглушки для еще не расшифрованного файла
     renderStub(data, id) {
@@ -1759,9 +1908,9 @@ const Core = {
         if (data.type === 'video_note') {
             return `
                 <div class="media-stub" id="stub-${id}">
-                    <div class="circle-note-container"><video src=""></video></div>
+                    <div class="circle-note-container"><video src="" playsinline preload="metadata"></video></div>
                     <button class="sys-modal-btn primary" style="padding:5px; font-size:0.6rem; margin-top:8px;"
-                        onclick='Core.decryptMedia("${id}", ${JSON.stringify(data).replace(/"/g, '&quot;')})'>РАСШИФРОВАТЬ КРУЖОК</button>
+                        onclick="Core.decryptMediaEncoded('${id}', '${this.encodeMediaPayload(data)}')">РАСШИФРОВАТЬ КРУЖОК</button>
                 </div>`;
         }
 
@@ -1769,7 +1918,7 @@ const Core = {
             <div class="media-stub" id="stub-${id}">
                 <div style="color:var(--main); font-size:0.7rem; margin-bottom:5px;">[ ${label}: ${this.escapeHtml(data.name || 'file')} ]</div>
                 <button class="sys-modal-btn primary" style="padding:5px; font-size:0.6rem;"
-                    onclick='Core.decryptMedia("${id}", ${JSON.stringify(data).replace(/"/g, '&quot;')})'>РАСШИФРОВАТЬ</button>
+                    onclick="Core.decryptMediaEncoded('${id}', '${this.encodeMediaPayload(data)}')">РАСШИФРОВАТЬ</button>
             </div>`;
     },
     // Core.resetCircleUI         - Сброс интерфейса записи кружка (возврат кнопок в дефолт)
@@ -2400,8 +2549,7 @@ const Core = {
         const panicGestureEnabled = localStorage.getItem('cfg_panic_gesture') === 'true';
         const h = `
             <div style="display:flex; flex-direction:column; gap:10px;">
-                <button class="sys-modal-btn" onclick="Core.setupTelegram()">✈️ ПРИВЯЗАТЬ ТЕЛЕГРАМ-МАЯК</button>
-                <button class="sys-modal-btn" onclick="Core.disableTelegramBeacon()">⛔ ОТКЛЮЧИТЬ МАЯК</button>
+                <button class="sys-modal-btn" onclick="Core.setupTelegram()">✈️ ТЕЛЕГРАМ-МАЯК</button>
                 <button class="sys-modal-btn" onclick="NodeManager.renderSettings()">🌐 ПОДКЛЮЧЕНИЕ К УЗЛУ</button>
                 <button class="sys-modal-btn" onclick="Core.toggleFlipper()">ЭКСТРЕННЫЙ ФЛИП-ЛОК: ${panicGestureEnabled ? 'ВКЛ' : 'ВЫКЛ'}</button>
                 <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🧬 ПРИВЯЗАТЬ ОТПЕЧАТОК/FACE</button>
@@ -2472,15 +2620,22 @@ const Core = {
                 <small style="color:#555;">${nodeState}<br>Hash: ${h.substring(0,16)}...</small>
             </div>
             <a href="${botUrl}" target="_blank" class="sys-modal-btn primary" style="text-decoration:none; display:block; text-align:center;">ОТКРЫТЬ БОТА</a>
+            <div style="margin-top:10px;color:#777;font-size:.7rem;">Для отключения в Telegram отправьте боту: <b>/stop ${h}</b></div>
+            ${localStorage.getItem('dmash_beacon_bound_v1') === 'true' ? '<button class="sys-modal-btn" onclick="Core.disableTelegramBeacon()" style="margin-top:10px;">⛔ ОТКЛЮЧИТЬ МАЯК</button>' : ''}
             <button class="sys-modal-btn" onclick="Core.closeModal()" style="margin-top:10px;">ГОТОВО</button>
         `;
         this.openModal("TELEGRAM МАЯК", h_html);
     },
     async disableTelegramBeacon() {
         const h = await window.DeviceRoot.notificationBeaconHandle();
-        window.NodeManager?.setNotificationBeaconEnabled(false);
+        for (const endpoint of window.NodeManager?.endpoints || []) {
+            endpoint.notificationEnabled = false;
+            endpoint.autoConnect = false;
+        }
+        window.NodeManager?.save();
+        try { await window.NodeManager?.requestAll('UNREGISTER_NOTIFICATION_BEACON', { beacon_handle: h }); } catch (_) { }
         try { await window.NodeManager?.removeNotificationBeacon(h); } catch (_) { }
-        try { await window.NodeManager?.unregisterNotificationBeacon(h); } catch (_) { }
+        localStorage.removeItem('dmash_beacon_bound_v1');
         this.shmon('INFO', 'Маяк отключён на доступных узлах.');
         this.openSettings();
     },
@@ -2719,6 +2874,7 @@ const Core = {
     messageStatusHtml(msg) {
         if (msg.inbound || !msg.transportState) return "";
         const states = {
+            QUEUED: " <span class=\"m-state\" title=\"Улетит при первой возможности\">⌛</span>",
             SENT: " <span class=\"m-state\" title=\"Sent to transport\">✓</span>",
             DELIVERED: " <span class=\"m-state\" title=\"Delivered to device\">✓✓</span>",
             READ: " <span class=\"m-state m-state--read\" title=\"Read by account\">✓✓</span>"
