@@ -1,36 +1,31 @@
 "use strict";
 
 /*
- * Bridge the legacy classic-script lexical `const ui` into window.ui.
- *
- * ui_logic.js intentionally predates the runtime repair modules and declares
- * `const ui = {...}` at top level.  A top-level lexical binding is visible to
- * later classic scripts by identifier, but it is NOT a property of `window`.
- * runtime_fixes.js and acceptance_fixes.js are isolated IIFEs and correctly
- * look up collaborators through `window`, so without this bridge they can wait
- * forever for `window.ui` even though the visible legacy UI is already running.
- *
- * Do not duplicate UI logic here.  This file only exports the already-existing
- * object when its lexical binding becomes available.
+ * Bridge legacy classic-script global lexical bindings into window properties.
+ * `const ui` and `const sys` are visible to later classic scripts by identifier,
+ * but are not properties of window. Runtime repair modules use window-scoped
+ * collaborators deliberately, so export the existing objects without
+ * duplicating their implementation.
  */
-(function exposeLegacyUi(global) {
-    if (global.ui) return;
-
+(function exposeLegacyRuntime(global) {
     let attempts = 0;
     const expose = () => {
         attempts += 1;
+        let changed = false;
         try {
-            // `typeof ui` is safe before ui_logic.js has executed. Once the
-            // classic script creates its global lexical binding, a later
-            // classic script can resolve that identifier even though
-            // `window.ui` is still absent.
             if (!global.ui && typeof ui !== "undefined" && ui) {
                 global.ui = ui;
-                global.dispatchEvent?.(new CustomEvent("dmash-ui-global-ready"));
-                return true;
+                changed = true;
             }
         } catch (_) {}
-        return false;
+        try {
+            if (!global.sys && typeof sys !== "undefined" && sys) {
+                global.sys = sys;
+                changed = true;
+            }
+        } catch (_) {}
+        if (changed) global.dispatchEvent?.(new CustomEvent("dmash-ui-global-ready"));
+        return !!global.ui && !!global.sys;
     };
 
     if (expose()) return;
