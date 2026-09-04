@@ -26,10 +26,12 @@ class RoutingPrimitiveTests(unittest.TestCase):
         self.node_b = self.b.verify_key.encode().hex()
 
     def test_dnss_is_fresh_and_context_separated(self):
-        first = generate_dnss()
-        second = generate_dnss()
-        other_context = generate_dnss()
+        first = generate_dnss(self.node_a)
+        second = generate_dnss(self.node_a)
+        other_context = generate_dnss(self.node_b)
         self.assertEqual(len(bytes.fromhex(first)), 16)
+        self.assertEqual(len(bytes.fromhex(second)), 16)
+        self.assertEqual(len(bytes.fromhex(other_context)), 16)
         self.assertNotEqual(first, second)
         self.assertNotEqual(first, other_context)
 
