@@ -1,7 +1,7 @@
 "use strict";
 
 // One visible release identifier for the page and Service Worker generation.
-window.DMASH_RELEASE = Object.freeze({ id: "m1.5-functional-repair-20260904.46" });
+window.DMASH_RELEASE = Object.freeze({ id: "m1.5-functional-repair-20260905.47" });
 
 /*
  * Runtime repair loader.
@@ -23,7 +23,8 @@ window.DMASH_RELEASE = Object.freeze({ id: "m1.5-functional-repair-20260904.46" 
         "js/pending_contact_requests.js",
         "js/resource_pow.js",
         "js/runtime_fixes.js",
-        "js/public_contact_runtime.js"
+        "js/public_contact_runtime.js",
+        "js/acceptance_fixes.js"
     ];
 
     const load = src => new Promise((resolve, reject) => {
