@@ -1,15 +1,14 @@
 "use strict";
 
 // One visible release identifier for the page and Service Worker generation.
-window.DMASH_RELEASE = Object.freeze({ id: "m1.5-functional-repair-20260904.45" });
+window.DMASH_RELEASE = Object.freeze({ id: "m1.5-functional-repair-20260904.46" });
 
 /*
  * Runtime repair loader.
  *
  * Do not patch DeviceRoot here at DOMContentLoaded: the legacy shell loads the
  * crypto/core modules lazily after calculator unlock, so a one-shot DOM hook
- * races them and was the reason the previous biometric compatibility patch was
- * often never installed. runtime_fixes.js waits for the actual objects.
+ * races them. runtime_fixes.js waits for the actual objects.
  */
 (function loadFunctionalRepair(global) {
     const ver = encodeURIComponent(global.DMASH_RELEASE.id);
@@ -23,7 +22,8 @@ window.DMASH_RELEASE = Object.freeze({ id: "m1.5-functional-repair-20260904.45" 
         "js/contact_transport.js",
         "js/pending_contact_requests.js",
         "js/resource_pow.js",
-        "js/runtime_fixes.js"
+        "js/runtime_fixes.js",
+        "js/public_contact_runtime.js"
     ];
 
     const load = src => new Promise((resolve, reject) => {
