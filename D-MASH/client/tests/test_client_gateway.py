@@ -2,6 +2,8 @@ import base64
 import asyncio
 from dataclasses import dataclass
 import json
+import os
+import tempfile
 import time
 import unittest
 
@@ -17,6 +19,7 @@ from backend.client_gateway import (
     verify_device_auth,
     router,
 )
+from backend.registration_registry import RegistrationRegistry
 
 
 class ClientGatewayAuthTests(unittest.TestCase):
@@ -47,17 +50,27 @@ class ClientGatewayAuthTests(unittest.TestCase):
     def setUp(self):
         self.node_key = SigningKey.generate()
         self.previous_runtime_state = gateway.runtime_state
+        self.previous_registry_factory = gateway.registration_registry_factory
+        handle, self.registry_path = tempfile.mkstemp(prefix="dmash-gateway-registration-", suffix=".sqlite")
+        os.close(handle)
+        gateway.registration_registry_factory = lambda node_crypto: RegistrationRegistry(self.registry_path, node_crypto)
         # Gateway auth needs only NodeID and a capability policy. The test
         # never requests a transport operation, so no routing/session state is
         # fabricated or persisted.
         gateway.runtime_state = lambda: type("State", (), {
-            "node_crypto": type("NodeCrypto", (), {"node_id": self.node_key.verify_key.encode().hex()})(),
+            "node_crypto": type("NodeCrypto", (), {
+                "node_id": self.node_key.verify_key.encode().hex(),
+                "secret_salt": b"g" * 32,
+            })(),
             "capabilities": None,
             "node": None,
         })()
 
     def tearDown(self):
         gateway.runtime_state = self.previous_runtime_state
+        gateway.registration_registry_factory = self.previous_registry_factory
+        if os.path.exists(self.registry_path):
+            os.unlink(self.registry_path)
 
     def _authenticated_frames(self, client_key, *requests):
         """Build a DEVICE_AUTH_V1 exchange followed by public DMP-C frames."""
@@ -82,7 +95,10 @@ class ClientGatewayAuthTests(unittest.TestCase):
             "advertised_operations": lambda self: frozenset({"STATUS", "START_PROBE", "ROUTE_STATUS"}),
         })()
         gateway.runtime_state = lambda: type("State", (), {
-            "node_crypto": type("NodeCrypto", (), {"node_id": self.node_key.verify_key.encode().hex()})(),
+            "node_crypto": type("NodeCrypto", (), {
+                "node_id": self.node_key.verify_key.encode().hex(),
+                "secret_salt": b"g" * 32,
+            })(),
             "capabilities": capabilities,
             "node": type("Node", (), {"active_connections": [], "transport": transport})(),
         })()
@@ -256,6 +272,39 @@ class ClientGatewayAuthTests(unittest.TestCase):
         self.assertEqual(websocket.sent[3], {
             "type": "ERROR", "request_id": "grant-wrong-node", "code": "INVALID_ENTRY_GRANT",
         })
+
+    def test_registration_persists_only_when_dnss_and_verified_grant_are_both_present(self):
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        client_key = SigningKey.generate()
+        route_key = SigningKey.generate()
+        route_public_key = route_key.verify_key.encode(encoder=HexEncoder).decode("ascii")
+        grant = gateway.EntryGrantV1.issue(self.node_key, route_public_key, int(time.time()) + 60)
+        dnss = "ab" * 16
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_DNSS", "request_id": "dnss", "dnss": dnss},
+            {"type": "REGISTER_ENTRY_GRANT", "request_id": "grant", "entry_grant": grant.to_dict()},
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[2]["type"], "REGISTER_DNSS_RESULT")
+        self.assertEqual(websocket.sent[3]["type"], "REGISTER_ENTRY_GRANT_RESULT")
+        registry = RegistrationRegistry(self.registry_path, type("Node", (), {
+            "node_id": self.node_key.verify_key.encode().hex(), "secret_salt": b"g" * 32,
+        })())
+        try:
+            record = registry.lookup(bytes.fromhex(dnss))
+            self.assertIsNotNone(record)
+            self.assertEqual(record.grant.to_dict(), grant.to_dict())
+            with open(self.registry_path, "rb") as database:
+                self.assertNotIn(bytes.fromhex(dnss), database.read())
+        finally:
+            registry.close()
 
     def test_authenticated_start_probe_propagates_metric_and_clamps_hop_limit(self):
         @dataclass

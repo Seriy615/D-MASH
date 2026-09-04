@@ -20,10 +20,10 @@ try:  # Runtime scripts import backend modules as top-level modules.
 except ModuleNotFoundError:  # Package tests import ``backend.client_gateway``.
     from .capabilities import allowed_operations
 try:  # Isolated routing primitives have no runtime-state dependencies.
-    from dnss import DNSSContext
+    from dnss import node_blind_hash
     from entry_grant import EntryGrantV1
 except ModuleNotFoundError:
-    from .dnss import DNSSContext
+    from .dnss import node_blind_hash
     from .entry_grant import EntryGrantV1
 
 router = APIRouter()
@@ -31,6 +31,26 @@ PROTOCOL = "DMP-C"
 VERSION = 2
 LEGACY_VERSION = 1
 AUTH_TIMEOUT_SECONDS = 15
+
+# The application lifecycle owns the registry's database and close policy.  It
+# injects this factory at startup with ``factory(node_crypto) ->
+# RegistrationRegistry``.  Do not infer a path from the async system database:
+# opening another synchronous SQLite connection to it here would create an
+# uncoordinated durability/locking boundary.  Keeping the seam explicit also
+# makes a gateway-only deployment fail closed rather than silently using an
+# ephemeral registry.
+registration_registry_factory = None
+
+
+def _registration_registry_available() -> bool:
+    return callable(registration_registry_factory)
+
+
+def _decode_dnss(value: str) -> bytes:
+    """Decode a previously wire-validated DNSS without retaining its wire form."""
+    if len(value) == 32:
+        return bytes.fromhex(value)
+    return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
 
 
 def _routing_registration_operations(state, operations):
@@ -42,7 +62,8 @@ def _routing_registration_operations(state, operations):
     """
     if ("START_PROBE" in operations and "ROUTE_STATUS" in operations and
             getattr(state, "node", None) and
-            getattr(state.node, "transport", None)):
+            getattr(state.node, "transport", None) and
+            _registration_registry_available()):
         return frozenset(operations) | {"REGISTER_DNSS", "REGISTER_ENTRY_GRANT"}
     return frozenset(operations)
 
@@ -143,6 +164,7 @@ async def dmp_client(websocket: WebSocket):
     # challenge itself exposes only `node_id`; clearing this reference here
     # makes the PWA's immediate STATUS request crash the gateway after AUTH_OK.
     session_locator_handles = set()
+    registration_registry = None
     try:
         raw = await asyncio.wait_for(websocket.receive_text(), AUTH_TIMEOUT_SECONDS)
         auth = json.loads(raw)
@@ -155,11 +177,16 @@ async def dmp_client(websocket: WebSocket):
 
         operations = _routing_registration_operations(state, allowed_operations(state))
         # Registration state is intentionally scoped to this authenticated
-        # session.  Only blind DNSS indexes and verified grant metadata live in
-        # memory; raw DNSS is never sent to transport or durable storage.
-        dnss_context = DNSSContext(node_id)
-        registered_dnss = set()
-        registered_grants = {}
+        # session. A registry receives a DNSS only after both it and its grant
+        # validate. Until then, the raw 16 bytes are held only in this coroutine.
+        pending_dnss = None
+        pending_grant = None
+
+        def get_registration_registry():
+            nonlocal registration_registry
+            if registration_registry is None:
+                registration_registry = registration_registry_factory(state.node_crypto)
+            return registration_registry
         await websocket.send_json({
             "type": "AUTH_OK",
             "protocol": PROTOCOL,
@@ -183,20 +210,39 @@ async def dmp_client(websocket: WebSocket):
                 if not _valid_dnss(dnss):
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_DNSS"})
                     continue
-                # The raw value exists only for this call.  The context's
-                # keyed digest is the sole registration identifier retained.
-                dnss_handle = dnss_context.blind_hash(dnss)
-                registered_dnss.add(dnss_handle)
+                # The raw value never crosses into storage by itself.  It is
+                # retained in this session only until a verified grant arrives.
+                pending_dnss = _decode_dnss(dnss)
+                try:
+                    dnss_handle = node_blind_hash(node_id, state.node_crypto.secret_salt, pending_dnss)
+                except Exception:
+                    pending_dnss = None
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "REGISTRATION_FAILED"})
+                    continue
                 await websocket.send_json({
                     "type": "REGISTER_DNSS_RESULT", "request_id": request_id,
                     "dnss_handle": dnss_handle,
                 })
+                if pending_grant is not None:
+                    try:
+                        get_registration_registry().register(pending_dnss, pending_grant.to_dict())
+                    except Exception:
+                        await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "REGISTRATION_FAILED"})
+                        continue
+                    pending_dnss = pending_grant = None
             elif operation == "REGISTER_ENTRY_GRANT":
                 grant = _verify_entry_grant(request.get("entry_grant"), node_id)
                 if grant is None:
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_ENTRY_GRANT"})
                     continue
-                registered_grants[grant.route_id] = grant
+                pending_grant = grant
+                if pending_dnss is not None:
+                    try:
+                        get_registration_registry().register(pending_dnss, pending_grant.to_dict())
+                    except Exception:
+                        await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "REGISTRATION_FAILED"})
+                        continue
+                    pending_dnss = pending_grant = None
                 await websocket.send_json({
                     "type": "REGISTER_ENTRY_GRANT_RESULT", "request_id": request_id,
                     "route_id": grant.route_id, "expires_at": grant.expires_at,
@@ -318,6 +364,11 @@ async def dmp_client(websocket: WebSocket):
     except (WebSocketDisconnect, TimeoutError, json.JSONDecodeError):
         return
     finally:
+        if registration_registry is not None:
+            try:
+                registration_registry.close()
+            except Exception:
+                pass
         if state and state.node:
             state.node.transport.detach_local_delivery_session(websocket)
 
