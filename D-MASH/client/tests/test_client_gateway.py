@@ -2,8 +2,10 @@ import base64
 import asyncio
 from dataclasses import dataclass
 import json
+import time
 import unittest
 
+from nacl.encoding import HexEncoder
 from nacl.signing import SigningKey
 from starlette.websockets import WebSocketDisconnect
 
@@ -161,6 +163,98 @@ class ClientGatewayAuthTests(unittest.TestCase):
         self.assertEqual(websocket.sent[3], {
             "type": "ROUTE_STATUS_RESULT", "request_id": "route-ready",
             "state": "ROUTE_READY", "best_metric": 4, "expires_at": 1_900_000_000,
+        })
+
+    def test_registration_operations_are_advertised_only_for_routing_capable_state(self):
+        client_key = SigningKey.generate()
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_DNSS", "request_id": "not-route-capable", "dnss": "00" * 16},
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertNotIn("REGISTER_DNSS", websocket.sent[1]["capabilities"])
+        self.assertNotIn("REGISTER_ENTRY_GRANT", websocket.sent[1]["capabilities"])
+        self.assertEqual(websocket.sent[2], {
+            "type": "ERROR", "request_id": "not-route-capable",
+            "code": "UNSUPPORTED_OPERATION",
+        })
+
+    def test_authenticated_dnss_registration_accepts_128_bit_values_and_returns_blind_handle(self):
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        client_key = SigningKey.generate()
+        dnss_hex = "0123456789abcdef" * 2
+        dnss_b64 = base64.urlsafe_b64encode(bytes.fromhex(dnss_hex)).decode("ascii").rstrip("=")
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_DNSS", "request_id": "dnss-hex", "dnss": dnss_hex},
+            {"type": "REGISTER_DNSS", "request_id": "dnss-b64", "dnss": dnss_b64},
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertIn("REGISTER_DNSS", websocket.sent[1]["capabilities"])
+        for result in websocket.sent[2:]:
+            self.assertEqual(result["type"], "REGISTER_DNSS_RESULT")
+            self.assertRegex(result["dnss_handle"], r"^[0-9a-f]{64}$")
+            self.assertNotIn(dnss_hex, json.dumps(result))
+            self.assertNotIn(dnss_b64, json.dumps(result))
+
+    def test_authenticated_dnss_registration_rejects_malformed_values(self):
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        client_key = SigningKey.generate()
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_DNSS", "request_id": "empty", "dnss": ""},
+            {"type": "REGISTER_DNSS", "request_id": "short", "dnss": "00" * 15},
+            {"type": "REGISTER_DNSS", "request_id": "bad-hex", "dnss": "gg" * 16},
+            {"type": "REGISTER_DNSS", "request_id": "bad-b64", "dnss": "not-base64!"},
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[2:], [
+            {"type": "ERROR", "request_id": "empty", "code": "INVALID_DNSS"},
+            {"type": "ERROR", "request_id": "short", "code": "INVALID_DNSS"},
+            {"type": "ERROR", "request_id": "bad-hex", "code": "INVALID_DNSS"},
+            {"type": "ERROR", "request_id": "bad-b64", "code": "INVALID_DNSS"},
+        ])
+
+    def test_authenticated_entry_grant_accepts_node_bound_grant_and_rejects_wrong_node(self):
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        client_key = SigningKey.generate()
+        route_key = SigningKey.generate()
+        route_public_key = route_key.verify_key.encode(encoder=HexEncoder).decode("ascii")
+        valid_grant = gateway.EntryGrantV1.issue(self.node_key, route_public_key, int(time.time()) + 60)
+        wrong_node = SigningKey.generate()
+        wrong_grant = gateway.EntryGrantV1.issue(wrong_node, route_public_key, int(time.time()) + 60)
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_ENTRY_GRANT", "request_id": "grant-valid", "entry_grant": valid_grant.to_dict()},
+            {"type": "REGISTER_ENTRY_GRANT", "request_id": "grant-wrong-node", "entry_grant": wrong_grant.to_dict()},
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[2], {
+            "type": "REGISTER_ENTRY_GRANT_RESULT", "request_id": "grant-valid",
+            "route_id": valid_grant.route_id, "expires_at": valid_grant.expires_at,
+        })
+        self.assertEqual(websocket.sent[3], {
+            "type": "ERROR", "request_id": "grant-wrong-node", "code": "INVALID_ENTRY_GRANT",
         })
 
     def test_authenticated_start_probe_propagates_metric_and_clamps_hop_limit(self):

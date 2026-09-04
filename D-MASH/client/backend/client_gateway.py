@@ -10,6 +10,7 @@ import json
 import secrets
 import time
 from dataclasses import asdict
+from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from nacl.exceptions import BadSignatureError
@@ -18,12 +19,53 @@ try:  # Runtime scripts import backend modules as top-level modules.
     from capabilities import allowed_operations
 except ModuleNotFoundError:  # Package tests import ``backend.client_gateway``.
     from .capabilities import allowed_operations
+try:  # Isolated routing primitives have no runtime-state dependencies.
+    from dnss import DNSSContext
+    from entry_grant import EntryGrantV1
+except ModuleNotFoundError:
+    from .dnss import DNSSContext
+    from .entry_grant import EntryGrantV1
 
 router = APIRouter()
 PROTOCOL = "DMP-C"
 VERSION = 2
 LEGACY_VERSION = 1
 AUTH_TIMEOUT_SECONDS = 15
+
+
+def _routing_registration_operations(state, operations):
+    """Add registration only alongside the already implemented route surface.
+
+    Capability flags are deliberately not treated as a protocol grant: a
+    partially initialized state, or a node that only advertises PING/STATUS,
+    must not expose route-registration operations.
+    """
+    if ("START_PROBE" in operations and "ROUTE_STATUS" in operations and
+            getattr(state, "node", None) and
+            getattr(state.node, "transport", None)):
+        return frozenset(operations) | {"REGISTER_DNSS", "REGISTER_ENTRY_GRANT"}
+    return frozenset(operations)
+
+
+def _valid_dnss(value: Any) -> bool:
+    """Accept the wire forms emitted by DNSS primitives, but never store raw data."""
+    if not isinstance(value, str) or not value or len(value) > 256:
+        return False
+    try:
+        if len(value) == 32:
+            return len(bytes.fromhex(value)) == 16
+        return len(base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))) == 16
+    except (ValueError, TypeError, base64.binascii.Error):
+        return False
+
+
+def _verify_entry_grant(value, node_id: str):
+    """Verify a self-contained EntryGrantV1 without accepting Account material."""
+    try:
+        grant = EntryGrantV1.from_dict(value) if isinstance(value, dict) else EntryGrantV1.from_json(value)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+    return grant if grant.verify(expected_node_id=node_id) else None
 
 
 def runtime_state():
@@ -111,7 +153,13 @@ async def dmp_client(websocket: WebSocket):
             await websocket.close(code=1008, reason="authentication failed")
             return
 
-        operations = allowed_operations(state)
+        operations = _routing_registration_operations(state, allowed_operations(state))
+        # Registration state is intentionally scoped to this authenticated
+        # session.  Only blind DNSS indexes and verified grant metadata live in
+        # memory; raw DNSS is never sent to transport or durable storage.
+        dnss_context = DNSSContext(node_id)
+        registered_dnss = set()
+        registered_grants = {}
         await websocket.send_json({
             "type": "AUTH_OK",
             "protocol": PROTOCOL,
@@ -130,6 +178,29 @@ async def dmp_client(websocket: WebSocket):
                 continue
             if operation == "PING":
                 await websocket.send_json({"type": "PONG", "request_id": request_id})
+            elif operation == "REGISTER_DNSS":
+                dnss = request.get("dnss")
+                if not _valid_dnss(dnss):
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_DNSS"})
+                    continue
+                # The raw value exists only for this call.  The context's
+                # keyed digest is the sole registration identifier retained.
+                dnss_handle = dnss_context.blind_hash(dnss)
+                registered_dnss.add(dnss_handle)
+                await websocket.send_json({
+                    "type": "REGISTER_DNSS_RESULT", "request_id": request_id,
+                    "dnss_handle": dnss_handle,
+                })
+            elif operation == "REGISTER_ENTRY_GRANT":
+                grant = _verify_entry_grant(request.get("entry_grant"), node_id)
+                if grant is None:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_ENTRY_GRANT"})
+                    continue
+                registered_grants[grant.route_id] = grant
+                await websocket.send_json({
+                    "type": "REGISTER_ENTRY_GRANT_RESULT", "request_id": request_id,
+                    "route_id": grant.route_id, "expires_at": grant.expires_at,
+                })
             elif operation == "STATUS":
                 await websocket.send_json({
                     "type": "STATUS",

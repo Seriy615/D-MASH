@@ -43,8 +43,13 @@ def validate_node_id(node_id: Union[str, BytesLike]) -> bool:
         return False
 
 
-def generate_dnss() -> str:
-    """Return a fresh random 128-bit DNSS value as lowercase hexadecimal."""
+def generate_dnss(node_id: Union[str, BytesLike]) -> str:
+    """Return fresh 128-bit DNSS entropy scoped to a validated NodeID.
+
+    DNSS values are random rather than derived from the node, but requiring the
+    caller's NodeID prevents their use outside an explicit routing-node context.
+    """
+    _node_bytes(node_id)
     return secrets.token_hex(16)
 
 
