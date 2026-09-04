@@ -2,7 +2,7 @@
 
 // Bump this ID for every deployed PWA release. It is intentionally visible so
 // a support screenshot identifies the code a browser actually executes.
-window.DMASH_RELEASE = Object.freeze({ id: "m1.5-device-auth-v2-20260901.44" });
+window.DMASH_RELEASE = Object.freeze({ id: "m1.5-device-auth-v2-20260904.45-rescue1" });
 
 /*
  * WebAuthn compatibility cutover.
@@ -199,4 +199,14 @@ window.DMASH_RELEASE = Object.freeze({ id: "m1.5-device-auth-v2-20260901.44" });
         const badge = document.getElementById("dmash-build-id");
         if (badge) badge.textContent = `D-MASH build ${global.DMASH_RELEASE.id}`;
     });
+})(window);
+
+// Rescue fixes are isolated from the legacy application modules so the
+// emergency cutover is reviewable and reversible as one small layer.
+(function loadRescuePatch(global) {
+    const script = document.createElement("script");
+    script.src = `js/rescue_patch.js?v=${encodeURIComponent(global.DMASH_RELEASE.id)}`;
+    script.async = false;
+    script.onerror = () => console.error("[D-MASH] rescue_patch.js failed to load");
+    document.head.appendChild(script);
 })(window);
