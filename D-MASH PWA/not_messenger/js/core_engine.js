@@ -186,6 +186,14 @@ const Core = {
         await window.NodeManager?.onDeviceUnlocked?.();
         return deviceState;
     },
+    async recoverDeviceAfterConfirmedMaster(masterPin) {
+        // This method is reached only after the calculator has verified sys_m
+        // and DeviceRoot reported UNLOCK_FAILED. The old encrypted local root
+        // is therefore unusable under the confirmed device secret. Erase that
+        // installation boundary explicitly, then create one new device root.
+        await window.DeviceRoot.eraseForExplicitWipe();
+        return this.unlockDevice(masterPin);
+    },
     async changeDeviceMasterSecret(currentMasterPin, nextMasterPin) {
         // This is deliberately device-scoped.  Account passwords never unwrap
         // or rewrap DeviceRoot, and the root/device identity is never replaced.

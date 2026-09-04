@@ -50,6 +50,34 @@ const hex = (bytes) => Buffer.from(bytes).toString("hex");
   assert.equal(reloaded.identity.deviceId, firstId, "identity persists across reload/restart");
   assert.deepEqual([...reloaded.root], [...firstRoot]);
 
+  // Explicit wipe is the only identity-replacement boundary. It locks the
+  // active root and deletes its dedicated database; an ordinary unlock failure
+  // never reaches this operation.
+  let erasedDb = null;
+  const originalIndexedDb = global.indexedDB;
+  Object.defineProperty(global, "indexedDB", { value: { deleteDatabase(name) { erasedDb = name; const request = {}; queueMicrotask(() => request.onsuccess()); return request; } }, configurable: true });
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(new MemoryStore(stored));
+  await DeviceRoot.eraseForExplicitWipe();
+  assert.equal(erasedDb, "dmash_device_root_v1", "explicit wipe deletes only the dedicated DeviceRoot database");
+  assert.equal(DeviceRoot.state, null, "explicit wipe clears unlocked root state");
+  Object.defineProperty(global, "indexedDB", { value: originalIndexedDb, configurable: true });
+
+  // A confirmed-master recovery erases an undecryptable installation record;
+  // the next bootstrap is therefore a newly generated identity, not a retry of
+  // the lost root. Model the database deletion with a fresh store boundary.
+  const recoveryStore = new MemoryStore();
+  const oldRootStore = new MemoryStore(structuredClone(stored));
+  let deleted = false;
+  Object.defineProperty(global, "indexedDB", { value: { deleteDatabase() { deleted = true; const request = {}; queueMicrotask(() => request.onsuccess()); return request; } }, configurable: true });
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(oldRootStore);
+  await assert.rejects(() => DeviceRoot.unlock("different confirmed pin"), (error) => error.code === "UNLOCK_FAILED");
+  await DeviceRoot.eraseForExplicitWipe();
+  assert.equal(deleted, true, "confirmed-master recovery deletes the unusable DeviceRoot store");
+  DeviceRoot.setStoreForTests(recoveryStore);
+  const recoveredFresh = await DeviceRoot.unlock("different confirmed pin");
+  assert.notEqual(recoveredFresh.identity.deviceId, firstId, "recovery creates a new device identity after the lost root is erased");
+  Object.defineProperty(global, "indexedDB", { value: originalIndexedDb, configurable: true });
+
   // Calculator-master-secret changes must rewrap the same root, never create a
   // second device. The old secret stops working only after the new wrap is
   // persisted, and a failed rewrap leaves the original record usable.

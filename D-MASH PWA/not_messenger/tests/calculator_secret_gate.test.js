@@ -19,6 +19,7 @@ const context = {
   setTimeout, clearTimeout, console,
   localStorage: { getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, String(value)), clear: () => values.clear() },
   sessionStorage: { clear() {} },
+  indexedDB: { async databases() { return []; }, deleteDatabase() { return { onsuccess: null, onerror: null, onblocked: null }; } },
   document: {
     getElementById(id) { return elements[id] || null; },
     querySelector() { return null; },
@@ -94,6 +95,33 @@ const sys = vm.runInNewContext("sys", context);
   for (const digit of "7890") ui.num(digit); await ui.eval();
   assert.equal(values.get("sys_m"), await sys.fastHash("2345"), "failed device rewrap retains the old calculator verifier");
   assert.match(ui.hist, /ОШИБКА УСТРОЙСТВА/, "failed device rewrap is surfaced to the user");
+
+  // Normal calculator unlock never opens an unexplained recovery/password
+  // prompt when DeviceRoot rejects the configured master secret. The record is
+  // left untouched and the ordinary device error is shown instead.
+  let prompts = 0;
+  context.window.prompt = () => { prompts += 1; return "unexpected"; };
+  const recoveryCalls = [];
+  context.Core = {
+    async unlockDevice() { recoveryCalls.push("unlock"); const error = new Error("locked"); error.code = "UNLOCK_FAILED"; throw error; },
+    async recoverDeviceAfterConfirmedMaster(pin) { recoveryCalls.push(`recover:${pin}`); }
+  };
+  values.set("sys_m", await sys.fastHash("4690"));
+  ui.mode = 0; ui.resetCalculator();
+  for (const digit of "4690") ui.num(digit); await ui.eval();
+  assert.equal(prompts, 0, "normal device unlock never asks for a second or legacy account secret");
+  assert.deepEqual(recoveryCalls, ["unlock", "recover:4690"], "a confirmed-master decrypt failure creates a fresh device without another credential prompt");
+
+  // Explicit wipe awaits DeviceRoot deletion before clearing local state. The
+  // next setup is therefore permitted to create a new installation identity;
+  // no old-key or legacy-account prompt is involved.
+  const wipeOrder = [];
+  context.window.DeviceRoot = { async eraseForExplicitWipe() { wipeOrder.push("root-erased"); } };
+  context.window.location = { replace(url) { wipeOrder.push(`redirect:${url}`); } };
+  values.set("sentinel", "present");
+  await sys.wipe();
+  assert.deepEqual(wipeOrder, ["root-erased"], "wipe awaits DeviceRoot erasure before scheduling redirect");
+  assert.equal(values.size, 0, "wipe clears local state only after DeviceRoot erasure");
 
   // Invalid expression results fail validation and cannot replace a verifier.
   const priorMaster = values.get("sys_m");

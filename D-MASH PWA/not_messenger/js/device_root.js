@@ -90,6 +90,10 @@
                 tx.onabort = () => reject(new DeviceRootError("STORAGE_WRITE_FAILED", "Device identity storage write was aborted."));
             });
         }
+        close() {
+            try { this.db?.close(); } catch (_) {}
+            this.db = null;
+        }
     }
 
     const DeviceRoot = {
@@ -514,6 +518,25 @@
                 }
                 throw error;
             }
+        },
+        // Explicit wipe/recovery boundary. This deletes the complete local
+        // DeviceRoot database, so the next calculator setup creates a new
+        // installation identity. It is never used for an ordinary unlock
+        // failure or a wrong master-code attempt.
+        async eraseForExplicitWipe() {
+            const store = this._store();
+            this.lock();
+            store.close?.();
+            if (!global.indexedDB?.deleteDatabase) {
+                throw new DeviceRootError("STORAGE_UNAVAILABLE", "Device identity storage could not be erased.");
+            }
+            await new Promise((resolve, reject) => {
+                const request = global.indexedDB.deleteDatabase(DB_NAME);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(new DeviceRootError("STORAGE_WRITE_FAILED", "Device identity storage could not be erased."));
+                request.onblocked = () => reject(new DeviceRootError("STORAGE_BLOCKED", "Close other D-MASH tabs before wiping this device."));
+            });
+            this.store = null;
         },
         lock() {
             if (this.state?.root) this.state.root.fill(0);

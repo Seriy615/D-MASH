@@ -458,25 +458,19 @@ const ui = {
                     this.resetCalculator();
                     await this.show_gate();
                 } catch (error) {
-                    // Keep an explicit migration path for records encrypted by
-                    // a pre-device-auth build with the Account passphrase.
-                    if (error?.code === 'UNLOCK_FAILED' && typeof Core?.migrateDeviceRootFromLegacyAccountPassphrase === 'function') {
-                        // Account passphrases are not calculator PINs. Ask for
-                        // the legacy account passphrase explicitly; cancellation
-                        // and failure leave the encrypted record untouched.
-                        const legacyPassphrase = window.prompt?.('Введите пароль прежнего аккаунта для миграции устройства:');
-                        if (!legacyPassphrase) {
-                            this.hist = 'МИГРАЦИЯ ОТМЕНЕНА. УСТРОЙСТВО НЕ ИЗМЕНЕНО.';
-                        } else {
-                            try {
-                                await Core.migrateDeviceRootFromLegacyAccountPassphrase(legacyPassphrase, devicePin);
-                                await Core.unlockDevice(devicePin);
-                                this.resetCalculator();
-                                await this.show_gate();
-                                return;
-                            } catch (_) {
-                                this.hist = 'ПАРОЛЬ ПРЕЖНЕГО АККАУНТА НЕ ПОДОШЁЛ. УСТРОЙСТВО НЕ ИЗМЕНЕНО.';
-                            }
+                    // The calculator verifier has already confirmed this
+                    // master code. A root that still cannot decrypt is lost
+                    // local device state, so replace that unusable installation
+                    // with one fresh device identity—never request another
+                    // password or enter an unexplained migration flow.
+                    if (error?.code === 'UNLOCK_FAILED' && typeof Core?.recoverDeviceAfterConfirmedMaster === 'function') {
+                        try {
+                            await Core.recoverDeviceAfterConfirmedMaster(devicePin);
+                            this.resetCalculator();
+                            await this.show_gate();
+                            return;
+                        } catch (recoveryError) {
+                            this.hist = "ОШИБКА ВОССТАНОВЛЕНИЯ УСТРОЙСТВА: " + recoveryError.message;
                         }
                     } else this.hist = "ОШИБКА УСТРОЙСТВА: " + error.message;
                     this.update();
@@ -515,11 +509,26 @@ const sys = {
         return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     },
 
-    wipe() {
+    async wipe() {
         document.getElementById('current').innerText = "УДАЛЕНИЕ...";
         document.body.style.background = '#ff003c';
+        try {
+            // Remove DeviceRoot first and await completion. This establishes an
+            // explicit, durable wipe boundary: the next setup is a genuinely
+            // new device identity, never a prompt for historical credentials.
+            await window.DeviceRoot?.eraseForExplicitWipe?.();
+        } catch (error) {
+            document.getElementById('current').innerText = "ОЧИСТКА НЕ ЗАВЕРШЕНА";
+            document.getElementById('history').innerText = error?.message || "Закройте другие вкладки D-MASH и повторите очистку.";
+            return;
+        }
         localStorage.clear(); sessionStorage.clear();
-        indexedDB.databases().then(dbs => { dbs.forEach(db => indexedDB.deleteDatabase(db.name)); });
+        const databases = await indexedDB.databases?.() || [];
+        await Promise.all(databases.map(({ name }) => new Promise(resolve => {
+            if (!name) return resolve();
+            const request = indexedDB.deleteDatabase(name);
+            request.onsuccess = request.onerror = request.onblocked = resolve;
+        })));
         setTimeout(() => { window.location.replace("https://google.com"); }, 1500);
     },
 
