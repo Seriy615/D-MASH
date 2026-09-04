@@ -3,12 +3,12 @@
  * IndexedDB or localStorage, where user data lives.
  */
 
-const RELEASE_ID = 'm1.5-device-auth-v2-20260901.44';
+const RELEASE_ID = 'm1.5-device-auth-v2-20260904.45-rescue1';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',
     './css/foundation.css', './css/app_shell.css',
-    './js/release.js', './js/locales/en.js', './js/locales/ru.js', './js/i18n.js',
+    './js/release.js', './js/rescue_patch.js', './js/locales/en.js', './js/locales/ru.js', './js/i18n.js',
     './js/app_shell.js', './js/ui_logic.js', './js/node_manager.js',
     './js/core_engine.js', './js/storage.js', './js/device_root.js'
 ];
@@ -19,8 +19,8 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => cache.addAll(CORE_ASSETS))
-            // This release is a compatibility rollback. Activate the fully
-            // cached legacy shell without requiring the user to clear data.
+            // Rescue releases activate only after the full static set was
+            // cached successfully, so users do not land on a mixed generation.
             .then(() => self.skipWaiting())
     );
 });
