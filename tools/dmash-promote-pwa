@@ -19,16 +19,11 @@ require_command() {
 
 verify_nginx_read_access() {
   local path
-  # Ancestors are traversal-only. `not_messenger` itself remains non-listable;
-  # individual public directories/files receive only the permissions nginx needs.
   setfacl -m "u:${nginx_user}:--x" \
     /srv/messenger.d-mash.ru \
     /srv/messenger.d-mash.ru/public_html \
     "$production_root"
 
-  # Historical rollback directories are deliberately not web-visible. Remove a
-  # prior recursive ACL if one was applied manually, without changing modes or
-  # ownership of those private artifacts.
   while IFS= read -r -d '' path; do
     setfacl -R -x "u:${nginx_user}" "$path" 2>/dev/null || true
   done < <(find "$production_root" -mindepth 1 -type d \( -name '.rollback' -o -name '.rollbacks' -o -name 'rollback-*' \) -print0)
@@ -58,9 +53,12 @@ verify_public_https() {
   local asset
   local -a assets=(
     index.html manifest.json nodes.json sw.js calc_icon.png
-    css/foundation.css css/app_shell.css
+    css/foundation.css css/app_shell.css css/runtime_fixes.css
     js/release.js js/i18n.js js/app_shell.js js/ui_logic.js js/node_manager.js
-    js/core_engine.js js/storage.js js/device_root.js
+    js/core_engine.js js/storage.js js/device_root.js js/device_routes.js
+    js/dmash_links.js js/quick_name_registry.js
+    js/contact_payloads.js js/contact_transport.js js/pending_contact_requests.js
+    js/resource_pow.js js/runtime_fixes.js js/public_contact_runtime.js
     js/locales/en.js js/locales/ru.js
     js/vendor/argon2-bundled.min.js js/vendor/argon2.wasm
     js/vendor/html5-qrcode.min.js js/vendor/kyber768.js js/vendor/kyber768.wasm
@@ -112,8 +110,6 @@ rsync -a --delete \
   --exclude='rollback-*' \
   "$source_root/" "$staging/"
 
-# Make the release normally readable without granting writes; ACL verification
-# below protects deployments where ownership/mode inheritance is restrictive.
 find "$staging" -type f -exec chmod 0644 {} +
 find "$staging" -type d -exec chmod 0755 {} +
 rsync -a --delete \
