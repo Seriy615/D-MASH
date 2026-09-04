@@ -4,13 +4,14 @@
 const assert = require("node:assert/strict");
 const { ContactTransport, ContactTransportError } = require("../js/contact_transport.js");
 
-const key = (character) => character.repeat(43);
+const key = character => character.repeat(43);
 const request = Object.freeze({
   type: "CONTACT_REQUEST_V1", version: 1, request_id: key("a"),
   sender_display_name: "Alice", intro_message: "Private hello",
   reply_route_certificate: { routeId: key("b") }, bootstrap_encryption_public: key("c"),
   protocol_capabilities: ["CONTACT_ACCEPT_V1"]
 });
+const destinationCertificate = Object.freeze({ routeId: key("d") });
 const bytes = new TextEncoder().encode(JSON.stringify(request));
 const validator = {
   validateRequest(value) {
@@ -27,7 +28,9 @@ const validator = {
     validator,
     async encrypt({ plaintext, recipientCertificate }) {
       assert.deepEqual(plaintext, bytes);
-      assert.equal(recipientCertificate.routeId, request.reply_route_certificate.routeId);
+      assert.equal(recipientCertificate.routeId, destinationCertificate.routeId,
+        "first request is encrypted to destination Route, never sender reply Route");
+      assert.notEqual(recipientCertificate.routeId, request.reply_route_certificate.routeId);
       return key("z");
     },
     async submit(value) { submitted.push(value); },
@@ -41,8 +44,8 @@ const validator = {
     now: () => 99
   });
 
-  const routeLocator = key("d");
-  const envelope = await transport.deliver({ routeLocator, payload: request });
+  const routeLocator = destinationCertificate.routeId;
+  const envelope = await transport.deliver({ routeLocator, recipientCertificate: destinationCertificate, payload: request });
   assert.deepEqual(Object.keys(envelope).sort(), ["ciphertext", "request_id", "type", "version"]);
   const metadata = JSON.stringify(envelope).toLowerCase();
   for (const secret of ["alice", "private hello", "account", request.reply_route_certificate.routeId.toLowerCase()]) {
@@ -50,9 +53,20 @@ const validator = {
   }
   assert.deepEqual(submitted, [{ routeLocator, envelope }], "only injected submit receives an opaque envelope");
 
+  await assert.rejects(
+    () => transport.deliver({ routeLocator, payload: request }),
+    (error) => error instanceof ContactTransportError && error.code === "INVALID_RECIPIENT_CERTIFICATE",
+    "destination RouteCertificate is mandatory"
+  );
+  await assert.rejects(
+    () => transport.deliver({ routeLocator, recipientCertificate: { routeId: key("e") }, payload: request }),
+    (error) => error instanceof ContactTransportError && error.code === "ROUTE_CERTIFICATE_MISMATCH",
+    "certificate cannot be transplanted to another RouteID"
+  );
+
   for (const invalidRouteLocator of ["node-route", "contact:alice", "account-identifier", "A".repeat(64)]) {
     await assert.rejects(
-      () => transport.deliver({ routeLocator: invalidRouteLocator, payload: request }),
+      () => transport.deliver({ routeLocator: invalidRouteLocator, recipientCertificate: destinationCertificate, payload: request }),
       (error) => error instanceof ContactTransportError && error.code === "INVALID_ROUTE_LOCATOR",
       "plaintext or non-canonical route locators reject before submission"
     );
@@ -67,21 +81,18 @@ const validator = {
 
   await assert.rejects(
     () => transport.ingest({ envelope, receivedRoute: "inbox-route" }),
-    (error) => error instanceof ContactTransportError && error.code === "REPLAY_DETECTED",
-    "replayed request is rejected before storage"
+    (error) => error instanceof ContactTransportError && error.code === "REPLAY_DETECTED"
   );
   assert.equal(stored.length, 1);
 
   await assert.rejects(
     () => transport.ingest({ envelope: { ...envelope, ciphertext: "%%%" }, receivedRoute: "inbox-route" }),
-    (error) => error instanceof ContactTransportError && error.code === "INVALID_CIPHERTEXT",
-    "malformed envelope rejects before decrypt/store"
+    (error) => error instanceof ContactTransportError && error.code === "INVALID_CIPHERTEXT"
   );
 
   assert.throws(
     () => new ContactTransport({ validator, submit: async () => {}, decrypt: async () => {}, dedupe: async () => false, store: async () => {} }),
-    (error) => error instanceof ContactTransportError && error.code === "CALLBACK_REQUIRED",
-    "encryption callback is mandatory; no crypto fallback exists"
+    (error) => error instanceof ContactTransportError && error.code === "CALLBACK_REQUIRED"
   );
   console.log("Contact transport acceptance: all assertions passed");
-})().catch((error) => { console.error(error); process.exitCode = 1; });
+})().catch(error => { console.error(error); process.exitCode = 1; });
