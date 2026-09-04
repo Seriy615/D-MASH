@@ -116,5 +116,52 @@ Core.closeModal = () => { Core.modalWasClosed = true; };
   assert.equal(ui.op, null, "termination clears calculator operator");
   assert.equal(ui.mode, 0, "termination resets calculator mode");
 
+  // A successful device unlock may leave asynchronous Core work between the
+  // calculator PIN entry and account selection.  Reset again immediately
+  // after it resolves so that no stale calculator state reaches the selector.
+  const calculatorElements = new Map();
+  const calculatorContext = {
+    window: {
+      addEventListener() {},
+      NodeManager: null,
+    },
+    document: { getElementById(id) { return calculatorElements.get(id) || null; } },
+    localStorage: { getItem(key) { return key === "sys_configured" ? "true" : "master"; } },
+    sessionStorage: {},
+    crypto: webcrypto,
+    TextEncoder,
+    Core: {
+      async unlockDevice() {
+        // Model state altered by successful asynchronous unlocking; the UI
+        // must clear it before opening its account selector.
+        calculatorContext.__ui.curr = "residual";
+        calculatorContext.__ui.hist = "residual history";
+        calculatorContext.__ui.op = "+";
+      },
+    },
+    console,
+    Promise,
+    setTimeout,
+    clearTimeout,
+  };
+  calculatorContext.window.crypto = webcrypto;
+  vm.runInNewContext(
+    `${fs.readFileSync(require.resolve("../js/ui_logic.js"), "utf8")}; globalThis.__ui = ui; globalThis.__sys = sys;`,
+    calculatorContext,
+    { filename: "ui_logic.js" }
+  );
+  calculatorContext.__sys.fastHash = async () => "master";
+  calculatorContext.__sys.loadAllLibs = async () => true;
+  let selectorState;
+  calculatorContext.__ui.show_gate = async function() {
+    selectorState = { curr: this.curr, hist: this.hist, op: this.op };
+  };
+  calculatorContext.__ui.curr = "1234";
+  calculatorContext.__ui.hist = "123 +";
+  calculatorContext.__ui.op = "+";
+  await calculatorContext.__ui.eval();
+
+  assert.deepEqual(selectorState, { curr: "0", hist: "", op: null }, "unlock neutralizes calculator before account selection");
+
   console.log("Core lifecycle acceptance: all assertions passed");
 })().catch((error) => { console.error(error); process.exitCode = 1; });
