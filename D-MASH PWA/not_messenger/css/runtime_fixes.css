@@ -112,6 +112,24 @@
 .dmash-registry-state { margin: 6px 0; color: var(--main); font: 700 .62rem/1.3 monospace; }
 .dmash-registry-row .gate-btn.danger { margin: 0; padding: 8px; background: #300; color: #fff; border: 1px solid #733; }
 
+.dmash-gate-metrics {
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    margin: 8px 0 12px; color: #777; font: .62rem/1.3 monospace;
+}
+.dmash-id-connection-line {
+    margin-top: 5px; color: #777; font: .6rem/1.25 monospace;
+}
+.dmash-quick-choice-list {
+    display: grid; gap: 7px; max-height: min(42vh, 340px); overflow-y: auto;
+    margin-bottom: 10px;
+}
+.dmash-quick-choice {
+    width: 100%; padding: 10px 11px; border: 1px solid var(--border); background: #080808;
+    color: var(--main); text-align: left; font: inherit; cursor: pointer;
+}
+.dmash-quick-choice b { display: block; color: var(--main); font-size: .76rem; }
+.dmash-quick-choice small { display: block; margin-top: 3px; color: #aaa; font-size: .68rem; overflow-wrap: anywhere; }
+
 /* Node status belongs to device/global settings, not the account workspace. */
 #workspace .network-card { display: none !important; }
 
@@ -123,4 +141,5 @@
     #settings-layer .gate-container { width: 100%; max-width: 100%; padding: 22px 18px; }
     .dmash-account-select-row { grid-template-columns: 1fr; }
     .dmash-account-bio-button { width: 100% !important; }
+    .dmash-gate-metrics { display: grid; grid-template-columns: 1fr; gap: 3px; }
 }
