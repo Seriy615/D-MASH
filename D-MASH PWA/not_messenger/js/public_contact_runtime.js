@@ -4,6 +4,7 @@
 (function (global) {
     const text = value => new TextEncoder().encode(value);
     const b64url = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    const clonePlain = value => JSON.parse(JSON.stringify(value));
 
     async function seal(recipientCertificate, plaintext) {
         if (!global.DeviceRoutes?.verifyCertificate?.(recipientCertificate)) throw new Error("RouteCertificate is invalid");
@@ -25,7 +26,13 @@
 
         core.sendPublicContactRequest = async function sendPublicContactRequest(descriptor, displayName, intro) {
             if (!descriptor?.r || !descriptor?.c || descriptor.c.routeId !== descriptor.r) throw new Error("D-MASH Contact Link is invalid");
-            if (!global.DeviceRoutes.verifyCertificate(descriptor.c)) throw new Error("RouteCertificate signature is invalid");
+
+            // Contact descriptors may cross classic-script/runtime boundaries.
+            // Normalize the certificate into this window realm before passing it
+            // through the strict transport validator; cryptographic verification
+            // is performed again on the normalized object.
+            const recipientCertificate = clonePlain(descriptor.c);
+            if (!global.DeviceRoutes.verifyCertificate(recipientCertificate)) throw new Error("RouteCertificate signature is invalid");
 
             let reply = global.DeviceRoutes.current();
             if (!reply) reply = await global.DeviceRoutes.issue({ type: "public-contact", allowedAccounts: [] });
@@ -38,14 +45,14 @@
                 request_id: requestId,
                 sender_display_name: String(displayName || "").trim(),
                 intro_message: String(intro || "").trim(),
-                reply_route_certificate: reply.certificate,
+                reply_route_certificate: clonePlain(reply.certificate),
                 bootstrap_encryption_public: reply.certificate.boxPublicKey,
                 protocol_capabilities: ["CONTACT_ACCEPT_V1", "DMP_C_V2"]
             });
 
             const transport = new global.ContactTransport({
                 validator: global.ContactPayloads,
-                encrypt: ({ plaintext, recipientCertificate }) => seal(recipientCertificate, plaintext),
+                encrypt: ({ plaintext, recipientCertificate: certificate }) => seal(certificate, plaintext),
                 submit: async ({ routeLocator, envelope }) => {
                     const ready = await global.NodeManager.routeStatus(routeLocator);
                     if (!ready) throw new Error("RouteID пока не найден в mesh. Получатель должен быть online хотя бы на одной Node.");
@@ -62,7 +69,7 @@
 
             await transport.deliver({
                 routeLocator: descriptor.r,
-                recipientCertificate: descriptor.c,
+                recipientCertificate,
                 payload: request
             });
             this.customAlert("ОТПРАВЛЕНО", "Запрос в контакты отправлен через Public Route. AccountID не раскрывался.");
