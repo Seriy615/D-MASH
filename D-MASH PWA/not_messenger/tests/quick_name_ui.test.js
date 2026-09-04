@@ -44,6 +44,7 @@ Core.customAlert = (title, message) => { throw new Error(`${title}: ${message}`)
   assert.match(modal.innerHTML, /ДОБАВИТЬ БЫСТРОЕ ИМЯ/, "add action is rendered");
   assert.match(modal.innerHTML, /УДАЛИТЬ/, "remove action is rendered");
 
+
   const responses = ["Work", "dmash://work"];
   Core.customPrompt = (_title, _message, callback) => callback(responses.shift());
   Core.addQuickNameFlow();

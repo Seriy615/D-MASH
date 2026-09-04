@@ -184,22 +184,16 @@ const ui = {
     renderGlobalSettings() {
         const gateBox = document.querySelector('.gate-container');
         if (!gateBox) return;
-        const sections = [
-            'PUBLIC ROUTES',
-            'QUICK NAME REGISTRY',
-            'NODES',
-            'DEVICE BIOMETRIC AUTH'
-        ];
-        const sectionHtml = sections.map(label => `<li style="padding:9px 0; border-bottom:1px solid #333; color:#ddd;">${label}</li>`).join('');
         gateBox.innerHTML = `
-            <div id="global-settings-title" style="color:#0f0; font-size:0.8rem; margin-bottom:10px; text-align:center;">ГЛОБАЛЬНЫЕ НАСТРОЙКИ</div>
-            <p style="color:#aaa; font-size:0.72rem; line-height:1.4; margin:0 0 12px; text-align:center;">НАСТРОЙКИ ЭТОГО УСТРОЙСТВА. АККАУНТ НЕ ВЫБРАН.</p>
-            <ul aria-labelledby="global-settings-title" style="list-style:none; padding:0; margin:0 0 14px; max-height:250px; overflow-y:auto; text-align:left;">${sectionHtml}</ul>
-            <button id="global-public-routes-button" class="gate-btn" type="button" onclick="ui.openPublicRoutes()">PUBLIC ROUTES</button>
-            <button id="global-quick-names-button" class="gate-btn" type="button" onclick="ui.openQuickNames()">QUICK NAME REGISTRY</button>
-            <button id="global-nodes-button" class="gate-btn" type="button" onclick="ui.renderGlobalNodes()">УПРАВЛЕНИЕ УЗЛАМИ</button>
-            <button class="gate-btn" type="button" onclick="ui.beginBiometricTriggerSetup()">НАСТРОИТЬ БИОМЕТРИЮ УСТРОЙСТВА</button>
-            <button class="gate-btn" type="button" onclick="ui.show_gate()">К СПИСКУ</button>
+            <div id="global-settings-title" style="color:#0f0; font-size:0.95rem; font-weight:bold; margin-bottom:8px; text-align:left;">НАСТРОЙКИ УСТРОЙСТВА</div>
+            <p style="color:#aaa; font-size:0.76rem; line-height:1.45; margin:0 0 14px; text-align:left;">Эти данные сохраняются только в этом браузере и доступны до выбора аккаунта.</p>
+            <div style="display:grid;gap:9px;text-align:left;">
+                <button id="global-public-routes-button" class="gate-btn" type="button" style="margin:0;text-align:left;padding:12px 13px;" onclick="ui.openPublicRoutes()"><b style="display:block;color:#0f0;">ПУБЛИЧНЫЕ МАРШРУТЫ</b><small style="color:#aaa;">Приём новых контактов на этом устройстве</small></button>
+                <button id="global-quick-names-button" class="gate-btn" type="button" style="margin:0;text-align:left;padding:12px 13px;" onclick="ui.renderGlobalQuickNames()"><b style="display:block;color:#0f0;">БЫСТРЫЕ ИМЕНА</b><small style="color:#aaa;">Локальные подписи и значения, зашифрованные ключом устройства</small></button>
+                <button id="global-nodes-button" class="gate-btn" type="button" style="margin:0;text-align:left;padding:12px 13px;" onclick="ui.renderGlobalNodes()"><b style="display:block;color:#0f0;">УЗЛЫ</b><small style="color:#aaa;">Выбор и список узлов только этого устройства</small></button>
+                <button class="gate-btn" type="button" style="margin:0;text-align:left;padding:12px 13px;" onclick="ui.beginBiometricTriggerSetup()"><b style="display:block;color:#0f0;">БИОМЕТРИЯ УСТРОЙСТВА</b><small style="color:#aaa;">Разблокирует устройство, но не входит в аккаунт</small></button>
+            </div>
+            <button class="gate-btn" type="button" style="margin-top:15px;background:transparent;color:#aaa;border-color:#555;" onclick="ui.show_gate()">НАЗАД К ВЫБОРУ АККАУНТА</button>
         `;
     },
     openPublicRoutes() {
@@ -212,7 +206,38 @@ const ui = {
     createPublicRoute() { window.DeviceRoutes.issue({ type: 'public-contact', allowedAccounts: [] }).then(() => this.openPublicRoutes()).catch(error => window.Core?.customAlert?.('PUBLIC ROUTES', error.message)); },
     reissuePublicRoute() { window.DeviceRoutes.reissue().then(() => this.openPublicRoutes()).catch(error => window.Core?.customAlert?.('PUBLIC ROUTES', error.message)); },
     togglePublicRoute(id) { const route = window.DeviceRoutes.list().find(item => item.routeId === id); window.DeviceRoutes.activate(id, !route.active); this.openPublicRoutes(); },
-    openQuickNames() { return window.Core?.openQuickNames?.(); },
+    openQuickNames() { return this.renderGlobalQuickNames(); },
+    quickNameEscape(value) {
+        const text = String(value ?? '');
+        return window.Core?.escapeHtml ? window.Core.escapeHtml(text) : text.replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+    },
+    async renderGlobalQuickNames() {
+        const gateBox = document.querySelector('.gate-container');
+        if (!gateBox) return;
+        try {
+            const registry = window.Core?.getQuickNameRegistry?.();
+            if (!registry) throw new Error('СНАЧАЛА РАЗБЛОКИРУЙТЕ УСТРОЙСТВО');
+            const entries = await registry.list();
+            const rows = entries.length ? entries.map(entry => {
+                const id = encodeURIComponent(entry.id);
+                return `<div style="padding:10px 0;border-bottom:1px solid #333;text-align:left;"><b style="color:#0f0;display:block;overflow-wrap:anywhere;">${this.quickNameEscape(entry.name)}</b><div style="font-size:.72rem;color:#ccc;overflow-wrap:anywhere;margin:4px 0 8px;">${this.quickNameEscape(entry.value)}</div><button class="gate-btn" type="button" style="width:auto;margin:0;padding:6px 9px;background:#400;color:#fff;border-color:#a44;" onclick="ui.removeGlobalQuickName(decodeURIComponent('${id}'))">УДАЛИТЬ</button></div>`;
+            }).join('') : '<div style="padding:18px 0;color:#aaa;text-align:left;">СПИСОК ПУСТ. ДОБАВЬТЕ ИМЯ — ОНО СРАЗУ ПОЯВИТСЯ ЗДЕСЬ.</div>';
+            gateBox.innerHTML = `<div id="global-quick-names-title" style="color:#0f0;font-size:.95rem;font-weight:bold;text-align:left;">БЫСТРЫЕ ИМЕНА</div><p style="color:#aaa;font-size:.72rem;line-height:1.45;margin:7px 0 10px;text-align:left;">СОХРАНЯЮТСЯ ЛОКАЛЬНО В ЭТОМ БРАУЗЕРЕ В ЗАШИФРОВАННОМ РЕЕСТРЕ. В АККАУНТ, СЕТЬ ИЛИ НА УЗЕЛ НЕ ОТПРАВЛЯЮТСЯ.</p><div aria-labelledby="global-quick-names-title" style="max-height:250px;overflow-y:auto;margin-bottom:12px;">${rows}</div><button id="global-add-quick-name-button" class="gate-btn" type="button" style="margin:0;" onclick="ui.addGlobalQuickName()">ДОБАВИТЬ БЫСТРОЕ ИМЯ</button><button class="gate-btn" type="button" style="margin-top:9px;background:transparent;color:#aaa;border-color:#555;" onclick="ui.renderGlobalSettings()">НАЗАД К НАСТРОЙКАМ</button>`;
+        } catch (error) { window.Core?.customAlert?.('БЫСТРЫЕ ИМЕНА', error.message); }
+    },
+    async addGlobalQuickName() {
+        const name = window.prompt?.('Название быстрого имени');
+        if (name === null || name === undefined) return;
+        const value = window.prompt?.('Значение для «' + name + '»');
+        if (value === null || value === undefined) return;
+        try { await window.Core.getQuickNameRegistry().add({ name, value }); await this.renderGlobalQuickNames(); }
+        catch (error) { window.Core?.customAlert?.('БЫСТРЫЕ ИМЕНА', error.message); }
+    },
+    async removeGlobalQuickName(id) {
+        if (window.confirm && !window.confirm('Удалить это быстрое имя только с данного устройства?')) return;
+        try { await window.Core.getQuickNameRegistry().remove(id); await this.renderGlobalQuickNames(); }
+        catch (error) { window.Core?.customAlert?.('БЫСТРЫЕ ИМЕНА', error.message); }
+    },
     renderGlobalNodes() {
         const gateBox = document.querySelector('.gate-container');
         const manager = window.NodeManager;
