@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user/device data lives.
  */
 
-const RELEASE_ID = 'm1.5-functional-repair-20260905.48';
+const RELEASE_ID = 'm1.5-functional-repair-20260905.49';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',
@@ -13,7 +13,8 @@ const CORE_ASSETS = [
     './js/core_engine.js', './js/storage.js', './js/device_root.js',
     './js/device_routes.js', './js/dmash_links.js', './js/quick_name_registry.js',
     './js/contact_payloads.js', './js/contact_transport.js', './js/pending_contact_requests.js',
-    './js/resource_pow.js', './js/ui_global_bridge.js', './js/runtime_fixes.js', './js/public_contact_runtime.js', './js/acceptance_fixes.js',
+    './js/resource_pow.js', './js/ui_global_bridge.js', './js/runtime_fixes.js', './js/public_contact_runtime.js',
+    './js/acceptance_fixes.js', './js/stability_fixes.js',
     './js/vendor/nacl-fast.min.js', './js/vendor/nacl-util.min.js',
     './js/vendor/qrcode.min.js', './js/vendor/html5-qrcode.min.js',
     './js/vendor/argon2-bundled.min.js', './js/vendor/argon2.wasm',
