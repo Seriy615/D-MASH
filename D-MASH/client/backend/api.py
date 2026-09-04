@@ -11,15 +11,33 @@ from typing import Optional
 from nacl.public import PrivateKey
 from nacl.encoding import Base64Encoder
 import asyncio
-from core import state
-from database import DatabaseManager
-from crypto import CryptoManager
+
+# ``core`` imports this router while it is initializing.  Define it before
+# importing runtime state so package imports resolve that intentional cycle.
+router = APIRouter()
+
+if __package__:
+    from .core import state
+    from .database import DatabaseManager
+    from .crypto import CryptoManager
+else:  # Runtime launcher imports backend modules from its working directory.
+    from core import state
+    from database import DatabaseManager
+    from crypto import CryptoManager
 from fastapi.concurrency import run_in_threadpool
 # Добавьте в начало
 import base64
-from dsp import AudioProcessor
+if __package__:
+    from .dsp import AudioProcessor
+else:
+    from dsp import AudioProcessor
 
-router = APIRouter()
+# This HTTP endpoint predates the DMP-C Device transport.  It must not retain
+# or route a message when a legacy client attempts to use it: doing so could
+# silently revive the raw persistence path instead of requiring DMP-C.
+LEGACY_SEND_UNAVAILABLE_DETAIL = (
+    "Legacy send endpoint unavailable; DMP-C and mesh routing are not attempted."
+)
 
 # --- Pydantic Models ---
 class LoginData(BaseModel):
@@ -172,6 +190,10 @@ async def connect_peer(data: ConnectData):
 
 @router.post("/api/send")
 async def send_message(data: SendData):
+    # Fail before inspecting state or constructing a packet.  In particular,
+    # do not write legacy message/contact rows or enqueue a probe fallback.
+    raise HTTPException(status_code=410, detail=LEGACY_SEND_UNAVAILABLE_DETAIL)
+
     if not state.db: raise HTTPException(400)
     
     pkt_uuid = str(uuid.uuid4())

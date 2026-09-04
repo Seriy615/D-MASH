@@ -25,12 +25,22 @@ try:  # Isolated routing primitives have no runtime-state dependencies.
 except ModuleNotFoundError:
     from .dnss import node_blind_hash
     from .entry_grant import EntryGrantV1
+try:
+    from resource_pow import (verify_activation_pow, activation_pow_difficulty,
+                              MAX_ACTIVATION_VALIDITY_SECONDS)
+except ModuleNotFoundError:
+    from .resource_pow import (verify_activation_pow, activation_pow_difficulty,
+                               MAX_ACTIVATION_VALIDITY_SECONDS)
 
 router = APIRouter()
 PROTOCOL = "DMP-C"
 VERSION = 2
 LEGACY_VERSION = 1
 AUTH_TIMEOUT_SECONDS = 15
+ACTIVATION_POW_DIFFICULTY = activation_pow_difficulty()
+ACTIVATION_POW_REPLAY_CAPACITY = 4096
+# key -> proof expiry.  Expiry is also the natural pruning timestamp.
+_USED_ACTIVATION_POW: dict[tuple[str, str, str, int, int], int] = {}
 
 # The application lifecycle owns the registry's database and close policy.  It
 # injects this factory at startup with ``factory(node_crypto) ->
@@ -80,13 +90,114 @@ def _valid_dnss(value: Any) -> bool:
         return False
 
 
+def _canonical_node_id(value: Any) -> str | None:
+    """Return the lowercase hex NodeID for trusted runtime identity material.
+
+    NodeCrypto normally exposes its Ed25519 public key as lowercase hex, while
+    small embedders and older launchers can expose the raw 32-byte key.  The
+    protocol always signs and verifies the hex wire form, so normalize only
+    those two unambiguous representations at this boundary.
+    """
+    if isinstance(value, str):
+        candidate = value
+    elif isinstance(value, (bytes, bytearray, memoryview)):
+        raw = bytes(value)
+        if len(raw) == 32:
+            return raw.hex()
+        try:
+            candidate = raw.decode("ascii")
+        except UnicodeDecodeError:
+            return None
+    else:
+        return None
+    if len(candidate) != 64:
+        return None
+    try:
+        bytes.fromhex(candidate)
+    except ValueError:
+        return None
+    return candidate.lower()
+
+
+def _entry_grant_wire_value(value: Any) -> Any:
+    """Decode byte-like JSON field values without accepting binary wire data.
+
+    A WebSocket JSON message contains text, but direct ASGI integrations may
+    have decoded JSON fields into bytes.  Accept only strict ASCII equivalents
+    of the canonical textual grant fields; EntryGrantV1 still owns schema,
+    signature, expiry, and node-binding validation.
+    """
+    if not isinstance(value, dict):
+        return value
+    decoded = {}
+    for key, field in value.items():
+        if isinstance(key, (bytes, bytearray, memoryview)):
+            try:
+                key = bytes(key).decode("ascii")
+            except UnicodeDecodeError:
+                return value
+        if isinstance(field, (bytes, bytearray, memoryview)):
+            try:
+                field = bytes(field).decode("ascii")
+            except UnicodeDecodeError:
+                return value
+        decoded[key] = field
+    return decoded
+
+
 def _verify_entry_grant(value, node_id: str):
     """Verify a self-contained EntryGrantV1 without accepting Account material."""
     try:
+        value = _entry_grant_wire_value(value)
         grant = EntryGrantV1.from_dict(value) if isinstance(value, dict) else EntryGrantV1.from_json(value)
     except (TypeError, ValueError, json.JSONDecodeError):
         return None
     return grant if grant.verify(expected_node_id=node_id) else None
+
+
+def _activation_pow_ok(request: dict, node_id: str, device_key: str,
+                       activation_type: str, resource: bytes | str) -> bool:
+    """Check and consume a node/device/type/resource-bound activation proof."""
+    proof = request.get("pow")
+    if not isinstance(proof, dict):
+        return False
+    try:
+        canonical_resource = resource.hex() if isinstance(resource, bytes) else resource
+        if (proof.get("v") != 1 or proof.get("type") != activation_type or
+                proof.get("resource") != canonical_resource or
+                not isinstance(proof.get("digest"), str)):
+            return False
+        nonce, expires_at = proof["nonce"], proof["expires_at"]
+        difficulty = proof.get("difficulty", ACTIVATION_POW_DIFFICULTY)
+        if (not isinstance(difficulty, int) or difficulty < ACTIVATION_POW_DIFFICULTY or
+                difficulty > 24):
+            return False
+        digest = proof["digest"]
+        if not verify_activation_pow(node_id, activation_type, device_key, resource,
+                                     nonce, expires_at, difficulty, digest):
+            return False
+        now = int(time.time())
+        # Prune expired entries on every validation and enforce a hard cap even
+        # when an attacker submits many distinct, still-live proofs.
+        for key, expiry in list(_USED_ACTIVATION_POW.items()):
+            if expiry <= now:
+                del _USED_ACTIVATION_POW[key]
+        # Normalize hex versus bytes representations so wire encoding changes
+        # cannot evade replay detection for the same validated proof.
+        digest_id = bytes.fromhex(digest).hex() if isinstance(digest, str) else bytes(digest).hex()
+        replay_key = (node_id, activation_type, digest_id, nonce, expires_at)
+        if replay_key in _USED_ACTIVATION_POW:
+            return False
+        if len(_USED_ACTIVATION_POW) >= ACTIVATION_POW_REPLAY_CAPACITY:
+            # Never evict a live proof: doing so would make that proof
+            # replayable if it were submitted again before expiry.  The cache
+            # is intentionally fail-closed under sustained distinct-proof
+            # pressure; expired entries were pruned above.
+            return False
+        _USED_ACTIVATION_POW[replay_key] = expires_at
+        return True
+    except (KeyError, TypeError, ValueError):
+        return False
 
 
 def runtime_state():
@@ -142,7 +253,7 @@ def verify_device_auth(public_key_hex: str, signature_b64: str, node_id: str,
 async def dmp_client(websocket: WebSocket):
     await websocket.accept()
     state = runtime_state()
-    node_id = state.node_crypto.node_id if state.node_crypto else None
+    node_id = _canonical_node_id(state.node_crypto.node_id) if state.node_crypto else None
     if not node_id:
         await websocket.close(code=1011, reason="node identity unavailable")
         return
@@ -174,6 +285,7 @@ async def dmp_client(websocket: WebSocket):
         ):
             await websocket.close(code=1008, reason="authentication failed")
             return
+        device_transport_key = auth.get("public_key")
 
         operations = _routing_registration_operations(state, allowed_operations(state))
         # Registration state is intentionally scoped to this authenticated
@@ -213,6 +325,20 @@ async def dmp_client(websocket: WebSocket):
                 # The raw value never crosses into storage by itself.  It is
                 # retained in this session only until a verified grant arrives.
                 pending_dnss = _decode_dnss(dnss)
+                # An existing DNSS by itself is not an activation.  A following
+                # changed grant is checked below; only an exact registered pair
+                # is allowed to repeat without new work.
+                try:
+                    existing_record = get_registration_registry().lookup(pending_dnss)
+                    already_registered = existing_record is not None and pending_grant is None
+                except Exception:
+                    existing_record = None
+                    already_registered = False
+                if not already_registered and not _activation_pow_ok(
+                        request, node_id, device_transport_key, "DNSS", pending_dnss):
+                    pending_dnss = None
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_RESOURCE_POW"})
+                    continue
                 try:
                     dnss_handle = node_blind_hash(node_id, state.node_crypto.secret_salt, pending_dnss)
                 except Exception:
@@ -234,6 +360,23 @@ async def dmp_client(websocket: WebSocket):
                 grant = _verify_entry_grant(request.get("entry_grant"), node_id)
                 if grant is None:
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_ENTRY_GRANT"})
+                    continue
+                # A DNSS may already exist with a different grant: compare the
+                # signed grant itself, not just DNSS presence.  Only an exact
+                # repeat of a validated registration is idempotent without PoW.
+                # The route id is the canonical work resource.
+                already_registered = False
+                existing_record = None
+                if pending_dnss is not None:
+                    try:
+                        existing_record = get_registration_registry().lookup(pending_dnss)
+                        already_registered = (existing_record is not None and
+                            existing_record.grant.to_dict() == grant.to_dict())
+                    except Exception:
+                        already_registered = False
+                if not already_registered and not _activation_pow_ok(
+                        request, node_id, device_transport_key, "ENTRY_GRANT", grant.route_id):
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_RESOURCE_POW"})
                     continue
                 pending_grant = grant
                 if pending_dnss is not None:
@@ -340,6 +483,23 @@ async def dmp_client(websocket: WebSocket):
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
                     continue
                 await websocket.send_json({"type": "SUBMIT_ENVELOPE_RESULT", "request_id": request_id, **asdict(submission)})
+            elif operation == "SUBMIT_CONTACT":
+                route_locator = request.get("route_locator")
+                envelope = request.get("envelope")
+                reply_route = request.get("reply_route")
+                if (not isinstance(route_locator, str) or not route_locator or
+                        not isinstance(envelope, dict) or
+                        (reply_route is not None and not isinstance(reply_route, str))):
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_CONTACT_ENVELOPE"})
+                    continue
+                try:
+                    submission = await state.node.transport.submit_contact(
+                        route_locator, envelope, reply_route=reply_route,
+                    )
+                except (PermissionError, ValueError):
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_CONTACT_ENVELOPE"})
+                    continue
+                await websocket.send_json({"type": "SUBMIT_CONTACT_RESULT", "request_id": request_id, **asdict(submission)})
             elif operation == "PULL":
                 locator_handle = request.get("locator_handle")
                 if not isinstance(locator_handle, str) or not locator_handle:

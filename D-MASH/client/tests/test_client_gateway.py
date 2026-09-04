@@ -6,6 +6,7 @@ import os
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 from nacl.encoding import HexEncoder
 from nacl.signing import SigningKey
@@ -20,6 +21,7 @@ from backend.client_gateway import (
     router,
 )
 from backend.registration_registry import RegistrationRegistry
+from backend.resource_pow import activation_pow_difficulty, mine_activation_pow
 
 
 class ClientGatewayAuthTests(unittest.TestCase):
@@ -48,6 +50,15 @@ class ClientGatewayAuthTests(unittest.TestCase):
             self.closed = (code, reason)
 
     def setUp(self):
+        # Keep production difficulty at its safe floor.  Patch only the
+        # gateway module's threshold for this unit fixture, so the suite
+        # exercises the real verifier without mining several 20+-bit proofs.
+        self.assertGreaterEqual(activation_pow_difficulty(), 20)
+        self.pow_difficulty = 4
+        self.activation_pow_difficulty = patch.object(
+            gateway, "ACTIVATION_POW_DIFFICULTY", self.pow_difficulty,
+        )
+        self.activation_pow_difficulty.start()
         self.node_key = SigningKey.generate()
         self.previous_runtime_state = gateway.runtime_state
         self.previous_registry_factory = gateway.registration_registry_factory
@@ -66,7 +77,31 @@ class ClientGatewayAuthTests(unittest.TestCase):
             "node": None,
         })()
 
+    def _activation_pow(self, client_key, activation_type, resource, *, node_id=None,
+                        start_nonce=0, expires_at=None):
+        """Return the canonical, device- and node-bound activation proof."""
+        return mine_activation_pow(
+            node_id or self.node_key.verify_key.encode().hex(),
+            activation_type,
+            client_key.verify_key.encode().hex(),
+            resource,
+            int(time.time()) + 60 if expires_at is None else expires_at,
+            difficulty=self.pow_difficulty,
+            start_nonce=start_nonce,
+        )
+
+    def test_activation_pow_wire_proof_is_json_safe_and_canonical(self):
+        client_key = SigningKey.generate()
+        resource = bytes.fromhex("01" * 16)
+
+        proof = self._activation_pow(client_key, "DNSS", resource)
+
+        self.assertEqual(proof["resource"], resource.hex())
+        self.assertIsInstance(proof["digest"], str)
+        self.assertEqual(json.loads(json.dumps(proof)), proof)
+
     def tearDown(self):
+        self.activation_pow_difficulty.stop()
         gateway.runtime_state = self.previous_runtime_state
         gateway.registration_registry_factory = self.previous_registry_factory
         if os.path.exists(self.registry_path):
@@ -89,10 +124,10 @@ class ClientGatewayAuthTests(unittest.TestCase):
             })
         return [valid_auth, *(json.dumps(request) for request in requests), "__DISCONNECT__"]
 
-    def _install_routing_state(self, transport):
+    def _install_routing_state(self, transport, operations=None):
         """Install an in-memory, routing-capable Node facade for the gateway."""
         capabilities = type("Capabilities", (), {
-            "advertised_operations": lambda self: frozenset({"STATUS", "START_PROBE", "ROUTE_STATUS"}),
+            "advertised_operations": lambda self: operations or frozenset({"STATUS", "START_PROBE", "ROUTE_STATUS"}),
         })()
         gateway.runtime_state = lambda: type("State", (), {
             "node_crypto": type("NodeCrypto", (), {
@@ -206,10 +241,16 @@ class ClientGatewayAuthTests(unittest.TestCase):
         client_key = SigningKey.generate()
         dnss_hex = "0123456789abcdef" * 2
         dnss_b64 = base64.urlsafe_b64encode(bytes.fromhex(dnss_hex)).decode("ascii").rstrip("=")
+        first_proof = self._activation_pow(client_key, "DNSS", bytes.fromhex(dnss_hex))
         websocket = self.GatewaySocket(self._authenticated_frames(
             client_key,
-            {"type": "REGISTER_DNSS", "request_id": "dnss-hex", "dnss": dnss_hex},
-            {"type": "REGISTER_DNSS", "request_id": "dnss-b64", "dnss": dnss_b64},
+            {"type": "REGISTER_DNSS", "request_id": "dnss-hex", "dnss": dnss_hex,
+             "pow": first_proof},
+            {"type": "REGISTER_DNSS", "request_id": "dnss-b64", "dnss": dnss_b64,
+             "pow": self._activation_pow(
+                 client_key, "DNSS", base64.urlsafe_b64decode(dnss_b64 + "=="),
+                 start_nonce=first_proof["nonce"] + 1,
+             )},
         ))
 
         asyncio.run(gateway.dmp_client(websocket))
@@ -259,7 +300,8 @@ class ClientGatewayAuthTests(unittest.TestCase):
         wrong_grant = gateway.EntryGrantV1.issue(wrong_node, route_public_key, int(time.time()) + 60)
         websocket = self.GatewaySocket(self._authenticated_frames(
             client_key,
-            {"type": "REGISTER_ENTRY_GRANT", "request_id": "grant-valid", "entry_grant": valid_grant.to_dict()},
+            {"type": "REGISTER_ENTRY_GRANT", "request_id": "grant-valid", "entry_grant": valid_grant.to_dict(),
+             "pow": self._activation_pow(client_key, "ENTRY_GRANT", valid_grant.route_id)},
             {"type": "REGISTER_ENTRY_GRANT", "request_id": "grant-wrong-node", "entry_grant": wrong_grant.to_dict()},
         ))
 
@@ -271,6 +313,59 @@ class ClientGatewayAuthTests(unittest.TestCase):
         })
         self.assertEqual(websocket.sent[3], {
             "type": "ERROR", "request_id": "grant-wrong-node", "code": "INVALID_ENTRY_GRANT",
+        })
+
+    def test_entry_grant_coerces_ascii_byte_fields_and_raw_runtime_node_id(self):
+        """ASGI adapters may retain JSON text as bytes; canonical signing remains unchanged."""
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        gateway.runtime_state = lambda: type("State", (), {
+            "node_crypto": type("NodeCrypto", (), {
+                "node_id": self.node_key.verify_key.encode(),
+                "secret_salt": b"g" * 32,
+            })(),
+            "capabilities": type("Capabilities", (), {
+                "advertised_operations": lambda self: frozenset({"STATUS", "START_PROBE", "ROUTE_STATUS"}),
+            })(),
+            "node": type("Node", (), {"active_connections": [], "transport": Transport()})(),
+        })()
+        client_key = SigningKey.generate()
+        route_key = SigningKey.generate()
+        grant = gateway.EntryGrantV1.issue(
+            self.node_key, route_key.verify_key.encode(encoder=HexEncoder).decode("ascii"), int(time.time()) + 60,
+        )
+        # Byte keys/values are an adapter/parser concern, not a JSON wire
+        # representation. Exercise that coercion directly because json.dumps
+        # cannot encode byte keys (or byte values).
+        byte_field_grant = {
+            key.encode("ascii") if isinstance(key, str) else key:
+            value.encode("ascii") if isinstance(value, str) else value
+            for key, value in grant.to_dict().items()
+        }
+        self.assertEqual(gateway._verify_entry_grant(
+            byte_field_grant, self.node_key.verify_key.encode().hex(),
+        ).to_dict(), grant.to_dict())
+        # The actual WebSocket request must remain a JSON-compatible wire
+        # object; dmp_client canonicalizes the raw byte runtime node ID above.
+        websocket_request = {
+            "type": "REGISTER_ENTRY_GRANT", "request_id": "byte-wire-grant",
+            "entry_grant": grant.to_dict(),
+            "pow": self._activation_pow(client_key, "ENTRY_GRANT", grant.route_id),
+        }
+        self.assertEqual(json.loads(json.dumps(websocket_request)), websocket_request)
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            websocket_request,
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[2], {
+            "type": "REGISTER_ENTRY_GRANT_RESULT", "request_id": "byte-wire-grant",
+            "route_id": grant.route_id, "expires_at": grant.expires_at,
         })
 
     def test_registration_persists_only_when_dnss_and_verified_grant_are_both_present(self):
@@ -286,8 +381,10 @@ class ClientGatewayAuthTests(unittest.TestCase):
         dnss = "ab" * 16
         websocket = self.GatewaySocket(self._authenticated_frames(
             client_key,
-            {"type": "REGISTER_DNSS", "request_id": "dnss", "dnss": dnss},
-            {"type": "REGISTER_ENTRY_GRANT", "request_id": "grant", "entry_grant": grant.to_dict()},
+            {"type": "REGISTER_DNSS", "request_id": "dnss", "dnss": dnss,
+             "pow": self._activation_pow(client_key, "DNSS", bytes.fromhex(dnss))},
+            {"type": "REGISTER_ENTRY_GRANT", "request_id": "grant", "entry_grant": grant.to_dict(),
+             "pow": self._activation_pow(client_key, "ENTRY_GRANT", grant.route_id)},
         ))
 
         asyncio.run(gateway.dmp_client(websocket))
@@ -305,6 +402,219 @@ class ClientGatewayAuthTests(unittest.TestCase):
                 self.assertNotIn(bytes.fromhex(dnss), database.read())
         finally:
             registry.close()
+
+    def test_new_registration_requires_node_bound_single_use_canonical_pow(self):
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        client_key = SigningKey.generate()
+        dnss = "cd" * 16
+        wrong_node_proof = self._activation_pow(
+            client_key, "DNSS", bytes.fromhex(dnss),
+            node_id=SigningKey.generate().verify_key.encode().hex(),
+        )
+        valid_proof = self._activation_pow(client_key, "DNSS", bytes.fromhex(dnss))
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_DNSS", "request_id": "wrong-node", "dnss": dnss, "pow": wrong_node_proof},
+            {"type": "REGISTER_DNSS", "request_id": "valid-once", "dnss": dnss, "pow": valid_proof},
+            {"type": "REGISTER_DNSS", "request_id": "replayed", "dnss": dnss, "pow": valid_proof},
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[2], {
+            "type": "ERROR", "request_id": "wrong-node", "code": "INVALID_RESOURCE_POW",
+        })
+        self.assertEqual(websocket.sent[3]["type"], "REGISTER_DNSS_RESULT")
+        self.assertEqual(websocket.sent[4], {
+            "type": "ERROR", "request_id": "replayed", "code": "INVALID_RESOURCE_POW",
+        })
+
+    def test_new_dnss_registration_rejects_an_expired_activation_proof(self):
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        client_key = SigningKey.generate()
+        dnss = "de" * 16
+        expired_proof = self._activation_pow(
+            client_key, "DNSS", bytes.fromhex(dnss), expires_at=int(time.time()) - 1,
+        )
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_DNSS", "request_id": "expired", "dnss": dnss, "pow": expired_proof},
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[2], {
+            "type": "ERROR", "request_id": "expired", "code": "INVALID_RESOURCE_POW",
+        })
+
+    def test_new_entry_grant_activation_rejects_a_replayed_proof(self):
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        client_key = SigningKey.generate()
+        route_key = SigningKey.generate()
+        grant = gateway.EntryGrantV1.issue(
+            self.node_key, route_key.verify_key.encode(encoder=HexEncoder).decode("ascii"), int(time.time()) + 60,
+        )
+        proof = self._activation_pow(client_key, "ENTRY_GRANT", grant.route_id)
+        request = {"type": "REGISTER_ENTRY_GRANT", "entry_grant": grant.to_dict(), "pow": proof}
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {**request, "request_id": "grant-once"},
+            {**request, "request_id": "grant-replayed"},
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[2]["type"], "REGISTER_ENTRY_GRANT_RESULT")
+        self.assertEqual(websocket.sent[3], {
+            "type": "ERROR", "request_id": "grant-replayed", "code": "INVALID_RESOURCE_POW",
+        })
+
+    def test_new_entry_grant_activation_rejects_an_expired_proof(self):
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        client_key = SigningKey.generate()
+        route_key = SigningKey.generate()
+        grant = gateway.EntryGrantV1.issue(
+            self.node_key, route_key.verify_key.encode(encoder=HexEncoder).decode("ascii"), int(time.time()) + 60,
+        )
+        expired_proof = self._activation_pow(
+            client_key, "ENTRY_GRANT", grant.route_id, expires_at=int(time.time()) - 1,
+        )
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_ENTRY_GRANT", "request_id": "grant-expired",
+             "entry_grant": grant.to_dict(), "pow": expired_proof},
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[2], {
+            "type": "ERROR", "request_id": "grant-expired", "code": "INVALID_RESOURCE_POW",
+        })
+
+    def test_activation_pow_cache_rejects_new_proof_without_evicting_live_proof(self):
+        """Saturation must not turn an earlier live proof into a replay."""
+        client_key = SigningKey.generate()
+        node_id = self.node_key.verify_key.encode().hex()
+        device_key = client_key.verify_key.encode().hex()
+        first_resource = bytes.fromhex("01" * 16)
+        second_resource = bytes.fromhex("02" * 16)
+        first_proof = self._activation_pow(client_key, "DNSS", first_resource)
+        second_proof = self._activation_pow(client_key, "DNSS", second_resource)
+
+        with (patch.object(gateway, "ACTIVATION_POW_REPLAY_CAPACITY", 1),
+              patch.dict(gateway._USED_ACTIVATION_POW, {}, clear=True)):
+            self.assertTrue(gateway._activation_pow_ok(
+                {"pow": first_proof}, node_id, device_key, "DNSS", first_resource,
+            ))
+            self.assertFalse(gateway._activation_pow_ok(
+                {"pow": second_proof}, node_id, device_key, "DNSS", second_resource,
+            ))
+            # If saturation evicted the first live record, this would wrongly
+            # succeed and demonstrate the replay vulnerability.
+            self.assertFalse(gateway._activation_pow_ok(
+                {"pow": first_proof}, node_id, device_key, "DNSS", first_resource,
+            ))
+
+    def test_new_registration_rejects_proof_below_gateway_minimum_difficulty(self):
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        client_key = SigningKey.generate()
+        dnss = "ce" * 16
+        proof = self._activation_pow(client_key, "DNSS", bytes.fromhex(dnss))
+        proof["difficulty"] = gateway.ACTIVATION_POW_DIFFICULTY - 1
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_DNSS", "request_id": "low-difficulty", "dnss": dnss, "pow": proof},
+        ))
+
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[2], {
+            "type": "ERROR", "request_id": "low-difficulty", "code": "INVALID_RESOURCE_POW",
+        })
+
+    def test_existing_valid_registration_bypasses_activation_pow(self):
+        class Transport:
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport())
+        dnss = bytes.fromhex("ef" * 16)
+        route_key = SigningKey.generate()
+        grant = gateway.EntryGrantV1.issue(
+            self.node_key, route_key.verify_key.encode(encoder=HexEncoder).decode("ascii"), int(time.time()) + 60,
+        )
+        with RegistrationRegistry(self.registry_path, gateway.runtime_state().node_crypto) as registry:
+            registry.register(dnss, grant.to_dict())
+
+        client_key = SigningKey.generate()
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_DNSS", "request_id": "existing", "dnss": dnss.hex()},
+        ))
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[2]["type"], "REGISTER_DNSS_RESULT")
+
+    def test_data_ack_and_pull_do_not_require_registration_pow(self):
+        class Transport:
+            async def register_inbound_locator(self, locator):
+                return "locator-handle"
+
+            def attach_local_delivery_session(self, handle, session):
+                self.attached = (handle, session)
+
+            async def pull(self, handle):
+                return [{"opaque": "packet"}]
+
+            async def ack(self, delivery_id, *, allowed_locator_handles):
+                return delivery_id == "delivery-1" and allowed_locator_handles == {"locator-handle"}
+
+            def detach_local_delivery_session(self, session):
+                pass
+
+        self._install_routing_state(Transport(), frozenset({
+            "STATUS", "START_PROBE", "ROUTE_STATUS", "REGISTER_INBOUND_LOCATOR", "PULL", "ACK",
+        }))
+        client_key = SigningKey.generate()
+        websocket = self.GatewaySocket(self._authenticated_frames(
+            client_key,
+            {"type": "REGISTER_INBOUND_LOCATOR", "request_id": "locator", "locator": "inbound"},
+            {"type": "PULL", "request_id": "pull", "locator_handle": "locator-handle", "pow": {"invalid": True}},
+            {"type": "ACK", "request_id": "ack", "delivery_id": "delivery-1", "pow": {"invalid": True}},
+            {"type": "DATA", "request_id": "data", "pow": {"invalid": True}},
+        ))
+        asyncio.run(gateway.dmp_client(websocket))
+
+        self.assertEqual(websocket.sent[3], {
+            "type": "PULL_RESULT", "request_id": "pull", "packets": [{"opaque": "packet"}],
+        })
+        self.assertEqual(websocket.sent[4], {
+            "type": "ACK_RESULT", "request_id": "ack", "acknowledged": True,
+        })
+        self.assertEqual(websocket.sent[5], {
+            "type": "ERROR", "request_id": "data", "code": "UNSUPPORTED_OPERATION",
+        })
+        self.assertNotIn("INVALID_RESOURCE_POW", json.dumps(websocket.sent))
 
     def test_authenticated_start_probe_propagates_metric_and_clamps_hop_limit(self):
         @dataclass

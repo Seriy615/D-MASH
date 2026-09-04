@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import secrets
 import hashlib
+import re
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Set
 
@@ -31,6 +32,46 @@ class NodeTransportService:
         # Runtime-only registry.  It contains blind locator handles and live
         # DMP-C sessions, never user IDs or raw locators.
         self._local_delivery_sessions: Dict[str, Set[Any]] = {}
+        # Short-lived correlation only; route aliases are never persisted.
+        self._contact_reply_routes: Dict[str, tuple[str, float]] = {}
+
+    @staticmethod
+    def _contact_envelope(envelope: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate the opaque metadata used by CONTACT_*_V1 payloads."""
+        if not isinstance(envelope, dict):
+            raise ValueError("contact envelope is required")
+        expected = {"version", "type", "request_id", "ciphertext"}
+        if set(envelope) != expected or envelope.get("version") != 1:
+            raise ValueError("invalid contact envelope")
+        if envelope.get("type") not in {"CONTACT_REQUEST_V1", "CONTACT_ACCEPT_V1"}:
+            raise ValueError("invalid contact envelope type")
+        if not isinstance(envelope.get("request_id"), str) or not re.fullmatch(r"[A-Za-z0-9_-]{43}", envelope["request_id"]):
+            raise ValueError("invalid contact request id")
+        if not isinstance(envelope.get("ciphertext"), str) or not re.fullmatch(r"[A-Za-z0-9_-]+", envelope["ciphertext"]):
+            raise ValueError("invalid contact ciphertext")
+        return dict(envelope)
+
+    def remember_contact_reply_route(self, request_id: str, route_alias: str, *, ttl_seconds: int = 900) -> None:
+        if not re.fullmatch(r"[A-Za-z0-9_-]{43}", request_id) or not isinstance(route_alias, str) or not route_alias:
+            raise ValueError("invalid contact reply route")
+        if not isinstance(ttl_seconds, int) or not 1 <= ttl_seconds <= 3600:
+            raise ValueError("invalid contact reply route lifetime")
+        self._contact_reply_routes[request_id] = (route_alias, __import__("time").time() + ttl_seconds)
+
+    def contact_reply_route(self, request_id: str) -> str | None:
+        entry = self._contact_reply_routes.get(request_id)
+        if not entry:
+            return None
+        if entry[1] <= __import__("time").time():
+            self._contact_reply_routes.pop(request_id, None)
+            return None
+        return entry[0]
+
+    async def submit_contact(self, route_alias: str, envelope: Dict[str, Any], *, reply_route: str | None = None) -> TransportSubmission:
+        envelope = self._contact_envelope(envelope)
+        if reply_route is not None:
+            self.remember_contact_reply_route(envelope["request_id"], reply_route)
+        return await self.submit_envelope(route_alias, envelope)
 
     def _blind(self, locator: str) -> str:
         if not isinstance(locator, str) or not locator or not self.system_db.node_crypto:
@@ -260,6 +301,16 @@ class NodeTransportService:
         route_alias = packet.get("route_id") or packet.get("route_alias")
         if not route_alias:
             return None
+        envelope = packet.get("envelope") or {}
+        if envelope.get("type") in {"CONTACT_REQUEST_V1", "CONTACT_ACCEPT_V1"}:
+            try:
+                self._contact_envelope(envelope)
+            except ValueError:
+                return None
+            # Packet IDs are hop-level; request_id is the end-to-end replay key.
+            # Blind storage gives this durable dedupe key without exposing it.
+            if not await self.system_db.mark_packet_seen(envelope["request_id"]):
+                return None
         route = await self.system_db.get_best_route_alias(self._blind(route_alias))
         if not route:
             return None

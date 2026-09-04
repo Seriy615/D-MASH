@@ -29,6 +29,18 @@ class NotificationTriggerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(calls), 1)
         self.assertNotIn("sender", calls[0])
         self.assertNotIn("message", calls[0])
+        self.assertEqual(calls[0]["version"], 2)
+        self.assertEqual(calls[0]["event_type"], "MALYAVA")
+
+    async def test_notification_event_is_explicit_and_allowlisted(self):
+        calls = []
+        async def sender(payload): calls.append(payload); return True
+        trigger = NotificationTrigger(sender, delay_seconds=0)
+        trigger.schedule("opaque-handle", event_type="INCOMING_BAZAR")
+        await asyncio.sleep(0.02)
+        self.assertEqual(calls[0]["event_type"], "INCOMING_BAZAR")
+        with self.assertRaises(ValueError):
+            trigger.schedule("opaque-handle", event_type="untrusted")
 
     async def test_retry_is_bounded_and_idempotency_is_stable(self):
         calls = []

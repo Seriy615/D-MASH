@@ -20,7 +20,7 @@ class PersonalBotDeliveryTests(unittest.TestCase):
         self.store = EnrollmentStore()
         self.store.ensure_schema(self.db)
         secrets = self.store.create(self.db, "opaque-owner")
-        self.store.bind_from_webhook(self.db, secrets.webhook_secret, "safe-chat-id", "/start " + secrets.start_code)
+        self.store.bind_from_webhook(self.db, secrets.webhook_secret, "safe-chat-id", "/start " + secrets.start_code, self.key)
         self.vault.save(self.db, "opaque-owner", "private-personal-bot-token")
 
     def tearDown(self):

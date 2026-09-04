@@ -58,6 +58,13 @@ python3 -m venv "$PREFIX/.venv"
 "$PREFIX/.venv/bin/pip" install --requirement "$SRC/requirements.txt"
 install -d -o dmash-node -g dmash-node -m 0700 "$PREFIX/backend"
 cp -a "$SRC/backend/." "$PREFIX/backend/"
+cat > /usr/local/sbin/dmash-node-peer <<EOF
+#!/usr/bin/env bash
+set -Eeuo pipefail
+cd "$PREFIX/backend"
+exec "$PREFIX/.venv/bin/python" peer_admin.py "\$@"
+EOF
+chmod 0755 /usr/local/sbin/dmash-node-peer
 chown -R dmash-node:dmash-node "$PREFIX"
 
 cat > /etc/dmash-node.env <<EOF
@@ -126,3 +133,4 @@ if [[ "$SETUP_FIREWALL" == "1" ]]; then
 fi
 echo "D-MASH node installed. Identity: $PREFIX/backend/node_identity.key"
 echo "Node '$NODE_NAME' installed as $VISIBILITY. Keep HTTP port $HTTP_PORT loopback-only; expose HTTPS/WSS and P2P TCP port $P2P_PORT."
+echo "To verify and link a mesh neighbor locally: sudo -u dmash-node dmash-node-peer add <host:P2P-port>"

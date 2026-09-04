@@ -63,6 +63,21 @@ P2P_HOST=127.0.0.1 P2P_PORT=9001 DMASH_HTTP_HOST=127.0.0.1 DMASH_HTTP_PORT=8001 
 
 The HTTP service serves the Python node interface. The P2P listener is used for node-to-node connections. A node identity is created on first start and stored in `node_identity.key`; keep that file private and persistent for a stable node identity.
 
+### Linking verified Node peers
+
+Node peers are deliberately not configured through the public PWA or an HTTP
+endpoint. On the host of a running Node, first ensure its P2P TCP port is
+reachable, then add the other Node by its `host:P2P-port`:
+
+```bash
+sudo -u dmash-node dmash-node-peer add forge.example.net:19090
+sudo -u dmash-node dmash-node-peer list
+```
+
+`add` completes the Node PoW and signature handshake before it persists the
+encrypted peer-directory entry. The Node daemon reconnects known peers every
+10 seconds; do not edit `system.db` manually.
+
 ## Local multi-node setup
 
 The Compose file starts four development nodes with separate HTTP and P2P ports:

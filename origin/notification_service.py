@@ -10,6 +10,9 @@ import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from nacl.encoding import HexEncoder
+from nacl.public import PrivateKey, SealedBox
+from nacl import secret
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from nacl.exceptions import BadSignatureError
@@ -20,10 +23,20 @@ from personal_bot_vault import PersonalBotVault
 
 DB_PATH = Path(os.getenv("NOTIFICATION_DB_PATH", "/var/lib/dmash-notify/notifications.db"))
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-HMAC_KEY = os.getenv("DMASH_NOTIFICATION_HMAC_KEY", "").encode()
+ORIGIN_PRIVATE_KEY_HEX = os.getenv("DMASH_NOTIFICATION_ORIGIN_PRIVATE_KEY", "")
+AUTHORIZED_NODE_KEYS = frozenset(key.strip().lower() for key in os.getenv("DMASH_NOTIFICATION_NODE_KEYS", "").split(",") if key.strip())
 VAULT_KEY = os.getenv("NOTIFICATION_VAULT_KEY", "")
 PERSONAL_WEBHOOK_URL = os.getenv("PERSONAL_BOT_WEBHOOK_URL", "")
+TELEGRAM_WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET", "")
 MESSAGE = "У вас новое сообщение в D-MASH"
+BEACON_CONNECTED_MESSAGE = "✅ Маяк подключен."
+BEACON_ALREADY_MESSAGE = "ℹ️ Маяк уже настроен."
+BEACON_STOPPED_MESSAGE = "✅ Маяк отключен."
+PWA_URL = "https://messenger.d-mash.ru/not_messenger/index.html"
+NOTIFICATION_LABELS = {
+    "MALYAVA": "✉️ МАЛЯВА",
+    "INCOMING_BAZAR": "📞 ВХОДЯЩИЙ БАЗАР",
+}
 
 app = FastAPI(title="D-MASH Origin Notifications", docs_url=None, redoc_url=None)
 
@@ -40,15 +53,64 @@ def connect_db():
     return db
 
 
+def chat_id_for_binding(value: str) -> str:
+    """Read encrypted chat IDs; plaintext exists only for pre-migration rows."""
+    try:
+        return decrypt_chat_id(value)
+    except Exception:
+        return value
+
+
+def migrate_binding_chat_ids(db: sqlite3.Connection) -> None:
+    """Encrypt legacy binding rows in-place when the vault is configured."""
+    if not VAULT_KEY:
+        return
+    for row in db.execute("SELECT handle_hash, chat_id FROM bindings").fetchall():
+        try:
+            decrypt_chat_id(row[1])
+        except Exception:
+            db.execute("UPDATE bindings SET chat_id=? WHERE handle_hash=?", (encrypt_chat_id(row[1]), row[0]))
+
+
 def handle_hash(handle: str) -> str:
-    return hashlib.sha256(("dmash-notify-handle-v1:" + handle).encode()).hexdigest()
+    if not VAULT_KEY:
+        raise ValueError("notification vault key is required")
+    key = base64.urlsafe_b64decode(VAULT_KEY.encode("ascii"))
+    return hmac.new(key, b"dmash-notify-blind-v1:" + handle.encode(), hashlib.sha256).hexdigest()
 
 
-def verify_node_request(body: bytes, signature: str):
-    if len(HMAC_KEY) < 32:
+def valid_beacon_handle(handle: str) -> bool:
+    return isinstance(handle, str) and 32 <= len(handle) <= 256 and all(c.isalnum() or c in "-_" for c in handle)
+
+
+def encrypt_chat_id(chat_id: str) -> str:
+    key = base64.urlsafe_b64decode(VAULT_KEY.encode("ascii"))
+    return base64.urlsafe_b64encode(secret.SecretBox(key).encrypt(str(chat_id).encode())).decode("ascii")
+
+
+def decrypt_chat_id(ciphertext: str) -> str:
+    key = base64.urlsafe_b64decode(VAULT_KEY.encode("ascii"))
+    return secret.SecretBox(key).decrypt(base64.urlsafe_b64decode(ciphertext.encode())).decode()
+
+
+def decrypt_node_request(body: bytes) -> dict:
+    """Verify a configured node signature before decrypting its sealed payload."""
+    if not ORIGIN_PRIVATE_KEY_HEX or not AUTHORIZED_NODE_KEYS:
         raise HTTPException(503, "notification service not configured")
-    expected = hmac.new(HMAC_KEY, body, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(expected, signature or ""):
+    try:
+        envelope = json.loads(body)
+        node_id, ciphertext, signature = envelope["node_id"].lower(), envelope["ciphertext"], envelope["signature"]
+        if envelope["version"] != 1 or node_id not in AUTHORIZED_NODE_KEYS:
+            raise ValueError
+        VerifyKey(node_id, encoder=HexEncoder).verify(
+            f"DMP-ORIGIN-NOTIFY|1|{node_id}|{ciphertext}".encode(), base64.b64decode(signature, validate=True),
+        )
+        private_key = PrivateKey(ORIGIN_PRIVATE_KEY_HEX, encoder=HexEncoder)
+        plaintext = SealedBox(private_key).decrypt(base64.b64decode(ciphertext, validate=True))
+        payload = json.loads(plaintext)
+        if not isinstance(payload, dict): raise ValueError
+        return payload
+    except Exception:
         raise HTTPException(403, "invalid node authentication")
 
 
@@ -63,10 +125,20 @@ def telegram_call(token: str, method: str, fields: dict) -> dict | None:
         return None
 
 
-def telegram_send(chat_id: str) -> bool:
+def telegram_send(chat_id: str, event_type: str) -> bool:
     if not TOKEN:
         raise HTTPException(503, "telegram integration not configured")
-    return bool(telegram_call(TOKEN, "sendMessage", {"chat_id": chat_id, "text": MESSAGE}))
+    label = NOTIFICATION_LABELS.get(event_type)
+    if not label:
+        raise ValueError("invalid notification event")
+    # The alert intentionally contains neither content nor identifiers. The
+    # sole visible text is a single HTML anchor to the public PWA.
+    return bool(telegram_call(TOKEN, "sendMessage", {
+        "chat_id": chat_id,
+        "text": f'<a href="{PWA_URL}">{label}</a>',
+        "parse_mode": "HTML",
+        "disable_web_page_preview": "true",
+    }))
 
 
 def personal_delivery_target(db: sqlite3.Connection, owner: str) -> tuple[str, str] | None:
@@ -77,7 +149,7 @@ def personal_delivery_target(db: sqlite3.Connection, owner: str) -> tuple[str, s
     """
     if not VAULT_KEY:
         return None
-    chat_id = EnrollmentStore().chat_id_for_owner(db, owner)
+    chat_id = EnrollmentStore().chat_id_for_owner(db, owner, VAULT_KEY)
     if not chat_id:
         return None
     token = PersonalBotVault(VAULT_KEY).decrypt_for_delivery(db, owner)
@@ -128,7 +200,62 @@ def verify_personal_request(db: sqlite3.Connection, payload: dict, action: str) 
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "telegram_configured": bool(TOKEN), "node_auth_configured": len(HMAC_KEY) >= 32, "personal_bot_enrollment_configured": bool(VAULT_KEY and PERSONAL_WEBHOOK_URL.startswith("https://"))}
+    return {"status": "ok", "telegram_configured": bool(TOKEN), "node_auth_configured": bool(ORIGIN_PRIVATE_KEY_HEX and AUTHORIZED_NODE_KEYS), "personal_bot_enrollment_configured": bool(VAULT_KEY and PERSONAL_WEBHOOK_URL.startswith("https://"))}
+
+
+@app.post("/v1/beacon/remove")
+async def remove_beacon(request: Request):
+    try:
+        payload = await request.json()
+    except json.JSONDecodeError:
+        raise HTTPException(400, "invalid JSON")
+    if not isinstance(payload, dict):
+        raise HTTPException(400, "invalid request")
+    db = connect_db()
+    try:
+        verify_personal_request(db, payload, "BEACON_REMOVE")
+        handle = payload.get("beacon_handle")
+        if not valid_beacon_handle(handle):
+            raise HTTPException(400, "invalid beacon handle")
+        removed = db.execute("DELETE FROM bindings WHERE handle_hash=?", (handle_hash(handle),)).rowcount == 1
+        db.commit()
+        return {"status": "removed" if removed else "not_configured"}
+    finally:
+        db.close()
+
+
+@app.post("/v1/telegram/webhook")
+async def telegram_beacon_webhook(request: Request, x_telegram_bot_api_secret_token: str = Header(default="")):
+    if not TELEGRAM_WEBHOOK_SECRET or not hmac.compare_digest(x_telegram_bot_api_secret_token, TELEGRAM_WEBHOOK_SECRET):
+        raise HTTPException(403, "invalid Telegram webhook")
+    try:
+        message = (await request.json()).get("message", {})
+        chat_id, command = message.get("chat", {}).get("id"), message.get("text", "")
+    except (AttributeError, json.JSONDecodeError):
+        raise HTTPException(400, "invalid Telegram update")
+    if chat_id is None or not isinstance(command, str):
+        return {"status": "ignored"}
+    with connect_db() as db:
+        migrate_binding_chat_ids(db)
+        if command.startswith("/start "):
+            handle = command.removeprefix("/start ").strip()
+            if not valid_beacon_handle(handle):
+                return {"status": "ignored"}
+            key = handle_hash(handle)
+            existing = db.execute("SELECT chat_id FROM bindings WHERE handle_hash=?", (key,)).fetchone()
+            db.execute("INSERT OR REPLACE INTO bindings (handle_hash, chat_id, enabled) VALUES (?, ?, 1)", (key, encrypt_chat_id(str(chat_id))))
+            db.commit()
+            telegram_call(TOKEN, "sendMessage", {"chat_id": str(chat_id), "text": BEACON_ALREADY_MESSAGE if existing else BEACON_CONNECTED_MESSAGE})
+            return {"status": "already_bound" if existing else "bound"}
+        if command.strip() == "/stop":
+            removed = False
+            for key, stored_chat in db.execute("SELECT handle_hash, chat_id FROM bindings").fetchall():
+                if hmac.compare_digest(chat_id_for_binding(stored_chat), str(chat_id)):
+                    db.execute("DELETE FROM bindings WHERE handle_hash=?", (key,)); removed = True
+            db.commit()
+            if removed: telegram_call(TOKEN, "sendMessage", {"chat_id": str(chat_id), "text": BEACON_STOPPED_MESSAGE})
+            return {"status": "stopped" if removed else "not_configured"}
+    return {"status": "ignored"}
 
 
 @app.post("/v1/personal-bots/enroll")
@@ -143,6 +270,7 @@ async def enroll_personal_bot(request: Request):
     if not isinstance(token, str):
         raise HTTPException(400, "invalid bot token")
     with connect_db() as db:
+        migrate_binding_chat_ids(db)
         owner = verify_personal_request(db, payload, "PERSONAL_BOT_ENROLL")
         bot = telegram_call(token, "getMe", {})
         if not bot or not bot.get("username"):
@@ -244,19 +372,31 @@ async def personal_webhook(request: Request, x_telegram_bot_api_secret_token: st
     except (json.JSONDecodeError, AttributeError):
         raise HTTPException(400, "invalid Telegram update")
     with connect_db() as db:
-        owner = EnrollmentStore().bind_from_webhook(db, x_telegram_bot_api_secret_token, str(chat_id), command)
+        stopped = EnrollmentStore().stop_from_webhook(db, x_telegram_bot_api_secret_token, str(chat_id), command, VAULT_KEY)
+        if stopped:
+            db.commit()
+            telegram_call(TOKEN, "sendMessage", {"chat_id": str(chat_id), "text": BEACON_STOPPED_MESSAGE})
+            return {"status": "stopped"}
+        start_status = EnrollmentStore().status_for_start(db, x_telegram_bot_api_secret_token, command)
+        if start_status == "already_bound":
+            telegram_call(TOKEN, "sendMessage", {"chat_id": str(chat_id), "text": BEACON_ALREADY_MESSAGE})
+            return {"status": "already_bound"}
+        owner = EnrollmentStore().bind_from_webhook(db, x_telegram_bot_api_secret_token, str(chat_id), command, VAULT_KEY)
         if not owner:
             raise HTTPException(403, "invalid enrollment webhook")
         db.commit()
+    # Confirm only after the one-time deep-link code was accepted and consumed.
+    # The response intentionally does not echo the code, owner alias, chat ID,
+    # or any notification handle back into Telegram.
+    telegram_call(TOKEN, "sendMessage", {"chat_id": str(chat_id), "text": BEACON_CONNECTED_MESSAGE})
     return {"status": "bound"}
 
 
 @app.post("/v1/notify")
-async def notify(request: Request, x_dmash_signature: str = Header(default="")):
+async def notify(request: Request):
     body = await request.body()
-    verify_node_request(body, x_dmash_signature)
     try:
-        payload = json.loads(body)
+        payload = decrypt_node_request(body)
         handle = payload["notification_handle"]
         key = payload["idempotency_key"]
         expires_at = int(payload["expires_at"])
@@ -270,7 +410,14 @@ async def notify(request: Request, x_dmash_signature: str = Header(default="")):
         row = db.execute("SELECT chat_id FROM bindings WHERE handle_hash = ? AND enabled = 1", (handle_hash(handle),)).fetchone()
         if not row:
             return {"status": "no_binding"}
-        if not telegram_send(row[0]):
+        try:
+            version = int(payload["version"])
+            event_type = payload["event_type"]
+            if version != 2 or not isinstance(event_type, str) or event_type not in NOTIFICATION_LABELS:
+                raise ValueError
+        except (KeyError, TypeError, ValueError):
+            raise HTTPException(400, "invalid notification event")
+        if not telegram_send(chat_id_for_binding(row[0]), event_type):
             raise HTTPException(502, "notification provider unavailable")
         db.execute("INSERT INTO delivered (idempotency_key, delivered_at, expires_at) VALUES (?, ?, ?)", (key, int(time.time()), expires_at))
         db.execute("DELETE FROM delivered WHERE expires_at < ?", (int(time.time()),))

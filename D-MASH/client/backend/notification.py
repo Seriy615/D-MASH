@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import hashlib
 import hmac
 import json
@@ -14,10 +15,16 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from typing import Awaitable, Callable, Optional
+from nacl.encoding import HexEncoder
+from nacl.public import PublicKey, SealedBox
 
 
 log = logging.getLogger("dmash.notification")
 SendCallback = Callable[[dict], Awaitable[bool]]
+
+# Node-originated events carry no message text, sender ID, or routing locator.
+# The label is the entire semantic disclosure made to the notification provider.
+NOTIFICATION_EVENTS = frozenset({"MALYAVA", "INCOMING_BAZAR"})
 
 
 @dataclass
@@ -27,6 +34,7 @@ class PendingNotification:
     idempotency_key: str
     created_at: int
     expires_at: int
+    event_type: str = "MALYAVA"
     task: Optional[asyncio.Task] = None
     cancelled: bool = False
     notified: bool = False
@@ -45,11 +53,14 @@ class NotificationTrigger:
         notification_handle: str,
         pending_id: Optional[str] = None,
         *,
+        event_type: str = "MALYAVA",
         created_at: Optional[int] = None,
         expires_at: Optional[int] = None,
     ) -> str:
         if not notification_handle or len(notification_handle) > 256:
             raise ValueError("invalid notification handle")
+        if event_type not in NOTIFICATION_EVENTS:
+            raise ValueError("invalid notification event")
         pending_id = pending_id or secrets.token_hex(16)
         if pending_id in self.pending:
             return pending_id
@@ -62,6 +73,7 @@ class NotificationTrigger:
             idempotency_key=hashlib.sha256(f"dmash-notify-v1:{pending_id}".encode()).hexdigest(),
             created_at=created_at,
             expires_at=expires_at,
+            event_type=event_type,
         )
         self.pending[pending_id] = state
         state.task = asyncio.create_task(self._run(state))
@@ -87,8 +99,9 @@ class NotificationTrigger:
                 if state.cancelled or int(time.time()) >= state.expires_at:
                     return
                 payload = {
-                    "version": 1,
+                    "version": 2,
                     "notification_handle": state.notification_handle,
+                    "event_type": state.event_type,
                     "idempotency_key": state.idempotency_key,
                     "created_at": state.created_at,
                     "expires_at": state.expires_at,
@@ -111,20 +124,31 @@ class NotificationTrigger:
 
 
 class OriginNotificationClient:
-    def __init__(self, url: str, hmac_key: bytes, timeout_seconds: float = 5):
+    """Encrypted Origin delivery; plaintext notification data never crosses HTTP."""
+    def __init__(self, url: str, origin_public_key_hex: str, node_crypto, timeout_seconds: float = 5):
         if not url.startswith("https://"):
             raise ValueError("notification Origin must use HTTPS")
-        if len(hmac_key) < 32:
-            raise ValueError("notification HMAC key must be at least 32 bytes")
-        self.url, self.hmac_key, self.timeout_seconds = url, hmac_key, timeout_seconds
+        if not node_crypto or not node_crypto.signing_key or not node_crypto.node_id:
+            raise ValueError("node identity is required for Origin notifications")
+        try:
+            self.origin_public_key = PublicKey(origin_public_key_hex, encoder=HexEncoder)
+        except Exception as exc:
+            raise ValueError("DMASH_NOTIFICATION_ORIGIN_PUBLIC_KEY must be a Curve25519 public key in hex") from exc
+        self.url, self.node_crypto, self.timeout_seconds = url, node_crypto, timeout_seconds
 
     async def send(self, payload: dict) -> bool:
-        body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-        signature = hmac.new(self.hmac_key, body, hashlib.sha256).hexdigest()
+        plaintext = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+        ciphertext = base64.b64encode(SealedBox(self.origin_public_key).encrypt(plaintext)).decode("ascii")
+        transcript = f"DMP-ORIGIN-NOTIFY|1|{self.node_crypto.node_id}|{ciphertext}"
+        envelope = {
+            "version": 1, "node_id": self.node_crypto.node_id,
+            "ciphertext": ciphertext, "signature": self.node_crypto.sign_challenge(transcript),
+        }
+        body = json.dumps(envelope, sort_keys=True, separators=(",", ":")).encode()
 
         def request() -> bool:
             req = urllib.request.Request(self.url, data=body, method="POST", headers={
-                "Content-Type": "application/json", "X-DMASH-Signature": signature,
+                "Content-Type": "application/json",
             })
             try:
                 with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
@@ -135,9 +159,9 @@ class OriginNotificationClient:
         return await asyncio.to_thread(request)
 
     @classmethod
-    def from_env(cls) -> Optional["OriginNotificationClient"]:
+    def from_env(cls, node_crypto) -> Optional["OriginNotificationClient"]:
         url = os.getenv("DMASH_NOTIFICATION_ORIGIN_URL")
-        key = os.getenv("DMASH_NOTIFICATION_HMAC_KEY")
-        if not url or not key:
+        public_key = os.getenv("DMASH_NOTIFICATION_ORIGIN_PUBLIC_KEY")
+        if not url or not public_key:
             return None
-        return cls(url, key.encode())
+        return cls(url, public_key, node_crypto)

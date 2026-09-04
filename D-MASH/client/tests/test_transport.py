@@ -89,6 +89,26 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(destination_route["next_hop_id"], "LOCAL")
         self.assertTrue(destination_route["is_local"])
 
+    async def test_contact_submit_validates_opaque_envelope_and_keeps_reply_route_ephemeral(self):
+        await self.db.add_route_alias(self.db.node_crypto.get_blind_hash("contact-route"), "peer", 1)
+        envelope = {"version": 1, "type": "CONTACT_REQUEST_V1",
+                    "request_id": "a" * 43, "ciphertext": "z" * 43}
+        result = await self.transport.submit_contact("contact-route", envelope, reply_route="reply-route")
+        self.assertEqual(result.state, "SUBMITTED_TO_ENTRY")
+        self.assertEqual(self.transport.contact_reply_route("a" * 43), "reply-route")
+        with self.assertRaises(ValueError):
+            await self.transport.submit_contact("contact-route", {**envelope, "ciphertext": "%%%"})
+
+    async def test_contact_receive_deduplicates_request_id(self):
+        handle = await self.transport.register_inbound_locator("contact-inbox")
+        await self.db.add_route_alias(handle, "LOCAL", 0, is_local=True)
+        envelope = {"version": 1, "type": "CONTACT_ACCEPT_V1",
+                    "request_id": "b" * 43, "ciphertext": "x" * 43}
+        packet = {"type": "DMP_C_DATA", "id": "hop-1", "route_id": "contact-inbox", "envelope": envelope}
+        self.assertIsNotNone(await self.transport.receive_data(packet, "peer"))
+        packet["id"] = "hop-2"
+        self.assertIsNone(await self.transport.receive_data(packet, "peer"))
+
     async def test_submit_envelope_uses_route_alias_and_not_raw_locator(self):
         raw_locator = "pairing-locator-that-must-not-leak"
         locator_handle = await self.transport.register_inbound_locator(raw_locator)

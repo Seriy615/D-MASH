@@ -25,7 +25,14 @@ app.include_router(router)
 app.include_router(client_gateway_router)
 
 # 3. Статика (Frontend)
-frontend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
+backend_path = os.path.dirname(os.path.abspath(__file__))
+# Canonical checkout: ``client/frontend``. Docker/Compose: ``backend/frontend``.
+# Prefer a present mount so either supported runtime layout starts correctly.
+frontend_candidates = (
+    os.path.join(backend_path, "frontend"),
+    os.path.join(os.path.dirname(backend_path), "frontend"),
+)
+frontend_path = next((path for path in frontend_candidates if os.path.isdir(path)), frontend_candidates[-1])
 if os.path.exists(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 else:

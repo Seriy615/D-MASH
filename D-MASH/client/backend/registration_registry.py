@@ -12,8 +12,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Optional, Union
 
-from .dnss import node_blind_hash
-from .entry_grant import EntryGrantV1
+if __package__:  # Package imports must share backend's EntryGrantV1 identity.
+    from .dnss import node_blind_hash
+    from .entry_grant import EntryGrantV1
+else:  # Runtime scripts import backend modules as top-level modules.
+    from dnss import node_blind_hash
+    from entry_grant import EntryGrantV1
 
 
 DNSS = Union[bytes, bytearray, memoryview]

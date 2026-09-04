@@ -18,6 +18,7 @@ from nacl.exceptions import BadSignatureError
 from nacl.signing import SigningKey, VerifyKey
 
 BytesLike = Union[bytes, bytearray, memoryview]
+DEFAULT_RESOURCE_POW_DIFFICULTY = 22
 
 
 def _node_bytes(node_id: Union[str, BytesLike]) -> bytes:
@@ -182,7 +183,8 @@ def _meets(digest: bytes, difficulty: int) -> bool:
     return difficulty == 0 or (int.from_bytes(digest, "big") >> (256 - difficulty)) == 0
 
 
-def create_resource_pow(node_id, resource: str, difficulty: int = 8) -> dict:
+def create_resource_pow(node_id, resource: str,
+                        difficulty: int = DEFAULT_RESOURCE_POW_DIFFICULTY) -> dict:
     nid = _node_bytes(node_id)
     if not isinstance(resource, str) or not resource or not isinstance(difficulty, int) or not 0 <= difficulty <= 256:
         raise ValueError("invalid resource or difficulty")

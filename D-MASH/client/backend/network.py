@@ -5,13 +5,43 @@ import time
 from datetime import datetime
 from websockets.server import serve
 from websockets.client import connect as ws_connect
-from database import DatabaseManager
 import base64
-# Добавьте в начало
-from dsp import AudioProcessor
-from crypto import NodeCryptoManager # <-- Импортируем для статических методов
-from transport import NodeTransportService
+
+# The daemon historically imports backend modules as top-level scripts, while
+# tests and embedding code import them as ``backend.*``.  Keep both modes
+# explicit so package imports cannot accidentally resolve an unrelated
+# third-party ``crypto`` module.
+if __package__:
+    from .database import DatabaseManager
+    from .dsp import AudioProcessor
+    from .crypto import NodeCryptoManager
+    from .transport import NodeTransportService
+else:
+    from database import DatabaseManager
+    from dsp import AudioProcessor
+    from crypto import NodeCryptoManager
+    from transport import NodeTransportService
+
 HANDSHAKE_TIMEOUT = 10.0
+
+
+class LegacyRelayUnavailableError(RuntimeError):
+    """Raised when a retired raw relay packet path is invoked.
+
+    The message intentionally contains no packet fields: these paths may be
+    reached with untrusted sensitive payloads.
+    """
+
+
+LEGACY_RELAY_UNAVAILABLE_DETAIL = (
+    "Legacy raw P2P relay is unavailable; migrate to the DMP-C Device transport."
+)
+
+
+def _legacy_relay_unavailable():
+    raise LegacyRelayUnavailableError(LEGACY_RELAY_UNAVAILABLE_DETAIL)
+
+
 class P2PNode:
     def __init__(self, system_db: DatabaseManager, *, can_route: bool = False, can_accept_devices: bool = False):
         self.system_db = system_db
@@ -195,24 +225,26 @@ class P2PNode:
                 if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2", "DMP_C_DATA", "PROBE", "DATA"} and not self.can_route:
                     return
 
-                # Регистрируем пакет (внутри используется хеширование ID)
-                is_new = await self.system_db.mark_packet_seen(pkt_id)
-
                 if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2"}:
+                    # DMP-C remains capability-gated by the existing policy.
+                    is_new = await self.system_db.mark_packet_seen(pkt_id)
                     await self._handle_dmp_c_probe(packet, from_peer, is_new)
                 elif pkt_type == "DMP_C_DATA":
+                    is_new = await self.system_db.mark_packet_seen(pkt_id)
                     if is_new:
                         await self._handle_dmp_c_data(packet, from_peer)
-
-                if pkt_type == "PROBE":
-                    await self._handle_probe(packet, from_peer, is_new)
-                elif pkt_type == "DATA":
-                    if is_new:
-                        await self._handle_data(packet, from_peer)
+                elif pkt_type in {"PROBE", "DATA"}:
+                    # Reject before seen-packet tracking or any relay/storage
+                    # side effect.  Never interpolate the raw envelope here.
+                    _legacy_relay_unavailable()
         except Exception as e:
             print(f"❌ Packet error: {e}")
 
     async def _handle_probe(self, packet, from_peer, is_new_probe):
+        _legacy_relay_unavailable()
+
+        # Retained below only as unreachable historical reference; legacy raw
+        # probes must not create routes, mailbox entries, or outbox rows.
         probe_id = packet['id']
         route_id = packet['route_id']
         rev_id = packet['rev_id']
@@ -300,6 +332,8 @@ class P2PNode:
 
     async def _send_probe_response(self, requester_id):
         """Боб отправляет свою пробу Алисе в ответ"""
+        _legacy_relay_unavailable()
+
         print(f"🔄 [PROBE] Sending symmetric response to {requester_id[:8]}")
 
         route_id = self.active_crypto.get_route_id(self.active_user_id, requester_id)
@@ -336,6 +370,8 @@ class P2PNode:
 
     async def _handle_data(self, packet, from_peer):
         """Пересылка данных"""
+        _legacy_relay_unavailable()
+
         route_id = packet.get('route_id')
 
         # BLIND ROUTING: Получаем расшифрованный лучший маршрут
@@ -396,6 +432,8 @@ class P2PNode:
             await self.system_db.conn.commit()
 
     async def _deliver_to_active_user(self, packet, sender_id_hint):
+        _legacy_relay_unavailable()
+
         if not self.active_crypto or not self.active_user_db:
             return False
 
