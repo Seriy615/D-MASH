@@ -298,7 +298,13 @@ const Core = {
             const routeId = route?.routeId || route?.route_id;
             if (typeof routeId !== 'string' || !routeId || seen.has(routeId)) return false;
             // Account association is local policy. Never forward account IDs.
-            if (route.accountId && route.accountId !== identity) return false;
+            // The enclosing registry record is the authoritative association.
+            // If an imported descriptor carries an association as well, accept
+            // both supported spellings only when it agrees with that record.
+            // This prevents a malformed A record from advertising a route
+            // explicitly labelled for B.
+            const routeAccountId = route.accountId ?? route.account_id;
+            if (routeAccountId && routeAccountId !== identity) return false;
             seen.add(routeId);
             return true;
         }).map(route => ({
@@ -2403,155 +2409,52 @@ const Core = {
     ================================================================
     Привязка к биометрии и аппаратным ключам Knox.
     */
-    // Core.setupBiometrics    - Привязка аккаунта к WebAuthn/Passkeys (Knox PRF)
-    setupBiometrics: async function() {
-        if (!window.PublicKeyCredential) return Core.customAlert("ОШИБКА", "Браузер не поддерживает биометрию.");
-
-        Core.customPrompt("KNOX HARDWARE", "Введи КЛЮЧ ДОСТУПА для привязки к железу:", async (key) => {
-            if (!key) return;
-            try {
-                if (!(await Core.verifySessionPassphrase(key))) throw new Error("Ключ доступа не совпадает с текущей сессией");
-                const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
-                const userId = new Uint8Array(16); window.crypto.getRandomValues(userId);
-
-                const createCreds = await navigator.credentials.create({
-                    publicKey: {
-                        challenge,
-                        rp: { name: "MathPro Security", id: window.location.hostname },
-                        user: { id: userId, name: Core.activeIdentity, displayName: Core.activeIdentity },
-                        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-                        authenticatorSelection: {
-                            authenticatorAttachment: "platform",
-                            userVerification: "required",
-                            residentKey: "required"
-                        },
-                        // ТА САМАЯ МАГИЯ: Запрашиваем секрет у Knox
-                        extensions: { prf: { eval: { first: new Uint8Array(32) } } }
-                    }
-                });
-
-                if (createCreds) {
-                    const credId = Core.bytesToHex(new Uint8Array(createCreds.rawId));
-
-                    // Пробуем достать секрет из ответа Knox
-                    let hardwareKey = null;
-                    const extensionRes = createCreds.getClientExtensionResults();
-                    if (extensionRes.prf && extensionRes.prf.results) {
-                        hardwareKey = new Uint8Array(extensionRes.prf.results.first);
-                        console.log("[*] Knox PRF: Hardware key derived.");
-                    }
-
-                    // Шифруем: если Knox дал секрет - юзаем его, если нет - fallback на Master PIN (как было)
-                    const encryptedKey = await Core.encryptWithHardware(key, hardwareKey);
-
-                    await Storage.updateAccountAuth(Core.activeIdentity, {
-                        bio: true,
-                        bio_key: encryptedKey,
-                        cred_id: credId,
-                        has_prf: !!hardwareKey // Пометка, что это железный шифр
-                    });
-                    Core.customAlert("УСПЕХ", hardwareKey ? "Ключ прибит к железу Knox!" : "Палец привязан (Software mode).");
-                }
-            } catch (e) { Core.customAlert("ОТКАЗ", "Knox не ответил: " + e.message); }
-        }, { inputType: 'password' });
-    },
-    // Core.biometricLogin     - Вход в аккаунт через палец/лицо без ввода пароля
-    biometricLogin: async function(id) {
+    // Biometric enrollment is installation-scoped. DeviceRoot is the only
+    // WebAuthn PRF authority; this never reads or writes Account credentials.
+    setupDeviceBiometrics: async function() {
         try {
-            const acc = await Storage.getRegistryAccount(id);
-            if (!acc || !acc.bio_key) return false;
-
-            const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
-            const getAssertion = await navigator.credentials.get({
-                publicKey: {
-                    challenge,
-                    timeout: 60000,
-                    userVerification: "required",
-                    allowCredentials: [{ id: Core.hexToBytes(acc.cred_id), type: 'public-key' }],
-                    // Запрашиваем секрет обратно
-                    extensions: { prf: { eval: { first: new Uint8Array(32) } } }
-                }
-            });
-
-            if (getAssertion) {
-                let hardwareKey = null;
-                const extRes = getAssertion.getClientExtensionResults();
-                if (extRes.prf && extRes.prf.results) {
-                    hardwareKey = new Uint8Array(extRes.prf.results.first);
-                }
-
-                const key = await Core.decryptWithHardware(acc.bio_key, hardwareKey);
-                if (key) { await Core.boot(id, key); return true; }
-                else { Core.customAlert("ОШИБКА", "Не удалось вскрыть железный контейнер."); }
+            if (!this.deviceState || window.DeviceRoot?.state !== this.deviceState) {
+                throw new Error("СНАЧАЛА РАЗБЛОКИРУЙТЕ УСТРОЙСТВО MASTER-КОДОМ");
             }
+            await window.DeviceRoot.enrollWebAuthnPrf();
+            Core.customAlert("УСПЕХ", "Биометрия разблокирует только устройство. Затем выберите аккаунт и введите ключ доступа.");
+            return true;
+        } catch (error) {
+            Core.customAlert("ОТКАЗ", error?.message || "Биометрия устройства недоступна.");
             return false;
-        } catch (e) { return false; }
-    },
-    // Core.encryptWithHardware - Шифрование данных ключом, вытянутым из железа Knox
-    encryptWithHardware: async function(key, hwKey) {
-        const master = localStorage.getItem('sys_m');
-        let baseKey = Core.hexToBytes(master).slice(0, 32);
-
-        // Если Knox дал секрет - мешаем его с Master PIN через XOR или просто HASH
-        if (hwKey) {
-            const combined = new Uint8Array(32);
-            for (let i = 0; i < 32; i++) combined[i] = baseKey[i] ^ hwKey[i];
-            baseKey = combined;
         }
-
-        const n = window.nacl.randomBytes(24);
-        const e = window.nacl.secretbox(new TextEncoder().encode(key), n, baseKey);
-        const res = new Uint8Array(n.length + e.length); res.set(n); res.set(e, n.length);
-        return Core.bytesToHex(res);
     },
-    // Core.decryptWithHardware - Дешифрование через аппаратный ключ
-    decryptWithHardware: async function(blob, hwKey) {
-        const master = localStorage.getItem('sys_m');
-        let baseKey = Core.hexToBytes(master).slice(0, 32);
-
-        if (hwKey) {
-            const combined = new Uint8Array(32);
-            for (let i = 0; i < 32; i++) combined[i] = baseKey[i] ^ hwKey[i];
-            baseKey = combined;
+    // PRF unlock is a device-only boundary. It never bootstraps, derives from,
+    // or enters an Account; Core state is committed only after DeviceRoot has
+    // returned a verified unlocked state.
+    unlockDeviceWithBiometrics: async function() {
+        try {
+            const unlock = window.DeviceRoot?.unlockWithWebAuthnPrf;
+            if (typeof unlock !== "function") throw new Error("БИОМЕТРИЯ УСТРОЙСТВА НЕДОСТУПНА");
+            const state = await unlock.call(window.DeviceRoot);
+            if (!state || !state.root || !state.identity) throw new Error("БИОМЕТРИЯ НЕ РАЗБЛОКИРОВАЛА УСТРОЙСТВО");
+            this.deviceState = state;
+            this.device = Object.freeze({ id: state.identity.deviceId, fingerprints: state.identity.fingerprints, signing: state.identity.signing, agreement: state.identity.agreement });
+            this.quickNameRegistry = null;
+            this.pendingContactRequestStore = null;
+            await window.NodeManager?.onDeviceUnlocked?.();
+            return true;
+        } catch (error) {
+            Core.customAlert("ОТКАЗ", error?.message || "БИОМЕТРИЯ УСТРОЙСТВА НЕДОСТУПНА");
+            return false;
         }
-
-        const r = Core.hexToBytes(blob);
-        if (r.length < 24) return null;
-        const n = r.slice(0, 24), c = r.slice(24);
-        const d = window.nacl.secretbox.open(c, n, baseKey);
-        return d ? new TextDecoder().decode(d) : null;
     },
     // Core.setupLazyLogin     - Сохранение зашифрованного пароля для быстрого входа
     setupLazyLogin: function() {
-        Core.customPrompt("БЕСПАРОЛЬНЫЙ ВХОД", "Введи КЛЮЧ ДОСТУПА для сохранения:", async (key) => {
-            if (!key) return;
-            if (!(await Core.verifySessionPassphrase(key))) throw new Error("Ключ доступа не совпадает с текущей сессией");
-            const encryptedKey = await Core.encryptForBio(key); // Тоже шифруем Мастер-кодом
-            await Storage.updateAccountAuth(Core.activeIdentity, { lazy: true, lazy_key: encryptedKey });
-            Core.customAlert("ГОТОВО", "Теперь вход для этого акка — в один тап.");
-        }, { inputType: 'password' });
+        Core.customAlert("ОТКАЗ", "Беспарольный вход аккаунта недоступен.");
     },
     // Core.lazyLogin          - Вход в один тап через Master PIN
     lazyLogin: async function(id) {
-        const acc = await Storage.getRegistryAccount(id);
-        if (!acc || !acc.lazy_key) return false;
-        const key = await Core.decryptFromBio(acc.lazy_key);
-        if (key) { await Core.boot(id, key); return true; }
         return false;
     },
     // Core.encryptForBio      - Шифрование пароля для "ленивого" входа
     encryptForBio: async function(key) {
-        try {
-            const master = localStorage.getItem('sys_m'); // Хеш Master PIN
-            if (!master) return null;
-            const n = window.nacl.randomBytes(24);
-            // Берем первые 32 байта хеша как ключ для secretbox
-            const masterKey = Core.hexToBytes(master).slice(0, 32);
-            const e = window.nacl.secretbox(new TextEncoder().encode(key), n, masterKey);
-            const res = new Uint8Array(n.length + e.length);
-            res.set(n); res.set(e, n.length);
-            return Core.bytesToHex(res);
-        } catch (e) { return null; }
+        return null;
     },
     verifySessionPassphrase: async function(passphrase) {
         if (!this.activeIdentity || !this.gammaKeys?.master || typeof window.argon2 === 'undefined') return false;
@@ -2620,7 +2523,7 @@ const Core = {
                 <button class="sys-modal-btn" onclick="Core.openQuickNames()">🏷️ БЫСТРЫЕ ИМЕНА</button>
                 <button class="sys-modal-btn" onclick="Core.openPendingContacts()">📨 ЗАПРОСЫ В КОНТАКТЫ</button>
                 <button class="sys-modal-btn" onclick="Core.toggleFlipper()">ЭКСТРЕННЫЙ ФЛИП-ЛОК: ${panicGestureEnabled ? 'ВКЛ' : 'ВЫКЛ'}</button>
-                <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🧬 ПРИВЯЗАТЬ ОТПЕЧАТОК/FACE</button>
+                <button class="sys-modal-btn" onclick="Core.setupDeviceBiometrics()">🧬 БИОМЕТРИЯ УСТРОЙСТВА</button>
                 <button class="sys-modal-btn" onclick="Core.setupLazyLogin()">💤 ВКЛЮЧИТЬ БЕСПАРОЛЬНЫЙ ВХОД</button>
                 <button class="sys-modal-btn" onclick="ui.startMasterReconfiguration()">СМЕНИТЬ MASTER-КОД</button>
                 <button class="sys-modal-btn primary" onclick="Core.closeModal()">ЗАКРЫТЬ</button>
@@ -2794,14 +2697,14 @@ const Core = {
     openAccountManager: async function() {
         const accounts = await Storage.getAllRegistryAccounts();
         let listHtml = accounts.map(acc => {
-            const hasExtra = acc.bio || acc.lazy;
+            const hasExtra = acc.lazy;
             return `
             <div style="background:#111; padding:12px; margin-bottom:10px; border:1px solid #333; text-align:left;">
                 <div style="margin-bottom:8px;">
                     <b style="color:var(--main);">${acc.id}</b>
                     <div style="font-size:0.6rem; color:#555;">${acc.pk.substring(0,16)}...</div>
                     <div style="font-size:0.6rem; color:var(--op); margin-top:4px;">
-                        ${acc.bio ? '[🧬 БИОМЕТРИЯ] ' : ''} ${acc.lazy ? '[⚡ ЛЕНИВЫЙ] ' : ''}
+                        ${acc.lazy ? '[⚡ ЛЕНИВЫЙ] ' : ''}
                     </div>
                 </div>
                 <div style="display:flex; gap:5px;">
@@ -2824,7 +2727,6 @@ const Core = {
         Core.customPrompt("ОБНУЛЕНИЕ", `Введите "СБРОС" для ${id}:`, async (val) => {
             if (val === "СБРОС") {
                 await Storage.updateAccountAuth(id, {
-                    bio: false, bio_key: null, cred_id: null,
                     lazy: false, lazy_key: null
                 });
                 Core.customAlert("ГОТОВО", "Ключи Knox и ленивый вход удалены из памяти приложения.");

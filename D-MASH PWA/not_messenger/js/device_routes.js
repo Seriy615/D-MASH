@@ -134,11 +134,26 @@
             if (!Number.isSafeInteger(issuedAt) || issuedAt < 0) throw new RouteError("INVALID_ISSUED_AT", "Route issue time is invalid.");
             const index = this._loadIndex();
             const current = await this._generate(this._newMaterialName(), policy, issuedAt);
+            // Activation is local device policy.  It is intentionally absent
+            // from the certificate, just like account allow-lists.
+            current.active = true;
             // Reissue fallback is strictly bounded: retain only the immediately
             // preceding route, replacing any older fallback in the public index.
             this._saveIndex({ version: VERSION, current, previous: index.current || null });
             this._emitLifecycle(index.current ? "ROUTE_REISSUED" : "ROUTE_ISSUED", current);
             return this.publicRoute(current);
+        },
+        // End-user alias: reissuing always creates fresh route key material.
+        // Unless explicitly supplied, it retains the current route's local
+        // policy; an account session is never consulted.
+        async reissue({ type, allowedAccounts, issuedAt = Date.now() } = {}) {
+            const current = this._loadIndex().current;
+            if (!current && type === undefined) throw new RouteError("NO_CURRENT_ROUTE", "Create a public route before reissuing it.");
+            return this.issue({
+                type: type === undefined ? current.type : type,
+                allowedAccounts: allowedAccounts === undefined ? current.allowedAccounts : allowedAccounts,
+                issuedAt
+            });
         },
         publicRoute(route) {
             if (!route?.certificate || !this.verifyCertificate(route.certificate)) throw new RouteError("INVALID_CERTIFICATE", "Route certificate self-signature is invalid.");
@@ -147,6 +162,33 @@
         current() {
             const route = this._loadIndex().current;
             return route ? this.publicRoute(route) : null;
+        },
+        // Device-local management view.  `active` and `type` are local policy
+        // data and must not be used as a shareable route descriptor.
+        list() {
+            const { current, previous } = this._loadIndex();
+            return [current, previous].filter(Boolean).map((route, index) => Object.freeze({
+                ...this.publicRoute(route),
+                active: route.active !== false,
+                current: index === 0,
+                type: route.type
+            }));
+        },
+        activePublicRoutes() {
+            return this.list().filter(route => route.active);
+        },
+        activate(routeId, active = true) {
+            if (typeof routeId !== "string" || !routeId) throw new RouteError("INVALID_ROUTE_ID", "Route ID is invalid.");
+            if (typeof active !== "boolean") throw new RouteError("INVALID_ACTIVE_STATE", "Route activation state is invalid.");
+            const index = this._loadIndex();
+            let changed = null;
+            for (const route of [index.current, index.previous]) {
+                if (route?.certificate?.routeId === routeId) { route.active = active; changed = route; break; }
+            }
+            if (!changed) throw new RouteError("NOT_FOUND", "Public route was not found.");
+            this._saveIndex(index);
+            this._emitLifecycle(active ? "ROUTE_ACTIVATED" : "ROUTE_DEACTIVATED", changed);
+            return Object.freeze({ ...this.publicRoute(changed), active, current: index.current === changed, type: changed.type });
         },
         // Resolution is local-only and considers current then exactly one prior
         // reissue. It returns policy but never a private key.

@@ -138,5 +138,19 @@ manager.connections.set(connection.endpoint.url, connection);
   resolveLogoutLookup({ privateRoutes: [{ routeId: "b-private-stale" }] });
   await new Promise(resolve => setImmediate(resolve));
   assert.deepEqual(advertised, [], "private routes are not dispatched after logout/reconnect during lookup");
+
+  // Route descriptors live beneath one registry account.  A descriptor that
+  // additionally claims another account is malformed and must stay isolated,
+  // whereas legacy snake_case association remains supported.
+  coreStorage.getRegistryAccount = async identity => ({ privateRoutes: [
+    { routeId: `${identity}-owned`, accountId: identity },
+    { routeId: "foreign-camel", accountId: "B" },
+    { route_id: `${identity}-legacy`, account_id: identity },
+    { routeId: "foreign-snake", account_id: "B" },
+  ] });
+  lifecycleCore.activeIdentity = "A";
+  const ownedRoutes = await lifecycleCore.activeAccountPrivateRoutes();
+  assert.deepEqual(ownedRoutes.map(route => route.routeId), ["A-owned", "A-legacy"], "only routes associated with active account A are selected");
+  assert.equal(ownedRoutes.some(route => route.routeId.startsWith("foreign-")), false, "foreign account descriptors never cross account boundary");
   console.log("Private route lifecycle: all assertions passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });

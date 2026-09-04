@@ -14,6 +14,7 @@
     const VERSION = 1;
     const NODE_PREFIX = "#/node/";
     const CONTACT_PREFIX = "#/c/";
+    const ROUTE_PREFIX = "#/r/";
     const HEX_32 = /^[0-9a-f]{64}$/;
     const B64URL = /^[A-Za-z0-9_-]+$/;
     const MAX_LABEL_LENGTH = 120;
@@ -126,6 +127,19 @@
         return result;
     }
 
+    function canonicalRoute(input) {
+        if (!isPlainObject(input)) fail("Public route descriptor must be an object.");
+        requireOnlyKeys(input, ["v", "r", "c"]);
+        if (input.v !== VERSION) fail("Unsupported public route descriptor version.");
+        if (typeof input.r !== "string" || !B64URL.test(input.r) || input.r.length !== 43) fail("Public RouteID is invalid.");
+        if (!isPlainObject(input.c) || input.c.routeId !== input.r || input.c.signingPublicKey !== input.r ||
+            typeof input.c.boxPublicKey !== "string" || !B64URL.test(input.c.boxPublicKey) || input.c.boxPublicKey.length !== 43 ||
+            !Number.isSafeInteger(input.c.issuedAt) || input.c.issuedAt < 0 || typeof input.c.signature !== "string" || !B64URL.test(input.c.signature) || input.c.signature.length !== 86) {
+            fail("Public route certificate is invalid.");
+        }
+        return { v: VERSION, r: input.r, c: { version: VERSION, routeId: input.r, signingPublicKey: input.r, boxPublicKey: input.c.boxPublicKey, issuedAt: input.c.issuedAt, signature: input.c.signature } };
+    }
+
     function assertCanonical(encoded, descriptor) {
         if (encodeDescriptor(descriptor) !== encoded) fail("Descriptor is not canonically encoded.");
     }
@@ -148,9 +162,16 @@
         assertCanonical(encoded, result);
         return result;
     }
+    function serializeDmashRouteUri(route) { return ROUTE_PREFIX + encodeDescriptor(canonicalRoute({ v: VERSION, r: route?.routeId, c: route?.certificate })); }
+    function parseDmashRouteUri(uri) {
+        const { descriptor, encoded } = decodeDescriptor(uri, ROUTE_PREFIX);
+        const result = canonicalRoute(descriptor);
+        assertCanonical(encoded, result);
+        return result;
+    }
 
     const api = Object.freeze({
-        DmashLinkError, parseDmashNodeUri, serializeDmashNodeUri, parseDmashContactUri, serializeDmashContactUri
+        DmashLinkError, parseDmashNodeUri, serializeDmashNodeUri, parseDmashContactUri, serializeDmashContactUri, parseDmashRouteUri, serializeDmashRouteUri
     });
     Object.assign(global, api);
     if (typeof module !== "undefined" && module.exports) module.exports = api;

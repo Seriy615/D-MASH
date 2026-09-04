@@ -17,12 +17,27 @@
     const VERSION = 1;
     const ROOT_BYTES = 32;
     const WRAP_SALT_BYTES = 16;
+    const WRAP_KEY_BYTES = 32;
+    const WRAP_IV_BYTES = 12;
+    const GCM_TAG_BYTES = 16;
     const AAD = new TextEncoder().encode("dmash/device-root-wrap/v1");
+    const PRF_WRAP = "webauthn-prf-aes-256-gcm-v1";
+    const PRF_AAD = new TextEncoder().encode("dmash/device-root-webauthn-prf-wrap/v1");
+    const PRF_SALT_BYTES = 32;
+    const PRF_OUTPUT_BYTES = 32;
     const ZERO_SALT = new Uint8Array(32);
 
     const utf8 = (value) => new TextEncoder().encode(value);
     const b64 = (bytes) => btoa(String.fromCharCode(...bytes));
     const unb64 = (value) => new Uint8Array(atob(value).split("").map((char) => char.charCodeAt(0)));
+    const decodeB64 = (value, length) => {
+        if (typeof value !== "string" || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) throw new Error("invalid base64");
+        const bytes = unb64(value);
+        // Reject non-canonical encodings so persisted cryptographic fields have
+        // one representation and malformed records cannot be interpreted leniently.
+        if (b64(bytes) !== value || (length !== undefined && bytes.length !== length)) throw new Error("invalid encoded length");
+        return bytes;
+    };
     const u32 = (value) => {
         const bytes = new Uint8Array(4);
         new DataView(bytes.buffer).setUint32(0, value, false);
@@ -86,6 +101,7 @@
             pairing: "dmash/device-pairing",
             routing: "dmash/device-routing",
             transportAuth: "dmash/device-transport-auth",
+            notificationBeacon: "dmash/device-notification-beacon",
             mlKemSeedRoot: "dmash/device-mlkem-seed-root"
         }),
         store: null,
@@ -97,6 +113,27 @@
         _store() { return this.store || (this.store = new IndexedDbDeviceRootStore()); },
         _requireCrypto() {
             if (!this._crypto?.getRandomValues || !this._crypto?.subtle) throw new DeviceRootError("CRYPTO_UNAVAILABLE", "Web Crypto is required for device identity.");
+        },
+        _credentials() { return global.navigator?.credentials; },
+        _requireWebAuthn() {
+            if (global.isSecureContext !== true || typeof this._credentials()?.create !== "function" || typeof this._credentials()?.get !== "function") {
+                throw new DeviceRootError("WEBAUTHN_UNAVAILABLE", "Platform WebAuthn PRF is unavailable; use the calculator master secret.");
+            }
+        },
+        _webauthnChallenge() { return this._crypto.getRandomValues(new Uint8Array(32)); },
+        _prfResult(credential) {
+            const result = credential?.getClientExtensionResults?.()?.prf?.results?.first;
+            const bytes = result instanceof ArrayBuffer ? new Uint8Array(result) :
+                (ArrayBuffer.isView(result) ? new Uint8Array(result.buffer, result.byteOffset, result.byteLength) : null);
+            if (!bytes || bytes.length !== PRF_OUTPUT_BYTES) throw new DeviceRootError("WEBAUTHN_PRF_UNAVAILABLE", "The platform credential did not provide a WebAuthn PRF result.");
+            return new Uint8Array(bytes);
+        },
+        _credentialId(credential) {
+            const rawId = credential?.rawId;
+            const bytes = rawId instanceof ArrayBuffer ? new Uint8Array(rawId) :
+                (ArrayBuffer.isView(rawId) ? new Uint8Array(rawId.buffer, rawId.byteOffset, rawId.byteLength) : null);
+            if (!bytes?.length || bytes.length > 1024) throw new DeviceRootError("WEBAUTHN_ENROLLMENT_FAILED", "Platform WebAuthn did not return a valid credential.");
+            return b64(bytes);
         },
         canonicalInfo(domain, version = VERSION, context = "") {
             if (typeof domain !== "string" || !domain || typeof context !== "string" || !Number.isInteger(version) || version < 1) {
@@ -117,27 +154,41 @@
         async _wrapKey(masterPin, salt) {
             if (typeof masterPin !== "string" || !masterPin) throw new DeviceRootError("MASTER_PIN_REQUIRED", "A calculator master PIN is required to unlock this device.");
             if (!global.argon2?.hash) throw new DeviceRootError("ARGON2_UNAVAILABLE", "Password hardening is unavailable; device identity was not changed.");
-            const result = await global.argon2.hash({
-                pass: masterPin,
-                salt: b64(salt),
-                time: 3,
-                mem: 65536,
-                hashLen: 32,
-                type: global.argon2.argon2id
-            });
-            return this._crypto.subtle.importKey("raw", result.hash, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+            if (!(salt instanceof Uint8Array) || salt.length !== WRAP_SALT_BYTES) throw new DeviceRootError("STORAGE_CORRUPT", "Device identity wrapping parameters are invalid.");
+            let hash;
+            try {
+                const result = await global.argon2.hash({
+                    pass: masterPin,
+                    salt: b64(salt),
+                    time: 3,
+                    mem: 65536,
+                    hashLen: WRAP_KEY_BYTES,
+                    type: global.argon2.argon2id
+                });
+                hash = result?.hash instanceof Uint8Array ? result.hash : new Uint8Array(result?.hash || []);
+                if (hash.length !== WRAP_KEY_BYTES) throw new Error("invalid Argon2 output");
+                return await this._crypto.subtle.importKey("raw", hash, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+            } catch (error) {
+                if (error instanceof DeviceRootError) throw error;
+                throw new DeviceRootError("ARGON2_FAILED", "Password hardening failed; device identity was not changed.");
+            } finally {
+                hash?.fill(0);
+            }
         },
         async _encryptRoot(root, masterPin, salt) {
             const iv = this._crypto.getRandomValues(new Uint8Array(12));
             const key = await this._wrapKey(masterPin, salt);
             const ciphertext = await this._crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: AAD }, key, root);
-            return { iv: b64(iv), wrappedRoot: b64(new Uint8Array(ciphertext)) };
+            return { wrap: "argon2id-aes-256-gcm-v1", iv: b64(iv), wrappedRoot: b64(new Uint8Array(ciphertext)) };
         },
         async _decryptRoot(record, masterPin) {
             try {
-                const salt = unb64(record.wrapSalt);
+                if (record.wrap && record.wrap !== "argon2id-aes-256-gcm-v1") throw new Error("unsupported wrapping scheme");
+                const salt = decodeB64(record.wrapSalt, WRAP_SALT_BYTES);
                 const key = await this._wrapKey(masterPin, salt);
-                const plaintext = await this._crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(record.iv), additionalData: AAD }, key, unb64(record.wrappedRoot));
+                const iv = decodeB64(record.iv, WRAP_IV_BYTES);
+                const wrappedRoot = decodeB64(record.wrappedRoot, ROOT_BYTES + GCM_TAG_BYTES);
+                const plaintext = await this._crypto.subtle.decrypt({ name: "AES-GCM", iv, additionalData: AAD }, key, wrappedRoot);
                 const root = new Uint8Array(plaintext);
                 if (root.length !== ROOT_BYTES) throw new Error("invalid root length");
                 return root;
@@ -145,6 +196,100 @@
                 if (error instanceof DeviceRootError) throw error;
                 throw new DeviceRootError("UNLOCK_FAILED", "Device identity could not be unlocked. It was not replaced.");
             }
+        },
+        async _prfWrapKey(prfOutput) {
+            if (!(prfOutput instanceof Uint8Array) || prfOutput.length !== PRF_OUTPUT_BYTES) {
+                throw new DeviceRootError("WEBAUTHN_PRF_UNAVAILABLE", "The platform credential did not provide a WebAuthn PRF result.");
+            }
+            try {
+                return await this._crypto.subtle.importKey("raw", prfOutput, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+            } catch (_) {
+                throw new DeviceRootError("WEBAUTHN_PRF_FAILED", "The WebAuthn PRF wrapping key could not be used.");
+            }
+        },
+        async _getPrfAssertion(credentialId, prfSalt) {
+            this._requireWebAuthn();
+            let assertion;
+            try {
+                assertion = await this._credentials().get({ publicKey: {
+                    challenge: this._webauthnChallenge(),
+                    rpId: global.location?.hostname || undefined,
+                    allowCredentials: [{ type: "public-key", id: credentialId }],
+                    userVerification: "required",
+                    extensions: { prf: { eval: { first: prfSalt } } }
+                } });
+            } catch (_) {
+                throw new DeviceRootError("WEBAUTHN_ASSERTION_FAILED", "Device biometric authentication did not unlock this device.");
+            }
+            return this._prfResult(assertion);
+        },
+        // Enrolls a platform, user-verified credential as an additional wrapping
+        // path for the already-unlocked DeviceRoot. It never replaces Argon2id.
+        async enrollWebAuthnPrf() {
+            this._requireCrypto();
+            this._requireWebAuthn();
+            if (!this.state?.root || !this.state?.record) throw new DeviceRootError("DEVICE_LOCKED", "Unlock the device with the calculator master secret before enrolling biometrics.");
+            if (this.state.record.biometricWrap) throw new DeviceRootError("WEBAUTHN_ALREADY_ENROLLED", "Device biometric authentication is already enrolled.");
+            let credential;
+            try {
+                const userId = this._crypto.getRandomValues(new Uint8Array(32));
+                credential = await this._credentials().create({ publicKey: {
+                    challenge: this._webauthnChallenge(),
+                    rp: { name: "D-MASH Device" },
+                    user: { id: userId, name: "device", displayName: "D-MASH Device" },
+                    pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged" },
+                    attestation: "none",
+                    extensions: { prf: {} }
+                } });
+            } catch (_) {
+                throw new DeviceRootError("WEBAUTHN_ENROLLMENT_FAILED", "Platform WebAuthn enrollment did not complete.");
+            }
+            const credentialId = decodeB64(this._credentialId(credential));
+            const prfSalt = this._crypto.getRandomValues(new Uint8Array(PRF_SALT_BYTES));
+            let prfOutput;
+            try {
+                prfOutput = await this._getPrfAssertion(credentialId, prfSalt);
+                const key = await this._prfWrapKey(prfOutput);
+                const iv = this._crypto.getRandomValues(new Uint8Array(WRAP_IV_BYTES));
+                const ciphertext = await this._crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: PRF_AAD }, key, this.state.root);
+                const biometricWrap = { wrap: PRF_WRAP, credentialId: b64(credentialId), prfSalt: b64(prfSalt), iv: b64(iv), wrappedRoot: b64(new Uint8Array(ciphertext)) };
+                const record = { ...this.state.record, biometricWrap };
+                await this._store().put(record);
+                this.state.record = record;
+                return Object.freeze({ enrolled: true });
+            } catch (error) {
+                if (error instanceof DeviceRootError) throw error;
+                throw new DeviceRootError("WEBAUTHN_ENROLLMENT_FAILED", "Device biometric wrapping was not saved.");
+            } finally { prfOutput?.fill(0); }
+        },
+        // This path is intentionally PRF-only: cancellation, unsupported PRF,
+        // malformed metadata, or decrypt failure never fall back to PIN or any
+        // locally stored software secret.
+        async unlockWithWebAuthnPrf() {
+            this._requireCrypto();
+            const record = await this._store().get();
+            const wrap = record?.biometricWrap;
+            let prfOutput;
+            try {
+                if (!record || record.version !== VERSION || !wrap || wrap.wrap !== PRF_WRAP) throw new Error("no supported biometric wrap");
+                const credentialId = decodeB64(wrap.credentialId);
+                const prfSalt = decodeB64(wrap.prfSalt, PRF_SALT_BYTES);
+                const iv = decodeB64(wrap.iv, WRAP_IV_BYTES);
+                const wrappedRoot = decodeB64(wrap.wrappedRoot, ROOT_BYTES + GCM_TAG_BYTES);
+                prfOutput = await this._getPrfAssertion(credentialId, prfSalt);
+                const key = await this._prfWrapKey(prfOutput);
+                const plaintext = await this._crypto.subtle.decrypt({ name: "AES-GCM", iv, additionalData: PRF_AAD }, key, wrappedRoot);
+                const root = new Uint8Array(plaintext);
+                if (root.length !== ROOT_BYTES) throw new Error("invalid root length");
+                const identity = await this.deviceIdentity(root);
+                this.state = { root, identity, created: false, record };
+                return this.state;
+            } catch (error) {
+                if (this.state?.root) this.lock();
+                if (error instanceof DeviceRootError && error.code === "WEBAUTHN_UNAVAILABLE") throw error;
+                throw new DeviceRootError("WEBAUTHN_UNLOCK_FAILED", "Device biometric authentication could not unlock this device.");
+            } finally { prfOutput?.fill(0); }
         },
         async deviceIdentity(root) {
             const edSeed = await this.derive(root, this.domains.identityEd25519, VERSION, "");
@@ -173,6 +318,14 @@
             if (!global.nacl?.sign?.keyPair?.fromSeed) throw new DeviceRootError("NACL_UNAVAILABLE", "Device transport primitives are unavailable.");
             const signing = global.nacl.sign.keyPair.fromSeed(seed);
             return Object.freeze({ mode: "DEVICE_AUTH_V1", nodeId: nodeId.toLowerCase(), signing });
+        },
+        async notificationBeaconHandle() {
+            if (!this.state?.root) throw new DeviceRootError("DEVICE_LOCKED", "Device identity must be unlocked before accessing the notification beacon.");
+            const material = await this.derive(this.state.root, this.domains.notificationBeacon, VERSION, "origin-v1");
+            const digest = new Uint8Array(await this._crypto.subtle.digest("SHA-256", join(utf8("dmash/notification-beacon/v1"), material)));
+            // This is a stable opaque device handle. It is not an Account ID,
+            // DeviceRoot, or a routing locator and is never displayed raw.
+            return Array.from(digest, byte => byte.toString(16).padStart(2, "0")).join("");
         },
         bindingTranscript(binding) {
             const fields = ["D-MASH-DEVICE-BINDING", "1", binding.account_public_key, binding.device_signing_public_key, binding.device_agreement_public_key, String(binding.created_at)];

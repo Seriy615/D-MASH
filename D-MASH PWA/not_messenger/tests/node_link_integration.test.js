@@ -59,6 +59,14 @@ const manager = context.window.NodeManager;
 manager.endpoints = [];
 manager.active = null;
 
+assert.throws(
+  () => manager.add("wss://forgeai.isgood.host/dmash-client/v1", "D-MASH forge test"),
+  /Forge is not an eligible Messenger node/,
+  "the exact Forge host marker is never eligible as a device node"
+);
+assert.equal(manager.isExcludedNode("wss://forgeai.isgood.host/dmash-client/v1"), true, "Forge host marker is recognized centrally");
+assert.equal(manager.isExcludedNode("wss://node.example.test/dmash-client/v1"), false, "ordinary node hosts remain eligible");
+
 const imported = manager.importNodeProvisioning(canonicalUri);
 assert.equal(imported.url, "wss://node.example.test/dmash-client/v1");
 assert.equal(imported.label, descriptor.l);

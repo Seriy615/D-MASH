@@ -23,6 +23,16 @@ class NodeEndpoint {
     }
 }
 
+// Forge is a separate Node deployment, not a Messenger entry node. Keep this
+// boundary here (rather than in UI code) so persisted, catalog, QR, and manual
+// endpoint paths all apply the same exclusion.
+const EXCLUDED_NODE_HOSTS = new Set(['forgeai.isgood.host']);
+
+function isExcludedNode(url) {
+    try { return EXCLUDED_NODE_HOSTS.has(new URL(url, window.location.href).hostname.toLowerCase()); }
+    catch (_) { return false; }
+}
+
 const NodeManager = {
     storageKey: 'dmash_node_endpoints_v1',
     activeKey: 'dmash_active_node_v1',
@@ -36,9 +46,12 @@ const NodeManager = {
     state: 'disconnected', error: null, reconnectAttempt: 0, reconnectTimer: null,
     pingTimer: null, pendingPings: new Map(), pendingRequests: new Map(), lastLatencyMs: null, lastConnectedAt: null,
 
+    isExcludedNode(url) { return isExcludedNode(url); },
+
     load() {
         try {
             this.endpoints = JSON.parse(localStorage.getItem(this.storageKey) || '[]')
+                .filter(item => item && !isExcludedNode(item.url))
                 .map(item => new NodeEndpoint(item.url, item.label, item));
         } catch (_) { this.endpoints = []; }
         const activeUrl = localStorage.getItem(this.activeKey);
@@ -198,6 +211,7 @@ const NodeManager = {
         else localStorage.removeItem(this.activeKey);
     },
     add(url, label = '', options = {}) {
+        if (isExcludedNode(url)) throw new Error('Forge is not an eligible Messenger node');
         const endpoint = new NodeEndpoint(url, label, options);
         const existing = this.endpoints.find(item => item.url === endpoint.url);
         if (existing) Object.assign(existing, {
@@ -226,7 +240,8 @@ const NodeManager = {
         const response = await fetch(path, { cache: 'no-store' });
         if (!response.ok) throw new Error(`Node list HTTP ${response.status}`);
         const data = await response.json();
-        this.originNodes = (data.nodes || []).map(item => ({ ...item, public: true }));
+        this.originNodes = (data.nodes || []).filter(item => item && !isExcludedNode(item.url))
+            .map(item => ({ ...item, public: true }));
         return this.originNodes;
     },
     async autoConnect() {

@@ -83,6 +83,21 @@
             return envelope;
         }
 
+        async deliverAccept({ routeLocator, payload, acceptedRequest } = {}) {
+            if (typeof routeLocator !== "string" || !ROUTE_LOCATOR.test(routeLocator)) {
+                fail("INVALID_ROUTE_LOCATOR", "Route locator must be a canonical opaque RouteID or mesh token.");
+            }
+            if (typeof this.validator.validateAccept !== "function" || typeof this.validator.serializeAccept !== "function") {
+                fail("VALIDATOR_REQUIRED", "validator accept methods are required.");
+            }
+            const accept = this.validator.validateAccept(payload, acceptedRequest);
+            const plaintext = this.validator.serializeAccept(accept, acceptedRequest);
+            const ciphertext = await this.encrypt({ plaintext, recipientCertificate: acceptedRequest.reply_route_certificate });
+            const envelope = ContactTransport.validateEnvelope({ version: VERSION, type: "CONTACT_ACCEPT_V1", request_id: accept.request_id, ciphertext });
+            await this.submit({ routeLocator, envelope });
+            return envelope;
+        }
+
         async ingest({ envelope: rawEnvelope, receivedRoute } = {}) {
             if (typeof receivedRoute !== "string" || !receivedRoute) fail("INVALID_RECEIVED_ROUTE", "Received route is invalid.");
             const envelope = ContactTransport.validateEnvelope(rawEnvelope);
@@ -95,6 +110,19 @@
             if (await this.dedupe({ requestId: request.request_id, envelope })) fail("REPLAY_DETECTED", "Contact request was already received.");
             const stored = await this.store({ request, receivedRoute, receivedAt: this.now(), envelope });
             return { request: stored === undefined ? request : stored, envelope };
+        }
+
+        async ingestAccept({ envelope: rawEnvelope, receivedRoute, acceptedRequest } = {}) {
+            if (typeof receivedRoute !== "string" || !receivedRoute) fail("INVALID_RECEIVED_ROUTE", "Received route is invalid.");
+            const envelope = ContactTransport.validateEnvelope({ ...rawEnvelope, type: "CONTACT_ACCEPT_V1" });
+            if (typeof this.validator.deserializeAccept !== "function") fail("VALIDATOR_REQUIRED", "validator.deserializeAccept is required.");
+            const opened = await this.decrypt({ envelope, receivedRoute });
+            if (!opened || opened.authenticated !== true || opened.plaintext === undefined) fail("DECRYPT_REJECTED", "Ingress decryption did not authenticate the envelope.");
+            const accept = this.validator.deserializeAccept(opened.plaintext, acceptedRequest);
+            if (accept.request_id !== envelope.request_id) fail("REQUEST_BINDING_INVALID", "Accept does not bind to its envelope.");
+            if (await this.dedupe({ requestId: accept.request_id, envelope })) fail("REPLAY_DETECTED", "Contact accept was already received.");
+            const stored = await this.store({ accept, acceptedRequest, receivedRoute, receivedAt: this.now(), envelope });
+            return { accept: stored === undefined ? accept : stored, envelope };
         }
     }
 

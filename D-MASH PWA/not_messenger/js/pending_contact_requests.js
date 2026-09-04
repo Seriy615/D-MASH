@@ -87,7 +87,7 @@
             if (!state || state.version !== VERSION || !Array.isArray(state.requests)) throw new PendingContactRequestError("STORAGE_CORRUPT", "Pending contact request storage is corrupt or unsupported.");
             const ids = new Set();
             for (const request of state.requests) {
-                if (!isPlainObject(request) || typeof request.id !== "string" || !request.id || ids.has(request.id) || !Number.isFinite(request.receivedAt) || !Number.isFinite(request.updatedAt) || !Object.values(STATUSES).includes(request.status)) {
+                if (!isPlainObject(request) || typeof request.id !== "string" || !request.id || ids.has(request.id) || (request.requestId !== undefined && (typeof request.requestId !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(request.requestId))) || !Number.isFinite(request.receivedAt) || !Number.isFinite(request.updatedAt) || !Object.values(STATUSES).includes(request.status)) {
                     throw new PendingContactRequestError("STORAGE_CORRUPT", "Pending contact request storage is corrupt.");
                 }
                 PendingContactRequestStore.normalizeDisplayName(request.displayName);
@@ -136,6 +136,23 @@
             if (typeof id !== "string" || !id || this.state.requests.some(request => request.id === id)) throw new PendingContactRequestError("INVALID_ID", "Pending contact request identifier is invalid.");
             const request = { id, displayName, intro, replyRoute, bootstrap, receivedRoute, status: STATUSES.PENDING, receivedAt, updatedAt: this.now() };
             this.state.requests.push(request); await this._save(); return clone(request);
+        }
+        // The transport-facing write path is intentionally the only one which
+        // deduplicates wire request IDs.  A replay must not create a second
+        // user-visible pending request, including after restart.
+        async addContactRequest({ requestId, displayName, intro = null, replyRoute, bootstrap, receivedRoute, receivedAt = this.now() } = {}) {
+            if (typeof requestId !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(requestId)) {
+                throw new PendingContactRequestError("INVALID_REQUEST_ID", "CONTACT_REQUEST_V1 request_id is invalid.");
+            }
+            await this.load();
+            const existing = this.state.requests.find(request => request.requestId === requestId);
+            if (existing) return { request: clone(existing), duplicate: true };
+            const request = await this.add({ displayName, intro, replyRoute, bootstrap, receivedRoute, receivedAt });
+            // add() saved the new record; bind the replay key and save it in the
+            // same device-root-protected inbox, never to a separate plaintext index.
+            this.state.requests[this.state.requests.length - 1].requestId = requestId;
+            await this._save();
+            return { request: clone(this.state.requests[this.state.requests.length - 1]), duplicate: false };
         }
         async list() { await this.load(); return clone(this.state.requests); }
         async read(id) { await this.load(); const request = this.state.requests.find(item => item.id === id); return request ? clone(request) : null; }

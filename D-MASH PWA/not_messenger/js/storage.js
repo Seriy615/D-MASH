@@ -6,7 +6,7 @@ const Storage = {
     registry_instance: null,
     masterKey: null, // AES-GCM ключ (32 байта из Argon2)
     REGISTRY_DB: 'dm_registry_v1',
-    REG_VER: 22,
+    REG_VER: 23,
 
     /**
      * ИНИЦИАЛИЗАЦИЯ СЛЕПОГО СЕЙФА (Gamma-1)
@@ -39,6 +39,11 @@ const Storage = {
                     if (!db.objectStoreNames.contains('pairing_material')) {
                         db.createObjectStore('pairing_material', { keyPath: 'alias' });
                     }
+                    // Outbound content waits encrypted at rest until a Mesh
+                    // route becomes usable; it never goes into localStorage.
+                    if (!db.objectStoreNames.contains('blind_outbox')) {
+                        db.createObjectStore('blind_outbox', { keyPath: 'alias' });
+                    }
                 };
 
                 request.onsuccess = (e) => {
@@ -68,7 +73,7 @@ const Storage = {
      * СОХРАНЕНИЕ МАЛЯВЫ (Gamma-1: Blind Pagination)
      */
 // В storage.js измени saveMessageGamma:
-    saveMessageGamma: async function(peerID, text, inbound, isRead) {
+    saveMessageGamma: async function(peerID, text, inbound, isRead, transportState = null, wireId = null) {
         const aliasL1 = await this.getAlias(peerID, "L1");
 
         let secrets = await this.getBox('blind_secrets', aliasL1);
@@ -85,16 +90,65 @@ const Storage = {
             alias: aliasL3,
             // Outgoing data has only entered local transport at this point.
             // Do not claim DELIVERED or READ without authenticated receipts.
-            data: { text, ts: Date.now(), inbound, transportState: inbound ? null : 'SENT' }
+            data: { text, ts: Date.now(), inbound, transportState: inbound ? null : (transportState || 'SENT'), wireId }
         });
 
         const peerInfo = await this.getBox('blind_peers', aliasL1) || { id: peerID, name: `Peer-${peerID.substring(0,4)}` };
         peerInfo.last_ts = Date.now();
-        peerInfo.unread = (!isRead && inbound);
+        // An outgoing message or a read inbound message must not erase a
+        // previously pending unread marker; only opening the chat clears it.
+        if (inbound && !isRead) peerInfo.unread = true;
         await this.putBox('blind_peers', { alias: aliasL1, data: peerInfo });
 
         // ФИКС: Возвращаем SeqNum
         return seqNum;
+    },
+
+    hasMessageWireId: async function(peerID, wireId) {
+        if (!wireId) return false;
+        const aliasL1 = await this.getAlias(peerID, 'L1');
+        const secrets = await this.getBox('blind_secrets', aliasL1);
+        for (let seq = secrets?.msgCount || 0; seq >= 1; seq--) {
+            const alias = await this.getAlias(aliasL1 + seq, 'L3');
+            const message = await this.getBox('blind_messages', alias);
+            if (message?.wireId === wireId) return true;
+        }
+        return false;
+    },
+
+    // Receipt references are opaque random message IDs carried only inside the
+    // end-to-end encrypted payload.  Search is bounded by this peer's local
+    // message count; no identity or message metadata is exposed to a node.
+    updateMessageTransportState: async function(peerID, wireId, transportState) {
+        if (!wireId || !['DELIVERED', 'READ'].includes(transportState)) return false;
+        const aliasL1 = await this.getAlias(peerID, 'L1');
+        const secrets = await this.getBox('blind_secrets', aliasL1);
+        for (let seq = secrets?.msgCount || 0; seq >= 1; seq--) {
+            const alias = await this.getAlias(aliasL1 + seq, 'L3');
+            const message = await this.getBox('blind_messages', alias);
+            if (!message || message.inbound || message.wireId !== wireId) continue;
+            const rank = { SENT: 0, DELIVERED: 1, READ: 2 };
+            if ((rank[message.transportState] || 0) >= rank[transportState]) return true;
+            message.transportState = transportState;
+            await this.putBox('blind_messages', { alias, data: message });
+            return true;
+        }
+        return false;
+    },
+
+    markInboundMessagesRead: async function(peerID) {
+        const aliasL1 = await this.getAlias(peerID, 'L1');
+        const secrets = await this.getBox('blind_secrets', aliasL1);
+        const newlyReadWireIds = [];
+        for (let seq = 1; seq <= (secrets?.msgCount || 0); seq++) {
+            const alias = await this.getAlias(aliasL1 + seq, 'L3');
+            const message = await this.getBox('blind_messages', alias);
+            if (!message?.inbound || message.readAt) continue;
+            message.readAt = Date.now();
+            if (message.wireId) newlyReadWireIds.push(message.wireId);
+            await this.putBox('blind_messages', { alias, data: message });
+        }
+        return newlyReadWireIds;
     },
 
 /**
@@ -106,7 +160,8 @@ const Storage = {
         if (!secrets) return [];
 
         const total = secrets.msgCount || 0;
-        // Считаем границы: от старых к новым
+        // Pages are returned in chronological order. The caller atomically
+        // paints the initial page, preventing progressive early-message paint.
         const end = Math.max(1, total - offset);
         const start = Math.max(1, end - limit + 1);
 
@@ -116,7 +171,7 @@ const Storage = {
             const msg = await this.getBox('blind_messages', aliasL3);
             if (msg) messages.push({ ...msg, id: i });
         }
-        return messages; // Теперь возвращает [Старое, ..., Новое]
+        return messages; // [Старое, ..., Новое]
     },
 
     /**
@@ -189,6 +244,29 @@ deleteMessageGamma: async function(peerID, msgId) {
             tx2.oncomplete = resolve;
             tx2.onerror = () => reject(tx2.error || new Error('peer deletion failed'));
             tx2.onabort = () => reject(tx2.error || new Error('peer deletion aborted'));
+        });
+        const queued = await this.getAllBoxes('blind_outbox');
+        await Promise.all(queued.filter(item => item?.peerID === peerID).map(item => this.deleteBox('blind_outbox', item.alias)));
+    },
+
+    async getAllBoxes(storeName) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readonly');
+            const request = tx.objectStore(storeName).getAll();
+            request.onerror = () => reject(request.error || new Error('vault read failed'));
+            request.onsuccess = async () => {
+                try {
+                    const values = await Promise.all((request.result || []).map(async item => ({ ...(await this.decryptBox(item.blob)), alias: item.alias })));
+                    resolve(values.filter(Boolean));
+                } catch (error) { reject(error); }
+            };
+        });
+    },
+    deleteBox(storeName, alias) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readwrite');
+            tx.objectStore(storeName).delete(alias);
+            tx.oncomplete = resolve; tx.onerror = () => reject(tx.error || new Error('vault delete failed'));
         });
     },
 

@@ -21,6 +21,7 @@
     <script src="js/release.js"></script>
     <script src="js/device_routes.js"></script>
     <script src="js/dmash_links.js"></script>
+    <script src="js/quick_name_registry.js"></script>
 <style>
     /* =========================================
        1. БАЗОВЫЕ НАСТРОЙКИ И ПЕРЕМЕННЫЕ
@@ -400,11 +401,11 @@
     <div id="app-container">
         <div id="display-area"><div id="history"></div><div id="current">0</div></div>
         <div id="keypad">
-            <button class="btn sys" onclick="ui.cmd('AC')">AC</button><button class="btn sys" onclick="ui.cmd('±')">±</button><button class="btn sys" onclick="ui.cmd('%')">%</button><button class="btn op" onclick="ui.cmd('/')">÷</button>
-            <button class="btn" onclick="ui.num('7')">7</button><button class="btn" onclick="ui.num('8')">8</button><button class="btn" onclick="ui.num('9')">9</button><button class="btn op" onclick="ui.cmd('*')">×</button>
-            <button class="btn" onclick="ui.num('4')">4</button><button class="btn" onclick="ui.num('5')">5</button><button class="btn" onclick="ui.num('6')">6</button><button class="btn op" onclick="ui.cmd('-')">−</button>
-            <button class="btn" onclick="ui.num('1')">1</button><button class="btn" onclick="ui.num('2')">2</button><button class="btn" onclick="ui.num('3')">3</button><button class="btn op" onclick="ui.cmd('+')">+</button>
-            <button class="btn zero" onclick="ui.num('0')">0</button><button class="btn" onclick="ui.num('.')">,</button><button class="btn op" onclick="ui.eval()">=</button>
+            <button class="btn sys" data-calc-token="AC" onclick="ui.cmd('AC')">AC</button><button class="btn sys" data-calc-token="±" onclick="ui.cmd('±')">±</button><button class="btn sys" data-calc-token="%" onclick="ui.cmd('%')">%</button><button class="btn op" data-calc-token="/" onclick="ui.cmd('/')">÷</button>
+            <button class="btn" data-calc-token="7" onclick="ui.num('7')">7</button><button class="btn" data-calc-token="8" onclick="ui.num('8')">8</button><button class="btn" data-calc-token="9" onclick="ui.num('9')">9</button><button class="btn op" data-calc-token="*" onclick="ui.cmd('*')">×</button>
+            <button class="btn" data-calc-token="4" onclick="ui.num('4')">4</button><button class="btn" data-calc-token="5" onclick="ui.num('5')">5</button><button class="btn" data-calc-token="6" onclick="ui.num('6')">6</button><button class="btn op" data-calc-token="-" onclick="ui.cmd('-')">−</button>
+            <button class="btn" data-calc-token="1" onclick="ui.num('1')">1</button><button class="btn" data-calc-token="2" onclick="ui.num('2')">2</button><button class="btn" data-calc-token="3" onclick="ui.num('3')">3</button><button class="btn op" data-calc-token="+" onclick="ui.cmd('+')">+</button>
+            <button class="btn zero" data-calc-token="0" onclick="ui.num('0')">0</button><button class="btn" data-calc-token="." onclick="ui.num('.')">,</button><button class="btn op" data-calc-token="=" onclick="ui.eval()">=</button>
         </div>
     </div>
     <div id="settings-layer">
