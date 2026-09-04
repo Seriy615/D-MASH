@@ -186,6 +186,20 @@ const Core = {
         await window.NodeManager?.onDeviceUnlocked?.();
         return deviceState;
     },
+    async changeDeviceMasterSecret(currentMasterPin, nextMasterPin) {
+        // This is deliberately device-scoped.  Account passwords never unwrap
+        // or rewrap DeviceRoot, and the root/device identity is never replaced.
+        const result = await window.DeviceRoot.rewrapMasterPin(currentMasterPin, nextMasterPin);
+        if (this.deviceState) this.deviceState.record = window.DeviceRoot.state?.record || this.deviceState.record;
+        return result;
+    },
+    async migrateDeviceRootFromLegacyAccountPassphrase(accountPassphrase, calculatorMasterPin) {
+        // This compatibility path is explicit and local-only. DeviceRoot
+        // validates the old account-derived wrapping key before rewrapping the
+        // existing root under the calculator secret; no Account data or device
+        // identity is sent, recreated, or replaced.
+        return window.DeviceRoot.migrateLegacyAccountPassphrase(accountPassphrase, calculatorMasterPin);
+    },
     async boot(identity, passphrase, options = {}) {
         const statusEl = document.getElementById('gate-status-text');
         try {

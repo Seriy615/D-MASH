@@ -50,6 +50,47 @@ const hex = (bytes) => Buffer.from(bytes).toString("hex");
   assert.equal(reloaded.identity.deviceId, firstId, "identity persists across reload/restart");
   assert.deepEqual([...reloaded.root], [...firstRoot]);
 
+  // Calculator-master-secret changes must rewrap the same root, never create a
+  // second device. The old secret stops working only after the new wrap is
+  // persisted, and a failed rewrap leaves the original record usable.
+  const rewrapStore = new MemoryStore(structuredClone(stored));
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(rewrapStore);
+  await DeviceRoot.rewrapMasterPin("correct horse battery staple", "new calculator secret");
+  const rewrappedRecord = structuredClone(rewrapStore.record);
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(new MemoryStore(rewrappedRecord));
+  await assert.rejects(() => DeviceRoot.unlock("correct horse battery staple"), (error) => error.code === "UNLOCK_FAILED", "old master secret cannot unlock after a completed rewrap");
+  const rewrapped = await DeviceRoot.unlock("new calculator secret");
+  assert.equal(rewrapped.identity.deviceId, firstId, "master-secret rewrap preserves the device identity");
+  assert.deepEqual([...rewrapped.root], [...firstRoot], "master-secret rewrap preserves the device root");
+  const failedRewrapStore = new MemoryStore(structuredClone(rewrappedRecord)); failedRewrapStore.failPut = true;
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(failedRewrapStore);
+  await assert.rejects(() => DeviceRoot.rewrapMasterPin("new calculator secret", "uncommitted secret"), (error) => error.code === "STORAGE_WRITE_FAILED");
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(new MemoryStore(rewrappedRecord));
+  const afterFailedRewrap = await DeviceRoot.unlock("new calculator secret");
+  assert.equal(afterFailedRewrap.identity.deviceId, firstId, "failed rewrap leaves the prior identity unlockable");
+
+  // Compatibility: older installations wrapped the same DeviceRoot with an
+  // Account passphrase before calculator-device unlock was introduced. An
+  // explicit migration proves that old credential, then preserves the root and
+  // device ID under the calculator master secret.
+  const legacyCredentialStore = new MemoryStore(structuredClone(stored));
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(legacyCredentialStore);
+  await DeviceRoot.migrateLegacyAccountPassphrase("correct horse battery staple", "4690");
+  const legacyMigratedRecord = structuredClone(legacyCredentialStore.record);
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(new MemoryStore(legacyMigratedRecord));
+  await assert.rejects(() => DeviceRoot.unlock("correct horse battery staple"), (error) => error.code === "UNLOCK_FAILED", "legacy Account passphrase no longer unlocks after migration");
+  const compatibilityUnlocked = await DeviceRoot.unlock("4690");
+  assert.equal(compatibilityUnlocked.identity.deviceId, firstId, "legacy credential migration preserves the device identity");
+  assert.deepEqual([...compatibilityUnlocked.root], [...firstRoot], "legacy credential migration preserves the device root");
+  assert.equal(compatibilityUnlocked.record.migration.credentialDomain, "calculator-master-v1", "migration records the new credential domain");
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(new MemoryStore(structuredClone(stored)));
+  await assert.rejects(() => DeviceRoot.migrateLegacyAccountPassphrase("wrong account passphrase", "4690"), (error) => error.code === "UNLOCK_FAILED", "wrong legacy Account passphrase fails closed");
+  const failedLegacyMigrationStore = new MemoryStore(structuredClone(stored)); failedLegacyMigrationStore.failPut = true;
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(failedLegacyMigrationStore);
+  await assert.rejects(() => DeviceRoot.migrateLegacyAccountPassphrase("correct horse battery staple", "4690"), (error) => error.code === "STORAGE_WRITE_FAILED", "failed legacy migration does not commit a replacement record");
+  DeviceRoot.lock(); DeviceRoot.setStoreForTests(new MemoryStore(structuredClone(stored)));
+  assert.equal((await DeviceRoot.unlock("correct horse battery staple")).identity.deviceId, firstId, "failed legacy migration leaves the original identity unlockable with its original credential");
+
   // A distinct installation gets independent CSPRNG root/DeviceID.
   DeviceRoot.lock(); DeviceRoot.setStoreForTests(new MemoryStore());
   const secondInstall = await DeviceRoot.unlock("correct horse battery staple");

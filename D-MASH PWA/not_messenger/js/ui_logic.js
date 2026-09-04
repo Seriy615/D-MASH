@@ -389,16 +389,29 @@ const ui = {
         }
         if (this.mode === 3) {
             if (!this.validSecret(candidate) || await sys.fastHash(candidate) !== localStorage.getItem('sys_m')) { this.curr = '0'; this.hist = 'НЕВЕРНЫЙ MASTER-КОД'; this.update(); return; }
+            this.pendingCurrentMasterSecret = candidate;
             this.curr = '0'; this.mode = 4; this.hist = 'НОВЫЙ MASTER-КОД'; this.update(); return;
         }
         if (this.mode === 4) {
             if (!this.validSecret(candidate)) { this.hist = 'MASTER-КОД: МИНИМУМ 4 ЦИФРЫ'; this.update(); return; }
-            this.pendingMasterHash = await sys.fastHash(candidate); this.curr = '0'; this.mode = 5; this.hist = 'НОВЫЙ WIPE-КОД'; this.update(); return;
+            this.pendingMasterHash = await sys.fastHash(candidate); this.pendingNextMasterSecret = candidate; this.curr = '0'; this.mode = 5; this.hist = 'НОВЫЙ WIPE-КОД'; this.update(); return;
         }
         if (this.mode === 5) {
             if (!this.validSecret(candidate)) { this.hist = 'WIPE-КОД: МИНИМУМ 4 ЦИФРЫ'; this.update(); return; }
-            localStorage.setItem('sys_m', this.pendingMasterHash); localStorage.setItem('sys_w', await sys.fastHash(candidate));
-            this.pendingMasterHash = null; this.mode = 0; this.curr = '0'; this.hist = 'КОДЫ ОБНОВЛЕНЫ'; this.update(); setTimeout(() => this.cmd('AC'), 1000); return;
+            try {
+                // Rewrap first.  Do not replace the local verifier until the
+                // existing DeviceRoot has been proved unlockable and safely
+                // re-encrypted under the new master secret.
+                if (typeof Core?.changeDeviceMasterSecret === 'function') {
+                    await Core.changeDeviceMasterSecret(this.pendingCurrentMasterSecret, this.pendingNextMasterSecret);
+                }
+                localStorage.setItem('sys_m', this.pendingMasterHash); localStorage.setItem('sys_w', await sys.fastHash(candidate));
+                this.pendingMasterHash = null; this.pendingCurrentMasterSecret = null; this.pendingNextMasterSecret = null;
+                this.mode = 0; this.curr = '0'; this.hist = 'КОДЫ ОБНОВЛЕНЫ'; this.update(); setTimeout(() => this.cmd('AC'), 1000); return;
+            } catch (error) {
+                this.pendingMasterHash = null; this.pendingCurrentMasterSecret = null; this.pendingNextMasterSecret = null;
+                this.mode = 0; this.curr = '0'; this.hist = 'ОШИБКА УСТРОЙСТВА: ' + error.message; this.update(); return;
+            }
         }
 
         const inputHash = await sys.fastHash(candidate);
@@ -420,7 +433,27 @@ const ui = {
                     this.resetCalculator();
                     await this.show_gate();
                 } catch (error) {
-                    this.hist = "ОШИБКА УСТРОЙСТВА: " + error.message;
+                    // Keep an explicit migration path for records encrypted by
+                    // a pre-device-auth build with the Account passphrase.
+                    if (error?.code === 'UNLOCK_FAILED' && typeof Core?.migrateDeviceRootFromLegacyAccountPassphrase === 'function') {
+                        // Account passphrases are not calculator PINs. Ask for
+                        // the legacy account passphrase explicitly; cancellation
+                        // and failure leave the encrypted record untouched.
+                        const legacyPassphrase = window.prompt?.('Введите пароль прежнего аккаунта для миграции устройства:');
+                        if (!legacyPassphrase) {
+                            this.hist = 'МИГРАЦИЯ ОТМЕНЕНА. УСТРОЙСТВО НЕ ИЗМЕНЕНО.';
+                        } else {
+                            try {
+                                await Core.migrateDeviceRootFromLegacyAccountPassphrase(legacyPassphrase, devicePin);
+                                await Core.unlockDevice(devicePin);
+                                this.resetCalculator();
+                                await this.show_gate();
+                                return;
+                            } catch (_) {
+                                this.hist = 'ПАРОЛЬ ПРЕЖНЕГО АККАУНТА НЕ ПОДОШЁЛ. УСТРОЙСТВО НЕ ИЗМЕНЕНО.';
+                            }
+                        }
+                    } else this.hist = "ОШИБКА УСТРОЙСТВА: " + error.message;
                     this.update();
                 }
             }

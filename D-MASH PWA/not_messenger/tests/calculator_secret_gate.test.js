@@ -72,6 +72,29 @@ const sys = vm.runInNewContext("sys", context);
   assert.equal(ui.op, null, "unlock leaves no pending operator");
   assert.equal(ui.leftOperand, null, "unlock leaves no pending left operand");
 
+  // Reconfiguration rewraps the existing device before changing sys_m, so a
+  // user cannot be locked out by a calculator-master-secret change.
+  let rewrap = null;
+  context.Core = { async changeDeviceMasterSecret(current, next) { rewrap = [current, next]; } };
+  values.set("sys_m", await sys.fastHash("4690"));
+  ui.mode = 3; ui.resetCalculator();
+  for (const digit of "4690") ui.num(digit); await ui.eval();
+  for (const digit of "2345") ui.num(digit); await ui.eval();
+  for (const digit of "6789") ui.num(digit); await ui.eval();
+  assert.deepEqual(rewrap, ["4690", "2345"], "device root is rewrapped from the old to new evaluated master secret");
+  assert.equal(values.get("sys_m"), await sys.fastHash("2345"), "calculator verifier changes only after successful device rewrap");
+
+  // A rewrap failure must retain the old verifier and report an error rather
+  // than stranding the existing device identity.
+  context.Core = { async changeDeviceMasterSecret() { throw new Error("rewrap failed"); } };
+  values.set("sys_m", await sys.fastHash("2345"));
+  ui.mode = 3; ui.resetCalculator();
+  for (const digit of "2345") ui.num(digit); await ui.eval();
+  for (const digit of "3456") ui.num(digit); await ui.eval();
+  for (const digit of "7890") ui.num(digit); await ui.eval();
+  assert.equal(values.get("sys_m"), await sys.fastHash("2345"), "failed device rewrap retains the old calculator verifier");
+  assert.match(ui.hist, /ОШИБКА УСТРОЙСТВА/, "failed device rewrap is surfaced to the user");
+
   // Invalid expression results fail validation and cannot replace a verifier.
   const priorMaster = values.get("sys_m");
   ui.mode = 4; ui.resetCalculator(); ui.num("1"); ui.cmd("+"); ui.num("2");

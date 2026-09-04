@@ -450,6 +450,59 @@
             this.state = { root, identity, created, record };
             return this.state;
         },
+        // Changing the calculator master secret must also rotate the local
+        // wrapping key.  The DeviceRoot itself (and therefore the public device
+        // identity, account separation, and biometric wrap) remains unchanged.
+        // Persist only after both the old unwrap and new wrap succeed, so a
+        // failed/cancelled change cannot strand or replace an installation.
+        async rewrapMasterPin(currentMasterPin, nextMasterPin) {
+            this._requireCrypto();
+            if (typeof nextMasterPin !== "string" || !nextMasterPin) {
+                throw new DeviceRootError("MASTER_PIN_REQUIRED", "A new calculator master PIN is required.");
+            }
+            const store = this._store();
+            const record = await store.get();
+            if (!record || record.version !== VERSION || !record.wrapSalt || !record.iv || !record.wrappedRoot) {
+                throw new DeviceRootError("STORAGE_CORRUPT", "Device identity record is corrupt or unsupported. It was not changed.");
+            }
+            const root = await this._decryptRoot(record, currentMasterPin);
+            try {
+                const wrapSalt = this._crypto.getRandomValues(new Uint8Array(WRAP_SALT_BYTES));
+                const wrapped = await this._encryptRoot(root, nextMasterPin, wrapSalt);
+                const updated = { ...record, wrapSalt: b64(wrapSalt), ...wrapped };
+                await store.put(updated);
+                if (this.state?.root) this.state.record = updated;
+                return Object.freeze({ rewrapped: true });
+            } finally {
+                root.fill(0);
+            }
+        },
+        // Compatibility migration for records created before DeviceRoot moved
+        // from the Account passphrase to the calculator master secret. The
+        // caller must obtain this secret explicitly from the user after a
+        // calculator unlock failure. A successful old-wrap decrypt is the
+        // cryptographic proof of the legacy credential; the same root is then
+        // atomically rewrapped and annotated, never recreated or replaced.
+        async migrateLegacyAccountPassphrase(accountPassphrase, calculatorMasterPin) {
+            this._requireCrypto();
+            const store = this._store();
+            const record = await store.get();
+            if (!record || record.version !== VERSION || !record.wrapSalt || !record.iv || !record.wrappedRoot) {
+                throw new DeviceRootError("STORAGE_CORRUPT", "Device identity record is corrupt or unsupported. It was not changed.");
+            }
+            const root = await this._decryptRoot(record, accountPassphrase);
+            try {
+                const wrapSalt = this._crypto.getRandomValues(new Uint8Array(WRAP_SALT_BYTES));
+                const wrapped = await this._encryptRoot(root, calculatorMasterPin, wrapSalt);
+                const migration = { ...(record.migration || {}), credentialDomain: "calculator-master-v1", migratedAt: Date.now() };
+                const updated = { ...record, wrapSalt: b64(wrapSalt), ...wrapped, migration };
+                await store.put(updated);
+                if (this.state?.root) this.state.record = updated;
+                return Object.freeze({ migrated: true });
+            } finally {
+                root.fill(0);
+            }
+        },
         async bootstrap(masterPin) {
             try {
                 return await this.unlock(masterPin);
