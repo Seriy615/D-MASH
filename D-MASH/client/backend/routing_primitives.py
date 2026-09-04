@@ -1,8 +1,12 @@
 """Protocol primitives for anonymous, node-bound routing.
 
 All serialized objects in this module are deliberately small and contain no
-account or user identifiers.  Node IDs are Ed25519 public keys represented as
+account or user identifiers. Node IDs are Ed25519 public keys represented as
 64 hexadecimal characters.
+
+EntryGrant helpers delegate to the canonical Route-owned EntryGrantV1 used by
+the DMP-C gateway. This prevents a second, divergent ownership protocol from
+reappearing in the legacy helper surface.
 """
 from __future__ import annotations
 
@@ -14,8 +18,12 @@ import secrets
 import time
 from typing import Any, Mapping, Optional, Union
 
-from nacl.exceptions import BadSignatureError
 from nacl.signing import SigningKey, VerifyKey
+
+if __package__:
+    from .entry_grant import EntryGrantV1, route_id_for_public_key
+else:
+    from entry_grant import EntryGrantV1, route_id_for_public_key
 
 BytesLike = Union[bytes, bytearray, memoryview]
 DEFAULT_RESOURCE_POW_DIFFICULTY = 22
@@ -45,11 +53,7 @@ def validate_node_id(node_id: Union[str, BytesLike]) -> bool:
 
 
 def generate_dnss(node_id: Union[str, BytesLike]) -> str:
-    """Return fresh 128-bit DNSS entropy scoped to a validated NodeID.
-
-    DNSS values are random rather than derived from the node, but requiring the
-    caller's NodeID prevents their use outside an explicit routing-node context.
-    """
+    """Return fresh 128-bit DNSS entropy scoped to a validated NodeID."""
     _node_bytes(node_id)
     return secrets.token_hex(16)
 
@@ -60,10 +64,7 @@ def new_dnss_value() -> bytes:
 
 
 def blind_alias(secret: BytesLike, value: Union[str, BytesLike]) -> str:
-    """Create a stable opaque alias using HMAC-SHA256.
-
-    The secret is caller-owned and must not be derived from a public NodeID.
-    """
+    """Create a stable opaque alias using HMAC-SHA256."""
     key = bytes(secret)
     if not key:
         raise ValueError("blind secret must not be empty")
@@ -72,7 +73,6 @@ def blind_alias(secret: BytesLike, value: Union[str, BytesLike]) -> str:
                     hashlib.sha256).hexdigest()
 
 
-# Explicit protocol spelling and a convenient compatibility spelling.
 hmac_blind_alias = blind_alias
 create_blind_alias = blind_alias
 
@@ -119,55 +119,75 @@ def _signing_key(key) -> SigningKey:
 def _verify_key(key) -> VerifyKey:
     if isinstance(key, VerifyKey):
         return key
-    return VerifyKey(bytes.fromhex(key) if isinstance(key, str) else bytes(key))
+    if isinstance(key, str):
+        raw = bytes.fromhex(key) if len(key) == 64 else base64.urlsafe_b64decode(key + "=" * (-len(key) % 4))
+    else:
+        raw = bytes(key)
+    return VerifyKey(raw)
 
 
 def encode_entry_grant(grant: Mapping[str, Any]) -> str:
-    allowed = {"v", "node_id", "route_id", "expires_at", "issued_at", "signature"}
-    if set(grant) != allowed:
-        raise ValueError("EntryGrantV1 has an invalid schema")
+    """Encode the compatibility wrapper around canonical EntryGrantV1."""
+    if set(grant) != {"grant", "resource"} or not isinstance(grant.get("resource"), str):
+        raise ValueError("EntryGrant wrapper has an invalid schema")
+    EntryGrantV1.from_dict(grant["grant"])
     return base64.urlsafe_b64encode(_canonical(grant)).rstrip(b"=").decode("ascii")
 
 
 def create_entry_grant(node_id, route_signing_key, resource: str,
                        expires_at: int, *, issued_at: Optional[int] = None,
                        route_id: Optional[str] = None) -> str:
-    """Sign canonical EntryGrantV1, binding both NodeID and route ID."""
+    """Create a Route-owned EntryGrant bound to ``node_id``.
+
+    ``resource`` is retained only as compatibility metadata for callers of this
+    older helper. It is not the RouteID and grants no routing authority.
+    """
     nid = _node_bytes(node_id).hex()
     if not isinstance(resource, str) or not resource:
-        raise ValueError("route_id/resource is required")
-    rid = resource if route_id is None else route_id
-    if not isinstance(rid, str) or not rid or not isinstance(expires_at, int):
-        raise ValueError("route_id and integer expiry are required")
-    payload = {"v": 1, "node_id": nid, "route_id": rid,
-               "expires_at": expires_at,
-               "issued_at": int(time.time()) if issued_at is None else issued_at}
-    sig = _signing_key(route_signing_key).sign(_canonical(payload)).signature.hex()
-    return encode_entry_grant({**payload, "signature": sig})
+        raise ValueError("resource is required")
+    signing_key = _signing_key(route_signing_key)
+    canonical_route_id = route_id_for_public_key(signing_key.verify_key)
+    if route_id is not None and route_id != canonical_route_id:
+        raise ValueError("RouteID must equal RouteSignPublic")
+    created_at = int(time.time()) if issued_at is None else issued_at
+    grant = EntryGrantV1.issue(
+        signing_key,
+        canonical_route_id,
+        expires_at,
+        entry_node_id=nid,
+        generation=1,
+        created_at=created_at,
+    )
+    return encode_entry_grant({"grant": grant.to_dict(), "resource": resource})
 
 
 def verify_entry_grant(encoded, route_verify_key, node_id, *, now=None,
                        route_id: Optional[str] = None) -> Optional[dict]:
     try:
-        text = encoded.decode() if isinstance(encoded, bytes) else encoded
-        raw = base64.urlsafe_b64decode(text + "=" * (-len(text) % 4))
-        grant = json.loads(raw.decode("utf-8"))
-        if set(grant) != {"v", "node_id", "route_id", "expires_at", "issued_at", "signature"}:
+        text_value = encoded.decode() if isinstance(encoded, bytes) else encoded
+        raw = base64.urlsafe_b64decode(text_value + "=" * (-len(text_value) % 4))
+        wrapper = json.loads(raw.decode("utf-8"))
+        if set(wrapper) != {"grant", "resource"} or not isinstance(wrapper["resource"], str):
+            return None
+        grant = EntryGrantV1.from_dict(wrapper["grant"])
+        expected_route_id = route_id_for_public_key(_verify_key(route_verify_key))
+        if grant.route_id != expected_route_id:
+            return None
+        if route_id is not None and route_id != grant.route_id:
             return None
         nid = _node_bytes(node_id).hex()
-        if grant["v"] != 1 or grant["node_id"] != nid:
+        if not grant.verify(expected_node_id=nid, now=now):
             return None
-        if route_id is not None and grant["route_id"] != route_id:
-            return None
-        if not isinstance(grant["route_id"], str) or not isinstance(grant["expires_at"], int):
-            return None
-        if (now if now is not None else int(time.time())) >= grant["expires_at"]:
-            return None
-        payload = {k: grant[k] for k in ("v", "node_id", "route_id", "expires_at", "issued_at")}
-        sig = bytes.fromhex(grant["signature"])
-        _verify_key(route_verify_key).verify(_canonical(payload), sig)
-        return {**payload, "resource": payload["route_id"]}
-    except (TypeError, ValueError, KeyError, json.JSONDecodeError, BadSignatureError,
+        return {
+            "v": 1,
+            "node_id": grant.node_id,
+            "route_id": grant.route_id,
+            "generation": grant.generation,
+            "issued_at": grant.created_at,
+            "expires_at": grant.expires_at,
+            "resource": wrapper["resource"],
+        }
+    except (TypeError, ValueError, KeyError, json.JSONDecodeError,
             UnicodeError, base64.binascii.Error):
         return None
 
@@ -209,6 +229,7 @@ def verify_resource_pow(proof: Mapping[str, Any], node_id, *, difficulty=None) -
         return hmac.compare_digest(str(proof.get("digest", "")), digest.hex()) and _meets(digest, d)
     except (KeyError, TypeError, ValueError, OverflowError):
         return False
+
 
 create_pow = create_resource_pow
 verify_pow = verify_resource_pow
