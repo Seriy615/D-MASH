@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import secrets
+import hashlib
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Set
 
@@ -91,23 +92,37 @@ class NodeTransportService:
         hops: int = 0,
         origin_peer_id: str | None = None,
         probe_id: str | None = None,
-        ttl: int = 6,
+        ttl: int = 15,
     ) -> TransportSubmission:
         if not self.can_route or not self.can_accept_devices:
             raise PermissionError("routing is disabled by local Node policy")
         if not route_alias or not back_route_alias:
             raise ValueError("route aliases are required")
+        try:
+            metric = int(hops)
+            hop_limit = int(ttl)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("invalid probe metric or hop limit") from exc
+        if metric < 0 or not 1 <= hop_limit <= 15:
+            raise ValueError("invalid probe metric or hop limit")
+        route_blind = self._blind(route_alias)
+        # NCRH labels a trajectory only. It is deliberately not used as a
+        # proof of route ownership or peer trust.
+        ncrh = hashlib.sha256(f"D-MASH|NCRH|V1|{route_alias}|{route_blind}".encode("utf-8")).hexdigest()
+        metric = metric or secrets.randbelow(1_000_000) + 1_000_000
         packet = {
-            "type": "DMP_C_PROBE",
+            "type": "ROUTE_PROBE_V2",
             "id": probe_id or secrets.token_hex(16),
             "route_id": route_alias,
             "back_route_id": back_route_alias,
-            "hops": int(hops),
-            "ttl": int(ttl),
+            "metric": metric,
+            "hop_limit": hop_limit,
+            "ncrh": ncrh,
         }
         await self.system_db.add_route_alias(
-            self._blind(back_route_alias), origin_peer_id or "LOCAL", int(hops),
+            self._blind(back_route_alias), origin_peer_id or "LOCAL", metric,
             is_local=origin_peer_id is None,
+            ncrh=ncrh,
         )
         await self._dispatch_mesh_packet(packet, origin_peer_id=origin_peer_id)
         return TransportSubmission(delivery_id=packet["id"], state="SUBMITTED_TO_ENTRY", packet=packet)
@@ -159,7 +174,6 @@ class NodeTransportService:
         return {
             "state": "ROUTE_READY",
             "best_metric": route["hops"],
-            "candidate_count": route["candidate_count"],
             "expires_at": route["expires_at"],
         }
 
@@ -218,15 +232,26 @@ class NodeTransportService:
     async def receive_probe(self, packet: Dict[str, Any], from_peer: str, *, is_destination: bool = False) -> bool:
         if not self.can_route:
             return False
+        is_v2 = packet.get("type") == "ROUTE_PROBE_V2"
         back_route_alias = packet.get("back_route_id") or packet.get("back_route_alias")
         route_alias = packet.get("route_id") or packet.get("route_alias")
-        hops = int(packet.get("hops", 0))
-        candidate_hops = hops + 1
+        try:
+            metric = int(packet["metric"] if is_v2 else packet.get("metric", packet.get("hops", 0)))
+            hop_limit = int(packet["hop_limit"] if is_v2 else packet.get("ttl", 0))
+        except (KeyError, TypeError, ValueError):
+            return False
+        if metric < 0 or not 0 <= hop_limit <= 15:
+            return False
+        candidate_metric = metric + 1
+        ncrh = packet.get("ncrh")
         updated = False
         if back_route_alias:
-            updated = await self.system_db.add_route_alias(self._blind(back_route_alias), from_peer, candidate_hops, is_local=False) or updated
+            updated = await self.system_db.add_route_alias(self._blind(back_route_alias), from_peer, candidate_metric, is_local=False, ncrh=ncrh) or updated
         if is_destination and route_alias:
-            updated = await self.system_db.add_route_alias(self._blind(route_alias), "LOCAL", candidate_hops, is_local=True) or updated
+            # A locally armed destination terminates data into the
+            # mailbox/session, but retains the received metric as route
+            # metadata. Database selection explicitly prefers local bindings.
+            updated = await self.system_db.add_route_alias(self._blind(route_alias), "LOCAL", candidate_metric, is_local=True, ncrh=ncrh) or updated
         return updated
 
     async def receive_data(self, packet: Dict[str, Any], from_peer: str) -> Optional[TransportSubmission]:

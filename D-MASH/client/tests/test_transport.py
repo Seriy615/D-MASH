@@ -70,8 +70,13 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
             probe_id="probe-1",
         )
         self.assertEqual(submission.state, "SUBMITTED_TO_ENTRY")
-        self.assertEqual(self.node.calls[0]["packet"]["type"], "DMP_C_PROBE")
+        self.assertEqual(self.node.calls[0]["packet"]["type"], "ROUTE_PROBE_V2")
         self.assertEqual(self.node.calls[0]["packet"]["route_id"], "route-handle-b")
+        self.assertEqual(self.node.calls[0]["packet"]["hop_limit"], 15)
+        self.assertGreaterEqual(self.node.calls[0]["packet"]["metric"], 1_000_000)
+        self.assertNotIn("hops", self.node.calls[0]["packet"])
+        self.assertNotIn("ttl", self.node.calls[0]["packet"])
+        self.assertTrue(self.node.calls[0]["packet"]["ncrh"])
         self.assertEqual(self.node.calls[0]["exclude_peer_id"], "peer-a")
 
         await self.transport.receive_probe(self.node.calls[0]["packet"], "peer-a", is_destination=True)
@@ -118,8 +123,48 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
         status = await self.transport.route_status("ready-route")
         self.assertEqual(status["state"], "ROUTE_READY")
         self.assertEqual(status["best_metric"], 4)
-        self.assertEqual(status["candidate_count"], 2)
         self.assertNotIn("next_hop_id", status)
+        self.assertNotIn("candidate_count", status)
+
+    async def test_candidate_ncrh_metadata_is_bounded_and_never_exposed_in_status(self):
+        alias = self.db.node_crypto.get_blind_hash("bounded-route")
+        for index in range(5):
+            await self.db.add_route_alias(alias, "peer-a", 3, ncrh=f"{index:064x}")
+        async with self.db.conn.execute("SELECT routing_blob FROM blind_routes WHERE route_in_hash=?", (alias,)) as cursor:
+            stored = (await cursor.fetchone())["routing_blob"]
+        candidate = json.loads(stored)["candidates"][0]
+        self.assertLessEqual(len(candidate["alternate_ncrh"]), 3)
+        status = await self.transport.route_status("bounded-route")
+        self.assertNotIn("ncrh", status)
+        self.assertNotIn("alternate_ncrh", status)
+
+    async def test_candidate_expiry_is_independent_and_invalid_ncrh_is_not_retained(self):
+        alias = self.db.node_crypto.get_blind_hash("fresh-route")
+        now = __import__("time").time()
+        await self.db.add_route_alias(alias, "expired-peer", 1, expires_at=now - 1, ncrh="a" * 64)
+        await self.db.add_route_alias(alias, "fresh-peer", 5, expires_at=now + 60, ncrh="oversized-untrusted-label")
+        route = await self.db.get_best_route_alias(alias)
+        self.assertEqual(route["next_hop_id"], "fresh-peer")
+        self.assertEqual(route["candidate_count"], 1)
+        async with self.db.conn.execute("SELECT routing_blob FROM blind_routes WHERE route_in_hash=?", (alias,)) as cursor:
+            candidate = json.loads((await cursor.fetchone())["routing_blob"])["candidates"][0]
+        self.assertNotIn("oversized-untrusted-label", json.dumps(candidate))
+
+    async def test_expired_local_candidate_does_not_capture_fresh_transit_route(self):
+        alias = self.db.node_crypto.get_blind_hash("candidate-locality")
+        now = __import__("time").time()
+        await self.db.add_route_alias(alias, "LOCAL", 0, is_local=True, expires_at=now + 0.01)
+        await self.db.add_route_alias(alias, "fresh-peer", 4, expires_at=now + 60)
+        await __import__("asyncio").sleep(0.02)
+        route = await self.db.get_best_route_alias(alias)
+        self.assertEqual(route["next_hop_id"], "fresh-peer")
+        self.assertFalse(route["is_local"])
+
+    async def test_v2_probe_requires_separate_valid_metric_and_hop_limit(self):
+        invalid = {"type": "ROUTE_PROBE_V2", "route_id": "route", "back_route_id": "back", "metric": 1}
+        self.assertFalse(await self.transport.receive_probe(invalid, "peer"))
+        with self.assertRaises(ValueError):
+            await self.transport.start_probe("route", "back", ttl=16)
 
     async def test_locator_notification_binding_is_encrypted_and_removed_with_beacon(self):
         locator, beacon = "inbound-beacon-locator", "device-derived-beacon"

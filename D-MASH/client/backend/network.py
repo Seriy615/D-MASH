@@ -192,13 +192,13 @@ class P2PNode:
 
                 # Do not mark, learn, route, or enqueue real transport traffic
                 # when this universal Python Node has routing disabled.
-                if pkt_type in {"DMP_C_PROBE", "DMP_C_DATA", "PROBE", "DATA"} and not self.can_route:
+                if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2", "DMP_C_DATA", "PROBE", "DATA"} and not self.can_route:
                     return
 
                 # Регистрируем пакет (внутри используется хеширование ID)
                 is_new = await self.system_db.mark_packet_seen(pkt_id)
 
-                if pkt_type == "DMP_C_PROBE":
+                if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2"}:
                     await self._handle_dmp_c_probe(packet, from_peer, is_new)
                 elif pkt_type == "DMP_C_DATA":
                     if is_new:
@@ -279,11 +279,20 @@ class P2PNode:
             return
         # A duplicate probe may still improve the hop gradient through a
         # different peer. Forward only when the local best candidate changed.
-        if not route_updated or packet.get("ttl", 0) <= 0:
+        is_v2 = packet.get("type") == "ROUTE_PROBE_V2"
+        try:
+            remaining_hops = int(packet["hop_limit"] if is_v2 else packet.get("ttl", 0))
+        except (KeyError, TypeError, ValueError):
+            return
+        if not route_updated or remaining_hops <= 0:
             return
         next_packet = dict(packet)
-        next_packet["hops"] = int(packet.get("hops", 0)) + 1
-        next_packet["ttl"] = int(packet.get("ttl", 0)) - 1
+        next_packet["metric"] = int(packet.get("metric", packet.get("hops", 0))) + 1
+        if is_v2:
+            next_packet["hop_limit"] = remaining_hops - 1
+        else:
+            next_packet["hops"] = next_packet["metric"]
+            next_packet["ttl"] = remaining_hops - 1
         await self.enqueue_transport_packet(next_packet, exclude_peer_id=from_peer)
 
     async def _handle_dmp_c_data(self, packet, from_peer):

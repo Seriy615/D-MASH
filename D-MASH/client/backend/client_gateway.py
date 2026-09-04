@@ -194,9 +194,9 @@ async def dmp_client(websocket: WebSocket):
                 try:
                     submission = await state.node.transport.start_probe(
                         route_locator, back_route_locator,
-                        hops=request.get("hops", 0), ttl=min(6, max(1, int(request.get("ttl", 6)))),
+                        hops=request.get("metric", request.get("hops", 0)), ttl=min(15, max(1, int(request.get("hop_limit", request.get("ttl", 15))))),
                     )
-                except (PermissionError, ValueError):
+                except (PermissionError, TypeError, ValueError):
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
                     continue
                 await websocket.send_json({"type": "START_PROBE_RESULT", "request_id": request_id, **asdict(submission)})

@@ -109,7 +109,7 @@ const NodeManager = {
                     this.setLocatorHandle(peerId, result.locator_handle);
                     await this.bindNotificationBeacon(route.backRouteLocator, node);
                     await this.requestOn(node, 'START_PROBE', {
-                        route_locator: route.routeLocator, back_route_locator: route.backRouteLocator, ttl: 6
+                        route_locator: route.routeLocator, back_route_locator: route.backRouteLocator, hop_limit: 15
                     });
                 } catch (error) { this.showMessage(`Mesh locator arm failed: ${error.message}`, true); }
             }
@@ -494,7 +494,7 @@ const NodeManager = {
     },
     startProbe(routeLocator, backRouteLocator, options = {}) {
         return this.requestAll('START_PROBE', {
-            route_locator: routeLocator, back_route_locator: backRouteLocator, ttl: 6, ...options
+            route_locator: routeLocator, back_route_locator: backRouteLocator, hop_limit: 15, ...options
         }).then(results => results[0]);
     },
     async routeStatus(routeLocator) {

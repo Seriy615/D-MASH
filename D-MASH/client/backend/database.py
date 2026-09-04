@@ -398,8 +398,12 @@ class DatabaseManager:
         ) as cursor:
             return await cursor.fetchone() is not None
 
-    async def add_route_alias(self, route_alias: str, next_hop_id: str, hops: int, *, is_local: bool = False, health: float = 0.0, expires_at: float | None = None):
-        """Store a node-local blind route alias and keep the shortest candidate."""
+    async def add_route_alias(self, route_alias: str, next_hop_id: str, hops: int, *, is_local: bool = False, health: float = 0.0, expires_at: float | None = None, ncrh: str | None = None):
+        """Store a node-local blind route alias and bounded fresh candidates.
+
+        Candidate identities and NCRH trajectory tags remain encrypted in the
+        routing blob.  The database index stays a Node-local blind alias.
+        """
         if not route_alias or not next_hop_id or hops < 0:
             raise ValueError("invalid blind route")
         now = time.time()
@@ -413,16 +417,31 @@ class DatabaseManager:
         if row:
             current = self.node_crypto.decrypt_from_self(row["routing_blob"]) or current
         was_local = bool(current.get("is_local"))
-        before = [dict(candidate) for candidate in current.get("candidates", [])]
-        candidates = [candidate for candidate in current.get("candidates", []) if candidate.get("next_hop") != next_hop_id]
-        candidates.append({"next_hop": next_hop_id, "hops": int(hops), "health": float(health)})
+        before = [dict(candidate) for candidate in current.get("candidates", []) if candidate.get("expires_at", expiry) > now]
+        candidates = [candidate for candidate in before if candidate.get("next_hop") != next_hop_id]
+        previous = next((candidate for candidate in before if candidate.get("next_hop") == next_hop_id), {})
+        # NCRH is an opaque fixed-size trajectory label.  Never allow a peer
+        # to turn the encrypted route blob into unbounded storage; it is kept
+        # only in this encrypted candidate metadata, never in status output.
+        valid_ncrh = ncrh if isinstance(ncrh, str) and len(ncrh) == 64 and all(c in "0123456789abcdef" for c in ncrh) else None
+        tags = [tag for tag in previous.get("alternate_ncrh", []) if isinstance(tag, str) and len(tag) == 64]
+        previous_best = previous.get("best_ncrh")
+        if valid_ncrh and valid_ncrh != previous_best and valid_ncrh not in tags:
+            tags = (tags + [valid_ncrh])[-3:]
+        candidates.append({
+            "next_hop": next_hop_id, "hops": int(hops), "health": float(health), "is_local": bool(is_local),
+            "expires_at": expiry, "last_seen": now,
+            "best_ncrh": valid_ncrh or previous_best,
+            "alternate_ncrh": tags,
+        })
         candidates.sort(key=lambda candidate: (candidate["hops"], -candidate.get("health", 0.0)))
         current["candidates"] = candidates[:3]
         current["is_local"] = bool(current.get("is_local") or is_local)
         blob = self.node_crypto.encrypt_for_self(current)
+        route_expiry = max((candidate["expires_at"] for candidate in current["candidates"]), default=expiry)
         await self.conn.execute(
             "INSERT OR REPLACE INTO blind_routes (route_in_hash, routing_blob, expires_at) VALUES (?, ?, ?)",
-            (route_alias, blob, expiry),
+            (route_alias, blob, route_expiry),
         )
         await self.conn.commit()
         before_best = min(before, key=lambda c: (c.get("hops", 10**9), -c.get("health", 0.0)), default=None)
@@ -441,19 +460,25 @@ class DatabaseManager:
         if not row:
             return None
         data = self.node_crypto.decrypt_from_self(row["routing_blob"])
-        candidates = (data or {}).get("candidates", [])
+        now = time.time()
+        candidates = [candidate for candidate in (data or {}).get("candidates", []) if candidate.get("expires_at", row["expires_at"]) > now]
         if not candidates:
             return None
-        best = min(candidates, key=lambda candidate: (candidate.get("hops", 10**9), -candidate.get("health", 0.0)))
+        # A locally armed binding terminates the route. Prefer it over any
+        # transit gradient while preserving the inbound probe metric for
+        # status/diagnostics.
+        best = min(candidates, key=lambda candidate: (not candidate.get("is_local", False), candidate.get("hops", 10**9), -candidate.get("health", 0.0)))
         return {
             "next_hop_id": best["next_hop"],
             "hops": best.get("hops", 0),
             "health": best.get("health", 0.0),
-            "is_local": bool((data or {}).get("is_local")),
+            # Locality is candidate-scoped.  A stale local candidate must not
+            # cause a fresh transit candidate to be delivered locally.
+            "is_local": bool(best.get("is_local", False)),
             # This is intentionally only a bounded count.  The candidate
             # identities remain inside the encrypted node-local routing blob.
             "candidate_count": len(candidates),
-            "expires_at": row["expires_at"],
+            "expires_at": min(candidate.get("expires_at", row["expires_at"]) for candidate in candidates),
         }
 
     async def get_best_route(self, route_id: str) -> Optional[Dict]:
