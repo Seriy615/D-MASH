@@ -450,6 +450,9 @@ class DatabaseManager:
             "hops": best.get("hops", 0),
             "health": best.get("health", 0.0),
             "is_local": bool((data or {}).get("is_local")),
+            # This is intentionally only a bounded count.  The candidate
+            # identities remain inside the encrypted node-local routing blob.
+            "candidate_count": len(candidates),
             "expires_at": row["expires_at"],
         }
 

@@ -91,7 +91,7 @@ class NodeTransportService:
         hops: int = 0,
         origin_peer_id: str | None = None,
         probe_id: str | None = None,
-        ttl: int = 20,
+        ttl: int = 6,
     ) -> TransportSubmission:
         if not self.can_route or not self.can_accept_devices:
             raise PermissionError("routing is disabled by local Node policy")
@@ -135,11 +135,33 @@ class NodeTransportService:
             delivered_to_session = await self._store_mailbox(self._blind(route_alias), packet)
             state = "DELIVERED_TO_DESTINATION_PWA_SESSION" if delivered_to_session else "DELIVERED_TO_DESTINATION_NODE"
             return TransportSubmission(delivery_id=delivery_id, state=state, packet=packet)
+        # DATA must never create an implicit flood.  Route discovery is an
+        # explicit Probe operation; callers are required to check
+        # ROUTE_STATUS first and an expired/unknown entry is a hard stop.
         if not route:
-            await self._dispatch_mesh_packet(packet, origin_peer_id=origin_peer_id)
-            return TransportSubmission(delivery_id=delivery_id, state="ROUTE_NOT_ARMED", packet=packet)
+            return TransportSubmission(delivery_id=delivery_id, state="ROUTE_UNKNOWN", packet=packet)
         await self._dispatch_mesh_packet(packet, next_hop_id=route["next_hop_id"], origin_peer_id=origin_peer_id)
         return TransportSubmission(delivery_id=delivery_id, state="SUBMITTED_TO_ENTRY", packet=packet)
+
+    async def route_status(self, route_alias: str) -> Dict[str, Any]:
+        """Return minimal readiness metadata without revealing topology.
+
+        The raw locator is accepted only inside the authenticated client call;
+        lookup and all durable state use this Node's blind alias.
+        """
+        if not self.can_route or not self.can_accept_devices:
+            raise PermissionError("routing is disabled by local Node policy")
+        if not isinstance(route_alias, str) or not route_alias:
+            raise ValueError("route alias is required")
+        route = await self.system_db.get_best_route_alias(self._blind(route_alias))
+        if not route:
+            return {"state": "ROUTE_UNKNOWN"}
+        return {
+            "state": "ROUTE_READY",
+            "best_metric": route["hops"],
+            "candidate_count": route["candidate_count"],
+            "expires_at": route["expires_at"],
+        }
 
     async def pull(self, locator_handle: str) -> list[dict[str, Any]]:
         if not self.can_accept_devices:

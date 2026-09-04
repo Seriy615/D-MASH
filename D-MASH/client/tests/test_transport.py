@@ -105,6 +105,35 @@ class OpaqueTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(row["target_hash"], locator_handle)
         self.assertNotIn(raw_locator, row["packet_json"])
 
+    async def test_unknown_route_is_not_blindly_forwarded_and_status_is_minimal(self):
+        status = await self.transport.route_status("missing-route")
+        self.assertEqual(status, {"state": "ROUTE_UNKNOWN"})
+        result = await self.transport.submit_envelope("missing-route", {"packet_id": "no-route", "ciphertext": "opaque"})
+        self.assertEqual(result.state, "ROUTE_UNKNOWN")
+        self.assertEqual(self.node.calls, [])
+
+    async def test_route_status_reports_ready_without_next_hop_topology(self):
+        await self.db.add_route_alias(self.db.node_crypto.get_blind_hash("ready-route"), "peer-private", 4)
+        await self.db.add_route_alias(self.db.node_crypto.get_blind_hash("ready-route"), "peer-alternate", 6)
+        status = await self.transport.route_status("ready-route")
+        self.assertEqual(status["state"], "ROUTE_READY")
+        self.assertEqual(status["best_metric"], 4)
+        self.assertEqual(status["candidate_count"], 2)
+        self.assertNotIn("next_hop_id", status)
+
+    async def test_locator_notification_binding_is_encrypted_and_removed_with_beacon(self):
+        locator, beacon = "inbound-beacon-locator", "device-derived-beacon"
+        locator_alias = await self.transport.register_inbound_locator(locator)
+        await self.transport.register_notification_beacon(beacon)
+        self.assertTrue(await self.transport.bind_locator_notification_beacon(locator, beacon))
+        self.assertEqual(await self.db.notification_handle_for_locator_alias(locator_alias), beacon)
+        async with self.db.conn.execute("SELECT user_blob FROM local_bindings WHERE binding_hash=?", (locator_alias,)) as cursor:
+            stored = (await cursor.fetchone())["user_blob"]
+        self.assertNotIn(locator, stored)
+        self.assertNotIn(beacon, stored)
+        self.assertTrue(await self.transport.unregister_notification_beacon(beacon))
+        self.assertIsNone(await self.db.notification_handle_for_locator_alias(locator_alias))
+
     async def test_pull_and_ack_keep_envelopes_opaque_until_ack(self):
         inbound_handle = await self.transport.register_inbound_locator("inbound-locator")
         await self.db.add_route_alias(inbound_handle, "LOCAL", 0, is_local=True)

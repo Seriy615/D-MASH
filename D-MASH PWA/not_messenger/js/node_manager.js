@@ -13,7 +13,7 @@ class NodeEndpoint {
         // Provisioning metadata is retained locally only. Password-based node
         // authentication is not claimed until the DMP-C server supports it.
         this.password = typeof options.password === 'string' ? options.password : null;
-        this.autoConnect = options.autoConnect !== false;
+        this.autoConnect = options.autoConnect === true;
         // Notification delivery is an explicit, per-node opt-in.  Do not turn
         // every Entry Node into a notification relay just because Telegram was
         // linked on this device.
@@ -29,7 +29,7 @@ const NodeManager = {
     inboundHandleKey: 'dmash_mesh_inbound_handle_v1',
     routeConfigKey: 'dmash_mesh_route_config_v1',
     notificationBeaconEnabledKey: 'dmash_notification_beacon_enabled_v1',
-    endpoints: [], active: null, socket: null, capabilities: new Set(), connections: new Map(),
+    endpoints: [], originNodes: [], active: null, socket: null, capabilities: new Set(), connections: new Map(),
     transportMode: 'mesh',
     state: 'disconnected', error: null, reconnectAttempt: 0, reconnectTimer: null,
     pingTimer: null, pendingPings: new Map(), pendingRequests: new Map(), lastLatencyMs: null, lastConnectedAt: null,
@@ -90,19 +90,33 @@ const NodeManager = {
         await this.startProbe(routeLocator, backRouteLocator);
         return { armed: true, locator_handle: result.locator_handle };
     },
-    async armStoredRoutes() {
-        if (!this.connectedConnections().length) return;
-        if (!this.supports('REGISTER_INBOUND_LOCATOR') || !this.supports('START_PROBE')) return;
+    async armStoredRoutes(connection = null) {
+        // A newly attached Entry Node needs the user's inbound locators and a
+        // fresh probe for every existing chat.  Scope this pass to that one
+        // connection: creating a route is the only operation that broadcasts
+        // to every connected Node.
+        const connections = connection ? [connection] : this.connectedConnections();
+        if (!connections.length) return;
         const routes = this.getRouteConfig();
-        for (const [peerId, route] of Object.entries(routes)) {
-            if (!route?.backRouteLocator) continue;
-            try {
-                const result = await this.registerInboundLocator(route.backRouteLocator);
-                this.setLocatorHandle(peerId, result.locator_handle);
-                await this.bindNotificationBeacon(route.backRouteLocator);
-                await this.startProbe(route.routeLocator, route.backRouteLocator);
-            } catch (error) { this.showMessage(`Mesh locator arm failed: ${error.message}`, true); }
+        for (const node of connections) {
+            if (node.state !== 'connected' || !node.capabilities.has('REGISTER_INBOUND_LOCATOR') || !node.capabilities.has('START_PROBE')) continue;
+            for (const [peerId, route] of Object.entries(routes)) {
+                if (!route?.routeLocator || !route?.backRouteLocator) continue;
+                try {
+                    // A probe advertises one forward locator only; the return
+                    // locator is registered locally at this Entry Node.
+                    const result = await this.requestOn(node, 'REGISTER_INBOUND_LOCATOR', { locator: route.backRouteLocator });
+                    this.setLocatorHandle(peerId, result.locator_handle);
+                    await this.bindNotificationBeacon(route.backRouteLocator, node);
+                    await this.requestOn(node, 'START_PROBE', {
+                        route_locator: route.routeLocator, back_route_locator: route.backRouteLocator, ttl: 6
+                    });
+                } catch (error) { this.showMessage(`Mesh locator arm failed: ${error.message}`, true); }
+            }
         }
+        // The node-state event fires as soon as authentication completes;
+        // flush once more after its route probes are actually armed.
+        window.Core?.flushOutboundQueue?.();
     },
     async removeMeshRoute(peerId) {
         const routes = this.getRouteConfig();
@@ -129,7 +143,9 @@ const NodeManager = {
         const endpoint = new NodeEndpoint(url, label, options);
         const existing = this.endpoints.find(item => item.url === endpoint.url);
         if (existing) Object.assign(existing, { label: endpoint.label, public: endpoint.public, password: endpoint.password });
-        if (existing) existing.autoConnect = endpoint.autoConnect;
+        // Catalog refreshes must never silently change a user's connection
+        // policy. Only an explicit add/edit can carry autoConnect.
+        if (existing && Object.hasOwn(options, 'autoConnect')) existing.autoConnect = endpoint.autoConnect;
         else this.endpoints.push(endpoint);
         this.save(); return endpoint;
     },
@@ -149,23 +165,32 @@ const NodeManager = {
         const response = await fetch(path, { cache: 'no-store' });
         if (!response.ok) throw new Error(`Node list HTTP ${response.status}`);
         const data = await response.json();
-        for (const item of (data.nodes || [])) this.add(item.url, item.label, { public: true });
-        return this.endpoints;
+        this.originNodes = (data.nodes || []).map(item => ({ ...item, public: true }));
+        return this.originNodes;
     },
     async autoConnect() {
-        if (!this.endpoints.length) await this.loadOriginList();
-        // Default policy: exactly one randomly selected prepared public node.
-        // A manually selected/personal node always wins and is never replaced.
-        if (!this.active) {
-            const publicNodes = this.endpoints.filter(endpoint => endpoint.public);
-            const candidates = publicNodes.length ? publicNodes : this.endpoints;
-            if (candidates.length) this.select(candidates[Math.floor(Math.random() * candidates.length)].url);
+        // Connections belong to this device. Nothing from the public catalog is
+        // added or chosen until the user explicitly requests a node.
+        for (const endpoint of this.endpoints.filter(item => item.autoConnect === true || item.notificationEnabled === true)) {
+            if (this.connections.get(endpoint.url)?.state !== 'connected') await this.connect(endpoint.url);
         }
-        if (this.active && this.active.autoConnect !== false && !this.connectedConnections().length) await this.connect(this.active.url);
+    },
+    async requestNode() {
+        if (!this.originNodes.length) await this.loadOriginList();
+        const candidates = this.originNodes;
+        if (!candidates.length) throw new Error('Публичные узлы не найдены');
+        const selected = candidates[Math.floor(Math.random() * candidates.length)];
+        const endpoint = this.add(selected.url, selected.label, { public: true, autoConnect: true });
+        this.select(endpoint.url);
+        await this.connect(endpoint.url);
+        return endpoint;
     },
     select(url) {
         const endpoint = this.endpoints.find(item => item.url === url);
         if (!endpoint) throw new Error('Unknown node endpoint');
+        // The primary node is always an auto-connected node. Selecting it is
+        // an explicit promotion, unlike merely opening its gear modal.
+        endpoint.autoConnect = true;
         this.active = endpoint; this.save(); this.syncFacade();
     },
     setState(state, error = null) {
@@ -212,13 +237,16 @@ const NodeManager = {
             };
             const connect = square(this.makeButton(connection?.state === 'connected' ? 'OFF' : 'ON', () => {
                 if (connection?.state === 'connected') this.disconnectEndpoint(endpoint.url);
-                else { this.select(endpoint.url); this.connect(endpoint.url).catch(error => this.showMessage(error, true)); }
+                // ON/OFF controls this particular device connection. It must
+                // not silently promote the node to primary: several Nodes may
+                // be online concurrently, while primary is only a preference
+                // for single-node requests.
+                else this.connect(endpoint.url).catch(error => this.showMessage(error, true));
             }, connection?.state !== 'connected'));
             connect.title = connection?.state === 'connected' ? 'Отключить узел' : 'Подключить узел';
             const qr = square(this.makeButton('QR', () => this.showNodeQR(endpoint), false));
             qr.title = 'Показать QR узла';
             const settings = square(this.makeButton('⚙', () => {
-                this.select(endpoint.url);
                 this.renderNodeSettings(endpoint);
             }, false));
             settings.style.fontSize = '1rem';
@@ -302,7 +330,7 @@ const NodeManager = {
             connection.lastConnectedAt = Date.now(); this.updateState();
             connection.socket.send(JSON.stringify({ type: 'STATUS', request_id: crypto.randomUUID() }));
             this.syncNotificationBeacon().catch(error => this.showMessage(`Beacon registration failed: ${error.message}`, true));
-            this.armStoredRoutes();
+            this.armStoredRoutes(connection);
             this.startPings(connection);
         } else if (message.type === 'DELIVERY_AVAILABLE') {
             // The ciphertext stays in the Node mailbox until ACK. This signal
@@ -430,22 +458,29 @@ const NodeManager = {
     unregisterNotificationBeacon(beaconHandle) {
         return this.requestAll('UNREGISTER_NOTIFICATION_BEACON', { beacon_handle: beaconHandle });
     },
-    async bindNotificationBeacon(locator) {
+    async bindNotificationBeacon(locator, connection = null) {
         if (!locator || !window.DeviceRoot?.notificationBeaconHandle) return [];
         const beaconHandle = await window.DeviceRoot.notificationBeaconHandle();
-        const eligible = this.connectedConnections().filter(connection =>
-            connection.endpoint.notificationEnabled === true && connection.capabilities.has('BIND_LOCATOR_NOTIFICATION_BEACON')
+        const eligible = (connection ? [connection] : this.connectedConnections()).filter(item =>
+            item.endpoint.notificationEnabled === true && item.capabilities.has('BIND_LOCATOR_NOTIFICATION_BEACON')
         );
         if (!eligible.length) return [];
-        await Promise.all(eligible.map(connection => this.requestOn(connection, 'REGISTER_NOTIFICATION_BEACON', { beacon_handle: beaconHandle })));
-        return Promise.all(eligible.map(connection => this.requestOn(connection, 'BIND_LOCATOR_NOTIFICATION_BEACON', { locator, beacon_handle: beaconHandle })));
+        await Promise.all(eligible.map(item => this.requestOn(item, 'REGISTER_NOTIFICATION_BEACON', { beacon_handle: beaconHandle })));
+        return Promise.all(eligible.map(item => this.requestOn(item, 'BIND_LOCATOR_NOTIFICATION_BEACON', { locator, beacon_handle: beaconHandle })));
     },
     notificationBeaconEnabled(endpoint = this.active) {
         return endpoint?.notificationEnabled === true;
     },
-    setNotificationBeaconEnabled(enabled, endpoint = this.active) {
+    async setNotificationBeaconEnabled(enabled, endpoint = this.active) {
         if (!endpoint) throw new Error('Select a node first');
+        if (enabled === true) {
+            const handle = await window.DeviceRoot?.notificationBeaconHandle?.();
+            if (!handle || localStorage.getItem('dmash_beacon_bound_v1') !== 'true') {
+                throw new Error('Сначала привяжите Телеграм-маяк.');
+            }
+        }
         endpoint.notificationEnabled = enabled === true;
+        if (endpoint.notificationEnabled) endpoint.autoConnect = true;
         this.save();
     },
     async syncNotificationBeacon(connection = null) {
@@ -459,12 +494,27 @@ const NodeManager = {
     },
     startProbe(routeLocator, backRouteLocator, options = {}) {
         return this.requestAll('START_PROBE', {
-            route_locator: routeLocator, back_route_locator: backRouteLocator, ...options
+            route_locator: routeLocator, back_route_locator: backRouteLocator, ttl: 6, ...options
         }).then(results => results[0]);
     },
+    async routeStatus(routeLocator) {
+        const connections = this.connectedConnections().filter(connection => connection.capabilities.has('ROUTE_STATUS'));
+        if (!connections.length) throw new Error('No connected D-MASH node supports route status');
+        const results = await Promise.allSettled(connections.map(async connection => ({
+            connection,
+            result: await this.requestOn(connection, 'ROUTE_STATUS', { route_locator: routeLocator })
+        })));
+        const ready = results.filter(item => item.status === 'fulfilled' && item.value.result.state === 'ROUTE_READY')
+            .map(item => item.value)
+            .sort((a, b) => (a.result.best_metric ?? Number.MAX_SAFE_INTEGER) - (b.result.best_metric ?? Number.MAX_SAFE_INTEGER));
+        return ready[0] || null;
+    },
     async submitEnvelope(routeLocator, envelope) {
-        const results = await this.requestAll('SUBMIT_ENVELOPE', { route_locator: routeLocator, envelope });
-        return results[0];
+        // Discovery is event-driven.  Do not turn a missing route into a blind
+        // DATA flood or a silent legacy-relay fallback.
+        const ready = await this.routeStatus(routeLocator);
+        if (!ready) throw new Error('Route unavailable: no connected node reports ROUTE_READY');
+        return this.requestOn(ready.connection, 'SUBMIT_ENVELOPE', { route_locator: routeLocator, envelope });
     },
     async pull(locatorHandle) {
         const connections = this.connectedConnections().filter(connection => connection.capabilities.has('PULL'));
@@ -505,6 +555,8 @@ const NodeManager = {
     },
     disconnectEndpoint(url) {
         const connection = this.connections.get(url);
+        const endpoint = this.endpoints.find(item => item.url === url);
+        if (endpoint?.notificationEnabled) return this.showMessage('Узел обеспечивает уведомления и не может быть отключён.');
         if (!connection) return;
         clearTimeout(connection.reconnectTimer); this.stopPings(connection);
         this.rejectPending(connection, new Error('D-MASH node disconnected'));
@@ -620,7 +672,6 @@ const NodeManager = {
     },
     renderNodeSettings(endpoint = this.active) {
         if (!endpoint) return this.renderSettings();
-        this.select(endpoint.url);
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
         const box = document.createElement('div'); box.className = 'sys-modal-box';
         const title = document.createElement('h4'); title.textContent = 'НАСТРОЙКИ УЗЛА';
@@ -629,7 +680,8 @@ const NodeManager = {
         identity.textContent = `${endpoint.label}\n${endpoint.url}`;
         const autoConnect = document.createElement('label');
         autoConnect.style.cssText = 'display:block;text-align:left;margin:0 0 10px;font-size:.78rem;color:#ccc';
-        const autoToggle = document.createElement('input'); autoToggle.type = 'checkbox'; autoToggle.checked = endpoint.autoConnect !== false;
+        const autoToggle = document.createElement('input'); autoToggle.type = 'checkbox'; autoToggle.checked = endpoint.autoConnect === true;
+        autoToggle.disabled = endpoint === this.active || endpoint.notificationEnabled === true;
         autoToggle.onchange = () => { endpoint.autoConnect = autoToggle.checked; this.save(); };
         autoConnect.append(autoToggle, document.createTextNode(' АВТОПОДКЛЮЧЕНИЕ'));
         const notification = document.createElement('p');
@@ -638,22 +690,22 @@ const NodeManager = {
         const notify = this.makeButton(endpoint.notificationEnabled ? 'ВЫКЛЮЧИТЬ УВЕДОМЛЕНИЯ' : 'РАЗРЕШИТЬ УВЕДОМЛЕНИЯ', async () => {
             try {
                 const enabled = endpoint.notificationEnabled !== true;
-                this.setNotificationBeaconEnabled(enabled, endpoint);
+                await this.setNotificationBeaconEnabled(enabled, endpoint);
                 const connection = this.connections.get(endpoint.url);
                 if (enabled && connection?.state === 'connected') await this.syncNotificationBeacon(connection);
                 if (!enabled && connection?.state === 'connected' && connection.capabilities.has('UNREGISTER_NOTIFICATION_BEACON')) {
                     await this.requestOn(connection, 'UNREGISTER_NOTIFICATION_BEACON', { beacon_handle: await window.DeviceRoot.notificationBeaconHandle() });
                 }
                 this.renderNodeSettings(endpoint);
-            } catch (error) { this.setNotificationBeaconEnabled(endpoint.notificationEnabled !== true, endpoint); this.showMessage(error, true); }
+            } catch (error) { endpoint.notificationEnabled = false; this.save(); this.showMessage(error, true); }
         });
-        const primary = this.makeButton('СДЕЛАТЬ ОСНОВНЫМ', () => { this.select(endpoint.url); this.renderSettings(); });
+        const primary = endpoint === this.active ? null : this.makeButton('СДЕЛАТЬ ОСНОВНЫМ', () => { this.select(endpoint.url); this.renderSettings(); });
         const remove = this.makeButton('УДАЛИТЬ УЗЕЛ', () => {
             if (window.confirm(`Удалить узел «${endpoint.label}» только из этого устройства?`)) { this.remove(endpoint.url); this.renderSettings(); }
         });
         remove.style.cssText = 'color:#ff7b7b;border-color:#633';
         const back = this.makeButton('НАЗАД', () => this.renderSettings());
-        box.append(title, identity, autoConnect, notification, primary, notify, remove, back); modal.appendChild(box);
+        box.append(title, identity, autoConnect, notification, ...(primary ? [primary] : []), notify, remove, back); modal.appendChild(box);
     },
     renderSettings() {
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
@@ -681,9 +733,12 @@ const NodeManager = {
             });
         });
         const scan = this.makeButton('ДОБАВИТЬ ПО QR', () => this.openNodeScanner());
-        const disconnect = this.makeButton('ОТКЛЮЧИТЬ ВСЕ', () => { this.disconnect(false); this.renderSettings(); });
         const close = this.makeButton('НАЗАД', () => { if (window.Core?.openSettings) Core.openSettings(); else modal.style.display = 'none'; });
-        box.append(add, scan, disconnect, close); modal.appendChild(box);
+        if (!this.endpoints.length) {
+            const request = this.makeButton('ЗАПРОСИТЬ УЗЕЛ', () => this.requestNode().then(() => this.renderSettings()).catch(error => this.showMessage(error, true)), true);
+            box.append(request);
+        }
+        box.append(add, scan, close); modal.appendChild(box);
     },
     openStartLink(url) {
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';

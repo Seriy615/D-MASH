@@ -164,6 +164,27 @@ async def dmp_client(websocket: WebSocket):
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
                     continue
                 await websocket.send_json({"type": "UNREGISTER_INBOUND_LOCATOR_RESULT", "request_id": request_id, "removed": removed})
+            elif operation == "REGISTER_NOTIFICATION_BEACON":
+                beacon_handle = request.get("beacon_handle")
+                try:
+                    alias = await state.node.transport.register_notification_beacon(beacon_handle)
+                    await websocket.send_json({"type": "REGISTER_NOTIFICATION_BEACON_RESULT", "request_id": request_id, "beacon_alias": alias})
+                except Exception:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
+            elif operation == "UNREGISTER_NOTIFICATION_BEACON":
+                beacon_handle = request.get("beacon_handle")
+                try:
+                    removed = await state.node.transport.unregister_notification_beacon(beacon_handle)
+                    await websocket.send_json({"type": "UNREGISTER_NOTIFICATION_BEACON_RESULT", "request_id": request_id, "removed": removed})
+                except Exception:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
+            elif operation == "BIND_LOCATOR_NOTIFICATION_BEACON":
+                locator, beacon_handle = request.get("locator"), request.get("beacon_handle")
+                try:
+                    bound = await state.node.transport.bind_locator_notification_beacon(locator, beacon_handle)
+                    await websocket.send_json({"type": "BIND_LOCATOR_NOTIFICATION_BEACON_RESULT", "request_id": request_id, "bound": bound})
+                except Exception:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
             elif operation == "START_PROBE":
                 route_locator = request.get("route_locator")
                 back_route_locator = request.get("back_route_locator")
@@ -173,12 +194,23 @@ async def dmp_client(websocket: WebSocket):
                 try:
                     submission = await state.node.transport.start_probe(
                         route_locator, back_route_locator,
-                        hops=request.get("hops", 0), ttl=request.get("ttl", 20),
+                        hops=request.get("hops", 0), ttl=min(6, max(1, int(request.get("ttl", 6)))),
                     )
                 except (PermissionError, ValueError):
                     await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
                     continue
                 await websocket.send_json({"type": "START_PROBE_RESULT", "request_id": request_id, **asdict(submission)})
+            elif operation == "ROUTE_STATUS":
+                route_locator = request.get("route_locator")
+                if not isinstance(route_locator, str) or not route_locator:
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "INVALID_ROUTE_HANDLE"})
+                    continue
+                try:
+                    status = await state.node.transport.route_status(route_locator)
+                except (PermissionError, ValueError):
+                    await websocket.send_json({"type": "ERROR", "request_id": request_id, "code": "NODE_OPERATION_FAILED"})
+                    continue
+                await websocket.send_json({"type": "ROUTE_STATUS_RESULT", "request_id": request_id, **status})
             elif operation == "SUBMIT_ENVELOPE":
                 route_locator = request.get("route_locator")
                 envelope = request.get("envelope")
