@@ -54,10 +54,18 @@ git -C "$PREFIX/src" checkout --detach --force "$REVISION"
 
 SRC="$PREFIX/src/D-MASH/client"
 [[ -d "$SRC/backend" ]] || { echo "repository does not contain D-MASH/client/backend" >&2; exit 1; }
+[[ -d "$SRC/frontend" ]] || { echo "repository does not contain D-MASH/client/frontend" >&2; exit 1; }
 python3 -m venv "$PREFIX/.venv"
 "$PREFIX/.venv/bin/pip" install --requirement "$SRC/requirements.txt"
 install -d -o dmash-node -g dmash-node -m 0700 "$PREFIX/backend"
 cp -a "$SRC/backend/." "$PREFIX/backend/"
+
+# core.py serves the legacy HTTP frontend from either backend/frontend or
+# $PREFIX/frontend.  Install it explicitly outside backend runtime state so an
+# idempotent backend code refresh cannot delete it with rsync --delete.
+rm -rf "$PREFIX/frontend"
+cp -a "$SRC/frontend" "$PREFIX/frontend"
+
 cat > /usr/local/sbin/dmash-node-peer <<EOF
 #!/usr/bin/env bash
 set -Eeuo pipefail
