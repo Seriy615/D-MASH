@@ -120,6 +120,51 @@ const NodeManager = {
         // flush once more after its route probes are actually armed.
         window.Core?.flushOutboundQueue?.();
     },
+    activePublicDeviceRoutes() {
+        // DeviceRoutes owns the public route index.  Prefer its plural API so
+        // a future index with more than one active public route is armed in
+        // full, while retaining compatibility with the current() API.
+        const routes = window.DeviceRoutes;
+        if (!routes) return [];
+        const active = typeof routes.activePublicRoutes === 'function'
+            ? routes.activePublicRoutes()
+            : (typeof routes.current === 'function' ? routes.current() : null);
+        const candidates = Array.isArray(active) ? active : [active];
+        const seen = new Set();
+        return candidates.filter(route => {
+            if (!route || typeof route.routeId !== 'string' || !route.routeId || seen.has(route.routeId)) return false;
+            seen.add(route.routeId);
+            return true;
+        });
+    },
+    async probeDeviceRoutes(routes, connection = null) {
+        // This is deliberately connection-driven, not a refresh loop.  A
+        // caller with account-private routes must pass them explicitly; the
+        // device-wide public index is the only route source read implicitly.
+        const activeRoutes = Array.isArray(routes) ? routes : [];
+        const connections = connection ? [connection] : this.connectedConnections();
+        const probes = [];
+        for (const node of connections) {
+            if (node?.state !== 'connected' || !node.capabilities?.has('START_PROBE')) continue;
+            for (const route of activeRoutes) {
+                const routeLocator = route?.routeLocator || route?.routeId;
+                const backRouteLocator = route?.backRouteLocator || route?.routeId;
+                if (typeof routeLocator !== 'string' || !routeLocator || typeof backRouteLocator !== 'string' || !backRouteLocator) continue;
+                probes.push(this.requestOn(node, 'START_PROBE', {
+                    route_locator: routeLocator, back_route_locator: backRouteLocator, hop_limit: 15
+                }));
+            }
+        }
+        return Promise.allSettled(probes);
+    },
+    probeActivePublicDeviceRoutes(connection = null) {
+        return this.probeDeviceRoutes(this.activePublicDeviceRoutes(), connection);
+    },
+    // Account-private route probing is intentionally opt-in: callers provide
+    // the active account's routes rather than exposing account state here.
+    probeActiveAccountPrivateRoutes(routes, connection = null) {
+        return this.probeDeviceRoutes(routes, connection);
+    },
     async removeMeshRoute(peerId) {
         const routes = this.getRouteConfig();
         const route = routes[peerId];
@@ -341,6 +386,7 @@ const NodeManager = {
             connection.socket.send(JSON.stringify({ type: 'STATUS', request_id: crypto.randomUUID() }));
             this.syncNotificationBeacon().catch(error => this.showMessage(`Beacon registration failed: ${error.message}`, true));
             this.armStoredRoutes(connection);
+            this.probeActivePublicDeviceRoutes(connection).catch(error => this.showMessage(`Device route probe failed: ${error.message}`, true));
             this.startPings(connection);
         } else if (message.type === 'DELIVERY_AVAILABLE') {
             // The ciphertext stays in the Node mailbox until ACK. This signal

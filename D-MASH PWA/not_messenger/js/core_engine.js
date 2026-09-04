@@ -124,6 +124,9 @@ const Core = {
     // Created only after the installation-scoped DeviceRoot has been
     // unlocked.  Quick Names must never fall back to an Account vault.
     quickNameRegistry: null,
+    // Like Quick Names, the contact-request inbox belongs to the installation,
+    // not to whichever Account happens to be open in the workspace.
+    pendingContactRequestStore: null,
     isSyncing: false, chatOffset: 0, chatLimit: 50, isLoadingHistory: false,
     hex_lut: Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0')),
     randomInt32: () => {
@@ -164,6 +167,7 @@ const Core = {
         // Discard a registry object from a preceding DeviceRoot session.  Its
         // first cryptographic operation will now use this unlocked root.
         this.quickNameRegistry = null;
+        this.pendingContactRequestStore = null;
         if (!deviceState.legacy && deviceState.identity) {
             this.device = Object.freeze({
                 id: deviceState.identity.deviceId,
@@ -472,6 +476,7 @@ const Core = {
         this.blindSalt?.fill?.(0); this.blindSalt = null;
         this.activeIdentity = null; this.activePeerId = null; this.openingPeerId = null;
         this.deviceState = null;
+        this.pendingContactRequestStore = null;
         this.pendingInboundByPeer?.clear?.(); this.historyPrefetch?.clear?.();
         this.isSyncing = false; this.chatOffset = 0; this.isLoadingHistory = false;
         sessionStorage.clear();
@@ -539,6 +544,7 @@ const Core = {
         this.keys = { master: null, alias: null, sign: null, box: null, pub_hex: null };
         this.device = null;
         this.deviceState = null;
+        this.pendingContactRequestStore = null;
         window.DeviceRoot?.lock();
         this.activeIdentity = null;
         this.activePeerId = null;
@@ -2558,6 +2564,7 @@ const Core = {
                 <button class="sys-modal-btn" onclick="Core.setupTelegram()">✈️ ТЕЛЕГРАМ-МАЯК</button>
                 <button class="sys-modal-btn" onclick="NodeManager.renderSettings()">🌐 ПОДКЛЮЧЕНИЕ К УЗЛУ</button>
                 <button class="sys-modal-btn" onclick="Core.openQuickNames()">🏷️ БЫСТРЫЕ ИМЕНА</button>
+                <button class="sys-modal-btn" onclick="Core.openPendingContacts()">📨 ЗАПРОСЫ В КОНТАКТЫ</button>
                 <button class="sys-modal-btn" onclick="Core.toggleFlipper()">ЭКСТРЕННЫЙ ФЛИП-ЛОК: ${panicGestureEnabled ? 'ВКЛ' : 'ВЫКЛ'}</button>
                 <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🧬 ПРИВЯЗАТЬ ОТПЕЧАТОК/FACE</button>
                 <button class="sys-modal-btn" onclick="Core.setupLazyLogin()">💤 ВКЛЮЧИТЬ БЕСПАРОЛЬНЫЙ ВХОД</button>
@@ -2621,6 +2628,113 @@ const Core = {
                 await Core.openQuickNames();
             } catch (error) { Core.quickNameError(error); }
         });
+    },
+    // Pending contact requests are device-scoped, encrypted by DeviceRoot and
+    // never written into an Account vault.  This UI intentionally performs no
+    // network operation: accepting/rejecting only resolves the local inbox
+    // item until a separate transport milestone is implemented.
+    getPendingContactRequestStore: function() {
+        if (!this.deviceState || !window.DeviceRoot?.state || window.DeviceRoot.state !== this.deviceState) {
+            throw new Error("СНАЧАЛА РАЗБЛОКИРУЙТЕ УСТРОЙСТВО");
+        }
+        if (!window.PendingContactRequestStore) throw new Error("ВХОДЯЩИЕ ЗАПРОСЫ НЕДОСТУПНЫ");
+        if (!this.pendingContactRequestStore) {
+            this.pendingContactRequestStore = new window.PendingContactRequestStore({ deviceRoot: window.DeviceRoot });
+        }
+        return this.pendingContactRequestStore;
+    },
+    pendingContactError: function(error) {
+        Core.customAlert("ЗАПРОСЫ В КОНТАКТЫ", error?.message || "НЕ УДАЛОСЬ ОБНОВИТЬ ЗАПРОСЫ");
+    },
+    pendingContactRequestPayload: function(request) {
+        // Producers may retain the canonical request as bootstrap metadata.
+        // Validate it before presenting/transitioning it, but keep legacy
+        // local inbox records readable when that optional metadata is absent.
+        const payload = request?.bootstrap?.contactRequest || request?.bootstrap?.contact_request;
+        if (!payload) return null;
+        if (!window.ContactPayloads) throw new Error("ФОРМАТ ЗАПРОСА НЕДОСТУПЕН");
+        return window.ContactPayloads.validateRequest(payload);
+    },
+    openPendingContacts: async function() {
+        try {
+            const requests = (await this.getPendingContactRequestStore().list())
+                .filter(request => request.status === "pending")
+                .sort((a, b) => b.receivedAt - a.receivedAt);
+            const list = requests.map(request => {
+                const id = encodeURIComponent(request.id);
+                const intro = request.intro ? `<div style="font-size:.7rem;color:#aaa;margin-top:5px;">${Core.escapeHtml(request.intro)}</div>` : "";
+                return `<button class="sys-modal-btn" style="color:#49b9ff;border-color:#49b9ff;text-align:left;" onclick="Core.readPendingContactRequest(decodeURIComponent('${id}'))">
+                    <b>${Core.escapeHtml(request.displayName)}</b>${intro}
+                </button>`;
+            }).join("");
+            const h = `<div style="max-height:350px;overflow-y:auto;margin-bottom:15px;">${list || "ЗАПРОСОВ НЕТ"}</div>
+                <button class="sys-modal-btn primary" onclick="Core.openSettings()">НАЗАД</button>`;
+            this.openModal("ЗАПРОСЫ В КОНТАКТЫ", h);
+        } catch (error) { this.pendingContactError(error); }
+    },
+    readPendingContactRequest: async function(id) {
+        try {
+            const request = await this.getPendingContactRequestStore().read(id);
+            if (!request || request.status !== "pending") throw new Error("ЗАПРОС НЕ НАЙДЕН ИЛИ УЖЕ РЕШЁН");
+            const payload = this.pendingContactRequestPayload(request);
+            const requestId = payload ? `<div style="font-size:.6rem;color:#777;overflow-wrap:anywhere;margin-top:8px;">REQUEST: ${Core.escapeHtml(payload.request_id)}</div>` : "";
+            const intro = request.intro ? `<div style="margin:12px 0;color:#ccc;white-space:pre-wrap;">${Core.escapeHtml(request.intro)}</div>` : "";
+            const encodedId = encodeURIComponent(request.id);
+            const h = `<div style="color:#49b9ff;font-weight:bold;">${Core.escapeHtml(request.displayName)}</div>${intro}${requestId}
+                <div style="font-size:.7rem;color:#777;margin:12px 0;">ПРИНЯТИЕ/ОТКЛОНЕНИЕ МЕНЯЕТ ТОЛЬКО ЛОКАЛЬНЫЙ ВХОДЯЩИЙ ЗАПРОС. ОТПРАВКА В СЕТЬ НЕ ВЫПОЛНЯЕТСЯ.</div>
+                <button class="sys-modal-btn primary" onclick="Core.startAcceptPendingContactRequest(decodeURIComponent('${encodedId}'))">ПРИНЯТЬ</button>
+                <button class="sys-modal-btn danger" onclick="Core.rejectPendingContactRequest(decodeURIComponent('${encodedId}'))">ОТКЛОНИТЬ</button>
+                <button class="sys-modal-btn" onclick="Core.openPendingContacts()">ЗАКРЫТЬ</button>`;
+            this.openModal("ЗАПРОС В КОНТАКТЫ", h);
+        } catch (error) { this.pendingContactError(error); }
+    },
+    rejectPendingContactRequest: function(id) {
+        this.customConfirm("ОТКЛОНИТЬ ЗАПРОС", "Отклонить запрос локально? Ничего не будет отправлено в сеть.", async () => {
+            try {
+                await this.getPendingContactRequestStore().reject(id);
+                await this.openPendingContacts();
+            } catch (error) { this.pendingContactError(error); }
+        });
+    },
+    startAcceptPendingContactRequest: function(id) {
+        this.customPrompt("БЫСТРОЕ ИМЯ", "Введите Quick Name для этого контакта:", async quickName => {
+            try {
+                const normalizedQuickName = window.PendingContactRequestStore.normalizeDisplayName(quickName);
+                const accounts = await Storage.getAllRegistryAccounts();
+                this.openPendingContactAccountPicker(id, normalizedQuickName, accounts);
+            } catch (error) { this.pendingContactError(error); }
+        });
+    },
+    openPendingContactAccountPicker: function(id, quickName, accounts) {
+        const choices = (accounts || []).map(account => {
+            // CONTACT_ACCEPT_V1 names this an Account public key. The legacy
+            // registry stores the complete public bundle, whose first 32 bytes
+            // are its Account identifier. Do not persist this selection in the
+            // device inbox; it is used only for this local decision.
+            const identifier = String(account.pk || "").slice(0, 64).toLowerCase();
+            if (!/^[0-9a-f]{64}$/.test(identifier)) return "";
+            const encodedId = encodeURIComponent(id);
+            const encodedName = encodeURIComponent(quickName);
+            return `<button class="sys-modal-btn" style="text-align:left;" onclick="Core.acceptPendingContactRequest(decodeURIComponent('${encodedId}'),decodeURIComponent('${encodedName}'),'${identifier}')">
+                <b>${Core.escapeHtml(account.id || identifier)}</b><br><small style="color:#777;">${identifier}</small>
+            </button>`;
+        }).join("");
+        const h = `<div style="margin-bottom:10px;color:#aaa;font-size:.75rem;">Quick Name: ${Core.escapeHtml(quickName)}<br>ВЫБЕРИТЕ ACCOUNT IDENTIFIER:</div>
+            ${choices || "НЕТ ПОДХОДЯЩИХ АККАУНТОВ"}
+            <button class="sys-modal-btn" onclick="Core.readPendingContactRequest(decodeURIComponent('${encodeURIComponent(id)}'))">НАЗАД</button>`;
+        this.openModal("ВЫБОР АККАУНТА", h);
+    },
+    acceptPendingContactRequest: async function(id, quickName, selectedAccountIdentifier) {
+        try {
+            // Validate the two explicit user choices before the only mutation.
+            window.PendingContactRequestStore.normalizeDisplayName(quickName);
+            if (!/^[0-9a-f]{64}$/.test(selectedAccountIdentifier || "")) throw new Error("ACCOUNT IDENTIFIER НЕКОРРЕКТЕН");
+            const request = await this.getPendingContactRequestStore().read(id);
+            if (!request || request.status !== "pending") throw new Error("ЗАПРОС НЕ НАЙДЕН ИЛИ УЖЕ РЕШЁН");
+            this.pendingContactRequestPayload(request);
+            await this.getPendingContactRequestStore().accept(id);
+            this.customAlert("ЗАПРОС ПРИНЯТ", `Quick Name «${Core.escapeHtml(quickName)}» и выбранный Account identifier подтверждены локально. Сетевой CONTACT_ACCEPT не отправлялся.`);
+        } catch (error) { this.pendingContactError(error); }
     },
     // Core.openAccountManager - Реестр всех аккаунтов на устройстве
     openAccountManager: async function() {
