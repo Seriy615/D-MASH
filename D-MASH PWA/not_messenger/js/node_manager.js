@@ -160,10 +160,21 @@ const NodeManager = {
     probeActivePublicDeviceRoutes(connection = null) {
         return this.probeDeviceRoutes(this.activePublicDeviceRoutes(), connection);
     },
-    // Account-private route probing is intentionally opt-in: callers provide
-    // the active account's routes rather than exposing account state here.
-    probeActiveAccountPrivateRoutes(routes, connection = null) {
-        return this.probeDeviceRoutes(routes, connection);
+    // Account-private route probing is deliberately account-scoped.  Core owns
+    // the account vault and supplies only the currently logged-in account's
+    // public route descriptors; NodeManager never enumerates account storage.
+    async probeActiveAccountPrivateRoutes(routes = null, connection = null) {
+        // AUTH_OK may arrive while an account transition is in progress.  Do
+        // not let a deferred vault read from the old account advertise its
+        // locators after logout or an account switch.  Capture both values
+        // before the await, then require the same active session afterwards.
+        const core = window.Core;
+        const activeIdentity = core?.activeIdentity;
+        const generation = core?.privateRouteProbeGeneration;
+        const activeRoutes = routes || await core?.activeAccountPrivateRoutes?.() || [];
+        if (!activeIdentity || core !== window.Core || core?.activeIdentity !== activeIdentity ||
+            core?.privateRouteProbeGeneration !== generation) return [];
+        return this.probeDeviceRoutes(activeRoutes, connection);
     },
     async removeMeshRoute(peerId) {
         const routes = this.getRouteConfig();
@@ -395,6 +406,7 @@ const NodeManager = {
             this.syncNotificationBeacon().catch(error => this.showMessage(`Beacon registration failed: ${error.message}`, true));
             this.armStoredRoutes(connection);
             this.probeActivePublicDeviceRoutes(connection).catch(error => this.showMessage(`Device route probe failed: ${error.message}`, true));
+            this.probeActiveAccountPrivateRoutes(null, connection).catch(error => this.showMessage(`Private route probe failed: ${error.message}`, true));
             this.startPings(connection);
         } else if (message.type === 'DELIVERY_AVAILABLE') {
             // The ciphertext stays in the Node mailbox until ACK. This signal

@@ -103,6 +103,9 @@ const Core = {
     openingPeerId: null,
     pendingInboundByPeer: new Map(),
     activeIdentity: null,
+    // Invalidates deferred account-route lookups when the Account session
+    // changes.  This is intentionally event-driven; no refresh timer exists.
+    privateRouteProbeGeneration: 0,
     scanner: null,
     blobURLs: [],
     chatOffset: 0,
@@ -263,7 +266,16 @@ const Core = {
                 agreement: deviceState.identity.agreement
             });
             this.activeIdentity = identity;
+            this.privateRouteProbeGeneration++;
             this.shmon("INFO", `Система готова. ID: ${this.keys.server_id.substring(0,8)}`);
+
+            // Account login is the lifecycle boundary for private routes.  The
+            // route descriptors are account-vault data and are passed only to
+            // the event-driven probe path; public DeviceRoutes remain separate.
+            // Route discovery is best-effort network work, not an account-login
+            // prerequisite.  In particular a node that never answers
+            // START_PROBE must not delay vault initialization or the workspace.
+            void this.advertiseActiveAccountPrivateRoutes();
 
             // 5. Инициализация хранилища и запуск
             await Storage.initGamma(this.gammaKeys.master);
@@ -274,6 +286,41 @@ const Core = {
         } catch (e) {
             console.error(e);
             if (statusEl) statusEl.innerText = "ОШИБКА ЯДРА: " + e.message;
+        }
+    },
+    async activeAccountPrivateRoutes(identity = this.activeIdentity) {
+        if (!identity || !window.Storage?.getRegistryAccount) return [];
+        const account = await Storage.getRegistryAccount(identity);
+        const candidates = account?.privateRoutes || account?.private_routes || account?.routes || [];
+        const routes = Array.isArray(candidates) ? candidates : Object.values(candidates || {});
+        const seen = new Set();
+        return routes.filter(route => {
+            const routeId = route?.routeId || route?.route_id;
+            if (typeof routeId !== 'string' || !routeId || seen.has(routeId)) return false;
+            // Account association is local policy. Never forward account IDs.
+            if (route.accountId && route.accountId !== identity) return false;
+            seen.add(routeId);
+            return true;
+        }).map(route => ({
+            routeId: route.routeId || route.route_id,
+            routeLocator: route.routeLocator || route.route_locator || route.routeId || route.route_id,
+            backRouteLocator: route.backRouteLocator || route.back_route_locator || route.routeId || route.route_id
+        }));
+    },
+    async advertiseActiveAccountPrivateRoutes(connection = null) {
+        const identity = this.activeIdentity;
+        const generation = this.privateRouteProbeGeneration;
+        if (!identity || !window.NodeManager?.probeActiveAccountPrivateRoutes) return [];
+        try {
+            const routes = await this.activeAccountPrivateRoutes(identity);
+            // An account switch, logout, or session termination while vault
+            // storage was resolving must never advertise stale private routes.
+            if (this.activeIdentity !== identity || this.privateRouteProbeGeneration !== generation) return [];
+            return await window.NodeManager.probeActiveAccountPrivateRoutes(routes, connection);
+        } catch (error) {
+            // This detached lifecycle task must always consume its own failure.
+            this.shmon('WARN', `Private route probe deferred: ${error.message}`);
+            return [];
         }
     },
     async ensurePairingContribution() {
@@ -479,6 +526,7 @@ const Core = {
         this.gammaKeys = { master: null, sign: null, box: null };
         this.keys = { sign: null, box: null, pub_hex: null };
         this.blindSalt?.fill?.(0); this.blindSalt = null;
+        this.privateRouteProbeGeneration++;
         this.activeIdentity = null; this.activePeerId = null; this.openingPeerId = null;
         this.deviceState = null;
         this.pendingContactRequestStore = null;
@@ -551,6 +599,7 @@ const Core = {
         this.deviceState = null;
         this.pendingContactRequestStore = null;
         window.DeviceRoot?.lock();
+        this.privateRouteProbeGeneration++;
         this.activeIdentity = null;
         this.activePeerId = null;
 
