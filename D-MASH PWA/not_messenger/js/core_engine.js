@@ -176,6 +176,11 @@ const Core = {
                 agreement: deviceState.identity.agreement
             });
         }
+        // Device unlock is the first safe boundary at which device-scoped
+        // transport credentials and public routes may be used.  Keep this
+        // connection-driven (never a route refresh timer); account login is
+        // intentionally not required for public DeviceRoutes.
+        await window.NodeManager?.onDeviceUnlocked?.();
         return deviceState;
     },
     async boot(identity, passphrase, options = {}) {

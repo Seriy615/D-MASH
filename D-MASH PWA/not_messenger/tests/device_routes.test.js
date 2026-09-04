@@ -7,6 +7,11 @@ if (!global.crypto) Object.defineProperty(global, "crypto", { value: webcrypto, 
 global.btoa = (value) => Buffer.from(value, "binary").toString("base64");
 global.atob = (value) => Buffer.from(value, "base64").toString("binary");
 global.nacl = require("../js/vendor/nacl-fast.min.js");
+const lifecycleEvents = [];
+global.CustomEvent = class CustomEvent {
+  constructor(type, init) { this.type = type; this.detail = init?.detail; }
+};
+global.dispatchEvent = event => lifecycleEvents.push(event);
 
 class MemoryStorage {
   constructor() { this.data = new Map(); }
@@ -42,6 +47,8 @@ const { DeviceRoutes, RouteError } = require("../js/device_routes.js");
   DeviceRoutes.setStorageForTests(storage);
 
   const first = await DeviceRoutes.issue({ type: "direct-message", allowedAccounts: ["bob", "alice", "bob"], issuedAt: 100 });
+  assert.equal(lifecycleEvents.at(-1).detail.event, "ROUTE_ISSUED", "first route issue emits a lifecycle hook");
+  assert.equal(lifecycleEvents.at(-1).detail.route.routeId, first.routeId, "issue hook exposes only the public route");
   assert.equal(first.routeId, first.certificate.signingPublicKey, "RouteID is exactly the signing public key");
   assert.equal(first.routeId.length, 43, "RouteID encodes a 32-byte Ed25519 public key");
   assert.equal(DeviceRoutes.verifyCertificate(first.certificate), true, "canonical RouteCertificateV1 self-signature verifies");
@@ -60,6 +67,7 @@ const { DeviceRoutes, RouteError } = require("../js/device_routes.js");
   assert.equal(resolvedFirst.type, "direct-message");
 
   const second = await DeviceRoutes.issue({ type: "relay", allowedAccounts: ["carol"], issuedAt: 101 });
+  assert.equal(lifecycleEvents.at(-1).detail.event, "ROUTE_REISSUED", "subsequent issue emits the reissue lifecycle hook");
   const third = await DeviceRoutes.issue({ type: "relay", allowedAccounts: [], issuedAt: 102 });
   assert.equal(DeviceRoutes.current().routeId, third.routeId, "latest route is current");
   assert.equal(DeviceRoutes.resolve(second.routeId).routeId, second.routeId, "only immediate predecessor is accepted as fallback");

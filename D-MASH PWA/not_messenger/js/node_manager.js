@@ -225,6 +225,14 @@ const NodeManager = {
             if (this.connections.get(endpoint.url)?.state !== 'connected') await this.connect(endpoint.url);
         }
     },
+    async onDeviceUnlocked() {
+        if (!window.Core?.device?.signing || !window.DeviceRoot?.state?.root) return;
+        await this.autoConnect();
+        // Existing authenticated connections do not pass through AUTH_OK a
+        // second time when the device is unlocked, so probe their public
+        // routes explicitly at this lifecycle boundary.
+        await this.probeActivePublicDeviceRoutes();
+    },
     async requestNode() {
         if (!this.originNodes.length) await this.loadOriginList();
         const candidates = this.originNodes;

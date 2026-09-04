@@ -94,6 +94,12 @@
             } catch (_) { throw new RouteError("INDEX_CORRUPT", "Local route index is corrupt and was not replaced."); }
         },
         _saveIndex(index) { this._store().setItem(INDEX_KEY, JSON.stringify(index)); },
+        _emitLifecycle(event, route) {
+            if (typeof global.dispatchEvent !== "function" || typeof global.CustomEvent !== "function") return;
+            global.dispatchEvent(new global.CustomEvent("dmash-device-route", {
+                detail: { event, route: route ? this.publicRoute(route) : null }
+            }));
+        },
         _newMaterialName() {
             const bytes = global.crypto.getRandomValues(new Uint8Array(16));
             return MATERIAL_PREFIX + b64url(bytes);
@@ -131,6 +137,7 @@
             // Reissue fallback is strictly bounded: retain only the immediately
             // preceding route, replacing any older fallback in the public index.
             this._saveIndex({ version: VERSION, current, previous: index.current || null });
+            this._emitLifecycle(index.current ? "ROUTE_REISSUED" : "ROUTE_ISSUED", current);
             return this.publicRoute(current);
         },
         publicRoute(route) {
