@@ -15,6 +15,8 @@
     const INDEX_KEY = "dmash/routes/v1/index";
     const MATERIAL_PREFIX = "dmash/routes/v1/material/";
     const CERT_LABEL = "dmash/route-certificate/v1";
+    const ENTRY_GRANT_VERSION = "EntryGrantV1";
+    const ENTRY_GRANT_LABEL = "D-MASH|ENTRY_GRANT|V1\0";
     const MAX_REISSUE_HISTORY = 1; // current + one previous route, no more
     const text = (value) => new TextEncoder().encode(value);
     const b64url = (bytes) => {
@@ -25,12 +27,19 @@
     const unb64url = (value) => {
         if (typeof value !== "string" || !/^[A-Za-z0-9_-]*$/.test(value)) throw new RouteError("INVALID_ENCODING", "Route key encoding is invalid.");
         const padded = value.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - value.length % 4) % 4);
-        return new Uint8Array(atob(padded).split("").map((c) => c.charCodeAt(0)));
+        const bytes = new Uint8Array(atob(padded).split("").map((c) => c.charCodeAt(0)));
+        if (b64url(bytes) !== value) throw new RouteError("INVALID_ENCODING", "Route key encoding is not canonical.");
+        return bytes;
+    };
+    const hexBytes = (value) => {
+        if (typeof value !== "string" || !/^[0-9a-f]{64}$/.test(value)) throw new RouteError("INVALID_NODE_ID", "NodeID must be a lowercase 32-byte Ed25519 key in hex.");
+        return new Uint8Array(value.match(/../g).map((pair) => Number.parseInt(pair, 16)));
     };
     const u32 = (value) => {
         const out = new Uint8Array(4); new DataView(out.buffer).setUint32(0, value, false); return out;
     };
     const u64 = (value) => {
+        if (!Number.isSafeInteger(value) || value < 0) throw new RouteError("INVALID_INTEGER", "EntryGrant integer is invalid.");
         const out = new Uint8Array(8); const view = new DataView(out.buffer); const n = BigInt(value);
         view.setUint32(0, Number(n >> 32n), false); view.setUint32(4, Number(n & 0xffffffffn), false); return out;
     };
@@ -82,6 +91,39 @@
             try {
                 const signature = unb64url(certificate.signature);
                 return signature.length === 64 && global.nacl.sign.detached.verify(this.certificateTranscript(certificate), signature, unb64url(certificate.signingPublicKey));
+            } catch (_) { return false; }
+        },
+        // EntryGrantV1 has the same canonical binary transcript as the Python
+        // Node verifier.  Ownership is proven by RouteSignPrivate: RouteID is
+        // itself the Ed25519 verification key.  NodeID is only a signed binding.
+        entryGrantTranscript(grant) {
+            if (!grant || grant.v !== ENTRY_GRANT_VERSION) throw new RouteError("INVALID_ENTRY_GRANT", "EntryGrant version is invalid.");
+            const routeId = unb64url(grant.route_id);
+            const compatibilityKey = unb64url(grant.route_public_key);
+            const nodeId = hexBytes(grant.node_id);
+            if (routeId.length !== 32 || compatibilityKey.length !== 32) throw new RouteError("INVALID_ENTRY_GRANT", "EntryGrant route key is invalid.");
+            if (!Number.isSafeInteger(grant.generation) || grant.generation < 1) throw new RouteError("INVALID_ENTRY_GRANT", "EntryGrant generation is invalid.");
+            if (!Number.isSafeInteger(grant.created_at) || grant.created_at < 0 || !Number.isSafeInteger(grant.expires_at) || grant.expires_at <= grant.created_at) {
+                throw new RouteError("INVALID_ENTRY_GRANT", "EntryGrant lifetime is invalid.");
+            }
+            return join(
+                text(ENTRY_GRANT_LABEL),
+                field(routeId),
+                field(nodeId),
+                field(compatibilityKey),
+                u64(grant.generation),
+                u64(grant.created_at),
+                u64(grant.expires_at)
+            );
+        },
+        verifyEntryGrant(grant, expectedNodeId = null, now = Math.floor(Date.now() / 1000)) {
+            try {
+                if (expectedNodeId !== null && grant.node_id !== expectedNodeId) return false;
+                if (!Number.isSafeInteger(now) || grant.expires_at <= now) return false;
+                const signature = unb64url(grant.signature);
+                const routeKey = unb64url(grant.route_id);
+                return signature.length === 64 && routeKey.length === 32 &&
+                    global.nacl.sign.detached.verify(this.entryGrantTranscript(grant), signature, routeKey);
             } catch (_) { return false; }
         },
         _loadIndex() {
@@ -154,6 +196,52 @@
                 allowedAccounts: allowedAccounts === undefined ? current.allowedAccounts : allowedAccounts,
                 issuedAt
             });
+        },
+        // Create a Node-bound authorization using the Route private signing key.
+        // No Node private key participates in this operation.
+        async issueEntryGrant(routeId, entryNodeId, {
+            generation = 1,
+            createdAt = Math.floor(Date.now() / 1000),
+            expiresAt = createdAt + 24 * 60 * 60
+        } = {}) {
+            this._requirePrimitives();
+            const index = this._loadIndex();
+            const route = [index.current, index.previous].find((candidate) => candidate?.certificate?.routeId === routeId);
+            if (!route) throw new RouteError("NOT_FOUND", "Route was not found for EntryGrant issuance.");
+            hexBytes(entryNodeId);
+            if (!Number.isSafeInteger(generation) || generation < 1 || !Number.isSafeInteger(createdAt) || createdAt < 0 || !Number.isSafeInteger(expiresAt) || expiresAt <= createdAt) {
+                throw new RouteError("INVALID_ENTRY_GRANT", "EntryGrant lifetime or generation is invalid.");
+            }
+
+            const encoded = await global.DeviceRoot.deviceMaterial(route.materialName, () => {
+                throw new RouteError("MATERIAL_MISSING", "Route private material is unavailable.");
+            });
+            let privateMaterial;
+            try { privateMaterial = JSON.parse(new TextDecoder().decode(encoded)); }
+            finally { encoded.fill(0); }
+            if (privateMaterial.version !== VERSION) throw new RouteError("MATERIAL_CORRUPT", "Route private material is unsupported.");
+            const signingSecretKey = unb64url(privateMaterial.signingSecretKey);
+            try {
+                if (!global.nacl.sign.keyPair.fromSecretKey) throw new RouteError("CRYPTO_UNAVAILABLE", "Route signing primitive is unavailable.");
+                const signing = global.nacl.sign.keyPair.fromSecretKey(signingSecretKey);
+                if (b64url(signing.publicKey) !== routeId) throw new RouteError("MATERIAL_CORRUPT", "Route private key does not match RouteID.");
+                const grant = {
+                    v: ENTRY_GRANT_VERSION,
+                    node_id: entryNodeId,
+                    route_id: routeId,
+                    // Compatibility field is signed but not authoritative.
+                    // New grants bind it to RouteSignPublic exactly.
+                    route_public_key: routeId,
+                    generation,
+                    created_at: createdAt,
+                    expires_at: expiresAt
+                };
+                grant.signature = b64url(global.nacl.sign.detached(this.entryGrantTranscript(grant), signingSecretKey));
+                if (!this.verifyEntryGrant(grant, entryNodeId, createdAt)) throw new RouteError("ENTRY_GRANT_SELF_VERIFY_FAILED", "EntryGrant self-verification failed.");
+                return Object.freeze({ ...grant });
+            } finally {
+                signingSecretKey.fill(0);
+            }
         },
         publicRoute(route) {
             if (!route?.certificate || !this.verifyCertificate(route.certificate)) throw new RouteError("INVALID_CERTIFICATE", "Route certificate self-signature is invalid.");
