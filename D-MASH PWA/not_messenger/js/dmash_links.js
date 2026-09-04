@@ -4,11 +4,11 @@
  * Canonical, fragment-only D-MASH share links.
  *
  * Node:    #/node/<base64url(JSON)>
- * Contact: #/c/<base64url(JSON)>
+ * Contact: #/c/<base64url(JSON)>   (preferred: Public RouteCertificate)
+ * Route:   #/r/<base64url(JSON)>   (legacy alias for the same route descriptor)
  *
- * The compact descriptor fields are deliberately fixed.  The parser requires
- * the exact canonical JSON/base64url representation so a QR payload has one
- * unambiguous spelling and cannot smuggle unsupported future fields.
+ * #/c also accepts the older Account-pairing descriptor {v,i,p,l} so existing
+ * QR codes keep working. New public-contact sharing never contains AccountID.
  */
 (function (global) {
     const VERSION = 1;
@@ -40,9 +40,7 @@
         try {
             const binary = atob(padded);
             return Uint8Array.from(binary, character => character.charCodeAt(0));
-        } catch (_) {
-            return fail("Descriptor is not valid base64url.");
-        }
+        } catch (_) { return fail("Descriptor is not valid base64url."); }
     }
 
     function encodeDescriptor(value) {
@@ -93,8 +91,7 @@
         if (typeof value !== "string" || !value || value.length > 2048 || /[\u0000-\u001f\u007f]/.test(value)) fail("Node endpoint is invalid.");
         let url;
         try { url = new URL(value); } catch (_) { fail("Node endpoint is invalid."); }
-        if (!["wss:", "ws:"].includes(url.protocol) || !url.hostname ||
-            url.username || url.password || url.search || url.hash) fail("Node endpoint is unsafe.");
+        if (!["wss:", "ws:"].includes(url.protocol) || !url.hostname || url.username || url.password || url.search || url.hash) fail("Node endpoint is unsafe.");
         const host = url.hostname.toLowerCase();
         if (url.protocol === "ws:" && host !== "localhost" && host !== "127.0.0.1" && host !== "[::1]") {
             fail("Unencrypted node endpoints are allowed only on localhost.");
@@ -118,8 +115,7 @@
         return result;
     }
 
-    function canonicalContact(input) {
-        if (!isPlainObject(input)) fail("Contact descriptor must be an object.");
+    function canonicalLegacyContact(input) {
         requireOnlyKeys(input, ["v", "i", "p", "l"]);
         if (input.v !== VERSION) fail("Unsupported contact descriptor version.");
         const result = { v: VERSION, i: nodeId(input.i, "Contact ID"), p: nodeId(input.p, "Pairing contribution") };
@@ -132,12 +128,30 @@
         requireOnlyKeys(input, ["v", "r", "c"]);
         if (input.v !== VERSION) fail("Unsupported public route descriptor version.");
         if (typeof input.r !== "string" || !B64URL.test(input.r) || input.r.length !== 43) fail("Public RouteID is invalid.");
-        if (!isPlainObject(input.c) || input.c.routeId !== input.r || input.c.signingPublicKey !== input.r ||
+        if (!isPlainObject(input.c) || input.c.version !== VERSION || input.c.routeId !== input.r || input.c.signingPublicKey !== input.r ||
             typeof input.c.boxPublicKey !== "string" || !B64URL.test(input.c.boxPublicKey) || input.c.boxPublicKey.length !== 43 ||
-            !Number.isSafeInteger(input.c.issuedAt) || input.c.issuedAt < 0 || typeof input.c.signature !== "string" || !B64URL.test(input.c.signature) || input.c.signature.length !== 86) {
+            !Number.isSafeInteger(input.c.issuedAt) || input.c.issuedAt < 0 || typeof input.c.signature !== "string" ||
+            !B64URL.test(input.c.signature) || input.c.signature.length !== 86) {
             fail("Public route certificate is invalid.");
         }
-        return { v: VERSION, r: input.r, c: { version: VERSION, routeId: input.r, signingPublicKey: input.r, boxPublicKey: input.c.boxPublicKey, issuedAt: input.c.issuedAt, signature: input.c.signature } };
+        return {
+            v: VERSION,
+            r: input.r,
+            c: {
+                version: VERSION,
+                routeId: input.r,
+                signingPublicKey: input.r,
+                boxPublicKey: input.c.boxPublicKey,
+                issuedAt: input.c.issuedAt,
+                signature: input.c.signature
+            }
+        };
+    }
+
+    function canonicalContact(input) {
+        if (!isPlainObject(input)) fail("Contact descriptor must be an object.");
+        if (Object.hasOwn(input, "r") || Object.hasOwn(input, "c")) return canonicalRoute(input);
+        return canonicalLegacyContact(input);
     }
 
     function assertCanonical(encoded, descriptor) {
@@ -146,6 +160,7 @@
 
     function serializeDmashNodeUri(descriptor) { return NODE_PREFIX + encodeDescriptor(canonicalNode(descriptor)); }
     function serializeDmashContactUri(descriptor) { return CONTACT_PREFIX + encodeDescriptor(canonicalContact(descriptor)); }
+    function serializeDmashRouteUri(route) { return ROUTE_PREFIX + encodeDescriptor(canonicalRoute({ v: VERSION, r: route?.routeId || route?.r, c: route?.certificate || route?.c })); }
 
     function parseDmashNodeUri(uri, options) {
         const { descriptor, encoded } = decodeDescriptor(uri, NODE_PREFIX);
@@ -162,7 +177,7 @@
         assertCanonical(encoded, result);
         return result;
     }
-    function serializeDmashRouteUri(route) { return ROUTE_PREFIX + encodeDescriptor(canonicalRoute({ v: VERSION, r: route?.routeId, c: route?.certificate })); }
+
     function parseDmashRouteUri(uri) {
         const { descriptor, encoded } = decodeDescriptor(uri, ROUTE_PREFIX);
         const result = canonicalRoute(descriptor);
@@ -171,7 +186,10 @@
     }
 
     const api = Object.freeze({
-        DmashLinkError, parseDmashNodeUri, serializeDmashNodeUri, parseDmashContactUri, serializeDmashContactUri, parseDmashRouteUri, serializeDmashRouteUri
+        DmashLinkError,
+        parseDmashNodeUri, serializeDmashNodeUri,
+        parseDmashContactUri, serializeDmashContactUri,
+        parseDmashRouteUri, serializeDmashRouteUri
     });
     Object.assign(global, api);
     if (typeof module !== "undefined" && module.exports) module.exports = api;
