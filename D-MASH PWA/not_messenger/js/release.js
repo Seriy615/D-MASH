@@ -1,14 +1,14 @@
 "use strict";
 
 // One visible release identifier for the page and Service Worker generation.
-window.DMASH_RELEASE = Object.freeze({ id: "m1.5-functional-repair-20260905.48" });
+window.DMASH_RELEASE = Object.freeze({ id: "m1.5-functional-repair-20260905.49" });
 
 /*
  * Runtime repair loader.
  *
  * Do not patch DeviceRoot here at DOMContentLoaded: the legacy shell loads the
  * crypto/core modules lazily after calculator unlock, so a one-shot DOM hook
- * races them. runtime_fixes.js waits for the actual objects.
+ * races them. Runtime repair modules wait for the actual objects.
  */
 (function loadFunctionalRepair(global) {
     const ver = encodeURIComponent(global.DMASH_RELEASE.id);
@@ -25,7 +25,8 @@ window.DMASH_RELEASE = Object.freeze({ id: "m1.5-functional-repair-20260905.48" 
         "js/ui_global_bridge.js",
         "js/runtime_fixes.js",
         "js/public_contact_runtime.js",
-        "js/acceptance_fixes.js"
+        "js/acceptance_fixes.js",
+        "js/stability_fixes.js"
     ];
 
     const load = src => new Promise((resolve, reject) => {
