@@ -1,0 +1,265 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+# Canonical single-host EMS deploy for D-MASH Messenger + the EMS Node.
+#
+# Usage:
+#   sudo tools/dmash-deploy-ems main
+#   sudo tools/dmash-deploy-ems <full-commit-sha>
+#
+# The script preserves Node identity/runtime databases and deploys the legacy
+# Node HTTP frontend separately at /opt/dmash-node/frontend.  That separation
+# is required by core.py and prevents backend rsync --delete from deleting the
+# static frontend again.
+
+REVISION="${1:-main}"
+REPO_URL="${DMASH_REPO_URL:-https://github.com/Seriy615/D-MASH.git}"
+REPO_DIR="${DMASH_REPO_DIR:-/srv/dmash-source/D-MASH}"
+
+STAGE_PWA="${DMASH_STAGE_PWA:-/srv/messenger-stage/public_html/not_messenger}"
+PROD_PWA="${DMASH_PROD_PWA:-/srv/messenger.d-mash.ru/public_html/not_messenger}"
+PWA_BACKUP_ROOT="${DMASH_PWA_BACKUP_ROOT:-/srv/messenger.d-mash.ru/backups}"
+
+NODE_PREFIX="${DMASH_NODE_PREFIX:-/opt/dmash-node}"
+NODE_DST="$NODE_PREFIX/backend"
+NODE_FRONTEND_DST="$NODE_PREFIX/frontend"
+NODE_VENV="$NODE_PREFIX/.venv"
+NODE_BACKUP_ROOT="$NODE_PREFIX/deploy-backups"
+SERVICE="${DMASH_NODE_SERVICE:-dmash-node}"
+
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+WORKTREE=""
+PWA_BACKUP="$PWA_BACKUP_ROOT/deploy-wrapper-$STAMP"
+NODE_BACKUP="$NODE_BACKUP_ROOT/backend-$STAMP"
+FRONTEND_BACKUP="$NODE_BACKUP_ROOT/frontend-$STAMP"
+DEPLOY_SHA=""
+
+log() { printf '\n\033[1;36m[D-MASH DEPLOY]\033[0m %s\n' "$*"; }
+die() { printf '\n\033[1;31m[D-MASH ERROR]\033[0m %s\n' "$*" >&2; return 1; }
+
+cleanup() {
+    if [[ -n "${WORKTREE:-}" && -d "$WORKTREE" ]]; then
+        git -C "$REPO_DIR" worktree remove --force "$WORKTREE" >/dev/null 2>&1 || rm -rf "$WORKTREE"
+    fi
+}
+
+restore_frontend() {
+    rm -rf "$NODE_FRONTEND_DST"
+    if [[ -d "$FRONTEND_BACKUP" ]]; then
+        mkdir -p "$NODE_FRONTEND_DST"
+        rsync -a "$FRONTEND_BACKUP/" "$NODE_FRONTEND_DST/"
+        find "$NODE_FRONTEND_DST" -type d -exec chmod 0755 {} + 2>/dev/null || true
+        find "$NODE_FRONTEND_DST" -type f -exec chmod 0644 {} + 2>/dev/null || true
+    fi
+}
+
+rollback() {
+    local code=$?
+    trap - ERR
+    set +e
+
+    echo
+    echo "============================================================"
+    echo " DEPLOY FAILED — ROLLBACK"
+    echo "============================================================"
+
+    systemctl stop "$SERVICE" 2>/dev/null || true
+
+    if [[ -d "$NODE_BACKUP" ]]; then
+        log "Rolling Node backend code back"
+        rsync -a --delete \
+            --exclude='frontend/' \
+            --exclude='backups/' \
+            --exclude='deploy-backups/' \
+            --exclude='node_identity.key' \
+            --exclude='system.db' \
+            --exclude='registration_registry.db' \
+            --exclude='*.db' \
+            --exclude='*.db-*' \
+            --exclude='*.sqlite' \
+            --exclude='*.sqlite3' \
+            --exclude='*.sqlite-*' \
+            --exclude='*.sqlite3-*' \
+            --exclude='.env' \
+            --exclude='__pycache__/' \
+            --exclude='*.pyc' \
+            "$NODE_BACKUP/" "$NODE_DST/"
+    fi
+
+    log "Rolling Node frontend back"
+    restore_frontend
+
+    systemctl reset-failed "$SERVICE" 2>/dev/null || true
+    systemctl restart "$SERVICE" 2>/dev/null || true
+
+    if [[ -d "$PWA_BACKUP" ]]; then
+        log "Rolling Messenger back"
+        rsync -a --delete --exclude='.well-known/' "$PWA_BACKUP/" "$PROD_PWA/"
+        find "$PROD_PWA" -type d -exec chmod 0755 {} + 2>/dev/null || true
+        find "$PROD_PWA" -type f -exec chmod 0644 {} + 2>/dev/null || true
+        if command -v setfacl >/dev/null 2>&1; then
+            setfacl -m u:www-data:--x /srv/messenger.d-mash.ru /srv/messenger.d-mash.ru/public_html "$PROD_PWA" 2>/dev/null || true
+            setfacl -R -m u:www-data:rX "$PROD_PWA" 2>/dev/null || true
+        fi
+        nginx -t && systemctl reload nginx
+    fi
+
+    journalctl -u "$SERVICE" -n 60 --no-pager -l 2>/dev/null || true
+    cleanup
+    exit "$code"
+}
+
+trap rollback ERR
+trap cleanup EXIT
+
+[[ "$(id -u)" == 0 ]] || die "Run as root"
+for cmd in git rsync python3 systemctl nginx curl find; do
+    command -v "$cmd" >/dev/null || die "Missing command: $cmd"
+done
+
+log "Deployment target: EMS"
+log "Requested revision: $REVISION"
+
+mkdir -p "$(dirname "$REPO_DIR")"
+if [[ ! -d "$REPO_DIR/.git" ]]; then git clone "$REPO_URL" "$REPO_DIR"; fi
+
+git -C "$REPO_DIR" fetch origin --prune --tags
+if [[ "$REVISION" =~ ^[0-9a-fA-F]{40}$ ]]; then
+    REF="$REVISION"
+elif git -C "$REPO_DIR" show-ref --verify --quiet "refs/remotes/origin/$REVISION"; then
+    REF="origin/$REVISION"
+else
+    REF="$REVISION"
+fi
+DEPLOY_SHA="$(git -C "$REPO_DIR" rev-parse "${REF}^{commit}")"
+log "Resolved revision: $DEPLOY_SHA"
+
+WORKTREE="$(mktemp -d /srv/dmash-deploy.XXXXXX)"
+rmdir "$WORKTREE"
+git -C "$REPO_DIR" worktree add --detach "$WORKTREE" "$DEPLOY_SHA"
+
+PWA_SOURCE="$WORKTREE/D-MASH PWA/not_messenger"
+BACKEND_SOURCE="$WORKTREE/D-MASH/client/backend"
+FRONTEND_SOURCE="$WORKTREE/D-MASH/client/frontend"
+REQUIREMENTS="$WORKTREE/D-MASH/client/requirements.txt"
+PROMOTE="$WORKTREE/tools/dmash-promote-pwa"
+
+[[ -f "$PWA_SOURCE/index.html" && -f "$PWA_SOURCE/sw.js" ]] || die "PWA incomplete"
+[[ -f "$BACKEND_SOURCE/main.py" ]] || die "Node backend missing"
+[[ -d "$FRONTEND_SOURCE" ]] || die "Node frontend missing"
+[[ -f "$REQUIREMENTS" ]] || die "requirements.txt missing"
+[[ -x "$PROMOTE" || -f "$PROMOTE" ]] || die "promotion script missing"
+
+log "Creating production PWA backup"
+mkdir -p "$PWA_BACKUP_ROOT" "$PWA_BACKUP"
+rsync -a --exclude='.well-known/' "$PROD_PWA/" "$PWA_BACKUP/"
+
+log "Creating Node backend code backup"
+mkdir -p "$NODE_BACKUP_ROOT" "$NODE_BACKUP"
+if [[ -d "$NODE_DST" ]]; then
+    rsync -a \
+        --exclude='frontend/' \
+        --exclude='backups/' \
+        --exclude='deploy-backups/' \
+        --exclude='node_identity.key' \
+        --exclude='system.db' \
+        --exclude='registration_registry.db' \
+        --exclude='*.db' \
+        --exclude='*.db-*' \
+        --exclude='*.sqlite' \
+        --exclude='*.sqlite3' \
+        --exclude='*.sqlite-*' \
+        --exclude='*.sqlite3-*' \
+        --exclude='.env' \
+        --exclude='__pycache__/' \
+        --exclude='*.pyc' \
+        "$NODE_DST/" "$NODE_BACKUP/"
+fi
+
+log "Creating Node frontend backup"
+mkdir -p "$FRONTEND_BACKUP"
+if [[ -d "$NODE_FRONTEND_DST" ]]; then
+    rsync -a "$NODE_FRONTEND_DST/" "$FRONTEND_BACKUP/"
+elif [[ -d "$NODE_DST/frontend" ]]; then
+    # Migrate the historical nested layout without losing rollback coverage.
+    rsync -a "$NODE_DST/frontend/" "$FRONTEND_BACKUP/"
+fi
+
+log "Updating Messenger stage"
+mkdir -p "$STAGE_PWA"
+rsync -a --delete --exclude='.well-known/' --exclude='.rollback*' --exclude='rollback-*' "$PWA_SOURCE/" "$STAGE_PWA/"
+find "$STAGE_PWA" -type d -exec chmod 0755 {} +
+find "$STAGE_PWA" -type f -exec chmod 0644 {} +
+
+grep -oE 'm[0-9]+[^"'"'"' ]*' "$STAGE_PWA/js/release.js" | head -1 || true
+
+log "Promoting Messenger"
+bash "$PROMOTE"
+
+log "Updating Node Python dependencies"
+if [[ ! -x "$NODE_VENV/bin/python" ]]; then python3 -m venv "$NODE_VENV"; fi
+"$NODE_VENV/bin/pip" install --disable-pip-version-check -r "$REQUIREMENTS"
+
+log "Checking new backend syntax"
+"$NODE_VENV/bin/python" -m compileall -q "$BACKEND_SOURCE"
+
+log "Stopping EMS Node"
+systemctl stop "$SERVICE"
+
+log "Updating EMS Node backend"
+mkdir -p "$NODE_DST"
+rsync -a --delete \
+    --exclude='frontend/' \
+    --exclude='backups/' \
+    --exclude='deploy-backups/' \
+    --exclude='node_identity.key' \
+    --exclude='system.db' \
+    --exclude='registration_registry.db' \
+    --exclude='*.db' \
+    --exclude='*.db-*' \
+    --exclude='*.sqlite' \
+    --exclude='*.sqlite3' \
+    --exclude='*.sqlite-*' \
+    --exclude='*.sqlite3-*' \
+    --exclude='.env' \
+    --exclude='__pycache__/' \
+    --exclude='*.pyc' \
+    "$BACKEND_SOURCE/" "$NODE_DST/"
+
+log "Updating EMS Node frontend"
+rm -rf "$NODE_FRONTEND_DST"
+mkdir -p "$NODE_FRONTEND_DST"
+rsync -a --delete "$FRONTEND_SOURCE/" "$NODE_FRONTEND_DST/"
+find "$NODE_FRONTEND_DST" -type d -exec chmod 0755 {} +
+find "$NODE_FRONTEND_DST" -type f -exec chmod 0644 {} +
+rm -rf "$NODE_DST/frontend"
+
+log "Starting EMS Node"
+systemctl reset-failed "$SERVICE" 2>/dev/null || true
+systemctl restart "$SERVICE"
+sleep 3
+if ! systemctl is-active --quiet "$SERVICE"; then
+    journalctl -u "$SERVICE" -n 100 --no-pager -l || true
+    false
+fi
+
+log "Checking production Messenger"
+for asset in / /js/release.js /js/public_contact_runtime.js; do
+    curl --fail --silent --show-error --location --max-time 20 --output /dev/null \
+        "https://messenger.d-mash.ru/not_messenger${asset}"
+done
+
+trap - ERR
+
+echo
+echo "============================================================"
+echo " D-MASH EMS DEPLOY COMPLETE"
+echo "============================================================"
+echo "Commit: $DEPLOY_SHA"
+echo -n "Release: "
+grep -oE 'm[0-9]+[^"'"'"' ]*' "$PROD_PWA/js/release.js" | head -1 || true
+echo "Node: $(systemctl is-active "$SERVICE")"
+echo "PWA rollback: $PWA_BACKUP"
+echo "Node backend rollback: $NODE_BACKUP"
+echo "Node frontend rollback: $FRONTEND_BACKUP"
