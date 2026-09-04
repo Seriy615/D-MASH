@@ -12,10 +12,10 @@ import blake3
 
 BytesLike = Union[str, bytes]
 _DOMAIN = b"D-MASH|RESOURCE-POW|V1\x00"
-# Activation PoW is a wire protocol used by the browser. v2 uses SHA-256 so the
-# PWA can mine it deterministically without bundling a second hash runtime.
+# The JSON proof schema remains v1. The digest transcript is V2 and uses
+# SHA-256 so a browser can mine exactly the same proof without a BLAKE3 bundle.
 _ACTIVATION_DOMAIN = b"D-MASH|ACTIVATION-POW|V2\x00"
-ACTIVATION_POW_VERSION = 2
+ACTIVATION_POW_VERSION = 1
 MIN_ACTIVATION_DIFFICULTY = 20
 MAX_ACTIVATION_DIFFICULTY = 24
 DEFAULT_ACTIVATION_DIFFICULTY = 22
@@ -94,11 +94,11 @@ def mine_resource_pow(node_id: BytesLike, resource: BytesLike, difficulty: int, 
 def activation_pow_digest(node_id: BytesLike, activation_type: str,
                           device_transport_key: BytesLike, resource: BytesLike,
                           nonce: int, expires_at: int) -> bytes:
-    """Digest for a one-time activation proof v2.
+    """Digest for a one-time activation proof transcript V2.
 
     The device key and expiry are deliberately in the work transcript: a proof
     cannot be moved between devices, activation kinds, resources, or windows.
-    v2 uses SHA-256 and is byte-for-byte mirrored in not_messenger/js/resource_pow.js.
+    The bytes are mirrored in not_messenger/js/resource_pow.js.
     """
     if not isinstance(activation_type, str) or activation_type not in {"DNSS", "ENTRY_GRANT"}:
         raise ValueError("invalid activation type")
@@ -145,7 +145,7 @@ def mine_activation_pow(node_id: BytesLike, activation_type: str,
                         device_transport_key: BytesLike, resource: BytesLike,
                         expires_at: int, difficulty: int | None = None,
                         start_nonce: int = 0) -> dict[str, object]:
-    """Mine and return the JSON-safe v2 wire proof for a new activation."""
+    """Mine and return the JSON-safe activation proof."""
     if difficulty is None:
         difficulty = activation_pow_difficulty()
     if not isinstance(difficulty, int) or isinstance(difficulty, bool) or not 0 <= difficulty <= 256:
