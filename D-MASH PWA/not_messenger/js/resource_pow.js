@@ -1,16 +1,15 @@
 "use strict";
 
 /*
- * Browser implementation of D-MASH activation PoW v2.
+ * Browser implementation of D-MASH activation PoW.
  *
- * v2 deliberately uses SHA-256 because it is available everywhere the PWA
- * runs and can be implemented deterministically without shipping a second
- * cryptographic runtime only for proof-of-work. The transcript stays bound to
- * NodeID, Device transport public key, resource type, resource, expiry and
- * nonce. Backend resource_pow.py implements the exact same byte layout.
+ * The JSON wire schema remains v1 for compatibility with DMP-C. The digest
+ * transcript is V2 and deliberately uses SHA-256 because it is available in
+ * every supported PWA runtime without shipping a second hash implementation
+ * only for proof-of-work. Backend resource_pow.py mirrors these bytes exactly.
  */
 (function (global) {
-    const VERSION = 2;
+    const VERSION = 1;
     const DOMAIN = new TextEncoder().encode("D-MASH|ACTIVATION-POW|V2\0");
     const TYPES = new Set(["DNSS", "ENTRY_GRANT"]);
     const K = new Uint32Array([
@@ -117,7 +116,7 @@
         if (!Number.isSafeInteger(startNonce) || startNonce < 0) throw new RangeError("startNonce must be a non-negative safe integer");
         const { prefix, item } = activationPrefix(nodeId, activationType, deviceTransportKey, resource, expiresAt);
         const work = new Uint8Array(prefix.length + 8); work.set(prefix);
-        const started = performance?.now?.() ?? Date.now();
+        const started = global.performance?.now?.() ?? Date.now();
         for (let nonce = startNonce; Number.isSafeInteger(nonce); nonce++) {
             work.set(u64(nonce), prefix.length);
             const digest = sha256(work);
@@ -126,11 +125,11 @@
                     v: VERSION, type: activationType,
                     resource: resource instanceof Uint8Array ? hex(item) : String(resource),
                     nonce, expires_at: expiresAt, difficulty, digest: hex(digest),
-                    elapsed_ms: Math.round((performance?.now?.() ?? Date.now()) - started)
+                    elapsed_ms: Math.round((global.performance?.now?.() ?? Date.now()) - started)
                 });
             }
             if ((nonce - startNonce + 1) % 4096 === 0) {
-                onProgress?.({ attempts: nonce - startNonce + 1, elapsedMs: (performance?.now?.() ?? Date.now()) - started });
+                onProgress?.({ attempts: nonce - startNonce + 1, elapsedMs: (global.performance?.now?.() ?? Date.now()) - started });
                 await new Promise(resolve => setTimeout(resolve, 0));
             }
         }
