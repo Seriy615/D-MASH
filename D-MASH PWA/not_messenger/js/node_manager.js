@@ -9,10 +9,12 @@ class NodeEndpoint {
         }
         this.url = parsed.href;
         this.label = label || parsed.host;
+        // A node ID is an identity assertion from a canonical D-MASH link,
+        // not a credential.  Retain it so re-shared QR codes remain bound to
+        // the same node and so the DEVICE_AUTH challenge can be checked.
+        this.nodeId = typeof options.nodeId === 'string' ? options.nodeId : null;
+        this.capabilities = Array.isArray(options.capabilities) ? options.capabilities.slice() : null;
         this.public = options.public === true;
-        // Provisioning metadata is retained locally only. Password-based node
-        // authentication is not claimed until the DMP-C server supports it.
-        this.password = typeof options.password === 'string' ? options.password : null;
         this.autoConnect = options.autoConnect === true;
         // Notification delivery is an explicit, per-node opt-in.  Do not turn
         // every Entry Node into a notification relay just because Telegram was
@@ -142,7 +144,10 @@ const NodeManager = {
     add(url, label = '', options = {}) {
         const endpoint = new NodeEndpoint(url, label, options);
         const existing = this.endpoints.find(item => item.url === endpoint.url);
-        if (existing) Object.assign(existing, { label: endpoint.label, public: endpoint.public, password: endpoint.password });
+        if (existing) Object.assign(existing, {
+            label: endpoint.label, public: endpoint.public,
+            nodeId: endpoint.nodeId, capabilities: endpoint.capabilities
+        });
         // Catalog refreshes must never silently change a user's connection
         // policy. Only an explicit add/edit can carry autoConnect.
         if (existing && Object.hasOwn(options, 'autoConnect')) existing.autoConnect = endpoint.autoConnect;
@@ -304,6 +309,11 @@ const NodeManager = {
                 !Number.isInteger(message.expires_at) || message.expires_at <= Math.floor(Date.now() / 1000)) {
                 connection.socket.close(1008, 'invalid device auth challenge');
                 connection.error = 'invalid device-auth challenge'; this.updateState();
+                return;
+            }
+            if (connection.endpoint.nodeId && message.node_id.toLowerCase() !== connection.endpoint.nodeId) {
+                connection.socket.close(1008, 'node identity does not match provisioning link');
+                connection.error = 'node identity does not match provisioning link'; this.updateState();
                 return;
             }
             window.DeviceRoot.transportIdentity(message.node_id).then(transport => {
@@ -591,13 +601,29 @@ const NodeManager = {
         box.append(title, input, submit, cancel); modal.appendChild(box); input.focus();
     },
     importNodeProvisioning(value) {
+        if (typeof value !== 'string') throw new Error('Некорректный QR узла');
+        if (value.startsWith('#/node/')) {
+            if (typeof window.parseDmashNodeUri !== 'function') throw new Error('Парсер ссылок D-MASH недоступен');
+            const descriptor = window.parseDmashNodeUri(value);
+            const endpoint = this.add(descriptor.e, descriptor.l || '', {
+                nodeId: descriptor.n, capabilities: descriptor.c || null
+            });
+            this.select(endpoint.url);
+            return endpoint;
+        }
+
+        // Compatibility is deliberately limited to the prior, explicitly
+        // tagged JSON package. It carries no node identity and cannot be
+        // re-exported as a canonical link until a canonical link is imported.
         let packageData;
-        try { packageData = JSON.parse(value); } catch (_) { throw new Error('Нужен QR пакета D-MASH NODE V1'); }
-        if (packageData?.type !== 'DMASH_NODE_V1' || typeof packageData.url !== 'string') throw new Error('Некорректный QR узла');
-        // A QR may carry a password only when its creator explicitly elected
-        // that option. Current public DMP-C nodes use DEVICE_AUTH_V1 only;
-        // password metadata is stored as provisioning data, never transmitted.
-        const endpoint = this.add(packageData.url, packageData.label || '', { password: packageData.password || null });
+        try { packageData = JSON.parse(value); } catch (_) { throw new Error('Нужна ссылка D-MASH #/node/...'); }
+        if (!packageData || typeof packageData !== 'object' || Array.isArray(packageData) ||
+            Object.keys(packageData).some(key => !['type', 'version', 'url', 'label', 'password'].includes(key)) ||
+            packageData.type !== 'DMASH_NODE_V1' || packageData.version !== 1 || typeof packageData.url !== 'string' ||
+            (packageData.label !== undefined && typeof packageData.label !== 'string')) throw new Error('Некорректный legacy QR узла');
+        // Deliberately discard legacy password metadata: DMP-C authenticates
+        // devices with DEVICE_AUTH_V1 and does not support password auth.
+        const endpoint = this.add(packageData.url, packageData.label || '');
         this.select(endpoint.url);
         return endpoint;
     },
@@ -624,21 +650,28 @@ const NodeManager = {
         }, 100);
     },
     showNodeQR(endpoint) {
+        if (!endpoint.nodeId) {
+            this.showMessage('Для QR нужен канонический D-MASH #/node URI с NodeID.', true);
+            return;
+        }
+        if (typeof window.serializeDmashNodeUri !== 'function') {
+            this.showMessage('Сериализатор ссылок D-MASH недоступен.', true);
+            return;
+        }
+        let uri;
+        try {
+            uri = window.serializeDmashNodeUri({ v: 1, e: endpoint.url, n: endpoint.nodeId, l: endpoint.label, ...(endpoint.capabilities ? { c: endpoint.capabilities } : {}) });
+        } catch (error) { this.showMessage(error, true); return; }
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
         const box = document.createElement('div'); box.className = 'sys-modal-box';
         const target = document.createElement('div'); target.id = 'node-qr-target'; target.style.cssText = 'background:#fff;padding:12px;margin:12px auto;width:max-content';
-        const include = document.createElement('label'); include.style.cssText = 'display:block;text-align:left;font-size:.75rem;color:#ccc';
-        const toggle = document.createElement('input'); toggle.type = 'checkbox'; toggle.disabled = !endpoint.password;
-        include.append(toggle, document.createTextNode(endpoint.password ? ' ВКЛЮЧИТЬ ПАРОЛЬ В QR (небезопасно)' : ' Пароль для узла не задан'));
-        const render = () => {
-            target.replaceChildren();
-            const payload = { type: 'DMASH_NODE_V1', version: 1, url: endpoint.url, label: endpoint.label };
-            if (toggle.checked && endpoint.password) payload.password = endpoint.password;
-            if (window.QRCode) new QRCode(target, { text: JSON.stringify(payload), width: 210, height: 210 });
-        };
-        toggle.onchange = render; render();
+        if (window.QRCode) new QRCode(target, { text: uri, width: 210, height: 210 });
+        const copy = this.makeButton('КОПИРОВАТЬ ССЫЛКУ', async () => {
+            try { await navigator.clipboard.writeText(uri); this.showMessage('Ссылка узла скопирована.'); }
+            catch (_) { this.showMessage('Не удалось скопировать ссылку узла.', true); }
+        });
         const title = document.createElement('h4'); title.textContent = 'QR УЗЛА';
-        box.append(title, target, include, this.makeButton('НАЗАД', () => this.renderSettings())); modal.appendChild(box);
+        box.append(title, target, copy, this.makeButton('НАЗАД', () => this.renderSettings())); modal.appendChild(box);
     },
     makeButton(label, handler, primary = false) {
         const button = document.createElement('button'); button.className = `sys-modal-btn${primary ? ' primary' : ''}`;

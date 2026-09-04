@@ -121,6 +121,9 @@ const Core = {
     // designed; keeping it here prevents accidental Account-vault coupling.
     device: null,
     deviceState: null,
+    // Created only after the installation-scoped DeviceRoot has been
+    // unlocked.  Quick Names must never fall back to an Account vault.
+    quickNameRegistry: null,
     isSyncing: false, chatOffset: 0, chatLimit: 50, isLoadingHistory: false,
     hex_lut: Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0')),
     randomInt32: () => {
@@ -158,6 +161,9 @@ const Core = {
         // account password must never become the device-unlock credential.
         const deviceState = await window.DeviceRoot.bootstrap(masterPin);
         this.deviceState = deviceState;
+        // Discard a registry object from a preceding DeviceRoot session.  Its
+        // first cryptographic operation will now use this unlocked root.
+        this.quickNameRegistry = null;
         if (!deviceState.legacy && deviceState.identity) {
             this.device = Object.freeze({
                 id: deviceState.identity.deviceId,
@@ -2551,6 +2557,7 @@ const Core = {
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <button class="sys-modal-btn" onclick="Core.setupTelegram()">✈️ ТЕЛЕГРАМ-МАЯК</button>
                 <button class="sys-modal-btn" onclick="NodeManager.renderSettings()">🌐 ПОДКЛЮЧЕНИЕ К УЗЛУ</button>
+                <button class="sys-modal-btn" onclick="Core.openQuickNames()">🏷️ БЫСТРЫЕ ИМЕНА</button>
                 <button class="sys-modal-btn" onclick="Core.toggleFlipper()">ЭКСТРЕННЫЙ ФЛИП-ЛОК: ${panicGestureEnabled ? 'ВКЛ' : 'ВЫКЛ'}</button>
                 <button class="sys-modal-btn" onclick="Core.setupBiometrics()">🧬 ПРИВЯЗАТЬ ОТПЕЧАТОК/FACE</button>
                 <button class="sys-modal-btn" onclick="Core.setupLazyLogin()">💤 ВКЛЮЧИТЬ БЕСПАРОЛЬНЫЙ ВХОД</button>
@@ -2558,6 +2565,62 @@ const Core = {
                 <button class="sys-modal-btn primary" onclick="Core.closeModal()">ЗАКРЫТЬ</button>
             </div>`;
         Core.openModal("НАСТРОЙКИ", h);
+    },
+    // Quick Names are installation-wide preferences.  They are deliberately
+    // exposed from Global Settings and instantiated against DeviceRoot only
+    // after the calculator/master-PIN unlock has completed.
+    getQuickNameRegistry: function() {
+        if (!this.deviceState || !window.DeviceRoot?.state || window.DeviceRoot.state !== this.deviceState) {
+            throw new Error("СНАЧАЛА РАЗБЛОКИРУЙТЕ УСТРОЙСТВО");
+        }
+        if (!window.QuickNameRegistry) throw new Error("РЕЕСТР БЫСТРЫХ ИМЁН НЕДОСТУПЕН");
+        if (!this.quickNameRegistry) this.quickNameRegistry = new window.QuickNameRegistry({ deviceRoot: window.DeviceRoot });
+        return this.quickNameRegistry;
+    },
+    quickNameError: function(error) {
+        const message = error?.message || "НЕ УДАЛОСЬ ОБНОВИТЬ БЫСТРЫЕ ИМЕНА";
+        Core.customAlert("БЫСТРЫЕ ИМЕНА", message);
+    },
+    openQuickNames: async function() {
+        try {
+            const entries = await this.getQuickNameRegistry().list();
+            const list = entries.map((entry) => {
+                // IDs are passed encoded rather than interpolated directly, so
+                // encrypted persisted data cannot break the inline handler.
+                const id = encodeURIComponent(entry.id);
+                return `<div style="background:#111;padding:12px;margin-bottom:10px;border:1px solid #333;text-align:left;">
+                    <b style="color:var(--main);">${Core.escapeHtml(entry.name)}</b>
+                    <div style="font-size:.7rem;color:#aaa;overflow-wrap:anywhere;margin:5px 0 9px;">${Core.escapeHtml(entry.value)}</div>
+                    <button class="sys-modal-btn danger" style="padding:5px;font-size:.6rem;margin:0;" onclick="Core.removeQuickName(decodeURIComponent('${id}'))">УДАЛИТЬ</button>
+                </div>`;
+            }).join("");
+            const h = `<div style="max-height:350px;overflow-y:auto;margin-bottom:15px;">${list || "БЫСТРЫХ ИМЁН НЕТ"}</div>
+                <button class="sys-modal-btn" onclick="Core.addQuickNameFlow()">ДОБАВИТЬ БЫСТРОЕ ИМЯ</button>
+                <button class="sys-modal-btn primary" onclick="Core.openSettings()">НАЗАД</button>`;
+            Core.openModal("БЫСТРЫЕ ИМЕНА", h);
+        } catch (error) { this.quickNameError(error); }
+    },
+    addQuickNameFlow: function() {
+        try { this.getQuickNameRegistry(); } catch (error) { this.quickNameError(error); return; }
+        Core.customPrompt("БЫСТРОЕ ИМЯ", "Введите название:", (name) => {
+            if (name === null || name === undefined) return;
+            Core.customPrompt("ЗНАЧЕНИЕ", "Введите значение:", async (value) => {
+                if (value === null || value === undefined) return;
+                try {
+                    await Core.getQuickNameRegistry().add({ name, value });
+                    await Core.openQuickNames();
+                } catch (error) { Core.quickNameError(error); }
+            });
+        });
+    },
+    removeQuickName: function(id) {
+        Core.customPrompt("УДАЛЕНИЕ", 'Введите "УДАЛИТЬ" для подтверждения:', async (confirmation) => {
+            if (confirmation !== "УДАЛИТЬ") return;
+            try {
+                await Core.getQuickNameRegistry().remove(id);
+                await Core.openQuickNames();
+            } catch (error) { Core.quickNameError(error); }
+        });
     },
     // Core.openAccountManager - Реестр всех аккаунтов на устройстве
     openAccountManager: async function() {
