@@ -58,7 +58,7 @@ verify_public_https() {
     js/core_engine.js js/storage.js js/device_root.js js/device_routes.js
     js/dmash_links.js js/quick_name_registry.js
     js/contact_payloads.js js/contact_transport.js js/pending_contact_requests.js
-    js/resource_pow.js js/ui_global_bridge.js js/runtime_fixes.js js/public_contact_runtime.js js/acceptance_fixes.js js/acceptance_v50.js js/acceptance_v51.js
+    js/resource_pow.js js/ui_global_bridge.js js/runtime_fixes.js js/public_contact_runtime.js js/acceptance_fixes.js js/acceptance_v50.js js/acceptance_v51.js js/acceptance_v52.js
     js/locales/en.js js/locales/ru.js
     js/vendor/argon2-bundled.min.js js/vendor/argon2.wasm
     js/vendor/html5-qrcode.min.js js/vendor/kyber768.js js/vendor/kyber768.wasm
