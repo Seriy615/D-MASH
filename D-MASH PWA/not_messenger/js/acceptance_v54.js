@@ -9,10 +9,12 @@
  * The suffix must match the configured Master key verifier before any
  * destructive action begins. The reserved sequence is tracked separately from
  * the calculator display so it can exceed the normal decoy display length.
+ * Device-biometric calculator gestures use a deliberate one-second hold.
  */
 (function installAcceptanceV54(global) {
     const UI_PATCH = "__dmashAcceptanceV54EmergencyWipe";
     const PREFIX = "1020";
+    const BIOMETRIC_HOLD_MS = 1000;
     const KNOWN_DATABASES = [
         "dm_gamma_vault",
         "dm_registry_v1",
@@ -138,6 +140,23 @@
         const originalNum = uiObject.num.bind(uiObject);
         const originalCmd = uiObject.cmd.bind(uiObject);
         const originalEval = uiObject.eval.bind(uiObject);
+        const originalBeginBiometric = typeof uiObject.beginBiometricTriggerSetup === "function"
+            ? uiObject.beginBiometricTriggerSetup.bind(uiObject)
+            : null;
+
+        // One second is long enough to distinguish the gesture from a tap while
+        // keeping calculator biometric unlock responsive.
+        uiObject.biometricHoldMs = BIOMETRIC_HOLD_MS;
+        if (originalBeginBiometric) {
+            uiObject.beginBiometricTriggerSetup = function beginBiometricTriggerSetupV54(...args) {
+                const result = originalBeginBiometric(...args);
+                if (result !== false) {
+                    this.hist = "УДЕРЖИВАЙТЕ ЛЮБУЮ КНОПКУ 1 СЕК.";
+                    this.update?.();
+                }
+                return result;
+            };
+        }
 
         uiObject._emergencyWipeSequence = "";
 
