@@ -146,3 +146,32 @@ endpoint tests. PWA baseline still has the two documented historical failures.
 Cryptographic references: RFC 5869 (https://www.rfc-editor.org/rfc/rfc5869),
 RFC 7748 (https://www.rfc-editor.org/rfc/rfc7748); references do not constitute
 an audit of this protocol composition.
+
+## B2: Node↔Node migration
+
+IMPLEMENTED: `network.py` now uses the common v3 handshake and secure socket.
+Saved endpoints pin their known NodeID on reconnect; new peers are authenticated
+as first-contact identities and must still satisfy the existing Node identity
+PoW. Both directions independently generate 128-bit DNSS, mine and verify
+resource work bound to recipient NodeID, sender NodeID, DNSS, and the fresh
+session transcript. NODE_REGISTER/NODE_AUTHORIZED are encrypted, immediate
+control operations. One direction's work never authorizes the reverse.
+
+Node data operations are MESH_PROBE/MESH_DATA; NODE_CONTROL currently supports
+keepalive. Device operations including PULL are rejected on Node channels.
+Old REAL/DUMMY wrappers exist only at the local adapter boundary and are not
+sent as cleartext; padding is not transmitted by the adapter. Tact scheduling
+and existing locator-bearing packets still await milestones F/G.
+
+Compatibility: peers must upgrade together; there is no automatic fallback to
+the old unauthenticated-initiator handshake. Host:port dialing retains its
+existing ws transport; explicit wss URLs retain TLS verification. Encrypted
+DMP-C is additional protection, not a substitute for a deployment's TLS/WSS.
+Node authorization currently uses a new directional DNSS per connection;
+Device DNSS persistence remains a separate unfinished migration.
+
+Validation: 113 Node tests pass, including two real loopback WebSocket peers,
+independent directional DNSS/work, data transport, Device-operation rejection,
+and refusal when one direction supplies bad work. Identity-prefix mining is
+mocked only in these focused integration fixtures; resource proof verification
+is real with reduced test-only difficulty. Production difficulty is unchanged.
