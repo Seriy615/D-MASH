@@ -9,6 +9,8 @@ const { TextEncoder, TextDecoder } = require("node:util");
 (async () => {
   const source = fs.readFileSync(require.resolve("../js/release.js"), "utf8");
   const domListeners = new Map();
+  const loadedScripts = [];
+  let installRuntime;
   const keypadListeners = new Map();
   const performedHolds = [];
   const createCalls = [];
@@ -67,6 +69,7 @@ const { TextEncoder, TextDecoder } = require("node:util");
   };
   const ui = {
     _suppressToken: null,
+    async show_gate() {},
     async handleBiometricHold(token) { performedHolds.push(token); return true; }
   };
   const badge = { textContent: "" };
@@ -81,6 +84,8 @@ const { TextEncoder, TextDecoder } = require("node:util");
     Buffer,
     setTimeout,
     clearTimeout,
+    setInterval(callback) { installRuntime = callback; return 1; },
+    clearInterval() {},
     DeviceRoot,
     DeviceRootError,
     ui,
@@ -89,6 +94,12 @@ const { TextEncoder, TextDecoder } = require("node:util");
     btoa(value) { return Buffer.from(value, "binary").toString("base64"); },
     atob(value) { return Buffer.from(value, "base64").toString("binary"); },
     document: {
+      readyState: "loading",
+      scripts: [],
+      createElement(tag) { return { tagName: tag }; },
+      head: { appendChild(element) {
+        if (element.tagName === "script") { loadedScripts.push(element.src); element.onload(); }
+      } },
       getElementById(id) { if (id === "keypad") return keypad; if (id === "dmash-build-id") return badge; return null; }
     },
     addEventListener(type, callback) { domListeners.set(type, callback); }
@@ -97,10 +108,16 @@ const { TextEncoder, TextDecoder } = require("node:util");
   context.globalThis = context;
 
   vm.runInNewContext(source, context, { filename: "release.js" });
-  domListeners.get("DOMContentLoaded")();
+  await domListeners.get("DOMContentLoaded")();
+  assert.ok(loadedScripts.some(src => src.startsWith("js/runtime_fixes.js?")), "release loads the actual WebAuthn implementation");
+  // The implementation moved out of release.js; exercise the same runtime
+  // module the loader selected, retaining the historical WebAuthn contract.
+  vm.runInNewContext(fs.readFileSync(require.resolve("../js/runtime_fixes.js"), "utf8"), context, { filename: "runtime_fixes.js" });
+  installRuntime();
 
   const enrolled = await DeviceRoot.enrollWebAuthnPrf();
-  assert.deepEqual(enrolled, { enrolled: true });
+  assert.equal(enrolled.enrolled, true);
+  assert.equal(enrolled.credentialCount, 1);
   assert.equal(createCalls.length, 1, "enrollment uses one historical credentials.create call");
   assert.equal(getCalls.length, 0, "enrollment must not immediately request a second biometric assertion");
   const createPk = createCalls[0].publicKey;
@@ -133,6 +150,6 @@ const { TextEncoder, TextDecoder } = require("node:util");
   assert.deepEqual(performedHolds, ["3"], "qualified hold performs on trusted pointerup");
   assert.equal(ui._suppressToken, "3", "long press remains suppressed as calculator input");
 
-  assert.equal(badge.textContent, "D-MASH build m1.5-device-auth-v2-20260901.44");
+  assert.equal(badge.textContent, `D-MASH build ${context.DMASH_RELEASE.id}`);
   console.log("Historical WebAuthn device compatibility: all assertions passed");
 })().catch((error) => { console.error(error); process.exitCode = 1; });

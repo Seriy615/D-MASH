@@ -175,3 +175,16 @@ independent directional DNSS/work, data transport, Device-operation rejection,
 and refusal when one direction supplies bad work. Identity-prefix mining is
 mocked only in these focused integration fixtures; resource proof verification
 is real with reduced test-only difficulty. Production difficulty is unchanged.
+
+## Historical test migration
+
+The two baseline WebAuthn failures are now fixed in tests, without changing
+production biometrics. The executable historical test follows release.js's
+runtime loader and tests runtime_fixes.js, where enrollment/unlock/gesture
+logic now lives. It retains RP, ES256, resident/platform credential, PRF,
+single-prompt enrollment, encrypted wrap and trusted pointerup assertions.
+The source guard now checks the same runtime module and explicit PRF fallback.
+The obsolete fixed v44 badge expectation follows the actual release identifier.
+
+Full verification at this checkpoint: Node 113/113; Origin 11/11; PWA 25/25
+suites. No deployment or Chrome acceptance has been performed.
