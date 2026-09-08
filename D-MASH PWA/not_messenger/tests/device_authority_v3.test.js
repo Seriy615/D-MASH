@@ -12,6 +12,7 @@ const Authority = require('../js/device_authority_v3.js');
             calls.push({op, payload: structuredClone(payload), rid});
             if (op === 'REGISTER_DNSS' && !registered && !payload.pow) throw Error('DNSS_NOT_REGISTERED');
             if (op === 'REGISTER_DNSS') registered = true;
+            if (op === 'REGISTER_ROUTE' && !payload.pow) throw Error('INVALID_RESOURCE_POW');
             return {type: op + '_RESULT'};
         }
     };

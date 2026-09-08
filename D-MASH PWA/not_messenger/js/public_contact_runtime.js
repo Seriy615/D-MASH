@@ -47,7 +47,7 @@
                 intro_message: String(intro || "").trim(),
                 reply_route_certificate: clonePlain(reply.certificate),
                 bootstrap_encryption_public: reply.certificate.boxPublicKey,
-                protocol_capabilities: ["CONTACT_ACCEPT_V1", "DMP_C_V2"]
+                protocol_capabilities: ["CONTACT_ACCEPT_V1", "DMP_C_V3"]
             });
 
             const transport = new global.ContactTransport({
@@ -56,6 +56,7 @@
                 submit: async ({ routeLocator, envelope }) => {
                     const ready = await global.NodeManager.routeStatus(routeLocator);
                     if (!ready) throw new Error("RouteID пока не найден в mesh. Получатель должен быть online хотя бы на одной Node.");
+                    if (ready.connection.client) return global.NodeManager.submitDeviceEnvelopeV3(routeLocator, 'CONN_REQUEST', envelope, recipientCertificate, ready.connection);
                     return global.NodeManager.requestOn(ready.connection, "SUBMIT_CONTACT", {
                         route_locator: routeLocator,
                         envelope,

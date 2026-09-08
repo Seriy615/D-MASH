@@ -81,7 +81,23 @@ The gateway sends a plaintext `WELCOME` containing NodeID for per-Node Device
 identity derivation. WELCOME grants no authority: the same NodeID must verify
 the signed challenge. A real JS/Python loopback WebSocket test covers encrypted
 concurrent STATUS/PING, role capability limits and wrong identity rejection.
-These modules are not yet wired into the production PWA loader/Account flow.
+The loader and service worker now include these modules under release
+`transport-v3-dev-20260908.1`. NodeManager uses DeviceClientV3 for new
+connections, binds stable DNSS, and arms public routes with DeviceAuthorityV3.
+The canonical `/dmp-c/v3` and proxy-facing `/dmash-client/v3` are both backend
+routes. Known historical `/v1` endpoint paths map to `/v3`; an explicit
+descriptor `dmpcEndpoint` can override that mapping. The existing EMS proxy
+configuration still needs verification before deployment.
+
+PULL now retrieves the session's whole queue and persists opaque boxes in
+encrypted local staging before dispatch. Boxes without an available local key
+remain staged. The native Chrome fixture also passes close/reopen of this raw
+staging phase. Public contact senders wrap the existing contact ciphertext in
+a CONN_REQUEST Device Envelope; public registration stores grants encrypted
+and borrows route keys only for the operation, wiping them in finally.
+Core v3 polling delegates to this Device pipeline. Private route derivation,
+Account send/receive adapters and contact Accept/bootstrap remain incomplete;
+the branch is not deployable yet.
 
 `device_authority_v3.js` reuses encrypted `dnss/v1/NodeID` material, attempts
 socket binding without new work, and mines again only for
@@ -93,7 +109,12 @@ resource work difficulty; the client accepts the production 20–24-bit range.
 Tests exercise reconnect, runtime loss, distinct proof ids and wrong-session
 signature rejection. Node data reception also checks current route authority
 at mailbox insertion so an expired/revoked registration cannot keep receiving
-through an old routing-table entry.
+through an old routing-table entry. Route registration first attempts an
+idempotent reconnect without work and mines only after INVALID_RESOURCE_POW.
+
+The historical stability test now checks that the page and service worker
+have the same current release instead of pinning the old release-55 string.
+All historical v50–v55 behavior assertions remain in place.
 
 Validation at this checkpoint: 134 backend tests, 11 Origin tests, all 28 PWA
 suites pass using `tools/test_all.py`. No deployment or production acceptance.

@@ -185,7 +185,33 @@
         async canPull() {
             this._root();
             const rows = await this.store.all();
-            return rows.length + 128 <= MAX_RECORDS && rows.reduce((n, row) => n + row.size, 0) + 1024 * 1024 <= MAX_BYTES;
+            return rows.length + 256 <= MAX_RECORDS && rows.reduce((n, row) => n + row.size, 0) + 1024 * 1024 <= MAX_BYTES;
+        }
+        stageTransport(nodeId, entries) {
+            return this._exclusive(async () => {
+                for (const entry of entries) {
+                    if (typeof entry.delivery_id !== 'string' || typeof entry.ciphertext !== 'string' || entry.ciphertext.length > 65536) throw new Error('Invalid mailbox entry');
+                    const label = 'transport:' + nodeId + ':' + entry.delivery_id;
+                    await this._write(label, {record: 'transport', label, ciphertext: entry.ciphertext}, true);
+                }
+            });
+        }
+        async drainTransport(receiver) {
+            const results = [];
+            for (const row of await this.store.all()) {
+                const record = await this._open(row);
+                if (record.record !== 'transport') continue;
+                try {
+                    const result = await receiver(record.ciphertext);
+                    await this._write(record.label, {record: 'transport_seen'}, false, Date.now() + 86400000);
+                    results.push(result);
+                } catch (_) {
+                    // Keep even unknown/temporarily undecryptable Device boxes.
+                    // A bad entry must not prevent the rest of a drain.
+                    results.push('DEVICE_STORED');
+                }
+            }
+            return results;
         }
     }
     global.DeviceRecordStore = DeviceRecordStore;

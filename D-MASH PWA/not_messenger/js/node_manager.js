@@ -8,6 +8,11 @@ class NodeEndpoint {
             throw new Error('Insecure WS is allowed only on localhost');
         }
         this.url = parsed.href;
+        const transport = new URL(options.dmpcEndpoint || this.url);
+        if (!options.dmpcEndpoint) transport.pathname = transport.pathname.replace(/\/(dmp-c|dmash-client)\/v1$/, '/$1/v3');
+        if (!['wss:', 'ws:'].includes(transport.protocol) ||
+            (transport.protocol === 'ws:' && !['localhost', '127.0.0.1'].includes(transport.hostname))) throw new Error('DMP-C endpoint must use WSS');
+        this.dmpcEndpoint = transport.href;
         this.label = label || parsed.host;
         // A node ID is an identity assertion from a canonical D-MASH link,
         // not a credential.  Retain it so re-shared QR codes remain bound to
@@ -369,16 +374,39 @@ const NodeManager = {
     connectEndpoint(endpoint) {
         const existing = this.connections.get(endpoint.url);
         if (existing?.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(existing.socket.readyState)) return;
-        const connection = { endpoint, socket: new WebSocket(endpoint.url), capabilities: new Set(), state: 'connecting', error: null, pendingPings: new Map(), pendingRequests: new Map(), reconnectAttempt: existing?.reconnectAttempt || 0, reconnectTimer: null, pingTimer: null, lastLatencyMs: null, lastConnectedAt: null };
+        const connection = { endpoint, socket: null, capabilities: new Set(), state: 'connecting', error: null, pendingPings: new Map(), pendingRequests: new Map(), reconnectAttempt: existing?.reconnectAttempt || 0, reconnectTimer: null, pingTimer: null, lastLatencyMs: null, lastConnectedAt: null };
         this.connections.set(endpoint.url, connection);
-        connection.socket.onmessage = event => this.onMessage(connection, event);
-        connection.socket.onclose = () => {
+        const disconnected = error => {
+            connection.authority?.close();
             if (this.connections.get(endpoint.url) !== connection) return;
             connection.state = 'reconnecting'; connection.socket = null; this.stopPings(connection);
-            this.rejectPending(connection, new Error('D-MASH node disconnected'));
+            connection.error = error.message;
+            this.rejectPending(connection, error);
             this.scheduleReconnect(connection); this.updateState();
         };
-        connection.socket.onerror = () => { connection.error = 'connection failed'; this.updateState(); };
+        try {
+            connection.client = new window.DeviceClientV3({url: endpoint.dmpcEndpoint || endpoint.url,
+                nodeId: endpoint.nodeId, identity: nodeId => window.DeviceRoot.transportIdentity(nodeId),
+                onClose: disconnected, onEvent: message => {
+                    if (message.type === 'DELIVERY_AVAILABLE') {
+                        void this.pullDeviceMailboxV3().catch(error => { connection.error = error.message; this.updateState(); });
+                        window.dispatchEvent(new CustomEvent('dmash-delivery-available', {detail: message}));
+                    }
+                }});
+            const ready = connection.client.connect();
+            connection.socket = connection.client.socket;
+            connection.ready = ready.then(async () => {
+                connection.nodeId = connection.client.nodeId;
+                connection.capabilities = connection.client.capabilities;
+                connection.authority = new window.DeviceAuthorityV3(connection.client);
+                if (connection.capabilities.has('REGISTER_DNSS')) await connection.authority.bind();
+                if (this.connections.get(endpoint.url) !== connection || connection.client.state !== 'connected') return;
+                connection.state = 'connected'; connection.error = null; connection.reconnectAttempt = 0;
+                connection.lastConnectedAt = Date.now(); this.updateState(); this.startPings(connection);
+                await this.probeActivePublicDeviceRoutes(connection);
+                if (connection.capabilities.has('PULL')) await this.pullDeviceMailboxV3();
+            }).catch(error => connection.client.fail(error));
+        } catch (error) { disconnected(error); }
     },
     onMessage(connection, event) {
         const message = JSON.parse(event.data);
@@ -487,6 +515,13 @@ const NodeManager = {
     },
     ping(connection) {
         if (connection?.state !== 'connected' || connection.socket?.readyState !== WebSocket.OPEN) return;
+        if (connection.client) {
+            const started = performance.now();
+            connection.client.request('PING').then(() => {
+                connection.lastLatencyMs = Math.round(performance.now() - started); this.updateState();
+            }).catch(error => { connection.error = error.message; this.updateState(); });
+            return;
+        }
         const requestId = crypto.randomUUID();
         connection.pendingPings.set(requestId, performance.now());
         connection.socket.send(JSON.stringify({ type: 'PING', request_id: requestId }));
@@ -506,6 +541,7 @@ const NodeManager = {
         if (!connection || connection.state !== 'connected' || connection.socket?.readyState !== WebSocket.OPEN) {
             return Promise.reject(new Error('D-MASH node is not connected'));
         }
+        if (connection.client) return connection.client.request(type, payload);
         const requestId = crypto.randomUUID();
         const message = { ...payload, type, request_id: requestId };
         return new Promise((resolve, reject) => {
@@ -607,7 +643,18 @@ const NodeManager = {
         if (!ready) throw new Error('Route unavailable: no connected node reports ROUTE_READY');
         return this.requestOn(ready.connection, 'SUBMIT_ENVELOPE', { route_locator: routeLocator, envelope });
     },
+    async submitDeviceEnvelopeV3(routeLocator, type, accountPayload, certificate, connection) {
+        if (!window.DeviceRoutes.verifyCertificate(certificate) || certificate.routeId !== routeLocator) throw new Error('Recipient Device Route certificate mismatch');
+        const publicKey = Uint8Array.from(atob(certificate.boxPublicKey.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+        const envelope = window.DeviceEnvelope.create(routeLocator, type, JSON.stringify(accountPayload));
+        const ciphertext = window.DeviceEnvelope.seal(publicKey, envelope);
+        return connection.client.request('SUBMIT', {route_locator: routeLocator, ciphertext});
+    },
     async pull(locatorHandle) {
+        if (this.connectedConnections().some(connection => connection.client)) {
+            await this.pullDeviceMailboxV3();
+            return {packets: []};
+        }
         const connections = this.connectedConnections().filter(connection => connection.capabilities.has('PULL'));
         if (!connections.length) throw new Error('No connected D-MASH node supports this operation');
         const results = await Promise.allSettled(connections.map(async connection => ({
@@ -628,6 +675,47 @@ const NodeManager = {
         if (connection) return this.requestOn(connection, 'ACK', { delivery_id: deliveryId });
         const results = await this.requestAll('ACK', { delivery_id: deliveryId });
         return results[0];
+    },
+    deviceInboxV3() {
+        if (!this._deviceInboxV3) this._deviceInboxV3 = new window.DeviceInbox({
+            getRoot: () => window.DeviceRoot?.state?.root,
+            getActiveAccount: () => window.Core?.activeIdentity || null,
+            onDevice: async envelope => {
+                if (envelope.type !== 'CONN_REQUEST' || !window.Core?.ingestPublicContactPacket) return false;
+                const payload = JSON.parse(envelope.account_payload);
+                await window.Core.ingestPublicContactPacket(envelope.route_id, {id: envelope.packet_id, envelope: payload});
+                return true;
+            }
+        });
+        return this._deviceInboxV3;
+    },
+    async receiveDeviceCiphertextV3(ciphertext) {
+        const inbox = this.deviceInboxV3();
+        for (const route of this.activePublicDeviceRoutes()) {
+            try {
+                return await window.DeviceRoutes.withRouteKeys(route.routeId, ({box}) => inbox.receive(ciphertext, box.secretKey));
+            } catch (_) { /* Retain raw encrypted record if no local key can open it. */ }
+        }
+        const key = window.Core?.device?.agreement?.secretKey;
+        if (key) return inbox.receive(ciphertext, key);
+        throw new Error('Device decryption key unavailable');
+    },
+    pullDeviceMailboxV3() {
+        if (this._pullDeviceV3) return this._pullDeviceV3;
+        this._pullDeviceV3 = (async () => {
+            const inbox = this.deviceInboxV3();
+            for (const connection of this.connectedConnections()) {
+                if (!connection.client || !connection.capabilities.has('PULL')) continue;
+                if (!await inbox.canPull()) throw new Error('Device Inbox needs free storage before PULL');
+                const result = await connection.client.request('PULL');
+                if (result.type !== 'MAILBOX_DRAIN_RESULT' || !Array.isArray(result.entries)) throw new Error('Invalid mailbox drain');
+                await inbox.stageTransport(connection.nodeId, result.entries);
+            }
+            const result = await inbox.drainTransport(ciphertext => this.receiveDeviceCiphertextV3(ciphertext));
+            await inbox.drain();
+            return result;
+        })().finally(() => { this._pullDeviceV3 = null; });
+        return this._pullDeviceV3;
     },
     rejectPending(connection, error) {
         for (const pending of connection.pendingRequests.values()) pending.reject(error);

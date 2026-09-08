@@ -1152,6 +1152,13 @@ const Core = {
     },
     // Core.syncNetwork        - Опрос сервера (PULL), получение и сортировка новых маляв
     async syncNetwork() {
+        if (window.NodeManager?.connectedConnections?.().some(connection => connection.client)) {
+            try {
+                await window.NodeManager.pullDeviceMailboxV3();
+                await window.NodeManager.deviceInboxV3().drain();
+            } catch (error) { this.shmon('WARN', 'Device Inbox sync deferred: ' + error.message); }
+            return;
+        }
         if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
             const inboundHandles = window.NodeManager?.getInboundLocatorHandles?.() || [];
             if (!inboundHandles.length || this._meshPulling) return;

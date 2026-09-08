@@ -20,7 +20,9 @@ new vm.Script(v52, { filename: "acceptance_v52.js" });
 new vm.Script(v54, { filename: "acceptance_v54.js" });
 new vm.Script(v55, { filename: "acceptance_v55.js" });
 
-assert.match(release, /20260905\.55/, "release 55 is visible");
+const currentRelease = release.match(/id:\s*"([^"]+)"/)[1];
+const worker = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+assert.ok(worker.includes("const RELEASE_ID = '" + currentRelease + "'"), 'page and worker use the same current release');
 assert.match(release, /acceptance_v50\.js/, "v50 compatibility runtime is loaded");
 assert.match(release, /acceptance_v51\.js/, "v51 compatibility runtime is loaded");
 assert.match(release, /acceptance_v52\.js/, "v52 secure-registry runtime is loaded");

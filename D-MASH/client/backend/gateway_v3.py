@@ -86,6 +86,7 @@ def runtime_state():
 
 
 @router.websocket("/dmp-c/v3")
+@router.websocket("/dmash-client/v3")
 async def dmp_v3(websocket: WebSocket):
     await websocket.accept()
     secure = None

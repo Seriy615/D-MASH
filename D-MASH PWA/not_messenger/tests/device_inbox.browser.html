@@ -21,7 +21,10 @@
     await inbox.registerRoute('native-B', {scope: 'ACCOUNT', accountSlot: 'B'});
     const envelope = DeviceEnvelope.create('native-B', 'MSG', 'opaque B native storage payload');
     const ciphertext = DeviceEnvelope.seal(recipient.publicKey, envelope);
-    assert(await inbox.receive(ciphertext, recipient.secretKey) === 'DEVICE_STORED', 'B must be stored');
+    await inbox.stageTransport('localhost-node', [{delivery_id: 'native-drain-one', ciphertext}]);
+    inbox.store.close();
+    inbox = new DeviceInbox(options);
+    assert((await inbox.drainTransport(value => inbox.receive(value, recipient.secretKey)))[0] === 'DEVICE_STORED', 'B must be stored after raw drain reopening');
     assert(active === 'A' && delivered === 0, 'A must remain active');
     assert(!JSON.stringify(await inbox.store.all()).includes(envelope.account_payload), 'No payload at rest');
     inbox.store.close();

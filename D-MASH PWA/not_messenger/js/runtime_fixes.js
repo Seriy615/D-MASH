@@ -244,6 +244,26 @@
             if (!route?.routeId || !connection || connection.state !== "connected") return { state: "NODE_NOT_CONNECTED" };
             const nodeId = (connection.nodeId || connection.endpoint?.nodeId || "").toLowerCase();
             if (!HEX_32.test(nodeId)) throw new Error("Entry Node identity is unavailable");
+            if (connection.authority) {
+                const inbox = this.deviceInboxV3();
+                await inbox.registerRoute(route.routeId, {scope: 'DEVICE'});
+                const label = 'grant:' + nodeId + ':' + route.routeId;
+                let grant = (await inbox._get(label))?.grant;
+                const now = Math.floor(Date.now() / 1000);
+                if (!grant || grant.expires_at <= now + 60) {
+                    grant = await global.DeviceRoutes.issueEntryGrant(route.routeId, nodeId, {
+                        generation: (grant?.generation || 0) + 1, createdAt: now, expiresAt: now + 86400
+                    });
+                    await inbox._write(label, {record: 'grant', grant});
+                }
+                return global.DeviceRoutes.withRouteKeys(route.routeId, async ({signing}) => {
+                    const resource = {kind: 'PUBLIC', routeId: route.routeId, signing,
+                        generation: grant.generation, expiresAt: grant.expires_at, entryGrant: grant};
+                    await connection.authority.route('REGISTER_ROUTE', resource);
+                    await connection.authority.route('START_PROBE', resource, {route_locator: route.routeId});
+                    return {state: 'ACTIVATED'};
+                });
+            }
             for (const capability of ["REGISTER_INBOUND_LOCATOR", "START_PROBE"]) {
                 if (!connection.capabilities?.has(capability)) throw new Error(`Node lacks ${capability}`);
             }
@@ -539,7 +559,7 @@
                 intro_message: String(intro || "").trim(),
                 reply_route_certificate: reply.certificate,
                 bootstrap_encryption_public: reply.certificate.boxPublicKey,
-                protocol_capabilities: ["CONTACT_ACCEPT_V1", "DMP_C_V2"]
+                protocol_capabilities: ["CONTACT_ACCEPT_V1", "DMP_C_V3"]
             };
             const validator = global.ContactPayloads;
             const transport = new global.ContactTransport({
@@ -548,6 +568,7 @@
                 submit: async ({ routeLocator, envelope }) => {
                     const ready = await global.NodeManager.routeStatus(routeLocator);
                     if (!ready) throw new Error("RouteID пока не найден в mesh. Получатель должен быть online хотя бы на одной Node.");
+                    if (ready.connection.client) return global.NodeManager.submitDeviceEnvelopeV3(routeLocator, 'CONN_REQUEST', envelope, descriptor.c, ready.connection);
                     return global.NodeManager.requestOn(ready.connection, "SUBMIT_CONTACT", {
                         route_locator: routeLocator, envelope, reply_route: reply.routeId
                     });

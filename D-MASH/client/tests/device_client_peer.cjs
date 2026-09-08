@@ -19,5 +19,28 @@ const Client = require(path.join(root, 'device_client_v3.js'));
     client.close();
     const wrong = new Client({url: process.argv[2], nodeId: '00'.repeat(32), identity: async () => { throw Error('must not derive identity'); }});
     await assert.rejects(wrong.connect(), /pin mismatch/);
+    global.window = global;
+    global.location = {href: 'http://127.0.0.1/'};
+    const storage = () => { const values = new Map(); return {
+        getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key)
+    }; };
+    global.localStorage = storage(); global.sessionStorage = storage();
+    global.document = {getElementById: () => null};
+    global.DeviceRoot = {transportIdentity: async () => ({signing: nacl.sign.keyPair()})};
+    require(path.join(root, 'device_authority_v3.js'));
+    require(path.join(root, 'node_manager.js'));
+    const manager = global.NodeManager;
+    manager.updateState = () => {};
+    manager.scheduleReconnect = () => {};
+    manager.probeActivePublicDeviceRoutes = async () => [];
+    const endpoint = new global.NodeEndpoint(process.argv[2], 'Loopback test', {nodeId: process.argv[3]});
+    manager.connectEndpoint(endpoint);
+    const connection = manager.connections.get(endpoint.url);
+    await connection.ready;
+    assert.equal(connection.state, 'connected');
+    assert.equal((await manager.requestOn(connection, 'STATUS')).node_id, process.argv[3]);
+    connection.client.close();
+    assert.equal(connection.state, 'reconnecting');
+    assert.equal(connection.pendingRequests.size, 0);
     console.log('Real JS Device client / Python gateway interoperability passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

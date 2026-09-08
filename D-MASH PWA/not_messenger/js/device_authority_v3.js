@@ -47,11 +47,15 @@
             auth.signature = codec().b64(global.nacl.sign.detached(bytes(transcript), signing.secretKey));
             const request = { ...payload, authorization: auth };
             if (operation === 'REGISTER_ROUTE') {
-                request.pow = await this.work(kind === 'PUBLIC' ? 'ENTRY_GRANT' : 'PRIVATE_ROUTE', routeId);
                 if (kind === 'PUBLIC') request.entry_grant = entryGrant;
             }
             if (operation === 'START_PROBE') request.back_route_locator = routeId;
-            return this.client.request(operation, request, requestId);
+            try { return await this.client.request(operation, request, requestId); }
+            catch (error) {
+                if (operation !== 'REGISTER_ROUTE' || error.message !== 'INVALID_RESOURCE_POW') throw error;
+                request.pow = await this.work(kind === 'PUBLIC' ? 'ENTRY_GRANT' : 'PRIVATE_ROUTE', routeId);
+                return this.client.request(operation, request, requestId);
+            }
         }
         close() { this.dnss?.fill(0); this.dnss = null; this.binding = null; }
     }

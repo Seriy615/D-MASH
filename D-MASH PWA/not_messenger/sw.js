@@ -3,13 +3,15 @@
  * IndexedDB or localStorage, where user/device data lives.
  */
 
-const RELEASE_ID = 'm1.5-functional-repair-20260905.55';
+const RELEASE_ID = 'transport-v3-dev-20260908.1';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',
     './css/foundation.css', './css/app_shell.css', './css/runtime_fixes.css',
     './js/release.js', './js/locales/en.js', './js/locales/ru.js', './js/i18n.js',
     './js/app_shell.js', './js/ui_logic.js', './js/node_manager.js',
+    './js/secure_session.js', './js/device_client_v3.js', './js/device_authority_v3.js',
+    './js/device_envelope.js', './js/device_inbox.js',
     './js/core_engine.js', './js/storage.js', './js/device_root.js',
     './js/device_routes.js', './js/dmash_links.js', './js/quick_name_registry.js',
     './js/contact_payloads.js', './js/contact_transport.js', './js/pending_contact_requests.js',

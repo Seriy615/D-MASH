@@ -65,6 +65,18 @@ const { DeviceRoutes, RouteError } = require("../js/device_routes.js");
   const resolvedFirst = DeviceRoutes.resolve(first.routeId);
   assert.deepEqual([...resolvedFirst.allowedAccounts], ["alice", "bob"], "policy remains local and is canonicalized");
   assert.equal(resolvedFirst.type, "direct-message");
+  let borrowed;
+  await DeviceRoutes.withRouteKeys(first.routeId, async keys => {
+    borrowed = keys;
+    assert.equal(Buffer.from(keys.signing.publicKey).toString('base64url'), first.routeId);
+    assert.equal(Buffer.from(keys.box.publicKey).toString('base64url'), first.certificate.boxPublicKey);
+  });
+  assert.ok(borrowed.signing.secretKey.every(byte => byte === 0));
+  assert.ok(borrowed.box.secretKey.every(byte => byte === 0));
+  await assert.rejects(DeviceRoutes.withRouteKeys(first.routeId, async keys => {
+    borrowed = keys; throw Error('consumer failed');
+  }), /consumer failed/);
+  assert.ok(borrowed.signing.secretKey.every(byte => byte === 0), 'callback failure also wipes borrowed keys');
 
   const second = await DeviceRoutes.issue({ type: "relay", allowedAccounts: ["carol"], issuedAt: 101 });
   assert.equal(lifecycleEvents.at(-1).detail.event, "ROUTE_REISSUED", "subsequent issue emits the reissue lifecycle hook");

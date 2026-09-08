@@ -14,16 +14,21 @@ rechecks live route authority. All 134 Node tests, 11 Origin tests and
 28 PWA suites pass. Native Chrome localhost Inbox acceptance also passes;
 this is isolated module QA, not deployed PWA acceptance.
 
-PARTIAL: PWA still uses its old transport flow. Do not deploy this checkpoint:
-new runtime disables v2 resource operations, and peers require coordinated v3
+PARTIAL: NodeManager now connects using v3, binds DNSS, registers public routes
+with signed authority, wraps outgoing public contact requests in Device
+Envelope and drains the whole DNSS mailbox into encrypted local staging.
+Core delegates v3 polling to Device Inbox independently of locator handles.
+The real loopback JS/Python test now exercises NodeManager itself.
+Do not deploy this checkpoint: private route derivation and the Account
+receive/send adapters are still pending, and peers require coordinated v3
 upgrade. Legacy mailbox rows are preserved but not migrated. Device Envelope /
 Inbox still need main PWA integration. Hop labels, batching, password,
 S-TURN/calls/files and ratchet still need
 implementation/integration and acceptance. No push, deployment or production
 Chrome acceptance has occurred.
 
-Next: integrate the PWA v3 connection and authority flow, then encrypted Device
-Envelope and account-independent Inbox/dispatcher. Preserve old tests and data.
+Next: finish private-route capability derivation and Account Inbox handler;
+complete contact Accept/Account bootstrap. Preserve old tests and data.
 
 ## Historical handoff (retained verbatim below)
 

@@ -58,6 +58,13 @@ class MemoryStore {
     await inbox.registerRoute('restored-route', { scope: 'ACCOUNT', accountSlot: 'Account B' });
     assert.deepEqual(await inbox.drain('Account B'), ['PROCESSED']);
     assert.equal(accounts.length, 3);
+    const staged = Envelope.create('route-B', 'MSG', 'staged after Node drain');
+    await inbox.stageTransport('node-test', [{delivery_id: 'one', ciphertext: Envelope.seal(recipient.publicKey, staged)},
+        {delivery_id: 'bad', ciphertext: 'unopenable-box'}]);
+    const transportResults = await inbox.drainTransport(value => inbox.receive(value, recipient.secretKey));
+    assert.deepEqual(transportResults, ['PROCESSED', 'DEVICE_STORED']);
+    assert.equal(accounts.length, 4);
+    assert.deepEqual(await inbox.drainTransport(value => inbox.receive(value, recipient.secretKey)), ['DEVICE_STORED'], 'only the unopenable raw box remains for retry');
     assert.equal(await inbox.canPull(), true);
     root = null;
     await assert.rejects(inbox.drain('Account B'), /Device locked/);

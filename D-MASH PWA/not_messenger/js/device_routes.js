@@ -197,6 +197,27 @@
                 issuedAt
             });
         },
+        async withRouteKeys(routeId, callback) {
+            this._requirePrimitives();
+            const index = this._loadIndex();
+            const route = [index.current, index.previous].find(item => item?.certificate?.routeId === routeId);
+            if (!route) throw new RouteError('NOT_FOUND', 'Device Route is unavailable.');
+            const encoded = await global.DeviceRoot.deviceMaterial(route.materialName, () => { throw new RouteError('MATERIAL_MISSING', 'Route material is unavailable.'); });
+            let material;
+            try { material = JSON.parse(new TextDecoder().decode(encoded)); }
+            finally { encoded.fill(0); }
+            const signingSecret = unb64url(material.signingSecretKey), boxSecret = unb64url(material.boxSecretKey);
+            let signing, box;
+            try {
+                signing = global.nacl.sign.keyPair.fromSecretKey(signingSecret);
+                box = global.nacl.box.keyPair.fromSecretKey(boxSecret);
+                if (b64url(signing.publicKey) !== routeId || b64url(box.publicKey) !== route.certificate.boxPublicKey) throw new RouteError('MATERIAL_CORRUPT', 'Route keys do not match certificate.');
+                return await callback({signing, box});
+            } finally {
+                signingSecret.fill(0); boxSecret.fill(0);
+                signing?.secretKey.fill(0); box?.secretKey.fill(0);
+            }
+        },
         // Create a Node-bound authorization using the Route private signing key.
         // No Node private key participates in this operation.
         async issueEntryGrant(routeId, entryNodeId, {
