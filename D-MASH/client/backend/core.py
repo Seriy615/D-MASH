@@ -39,6 +39,8 @@ if __package__:  # Package imports must share modules with legacy absolute impor
     from .fallback_runtime import initialize_fallback_store
     from . import client_gateway
     from .registration_registry import RegistrationRegistry
+    from .device_registration import DeviceRegistration
+    from .dnss_mailbox import DnssMailbox
 else:  # Runtime scripts import backend modules as top-level modules.
     from database import DatabaseManager
     from network import P2PNode
@@ -50,6 +52,8 @@ else:  # Runtime scripts import backend modules as top-level modules.
     from fallback_runtime import initialize_fallback_store
     import client_gateway
     from registration_registry import RegistrationRegistry
+    from device_registration import DeviceRegistration
+    from dnss_mailbox import DnssMailbox
 
 # --- D-MASH CONFIGURATION ---
 TACT_INTERVAL = 1.5
@@ -78,6 +82,8 @@ class AppState:
     process_pool: Optional[Executor] = None
     capabilities: Optional[NodeCapabilities] = None
     fallback_store: Optional[FallbackStore] = None
+    device_registration = None
+    dnss_mailbox = None
 
 state = AppState()
 
@@ -175,6 +181,8 @@ async def lifespan(app: FastAPI):
             state.system_db.set_notification_trigger(NotificationTrigger(origin_client.send))
 
         await state.system_db.connect()
+        if state.capabilities.can_route:
+            await state.system_db.reset_transport_runtime()
         await initialize_fallback_store(state.system_db.conn, state)
         await state.system_db.rehydrate_notifications()
 
@@ -184,6 +192,11 @@ async def lifespan(app: FastAPI):
             can_route=state.capabilities.can_route,
             can_accept_devices=state.capabilities.can_accept_devices,
         )
+        if state.capabilities.can_accept_devices:
+            state.device_registration = DeviceRegistration(state.node_crypto.node_id, state.node_crypto.secret_salt)
+            state.dnss_mailbox = DnssMailbox(os.getenv("DMASH_MAILBOX_PATH", "mailbox_v3.db"))
+            await state.dnss_mailbox.connect()
+            state.node.transport.v3_mailbox = state.dnss_mailbox
 
         # 4. Запускаем Tact Engine
         state.tact = TactEngine(state.system_db, state.node, TACT_INTERVAL, PACKET_SIZE)
@@ -210,6 +223,10 @@ async def lifespan(app: FastAPI):
         if state.system_db: await state.system_db.close()
     finally:
         client_gateway.registration_registry_factory = None
+        state.device_registration = None
+        if state.dnss_mailbox:
+            await state.dnss_mailbox.close()
+            state.dnss_mailbox = None
 
 app = FastAPI(lifespan=lifespan)
 

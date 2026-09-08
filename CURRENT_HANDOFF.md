@@ -1,3 +1,25 @@
+# Active transport-v3 work — 2026-09-08
+
+Checkout: `/Users/afsvu/Documents/Codex/D-MASH/D-MASH`; branch `transport-v3`.
+Started from clean `main` at `703a5df`. See `TRANSPORT_V3.md` for current
+executable inventory, wire details, migration boundaries and test evidence.
+
+IMPLEMENTED: shared Python/JS secure sessions; mutual Node peering and
+directional DNSS work; v3 backend DNSS/resource authority and leased durable
+mailbox drain. All 132 Node tests, 11 Origin tests and 25 PWA suites pass.
+
+PARTIAL: PWA still uses its old transport flow. Do not deploy this checkpoint:
+new runtime disables v2 resource operations, and peers require coordinated v3
+upgrade. Legacy mailbox rows are preserved but not migrated. Device Envelope /
+Inbox, hop labels, batching, password, S-TURN/calls/files and ratchet still need
+implementation/integration and acceptance. No push, deployment or Chrome
+acceptance has occurred.
+
+Next: integrate the PWA v3 connection and authority flow, then encrypted Device
+Envelope and account-independent Inbox/dispatcher. Preserve old tests and data.
+
+## Historical handoff (retained verbatim below)
+
 # D-MASH — Current Engineering Handoff
 
 **Updated:** 2026-09-04 UTC  

@@ -188,3 +188,56 @@ The obsolete fixed v44 badge expectation follows the actual release identifier.
 
 Full verification at this checkpoint: Node 113/113; Origin 11/11; PWA 25/25
 suites. No deployment or Chrome acceptance has been performed.
+
+## C/D: backend DNSS authority and mailbox integration
+
+IMPLEMENTED in the v3 backend: runtime Device registrations bind DNSS to the
+handshake-authenticated Device key. Reconnect with that key preserves DNSS;
+restart discards registrations and requires new work. The durable mailbox
+alias uses a distinct HMAC domain and includes the authenticated Device key,
+so a different key claiming the same raw DNSS after restart cannot retrieve
+old mail. No raw DNSS or AccountID is persisted. Runtime registry/route indexes
+use a fresh random key, separate from the durable mailbox alias key.
+
+REGISTER_ROUTE/START_PROBE/UNREGISTER_ROUTE require a Route authority signature
+binding NodeID, DNSS, session transcript, operation, unique request id, kind,
+route id, generation and expiry. Public routes additionally require the
+Route-signed EntryGrant with matching Node/generation/expiry. Private locators
+commit to a direction-specific root-derived Ed25519 verifying capability;
+the Node receives no pairing root and requires no Public EntryGrant. Private
+activation uses the distinct PRIVATE_ROUTE work context. Production work
+thresholds remain unchanged. Both registrations and replay caches are bounded.
+
+When the v3 runtime is active, historical v2 resource operations are disabled
+at the capability boundary; its PING/STATUS remain for upgrade detection.
+New route operations cannot bypass the authority gate through the old endpoint.
+This is a protocol cutover and requires the matching PWA migration before
+production deployment; the current PWA is not yet migrated.
+
+IMPLEMENTED: destination route bindings direct opaque v1 ciphertext into
+`mailbox_v3.db` under blind DNSS. Multiple routes converge on one queue.
+REGISTER/UNREGISTER route state never deletes that DNSS mailbox. PULL accepts
+no queue selector and returns one MAILBOX_DRAIN_RESULT with all current entries,
+then deletes exactly its lease after awaited successful send. Failure or
+cancellation releases the lease without deletion. Crash leases expire in 30s;
+send timeout is 10s. New arrivals during send remain for the next PULL.
+Node acceptance reports NODE_ACCEPTED, not Account DELIVERED.
+
+Limits: 128 entries and 512 KiB of base64 ciphertext per DNSS, 64 KiB per
+ciphertext, 64 MiB global ciphertext quota, within the 1 MiB logical record
+limit. SQLite uses WAL/FULL and mode 0600. Routing tables/local bindings/seen
+state are reset on production Node startup; mailbox and peer directory remain.
+
+PARTIAL: legacy locator mailbox rows are retained unchanged, not automatically
+converted to DeviceCiphertext. Migration/recovery of those rows must be handled
+before promotion. Device packet-id dedupe, Inbox, PWA authority generation,
+password gating and notification wake integration remain for later milestones.
+Existing node routing metadata still uses its historical encryption helpers;
+full runtime-only route storage-key migration belongs to milestone F.
+
+Validation: all 132 Node tests, 11 Origin tests and 25 PWA suites pass. New
+coverage includes wrong owner, wrong session/DNSS/operation, replay, missing
+work, wrong/expired grant, public/private authority, restart/reconnect, mailbox
+quota/id conflict, cancellation/failure/crash, concurrent drain and arrivals,
+and a real database/gateway-operation/transport flow with two routes into one
+DNSS and one all-entry response. Browser acceptance remains unperformed.

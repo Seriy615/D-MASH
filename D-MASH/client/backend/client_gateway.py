@@ -70,6 +70,10 @@ def _routing_registration_operations(state, operations):
     partially initialized state, or a node that only advertises PING/STATUS,
     must not expose route-registration operations.
     """
+    # A runtime with the v3 authority service must not expose the historical
+    # bypass through an older endpoint. PING/STATUS remain for upgrade detection.
+    if getattr(state, "device_registration", None) is not None:
+        return frozenset({"PING", "STATUS"})
     if ("START_PROBE" in operations and "ROUTE_STATUS" in operations and
             getattr(state, "node", None) and
             getattr(state.node, "transport", None) and

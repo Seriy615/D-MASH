@@ -1,3 +1,14 @@
+# Transport v3 update — 2026-09-08
+
+Current implementation status is in `TRANSPORT_V3.md` and `CURRENT_HANDOFF.md`.
+The requirements below are historical context. Runtime v3 now authenticates
+Node roles mutually, uses directional Node DNSS/work, and has a Device DNSS
+registry with session-bound resource authority and durable all-entry mailbox
+drain. Client migration, hop-label routing and remaining milestones are not
+complete. No production or browser acceptance claim is made.
+
+## Historical routing requirements
+
 ТЫ — ГЛАВНЫЙ ОРКЕСТРАТОР РАЗРАБОТКИ D-MASH MESSENGER.
 
 Твоя задача — самостоятельно довести следующий большой архитектурный этап

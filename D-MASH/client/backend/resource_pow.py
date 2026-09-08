@@ -100,7 +100,7 @@ def activation_pow_digest(node_id: BytesLike, activation_type: str,
     cannot be moved between devices, activation kinds, resources, or windows.
     The bytes are mirrored in not_messenger/js/resource_pow.js.
     """
-    if not isinstance(activation_type, str) or activation_type not in {"DNSS", "ENTRY_GRANT"}:
+    if not isinstance(activation_type, str) or activation_type not in {"DNSS", "ENTRY_GRANT", "PRIVATE_ROUTE"}:
         raise ValueError("invalid activation type")
     if (not isinstance(expires_at, int) or isinstance(expires_at, bool) or
             not 0 <= expires_at < 2**64):

@@ -174,6 +174,13 @@ class DatabaseManager:
         if self.conn:
             await self.conn.close()
 
+    async def reset_transport_runtime(self):
+        """Discard rebuildable routes on Node startup; never delete mailbox."""
+        await self.conn.execute("DELETE FROM blind_routes")
+        await self.conn.execute("DELETE FROM local_bindings")
+        await self.conn.execute("DELETE FROM seen_packets")
+        await self.conn.commit()
+
     # --- МЕТОДЫ СИСТЕМЫ (BLIND LOGIC) ---
 
     async def mark_packet_seen(self, packet_id: str) -> bool:

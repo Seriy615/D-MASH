@@ -29,6 +29,8 @@ class NodeTransportService:
         self.can_route = can_route
         self.can_accept_devices = can_accept_devices
         self._inbound_locators: Dict[str, str] = {}
+        self.v3_mailbox = None
+        self._v3_bindings: Dict[str, str] = {}
         # Runtime-only registry.  It contains blind locator handles and live
         # DMP-C sessions, never user IDs or raw locators.
         self._local_delivery_sessions: Dict[str, Set[Any]] = {}
@@ -78,13 +80,17 @@ class NodeTransportService:
             raise ValueError("invalid route locator")
         return self.system_db.node_crypto.get_blind_hash(locator)
 
-    async def register_inbound_locator(self, locator: str) -> str:
+    async def register_inbound_locator(self, locator: str, *, blind_dnss: str | None = None) -> str:
         if not self.can_accept_devices:
             raise PermissionError("device acceptance is disabled by local Node policy")
         if not locator:
             raise ValueError("invalid inbound locator")
+        if blind_dnss is not None and self.v3_mailbox is None:
+            raise RuntimeError("v3 mailbox unavailable")
         locator_handle = await self.system_db.arm_inbound_locator(locator)
         self._inbound_locators[locator_handle] = locator_handle
+        if blind_dnss is not None:
+            self._v3_bindings[locator_handle] = blind_dnss
         return locator_handle
 
     async def register_notification_beacon(self, beacon_handle: str) -> str:
@@ -122,6 +128,7 @@ class NodeTransportService:
         removed = await self.system_db.disarm_inbound_locator(locator)
         locator_handle = self._blind(locator)
         self._inbound_locators.pop(locator_handle, None)
+        self._v3_bindings.pop(locator_handle, None)
         self._local_delivery_sessions.pop(locator_handle, None)
         return removed
 
@@ -190,6 +197,7 @@ class NodeTransportService:
         if route and route.get("is_local"):
             delivered_to_session = await self._store_mailbox(self._blind(route_alias), packet)
             state = "DELIVERED_TO_DESTINATION_PWA_SESSION" if delivered_to_session else "DELIVERED_TO_DESTINATION_NODE"
+            if self._blind(route_alias) in self._v3_bindings: state = "NODE_ACCEPTED"
             return TransportSubmission(delivery_id=delivery_id, state=state, packet=packet)
         # DATA must never create an implicit flood.  Route discovery is an
         # explicit Probe operation; callers are required to check
@@ -317,11 +325,22 @@ class NodeTransportService:
         if route.get("is_local"):
             delivered_to_session = await self._store_mailbox(self._blind(route_alias), packet)
             state = "DELIVERED_TO_DESTINATION_PWA_SESSION" if delivered_to_session else "DELIVERED_TO_DESTINATION_NODE"
+            if self._blind(route_alias) in self._v3_bindings: state = "NODE_ACCEPTED"
             return TransportSubmission(delivery_id=packet.get("id", ""), state=state, packet=packet)
         await self._dispatch_mesh_packet(packet, next_hop_id=route["next_hop_id"], origin_peer_id=from_peer)
         return TransportSubmission(delivery_id=packet.get("id", ""), state="ROUTED_IN_D_MASH", packet=packet)
 
     async def _store_mailbox(self, locator_handle: str, packet: Dict[str, Any]) -> bool:
+        if locator_handle in self._v3_bindings:
+            envelope = packet.get("envelope")
+            if (not isinstance(envelope, dict) or set(envelope) != {"version", "ciphertext"}
+                    or envelope["version"] != 1):
+                raise ValueError("Device ciphertext envelope required")
+            await self.v3_mailbox.put(self._v3_bindings[locator_handle], packet.get("id"), envelope["ciphertext"])
+            for session in list(self._local_delivery_sessions.get(locator_handle, set())):
+                try: await session.send_json({"type": "DELIVERY_AVAILABLE"})
+                except Exception: self.detach_local_delivery_session(session)
+            return False  # Node acceptance is distinct from Account delivery.
         envelope = packet.get("envelope") or {}
         # A call has many encrypted signaling packets (offer/ICE/hangup), but
         # they deliberately share one opaque transport nonce.  Use it as the
