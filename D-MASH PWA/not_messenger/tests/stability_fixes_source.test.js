@@ -10,6 +10,7 @@ const v50 = fs.readFileSync(path.join(root, "js", "acceptance_v50.js"), "utf8");
 const v51 = fs.readFileSync(path.join(root, "js", "acceptance_v51.js"), "utf8");
 const v52 = fs.readFileSync(path.join(root, "js", "acceptance_v52.js"), "utf8");
 const v54 = fs.readFileSync(path.join(root, "js", "acceptance_v54.js"), "utf8");
+const v55 = fs.readFileSync(path.join(root, "js", "acceptance_v55.js"), "utf8");
 const release = fs.readFileSync(path.join(root, "js", "release.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "css", "runtime_fixes.css"), "utf8");
 
@@ -17,13 +18,15 @@ new vm.Script(v50, { filename: "acceptance_v50.js" });
 new vm.Script(v51, { filename: "acceptance_v51.js" });
 new vm.Script(v52, { filename: "acceptance_v52.js" });
 new vm.Script(v54, { filename: "acceptance_v54.js" });
+new vm.Script(v55, { filename: "acceptance_v55.js" });
 
-assert.match(release, /20260905\.54/, "release 54 is visible");
+assert.match(release, /20260905\.55/, "release 55 is visible");
 assert.match(release, /acceptance_v50\.js/, "v50 compatibility runtime is loaded");
 assert.match(release, /acceptance_v51\.js/, "v51 compatibility runtime is loaded");
 assert.match(release, /acceptance_v52\.js/, "v52 secure-registry runtime is loaded");
-assert.match(release, /acceptance_v54\.js/, "v54 emergency-wipe runtime is loaded");
-assert.doesNotMatch(release, /acceptance_v53\.js/, "wrong 0010 emergency prefix runtime is not loaded");
+assert.match(release, /acceptance_v54\.js/, "v54 authenticated emergency-wipe implementation is loaded");
+assert.match(release, /acceptance_v55\.js/, "v55 canonical 0010 recovery-prefix override is loaded");
+assert.doesNotMatch(release, /acceptance_v53\.js/, "obsolete intermediate emergency runtime is not loaded");
 assert.doesNotMatch(release, /stability_fixes\.js/, "obsolete short-tap biometric patch is not loaded");
 assert.match(css, /#settings-layer[\s\S]*overflow-y:\s*auto/, "global settings own a vertical scroll surface");
 
@@ -48,7 +51,7 @@ assert.match(v52, /Only now is the old plaintext registry eligible for deletion/
 assert.match(v52, /const alias = await aliasFor\(record\.id\);?[\s\S]*const tx = db\.transaction/, "crypto finishes before registry write transactions");
 assert.match(v52, /loginWithGlobalSettingsV52/, "Global Settings remains reachable when the registry is empty");
 
-assert.match(v54, /const PREFIX = "1020"/, "1020 is reserved as the recovery wipe prefix");
+assert.match(v54, /const PREFIX = "1020"/, "v54 retains the internal authenticated wipe prefix implementation");
 assert.match(v54, /const BIOMETRIC_HOLD_MS = 1000/, "device biometric hold is one second");
 assert.match(v54, /_emergencyWipeSequence/, "emergency sequence is captured independently of the calculator display");
 assert.match(v54, /masterMatches/, "emergency wipe requires the configured Master key");
@@ -58,5 +61,7 @@ assert.match(v54, /getRegistrations/, "emergency wipe unregisters service worker
 assert.match(v54, /localStorage\.clear/, "emergency wipe clears localStorage");
 assert.match(v54, /sessionStorage\.clear/, "emergency wipe clears sessionStorage");
 assert.match(v54, /location\.replace\("about:blank"\)/, "emergency wipe leaves the app without adding a history entry");
+assert.match(v55, /startsWith\("0010"\)/, "public recovery sequence starts with 0010");
+assert.match(v55, /"1020" \+ sequence\.slice\(4\)/, "v55 delegates 0010 to the authenticated v54 wipe implementation");
 
-console.log("v54 browser acceptance source regression: all assertions passed");
+console.log("v55 browser acceptance source regression: all assertions passed");
