@@ -129,7 +129,13 @@
             if (typeof routeId !== 'string' || !routeId || routeId.length > 256 ||
                 !['DEVICE', 'ACCOUNT'].includes(scope) ||
                 (scope === 'ACCOUNT' && (typeof accountSlot !== 'string' || !accountSlot || accountSlot.length > 512))) throw new Error('Invalid Device route policy');
-            await this._write('route:' + routeId, { record: 'route', routeId, scope, accountSlot });
+            await this._write('route:' + routeId, { record: 'route', scope, accountSlot,
+                ...(scope === 'DEVICE' ? {routeId} : {}) });
+        }
+        routeAlias(routeId) { return this._alias(this._root(), 'route:' + routeId); }
+        async policyByAlias(alias) {
+            const record = await this.store.get(alias);
+            return record ? this._open(record) : null;
         }
         async _dispatch(envelope, policy) {
             if (policy.scope === 'DEVICE') return await this.onDevice(envelope) === true;
@@ -138,6 +144,7 @@
         }
         async _process(envelope, policy) {
             if (!policy) return 'DEVICE_STORED';
+            if (policy.scope === 'DEVICE' && !envelope.route_id) envelope = {...envelope, route_id: policy.routeId};
             if (await this._dispatch(envelope, policy)) {
                 await this._write('packet:' + envelope.packet_id, { record: 'seen', packetId: envelope.packet_id }, false, Date.now() + 30 * 86400000);
                 return 'PROCESSED';
@@ -151,11 +158,19 @@
             this.serial = result.catch(() => {});
             return result;
         }
-        receive(ciphertext, recipientSecretKey) {
+        receive(ciphertext, recipientSecretKey, expectedRoute = null) {
             return this._exclusive(async () => {
                 this._root();
-                const envelope = global.DeviceEnvelope.open(recipientSecretKey, ciphertext);
+                const wireEnvelope = global.DeviceEnvelope.open(recipientSecretKey, ciphertext);
+                let envelope = wireEnvelope;
+                if (expectedRoute !== null && envelope.route_id !== expectedRoute) throw new Error('Device key / Route mismatch');
                 const policy = await this._get('route:' + envelope.route_id);
+                if (policy?.scope !== 'DEVICE') {
+                    // Account RouteID is only a transient demultiplexing input.
+                    // Persist its blind Device alias, including in pending mail.
+                    envelope = {...wireEnvelope, route_alias: await this.routeAlias(wireEnvelope.route_id)};
+                    delete envelope.route_id;
+                }
                 const inserted = await this._write('packet:' + envelope.packet_id,
                     { record: 'pending', envelope, policy }, true);
                 if (!inserted) return 'DUPLICATE';
@@ -174,7 +189,9 @@
                     // A route may be restored after the Node already drained
                     // its mailbox. Keep unknown-route payloads encrypted until
                     // local authority is available; never infer an Account.
-                    const policy = record.policy || await this._get('route:' + record.envelope.route_id);
+                    const policy = record.policy || (record.envelope.route_alias
+                        ? await this.policyByAlias(record.envelope.route_alias)
+                        : await this._get('route:' + record.envelope.route_id));
                     if (!policy) continue;
                     if (accountSlot !== null && (policy.scope !== 'ACCOUNT' || policy.accountSlot !== accountSlot)) continue;
                     results.push(await this._process(record.envelope, policy));

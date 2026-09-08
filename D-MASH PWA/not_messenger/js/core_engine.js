@@ -209,6 +209,11 @@ const Core = {
         return window.DeviceRoot.migrateLegacyAccountPassphrase(accountPassphrase, calculatorMasterPin);
     },
     async boot(identity, passphrase, options = {}) {
+        this._accountTransitioning = true;
+        // Account keys are shared by the historical crypto implementation.
+        // Finish an in-flight Inbox transaction before replacing those keys.
+        if (this._inboxAccountTask) await this._inboxAccountTask.catch(() => {});
+        if (this._accountRouteTask) await this._accountRouteTask.catch(() => {});
         const statusEl = document.getElementById('gate-status-text');
         try {
             if (statusEl) statusEl.innerText = "КУЗНИЦА КЛЮЧЕЙ (1024 bit)...";
@@ -303,12 +308,13 @@ const Core = {
             await Storage.initGamma(this.gammaKeys.master);
             if (options.register === true) await Storage.registerAccount(identity, this.keys.pub_hex);
 
+            this._accountTransitioning = false;
             this.launchWorkspace();
 
         } catch (e) {
             console.error(e);
             if (statusEl) statusEl.innerText = "ОШИБКА ЯДРА: " + e.message;
-        }
+        } finally { this._accountTransitioning = false; }
     },
     async activeAccountPrivateRoutes(identity = this.activeIdentity) {
         if (!identity || !window.Storage?.getRegistryAccount) return [];
@@ -396,7 +402,29 @@ const Core = {
         };
     },
     async ensureAutomaticMeshRoute(peerId, peerContribution) {
+        if (this._accountTransitioning) return null;
+        if (this._accountRouteTask) await this._accountRouteTask.catch(() => {});
+        if (this._accountTransitioning) return null;
+        const task = this._ensureAutomaticMeshRoute(peerId, peerContribution);
+        this._accountRouteTask = task;
+        try { return await task; }
+        finally { if (this._accountRouteTask === task) this._accountRouteTask = null; }
+    },
+    async _ensureAutomaticMeshRoute(peerId, peerContribution) {
         if (!peerContribution || !window.NodeManager) return null;
+        if (window.PrivateRoutesV3) {
+            const owner = this.activeIdentity;
+            const pair = await window.PrivateRoutesV3.pair(await this.ensurePairingContribution(), peerContribution);
+            try {
+                if (!owner || this.activeIdentity !== owner) throw new Error('Account changed during route derivation');
+                const routeAlias = await window.NodeManager.deviceInboxV3().routeAlias(pair.backRouteLocator);
+                const accountAlias = await Storage.getAlias('device-route:' + routeAlias, 'L2');
+                if (this.activeIdentity !== owner) throw new Error('Account changed during route binding');
+                await Storage.putBox('pairing_material', {alias: accountAlias, data: {peerId}});
+                await window.NodeManager.installPrivateRouteV3(peerId, pair);
+                return {...window.NodeManager.getMeshRoute(peerId), version: 3};
+            } finally { pair.close(); }
+        }
         const locators = await this.derivePairingLocators(peerId, peerContribution);
         // armMeshRoute registers the local inbound locator and, when connected,
         // starts discovery without submitting a message envelope.
@@ -1149,6 +1177,53 @@ const Core = {
                 if (inp && !c) { inp.value = ""; inp.style.height = '45px'; }
             }
         } catch (e) { this.shmon("ERR", "Send fail", e); }
+    },
+    receiveAccountDeviceEnvelopeV3(envelope, accountSlot) {
+        if (this._accountTransitioning) return Promise.resolve(false);
+        if (this._inboxAccountTask) return this._inboxAccountTask.catch(() => {}).then(() => this.receiveAccountDeviceEnvelopeV3(envelope, accountSlot));
+        const task = this._receiveAccountDeviceEnvelopeV3(envelope, accountSlot);
+        this._inboxAccountTask = task;
+        return task.finally(() => { if (this._inboxAccountTask === task) this._inboxAccountTask = null; });
+    },
+    async _receiveAccountDeviceEnvelopeV3(deviceEnvelope, accountSlot) {
+        if (this._accountTransitioning) return false;
+        const current = () => this.activeIdentity === accountSlot && !!this.keys?.sign && !!this.blindSalt;
+        if (!current()) return false;
+        if (typeof deviceEnvelope.route_alias !== 'string') throw new Error('Blind Device route alias required');
+        const accountAlias = await Storage.getAlias('device-route:' + deviceEnvelope.route_alias, 'L2');
+        const route = await Storage.getBox('pairing_material', accountAlias);
+        if (!current() || !/^[0-9a-f]{64}$/i.test(route?.peerId || '')) return false;
+        const peerId = route.peerId, envelope = JSON.parse(deviceEnvelope.account_payload);
+        if (!envelope.sender_proof || !window.nacl.sign.detached.verify(this.hexToBytes(envelope.ciphertext),
+            this.hexToBytes(envelope.sender_proof), this.hexToBytes(peerId))) throw new Error('Account sender proof rejected');
+        const plaintext = await this.decrypt(envelope.ciphertext, peerId);
+        if (!current()) return false;
+        // Historical decrypt returns null for both control success and error.
+        // Retain these until the explicit epoch-ratchet outcome replaces it.
+        if (plaintext === null) return false;
+        let message = plaintext;
+        try { message = JSON.parse(plaintext); } catch (_) { /* Historical text payload. */ }
+        if (message && typeof message === 'object' && message.type === 'dmash_receipt') {
+            await Storage.updateMessageTransportState(peerId, message.id, message.state);
+            return current();
+        }
+        if (message && typeof message === 'object' && message.type?.startsWith('voip_')) {
+            await this.handleVoipSignal(message, peerId);
+            return current();
+        }
+        const wrapped = message && typeof message === 'object' && message.type === 'dmash_message' && typeof message.id === 'string';
+        if (wrapped && await Storage.hasMessageWireId(peerId, message.id)) return current();
+        if (!current()) return false;
+        const content = wrapped ? message.body : message, isCurrent = this.activePeerId === peerId;
+        const seq = await Storage.saveMessageGamma(peerId, content, true, isCurrent, null, wrapped ? message.id : null);
+        if (!current()) return false;
+        if (wrapped) await this.sendMessage({type: 'dmash_receipt', id: message.id, state: 'DELIVERED'}, false, peerId);
+        if (!current()) return false;
+        if (isCurrent) {
+            if (this.openingPeerId === peerId) this.queueInboundMessage(peerId, content, seq);
+            else this.appendInboundMessage(content, seq);
+        } else await this.renderPeers();
+        return true;
     },
     // Core.syncNetwork        - Опрос сервера (PULL), получение и сортировка новых маляв
     async syncNetwork() {

@@ -12,6 +12,7 @@ const CORE_ASSETS = [
     './js/app_shell.js', './js/ui_logic.js', './js/node_manager.js',
     './js/secure_session.js', './js/device_client_v3.js', './js/device_authority_v3.js',
     './js/device_envelope.js', './js/device_inbox.js',
+    './js/private_routes_v3.js',
     './js/core_engine.js', './js/storage.js', './js/device_root.js',
     './js/device_routes.js', './js/dmash_links.js', './js/quick_name_registry.js',
     './js/contact_payloads.js', './js/contact_transport.js', './js/pending_contact_requests.js',

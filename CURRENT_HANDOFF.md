@@ -1,5 +1,7 @@
 # Active transport-v3 work — 2026-09-08
 
+Общий checkpoint HANDOFF по запросу пользователя: [HANDOFF_TRANSPORT_V3.md](HANDOFF_TRANSPORT_V3.md).
+
 Checkout: `/Users/afsvu/Documents/Codex/D-MASH/D-MASH`; branch `transport-v3`.
 Started from clean `main` at `703a5df`. See `TRANSPORT_V3.md` for current
 executable inventory, wire details, migration boundaries and test evidence.
@@ -11,7 +13,7 @@ multi-account tests. JavaScript DeviceClientV3 interoperates with the Python
 gateway over a real loopback WebSocket. DeviceAuthorityV3 implements stable
 DNSS rebind/re-registration and session-bound route signing. Mailbox insertion
 rechecks live route authority. All 134 Node tests, 11 Origin tests and
-28 PWA suites pass. Native Chrome localhost Inbox acceptance also passes;
+31 PWA suites pass. Native Chrome localhost Inbox acceptance also passes;
 this is isolated module QA, not deployed PWA acceptance.
 
 PARTIAL: NodeManager now connects using v3, binds DNSS, registers public routes
@@ -19,16 +21,22 @@ with signed authority, wraps outgoing public contact requests in Device
 Envelope and drains the whole DNSS mailbox into encrypted local staging.
 Core delegates v3 polling to Device Inbox independently of locator handles.
 The real loopback JS/Python test now exercises NodeManager itself.
-Do not deploy this checkpoint: private route derivation and the Account
-receive/send adapters are still pending, and peers require coordinated v3
-upgrade. Legacy mailbox rows are preserved but not migrated. Device Envelope /
-Inbox still need main PWA integration. Hop labels, batching, password,
+Private route directional capabilities/box keys and normal Account message
+dispatch are now wired. Device Account-route records and pending envelopes
+retain only blind RouteID aliases. Account peer association stays in the
+Account Vault; Device forwards opaque Account ciphertext. Account transitions
+wait for current Inbox processing before replacing shared crypto keys.
+Do not deploy this checkpoint: contact Accept/bootstrap and explicit control
+decryption outcomes are incomplete, and peers require coordinated v3 upgrade.
+Legacy mailbox rows are preserved but not migrated. Hop labels, batching, password,
 S-TURN/calls/files and ratchet still need
 implementation/integration and acceptance. No push, deployment or production
 Chrome acceptance has occurred.
 
-Next: finish private-route capability derivation and Account Inbox handler;
-complete contact Accept/Account bootstrap. Preserve old tests and data.
+Next: finish contact Accept/Account bootstrap, then hop-local routing and
+batching. Preserve old tests and data. Historical decrypt returns null on both
+successful control packets and failures; these stay pending until the new
+ratchet supplies explicit outcomes. No control success is inferred from null.
 
 ## Historical handoff (retained verbatim below)
 

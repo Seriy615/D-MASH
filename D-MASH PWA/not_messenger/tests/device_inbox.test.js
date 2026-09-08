@@ -29,11 +29,16 @@ class MemoryStore {
     await inbox.registerRoute('public-device-route', { scope: 'DEVICE' });
     const packet = Envelope.create('route-B', 'MSG', 'opaque Account B ciphertext');
     const ciphertext = Envelope.seal(recipient.publicKey, packet);
+    await assert.rejects(inbox.receive(ciphertext, recipient.secretKey, 'another-route'), /Route mismatch/);
     assert.equal(await inbox.receive(ciphertext, recipient.secretKey), 'DEVICE_STORED');
     assert.equal(active, 'Account A', 'arrival must never switch the active Account');
     assert.deepEqual(accounts, [], 'locked Account payload must not enter the active Account');
     const persisted = JSON.stringify(await store.all());
     for (const secret of ['route-B', 'Account B', packet.account_payload, packet.packet_id]) assert.equal(persisted.includes(secret), false);
+    for (const row of await store.all()) {
+        const local = await inbox._open(row);
+        assert.equal(JSON.stringify(local).includes('route-B'), false, 'even decrypted Account route records retain only blind aliases');
+    }
     assert.equal(await inbox.receive(ciphertext, recipient.secretKey), 'DUPLICATE');
     active = 'Account B';
     assert.deepEqual(await inbox.drain('Account B'), ['PROCESSED']);

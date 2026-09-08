@@ -86,6 +86,17 @@ const NodeManager = {
     getMeshRoute(peerId) {
         return this.getRouteConfig()[peerId] || null;
     },
+    async blindLegacyRouteConfigV3() {
+        const routes = this.getRouteConfig();
+        let changed = false;
+        for (const route of Object.values(routes)) {
+            for (const field of ['routeLocator', 'backRouteLocator']) {
+                if (typeof route?.[field] !== 'string' || /^[A-Za-z0-9+/]{43}=$/.test(route[field])) continue;
+                route[field] = await this.deviceInboxV3().routeAlias(route[field]); changed = true;
+            }
+        }
+        if (changed) sessionStorage.setItem(this.routeConfigKey, JSON.stringify(routes));
+    },
     setMeshRoute(peerId, routeLocator, backRouteLocator) {
         const routes = this.getRouteConfig();
         routes[peerId] = { ...routes[peerId], routeLocator, backRouteLocator };
@@ -182,6 +193,7 @@ const NodeManager = {
     // the account vault and supplies only the currently logged-in account's
     // public route descriptors; NodeManager never enumerates account storage.
     async probeActiveAccountPrivateRoutes(routes = null, connection = null) {
+        if ((connection ? [connection] : this.connectedConnections()).some(node => node.client)) return this.probePrivateRoutesV3(connection);
         // AUTH_OK may arrive while an account transition is in progress.  Do
         // not let a deferred vault read from the old account advertise its
         // locators after logout or an account switch.  Capture both values
@@ -397,6 +409,7 @@ const NodeManager = {
             connection.socket = connection.client.socket;
             connection.ready = ready.then(async () => {
                 connection.nodeId = connection.client.nodeId;
+                await this.blindLegacyRouteConfigV3();
                 connection.capabilities = connection.client.capabilities;
                 connection.authority = new window.DeviceAuthorityV3(connection.client);
                 if (connection.capabilities.has('REGISTER_DNSS')) await connection.authority.bind();
@@ -404,6 +417,7 @@ const NodeManager = {
                 connection.state = 'connected'; connection.error = null; connection.reconnectAttempt = 0;
                 connection.lastConnectedAt = Date.now(); this.updateState(); this.startPings(connection);
                 await this.probeActivePublicDeviceRoutes(connection);
+                if (connection.capabilities.has('REGISTER_ROUTE')) await this.probePrivateRoutesV3(connection);
                 if (connection.capabilities.has('PULL')) await this.pullDeviceMailboxV3();
             }).catch(error => connection.client.fail(error));
         } catch (error) { disconnected(error); }
@@ -625,6 +639,11 @@ const NodeManager = {
         }).then(results => results[0]);
     },
     async routeStatus(routeLocator) {
+        if (this.connectedConnections().some(node => node.client)) {
+            const outbound = await this.deviceInboxV3()._get('private-outbound:' + routeLocator);
+            if (outbound) routeLocator = await window.PrivateRoutesV3.locator(window.DmashSecureSession.unb64(outbound.targetVerifyKey, 32));
+            else if (routeLocator.endsWith('=')) throw new Error('Unknown local blind route alias');
+        }
         const connections = this.connectedConnections().filter(connection => connection.capabilities.has('ROUTE_STATUS'));
         if (!connections.length) throw new Error('No connected D-MASH node supports route status');
         const results = await Promise.allSettled(connections.map(async connection => ({
@@ -637,6 +656,16 @@ const NodeManager = {
         return ready[0] || null;
     },
     async submitEnvelope(routeLocator, envelope) {
+        if (this.connectedConnections().some(node => node.client)) {
+            const record = await this.deviceInboxV3()._get('private-outbound:' + routeLocator);
+            if (!record || record.accountSlot !== window.Core.activeIdentity) throw new Error('Private Device route must be restored before sending');
+            const target = await window.PrivateRoutesV3.locator(window.DmashSecureSession.unb64(record.targetVerifyKey, 32));
+            const ready = await this.routeStatus(routeLocator);
+            if (!ready) throw new Error('Route unavailable');
+            const device = window.DeviceEnvelope.create(target, 'MSG', JSON.stringify(envelope));
+            const ciphertext = window.DeviceEnvelope.seal(window.DmashSecureSession.unb64(record.boxPublicKey, 32), device);
+            return ready.connection.client.request('SUBMIT', {route_locator: target, ciphertext});
+        }
         // Discovery is event-driven.  Do not turn a missing route into a blind
         // DATA flood or a silent legacy-relay fallback.
         const ready = await this.routeStatus(routeLocator);
@@ -679,7 +708,8 @@ const NodeManager = {
     deviceInboxV3() {
         if (!this._deviceInboxV3) this._deviceInboxV3 = new window.DeviceInbox({
             getRoot: () => window.DeviceRoot?.state?.root,
-            getActiveAccount: () => window.Core?.activeIdentity || null,
+            getActiveAccount: () => window.Core?._accountTransitioning ? null : (window.Core?.activeIdentity || null),
+            onAccount: (envelope, slot) => window.Core?.receiveAccountDeviceEnvelopeV3?.(envelope, slot) || false,
             onDevice: async envelope => {
                 if (envelope.type !== 'CONN_REQUEST' || !window.Core?.ingestPublicContactPacket) return false;
                 const payload = JSON.parse(envelope.account_payload);
@@ -689,12 +719,67 @@ const NodeManager = {
         });
         return this._deviceInboxV3;
     },
+    async installPrivateRouteV3(peerId, pair) {
+        const accountSlot = window.Core?.activeIdentity;
+        if (!accountSlot) throw new Error('Account must be unlocked to install a private route');
+        const inbox = this.deviceInboxV3(), b64 = window.DmashSecureSession.b64;
+        await inbox.registerRoute(pair.backRouteLocator, {scope: 'ACCOUNT', accountSlot});
+        await inbox._write('private-route:' + pair.backRouteLocator, {record: 'private_route',
+            accountSlot, routeAlias: await inbox.routeAlias(pair.backRouteLocator),
+            signingPublicKey: b64(pair.incoming.signing.publicKey), targetVerifyKey: b64(pair.outgoing.signing.publicKey),
+            generation: pair.generation, signingSecretKey: b64(pair.incoming.signing.secretKey),
+            boxSecretKey: b64(pair.incoming.box.secretKey)});
+        const outboundAlias = await inbox.routeAlias(pair.routeLocator);
+        await inbox._write('private-outbound:' + outboundAlias,
+            {record: 'private_outbound', accountSlot, boxPublicKey: b64(pair.outgoing.box.publicKey),
+                targetVerifyKey: b64(pair.outgoing.signing.publicKey)});
+        if (window.Core.activeIdentity !== accountSlot) return;
+        this.setMeshRoute(peerId, outboundAlias, await inbox.routeAlias(pair.backRouteLocator));
+        await this.probePrivateRoutesV3();
+    },
+    async probePrivateRoutesV3(connection = null) {
+        const inbox = this.deviceInboxV3();
+        const connections = connection ? [connection] : this.connectedConnections();
+        for (const row of await inbox.store.all()) {
+            const route = await inbox._open(row);
+            if (route.record !== 'private_route') continue;
+            const routeId = await window.PrivateRoutesV3.locator(window.DmashSecureSession.unb64(route.signingPublicKey, 32));
+            const target = await window.PrivateRoutesV3.locator(window.DmashSecureSession.unb64(route.targetVerifyKey, 32));
+            for (const node of connections) {
+                if (!node.authority || !node.capabilities.has('REGISTER_ROUTE')) continue;
+                const label = 'private-lifetime:' + node.nodeId + ':' + routeId;
+                let lifetime = await inbox._get(label);
+                const now = Math.floor(Date.now() / 1000);
+                if (!lifetime || lifetime.expiresAt <= now + 60) {
+                    lifetime = {record: 'private_lifetime', expiresAt: now + 86400};
+                    await inbox._write(label, lifetime);
+                }
+                const key = window.DmashSecureSession.unb64(route.signingSecretKey, 64);
+                const signing = window.nacl.sign.keyPair.fromSecretKey(key);
+                try {
+                    const resource = {kind: 'PRIVATE', routeId, signing,
+                        generation: route.generation, expiresAt: lifetime.expiresAt};
+                    await node.authority.route('REGISTER_ROUTE', resource);
+                    await node.authority.route('START_PROBE', resource, {route_locator: target});
+                } finally { key.fill(0); signing.secretKey.fill(0); }
+            }
+        }
+    },
     async receiveDeviceCiphertextV3(ciphertext) {
         const inbox = this.deviceInboxV3();
         for (const route of this.activePublicDeviceRoutes()) {
             try {
-                return await window.DeviceRoutes.withRouteKeys(route.routeId, ({box}) => inbox.receive(ciphertext, box.secretKey));
+                return await window.DeviceRoutes.withRouteKeys(route.routeId, ({box}) => inbox.receive(ciphertext, box.secretKey, route.routeId));
             } catch (_) { /* Retain raw encrypted record if no local key can open it. */ }
+        }
+        for (const row of await inbox.store.all()) {
+            const route = await inbox._open(row);
+            if (route.record !== 'private_route') continue;
+            const key = window.DmashSecureSession.unb64(route.boxSecretKey, 32);
+            const routeId = await window.PrivateRoutesV3.locator(window.DmashSecureSession.unb64(route.signingPublicKey, 32));
+            try { return await inbox.receive(ciphertext, key, routeId); }
+            catch (_) { /* Try the next Device-owned private route key. */ }
+            finally { key.fill(0); }
         }
         const key = window.Core?.device?.agreement?.secretKey;
         if (key) return inbox.receive(ciphertext, key);

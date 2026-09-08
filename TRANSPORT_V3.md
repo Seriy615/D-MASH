@@ -95,9 +95,37 @@ remain staged. The native Chrome fixture also passes close/reopen of this raw
 staging phase. Public contact senders wrap the existing contact ciphertext in
 a CONN_REQUEST Device Envelope; public registration stores grants encrypted
 and borrows route keys only for the operation, wiping them in finally.
-Core v3 polling delegates to this Device pipeline. Private route derivation,
-Account send/receive adapters and contact Accept/bootstrap remain incomplete;
-the branch is not deployable yet.
+Core v3 polling delegates to this Device pipeline. Private route derivation
+and normal Account send/receive are now connected; contact Accept/bootstrap
+and explicit control outcomes remain incomplete, so this is not deployable.
+
+### Device Account-route aliases (user clarification, 2026-09-08)
+
+Persistent Device lookup is `HMAC(DeviceAliasKey, RouteID) -> Account slot`.
+Account RouteID is transient during Device decrypt, then replaced by a blind
+alias in the pending record. The local route index also stores blind handles.
+Even opening the encrypted Device records does not reveal a retained raw
+Account RouteID. Directional route authority/box key material is separately
+encrypted under DeviceRoot; the Device derives transient wire routing values
+from that capability when registering/probing/sending. This is distinct from
+storing raw RouteID as a lookup identifier. Existing ephemeral route settings
+are blinded after Device unlock and reconstructed from Account pairing state.
+
+The Account Vault owns `blind Device route alias -> Account peer` association.
+The Account authenticates/decrypts its payload and writes its vault before a
+DELIVERED receipt. The Device never decrypts Account ciphertext: it wraps the
+opaque payload, chooses the Node and performs transport. Private locators use
+direction/generation-separated HKDF Ed25519 capabilities and recipient route
+box keys derived from the two contributions; Account IDs are excluded.
+
+The old crypto implementation shares mutable keys, so Account boot waits for
+current Inbox processing and route installation before replacing them. New
+Inbox work pauses during that transition. Tests cover A active/B stored,
+unlock B/write/receipt, bad sender proof, concurrent boot, opaque payload
+handoff, and absence of raw Account routes even in decrypted Device records.
+The historical decrypt null result is ambiguous for control packets; those
+remain pending rather than being marked successfully processed. The epoch
+ratchet milestone must provide explicit control success/failure outcomes.
 
 `device_authority_v3.js` reuses encrypted `dnss/v1/NodeID` material, attempts
 socket binding without new work, and mines again only for
@@ -116,7 +144,7 @@ The historical stability test now checks that the page and service worker
 have the same current release instead of pinning the old release-55 string.
 All historical v50–v55 behavior assertions remain in place.
 
-Validation at this checkpoint: 134 backend tests, 11 Origin tests, all 28 PWA
+Validation at this checkpoint: 134 backend tests, 11 Origin tests, all 31 PWA
 suites pass using `tools/test_all.py`. No deployment or production acceptance.
 
 Account identity, ratchet, content and receipts stay in the Account layer.

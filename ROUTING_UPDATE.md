@@ -5,7 +5,12 @@ The requirements below are historical context. Runtime v3 now authenticates
 Node roles mutually, uses directional Node DNSS/work, and has a Device DNSS
 registry with session-bound resource authority and durable all-entry mailbox
 drain. Client migration, hop-label routing and remaining milestones are not
-complete. No production or browser acceptance claim is made.
+complete. Native Chrome localhost Inbox QA passed; production acceptance has
+not run. Device Account-route lookup now stores blind RouteID aliases only,
+including pending Inbox records; Account peer association stays inside the
+Account Vault. Account provides recipient-encrypted payload and a blind local
+route handle; Device owns its envelope and transport. See TRANSPORT_V3.md for
+the user clarification and the precise implemented/partial boundaries.
 
 ## Historical routing requirements
 

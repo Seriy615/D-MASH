@@ -23,6 +23,7 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-dev-20260908.1" });
         "js/device_authority_v3.js",
         "js/device_envelope.js",
         "js/device_inbox.js",
+        "js/private_routes_v3.js",
         "js/contact_payloads.js",
         "js/contact_transport.js",
         "js/pending_contact_requests.js",
