@@ -1,0 +1,23 @@
+'use strict';
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const root = path.resolve(__dirname, '../../../D-MASH PWA/not_messenger/js');
+global.nacl = require(path.join(root, 'vendor/nacl-fast.min.js'));
+require(path.join(root, 'secure_session.js'));
+const Client = require(path.join(root, 'device_client_v3.js'));
+(async () => {
+    const signing = nacl.sign.keyPair();
+    const pub = Buffer.from(signing.publicKey).toString('hex');
+    const client = new Client({url: process.argv[2], nodeId: process.argv[3], identity: async () => ({signing})});
+    await client.connect();
+    assert.equal(client.transportPublicKey, pub);
+    assert.ok(signing.secretKey.every(byte => byte === 0));
+    const results = await Promise.all([client.request('STATUS'), client.request('PING')]);
+    assert.equal(results[0].node_id, process.argv[3]);
+    assert.equal(results[1].type, 'PONG');
+    await assert.rejects(client.request('MESH_DATA'), /unavailable/);
+    client.close();
+    const wrong = new Client({url: process.argv[2], nodeId: '00'.repeat(32), identity: async () => { throw Error('must not derive identity'); }});
+    await assert.rejects(wrong.connect(), /pin mismatch/);
+    console.log('Real JS Device client / Python gateway interoperability passed');
+})().catch(error => { console.error(error); process.exitCode = 1; });

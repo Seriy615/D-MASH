@@ -6,12 +6,16 @@ executable inventory, wire details, migration boundaries and test evidence.
 
 IMPLEMENTED: shared Python/JS secure sessions; mutual Node peering and
 directional DNSS work; v3 backend DNSS/resource authority and leased durable
-mailbox drain. All 132 Node tests, 11 Origin tests and 25 PWA suites pass.
+mailbox drain. Device Envelope and encrypted Inbox modules pass real-crypto
+multi-account tests. JavaScript DeviceClientV3 interoperates with the Python
+gateway over a real loopback WebSocket. All 133 Node tests, 11 Origin tests and
+27 PWA suites pass.
 
 PARTIAL: PWA still uses its old transport flow. Do not deploy this checkpoint:
 new runtime disables v2 resource operations, and peers require coordinated v3
 upgrade. Legacy mailbox rows are preserved but not migrated. Device Envelope /
-Inbox, hop labels, batching, password, S-TURN/calls/files and ratchet still need
+Inbox still need main PWA integration. Hop labels, batching, password,
+S-TURN/calls/files and ratchet still need
 implementation/integration and acceptance. No push, deployment or Chrome
 acceptance has occurred.
 

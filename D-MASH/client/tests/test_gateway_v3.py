@@ -22,6 +22,7 @@ class GatewayV3Tests(unittest.TestCase):
     def test_real_asgi_encrypted_status_and_fail_closed_resource_surface(self):
         with patch.object(gateway_v3, "runtime_state", return_value=self.state), TestClient(self.app) as client:
             with client.websocket_connect("/dmp-c/v3") as socket:
+                self.assertEqual(socket.receive_json()["type"], "WELCOME")
                 handshake = Handshake(SigningKey.generate(), "DEVICE")
                 socket.send_json(handshake.initiate())
                 auth, session = handshake.finish(socket.receive_json(), self.node_id)
@@ -36,12 +37,14 @@ class GatewayV3Tests(unittest.TestCase):
     def test_node_role_cannot_get_device_capabilities(self):
         with patch.object(gateway_v3, "runtime_state", return_value=self.state), TestClient(self.app) as client:
             with client.websocket_connect("/dmp-c/v3") as socket:
+                self.assertEqual(socket.receive_json()["type"], "WELCOME")
                 socket.send_json(Handshake(SigningKey.generate(), "NODE").initiate())
                 with self.assertRaises(WebSocketDisconnect): socket.receive_json()
 
     def test_plaintext_operation_after_auth_closes_socket(self):
         with patch.object(gateway_v3, "runtime_state", return_value=self.state), TestClient(self.app) as client:
             with client.websocket_connect("/dmp-c/v3") as socket:
+                self.assertEqual(socket.receive_json()["type"], "WELCOME")
                 handshake = Handshake(SigningKey.generate(), "DEVICE")
                 socket.send_json(handshake.initiate())
                 auth, session = handshake.finish(socket.receive_json(), self.node_id)

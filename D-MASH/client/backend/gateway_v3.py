@@ -89,6 +89,10 @@ async def dmp_v3(websocket: WebSocket):
         if not state.node_crypto or not state.node_crypto.signing_key:
             await websocket.close(code=1011, reason="node identity unavailable")
             return
+        # Identity discovery only; the client verifies the same NodeID in the
+        # signed transcript before trusting any operation or capability.
+        await websocket.send_json({"type": "WELCOME", "protocol": "DMP-C", "version": 3,
+                                   "node_id": state.node_crypto.node_id})
         secure, device_key = await accept_secure(websocket, state.node_crypto.signing_key, "DEVICE")
         session = DeviceSession(device_key, secure.session.transcript_hash.hex())
         surface = operations(state)

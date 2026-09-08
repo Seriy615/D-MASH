@@ -52,6 +52,35 @@ reports every failure. Use Python 3.12 with the pinned client dependencies and
 
 ## Target invariants (PLANNED until supported by integration tests)
 
+### Device boundary foundation (PARTIAL integration)
+
+`device_envelope.js` encrypts the entire canonical DeviceEnvelopeV1 with a
+fresh ephemeral X25519 NaCl box. Route, extensible type, packet id, metadata
+and opaque Account payload are inside the box. This layer alone does not
+authenticate the Account sender; the Account handler must verify its E2EE
+payload before marking delivery.
+
+`device_inbox.js` persists envelopes before invoking handlers. AES-GCM storage
+and HMAC record aliases use distinct DeviceRoot HKDF domains. Account B stays
+pending while A is active; Device handlers can run before Account login.
+Unknown local routes are retained encrypted until their policy is restored.
+Successful handling leaves a 30-day deduplication tombstone. Callback failure
+retains the pending record. Handlers must be idempotent across a crash between
+their durable write and the Inbox tombstone. Quotas bound disk consumption.
+IndexedDB persistence still requires native-browser acceptance; unit tests use
+an injected transactional store. Web Locks serialize tabs where supported.
+
+`device_client_v3.js` adds serialized asynchronous handshake processing,
+Node identity pinning, request correlation, timeout and disconnect cleanup.
+The gateway sends a plaintext `WELCOME` containing NodeID for per-Node Device
+identity derivation. WELCOME grants no authority: the same NodeID must verify
+the signed challenge. A real JS/Python loopback WebSocket test covers encrypted
+concurrent STATUS/PING, role capability limits and wrong identity rejection.
+These modules are not yet wired into the production PWA loader/Account flow.
+
+Validation at this checkpoint: 133 backend tests, 11 Origin tests, all 27 PWA
+suites pass using `tools/test_all.py`. No deployment or Chrome acceptance.
+
 Account identity, ratchet, content and receipts stay in the Account layer.
 Device plaintext is `{version,route_id,type,packet_id,device_metadata,account_payload}`;
 all fields are encrypted to the destination Device. Type is an extensible
