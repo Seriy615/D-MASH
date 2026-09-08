@@ -56,6 +56,7 @@
             if (this.state === 'authorizing') {
                 if (message.type !== 'AUTH_OK' || message.version !== 3 || message.role !== 'DEVICE' || !Array.isArray(message.capabilities)) throw new Error('Invalid v3 authorization');
                 this.capabilities = new Set(message.capabilities);
+                this.resourcePowDifficulty = message.resource_pow_difficulty;
                 this.state = 'connected'; clearTimeout(this.deadline);
                 this.resolveReady(this); return;
             }

@@ -8,16 +8,19 @@ IMPLEMENTED: shared Python/JS secure sessions; mutual Node peering and
 directional DNSS work; v3 backend DNSS/resource authority and leased durable
 mailbox drain. Device Envelope and encrypted Inbox modules pass real-crypto
 multi-account tests. JavaScript DeviceClientV3 interoperates with the Python
-gateway over a real loopback WebSocket. All 133 Node tests, 11 Origin tests and
-27 PWA suites pass.
+gateway over a real loopback WebSocket. DeviceAuthorityV3 implements stable
+DNSS rebind/re-registration and session-bound route signing. Mailbox insertion
+rechecks live route authority. All 134 Node tests, 11 Origin tests and
+28 PWA suites pass. Native Chrome localhost Inbox acceptance also passes;
+this is isolated module QA, not deployed PWA acceptance.
 
 PARTIAL: PWA still uses its old transport flow. Do not deploy this checkpoint:
 new runtime disables v2 resource operations, and peers require coordinated v3
 upgrade. Legacy mailbox rows are preserved but not migrated. Device Envelope /
 Inbox still need main PWA integration. Hop labels, batching, password,
 S-TURN/calls/files and ratchet still need
-implementation/integration and acceptance. No push, deployment or Chrome
-acceptance has occurred.
+implementation/integration and acceptance. No push, deployment or production
+Chrome acceptance has occurred.
 
 Next: integrate the PWA v3 connection and authority flow, then encrypted Device
 Envelope and account-independent Inbox/dispatcher. Preserve old tests and data.

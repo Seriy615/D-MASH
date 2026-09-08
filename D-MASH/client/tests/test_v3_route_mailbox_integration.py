@@ -103,3 +103,16 @@ class RouteMailboxIntegrationTests(unittest.IsolatedAsyncioTestCase):
     def test_legacy_endpoint_cannot_bypass_v3_authority(self):
         result = _routing_registration_operations(self.state, {"START_PROBE", "REGISTER_INBOUND_LOCATOR", "UNREGISTER_INBOUND_LOCATOR", "PULL"})
         self.assertEqual(result, {"PING", "STATUS"})
+
+    async def test_expired_authority_cannot_keep_receiving_data(self):
+        key = SigningKey.generate()
+        request = self.route_request(key, "REGISTER_ROUTE")
+        await self.request(request)
+        await self.request(self.route_request(key, "START_PROBE"))
+        locator = request["authorization"]["route_id"]
+        self.registry.clock = lambda: 2001
+        with self.assertRaisesRegex(PermissionError, "expired or revoked"):
+            await self.transport.submit_envelope(locator, {"version": 1, "ciphertext": b64(b"opaque")})
+        self.responses.clear()
+        await self.request({"type": "PULL"})
+        self.assertEqual(self.responses[-1]["entries"], [])

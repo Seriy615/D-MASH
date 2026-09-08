@@ -31,6 +31,7 @@ class NodeTransportService:
         self._inbound_locators: Dict[str, str] = {}
         self.v3_mailbox = None
         self._v3_bindings: Dict[str, str] = {}
+        self._v3_authority_checks = {}
         # Runtime-only registry.  It contains blind locator handles and live
         # DMP-C sessions, never user IDs or raw locators.
         self._local_delivery_sessions: Dict[str, Set[Any]] = {}
@@ -80,17 +81,20 @@ class NodeTransportService:
             raise ValueError("invalid route locator")
         return self.system_db.node_crypto.get_blind_hash(locator)
 
-    async def register_inbound_locator(self, locator: str, *, blind_dnss: str | None = None) -> str:
+    async def register_inbound_locator(self, locator: str, *, blind_dnss: str | None = None, authority_check=None) -> str:
         if not self.can_accept_devices:
             raise PermissionError("device acceptance is disabled by local Node policy")
         if not locator:
             raise ValueError("invalid inbound locator")
         if blind_dnss is not None and self.v3_mailbox is None:
             raise RuntimeError("v3 mailbox unavailable")
+        if blind_dnss is not None and (not callable(authority_check) or not authority_check()):
+            raise PermissionError("v3 route authority unavailable")
         locator_handle = await self.system_db.arm_inbound_locator(locator)
         self._inbound_locators[locator_handle] = locator_handle
         if blind_dnss is not None:
             self._v3_bindings[locator_handle] = blind_dnss
+            self._v3_authority_checks[locator_handle] = authority_check
         return locator_handle
 
     async def register_notification_beacon(self, beacon_handle: str) -> str:
@@ -129,6 +133,7 @@ class NodeTransportService:
         locator_handle = self._blind(locator)
         self._inbound_locators.pop(locator_handle, None)
         self._v3_bindings.pop(locator_handle, None)
+        self._v3_authority_checks.pop(locator_handle, None)
         self._local_delivery_sessions.pop(locator_handle, None)
         return removed
 
@@ -332,6 +337,9 @@ class NodeTransportService:
 
     async def _store_mailbox(self, locator_handle: str, packet: Dict[str, Any]) -> bool:
         if locator_handle in self._v3_bindings:
+            check = self._v3_authority_checks.get(locator_handle)
+            if check is None or not check():
+                raise PermissionError("v3 route authority expired or revoked")
             envelope = packet.get("envelope")
             if (not isinstance(envelope, dict) or set(envelope) != {"version", "ciphertext"}
                     or envelope["version"] != 1):

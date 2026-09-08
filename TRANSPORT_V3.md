@@ -67,8 +67,13 @@ Unknown local routes are retained encrypted until their policy is restored.
 Successful handling leaves a 30-day deduplication tombstone. Callback failure
 retains the pending record. Handlers must be idempotent across a crash between
 their durable write and the Inbox tombstone. Quotas bound disk consumption.
-IndexedDB persistence still requires native-browser acceptance; unit tests use
-an injected transactional store. Web Locks serialize tabs where supported.
+IndexedDB persistence was also verified in native Google Chrome using the
+isolated localhost `tests/device_inbox.browser.html`: encrypted storage,
+close/reopen, delivery to B while A stays active, durable deduplication and
+pre-login Device event all passed. The test removed its own database. This is
+module acceptance, not the required deployed PWA end-to-end acceptance.
+Unit tests use an injected transactional store. Web Locks serialize tabs
+where supported.
 
 `device_client_v3.js` adds serialized asynchronous handshake processing,
 Node identity pinning, request correlation, timeout and disconnect cleanup.
@@ -78,8 +83,20 @@ the signed challenge. A real JS/Python loopback WebSocket test covers encrypted
 concurrent STATUS/PING, role capability limits and wrong identity rejection.
 These modules are not yet wired into the production PWA loader/Account flow.
 
-Validation at this checkpoint: 133 backend tests, 11 Origin tests, all 27 PWA
-suites pass using `tools/test_all.py`. No deployment or Chrome acceptance.
+`device_authority_v3.js` reuses encrypted `dnss/v1/NodeID` material, attempts
+socket binding without new work, and mines again only for
+`DNSS_NOT_REGISTERED`. Concurrent binding attempts share one operation. Route
+proofs bind the operation, fresh request id, session transcript, DNSS, Node,
+authority key, generation and expiry. Private registration uses PRIVATE_ROUTE
+work and does not send a public EntryGrant. AUTH_OK now advertises the Node's
+resource work difficulty; the client accepts the production 20–24-bit range.
+Tests exercise reconnect, runtime loss, distinct proof ids and wrong-session
+signature rejection. Node data reception also checks current route authority
+at mailbox insertion so an expired/revoked registration cannot keep receiving
+through an old routing-table entry.
+
+Validation at this checkpoint: 134 backend tests, 11 Origin tests, all 28 PWA
+suites pass using `tools/test_all.py`. No deployment or production acceptance.
 
 Account identity, ratchet, content and receipts stay in the Account layer.
 Device plaintext is `{version,route_id,type,packet_id,device_metadata,account_payload}`;

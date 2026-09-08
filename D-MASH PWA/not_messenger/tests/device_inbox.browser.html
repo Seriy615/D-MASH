@@ -1,0 +1,45 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Device Inbox native storage acceptance</title>
+<h1>Device Inbox native storage acceptance</h1>
+<pre id="result">Running…</pre>
+<script src="../js/vendor/nacl-fast.min.js"></script>
+<script src="../js/secure_session.js"></script>
+<script src="../js/device_envelope.js"></script>
+<script src="../js/device_inbox.js"></script>
+<script>
+(async () => {
+    const assert = (value, message) => { if (!value) throw Error(message); };
+    // This page must run on an isolated localhost origin, never the PWA origin.
+    if (location.hostname !== '127.0.0.1') throw Error('Isolated localhost origin required');
+    const root = crypto.getRandomValues(new Uint8Array(32)), recipient = nacl.box.keyPair();
+    let active = 'A', delivered = 0, deviceEvents = 0;
+    const options = { getRoot: () => root, getActiveAccount: () => active,
+        onAccount: async () => { delivered++; return true; },
+        onDevice: async () => { deviceEvents++; return true; } };
+    let inbox = new DeviceInbox(options);
+    await inbox.registerRoute('native-B', {scope: 'ACCOUNT', accountSlot: 'B'});
+    const envelope = DeviceEnvelope.create('native-B', 'MSG', 'opaque B native storage payload');
+    const ciphertext = DeviceEnvelope.seal(recipient.publicKey, envelope);
+    assert(await inbox.receive(ciphertext, recipient.secretKey) === 'DEVICE_STORED', 'B must be stored');
+    assert(active === 'A' && delivered === 0, 'A must remain active');
+    assert(!JSON.stringify(await inbox.store.all()).includes(envelope.account_payload), 'No payload at rest');
+    inbox.store.close();
+    inbox = new DeviceInbox(options);
+    active = 'B';
+    assert((await inbox.drain('B')).includes('PROCESSED') && delivered === 1, 'Reopened native DB must deliver B');
+    assert(await inbox.receive(ciphertext, recipient.secretKey) === 'DUPLICATE', 'Deduplication must survive reopening');
+    active = null;
+    await inbox.registerRoute('native-public', {scope: 'DEVICE'});
+    const event = DeviceEnvelope.create('native-public', 'CONN_REQUEST', 'opaque bootstrap');
+    await inbox.receive(DeviceEnvelope.seal(recipient.publicKey, event), recipient.secretKey);
+    assert(deviceEvents === 1 && active === null, 'Device event must work without Account');
+    inbox.store.close();
+    await new Promise((resolve, reject) => {
+        const request = indexedDB.deleteDatabase('dmash_device_inbox_v1');
+        request.onsuccess = resolve; request.onerror = () => reject(request.error);
+    });
+    root.fill(0); recipient.secretKey.fill(0);
+    document.getElementById('result').textContent = 'PASS: native IndexedDB persistence, reopen, encrypted records, multi-account dispatch, deduplication, pre-login Device event. Test database removed.';
+})().catch(error => { document.getElementById('result').textContent = 'FAIL: ' + error.message; });
+</script>

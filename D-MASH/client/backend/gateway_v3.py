@@ -47,7 +47,12 @@ async def resource_operation(state, secure, session, request):
             raise RegistrationError("PROBE_ORIGIN_MISMATCH")
         registry.authorize_route(session, op, rid, auth, grant=request.get("entry_grant"), proof=request.get("pow"))
         if op == "REGISTER_ROUTE":
-            handle = await transport.register_inbound_locator(auth["route_id"], blind_dnss=alias)
+            route_alias = registry.route_alias(auth["route_id"])
+            def still_authorized():
+                current = registry.routes.get(route_alias)
+                return current is not None and current.blind_dnss == alias and current.expires_at > registry.clock()
+            handle = await transport.register_inbound_locator(auth["route_id"], blind_dnss=alias,
+                                                              authority_check=still_authorized)
             transport.attach_local_delivery_session(handle, secure)
             return {"type": "REGISTER_ROUTE_RESULT", "request_id": rid}
         if op == "UNREGISTER_ROUTE":
@@ -97,7 +102,9 @@ async def dmp_v3(websocket: WebSocket):
         session = DeviceSession(device_key, secure.session.transcript_hash.hex())
         surface = operations(state)
         await secure.send_json({"type": "AUTH_OK", "version": 3,
-                                "role": "DEVICE", "capabilities": surface})
+                                "role": "DEVICE", "capabilities": surface,
+                                "resource_pow_difficulty": state.device_registration.difficulty
+                                    if "REGISTER_DNSS" in surface else None})
         while True:
             request = await secure.receive_json()
             request_id = request.get("request_id")
