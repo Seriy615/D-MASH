@@ -104,3 +104,45 @@ new loader with an incomplete DOM fixture; `historical_webauthn_source_regressio
 expects WebAuthn implementation inside `release.js`, now moved to runtime
 modules. These failures are retained and must be migrated without weakening
 WebAuthn requirements. Baseline test output is local, outside Git.
+
+## B1: shared secure-session implementation
+
+IMPLEMENTED: `secure_session.py` and `secure_session.js`, shared v3
+HELLO → signed CHALLENGE → signed AUTH, X25519 ephemeral keys,
+HKDF-SHA256, separate send/receive keys, XSalsa20-Poly1305 encrypted records.
+Roles DEVICE/NODE, identities, suite, both ephemeral keys, nonces and expiry
+are bound into the transcript. The Python async adapter serializes concurrent
+sends including sequence allocation; failures destroy the session.
+
+Wire suite: `X25519-HKDF-SHA256-XSALSA20POLY1305`. Canonical JSON uses sorted
+ASCII property names, ASCII-escaped strings, safe integers, boolean/null and
+arrays/objects, maximum depth 32. Signed hash is SHA256 of
+`D-MASH|DMP-C|3|HANDSHAKE\0` plus canonical `[hello,challenge_without_signature]`.
+Responder and initiator signatures have distinct domain labels. HKDF salt is
+that hash; IKM is `X25519\0 || u32be(32) || shared`; info is the protocol domain
+plus suite. First/second 32 bytes are initiator→responder/responder→initiator.
+A future hybrid suite must bind its own suite and length-delimited KEM inputs;
+this implementation accepts no ML-KEM or silent fallback.
+
+SECURE frames have version 3, integer sequence, standard canonical base64
+ciphertext. Secretbox nonce is 16 zero bytes plus u64be(sequence). Directional
+keys and fresh connection keys separate nonce domains; sequence is strict,
+starts at zero and is bounded to 2^32−1. Maximum plaintext record: 1 MiB.
+Malformed, replayed or reflected incoming records close and clear keys.
+Python/JavaScript clear mutable key buffers and release references; neither
+managed runtime promises forensic erasure of all library/internal copies.
+
+IMPLEMENTED: FastAPI `/dmp-c/v3` DEVICE endpoint with encrypted PING/STATUS;
+NODE roles and unimplemented resource operations fail closed.
+PARTIAL: v3 is not yet the active PWA or Node↔Node transport. Existing v2 path
+remains unchanged pending authority/mailbox migration. This is not completion
+of milestone B or the overall refactor.
+
+Validation: 111 Node tests pass (98 baseline + 13 new). New tests include
+RFC 5869 vector, real bundled TweetNaCl↔PyNaCl interoperability for both roles,
+mutual possession, wrong identity/role/signature/expiry, challenge/auth replay,
+record tamper/reflection/replay, fresh reconnect keys, erasure and real ASGI
+endpoint tests. PWA baseline still has the two documented historical failures.
+Cryptographic references: RFC 5869 (https://www.rfc-editor.org/rfc/rfc5869),
+RFC 7748 (https://www.rfc-editor.org/rfc/rfc7748); references do not constitute
+an audit of this protocol composition.

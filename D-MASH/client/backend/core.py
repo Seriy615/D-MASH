@@ -227,12 +227,15 @@ if __package__:  # Package tests must not load a second top-level core module.
     sys.modules.setdefault("core", sys.modules[__name__])
     from .api import router as api_router
     from .client_gateway import router as client_gateway_router
+    from .gateway_v3 import router as gateway_v3_router
 else:
     from api import router as api_router
     from client_gateway import router as client_gateway_router
+    from gateway_v3 import router as gateway_v3_router
 
 app.include_router(api_router)
 app.include_router(client_gateway_router)
+app.include_router(gateway_v3_router)
 
 backend_path = os.path.dirname(os.path.abspath(__file__))
 # Canonical checkout: ``client/frontend``. Docker/Compose: ``backend/frontend``.

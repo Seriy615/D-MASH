@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from core import lifespan
 from api import router
 from client_gateway import router as client_gateway_router
+from gateway_v3 import router as gateway_v3_router
 
 # --- СОЗДАЕМ ПРИЛОЖЕНИЕ ---
 app = FastAPI(lifespan=lifespan)
@@ -23,6 +24,7 @@ app.add_middleware(
 # 2. API Роуты
 app.include_router(router)
 app.include_router(client_gateway_router)
+app.include_router(gateway_v3_router)
 
 # 3. Статика (Frontend)
 backend_path = os.path.dirname(os.path.abspath(__file__))
