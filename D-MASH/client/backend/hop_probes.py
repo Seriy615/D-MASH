@@ -81,7 +81,7 @@ class HopProbes:
         self._pending = {}
         self._pending_tasks = {}
         self._sync = {}
-        self._graph = []
+        self._graph = {}
         self._export_task = None
         self._closed = False
 
@@ -149,13 +149,28 @@ class HopProbes:
 
     def graph_snapshot(self):
         """Return the local logical NCRH graph without endpoint identities."""
-        return [dict(edge) for edge in self._graph]
+        edges = []
+        for index, sealed in list(self._graph.items()):
+            edge = json.loads(self._box.decrypt(sealed))
+            if edge['expires'] <= self.clock():
+                del self._graph[index]
+            else:
+                edges.append(edge)
+        return edges
 
-    def _record_edge(self, peer, ncrh_in, ncrh_out, metric):
-        edge = {'peer': peer, 'ncrh_in': ncrh_in, 'ncrh_out': ncrh_out, 'metric': metric}
-        self._graph = [old for old in self._graph
-                       if not (old['peer'] == peer and old['ncrh_in'] == ncrh_in)]
-        self._graph.append(edge)
+    def _record_edge(self, peer, ncrh_in, ncrh_out, metric, lifetime=1800):
+        index = self._index('graph', [peer, ncrh_in])
+        if index not in self._graph and len(self._graph) >= self.capacity:
+            self.graph_snapshot()  # Reclaim only expired state.
+            if len(self._graph) >= self.capacity:
+                raise BufferError('NCRH graph capacity reached')
+        edge = {'peer': peer, 'ncrh_in': ncrh_in, 'ncrh_out': ncrh_out,
+                'metric': metric, 'expires': self.clock() + lifetime}
+        self._graph[index] = bytes(self._box.encrypt(json.dumps(edge, separators=(',', ':')).encode()))
+
+    def _knows_ncrh(self, ncrh):
+        return any(ncrh in (edge['ncrh_in'], edge['ncrh_out'])
+                   for edge in self.graph_snapshot())
 
     async def _send_control(self, peer, packet):
         channel = self.transport.node.active_connections.get(peer) if self.transport.node else None
@@ -177,6 +192,8 @@ class HopProbes:
             self._pending_tasks.pop(request_id, None)
 
     async def _track_and_send(self, peer, packet, kind):
+        if len(self._pending) >= self.capacity:
+            raise BufferError('NCRH request capacity reached')
         request_id = packet['request_id']
         self._pending[request_id] = {'peer': peer, 'ncrh': packet['ncrh'], 'kind': kind,
                                      'sent_at': self.clock()}
@@ -324,42 +341,46 @@ class HopProbes:
     async def receive_probe(self, packet, peer):
         validate_probe(packet)
         tag = packet['origin_tag']
-        if not packet['hop_limit'] or packet['metric'] >= 15 or self._local(tag): return
+        known = self._knows_ncrh(packet['ncrh'])
+        # Reply describes pre-advertisement knowledge, even if installation fails.
+        await self._send_status(peer, packet['request_id'], packet['ncrh'], known)
         token = self._trace_token(packet['id'])
-        if token in packet['trace']: return
+        if (packet['metric'] >= 15 or self._local(tag)
+                or token in packet['trace']):
+            return
         metric = packet['metric'] + 1
         ncrh_in = packet['ncrh']
         ncrh = self.transport.system_db.node_crypto.extend_ncrh(ncrh_in)
         path_key = self._index('path', [peer, ncrh_in]).hex()
-        known = any(c['path_key'] == path_key for c in self._candidates(tag))
         candidate = {'path_key': path_key, 'mailbox_alias': None, 'next_peer': peer,
             'outgoing_label': packet['hop_route_label'], 'metric': metric, 'ncrh': ncrh,
             'ncrh_in': ncrh_in, 'until': self.clock() + packet['lifetime'],
             'probe_id': packet['id'], 'trace': packet['trace'] + [token]}
-        self._record_edge(peer, ncrh_in, ncrh, metric)
-        if self._install(tag, candidate):
+        self._record_edge(peer, ncrh_in, ncrh, metric, packet['lifetime'])
+        if self._install(tag, candidate) and packet['hop_limit']:
             await self._advertise(tag, candidate)
-        await self._send_status(peer, packet['request_id'], packet['ncrh'], known)
         await self._send_alias_bind(peer, packet['request_id'], candidate)
 
     async def receive_root(self, packet, peer):
         validate_root(packet)
-        if not packet['hop_limit'] or packet['metric'] >= 15: return
+        known = self._knows_ncrh(packet['ncrh'])
+        # Reply describes pre-advertisement knowledge, even if installation fails.
+        await self._send_status(peer, packet['request_id'], packet['ncrh'], known)
         token = self._trace_token(packet['id'])
-        if token in packet['trace']: return
+        if packet['metric'] >= 15 or token in packet['trace']:
+            return
         tag = self._root_tag(peer, packet['ncrh'])
         ncrh = self.transport.system_db.node_crypto.extend_ncrh(packet['ncrh'])
         path_key = self._index('path', [peer, packet['ncrh']]).hex()
-        known = any(c['path_key'] == path_key for c in self._candidates(tag))
         candidate = {'path_key': path_key, 'mailbox_alias': None, 'next_peer': peer,
             # Root knowledge grants no DATA capability. Only a correlated
             # peer-issued binding may supply a usable outgoing label.
             'outgoing_label': None, 'metric': packet['metric'] + 1, 'ncrh': ncrh,
             'ncrh_in': packet['ncrh'], 'until': self.clock() + packet['lifetime'],
             'probe_id': packet['id'], 'trace': packet['trace'] + [token]}
-        self._record_edge(peer, packet['ncrh'], ncrh, candidate['metric'])
-        if self._install(tag, candidate): await self._advertise(tag, candidate)
-        await self._send_status(peer, packet['request_id'], packet['ncrh'], known)
+        self._record_edge(peer, packet['ncrh'], ncrh, candidate['metric'], packet['lifetime'])
+        if self._install(tag, candidate) and packet['hop_limit']:
+            await self._advertise(tag, candidate)
         await self._send_alias_bind(peer, packet['request_id'], candidate)
 
     async def receive_status(self, packet, peer):
@@ -374,7 +395,8 @@ class HopProbes:
         if task: task.cancel()
         state = self._sync.setdefault(peer, {'sent': 0, 'replies': 0, 'timeouts': 0, 'advertisements': 0})
         state['replies'] += 1
-        state.setdefault('known', []).append({'ncrh': packet['ncrh'], 'state': packet['state']})
+        self._put('peer-knowledge', [peer, packet['ncrh']],
+                  {'peer': peer, 'ncrh': packet['ncrh'], 'state': packet['state']}, 1800)
 
     async def receive_alias_bind(self, packet, peer):
         validate_alias_bind(packet)

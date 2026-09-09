@@ -45,6 +45,69 @@ class HopProbeSemanticsTests(unittest.TestCase):
 
 
 class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
+    async def test_graph_is_encrypted_bounded_and_expires(self):
+        now = [100.0]
+        probes = HopProbes(self._transport(b'a' * 32), clock=lambda: now[0], capacity=2)
+        probes._record_edge('peer-A', '1' * 64, '2' * 64, 1, lifetime=5)
+        probes._record_edge('peer-B', '1' * 64, '2' * 64, 1, lifetime=10)
+        self.assertEqual(len(probes.graph_snapshot()), 2)
+        for value in ('peer-A', 'peer-B', '1' * 64, '2' * 64):
+            self.assertNotIn(value, repr(probes._graph))
+        with self.assertRaises(BufferError):
+            probes._record_edge('peer-C', '3' * 64, '4' * 64, 2)
+        now[0] = 105
+        probes._record_edge('peer-C', '3' * 64, '4' * 64, 2, lifetime=1)
+        self.assertEqual({e['peer'] for e in probes.graph_snapshot()}, {'peer-B', 'peer-C'})
+        now[0] = 111
+        self.assertEqual(probes.graph_snapshot(), [])
+        await probes.close()
+
+    async def test_terminal_advertisement_has_semantic_reply_without_binding(self):
+        transport = self._transport(b'a' * 32)
+        sent = []
+        class Channel:
+            async def send_packet(self, packet): sent.append(packet)
+        transport.node.active_connections = {'peer': Channel()}
+        probes = HopProbes(transport)
+        packet = {'type': 'HOP_ROOT_NCRH_V1', 'id': '1' * 64,
+                  'request_id': '2' * 64, 'ncrh': '3' * 64,
+                  'metric': 0, 'hop_limit': 0, 'lifetime': 10, 'trace': ['4' * 64]}
+        await probes.receive_root(packet, 'peer')
+        self.assertEqual(sent, [{'type': 'HOP_NCRH_STATUS_V1', 'request_id': '2' * 64,
+                                'ncrh': '3' * 64, 'state': 'UNKNOWN'}])
+        self.assertEqual(len(probes.graph_snapshot()), 1)
+        probes._record_edge('another-peer', '3' * 64, '5' * 64, 1)
+        await probes.receive_root(packet, 'peer')
+        self.assertEqual(sent[-1]['state'], 'KNOWN')
+        self.assertEqual(len(probes.graph_snapshot()), 2)
+        await probes.close()
+
+    async def test_status_precedes_install_even_when_capacity_is_exhausted(self):
+        for kind in ('HOP_ROOT_NCRH_V1', 'HOP_PROBE_V3'):
+            transport = self._transport(b'a' * 32)
+            sent = []
+            class Channel:
+                async def send_packet(self, packet): sent.append(packet)
+            transport.node.active_connections = {'peer': Channel()}
+            probes = HopProbes(transport, capacity=1)
+            packet = {'type': kind, 'id': '1' * 64, 'request_id': '2' * 64,
+                      'ncrh': '3' * 64, 'metric': 0, 'hop_limit': 0,
+                      'lifetime': 10, 'trace': ['4' * 64]}
+            if kind == 'HOP_PROBE_V3':
+                packet.update(origin_tag='5' * 64, hop_route_label='6' * 64)
+            handler = probes.receive_root if kind == 'HOP_ROOT_NCRH_V1' else probes.receive_probe
+            await handler(packet, 'peer')
+            statuses = lambda: [p for p in sent if p['type'] == 'HOP_NCRH_STATUS_V1']
+            self.assertEqual(statuses()[-1]['state'], 'UNKNOWN')
+            await handler(packet, 'peer')
+            self.assertEqual(statuses()[-1]['state'], 'KNOWN')
+            with self.assertRaises(BufferError):
+                await handler({**packet, 'request_id': '7' * 64, 'ncrh': '8' * 64}, 'peer')
+            self.assertEqual(statuses()[-1], {'type': 'HOP_NCRH_STATUS_V1',
+                             'request_id': '7' * 64, 'ncrh': '8' * 64, 'state': 'UNKNOWN'})
+            self.assertFalse(probes._exports)
+            await probes.close()
+
     def _transport(self, base):
         crypto = NodeCryptoManager('33' * 32, base)
         routes = SimpleNamespace(issue=lambda *args, **kwargs: 'f' * 64,

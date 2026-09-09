@@ -1,5 +1,21 @@
 # Active transport-v3 work — 2026-09-09
 
+## Semantic status checkpoint (2026-09-09)
+
+Root and Probe KNOWN/UNKNOWN responses describe NCRH knowledge before processing
+that advertisement. The correlated response is sent before reconstruction, so
+capacity failures cannot suppress it. A zero hop limit prevents propagation but
+allows local reconstruction; metric/loop terminal cases still receive status.
+The local NCRH graph now uses encrypted RAM rows, keyed blind indexes, capacity
+bounds and expiry. Distinct incoming peers remain distinct graph edges.
+
+Focused tests cover first UNKNOWN then KNOWN, terminal replies, capacity failure
+replies, graph encryption, capacity and expiry. Full test_all.py passes.
+This checkpoint does not complete automatic alias recovery: authenticated
+multi-node reconstruction, alias direction/correlation and independent peer
+export workers still require implementation and integration coverage.
+
+
 ## Recovery audit correction
 
 The earlier completion claims below overstate recovery acceptance. The
