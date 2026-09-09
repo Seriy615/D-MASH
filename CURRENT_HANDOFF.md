@@ -90,12 +90,22 @@ Probe and requires both an authenticated peer and a locally reconstructed
 candidate matching the NCRH/next-hop pair. NCRH knowledge alone cannot create
 a forwarding binding.
 
+Every authenticated Node connection starts the same synchronization round.
+Root and route advertisements use fresh RAM request IDs and receive explicit
+`HOP_NCRH_STATUS_V1` `KNOWN`/`UNKNOWN` replies correlated to the exact peer,
+request ID and NCRH. `HOP_ALIAS_BIND_V1` carries fresh runtime labels after a
+matching reconstructed candidate exists. Root, Probe, status and alias packets
+are direct Node control traffic, outside the 500 ms data aggregation window.
+Per-peer timeouts leave only that branch unresolved; successful peers remain
+usable. The local graph tracks peer/NCRH-in/NCRH-out/metric without endpoint
+identity.
+
 ## Validation and revision
 
 Full run: `/tmp/dmash-v3-py312/bin/python tools/test_all.py`.
-Final result: **172 backend tests, 11 Origin tests and 33 PWA suites passed**
+Final result: **176 backend tests, 11 Origin tests and 33 PWA suites passed**
 (exit 0). This includes 21 focused aggregation/batch tests plus BaseNCRH,
-Probe NCRH and encrypted backup coverage. Focused tests prove
+Probe NCRH, recovery correlation and encrypted backup coverage. Focused tests prove
 P1-P4 at 0/120/340/499 ms close at 500 ms, P5 at 510 ms closes at 1010 ms,
 next-hop regrouping, independent slow peers, exact batch limits, failure and
 cancellation retention. Real authenticated Node WebSocket coverage exercises

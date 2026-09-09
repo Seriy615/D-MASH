@@ -6,12 +6,12 @@ import time
 from collections import deque
 
 if __package__:
-    from .hop_probes import validate_probe
+    from .hop_probes import validate_probe, validate_root, validate_ncrh_status, validate_alias_bind
     from .hop_routes import validate_hop_packet
     from .secure_session import canonical
     from .resource_pow import activation_pow_difficulty, mine_activation_pow, verify_activation_pow
 else:
-    from hop_probes import validate_probe
+    from hop_probes import validate_probe, validate_root, validate_ncrh_status, validate_alias_bind
     from hop_routes import validate_hop_packet
     from secure_session import canonical
     from resource_pow import activation_pow_difficulty, mine_activation_pow, verify_activation_pow
@@ -78,7 +78,16 @@ class NodeChannel:
     def _operation(packet):
         if not isinstance(packet, dict):
             raise PermissionError("invalid Node packet")
-        if packet.get('type') in {'HOP_PROBE_V3', 'HOP_REPLY_V3'}:
+        if packet.get('type') == 'HOP_PROBE_V3':
+            validate_probe(packet)
+            return 'MESH_PROBE'
+        if packet.get('type') == 'HOP_ROOT_NCRH_V1':
+            validate_root(packet); return 'MESH_PROBE'
+        if packet.get('type') == 'HOP_NCRH_STATUS_V1':
+            validate_ncrh_status(packet); return 'MESH_PROBE'
+        if packet.get('type') == 'HOP_ALIAS_BIND_V1':
+            validate_alias_bind(packet); return 'MESH_PROBE'
+        if packet.get('type') == 'HOP_REPLY_V3':
             validate_probe(packet)
             return 'MESH_PROBE'
         if packet.get("type") == "HOP_DATA_V3":
@@ -114,6 +123,11 @@ class NodeChannel:
         operation = self._operation(packet)
         await self.secure.send_json({"type": operation, "packet": packet})
 
+    async def send_packet(self, packet):
+        """Send an authenticated control packet without mesh aggregation."""
+        operation = self._operation(packet)
+        await self.secure.send_json({"type": operation, "packet": packet})
+
     def __aiter__(self): return self
 
     async def __anext__(self):
@@ -133,7 +147,7 @@ class NodeChannel:
             self._validate_batch(value["packets"])
             self._received.extend(value["packets"])
             return json.dumps({"t": "REAL", "d": json.dumps(self._received.popleft())})
-        expected = {"MESH_PROBE": {"DMP_C_PROBE", "ROUTE_PROBE_V2", "HOP_PROBE_V3", "HOP_REPLY_V3"}, "MESH_DATA": {"DMP_C_DATA", "HOP_DATA_V3"}}
+        expected = {"MESH_PROBE": {"DMP_C_PROBE", "ROUTE_PROBE_V2", "HOP_PROBE_V3", "HOP_ROOT_NCRH_V1", "HOP_NCRH_STATUS_V1", "HOP_ALIAS_BIND_V1", "HOP_REPLY_V3"}, "MESH_DATA": {"DMP_C_DATA", "HOP_DATA_V3"}}
         packet = value.get("packet")
         if operation not in expected or not isinstance(packet, dict) or packet.get("type") not in expected[operation]:
             raise PermissionError("invalid Node operation")

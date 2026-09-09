@@ -49,8 +49,30 @@ three path alternatives are retained, including equal-length alternatives
 distinguished by their path commitment, while each Device/Node hop label
 remains independent.
 
+Every authenticated Node connection starts an event-driven synchronization
+round, even when neither side was restored from backup. The sender transmits
+`HOP_ROOT_NCRH_V1` for its `RootNCRH` and all eligible `HOP_PROBE_V3`
+advertisements. Each advertisement has a fresh RAM-only `request_id`.
+The receiver answers `HOP_NCRH_STATUS_V1` with the same `request_id`, NCRH and
+`KNOWN`/`UNKNOWN`; a successful reconstruction may additionally send
+`HOP_ALIAS_BIND_V1` with a fresh hop label. Replies are accepted only from the
+authenticated peer that received the advertisement and only when both
+request_id and NCRH match. Missing replies expire independently and do not
+block other peers.
+
+`HOP_ROOT_NCRH_V1` contains `{id,request_id,ncrh,metric,hop_limit,lifetime,trace}`.
+`HOP_PROBE_V3` adds `{origin_tag,hop_route_label}`. Status contains
+`{request_id,ncrh,state}`. Alias binding contains
+`{request_id,ncrh,hop_route_label,metric,lifetime}`. None of these packets
+contains Route_ID, route_locator, AccountID, DeviceID, DNSS or recipient data.
+The local graph records authenticated peer, NCRH-in, NCRH-out and metric.
+Logical candidate identity is `(authenticated peer, NCRH path)`; replacing a
+hop label updates that candidate rather than creating a duplicate. Multiple
+peers and multiple NCRH paths remain bounded alternatives.
+
 Alias recovery is a separate authenticated-peer operation (`recover_alias` in
-the current backend boundary). It can issue a fresh hop-local label only when
+the current backend boundary and `HOP_ALIAS_BIND_V1` wire exchange). It can
+issue a fresh hop-local label only when
 the Node already has a reconstructed candidate whose NCRH and next peer match;
 knowledge of NCRH alone never installs a forwarding binding. Old aliases,
 labels and Probe rows are runtime state and are intentionally absent from the
@@ -68,6 +90,11 @@ Local storage uses restrictive directory/file permissions and atomic writes.
 Restore validates and stages both secrets together, rolls back on replacement
 failure, and writes no partial Node state. The restored process receives a new
 RAM blind-index salt; it is never recovered from the bundle.
+
+The blind alias salt is CSPRNG-generated on every process startup and is never
+derived from signing identity or BaseNCRH. An existing malformed BaseNCRH file
+fails startup; replacement is allowed only when the file is absent on first
+initialization.
 
 
 ## Node aggregation windows — 2026-09-09

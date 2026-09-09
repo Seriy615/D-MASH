@@ -34,24 +34,24 @@ class RegistrationRegistryTests(unittest.TestCase):
         registered = self.registry.register(dnss, grant, now=1_000)
         self.assertEqual(registered.route_id, grant.route_id)
         self.assertEqual(self.registry.lookup(dnss, now=1_001).grant, grant)
+        stored_alias = self.registry.blind_hash(dnss)
 
         self.registry.close()
         self.registry = RegistrationRegistry(self.path, NodeCryptoManager(self.node_key.encode(encoder=HexEncoder).decode("ascii")))
         restored = self.registry.lookup(dnss, now=1_001)
-        self.assertIsNotNone(restored)
-        self.assertEqual(restored.route_public_key, self.route_public_key)
+        self.assertIsNone(restored, "old blind indexes are intentionally unusable after restart")
 
         connection = sqlite3.connect(self.path)
         dump = " ".join(str(cell) for row in connection.iterdump() for cell in (row,))
         connection.close()
         self.assertNotIn(dnss.decode("ascii"), dump)
-        self.assertIn(self.registry.blind_hash(dnss), dump)
+        self.assertIn(stored_alias, dump)
 
-    def test_hash_is_stable_for_node_but_node_scoped(self):
+    def test_hash_is_fresh_per_startup_and_node_scoped(self):
         dnss = b"raw-dnss-value!!"
         same_node = NodeCryptoManager(self.node_key.encode(encoder=HexEncoder).decode("ascii"))
         with RegistrationRegistry(self.path, same_node) as restarted_registry:
-            self.assertEqual(self.registry.blind_hash(dnss), restarted_registry.blind_hash(dnss))
+            self.assertNotEqual(self.registry.blind_hash(dnss), restarted_registry.blind_hash(dnss))
         # Use an independent database to avoid the intentional ownership guard.
         other_key = SigningKey(b"\x33" * 32)
         other_node = NodeCryptoManager(other_key.encode(encoder=HexEncoder).decode("ascii"))

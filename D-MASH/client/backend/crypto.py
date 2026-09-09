@@ -2,6 +2,7 @@ import time
 import json
 import base64
 import os
+import secrets
 import hashlib
 import hmac
 from typing import Optional, Tuple
@@ -25,10 +26,9 @@ class NodeCryptoManager:
     """
     def __init__(self, signing_key_hex: str = None, base_ncrh: bytes | None = None,
                  secret_salt: bytes | None = None):
-        # The blind-index key is RAM-only and is never part of a recovery
-        # bundle. Normal startup keeps the legacy identity-scoped derivation;
-        # recovery may pass a freshly generated salt so old blind aliases are
-        # intentionally not portable across restored state.
+        # The blind-index key is a fresh RAM-only secret on every startup and
+        # is never part of a recovery bundle. Old blind aliases are therefore
+        # intentionally rebuilt through the authenticated recovery protocol.
         self.secret_salt: Optional[bytes] = None
         self.signing_key: Optional[SigningKey] = None
         self.verify_key: Optional[VerifyKey] = None
@@ -51,10 +51,8 @@ class NodeCryptoManager:
         self.private_key = self.signing_key.to_curve25519_private_key()
         self.public_key = self.verify_key.to_curve25519_public_key()
         if secret_salt is None:
-            self.secret_salt = hashlib.sha256(
-                b"D-MASH|NODE_BLIND_ALIAS_KEY|V1\x00" + self.signing_key.encode()
-            ).digest()
-        elif isinstance(secret_salt, bytes) and len(secret_salt) == 32:
+            secret_salt = secrets.token_bytes(32)
+        if isinstance(secret_salt, bytes) and len(secret_salt) == 32:
             self.secret_salt = bytes(secret_salt)
         else:
             raise ValueError("secret_salt must be 32 random bytes")

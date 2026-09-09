@@ -142,12 +142,15 @@ def _atomic_secret_file(path: str, value: bytes) -> bytes:
 def ensure_base_ncrh(path: str = NODE_BASENCRH_FILE) -> bytes:
     try:
         with open(path, "rb") as handle: value = handle.read()
+    except FileNotFoundError:
+        return _atomic_secret_file(path, secrets.token_bytes(32))
+    try:
         if len(value) == 64:
             value = bytes.fromhex(value.decode("ascii"))
-        if len(value) != 32: raise ValueError("invalid BaseNCRH file")
+        if len(value) != 32: raise ValueError("malformed BaseNCRH file")
         return value
-    except (FileNotFoundError, ValueError, UnicodeDecodeError):
-        return _atomic_secret_file(path, secrets.token_bytes(32))
+    except (ValueError, UnicodeDecodeError) as error:
+        raise RuntimeError("BaseNCRH file is malformed; explicit repair is required") from error
 
 
 def ensure_node_identity():

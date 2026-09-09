@@ -5,7 +5,7 @@ from pathlib import Path
 
 from backend.crypto import NodeCryptoManager
 from backend.core import ensure_base_ncrh
-from backend.node_backup import LocalBlindObjectStore, backup_node, decrypt_bundle, encrypt_bundle, restore_node_files
+from backend.node_backup import LocalBlindObjectStore, backup_node, decrypt_bundle, encrypt_bundle, restore_node_files, restore_node_manager
 
 
 class NodeSecretTests(unittest.TestCase):
@@ -17,6 +17,14 @@ class NodeSecretTests(unittest.TestCase):
             self.assertEqual(first, second)
             self.assertEqual(len(first), 32)
             self.assertEqual(Path(path).stat().st_mode & 0o777, 0o600)
+
+    def test_malformed_base_ncrh_fails_closed(self):
+        from backend.core import ensure_base_ncrh
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'base.ncrh'
+            path.write_bytes(b'corrupt')
+            with self.assertRaises(RuntimeError): ensure_base_ncrh(str(path))
+            self.assertEqual(path.read_bytes(), b'corrupt')
 
     def test_base_ncrh_and_roots_are_stable_until_secret_replaced(self):
         base = b'a' * 32
@@ -61,6 +69,9 @@ class BackupTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(ram_salt), 32)
             self.assertNotEqual(ram_salt, b'a' * 32)
             self.assertEqual(identity.read_text(), '11' * 32); self.assertEqual(base.read_text(), (b'a' * 32).hex())
+            restored_manager = restore_node_manager(decrypt_bundle(bundle['ciphertext'], __import__('base64').urlsafe_b64decode(bundle['recovery_key'] + '==')), str(identity), str(base))
+            self.assertEqual(restored_manager.base_ncrh, b'a' * 32)
+            self.assertNotEqual(restored_manager.secret_salt, b'a' * 32)
             before = (identity.read_bytes(), base.read_bytes())
             with self.assertRaises(Exception): decrypt_bundle(bundle['ciphertext'][:-1], b'z' * 32)
             self.assertEqual((identity.read_bytes(), base.read_bytes()), before)

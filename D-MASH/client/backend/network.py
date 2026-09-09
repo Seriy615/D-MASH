@@ -100,6 +100,8 @@ class P2PNode:
             previous = self.active_connections.get(peer_id)
             self.active_connections[peer_id] = channel
             if previous: await previous.close()
+            try: await self.transport.hop_probes.peer_connected(peer_id)
+            except Exception: pass
             task = asyncio.create_task(self._listen_socket(channel, peer_id))
             self.connection_tasks.add(task)
             task.add_done_callback(self.connection_tasks.discard)
@@ -128,6 +130,8 @@ class P2PNode:
             previous = self.active_connections.get(peer_id)
             self.active_connections[peer_id] = channel
             if previous: await previous.close()
+            try: await self.transport.hop_probes.peer_connected(peer_id)
+            except Exception: pass
             await self._listen_socket(channel, peer_id)
         except asyncio.CancelledError:
             raise
@@ -237,11 +241,17 @@ class P2PNode:
 
                 # Do not mark, learn, route, or enqueue real transport traffic
                 # when this universal Python Node has routing disabled.
-                if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2", "DMP_C_DATA", "HOP_DATA_V3", "HOP_PROBE_V3", "HOP_REPLY_V3", "PROBE", "DATA"} and not self.can_route:
+                if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2", "DMP_C_DATA", "HOP_DATA_V3", "HOP_PROBE_V3", "HOP_ROOT_NCRH_V1", "HOP_NCRH_STATUS_V1", "HOP_ALIAS_BIND_V1", "HOP_REPLY_V3", "PROBE", "DATA"} and not self.can_route:
                     return
 
                 if pkt_type == 'HOP_PROBE_V3':
                     await self.transport.hop_probes.receive_probe(packet, from_peer)
+                elif pkt_type == 'HOP_ROOT_NCRH_V1':
+                    await self.transport.hop_probes.receive_root(packet, from_peer)
+                elif pkt_type == 'HOP_NCRH_STATUS_V1':
+                    await self.transport.hop_probes.receive_status(packet, from_peer)
+                elif pkt_type == 'HOP_ALIAS_BIND_V1':
+                    await self.transport.hop_probes.receive_alias_bind(packet, from_peer)
                 elif pkt_type == 'HOP_REPLY_V3':
                     await self.transport.hop_probes.receive_reply(packet, from_peer)
                 elif pkt_type == 'HOP_DATA_V3':

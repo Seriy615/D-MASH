@@ -147,3 +147,14 @@ def restore_node_files(payload, identity_path, base_ncrh_path):
     # Blind aliases are a RAM namespace. A restored process must install this
     # fresh value in NodeCryptoManager instead of deriving or importing it.
     return secrets.token_bytes(32)
+
+
+def restore_node_manager(payload, identity_path, base_ncrh_path):
+    """Restore persistent files and construct a manager with a fresh RAM salt."""
+    ram_salt = restore_node_files(payload, identity_path, base_ncrh_path)
+    state = payload['persistent_secret_state']
+    try:
+        from .crypto import NodeCryptoManager
+    except ImportError:
+        from crypto import NodeCryptoManager
+    return NodeCryptoManager(state['signing_key_hex'], bytes.fromhex(state['base_ncrh_hex']), ram_salt)
