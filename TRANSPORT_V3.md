@@ -15,6 +15,15 @@ prunes sessions at expiry. Secrets, tickets and session state are volatile;
 coturn installation and the production signaling WebSocket remain deployment
 work and are deliberately not claimed here.
 
+Device-level call/file payload validation is separated in
+`backend/session_protocol.py`. `CALL_REQUEST_V2` carries only an ephemeral
+call ID, expiry, signaling ticket, bounded display/ringtone data and media
+capabilities. `FILE_SESSION_REQUEST` carries an ephemeral session, opaque
+encrypted metadata, size/chunk/hash limits and a resumable flag. Both schemas
+are intended to be encrypted inside Device Envelope; their validators reject
+AccountID, DeviceID, DNSS and unbounded ringtone/metadata input. WebRTC
+DataChannel and production coturn integration are still follow-up work.
+
 ## Authenticated recovery acceptance — 2026-09-09
 
 Recovery now has a response-driven alias exchange in the production NodeChannel

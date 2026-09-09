@@ -59,6 +59,14 @@ stored. coturn installation, systemd/firewall wiring and the production WSS
 endpoint remain infrastructure work; this module does not claim those are
 deployed.
 
+`backend/session_protocol.py` now validates the encrypted Device payload shapes
+for `CALL_REQUEST_V2` and `FILE_SESSION_REQUEST`. Calls have bounded display
+name, allowlisted/decoded ringtone (256 KiB maximum), media capabilities and
+one-time signaling ticket. File sessions have opaque encrypted metadata,
+50 GiB size ceiling, bounded chunks, SHA-256 integrity and resumable flag.
+These validators never expose Account/Device identity to the Mesh; actual
+WebRTC/coturn transport integration remains pending.
+
 This checkpoint addresses authenticated route reconstruction and alias recovery.
 It does not complete the original overall product plan. Remaining work includes
 production PWA Probe orchestration across all route producers, durable transport
