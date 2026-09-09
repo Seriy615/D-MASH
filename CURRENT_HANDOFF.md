@@ -4,6 +4,20 @@ Checkout: `/Users/afsvu/Documents/Codex/D-MASH/D-MASH`; branch `transport-v3`.
 The earlier checkpoint is preserved in HANDOFF_TRANSPORT_V3.md. The current
 transport semantics are specified and tested in TRANSPORT_V3.md.
 
+## Hop-label foundation added after batching correction
+
+HopRoutes stores peer/role-scoped random labels behind fresh HMAC indexes and
+SecretBox-encrypted, bounded, expiring runtime records. Local NCRH mappings are
+encrypted and never used as authority. HOP_DATA_V3 is wired through NodeChannel,
+transport admission, snapshot-time route resolution and existing peer workers;
+labels change at each hop while Device ciphertext stays opaque. Shutdown drops
+the table's keys and rows. No raw RouteID persistence was introduced.
+
+Six focused tests include a three-Node data path and revoked-before-flush
+rejection. Bindings are explicitly installed in that fixture. Production Probe
+still needs to install these mappings and return Device L0; old discovery's
+global NCRH also still needs replacement. Do not claim milestone F complete.
+
 ## Current batching correction
 
 The periodic tact loop has been replaced by first-arrival-armed one-shot
@@ -47,7 +61,7 @@ Historical decrypt's ambiguous null result still leaves control packets pending.
 ## Validation and revision
 
 Full run: `/tmp/dmash-v3-py312/bin/python tools/test_all.py`.
-Final result: **155 backend tests, 11 Origin tests and 33 PWA suites passed**
+Final result: **161 backend tests, 11 Origin tests and 33 PWA suites passed**
 (exit 0). This includes 21 focused aggregation/batch tests. Focused tests prove
 P1-P4 at 0/120/340/499 ms close at 500 ms, P5 at 510 ms closes at 1010 ms,
 next-hop regrouping, independent slow peers, exact batch limits, failure and
@@ -55,8 +69,8 @@ cancellation retention. Real authenticated Node WebSocket coverage exercises
 the production aggregation window; all existing PWA suites remain required.
 
 Implementation checkpoint: `0ebc49ab3d796b16f3817773f3885e1286c816da`.
-The follow-up commit containing this handoff adds exact byte-boundary coverage
-and the final validation record. No deploy or push is part of this fix.
+Batching validation/documentation checkpoint: `c9fe8938c313f815602a1aff76434548f834f060`.
+The current continuation adds the hop-label data-plane foundation above. No deploy or push is part of this fix.
 
 ## Historical handoff (retained verbatim below)
 

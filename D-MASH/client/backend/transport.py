@@ -14,6 +14,11 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Set
 
+if __package__:
+    from .hop_routes import HopRoutes, validate_hop_packet
+else:
+    from hop_routes import HopRoutes, validate_hop_packet
+
 
 @dataclass(slots=True)
 class TransportSubmission:
@@ -28,6 +33,7 @@ class NodeTransportService:
         self.node = node
         self.can_route = can_route
         self.can_accept_devices = can_accept_devices
+        self.hop_routes = HopRoutes()
         self._inbound_locators: Dict[str, str] = {}
         self.v3_mailbox = None
         self._v3_bindings: Dict[str, str] = {}
@@ -334,6 +340,15 @@ class NodeTransportService:
             return TransportSubmission(delivery_id=packet.get("id", ""), state=state, packet=packet)
         await self._dispatch_mesh_packet(packet, next_hop_id=route["next_hop_id"], origin_peer_id=from_peer)
         return TransportSubmission(delivery_id=packet.get("id", ""), state="ROUTED_IN_D_MASH", packet=packet)
+
+    async def receive_hop_data(self, packet, from_peer):
+        if not self.can_route:
+            raise PermissionError('routing disabled')
+        validate_hop_packet(packet)
+        if self.hop_routes.resolve('NODE', from_peer, packet['hop_route_label']) is None:
+            raise PermissionError('unknown hop binding')
+        # Keep the incoming label until the aggregation snapshot re-resolves it.
+        await self.node.enqueue_transport_packet(packet, exclude_peer_id=from_peer)
 
     async def _store_mailbox(self, locator_handle: str, packet: Dict[str, Any]) -> bool:
         if locator_handle in self._v3_bindings:

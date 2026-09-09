@@ -218,6 +218,7 @@ async def lifespan(app: FastAPI):
         print("🛑 [CORE] Shutting down...")
         for task in state.background_tasks: task.cancel()
         if state.tact: await state.tact.close()
+        if state.node: state.node.transport.hop_routes.close()
         state.process_pool.shutdown(wait=False) # <--- НЕ ЗАБУДЬТЕ ЗАКРЫТЬ
         if state.db: await state.db.close()
         state.fallback_store = None

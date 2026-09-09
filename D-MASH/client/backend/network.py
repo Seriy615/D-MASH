@@ -178,6 +178,18 @@ class P2PNode:
         completed. Probe discovery retains its existing broadcast semantics.
         """
         packet = item['packet']
+        if packet['type'] == 'HOP_DATA_V3':
+            route = self.transport.hop_routes.resolve('NODE', item['exclude_peer_id'], packet['hop_route_label'])
+            if route is None:
+                return None
+            if route['mailbox_alias'] is not None:
+                await self.transport._store_mailbox(route['mailbox_alias'], packet)
+                return ()
+            if route['next_peer'] == item['exclude_peer_id']:
+                return None
+            item['packet'] = {**packet, 'hop_route_label': route['outgoing_label']}
+            item['queue_bytes'] = len(canonical(item['packet']))
+            return (route['next_peer'],)
         if packet['type'] == 'DMP_C_DATA':
             locator = packet.get('route_id') or packet.get('route_alias')
             if locator:
@@ -220,10 +232,12 @@ class P2PNode:
 
                 # Do not mark, learn, route, or enqueue real transport traffic
                 # when this universal Python Node has routing disabled.
-                if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2", "DMP_C_DATA", "PROBE", "DATA"} and not self.can_route:
+                if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2", "DMP_C_DATA", "HOP_DATA_V3", "PROBE", "DATA"} and not self.can_route:
                     return
 
-                if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2"}:
+                if pkt_type == 'HOP_DATA_V3':
+                    await self.transport.receive_hop_data(packet, from_peer)
+                elif pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2"}:
                     # DMP-C remains capability-gated by the existing policy.
                     is_new = await self.system_db.mark_packet_seen(pkt_id)
                     await self._handle_dmp_c_probe(packet, from_peer, is_new)

@@ -1,5 +1,43 @@
 # Transport v3 engineering record
 
+## Hop-label data plane foundation — 2026-09-09
+
+`HopRoutes` now provides a volatile label table scoped by authenticated role
+and ingress owner. Labels are independent 256-bit random values. Lookup uses
+HMAC with a fresh instance key; rows contain SecretBox-encrypted next peer,
+outgoing label or local mailbox alias, metric, expiry and local NCRH-in/out.
+NCRH-out is independently random and is not ownership evidence. Tables have
+bounded capacity/lifetime, explicit revocation and discard keys/rows on close.
+No stable Node key or raw RouteID is used in the table's index or persisted.
+
+`HOP_DATA_V3` is accepted inside authenticated Node MESH_DATA/MESH_BATCH. Its
+strict wire fields are packet id, hop_route_label and opaque Device ciphertext;
+raw route/account metadata and NCRH fields are rejected. An ingress label is
+valid only for the authenticated sending peer. Admission checks the binding;
+the existing first-arrival aggregator rechecks it at flush, rewrites the label
+and groups by resolved next peer. Local termination reuses mailbox authority
+checks. Revoked/expired queued bindings stay unresolved within the existing
+RAM queue budget. No stale peer fallback or implicit broadcast is introduced.
+
+Six new tests cover scope isolation, encrypted local metadata, independent
+labels/keys, expiry/capacity/revocation, tampering, strict wire fields and a
+three-Node data path with separate 500 ms windows and unchanged ciphertext.
+The multi-hop fixture installs bindings explicitly; it does NOT prove Probe
+establishment. Production Device submission/discovery still uses the existing
+locator path: automatic Probe/response installation, Device L0 acquisition,
+and replacement of legacy Probe's global NCRH are the next migration steps.
+This is a working hop-data-plane foundation, not completion of milestone F.
+
+Trajectory design direction: NCRH must not derive from RouteID or Account IDs.
+Different delivery bindings may reference the same locally known trajectory
+and share its health/selection state. That does not merge delivery permissions,
+DNSS or final labels. A shared node segment is not evidence of the same final
+destination or complete path. Keep trajectory identity local and encrypted;
+do not put a global hash of the node sequence on every hop. Current NCRH values
+are independent random local metadata per binding; shared trajectory records
+and their establishment are not implemented yet.
+
+
 ## Node aggregation windows — 2026-09-09
 
 Normal mesh DATA and discovery probes enter a RAM-only aggregation queue.
@@ -254,7 +292,7 @@ required work. NCRH never authorizes ownership. Each hop replaces a random
 local label using encrypted local metadata; Account identifiers never enter
 locator derivation or Node descriptors.
 
-Batching aggregates routes sharing a next hop every 500ms, with item/byte and
+Batching aggregates routes sharing a next hop in first-arrival 500ms windows, with item/byte and
 queue bounds and FIFO within a route. Control frames are immediate. Without
 padding and cover traffic this reduces timing granularity but does not prevent
 global traffic correlation.
