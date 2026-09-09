@@ -153,7 +153,7 @@ class P2PNode:
                 del self.active_connections[peer_id]
             await websocket.close()
 
-    async def enqueue_transport_packet(self, packet, *, next_hop_id: str | None = None, exclude_peer_id: str | None = None):
+    async def enqueue_transport_packet(self, packet, *, next_hop_id: str | None = None, exclude_peer_id: str | None = None, hop_owner=None):
         if not self.can_route:
             raise PermissionError("routing is disabled by local Node policy")
         NodeChannel._operation(packet)
@@ -167,6 +167,8 @@ class P2PNode:
             "packet": json.loads(encoded), "queue_bytes": len(encoded), "next_hop_id": next_hop_id,
             "exclude_peer_id": exclude_peer_id,
         }
+        if hop_owner is not None:
+            item['hop_owner'] = hop_owner
         self.transient_transport_outbox.append(item)
         if self.transport_batcher is not None:
             self.transport_batcher.accept(item)
@@ -179,11 +181,12 @@ class P2PNode:
         """
         packet = item['packet']
         if packet['type'] == 'HOP_DATA_V3':
-            route = self.transport.hop_routes.resolve('NODE', item['exclude_peer_id'], packet['hop_route_label'])
+            role, owner = ('DEVICE', item['hop_owner']) if 'hop_owner' in item else ('NODE', item['exclude_peer_id'])
+            route = self.transport.hop_routes.resolve(role, owner, packet['hop_route_label'])
             if route is None:
                 return None
             if route['mailbox_alias'] is not None:
-                await self.transport._store_mailbox(route['mailbox_alias'], packet)
+                await self.transport._store_hop_mailbox(route['mailbox_alias'], packet)
                 return ()
             if route['next_peer'] == item['exclude_peer_id']:
                 return None
@@ -217,6 +220,8 @@ class P2PNode:
         peers = tuple(peer for peer in self.active_connections
                       if peer != item.get('exclude_peer_id') and
                       self.system_db.node_crypto.get_blind_hash(peer) != item.get('exclude_peer_hash'))
+        if packet['type'] == 'HOP_PROBE_V3' and not self.transport.hop_probes.note_sent(packet, peers):
+            return ()  # Expired/answered discovery no longer needs a broadcast.
         return peers or None
 
     async def _process_envelope(self, envelope_json: str, from_peer: str):
@@ -232,10 +237,14 @@ class P2PNode:
 
                 # Do not mark, learn, route, or enqueue real transport traffic
                 # when this universal Python Node has routing disabled.
-                if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2", "DMP_C_DATA", "HOP_DATA_V3", "PROBE", "DATA"} and not self.can_route:
+                if pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2", "DMP_C_DATA", "HOP_DATA_V3", "HOP_PROBE_V3", "HOP_REPLY_V3", "PROBE", "DATA"} and not self.can_route:
                     return
 
-                if pkt_type == 'HOP_DATA_V3':
+                if pkt_type == 'HOP_PROBE_V3':
+                    await self.transport.hop_probes.receive_probe(packet, from_peer)
+                elif pkt_type == 'HOP_REPLY_V3':
+                    await self.transport.hop_probes.receive_reply(packet, from_peer)
+                elif pkt_type == 'HOP_DATA_V3':
                     await self.transport.receive_hop_data(packet, from_peer)
                 elif pkt_type in {"DMP_C_PROBE", "ROUTE_PROBE_V2"}:
                     # DMP-C remains capability-gated by the existing policy.

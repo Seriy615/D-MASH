@@ -110,7 +110,7 @@ class HopPipelineTests(unittest.IsolatedAsyncioTestCase):
             for p in packets: await c.transport.receive_hop_data(p, 'B')
         a.active_connections['B'] = SimpleNamespace(send_batch=send_b)
         b.active_connections['C'] = SimpleNamespace(send_batch=send_c)
-        c.transport._store_mailbox = AsyncMock()
+        c.transport._store_hop_mailbox = AsyncMock()
         original = packet(la)
         await a.transport.receive_hop_data(original, 'ENTRY')
         self.clocks[0].advance(.5)
@@ -120,12 +120,12 @@ class HopPipelineTests(unittest.IsolatedAsyncioTestCase):
         self.clocks[1].advance(.5)
         await eventually(lambda: bool(c.transient_transport_outbox))
         self.clocks[2].advance(.5)
-        await eventually(lambda: c.transport._store_mailbox.await_count == 1)
+        await eventually(lambda: c.transport._store_hop_mailbox.await_count == 1)
         for wire in (received[0][0], received[1][0]):
             self.assertEqual(wire['envelope'], original['envelope'])
             self.assertNotIn('route_id', wire)
             self.assertNotIn('ncrh', wire)
-        self.assertEqual(c.transport._store_mailbox.call_args.args[0], 'blind-dnss-locator')
+        self.assertEqual(c.transport._store_hop_mailbox.call_args.args[0], 'blind-dnss-locator')
 
     async def test_wrong_peer_and_revocation_before_flush(self):
         node = self.nodes[0]

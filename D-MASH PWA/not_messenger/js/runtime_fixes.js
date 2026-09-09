@@ -260,7 +260,7 @@
                     const resource = {kind: 'PUBLIC', routeId: route.routeId, signing,
                         generation: grant.generation, expiresAt: grant.expires_at, entryGrant: grant};
                     await connection.authority.route('REGISTER_ROUTE', resource);
-                    await connection.authority.route('START_PROBE', resource, {route_locator: route.routeId});
+                    await connection.authority.route('START_PROBE', resource, {route_locator: options.targetRoute || route.routeId});
                     return {state: 'ACTIVATED'};
                 });
             }
@@ -568,7 +568,9 @@
                 validator,
                 encrypt: ({ plaintext, recipientCertificate }) => sealForRouteCertificate(recipientCertificate, plaintext),
                 submit: async ({ routeLocator, envelope }) => {
-                    const ready = await global.NodeManager.routeStatus(routeLocator);
+                    const ready = global.NodeManager.ensurePublicRouteV3
+                        ? await global.NodeManager.ensurePublicRouteV3(routeLocator, reply.routeId)
+                        : await global.NodeManager.routeStatus(routeLocator);
                     if (!ready) throw new Error("RouteID пока не найден в mesh. Получатель должен быть online хотя бы на одной Node.");
                     if (ready.connection.client) {
                         await core.getContactFlowV3().recordOutgoing(request, descriptor.c, requestAccountSlot);

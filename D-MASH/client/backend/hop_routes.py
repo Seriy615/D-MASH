@@ -15,7 +15,7 @@ _LABEL = re.compile(r'[0-9a-f]{64}')
 def validate_hop_packet(packet):
     if not isinstance(packet, dict) or set(packet) != {'type', 'id', 'hop_route_label', 'envelope'} or packet['type'] != 'HOP_DATA_V3':
         raise ValueError('invalid hop packet')
-    if not isinstance(packet['id'], str) or not 1 <= len(packet['id']) <= 128:
+    if not isinstance(packet['id'], str) or not 1 <= len(packet['id']) <= 128 or not packet['id'].isascii():
         raise ValueError('invalid hop packet id')
     if not isinstance(packet['hop_route_label'], str) or not _LABEL.fullmatch(packet['hop_route_label']):
         raise ValueError('invalid hop label')
@@ -23,9 +23,10 @@ def validate_hop_packet(packet):
     if not isinstance(envelope, dict) or set(envelope) != {'version', 'ciphertext'} or type(envelope['version']) is not int or envelope['version'] != 1:
         raise ValueError('invalid opaque hop envelope')
     ciphertext = envelope['ciphertext']
-    if not isinstance(ciphertext, str) or not 1 <= len(ciphertext) <= 87384:
+    if not isinstance(ciphertext, str) or not 1 <= len(ciphertext) <= 65536:
         raise ValueError('invalid hop ciphertext size')
-    if not 1 <= len(base64.b64decode(ciphertext, validate=True)) <= 65536:
+    raw = base64.b64decode(ciphertext, validate=True)
+    if not raw or base64.b64encode(raw).decode() != ciphertext:
         raise ValueError('invalid hop ciphertext size')
 
 
@@ -59,7 +60,7 @@ class HopRoutes:
                 del self._rows[index]
 
     def issue(self, role, owner, *, next_peer=None, outgoing_label=None,
-              mailbox_alias=None, metric=0, ttl=1800, ncrh_in=None):
+              mailbox_alias=None, metric=0, ttl=1800, ncrh_in=None, ncrh_out=None):
         # This internal API is called only after the caller has validated
         # resource authority / a probe path. Knowing NCRH never calls issue.
         if type(ttl) not in (int, float) or not 0 < ttl <= 1800:
@@ -74,6 +75,8 @@ class HopRoutes:
             raise ValueError('invalid outgoing hop binding')
         if ncrh_in is not None and (not isinstance(ncrh_in, str) or not _LABEL.fullmatch(ncrh_in)):
             raise ValueError('invalid local NCRH')
+        if ncrh_out is not None and (not isinstance(ncrh_out, str) or not _LABEL.fullmatch(ncrh_out)):
+            raise ValueError('invalid outgoing NCRH')
         label = secrets.token_hex(32)
         index = self._index(role, owner, label)
         if len(self._rows) >= self.capacity:
@@ -82,7 +85,7 @@ class HopRoutes:
             raise BufferError('hop route capacity reached')
         self._rows[index] = self._seal(dict(next_peer=next_peer, outgoing_label=outgoing_label,
             mailbox_alias=mailbox_alias, metric=metric, expires=self.clock() + ttl,
-            ncrh_in=ncrh_in, ncrh_out=secrets.token_hex(32)))
+            ncrh_in=ncrh_in, ncrh_out=ncrh_out or (secrets.token_hex(32) if next_peer else None)))
         return label
 
     def resolve(self, role, owner, label):

@@ -2746,7 +2746,7 @@ const Core = {
                 await this._ensureAutomaticMeshRoute(peerId, body.contribution);
             }),
             send: async (certificate, message) => {
-                const ready = await window.NodeManager.routeStatus(certificate.routeId);
+                const ready = await window.NodeManager.ensurePublicRouteV3(certificate.routeId, message.body.route_certificate.routeId);
                 if (!ready?.connection.client) throw Error('Contact reply route unavailable');
                 return window.NodeManager.submitDeviceEnvelopeV3(certificate.routeId, 'CONN_ACCEPT', message, certificate, ready.connection);
             }

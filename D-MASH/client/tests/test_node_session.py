@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from nacl.signing import SigningKey
@@ -34,6 +35,7 @@ class NodeSessionTests(unittest.IsolatedAsyncioTestCase):
     async def asyncTearDown(self):
         for node in self.nodes:
             if node.transport_batcher: await node.transport_batcher.close()
+            node.transport.hop_probes.close()
             for channel in list(node.active_connections.values()): await channel.close()
             for task in list(node.connection_tasks): task.cancel()
             await asyncio.gather(*node.connection_tasks, return_exceptions=True)
@@ -102,6 +104,30 @@ class NodeSessionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse(await a.connect_to(f"127.0.0.1:{server.sockets[0].getsockname()[1]}"))
             self.assertFalse(a.active_connections)
             self.assertFalse(b.active_connections)
+
+    async def test_real_encrypted_probe_reply_and_device_hop_submit(self):
+        a, b = self.nodes
+        a.transport.can_accept_devices = b.transport.can_accept_devices = True
+        sink = AsyncMock()
+        b.transport.v3_mailbox = SimpleNamespace(put=sink)
+        await b.transport.register_inbound_locator('destination', blind_dnss='aa' * 32, authority_check=lambda: True)
+        TactEngine(a.system_db, a)
+        TactEngine(b.system_db, b)
+        async with serve(b._handle_incoming, '127.0.0.1', 0) as server:
+            self.assertTrue(await a.connect_to(f'127.0.0.1:{server.sockets[0].getsockname()[1]}'))
+            await a.transport.hop_probes.start('source-dnss', 'destination')
+            async with asyncio.timeout(5):
+                while a.transport.hop_probes.status('source-dnss', 'destination')['state'] != 'ROUTE_READY':
+                    await asyncio.sleep(.01)
+            status = a.transport.hop_probes.status('source-dnss', 'destination')
+            from backend.secure_session import b64
+            cipher = b64(b'opaque Device packet')
+            await a.transport.submit_hop_envelope('source-dnss', status['hop_route_label'], {'version': 1, 'ciphertext': cipher})
+            async with asyncio.timeout(5):
+                while not sink.await_count: await asyncio.sleep(.01)
+            self.assertEqual(sink.call_args.args[0], 'aa' * 32)
+            self.assertEqual(sink.call_args.args[2], cipher)
+            self.assertFalse(a.transient_transport_outbox)
 
 
 if __name__ == "__main__": unittest.main()

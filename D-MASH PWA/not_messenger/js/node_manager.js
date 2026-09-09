@@ -655,6 +655,25 @@ const NodeManager = {
             .sort((a, b) => (a.result.best_metric ?? Number.MAX_SAFE_INTEGER) - (b.result.best_metric ?? Number.MAX_SAFE_INTEGER));
         return ready[0] || null;
     },
+    async ensurePublicRouteV3(target, sourceRoute, timeoutMs = 18000) {
+        const ready = await this.routeStatus(target);
+        if (ready) return ready;
+        const connections = this.connectedConnections().filter(node => node.client && node.authority);
+        if (!connections.length) return null;
+        const route = window.DeviceRoutes.resolve(sourceRoute);
+        if (!route || typeof this.activatePublicRouteOnConnection !== 'function') throw new Error('Public source route is unavailable');
+        const attempts = await Promise.allSettled(connections.map(node =>
+            this.activatePublicRouteOnConnection(route, node, {targetRoute: target})));
+        if (attempts.every(result => result.status === 'rejected')) throw attempts[0].reason;
+        const deadline = Date.now() + timeoutMs;
+        do {
+            const found = await this.routeStatus(target);
+            if (found) return found;
+            if (Date.now() >= deadline) return null;
+            await new Promise(resolve => setTimeout(resolve, 250));
+        } while (Date.now() < deadline);
+        return null;
+    },
     async submitEnvelope(routeLocator, envelope) {
         if (this.connectedConnections().some(node => node.client)) {
             const record = await this.deviceInboxV3()._get('private-outbound:' + routeLocator);
@@ -664,7 +683,7 @@ const NodeManager = {
             if (!ready) throw new Error('Route unavailable');
             const device = window.DeviceEnvelope.create(target, 'MSG', JSON.stringify(envelope));
             const ciphertext = window.DeviceEnvelope.seal(window.DmashSecureSession.unb64(record.boxPublicKey, 32), device);
-            return ready.connection.client.request('SUBMIT', {route_locator: target, ciphertext});
+            return this.submitHopCiphertextV3(ready.connection, ready.result?.hop_route_label, ciphertext);
         }
         // Discovery is event-driven.  Do not turn a missing route into a blind
         // DATA flood or a silent legacy-relay fallback.
@@ -677,7 +696,13 @@ const NodeManager = {
         const publicKey = Uint8Array.from(atob(certificate.boxPublicKey.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
         const envelope = window.DeviceEnvelope.create(routeLocator, type, JSON.stringify(accountPayload));
         const ciphertext = window.DeviceEnvelope.seal(publicKey, envelope);
-        return connection.client.request('SUBMIT', {route_locator: routeLocator, ciphertext});
+        const status = await connection.client.request('ROUTE_STATUS', {route_locator: routeLocator});
+        if (status.state !== 'ROUTE_READY') throw new Error('Route unavailable');
+        return this.submitHopCiphertextV3(connection, status.hop_route_label, ciphertext);
+    },
+    submitHopCiphertextV3(connection, label, ciphertext) {
+        if (!/^[0-9a-f]{64}$/.test(label || '')) throw new Error('Node did not provide a hop route label');
+        return connection.client.request('SUBMIT', {hop_route_label: label, ciphertext});
     },
     async pull(locatorHandle) {
         if (this.connectedConnections().some(connection => connection.client)) {

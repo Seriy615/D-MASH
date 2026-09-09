@@ -58,12 +58,14 @@ async def resource_operation(state, secure, session, request):
         if op == "UNREGISTER_ROUTE":
             await transport.unregister_inbound_locator(auth["route_id"])
             return {"type": "UNREGISTER_ROUTE_RESULT", "request_id": rid}
-        result = await transport.start_probe(request.get("route_locator"), auth["route_id"], ttl=15)
+        state_name = await transport.hop_probes.start(alias, request.get("route_locator"))
         # Do not echo the transient probe packet or topology in the response.
-        return {"type": "START_PROBE_RESULT", "request_id": rid, "state": result.state}
+        return {"type": "START_PROBE_RESULT", "request_id": rid, "state": state_name}
     if op == "ROUTE_STATUS":
-        return {"type": "ROUTE_STATUS_RESULT", "request_id": rid, **await transport.route_status(request.get("route_locator"))}
+        return {"type": "ROUTE_STATUS_RESULT", "request_id": rid, **transport.hop_probes.status(alias, request.get("route_locator"))}
     if op == "SUBMIT":
+        if set(request) != {'type', 'request_id', 'hop_route_label', 'ciphertext'}:
+            raise RegistrationError('HOP_LABEL_REQUIRED')
         ciphertext = request.get("ciphertext")
         # Validate size and canonical ciphertext before any route/outbox work.
         if not isinstance(ciphertext, str) or not 1 <= len(ciphertext) <= 64 * 1024:
@@ -72,7 +74,7 @@ async def resource_operation(state, secure, session, request):
             raw = base64.b64decode(ciphertext, validate=True)
             if base64.b64encode(raw).decode() != ciphertext: raise ValueError()
         except Exception as error: raise RegistrationError("INVALID_CIPHERTEXT") from error
-        result = await transport.submit_envelope(request.get("route_locator"), {"version": 1, "ciphertext": ciphertext})
+        result = await transport.submit_hop_envelope(alias, request.get("hop_route_label"), {"version": 1, "ciphertext": ciphertext})
         return {"type": "SUBMIT_RESULT", "request_id": rid, "state": result.state, "delivery_id": result.delivery_id}
     raise RegistrationError("UNSUPPORTED_OPERATION")
 
@@ -122,6 +124,8 @@ async def dmp_v3(websocket: WebSocket):
                     response = {"type": "ERROR", "request_id": request_id, "code": str(error)}
                 except (ValueError, TypeError):
                     response = {"type": "ERROR", "request_id": request_id, "code": "INVALID_REQUEST"}
+                except PermissionError:
+                    response = {"type": "ERROR", "request_id": request_id, "code": "ROUTE_BINDING_REJECTED"}
             else:
                 response = {"type": "ERROR", "request_id": request_id, "code": "UNSUPPORTED_OPERATION"}
             if response is not None: await secure.send_json(response)

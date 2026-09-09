@@ -15,8 +15,10 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional, Set
 
 if __package__:
+    from .hop_probes import HopProbes
     from .hop_routes import HopRoutes, validate_hop_packet
 else:
+    from hop_probes import HopProbes
     from hop_routes import HopRoutes, validate_hop_packet
 
 
@@ -34,6 +36,7 @@ class NodeTransportService:
         self.can_route = can_route
         self.can_accept_devices = can_accept_devices
         self.hop_routes = HopRoutes()
+        self.hop_probes = HopProbes(self)
         self._inbound_locators: Dict[str, str] = {}
         self.v3_mailbox = None
         self._v3_bindings: Dict[str, str] = {}
@@ -101,6 +104,7 @@ class NodeTransportService:
         if blind_dnss is not None:
             self._v3_bindings[locator_handle] = blind_dnss
             self._v3_authority_checks[locator_handle] = authority_check
+            self.hop_probes.register(locator, locator_handle)
         return locator_handle
 
     async def register_notification_beacon(self, beacon_handle: str) -> str:
@@ -140,6 +144,7 @@ class NodeTransportService:
         self._inbound_locators.pop(locator_handle, None)
         self._v3_bindings.pop(locator_handle, None)
         self._v3_authority_checks.pop(locator_handle, None)
+        self.hop_probes.unregister(locator)
         self._local_delivery_sessions.pop(locator_handle, None)
         return removed
 
@@ -349,6 +354,26 @@ class NodeTransportService:
             raise PermissionError('unknown hop binding')
         # Keep the incoming label until the aggregation snapshot re-resolves it.
         await self.node.enqueue_transport_packet(packet, exclude_peer_id=from_peer)
+
+    async def submit_hop_envelope(self, owner, label, envelope):
+        if not self.can_route or not self.can_accept_devices:
+            raise PermissionError('routing disabled')
+        packet = dict(type='HOP_DATA_V3', id=secrets.token_hex(16), hop_route_label=label, envelope=envelope)
+        validate_hop_packet(packet)
+        route = self.hop_routes.resolve('DEVICE', owner, label)
+        if route is None: raise PermissionError('unknown Device hop binding')
+        if route['mailbox_alias'] is not None:
+            await self._store_hop_mailbox(route['mailbox_alias'], packet)
+            return TransportSubmission(packet['id'], 'NODE_ACCEPTED', packet)
+        await self.node.enqueue_transport_packet(packet, hop_owner=owner)
+        return TransportSubmission(packet['id'], 'SUBMITTED_TO_ENTRY', packet)
+
+    async def _store_hop_mailbox(self, alias, packet):
+        # A revoked v3 label must never fall through into the legacy mailbox.
+        check = self._v3_authority_checks.get(alias)
+        if alias not in self._v3_bindings or not callable(check) or not check():
+            raise PermissionError('v3 route authority expired or revoked')
+        return await self._store_mailbox(alias, packet)
 
     async def _store_mailbox(self, locator_handle: str, packet: Dict[str, Any]) -> bool:
         if locator_handle in self._v3_bindings:

@@ -52,6 +52,11 @@ class RouteMailboxIntegrationTests(unittest.IsolatedAsyncioTestCase):
         request.setdefault("request_id", secrets.token_hex(16))
         return await resource_operation(self.state, self.secure, self.session, request)
 
+    async def label(self, locator):
+        status = await self.request({'type': 'ROUTE_STATUS', 'route_locator': locator})
+        self.assertEqual(status['state'], 'ROUTE_READY')
+        return status['hop_route_label']
+
     def route_request(self, key, operation):
         public = b64(key.verify_key.encode())
         auth = {"kind": "PRIVATE", "route_id": private_locator(public), "public_key": public,
@@ -69,7 +74,7 @@ class RouteMailboxIntegrationTests(unittest.IsolatedAsyncioTestCase):
             registration = self.route_request(key, "REGISTER_ROUTE")
             await self.request(registration)
             await self.request(self.route_request(key, "START_PROBE"))
-            result = await self.request({"type": "SUBMIT", "route_locator": registration["authorization"]["route_id"],
+            result = await self.request({"type": "SUBMIT", "hop_route_label": await self.label(registration["authorization"]["route_id"]),
                                          "ciphertext": b64(f"opaque device packet {index}".encode())})
             self.assertEqual(result["state"], "NODE_ACCEPTED")
         self.responses.clear()
@@ -94,7 +99,7 @@ class RouteMailboxIntegrationTests(unittest.IsolatedAsyncioTestCase):
         request = self.route_request(key, "REGISTER_ROUTE")
         await self.request(request)
         await self.request(self.route_request(key, "START_PROBE"))
-        await self.request({"type": "SUBMIT", "route_locator": request["authorization"]["route_id"], "ciphertext": b64(b"opaque")})
+        await self.request({"type": "SUBMIT", "hop_route_label": await self.label(request["authorization"]["route_id"]), "ciphertext": b64(b"opaque")})
         await self.request(self.route_request(key, "UNREGISTER_ROUTE"))
         self.responses.clear()
         await self.request({"type": "PULL"})
@@ -110,9 +115,27 @@ class RouteMailboxIntegrationTests(unittest.IsolatedAsyncioTestCase):
         await self.request(request)
         await self.request(self.route_request(key, "START_PROBE"))
         locator = request["authorization"]["route_id"]
+        label = await self.label(locator)
         self.registry.clock = lambda: 2001
         with self.assertRaisesRegex(PermissionError, "expired or revoked"):
-            await self.transport.submit_envelope(locator, {"version": 1, "ciphertext": b64(b"opaque")})
+            await self.transport.submit_hop_envelope(self.registry.require_dnss(self.session), label, {"version": 1, "ciphertext": b64(b"opaque")})
         self.responses.clear()
         await self.request({"type": "PULL"})
         self.assertEqual(self.responses[-1]["entries"], [])
+
+    async def test_device_label_cannot_be_used_by_another_dnss_or_raw_locator(self):
+        key = SigningKey.generate()
+        registration = self.route_request(key, 'REGISTER_ROUTE')
+        await self.request(registration)
+        await self.request(self.route_request(key, 'START_PROBE'))
+        locator = registration['authorization']['route_id']
+        label = await self.label(locator)
+        with self.assertRaisesRegex(RegistrationError, 'HOP_LABEL_REQUIRED'):
+            await self.request({'type': 'SUBMIT', 'route_locator': locator, 'ciphertext': b64(b'opaque')})
+        self.session = DeviceSession(SigningKey.generate().verify_key.encode().hex(), 'cd' * 32)
+        dnss = 'bb' * 16
+        await self.request({'type': 'REGISTER_DNSS', 'dnss': dnss, 'pow': self.work('DNSS', bytes.fromhex(dnss))})
+        status = await self.request({'type': 'ROUTE_STATUS', 'route_locator': locator})
+        self.assertEqual(status['state'], 'ROUTE_UNKNOWN')
+        with self.assertRaisesRegex(PermissionError, 'unknown Device hop binding'):
+            await self.request({'type': 'SUBMIT', 'hop_route_label': label, 'ciphertext': b64(b'opaque')})
