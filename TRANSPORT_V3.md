@@ -22,7 +22,13 @@ capabilities. `FILE_SESSION_REQUEST` carries an ephemeral session, opaque
 encrypted metadata, size/chunk/hash limits and a resumable flag. Both schemas
 are intended to be encrypted inside Device Envelope; their validators reject
 AccountID, DeviceID, DNSS and unbounded ringtone/metadata input. WebRTC
-DataChannel and production coturn integration are still follow-up work.
+DataChannel and production coturn integration are still follow-up work. The PWA
+release now loads `call_session.js`; `DmashCallSession` owns
+`RTCPeerConnection` and media tracks, translates WebRTC events to ephemeral
+S-TURN signaling, queues early ICE and closes resources on hangup/failure.
+`Core.attachCallSignaling` switches `sendVoipSignal` away from ordinary chat
+MSG. A runtime adapter must still supply the authenticated one-time ticket; no
+production coturn/WSS endpoint is claimed or deployed.
 
 ## Authenticated recovery acceptance — 2026-09-09
 

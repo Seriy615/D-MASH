@@ -67,6 +67,15 @@ one-time signaling ticket. File sessions have opaque encrypted metadata,
 These validators never expose Account/Device identity to the Mesh; actual
 WebRTC/coturn transport integration remains pending.
 
+The PWA now loads `call_session.js` in the release and service-worker asset
+lists. `DmashCallSession` owns browser media tracks and RTCPeerConnection,
+translates offer/answer/ICE/hangup to the ephemeral S-TURN signaling contract,
+queues early ICE candidates and closes the peer/session on failure. Core can
+attach it through `Core.attachCallSignaling`; `sendVoipSignal` then bypasses the
+ordinary chat MSG path. A deployment-provided signaling adapter is still needed
+to create the S-TURN ticket, so this is client integration rather than a claim
+that coturn/WSS is already running.
+
 This checkpoint addresses authenticated route reconstruction and alias recovery.
 It does not complete the original overall product plan. Remaining work includes
 production PWA Probe orchestration across all route producers, durable transport
