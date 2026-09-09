@@ -1,42 +1,62 @@
-# Active transport-v3 work — 2026-09-08
-
-Общий checkpoint HANDOFF по запросу пользователя: [HANDOFF_TRANSPORT_V3.md](HANDOFF_TRANSPORT_V3.md).
+# Active transport-v3 work — 2026-09-09
 
 Checkout: `/Users/afsvu/Documents/Codex/D-MASH/D-MASH`; branch `transport-v3`.
-Started from clean `main` at `703a5df`. See `TRANSPORT_V3.md` for current
-executable inventory, wire details, migration boundaries and test evidence.
+The earlier checkpoint is preserved in HANDOFF_TRANSPORT_V3.md. The current
+transport semantics are specified and tested in TRANSPORT_V3.md.
 
-IMPLEMENTED: shared Python/JS secure sessions; mutual Node peering and
-directional DNSS work; v3 backend DNSS/resource authority and leased durable
-mailbox drain. Device Envelope and encrypted Inbox modules pass real-crypto
-multi-account tests. JavaScript DeviceClientV3 interoperates with the Python
-gateway over a real loopback WebSocket. DeviceAuthorityV3 implements stable
-DNSS rebind/re-registration and session-bound route signing. Mailbox insertion
-rechecks live route authority. All 134 Node tests, 11 Origin tests and
-31 PWA suites pass. Native Chrome localhost Inbox acceptance also passes;
-this is isolated module QA, not deployed PWA acceptance.
+## Current batching correction
 
-PARTIAL: NodeManager now connects using v3, binds DNSS, registers public routes
-with signed authority, wraps outgoing public contact requests in Device
-Envelope and drains the whole DNSS mailbox into encrypted local staging.
-Core delegates v3 polling to Device Inbox independently of locator handles.
-The real loopback JS/Python test now exercises NodeManager itself.
-Private route directional capabilities/box keys and normal Account message
-dispatch are now wired. Device Account-route records and pending envelopes
-retain only blind RouteID aliases. Account peer association stays in the
-Account Vault; Device forwards opaque Account ciphertext. Account transitions
-wait for current Inbox processing before replacing shared crypto keys.
-Do not deploy this checkpoint: contact Accept/bootstrap and explicit control
-decryption outcomes are incomplete, and peers require coordinated v3 upgrade.
-Legacy mailbox rows are preserved but not migrated. Hop labels, batching, password,
-S-TURN/calls/files and ratchet still need
-implementation/integration and acceptance. No push, deployment or production
-Chrome acceptance has occurred.
+The periodic tact loop has been replaced by first-arrival-armed one-shot
+aggregation. IDLE has no timer. First arrival arms deadline = now + 500 ms;
+later packets never move it. At deadline the incoming queue is synchronously
+swapped out and returns to IDLE. A packet after that swap starts a separate
+500 ms window immediately, independent of previous routing/sends. A late
+callback cannot absorb arrivals belonging to the next window.
 
-Next: finish contact Accept/Account bootstrap, then hop-local routing and
-batching. Preserve old tests and data. Historical decrypt returns null on both
-successful control packets and failures; these stay pending until the new
-ratchet supplies explicit outcomes. No control success is inferred from null.
+Closed snapshots resolve current blind local routing state, group by current
+next-hop (different final recipients can share one batch), then split each
+group into nonempty batches of <=128 packets and <=512 KiB canonical packet
+array bytes. Independent FIFO send workers prevent a slow peer from delaying
+future windows or other peers. Missing routes stay pending; stale enqueue-time
+next-hop hints are not used for DATA. Local routes use existing mailbox checks.
+
+Failures/cancellation retain unsent work; partial broadcasts retry only failed
+peers. The global RAM queue budget includes snapshots and in-flight packets.
+Retries are work-triggered and separate from aggregation; no periodic global
+tact, padding, cover traffic or empty batches. Authentication, DNSS/resource
+PoW and keepalive remain immediate. No persistent raw RouteID storage added.
+Shutdown cancels workers before DB closure; same-engine restart retains RAM
+work. This does not add process-crash persistence or remote receipt ACKs.
+Historical supported outbox rows join the pipeline from a startup scan and
+are deleted only after successful sends; unsupported rows stay preserved.
+
+## Implemented foundation and remaining scope
+
+Shared Python/JS secure sessions, mutual Node authentication and directional
+DNSS work, resource authority, durable DNSS mailbox, Device Envelope/Inbox,
+blind Account-route aliases, private route capabilities and Account dispatch
+are implemented. ACCEPT/CONFIRM bootstrap is now wired with encrypted stored
+transitions and Account-scoped import. Native Chrome localhost Inbox QA is
+historical module evidence, not production acceptance.
+
+Still remaining: hop-local labels/local NCRH, remote acceptance ACKs and
+crash-safe transport recovery, legacy mailbox migration, password Node,
+S-TURN/calls/files, epoch ratchet and full multi-node/browser acceptance.
+Historical decrypt's ambiguous null result still leaves control packets pending.
+
+## Validation and revision
+
+Full run: `/tmp/dmash-v3-py312/bin/python tools/test_all.py`.
+Final result: **155 backend tests, 11 Origin tests and 33 PWA suites passed**
+(exit 0). This includes 21 focused aggregation/batch tests. Focused tests prove
+P1-P4 at 0/120/340/499 ms close at 500 ms, P5 at 510 ms closes at 1010 ms,
+next-hop regrouping, independent slow peers, exact batch limits, failure and
+cancellation retention. Real authenticated Node WebSocket coverage exercises
+the production aggregation window; all existing PWA suites remain required.
+
+Implementation checkpoint: `0ebc49ab3d796b16f3817773f3885e1286c816da`.
+The follow-up commit containing this handoff adds exact byte-boundary coverage
+and the final validation record. No deploy or push is part of this fix.
 
 ## Historical handoff (retained verbatim below)
 

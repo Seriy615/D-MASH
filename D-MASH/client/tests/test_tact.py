@@ -179,6 +179,17 @@ class TactTests(unittest.IsolatedAsyncioTestCase):
             self.assertLessEqual(len(canonical(call.args[0])), MAX_BATCH_BYTES)
             NodeChannel._validate_batch(call.args[0])
 
+    async def test_exact_canonical_byte_limit_includes_array_separators(self):
+        for i, size in enumerate((131071, 131071, 131071, 131070)):
+            packet = {'type': 'DMP_C_DATA', 'id': str(i), 'route_id': 'r', 'body': ''}
+            packet['body'] = 'x' * (size - len(canonical(packet)))
+            await self.node.enqueue_transport_packet(packet)
+        await self.enqueue('overflow')
+        self.clock.advance(.5)
+        await eventually(lambda: not self.node.transient_transport_outbox)
+        self.assertEqual([len(x) for x in self.ids(self.a)], [4, 1])
+        self.assertEqual(len(canonical(self.a.send_batch.await_args_list[0].args[0])), MAX_BATCH_BYTES)
+
     async def test_failed_send_retained_fifo_across_windows(self):
         self.a.send_batch.side_effect = OSError('offline')
         await self.enqueue('first')

@@ -1,26 +1,62 @@
 # Transport v3 engineering record
 
-## Node batching development — 2026-09-09
+## Node aggregation windows — 2026-09-09
 
-The Node tact interval is now 500 ms. Each connected peer receives one nonempty
-transient MESH_BATCH per tick, capped at 128 packets and 512 KiB of canonical
-packet bytes. The receiver validates the entire batch before exposing ordered
-packets to existing handlers. No padding or empty-tick cover packets are emitted.
-Transient enqueue rejects unsupported/oversized packets and caps the queue at
-4096 packets / 16 MiB. Failed or cancelled socket sends retain queued work;
-partial broadcasts retry only peers whose send did not complete. Disconnected
-unicast targets remain pending. Historical durable rows are removed only after
-successful sends to available intended targets; partial legacy broadcasts may
-repeat previously sent packets.
+Normal mesh DATA and discovery probes enter a RAM-only aggregation queue.
+IDLE has no aggregation timer and no periodic scheduler. The first enqueue
+synchronously arms one monotonic deadline at arrival + 500 ms. Later arrivals
+join that window without extending it. At the deadline a synchronous callback
+atomically swaps the incoming list with an empty list and returns to IDLE.
+An arrival at/after an overdue deadline closes the old list before enqueue,
+so a delayed event-loop callback cannot accidentally extend the old window.
+The next arrival arms its own 500 ms window even if old routing or sends are
+still in flight. For arrivals at 0/120/340/499 ms, the first snapshot closes
+at 500 ms; an arrival at 510 ms opens the next deadline at 1010 ms.
 
-This is socket-send retry retention, not hop receipt acknowledgement: a remote
-crash after a successful write can still lose a packet. Transient queues do not
-survive a Node restart. A slow send can delay the next tick (bounded at 10 s),
-and the historical durable outbox is still a separate compatibility drain.
-Hop-local labels, remote acceptance acknowledgements and full multi-node
-delivery acceptance remain unfinished. Local tests cover empty ticks, batch
-limits/order, partial broadcasts, cancellation, reconnect and durable failure;
-the real two-Node encrypted WebSocket test also exchanges a multi-packet batch.
+A separate ordered resolver processes closed snapshots without awaiting socket
+sends. DATA resolves the current blind local route at flush time, ignoring
+its enqueue-time next-hop hint. A route that becomes local terminates through
+the existing mailbox authority check; a missing route remains pending and
+never falls back to the old peer or floods. Probes use the current eligible
+neighbor set (excluding their incoming peer), preserving discovery semantics.
+Groups are keyed by next-hop, not recipient: P1->A/P2->B/P3->A/P4->C produces
+A=[P1,P3], B=[P2], C=[P4]. Raw locators remain transient; no new persistent
+RouteID storage or Account metadata is introduced.
+
+Each group is split into as many nonempty MESH_BATCH records as needed within
+that closed window. Limits remain 128 packets and 512 KiB for the canonical
+packet array, including brackets/commas and ASCII JSON escaping. Independent
+FIFO peer queues send all those batches; a slow or failed peer blocks only its
+own queued sends, never opening/closing future windows or another peer. The
+4096-packet / 16 MiB enqueue budget counts incoming, snapshots, unresolved and
+in-flight work until completion. No padding, cover traffic or empty batches.
+Authentication, DNSS/resource authorization, PoW and keepalive retain their
+immediate secure-session paths outside the aggregator.
+
+Send failure/cancellation retains the head batch. Work retries per peer after
+1 s (a single attempt is bounded at 10 s); successful broadcast peers are
+removed immediately and are not resent. Unresolved routes have an on-demand
+retry while work exists. Neither retry mechanism is a global aggregation tick.
+FIFO order is maintained within each peer, including across windows and
+retries; no global arrival-order guarantee across different peers is implied.
+Shutdown cancels timers/workers before DB closure and retains unsent RAM work
+for restart of the same engine. Process restart still loses transient queues.
+Successful socket writes remain distinct from remote acceptance acknowledgments.
+
+Existing supported durable rows are scanned once at startup into the same
+pipeline, with their existing blind target fallback only when no locator is
+present. They are deleted only after all intended writes succeed; deletion
+failure retries cleanup without resending. Unsupported historical rows remain
+untouched. This is not a legacy mailbox migration or crash-exactly-once claim.
+
+Validation: deterministic one-shot-clock tests cover idle, first-arrival arm,
+non-extension, atomic/overdue snapshot, independent next windows, slow peers,
+actual blind-route regrouping/local delivery/missing routes, count/byte splits
+(including the exact byte boundary), FIFO retries, partial broadcast,
+cancellation during routing/sending, shutdown/restart, control bypass and
+legacy-row retention. The real authenticated two-Node WebSocket test also
+sends through TactEngine with the production 500 ms window. Full-suite results
+are recorded in CURRENT_HANDOFF.md. No deployment is part of this change.
 
 ## Contact bootstrap development — 2026-09-09
 
@@ -69,7 +105,7 @@ The following inventory was made before implementation:
 | Device events | Public contact ciphertext boundary exists, but outer type is visible; private receive tied to active Account | Encrypted Device envelope and Inbox with independent dispatch |
 | PoW | Node identity BLAKE3 prefix; resource activation SHA-256 transcript V2, production 20–24 bits, consumed replay cache | Preserve work policy; independently authorize each Node direction |
 | Capabilities | Policy flags route/accept/fallback/signal/be_turn/blob; no working S-TURN service | Canonical S-TURN alias and health-based descriptor |
-| Tact | 1.5 seconds; per-packet sends, padding, DUMMY; transient queue drops failed sends | 500ms per-peer bounded batch, no padding/cover, retry retention |
+| Tact | 1.5 seconds; per-packet sends, padding, DUMMY; transient queue drops failed sends | First-arrival 500ms window, per-peer bounded batches, no padding/cover, retry retention |
 | WebRTC | Core offer/answer/ICE via sendVoipSignal/message transport | Ephemeral signaling WSS plus coturn; Device-encrypted call request |
 | Files | Existing message/media path | Encrypted chunks over DataChannel, integrity/cancel/progress/limits |
 | Account crypto | S/P/timestamp/shift and bundled Kyber prototype | Loss-tolerant epoch keys with authenticated fresh-entropy updates |
@@ -84,7 +120,7 @@ C. Runtime DNSS ownership and session-bound public/private route authorization.
 D. Dedicated durable mailbox database/keys and all-row send/commit drain.
 E. Device envelope, encrypted Inbox and account-independent dispatcher.
 F. Probe-installed hop labels and local NCRH.
-G. Bounded 500ms scheduler, retry and duplicate handling.
+G. First-arrival one-shot 500 ms aggregation windows, peer FIFO retries and duplicate handling.
 H. Password challenge/verifier, fragment import and installer.
 I. Capability directory, coturn health and ephemeral signaling.
 J. Device-encrypted CallRequestV2 and actual call flow.
