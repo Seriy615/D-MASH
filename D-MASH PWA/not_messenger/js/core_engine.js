@@ -2372,8 +2372,20 @@ const Core = {
         }, 1000);
     },
     // Core.sendVoipSignal     - Хелпер отправки сигнальных данных
+    attachCallSignaling: function(session) {
+        if (!session || typeof session.sendSignal !== 'function') throw new Error('S-TURN call signaling session required');
+        this.callSignalingSession = session;
+        return session;
+    },
     sendVoipSignal: async function(data) {
         if (!Core.callPeerId) return;
+        // When an authenticated S-TURN signaling session is attached, ICE and
+        // SDP never enter the ordinary chat MSG path. The legacy fallback is
+        // retained only for peers that have not negotiated a signaling ticket.
+        if (this.callSignalingSession && typeof this.callSignalingSession.sendSignal === 'function') {
+            await this.callSignalingSession.sendSignal(data);
+            return;
+        }
         // Pass the call target explicitly: chat focus can change while ICE or
         // hangup signals are still being emitted.
         await Core.sendMessage(data, false, Core.callPeerId);
