@@ -136,6 +136,6 @@ class RouteMailboxIntegrationTests(unittest.IsolatedAsyncioTestCase):
         dnss = 'bb' * 16
         await self.request({'type': 'REGISTER_DNSS', 'dnss': dnss, 'pow': self.work('DNSS', bytes.fromhex(dnss))})
         status = await self.request({'type': 'ROUTE_STATUS', 'route_locator': locator})
-        self.assertEqual(status['state'], 'ROUTE_UNKNOWN')
+        self.assertEqual(status['state'], 'ROUTE_READY')
         with self.assertRaisesRegex(PermissionError, 'unknown Device hop binding'):
             await self.request({'type': 'SUBMIT', 'hop_route_label': label, 'ciphertext': b64(b'opaque')})

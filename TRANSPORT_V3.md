@@ -37,6 +37,25 @@ do not put a global hash of the node sequence on every hop. Current NCRH values
 are independent random local metadata per binding; shared trajectory records
 and their establishment are not implemented yet.
 
+Current Probe implementation now follows the initiator-advertisement model:
+the initiator advertises a bounded origin tag; receiving Nodes install
+alternative paths back toward that origin and propagate advertisements to
+their other peers. Probe does not search for a person or a final Account.
+The wire carries no RouteID, DNSS, NodeID or Account identity. At the origin,
+the root NCRH is a fresh 256-bit value. Each receiving Node deterministically
+transforms the incoming value with its runtime-local HMAC key:
+`HMAC-SHA256(K_runtime, "D-MASH|NCRH|V3\\0" || NCRH_in)`. Thus the same
+Node/runtime and input produce the same output, different Nodes/runtime keys
+produce different outputs, and a fork forwards the same prefix NCRH to every
+branch before each branch applies its own transform. Restart rotates the
+runtime key and therefore the NCRH namespace; there is no BootID.
+
+NCRH is retained as an optional trajectory alternative tag. Route selection
+uses reachability, hop metric, expiry and local labels; NCRH does not authorize,
+forward, identify a recipient, or decide ownership. Up to three path
+alternatives are retained, including equal-length alternatives distinguished
+by their path commitment, while each Device/Node hop label remains independent.
+
 
 ## Node aggregation windows — 2026-09-09
 

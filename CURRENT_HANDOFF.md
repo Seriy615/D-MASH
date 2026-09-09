@@ -53,10 +53,21 @@ are implemented. ACCEPT/CONFIRM bootstrap is now wired with encrypted stored
 transitions and Account-scoped import. Native Chrome localhost Inbox QA is
 historical module evidence, not production acceptance.
 
-Still remaining: hop-local labels/local NCRH, remote acceptance ACKs and
+Still remaining: complete production Probe rollout across all PWA route
+producers, remote acceptance ACKs and
 crash-safe transport recovery, legacy mailbox migration, password Node,
 S-TURN/calls/files, epoch ratchet and full multi-node/browser acceptance.
 Historical decrypt's ambiguous null result still leaves control packets pending.
+
+The hop Probe work is now more precise: Probe advertises an initiator and
+builds alternatives back toward that initiator; it does not search for a
+recipient. NCRH is a recursive path-prefix commitment, not a random road ID:
+each runtime applies HMAC-SHA256 with its private runtime key, while forked
+copies carry the same prefix value until the receiving branches transform it.
+NCRH is optional optimization metadata and distinguishes equal-length paths;
+hop labels, reachability and metric remain the delivery mechanism. Runtime
+restart rotates the NCRH namespace. Focused and full tests cover schema,
+fork-safe commitment invariants and the no-identity wire boundary.
 
 ## Validation and revision
 

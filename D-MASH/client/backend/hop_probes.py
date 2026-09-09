@@ -41,6 +41,9 @@ class HopProbes:
     def __init__(self, transport, *, clock=time.monotonic, capacity=10000):
         self.transport, self.clock, self.capacity = transport, clock, capacity
         self._key = secrets.token_bytes(32)
+        # Runtime-local namespace. Restart rotates it; no BootID or NodeID is
+        # included in the commitment.
+        self._ncrh_key = secrets.token_bytes(32)
         self._box = SecretBox(secrets.token_bytes(32))
         self._rows = {}
         self._exports = set()
@@ -85,14 +88,11 @@ class HopProbes:
         return None
 
     def _road(self, next_peer=None, downstream=None):
-        # Optional trajectory identity, independent of delivery labels/people.
-        # Unknown NCRH does not invent equivalence between unknown suffixes.
-        if next_peer is not None and downstream is None: return None
-        key = [next_peer, downstream]
-        row = self._get('road', key)
-        token = row['token'] if row else secrets.token_hex(32)
-        self._put('road', key, {'token': token}, 1800)
-        return token
+        if downstream is None:
+            return secrets.token_hex(32)
+        if not isinstance(downstream, str) or not _HEX.fullmatch(downstream):
+            raise ValueError('invalid NCRH input')
+        return hmac.new(self._ncrh_key, b'D-MASH|NCRH|V3\0' + bytes.fromhex(downstream), hashlib.sha256).hexdigest()
 
     def _trace_token(self, identity):
         # Per-Probe loop guard, not a stable Node/Boot ID or a node list.
@@ -197,6 +197,15 @@ class HopProbes:
         await self._advertise(tag, candidate)
         return 'SUBMITTED_TO_ENTRY'
 
+    def note_sent(self, packet, peers):
+        """Compatibility hook for the aggregation resolver.
+
+        Probe fan-out is represented by the volatile export queue; resolving a
+        packet must not consume the advertisement before its peer workers have
+        accepted it. The export worker owns that lifecycle.
+        """
+        return True
+
     async def receive_probe(self, packet, peer):
         validate_probe(packet)
         tag = packet['origin_tag']
@@ -229,4 +238,4 @@ class HopProbes:
             await asyncio.gather(self._export_task, return_exceptions=True)
         self._exports.clear()
         self._rows.clear()
-        self._key = self._box = None
+        self._key = self._box = self._ncrh_key = None
