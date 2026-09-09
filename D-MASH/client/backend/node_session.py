@@ -3,14 +3,19 @@ import asyncio
 import json
 import secrets
 import time
+from collections import deque
 
 if __package__:
+    from .secure_session import canonical
     from .resource_pow import activation_pow_difficulty, mine_activation_pow, verify_activation_pow
 else:
+    from secure_session import canonical
     from resource_pow import activation_pow_difficulty, mine_activation_pow, verify_activation_pow
 
 NODE_OPERATIONS = frozenset({"MESH_PROBE", "MESH_DATA", "MESH_BATCH", "NODE_CONTROL", "PEER_STATUS"})
 NODE_POW_DIFFICULTY = activation_pow_difficulty()
+MAX_BATCH_PACKETS = 128
+MAX_BATCH_BYTES = 512 * 1024
 
 
 def resource(dnss, session_hash):
@@ -63,6 +68,30 @@ class NodeChannel:
     def __init__(self, secure, local_dnss, remote_dnss):
         self.secure = secure
         self.local_dnss, self.remote_dnss = local_dnss, remote_dnss
+        self._received = deque()
+
+    @staticmethod
+    def _operation(packet):
+        if not isinstance(packet, dict):
+            raise PermissionError("invalid Node packet")
+        if packet.get("type") in {"DMP_C_PROBE", "ROUTE_PROBE_V2"}:
+            return "MESH_PROBE"
+        if packet.get("type") == "DMP_C_DATA":
+            return "MESH_DATA"
+        raise PermissionError("unsupported Node packet")
+
+    @classmethod
+    def _validate_batch(cls, packets):
+        if not isinstance(packets, list) or not 1 <= len(packets) <= MAX_BATCH_PACKETS:
+            raise PermissionError("invalid Node batch size")
+        for packet in packets:
+            cls._operation(packet)
+        if len(canonical(packets)) > MAX_BATCH_BYTES:
+            raise PermissionError("Node batch exceeds byte limit")
+
+    async def send_batch(self, packets):
+        self._validate_batch(packets)
+        await self.secure.send_json({"type": "MESH_BATCH", "packets": packets})
 
     async def send(self, value):
         envelope = json.loads(value)
@@ -72,23 +101,28 @@ class NodeChannel:
         if envelope.get("t") != "REAL":
             raise ValueError("invalid Node envelope")
         packet = json.loads(envelope["d"])
-        if packet.get("type") in {"DMP_C_PROBE", "ROUTE_PROBE_V2"}:
-            operation = "MESH_PROBE"
-        elif packet.get("type") == "DMP_C_DATA":
-            operation = "MESH_DATA"
-        else:
-            raise PermissionError("unsupported Node packet")
+        operation = self._operation(packet)
         await self.secure.send_json({"type": operation, "packet": packet})
 
     def __aiter__(self): return self
 
     async def __anext__(self):
+        if self._received:
+            return json.dumps({"t": "REAL", "d": json.dumps(self._received.popleft())})
         value = await self.secure.receive_json()
+        if not isinstance(value, dict):
+            raise PermissionError("invalid Node operation")
         operation = value.get("type")
         if operation not in NODE_OPERATIONS:
             raise PermissionError("Device operation on Node connection")
         if operation == "NODE_CONTROL" and value == {"type": "NODE_CONTROL", "control": "KEEPALIVE"}:
             return json.dumps({"t": "DUMMY"})
+        if operation == "MESH_BATCH":
+            if set(value) != {"type", "packets"}:
+                raise PermissionError("invalid Node batch")
+            self._validate_batch(value["packets"])
+            self._received.extend(value["packets"])
+            return json.dumps({"t": "REAL", "d": json.dumps(self._received.popleft())})
         expected = {"MESH_PROBE": {"DMP_C_PROBE", "ROUTE_PROBE_V2"}, "MESH_DATA": {"DMP_C_DATA"}}
         packet = value.get("packet")
         if operation not in expected or not isinstance(packet, dict) or packet.get("type") not in expected[operation]:
@@ -96,5 +130,6 @@ class NodeChannel:
         return json.dumps({"t": "REAL", "d": json.dumps(packet)})
 
     async def close(self, code=1000, reason=""):
+        self._received.clear()
         self.local_dnss = self.remote_dnss = None
         await self.secure.close(code=code, reason=reason)

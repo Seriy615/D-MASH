@@ -56,7 +56,7 @@ else:  # Runtime scripts import backend modules as top-level modules.
     from dnss_mailbox import DnssMailbox
 
 # --- D-MASH CONFIGURATION ---
-TACT_INTERVAL = 1.5
+TACT_INTERVAL = 0.5
 PACKET_SIZE = 4096
 P2P_PORT = int(os.getenv("P2P_PORT", 9000))
 P2P_HOST = os.getenv("P2P_HOST", "0.0.0.0")

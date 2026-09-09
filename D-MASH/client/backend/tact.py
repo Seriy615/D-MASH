@@ -1,135 +1,78 @@
+"""Nonempty per-peer transport batches with retry retention."""
 import asyncio
 import json
-import random
-import string
 import time
-from database import DatabaseManager
-from network import P2PNode
+
+if __package__:
+    from .node_session import MAX_BATCH_PACKETS, MAX_BATCH_BYTES, canonical
+else:
+    from node_session import MAX_BATCH_PACKETS, MAX_BATCH_BYTES, canonical
+
 
 class TactEngine:
-    def __init__(self, db: DatabaseManager, node: P2PNode, interval: float, packet_size: int):
-        self.db = db
-        self.node = node
-        self.interval = interval
-        self.packet_size = packet_size
+    def __init__(self, db, node, interval=0.5, packet_size=None):
+        self.db, self.node, self.interval = db, node, interval
         self.running = False
 
     async def start(self):
         self.running = True
-        print(f"⏱️ [TACT] Engine started. Tick: {self.interval}s")
         while self.running:
-            start_time = time.time()
+            started = time.monotonic()
             await self._tick()
-            elapsed = time.time() - start_time
-            sleep_time = max(0.1, self.interval - elapsed)
-            await asyncio.sleep(sleep_time)
+            await asyncio.sleep(max(0, self.interval - (time.monotonic() - started)))
 
     async def _tick(self):
-        # A non-routing Node must not flush stale outbox data or emit cover
-        # traffic as a routing side effect.
-        if not self.node.can_route:
+        if not self.node.can_route or not self.node.active_connections or not self.db.node_crypto:
             return
-        # 1. Получаем список активных соединений
-        # active_connections хранит { real_peer_id: websocket }
-        if not self.node.active_connections: return
-        
-        # 2. Создаем карту хешей для текущих соседей
-        # Нам нужно сопоставить хеши из БД (Blind Storage) с реальными сокетами
-        # active_hashes = { blind_hash: websocket }
-        active_hashes = {}
-        if self.db.node_crypto:
-            for peer_id, ws in self.node.active_connections.items():
-                h = self.db.node_crypto.get_blind_hash(peer_id)
-                active_hashes[h] = ws
-        else:
-            # Если криптография не инициализирована, мы не можем маршрутизировать
-            return
-
-        # DMP-C locator-bearing packets are intentionally transient: their
-        # opaque locators must never enter SQLite.  Flush them over the current
-        # authenticated peer graph before looking at the legacy durable queue.
-        transient_packets = self.node.transient_transport_outbox
-        self.node.transient_transport_outbox = []
-        for item in transient_packets:
-            envelope = self._create_envelope(json.dumps(item["packet"]), is_dummy=False)
-            next_hop_id = item.get("next_hop_id")
-            exclude_peer_id = item.get("exclude_peer_id")
-            if next_hop_id:
-                ws = active_hashes.get(self.db.node_crypto.get_blind_hash(next_hop_id))
-                targets = [ws] if ws else []
-            else:
-                targets = [ws for peer_id, ws in self.node.active_connections.items() if peer_id != exclude_peer_id]
-            for ws in targets:
-                try:
-                    await ws.send(envelope)
-                except Exception:
-                    pass
-
-        # 3. Читаем очередь (Outbox)
-        async with self.db.conn.execute("""
-            SELECT id, next_hop_hash, packet_json, exclude_peer_hash 
-            FROM outbox
-            -- Mesh packets are independently sealed in the persistent
-            -- outbox. Do not let a historical legacy backlog delay a newly
-            -- armed opaque route and make PWA report ROUTE_NOT_ARMED.
-            ORDER BY CASE WHEN packet_json LIKE '%"sealed_dmp_c"%' THEN 0 ELSE 1 END,
-                     created_at ASC
-            LIMIT 5
-        """) as cursor:
-            rows = await cursor.fetchall()
-
-        # 4. Если очередь пуста - шлем DUMMY (Traffic Obfuscation)
-        if not rows:
-            dummy = self._create_envelope("", is_dummy=True)
-            for ws in self.node.active_connections.values():
-                try: await ws.send(dummy)
-                except: pass
-            return
-
-        # 5. Обработка реальных пакетов
-        for row in rows:
-            msg_id = row['id']
-            target_hash = row['next_hop_hash']
-            exclude_hash = row['exclude_peer_hash']
-            payload = row['packet_json']
+        connections = dict(self.node.active_connections)
+        queue = self.node.transient_transport_outbox
+        # Retain the original queue across await/cancellation. Successful peers
+        # are removed individually so a partial broadcast retries only failures.
+        for item in list(queue):
+            if "pending_peers" not in item:
+                target = item.get("next_hop_id")
+                peers = {target} if target else {p for p in connections if p != item.get("exclude_peer_id")}
+                if peers:
+                    item["pending_peers"] = peers
+        async def flush_peer(peer, channel):
+            batch, items, size = [], [], 2
+            for item in list(queue):
+                if peer not in item.get("pending_peers", ()):
+                    continue
+                packet_size = len(canonical(item["packet"])) + 2
+                if len(batch) >= MAX_BATCH_PACKETS or size + packet_size > MAX_BATCH_BYTES:
+                    break
+                batch.append(item["packet"]); items.append(item); size += packet_size
+            if not batch:
+                return
             try:
-                stored = json.loads(payload)
-                if 'sealed_dmp_c' in stored:
-                    packet = self.db.node_crypto.decrypt_from_self(stored['sealed_dmp_c'])
-                    payload = json.dumps(packet)
-            except (TypeError, ValueError, json.JSONDecodeError):
-                pass
-            
-            envelope = self._create_envelope(payload, is_dummy=False)
-            
-            if target_hash:
-                # UNICAST: Шлем конкретному соседу, если он подключен
-                ws = active_hashes.get(target_hash)
-                if ws:
-                    try: await ws.send(envelope)
-                    except: pass
-            else:
-                # BROADCAST: Шлем всем, кроме исключенного (exclude_peer_hash)
-                for h, ws in active_hashes.items():
-                    if h == exclude_hash: continue 
-                    try: await ws.send(envelope)
-                    except: pass
-            
-            # Удаляем из очереди после попытки отправки
-            await self.db.conn.execute("DELETE FROM outbox WHERE id = ?", (msg_id,))
-            
+                async with asyncio.timeout(10):
+                    await channel.send_batch(batch)
+            except Exception:
+                return
+            for item in items:
+                item["pending_peers"].discard(peer)
+        await asyncio.gather(*(flush_peer(peer, channel) for peer, channel in connections.items()))
+        queue[:] = [item for item in queue if item.get("pending_peers") != set()]
+
+        # Historical durable rows remain accessible until their migration. A
+        # disconnected target or failed send must never acknowledge a row.
+        active = {self.db.node_crypto.get_blind_hash(p): c for p, c in connections.items()}
+        async with self.db.conn.execute("SELECT id, next_hop_hash, packet_json, exclude_peer_hash FROM outbox ORDER BY created_at ASC LIMIT 5") as cursor:
+            rows = await cursor.fetchall()
+        for row in rows:
+            try:
+                packet = json.loads(row["packet_json"])
+                if "sealed_dmp_c" in packet:
+                    packet = self.db.node_crypto.decrypt_from_self(packet["sealed_dmp_c"])
+                target = row["next_hop_hash"]
+                targets = [active[target]] if target in active else ([] if target else [c for h, c in active.items() if h != row["exclude_peer_hash"]])
+                if not targets:
+                    continue
+                for channel in targets:
+                    async with asyncio.timeout(10):
+                        await channel.send_batch([packet])
+            except Exception:
+                continue
+            await self.db.conn.execute("DELETE FROM outbox WHERE id = ?", (row["id"],))
         await self.db.conn.commit()
-        
-    def _create_envelope(self, payload_str: str, is_dummy: bool) -> str:
-        msg_type = "DUMMY" if is_dummy else "REAL"
-        envelope = { "t": msg_type, "d": payload_str, "x": "" }
-        
-        # Padding до фиксированного размера
-        current_len = len(json.dumps(envelope).encode('utf-8'))
-        padding_needed = self.packet_size - current_len
-        
-        if padding_needed > 0:
-            # Заполняем случайным мусором
-            envelope["x"] = ''.join(random.choices(string.ascii_letters + string.digits, k=padding_needed))
-            
-        return json.dumps(envelope)

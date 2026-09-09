@@ -1,5 +1,27 @@
 # Transport v3 engineering record
 
+## Node batching development — 2026-09-09
+
+The Node tact interval is now 500 ms. Each connected peer receives one nonempty
+transient MESH_BATCH per tick, capped at 128 packets and 512 KiB of canonical
+packet bytes. The receiver validates the entire batch before exposing ordered
+packets to existing handlers. No padding or empty-tick cover packets are emitted.
+Transient enqueue rejects unsupported/oversized packets and caps the queue at
+4096 packets / 16 MiB. Failed or cancelled socket sends retain queued work;
+partial broadcasts retry only peers whose send did not complete. Disconnected
+unicast targets remain pending. Historical durable rows are removed only after
+successful sends to available intended targets; partial legacy broadcasts may
+repeat previously sent packets.
+
+This is socket-send retry retention, not hop receipt acknowledgement: a remote
+crash after a successful write can still lose a packet. Transient queues do not
+survive a Node restart. A slow send can delay the next tick (bounded at 10 s),
+and the historical durable outbox is still a separate compatibility drain.
+Hop-local labels, remote acceptance acknowledgements and full multi-node
+delivery acceptance remain unfinished. Local tests cover empty ticks, batch
+limits/order, partial broadcasts, cancellation, reconnect and durable failure;
+the real two-Node encrypted WebSocket test also exchanges a multi-packet batch.
+
 ## Contact bootstrap development — 2026-09-09
 
 The live PWA now advertises CONTACT_BOOTSTRAP_V3 and carries signed ACCEPT /

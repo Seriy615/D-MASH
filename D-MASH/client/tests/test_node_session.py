@@ -60,6 +60,13 @@ class NodeSessionTests(unittest.IsolatedAsyncioTestCase):
                 if b._process_envelope.called: break
                 await asyncio.sleep(.01)
             self.assertTrue(b._process_envelope.called)
+            b._process_envelope.reset_mock()
+            packets = [{"type": "DMP_C_DATA", "id": f"batch-{i}", "envelope": {"ciphertext": "opaque"}} for i in range(3)]
+            await ca.send_batch(packets)
+            for _ in range(100):
+                if b._process_envelope.await_count == 3: break
+                await asyncio.sleep(.01)
+            self.assertEqual([json.loads(json.loads(call.args[0])["d"]) for call in b._process_envelope.await_args_list], packets)
             await ca.secure.send_json({"type": "PULL"})
             for _ in range(100):
                 if not b.active_connections: break

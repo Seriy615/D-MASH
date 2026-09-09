@@ -17,14 +17,14 @@ if __package__:
     from .crypto import NodeCryptoManager
     from .transport import NodeTransportService
     from .secure_socket import accept_secure, connect_secure
-    from .node_session import authorize_node
+    from .node_session import authorize_node, NodeChannel, canonical
 else:
     from database import DatabaseManager
     from dsp import AudioProcessor
     from crypto import NodeCryptoManager
     from transport import NodeTransportService
     from secure_socket import accept_secure, connect_secure
-    from node_session import authorize_node
+    from node_session import authorize_node, NodeChannel, canonical
 
 HANDSHAKE_TIMEOUT = 10.0
 
@@ -155,8 +155,15 @@ class P2PNode:
     async def enqueue_transport_packet(self, packet, *, next_hop_id: str | None = None, exclude_peer_id: str | None = None):
         if not self.can_route:
             raise PermissionError("routing is disabled by local Node policy")
+        NodeChannel._operation(packet)
+        encoded = canonical(packet)
+        if len(encoded) > 128 * 1024:
+            raise ValueError("transport packet exceeds queue limit")
+        if (len(self.transient_transport_outbox) >= 4096 or
+                sum(item["queue_bytes"] for item in self.transient_transport_outbox) + len(encoded) > 16 * 1024 * 1024):
+            raise BufferError("transport queue is full")
         self.transient_transport_outbox.append({
-            "packet": dict(packet), "next_hop_id": next_hop_id,
+            "packet": json.loads(encoded), "queue_bytes": len(encoded), "next_hop_id": next_hop_id,
             "exclude_peer_id": exclude_peer_id,
         })
 
