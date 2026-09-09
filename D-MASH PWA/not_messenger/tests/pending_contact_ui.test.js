@@ -71,7 +71,7 @@ context.Storage = { async getAllRegistryAccounts() { return [{ id: "Account One"
   assert.match(modal.innerHTML, /ПРИНЯТЬ/, "request detail exposes accept");
   assert.match(modal.innerHTML, /ОТКЛОНИТЬ/, "request detail exposes reject");
   assert.match(modal.innerHTML, /ЗАКРЫТЬ/, "request detail exposes close");
-  assert.match(modal.innerHTML, /ОТПРАВКА В СЕТЬ НЕ ВЫПОЛНЯЕТСЯ/, "detail clearly states local-only behavior");
+  assert.match(modal.innerHTML, /Локальный просмотр запроса/, "offline detail does not claim a network send");
 
   const prompts = ["Alice local"];
   Core.customPrompt = (_title, _message, callback) => callback(prompts.shift());
@@ -90,6 +90,24 @@ context.Storage = { async getAllRegistryAccounts() { return [{ id: "Account One"
   await new Promise(resolve => setImmediate(resolve));
   assert.deepEqual(transitions, ["accepted", "rejected"], "rejection makes the local pending transition");
   assert.equal(request.status, "rejected", "rejection resolves the request locally");
+
+  // The current v3 runtime must wait for a successful network submission.
+  request.status = 'pending';
+  window.ContactFlowV3 = function() {};
+  window.DeviceRoutes = {resolve: () => ({certificate: {routeId: 'owned-public-route'}})};
+  Core.pendingContactRequestPayload = () => ({request_id: 'validated-test-request'});
+  Core.keys = {sign: {publicKey: Uint8Array.from(accountIdentifier.match(/../g), value => parseInt(value, 16))}};
+  let failSend = true, sends = 0;
+  Core.getContactFlowV3 = () => ({accept: async () => {sends++; if (failSend) throw Error('reply route unavailable');}});
+  await Core.acceptPendingContactRequest(request.id, 'Alice local', 'c'.repeat(64));
+  assert.equal(sends, 0, 'a closed or different selected Account cannot authorize a bootstrap');
+  await Core.acceptPendingContactRequest(request.id, 'Alice local', accountIdentifier);
+  assert.equal(request.status, 'pending', 'failed submission keeps the request pending');
+  failSend = false;
+  await Core.acceptPendingContactRequest(request.id, 'Alice local', accountIdentifier);
+  assert.equal(request.status, 'accepted');
+  assert.equal(sends, 2);
+  assert.match(modal.innerHTML, /ПРИНЯТИЕ ОТПРАВЛЕНО/);
 
   Core.pendingContactRequestStore = null;
   Core.deviceState = null;

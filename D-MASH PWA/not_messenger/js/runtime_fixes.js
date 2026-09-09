@@ -547,6 +547,8 @@
         };
 
         core.sendPublicContactRequest = async function sendPublicContactRequest(descriptor, displayName, intro) {
+            const requestAccountSlot = this.activeIdentity;
+            if (global.ContactFlowV3 && !requestAccountSlot) throw Error('Откройте Account для нового контакта');
             if (!global.ContactPayloads || !global.ContactTransport) throw new Error("Contact transport modules unavailable");
             if (!global.DeviceRoutes.verifyCertificate(descriptor.c)) throw new Error("RouteCertificate is invalid");
             let reply = global.DeviceRoutes.current();
@@ -559,7 +561,7 @@
                 intro_message: String(intro || "").trim(),
                 reply_route_certificate: reply.certificate,
                 bootstrap_encryption_public: reply.certificate.boxPublicKey,
-                protocol_capabilities: ["CONTACT_ACCEPT_V1", "DMP_C_V3"]
+                protocol_capabilities: ["CONTACT_BOOTSTRAP_V3", "DMP_C_V3"]
             };
             const validator = global.ContactPayloads;
             const transport = new global.ContactTransport({
@@ -568,7 +570,10 @@
                 submit: async ({ routeLocator, envelope }) => {
                     const ready = await global.NodeManager.routeStatus(routeLocator);
                     if (!ready) throw new Error("RouteID пока не найден в mesh. Получатель должен быть online хотя бы на одной Node.");
-                    if (ready.connection.client) return global.NodeManager.submitDeviceEnvelopeV3(routeLocator, 'CONN_REQUEST', envelope, descriptor.c, ready.connection);
+                    if (ready.connection.client) {
+                        await core.getContactFlowV3().recordOutgoing(request, descriptor.c, requestAccountSlot);
+                        return global.NodeManager.submitDeviceEnvelopeV3(routeLocator, 'CONN_REQUEST', envelope, descriptor.c, ready.connection);
+                    }
                     return global.NodeManager.requestOn(ready.connection, "SUBMIT_CONTACT", {
                         route_locator: routeLocator, envelope, reply_route: reply.routeId
                     });

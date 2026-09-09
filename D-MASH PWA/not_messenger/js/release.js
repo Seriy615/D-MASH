@@ -1,7 +1,7 @@
 "use strict";
 
 // One visible release identifier for the page and Service Worker generation.
-window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-dev-20260908.1" });
+window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-dev-20260909.2" });
 
 /*
  * Runtime repair loader.
@@ -24,6 +24,8 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-dev-20260908.1" });
         "js/device_envelope.js",
         "js/device_inbox.js",
         "js/private_routes_v3.js",
+        "js/contact_bootstrap_v3.js",
+        "js/contact_flow_v3.js",
         "js/contact_payloads.js",
         "js/contact_transport.js",
         "js/pending_contact_requests.js",

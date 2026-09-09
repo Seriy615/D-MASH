@@ -711,6 +711,10 @@ const NodeManager = {
             getActiveAccount: () => window.Core?._accountTransitioning ? null : (window.Core?.activeIdentity || null),
             onAccount: (envelope, slot) => window.Core?.receiveAccountDeviceEnvelopeV3?.(envelope, slot) || false,
             onDevice: async envelope => {
+                if (envelope.type === 'CONN_ACCEPT' && window.Core?.getContactFlowV3) {
+                    await window.Core.getContactFlowV3().receive(envelope.route_id, JSON.parse(envelope.account_payload));
+                    return true;
+                }
                 if (envelope.type !== 'CONN_REQUEST' || !window.Core?.ingestPublicContactPacket) return false;
                 const payload = JSON.parse(envelope.account_payload);
                 await window.Core.ingestPublicContactPacket(envelope.route_id, {id: envelope.packet_id, envelope: payload});

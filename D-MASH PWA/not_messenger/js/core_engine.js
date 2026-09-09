@@ -214,6 +214,7 @@ const Core = {
         // Finish an in-flight Inbox transaction before replacing those keys.
         if (this._inboxAccountTask) await this._inboxAccountTask.catch(() => {});
         if (this._accountRouteTask) await this._accountRouteTask.catch(() => {});
+        if (this._contactAccountTask) await this._contactAccountTask.catch(() => {});
         const statusEl = document.getElementById('gate-status-text');
         try {
             if (statusEl) statusEl.innerText = "КУЗНИЦА КЛЮЧЕЙ (1024 bit)...";
@@ -1231,6 +1232,7 @@ const Core = {
             try {
                 await window.NodeManager.pullDeviceMailboxV3();
                 await window.NodeManager.deviceInboxV3().drain();
+                if (window.ContactFlowV3) await this.getContactFlowV3().resume();
             } catch (error) { this.shmon('WARN', 'Device Inbox sync deferred: ' + error.message); }
             return;
         }
@@ -2691,9 +2693,8 @@ const Core = {
         });
     },
     // Pending contact requests are device-scoped, encrypted by DeviceRoot and
-    // never written into an Account vault.  This UI intentionally performs no
-    // network operation: accepting/rejecting only resolves the local inbox
-    // item until a separate transport milestone is implemented.
+    // never written into an Account vault. V3 acceptance signs an Account
+    // bootstrap and sends it through the Device; rejection stays local.
     getPendingContactRequestStore: function() {
         if (!this.deviceState || !window.DeviceRoot?.state || window.DeviceRoot.state !== this.deviceState) {
             throw new Error("СНАЧАЛА РАЗБЛОКИРУЙТЕ УСТРОЙСТВО");
@@ -2703,6 +2704,54 @@ const Core = {
             this.pendingContactRequestStore = new window.PendingContactRequestStore({ deviceRoot: window.DeviceRoot });
         }
         return this.pendingContactRequestStore;
+    },
+    async withContactAccountV3(slot, work) {
+        if (this._accountTransitioning || this.activeIdentity !== slot) throw Error('Откройте выбранный Account');
+        if (this._contactAccountTask) await this._contactAccountTask.catch(() => {});
+        if (this._accountTransitioning || this.activeIdentity !== slot) throw Error('Account changed');
+        const task = work(); this._contactAccountTask = task;
+        try {return await task;} finally {if (this._contactAccountTask === task) this._contactAccountTask = null;}
+    },
+    getContactFlowV3() {
+        if (this.contactFlowV3) return this.contactFlowV3;
+        this.contactFlowV3 = new window.ContactFlowV3({store: window.NodeManager.deviceInboxV3(),
+            activeAccount: () => this._accountTransitioning ? null : this.activeIdentity,
+            makeBootstrap: options => this.withContactAccountV3(options.slot, async () => {
+                const contribution = await this.ensurePairingContribution();
+                if (this.activeIdentity !== options.slot || !this.keys?.sign) throw Error('Account locked');
+                const now = Math.floor(Date.now() / 1000);
+                const body = {version: 3, phase: options.phase, request_id: options.request.request_id,
+                    recipient_route_id: options.peerCertificate.routeId, route_certificate: options.localCertificate,
+                    account_bundle: this.keys.pub_hex, contribution, display_name: options.displayName,
+                    created_at: now, expires_at: now + 86400, accept_hash: options.acceptHash};
+                return window.DeviceRoutes.withRouteKeys(options.localCertificate.routeId, ({signing}) => {
+                    if (this.activeIdentity !== options.slot || !this.keys?.sign) throw Error('Account locked');
+                    return window.ContactBootstrapV3.create(body, this.keys.sign, signing);
+                });
+            }),
+            importPeer: (body, slot) => this.withContactAccountV3(slot, async () => {
+                const peerId = body.account_bundle.slice(0, 64), curvePub = body.account_bundle.slice(64, 128), kyberPub = body.account_bundle.slice(128);
+                const alias = await Storage.getAlias(peerId, 'L1');
+                const existing = await Storage.getBox('blind_peers', alias);
+                if (existing && ((existing.curvePub && existing.curvePub !== curvePub) ||
+                    (existing.kyberPub && existing.kyberPub !== kyberPub) ||
+                    (existing.pairingContribution && existing.pairingContribution !== body.contribution))) throw Error('Existing contact key material differs');
+                if (this.activeIdentity !== slot) throw Error('Account changed');
+                await Storage.putBox('blind_peers', {alias, data: {...existing, id: peerId, curvePub, kyberPub,
+                    name: existing?.name || body.display_name, pairingContribution: body.contribution,
+                    last_ts: Date.now(), unread: existing?.unread || false}});
+                // Already protected by the Account contact task. A boot may
+                // be waiting for it, so finish route installation before release.
+                if (this._accountRouteTask) await this._accountRouteTask.catch(() => {});
+                await this._ensureAutomaticMeshRoute(peerId, body.contribution);
+            }),
+            send: async (certificate, message) => {
+                const ready = await window.NodeManager.routeStatus(certificate.routeId);
+                if (!ready?.connection.client) throw Error('Contact reply route unavailable');
+                return window.NodeManager.submitDeviceEnvelopeV3(certificate.routeId, 'CONN_ACCEPT', message, certificate, ready.connection);
+            }
+        });
+        return this.contactFlowV3;
     },
     pendingContactError: function(error) {
         Core.customAlert("ЗАПРОСЫ В КОНТАКТЫ", error?.message || "НЕ УДАЛОСЬ ОБНОВИТЬ ЗАПРОСЫ");
@@ -2741,8 +2790,9 @@ const Core = {
             const requestId = payload ? `<div style="font-size:.6rem;color:#777;overflow-wrap:anywhere;margin-top:8px;">REQUEST: ${Core.escapeHtml(payload.request_id)}</div>` : "";
             const intro = request.intro ? `<div style="margin:12px 0;color:#ccc;white-space:pre-wrap;">${Core.escapeHtml(request.intro)}</div>` : "";
             const encodedId = encodeURIComponent(request.id);
+            const networkAccept = !!window.ContactFlowV3 && window.NodeManager?.connectedConnections().some(node => node.client);
             const h = `<div style="color:#49b9ff;font-weight:bold;">${Core.escapeHtml(request.displayName)}</div>${intro}${requestId}
-                <div style="font-size:.7rem;color:#777;margin:12px 0;">ПРИНЯТИЕ/ОТКЛОНЕНИЕ МЕНЯЕТ ТОЛЬКО ЛОКАЛЬНЫЙ ВХОДЯЩИЙ ЗАПРОС. ОТПРАВКА В СЕТЬ НЕ ВЫПОЛНЯЕТСЯ.</div>
+                <div style="font-size:.7rem;color:#777;margin:12px 0;">${networkAccept ? 'Для принятия откройте выбранный Account. Контакт получит защищённое подтверждение.' : 'Локальный просмотр запроса. Для сетевого принятия подключите Node v3.'}</div>
                 <button class="sys-modal-btn primary" onclick="Core.startAcceptPendingContactRequest(decodeURIComponent('${encodedId}'))">ПРИНЯТЬ</button>
                 <button class="sys-modal-btn danger" onclick="Core.rejectPendingContactRequest(decodeURIComponent('${encodedId}'))">ОТКЛОНИТЬ</button>
                 <button class="sys-modal-btn" onclick="Core.openPendingContacts()">ЗАКРЫТЬ</button>`;
@@ -2792,7 +2842,16 @@ const Core = {
             if (!/^[0-9a-f]{64}$/.test(selectedAccountIdentifier || "")) throw new Error("ACCOUNT IDENTIFIER НЕКОРРЕКТЕН");
             const request = await this.getPendingContactRequestStore().read(id);
             if (!request || request.status !== "pending") throw new Error("ЗАПРОС НЕ НАЙДЕН ИЛИ УЖЕ РЕШЁН");
-            this.pendingContactRequestPayload(request);
+            const payload = this.pendingContactRequestPayload(request);
+            if (window.ContactFlowV3) {
+                if (this.bytesToHex(this.keys?.sign?.publicKey || new Uint8Array()) !== selectedAccountIdentifier) throw Error('Откройте выбранный Account и повторите принятие запроса');
+                const local = window.DeviceRoutes.resolve(request.receivedRoute);
+                if (!payload || !local) throw Error('Contact bootstrap metadata unavailable');
+                await this.getContactFlowV3().accept(payload, local.certificate, quickName, this.activeIdentity);
+                await this.getPendingContactRequestStore().accept(id);
+                this.customAlert('ПРИНЯТИЕ ОТПРАВЛЕНО', 'Ожидаем подтверждения Account собеседника.');
+                return;
+            }
             await this.getPendingContactRequestStore().accept(id);
             this.customAlert("ЗАПРОС ПРИНЯТ", `Quick Name «${Core.escapeHtml(quickName)}» и выбранный Account identifier подтверждены локально. Сетевой CONTACT_ACCEPT не отправлялся.`);
         } catch (error) { this.pendingContactError(error); }

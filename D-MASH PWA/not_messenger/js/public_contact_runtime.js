@@ -25,6 +25,8 @@
         if (!core || core.__dmashPublicContactRuntimeV1 || !global.ContactPayloads || !global.ContactTransport || !global.DeviceRoutes) return false;
 
         core.sendPublicContactRequest = async function sendPublicContactRequest(descriptor, displayName, intro) {
+            const requestAccountSlot = this.activeIdentity;
+            if (global.ContactFlowV3 && !requestAccountSlot) throw Error('Откройте Account для нового контакта');
             if (!descriptor?.r || !descriptor?.c || descriptor.c.routeId !== descriptor.r) throw new Error("D-MASH Contact Link is invalid");
 
             // Contact descriptors may cross classic-script/runtime boundaries.
@@ -47,7 +49,7 @@
                 intro_message: String(intro || "").trim(),
                 reply_route_certificate: clonePlain(reply.certificate),
                 bootstrap_encryption_public: reply.certificate.boxPublicKey,
-                protocol_capabilities: ["CONTACT_ACCEPT_V1", "DMP_C_V3"]
+                protocol_capabilities: ["CONTACT_BOOTSTRAP_V3", "DMP_C_V3"]
             });
 
             const transport = new global.ContactTransport({
@@ -56,7 +58,10 @@
                 submit: async ({ routeLocator, envelope }) => {
                     const ready = await global.NodeManager.routeStatus(routeLocator);
                     if (!ready) throw new Error("RouteID пока не найден в mesh. Получатель должен быть online хотя бы на одной Node.");
-                    if (ready.connection.client) return global.NodeManager.submitDeviceEnvelopeV3(routeLocator, 'CONN_REQUEST', envelope, recipientCertificate, ready.connection);
+                    if (ready.connection.client) {
+                        await core.getContactFlowV3().recordOutgoing(request, recipientCertificate, requestAccountSlot);
+                        return global.NodeManager.submitDeviceEnvelopeV3(routeLocator, 'CONN_REQUEST', envelope, recipientCertificate, ready.connection);
+                    }
                     return global.NodeManager.requestOn(ready.connection, "SUBMIT_CONTACT", {
                         route_locator: routeLocator,
                         envelope,

@@ -1,5 +1,31 @@
 # Transport v3 engineering record
 
+## Contact bootstrap development — 2026-09-09
+
+The live PWA now advertises CONTACT_BOOTSTRAP_V3 and carries signed ACCEPT /
+CONFIRM payloads inside CONN_ACCEPT Device envelopes. Account Ed25519 signs its
+public bundle and contribution; the expected public Route key signs the same
+body and Account signature. Both proofs bind request id, source/destination
+public routes, expiry and phase. CONFIRM also binds the exact ACCEPT digest.
+The legacy public bundle format is carried for compatibility with current
+Account crypto; this is not a new PQ security claim.
+
+An outgoing request is associated locally with the Account chosen when the
+user starts it. Account changes during asynchronous route discovery cannot
+silently reassign that request. Incoming requests remain Device-level and
+readable before Account login. Acceptance requires the selected Account to be
+unlocked. Signed transitions persist before sends; failures leave them pending,
+and duplicate/retried ACCEPT can resend the same CONFIRM. A closed Account's
+bootstrap waits until that Account opens. Account imports peer keys and pairing
+material into its vault, then installs the private Device route capability.
+
+Two real-crypto test suites cover dual signatures, context/expiry/replay,
+encrypted ACCEPT/CONFIRM, restart retry, locked Account and idempotent import.
+The UI test retains legacy local behavior coverage and adds v3 selected-Account
+and failed-send guards. Real multi-node/browser contact acceptance is still
+pending; the old Account decrypt control-null ambiguity and transport retry
+limitations listed below remain. Current dev release: transport-v3-dev-20260909.2.
+
 ## Status and baseline
 
 2026-09-08. Base: `703a5df` on `main`; clean clone, working branch
