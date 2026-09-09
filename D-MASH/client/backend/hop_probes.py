@@ -19,11 +19,11 @@ def origin_tag(locator):
 
 
 def validate_probe(packet):
-    required = {'type', 'id', 'origin_tag', 'hop_route_label', 'metric', 'hop_limit', 'lifetime', 'trace'}
-    if not isinstance(packet, dict) or not required <= set(packet) or set(packet) - required - {'trajectory'}:
+    required = {'type', 'id', 'origin_tag', 'hop_route_label', 'ncrh', 'metric', 'hop_limit', 'lifetime', 'trace'}
+    if not isinstance(packet, dict) or set(packet) != required:
         raise ValueError('invalid hop probe fields')
     if packet['type'] != 'HOP_PROBE_V3': raise ValueError('invalid hop probe operation')
-    for name in ('id', 'origin_tag', 'hop_route_label') + (('trajectory',) if 'trajectory' in packet else ()):
+    for name in ('id', 'origin_tag', 'hop_route_label', 'ncrh'):
         if not isinstance(packet[name], str) or not _HEX.fullmatch(packet[name]):
             raise ValueError('invalid hop probe token')
     for field, low, high in (('metric', 0, 15), ('hop_limit', 0, 15), ('lifetime', 1, 1800)):
@@ -41,9 +41,6 @@ class HopProbes:
     def __init__(self, transport, *, clock=time.monotonic, capacity=10000):
         self.transport, self.clock, self.capacity = transport, clock, capacity
         self._key = secrets.token_bytes(32)
-        # Runtime-local namespace. Restart rotates it; no BootID or NodeID is
-        # included in the commitment.
-        self._ncrh_key = secrets.token_bytes(32)
         self._box = SecretBox(secrets.token_bytes(32))
         self._rows = {}
         self._exports = set()
@@ -87,13 +84,6 @@ class HopProbes:
             if callable(check) and check(): return record['alias']
         return None
 
-    def _road(self, next_peer=None, downstream=None):
-        if downstream is None:
-            return secrets.token_hex(32)
-        if not isinstance(downstream, str) or not _HEX.fullmatch(downstream):
-            raise ValueError('invalid NCRH input')
-        return hmac.new(self._ncrh_key, b'D-MASH|NCRH|V3\0' + bytes.fromhex(downstream), hashlib.sha256).hexdigest()
-
     def _trace_token(self, identity):
         # Per-Probe loop guard, not a stable Node/Boot ID or a node list.
         return self._index('trace', identity).hex()
@@ -122,7 +112,7 @@ class HopProbes:
         return self.transport.hop_routes.issue(role, owner,
             next_peer=candidate['next_peer'], outgoing_label=candidate['outgoing_label'],
             mailbox_alias=candidate['mailbox_alias'], metric=candidate['metric'], ttl=ttl,
-            ncrh_in=candidate.get('trajectory'), ncrh_out=candidate.get('downstream'))
+            ncrh_in=candidate.get('ncrh_in'), ncrh_out=candidate.get('ncrh'))
 
     def status(self, owner, locator):
         tag = origin_tag(locator)
@@ -137,6 +127,23 @@ class HopProbes:
             label = self._issue('DEVICE', owner, candidate)
             self._put('device', cache_key, {'label': label}, candidate['until'] - self.clock())
         return {'state': 'ROUTE_READY', 'hop_route_label': label, 'best_metric': candidate['metric']}
+
+    def recover_alias(self, authenticated_peer, ncrh):
+        """Issue a fresh hop alias for an already reconstructed NCRH path.
+
+        This is deliberately separate from Probe reconstruction. NCRH is only
+        a lookup hint: an authenticated peer and a locally stored candidate
+        with the same next hop are both required before a new label is issued.
+        """
+        if not isinstance(authenticated_peer, str) or not _HEX.fullmatch(ncrh or ''):
+            raise ValueError('invalid alias recovery request')
+        for row in list(self._rows.values()):
+            value = json.loads(self._box.decrypt(row))
+            if 'candidates' not in value: continue
+            for candidate in self._candidates(value['tag']):
+                if candidate['ncrh'] == ncrh and candidate['next_peer'] == authenticated_peer:
+                    return self._issue('NODE', authenticated_peer, candidate)
+        return None
 
     async def _advertise(self, tag, candidate, peers=None):
         if candidate['metric'] >= 15: return
@@ -172,7 +179,7 @@ class HopProbes:
                     packet = {'type': 'HOP_PROBE_V3', 'id': candidate['probe_id'], 'origin_tag': tag,
                         'hop_route_label': label, 'metric': candidate['metric'], 'hop_limit': 15 - candidate['metric'],
                         'lifetime': max(1, min(1800, int(candidate['until'] - self.clock()))), 'trace': candidate['trace']}
-                    if candidate.get('trajectory') is not None: packet['trajectory'] = candidate['trajectory']
+                    packet['ncrh'] = candidate['ncrh']
                     await self.transport._dispatch_mesh_packet(packet, next_hop_id=peer)
                 except (BufferError, PermissionError):
                     if label: self.transport.hop_routes.revoke('NODE', peer, label)
@@ -191,7 +198,8 @@ class HopProbes:
             raise PermissionError('Probe must advertise its registered initiator')
         identity = secrets.token_hex(32)
         candidate = {'path_key': 'local', 'mailbox_alias': alias, 'next_peer': None, 'outgoing_label': None,
-            'metric': 0, 'trajectory': self._road(), 'downstream': None, 'until': self.clock() + 1800,
+            'metric': 0, 'ncrh': self.transport.system_db.node_crypto.derive_ncrh_root(),
+            'ncrh_in': None, 'until': self.clock() + 1800,
             'probe_id': identity, 'trace': [self._trace_token(identity)]}
         self._install(tag, candidate)
         await self._advertise(tag, candidate)
@@ -213,12 +221,12 @@ class HopProbes:
         token = self._trace_token(packet['id'])
         if token in packet['trace']: return
         metric = packet['metric'] + 1
-        downstream = packet.get('trajectory')
-        road = self._road(peer, downstream)
-        path_key = self._index('path', [peer, downstream or packet['hop_route_label']]).hex()
+        ncrh_in = packet['ncrh']
+        ncrh = self.transport.system_db.node_crypto.extend_ncrh(ncrh_in)
+        path_key = self._index('path', [peer, ncrh_in, packet['hop_route_label']]).hex()
         candidate = {'path_key': path_key, 'mailbox_alias': None, 'next_peer': peer,
-            'outgoing_label': packet['hop_route_label'], 'metric': metric, 'trajectory': road,
-            'downstream': downstream, 'until': self.clock() + packet['lifetime'],
+            'outgoing_label': packet['hop_route_label'], 'metric': metric, 'ncrh': ncrh,
+            'ncrh_in': ncrh_in, 'until': self.clock() + packet['lifetime'],
             'probe_id': packet['id'], 'trace': packet['trace'] + [token]}
         if self._install(tag, candidate):
             await self._advertise(tag, candidate)
@@ -238,4 +246,4 @@ class HopProbes:
             await asyncio.gather(self._export_task, return_exceptions=True)
         self._exports.clear()
         self._rows.clear()
-        self._key = self._box = self._ncrh_key = None
+        self._key = self._box = None

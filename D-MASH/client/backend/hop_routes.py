@@ -85,7 +85,7 @@ class HopRoutes:
             raise BufferError('hop route capacity reached')
         self._rows[index] = self._seal(dict(next_peer=next_peer, outgoing_label=outgoing_label,
             mailbox_alias=mailbox_alias, metric=metric, expires=self.clock() + ttl,
-            ncrh_in=ncrh_in, ncrh_out=ncrh_out or (secrets.token_hex(32) if next_peer else None)))
+            ncrh_in=ncrh_in, ncrh_out=ncrh_out))
         return label
 
     def resolve(self, role, owner, label):

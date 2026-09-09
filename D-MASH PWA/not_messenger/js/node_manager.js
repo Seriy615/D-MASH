@@ -656,23 +656,9 @@ const NodeManager = {
         return ready[0] || null;
     },
     async ensurePublicRouteV3(target, sourceRoute, timeoutMs = 18000) {
-        const ready = await this.routeStatus(target);
-        if (ready) return ready;
-        const connections = this.connectedConnections().filter(node => node.client && node.authority);
-        if (!connections.length) return null;
-        const route = window.DeviceRoutes.resolve(sourceRoute);
-        if (!route || typeof this.activatePublicRouteOnConnection !== 'function') throw new Error('Public source route is unavailable');
-        const attempts = await Promise.allSettled(connections.map(node =>
-            this.activatePublicRouteOnConnection(route, node, {targetRoute: target})));
-        if (attempts.every(result => result.status === 'rejected')) throw attempts[0].reason;
-        const deadline = Date.now() + timeoutMs;
-        do {
-            const found = await this.routeStatus(target);
-            if (found) return found;
-            if (Date.now() >= deadline) return null;
-            await new Promise(resolve => setTimeout(resolve, 250));
-        } while (Date.now() < deadline);
-        return null;
+        // Probe advertises only a route owned by this Device. A target must
+        // advertise itself; this helper never performs target discovery.
+        return this.routeStatus(target);
     },
     async submitEnvelope(routeLocator, envelope) {
         if (this.connectedConnections().some(node => node.client)) {

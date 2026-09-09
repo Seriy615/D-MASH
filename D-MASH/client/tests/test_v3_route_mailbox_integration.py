@@ -20,7 +20,7 @@ from backend.secure_session import b64
 class RouteMailboxIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.crypto = NodeCryptoManager(SigningKey.generate().encode().hex())
+        self.crypto = NodeCryptoManager(SigningKey.generate().encode().hex(), b'v' * 32)
         self.db = DatabaseManager(str(Path(self.tmp.name) / "system.db"))
         self.db.set_node_crypto(self.crypto)
         await self.db.connect()

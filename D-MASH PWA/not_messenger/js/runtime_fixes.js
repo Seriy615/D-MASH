@@ -260,7 +260,7 @@
                     const resource = {kind: 'PUBLIC', routeId: route.routeId, signing,
                         generation: grant.generation, expiresAt: grant.expires_at, entryGrant: grant};
                     await connection.authority.route('REGISTER_ROUTE', resource);
-                    await connection.authority.route('START_PROBE', resource, {route_locator: options.targetRoute || route.routeId});
+                    await connection.authority.route('START_PROBE', resource, {route_locator: route.routeId});
                     return {state: 'ACTIVATED'};
                 });
             }

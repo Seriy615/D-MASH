@@ -1,5 +1,7 @@
 
 import os
+import secrets
+import tempfile
 import sys
 from contextlib import asynccontextmanager
 from typing import Optional, Set
@@ -61,6 +63,7 @@ PACKET_SIZE = 4096
 P2P_PORT = int(os.getenv("P2P_PORT", 9000))
 P2P_HOST = os.getenv("P2P_HOST", "0.0.0.0")
 NODE_KEY_FILE = "node_identity.key" # Файл для хранения ключа ноды
+NODE_BASENCRH_FILE = os.getenv("DMASH_BASENCRH_FILE", NODE_KEY_FILE + ".basencrh")
 REGISTRATION_REGISTRY_PATH = os.getenv(
     "DMASH_REGISTRATION_REGISTRY_PATH", "registration_registry.db"
 )
@@ -121,6 +124,32 @@ def create_crypto_executor() -> Executor:
         print("⚠️ [CORE] Process executor unavailable; using thread fallback.")
         return ThreadPoolExecutor(max_workers=2, thread_name_prefix="dmash-crypto")
 
+def _atomic_secret_file(path: str, value: bytes) -> bytes:
+    directory = os.path.dirname(os.path.abspath(path)) or "."
+    os.makedirs(directory, mode=0o700, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=".dmash-secret-", dir=directory)
+    try:
+        os.chmod(temporary, 0o600)
+        with os.fdopen(fd, "wb") as handle: handle.write(value)
+        os.replace(temporary, path)
+        try: os.chmod(path, 0o600)
+        except OSError: pass
+    finally:
+        if os.path.exists(temporary): os.unlink(temporary)
+    return value
+
+
+def ensure_base_ncrh(path: str = NODE_BASENCRH_FILE) -> bytes:
+    try:
+        with open(path, "rb") as handle: value = handle.read()
+        if len(value) == 64:
+            value = bytes.fromhex(value.decode("ascii"))
+        if len(value) != 32: raise ValueError("invalid BaseNCRH file")
+        return value
+    except (FileNotFoundError, ValueError, UnicodeDecodeError):
+        return _atomic_secret_file(path, secrets.token_bytes(32))
+
+
 def ensure_node_identity():
     """
     Загружает или генерирует (с майнингом) Identity ноды.
@@ -137,6 +166,8 @@ def ensure_node_identity():
         
         with open(NODE_KEY_FILE, "w") as f:
             f.write(signing_key_hex)
+        try: os.chmod(NODE_KEY_FILE, 0o600)
+        except OSError: pass
         
         print(f"✅ [CORE] New Identity generated: {node_id}")
         print(f"💾 [CORE] Saved to {NODE_KEY_FILE}")
@@ -166,7 +197,7 @@ async def lifespan(app: FastAPI):
     try:
         # 1. Инициализация Identity Ноды (Синхронно, блокирует старт до завершения PoW)
         node_signing_key = ensure_node_identity()
-        state.node_crypto = NodeCryptoManager(node_signing_key)
+        state.node_crypto = NodeCryptoManager(node_signing_key, ensure_base_ncrh())
         state.capabilities = NodeCapabilities.from_env()
         print(f"🌐 [CORE] Node ID: {state.node_crypto.node_id}")
         state.process_pool = create_crypto_executor()

@@ -25,7 +25,8 @@ class HopRouteTests(unittest.TestCase):
     def test_scoped_labels_and_local_ncrh_are_encrypted(self):
         table = HopRoutes()
         outgoing = 'a' * 64
-        label = table.issue('NODE', 'upstream', next_peer='downstream', outgoing_label=outgoing, ncrh_in='b' * 64)
+        label = table.issue('NODE', 'upstream', next_peer='downstream', outgoing_label=outgoing,
+                            ncrh_in='b' * 64, ncrh_out='c' * 64)
         route = table.resolve('NODE', 'upstream', label)
         self.assertEqual(route['next_peer'], 'downstream')
         self.assertNotEqual(label, outgoing)

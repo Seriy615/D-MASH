@@ -5,10 +5,10 @@
 `HopRoutes` now provides a volatile label table scoped by authenticated role
 and ingress owner. Labels are independent 256-bit random values. Lookup uses
 HMAC with a fresh instance key; rows contain SecretBox-encrypted next peer,
-outgoing label or local mailbox alias, metric, expiry and local NCRH-in/out.
-NCRH-out is independently random and is not ownership evidence. Tables have
-bounded capacity/lifetime, explicit revocation and discard keys/rows on close.
-No stable Node key or raw RouteID is used in the table's index or persisted.
+outgoing label or local mailbox alias, metric, expiry and NCRH-in/out. Tables
+have bounded capacity/lifetime, explicit revocation and discard keys/rows on
+close. No stable Node key or raw RouteID is used in the table's index or
+persisted.
 
 `HOP_DATA_V3` is accepted inside authenticated Node MESH_DATA/MESH_BATCH. Its
 strict wire fields are packet id, hop_route_label and opaque Device ciphertext;
@@ -19,42 +19,55 @@ and groups by resolved next peer. Local termination reuses mailbox authority
 checks. Revoked/expired queued bindings stay unresolved within the existing
 RAM queue budget. No stale peer fallback or implicit broadcast is introduced.
 
-Six new tests cover scope isolation, encrypted local metadata, independent
-labels/keys, expiry/capacity/revocation, tampering, strict wire fields and a
-three-Node data path with separate 500 ms windows and unchanged ciphertext.
-The multi-hop fixture installs bindings explicitly; it does NOT prove Probe
-establishment. Production Device submission/discovery still uses the existing
-locator path: automatic Probe/response installation, Device L0 acquisition,
-and replacement of legacy Probe's global NCRH are the next migration steps.
-This is a working hop-data-plane foundation, not completion of milestone F.
+The data-plane fixture installs bindings explicitly; Probe establishment is
+covered separately by the initiator-advertisement implementation below.
 
-Trajectory design direction: NCRH must not derive from RouteID or Account IDs.
-Different delivery bindings may reference the same locally known trajectory
-and share its health/selection state. That does not merge delivery permissions,
-DNSS or final labels. A shared node segment is not evidence of the same final
-destination or complete path. Keep trajectory identity local and encrypted;
-do not put a global hash of the node sequence on every hop. Current NCRH values
-are independent random local metadata per binding; shared trajectory records
-and their establishment are not implemented yet.
+NCRH is a trajectory property, independent of RouteID, Account ID and node
+identity. Different people can use the same trajectory, while different
+trajectories of equal length remain distinguishable. It is an optimization and
+path-selection hint; it never grants authority, identifies a recipient or
+replaces reachability and hop labels.
 
 Current Probe implementation now follows the initiator-advertisement model:
 the initiator advertises a bounded origin tag; receiving Nodes install
 alternative paths back toward that origin and propagate advertisements to
 their other peers. Probe does not search for a person or a final Account.
-The wire carries no RouteID, DNSS, NodeID or Account identity. At the origin,
-the root NCRH is a fresh 256-bit value. Each receiving Node deterministically
-transforms the incoming value with its runtime-local HMAC key:
-`HMAC-SHA256(K_runtime, "D-MASH|NCRH|V3\\0" || NCRH_in)`. Thus the same
-Node/runtime and input produce the same output, different Nodes/runtime keys
-produce different outputs, and a fork forwards the same prefix NCRH to every
-branch before each branch applies its own transform. Restart rotates the
-runtime key and therefore the NCRH namespace; there is no BootID.
+The wire carries no RouteID, DNSS, NodeID or Account identity and every
+`HOP_PROBE_V3` carries a mandatory 32-byte NCRH value. Each Node persists a
+random 32-byte `BaseNCRH_Node` beside its signing secret. The origin computes
+`HMAC-SHA256(BaseNCRH_Node, "D-MASH|NCRH|V3|ROOT\\0" || BaseNCRH_Node)`;
+each receiving Node computes
+`HMAC-SHA256(BaseNCRH_CurrentNode, "D-MASH|NCRH|V3|HOP\\0" || NCRH_in)`.
+Forks copy the same incoming value to each outgoing branch; branch Nodes then
+extend it independently. Restart preserves the namespace. Duplicate
+next-peer candidates are deduplicated by their path/NCRH key, while distinct
+NCRH candidates coexist.
 
-NCRH is retained as an optional trajectory alternative tag. Route selection
-uses reachability, hop metric, expiry and local labels; NCRH does not authorize,
-forward, identify a recipient, or decide ownership. Up to three path
-alternatives are retained, including equal-length alternatives distinguished
-by their path commitment, while each Device/Node hop label remains independent.
+Route selection uses reachability, hop metric, expiry and local labels; NCRH
+does not authorize, forward, identify a recipient, or decide ownership. Up to
+three path alternatives are retained, including equal-length alternatives
+distinguished by their path commitment, while each Device/Node hop label
+remains independent.
+
+Alias recovery is a separate authenticated-peer operation (`recover_alias` in
+the current backend boundary). It can issue a fresh hop-local label only when
+the Node already has a reconstructed candidate whose NCRH and next peer match;
+knowledge of NCRH alone never installs a forwarding binding. Old aliases,
+labels and Probe rows are runtime state and are intentionally absent from the
+Node recovery bundle.
+
+## Blind Node backup and recovery — 2026-09-09
+
+The recovery bundle contains only persistent Node secrets: the signing private
+identity and `BaseNCRH_Node`, plus version, generation and integrity metadata.
+It excludes hop labels, Probe candidates, queues and other transient state. A
+random opaque object ID addresses an encrypted bundle in a blind `put/get/delete`
+store; the store sees only that ID and ciphertext. The bundle uses PyNaCl
+SecretBox (XSalsa20-Poly1305) with a separate random 32-byte recovery key.
+Local storage uses restrictive directory/file permissions and atomic writes.
+Restore validates and stages both secrets together, rolls back on replacement
+failure, and writes no partial Node state. The restored process receives a new
+RAM blind-index salt; it is never recovered from the bundle.
 
 
 ## Node aggregation windows — 2026-09-09
@@ -153,7 +166,7 @@ The following inventory was made before implementation:
 |---|---|---|
 | Device / Node | JSON WebSocket `/dmp-c/v1`, DMP-C version 2, `CHALLENGE`, `AUTH`, `AUTH_OK`; Ed25519 Device signature of pipe-separated node/session/nonces/expiry | Mutual role-bound authentication, ephemeral X25519, directional encrypted records |
 | Node / Node | `ws://host:port`; initiator `{id,challenge}`, responder `{id,signature}`; inbound checks NodeID PoW but not initiator possession | Same v3 record layer, independent directional DNSS authorization |
-| Mesh wire | `{t:REAL,d:JSON(packet),x:padding}` or DUMMY; `ROUTE_PROBE_V2` carries route/back route, metric, hop limit, global NCRH; DATA carries route and envelope | Hop labels, local NCRH, opaque DeviceCiphertext, bounded batches |
+| Mesh wire | `{t:REAL,d:JSON(packet),x:padding}` or DUMMY; `HOP_PROBE_V3` carries opaque origin tag, hop label, metric, trace and mandatory NCRH; DATA carries opaque envelope | Hop labels, local NCRH, opaque DeviceCiphertext, bounded batches |
 | DNSS | PWA encrypted Device material `dnss/v1/NodeID`, 16 bytes; SQLite registry composite blind DNSS / raw RouteID; gateway pending registration cleared after grant | Stable Device/Node DNSS, runtime registration bound to authenticated Device key; rebuild after Node restart |
 | Public authority | Route-signed EntryGrantV1 includes NodeID, route key, generation and lifetime; no session/DNSS signature binding | Session-bound proof plus grant plus activation work |
 | Private routes | Account-scoped lifecycle and locator configuration; gateway does not distinguish authority | Root-capability proof, no mandatory public grant or AccountID KDF input |

@@ -4,7 +4,7 @@ Checkout: `/Users/afsvu/Documents/Codex/D-MASH/D-MASH`; branch `transport-v3`.
 The earlier checkpoint is preserved in HANDOFF_TRANSPORT_V3.md. The current
 transport semantics are specified and tested in TRANSPORT_V3.md.
 
-## Hop-label foundation added after batching correction
+## Hop-label and Probe foundation added after batching correction
 
 HopRoutes stores peer/role-scoped random labels behind fresh HMAC indexes and
 SecretBox-encrypted, bounded, expiring runtime records. Local NCRH mappings are
@@ -13,10 +13,9 @@ transport admission, snapshot-time route resolution and existing peer workers;
 labels change at each hop while Device ciphertext stays opaque. Shutdown drops
 the table's keys and rows. No raw RouteID persistence was introduced.
 
-Six focused tests include a three-Node data path and revoked-before-flush
-rejection. Bindings are explicitly installed in that fixture. Production Probe
-still needs to install these mappings and return Device L0; old discovery's
-global NCRH also still needs replacement. Do not claim milestone F complete.
+The data-plane fixture installs bindings explicitly; Probe establishment now
+installs the corresponding Node/Device labels from initiator advertisements.
+Probe remains a route-to-initiator mechanism and never searches for a person.
 
 ## Current batching correction
 
@@ -59,21 +58,44 @@ crash-safe transport recovery, legacy mailbox migration, password Node,
 S-TURN/calls/files, epoch ratchet and full multi-node/browser acceptance.
 Historical decrypt's ambiguous null result still leaves control packets pending.
 
-The hop Probe work is now more precise: Probe advertises an initiator and
-builds alternatives back toward that initiator; it does not search for a
-recipient. NCRH is a recursive path-prefix commitment, not a random road ID:
-each runtime applies HMAC-SHA256 with its private runtime key, while forked
-copies carry the same prefix value until the receiving branches transform it.
-NCRH is optional optimization metadata and distinguishes equal-length paths;
-hop labels, reachability and metric remain the delivery mechanism. Runtime
-restart rotates the NCRH namespace. Focused and full tests cover schema,
-fork-safe commitment invariants and the no-identity wire boundary.
+The hop Probe work is now precise: Probe advertises an initiator and builds
+alternatives back toward that initiator; it does not search for a recipient.
+Each Node persists a random 32-byte BaseNCRH beside its signing secret. The
+origin root is `HMAC-SHA256(BaseNCRH_Node,
+"D-MASH|NCRH|V3|ROOT\\0" || BaseNCRH_Node)`; each hop is
+`HMAC-SHA256(BaseNCRH_CurrentNode,
+"D-MASH|NCRH|V3|HOP\\0" || NCRH_in)`. Probe carries mandatory NCRH, copies
+the incoming value across forks, and extends it only when a Node receives the
+advertisement. NCRH is a trajectory optimization property, independent of
+RouteID and Account identity; it distinguishes equal-length paths but does not
+authorize or identify anything. Restart preserves the NCRH namespace. Focused
+and full tests cover schema, persistence, fork-safe commitment invariants and
+the no-identity wire boundary.
+
+## Blind Node backup and recovery
+
+The versioned encrypted recovery bundle includes only the signing private
+identity and BaseNCRH. Hop labels, Probe candidates and queues are transient
+and are not restored. A random opaque object ID and separate random recovery
+key address a SecretBox (XSalsa20-Poly1305) ciphertext through a blind
+`put/get/delete` store. Local files are mode 0600 inside a mode 0700 directory;
+restore stages both secrets and rolls back if either replacement fails. The
+restored process generates a fresh RAM blind-index salt; that salt is never
+serialized or imported.
+
+Route recovery is reconstructed from authenticated neighbor Probe
+advertisements. It creates fresh candidates, NCRH associations and hop labels;
+old aliases and labels never come from backup. Alias recovery is separate from
+Probe and requires both an authenticated peer and a locally reconstructed
+candidate matching the NCRH/next-hop pair. NCRH knowledge alone cannot create
+a forwarding binding.
 
 ## Validation and revision
 
 Full run: `/tmp/dmash-v3-py312/bin/python tools/test_all.py`.
-Final result: **161 backend tests, 11 Origin tests and 33 PWA suites passed**
-(exit 0). This includes 21 focused aggregation/batch tests. Focused tests prove
+Final result: **172 backend tests, 11 Origin tests and 33 PWA suites passed**
+(exit 0). This includes 21 focused aggregation/batch tests plus BaseNCRH,
+Probe NCRH and encrypted backup coverage. Focused tests prove
 P1-P4 at 0/120/340/499 ms close at 500 ms, P5 at 510 ms closes at 1010 ms,
 next-hop regrouping, independent slow peers, exact batch limits, failure and
 cancellation retention. Real authenticated Node WebSocket coverage exercises

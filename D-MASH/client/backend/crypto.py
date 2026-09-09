@@ -3,6 +3,7 @@ import json
 import base64
 import os
 import hashlib
+import hmac
 from typing import Optional, Tuple
 import nacl.bindings 
 import nacl.utils
@@ -22,23 +23,25 @@ class NodeCryptoManager:
     Менеджер криптографии для слоя Демона (The Node).
     Отвечает за Identity ноды, PoW и 'ослепление' данных (Blind Storage).
     """
-    def __init__(self, signing_key_hex: str = None):
-        # The blind-index key must be node-local *and stable*: route aliases
-        # are persisted, so a fresh random key here would orphan every route
-        # and inbound binding on restart.  It is derived only in RAM from the
-        # already-persistent private node identity with an explicit domain;
-        # neither the key nor raw locators are written to the database.
+    def __init__(self, signing_key_hex: str = None, base_ncrh: bytes | None = None,
+                 secret_salt: bytes | None = None):
+        # The blind-index key is RAM-only and is never part of a recovery
+        # bundle. Normal startup keeps the legacy identity-scoped derivation;
+        # recovery may pass a freshly generated salt so old blind aliases are
+        # intentionally not portable across restored state.
         self.secret_salt: Optional[bytes] = None
         self.signing_key: Optional[SigningKey] = None
         self.verify_key: Optional[VerifyKey] = None
         self.private_key: Optional[PrivateKey] = None # Curve25519 (для расшифровки SealedBox)
         self.public_key: Optional[PublicKey] = None   # Curve25519 (для создания SealedBox)
         self.node_id: str = ""
+        self.base_ncrh: bytes | None = None
 
         if signing_key_hex:
-            self._load_keys(signing_key_hex)
+            self._load_keys(signing_key_hex, base_ncrh, secret_salt)
 
-    def _load_keys(self, signing_key_hex: str):
+    def _load_keys(self, signing_key_hex: str, base_ncrh: bytes | None = None,
+                   secret_salt: bytes | None = None):
         """Загрузка существующих ключей ноды"""
         self.signing_key = SigningKey(signing_key_hex, encoder=HexEncoder)
         self.verify_key = self.signing_key.verify_key
@@ -47,9 +50,31 @@ class NodeCryptoManager:
         # Конвертация Ed25519 -> Curve25519 для шифрования
         self.private_key = self.signing_key.to_curve25519_private_key()
         self.public_key = self.verify_key.to_curve25519_public_key()
-        self.secret_salt = hashlib.sha256(
-            b"D-MASH|NODE_BLIND_ALIAS_KEY|V1\x00" + self.signing_key.encode()
-        ).digest()
+        if secret_salt is None:
+            self.secret_salt = hashlib.sha256(
+                b"D-MASH|NODE_BLIND_ALIAS_KEY|V1\x00" + self.signing_key.encode()
+            ).digest()
+        elif isinstance(secret_salt, bytes) and len(secret_salt) == 32:
+            self.secret_salt = bytes(secret_salt)
+        else:
+            raise ValueError("secret_salt must be 32 random bytes")
+        if base_ncrh is not None and (not isinstance(base_ncrh, bytes) or len(base_ncrh) != 32):
+            raise ValueError("BaseNCRH must be 32 random bytes")
+        # A missing BaseNCRH is deliberately unavailable, never replaced by a
+        # random runtime fallback. Production core always loads the persisted
+        # secret before constructing this manager.
+        self.base_ncrh = bytes(base_ncrh) if base_ncrh is not None else None
+
+    def derive_ncrh_root(self) -> str:
+        if self.base_ncrh is None: raise ValueError("BaseNCRH unavailable")
+        return hmac.new(self.base_ncrh, b"D-MASH|NCRH|V3|ROOT\0" + self.base_ncrh, hashlib.sha256).hexdigest()
+
+    def extend_ncrh(self, ncrh_in: str) -> str:
+        if self.base_ncrh is None or not isinstance(ncrh_in, str) or len(ncrh_in) != 64:
+            raise ValueError("invalid NCRH input")
+        try: value = bytes.fromhex(ncrh_in)
+        except ValueError as error: raise ValueError("invalid NCRH input") from error
+        return hmac.new(self.base_ncrh, b"D-MASH|NCRH|V3|HOP\0" + value, hashlib.sha256).hexdigest()
 
     @staticmethod
     def generate_node_identity() -> Tuple[str, str]:
