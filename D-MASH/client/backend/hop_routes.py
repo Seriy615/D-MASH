@@ -102,6 +102,15 @@ class HopRoutes:
     def revoke(self, role, owner, label):
         return self._rows.pop(self._index(role, owner, label), None) is not None
 
+    def revoke_through_peer(self, peer):
+        """Invalidate every ingress capability using this downstream channel."""
+        removed = 0
+        for index, row in list(self._rows.items()):
+            if self._open(row)['next_peer'] == peer:
+                del self._rows[index]
+                removed += 1
+        return removed
+
     def close(self):
         self._rows.clear()
         self._lookup_key = self._box_key = None

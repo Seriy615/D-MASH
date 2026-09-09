@@ -153,6 +153,7 @@ class P2PNode:
         finally:
             if self.active_connections.get(peer_id) is websocket:
                 del self.active_connections[peer_id]
+                self.transport.hop_probes.peer_disconnected(peer_id)
             await websocket.close()
 
     async def enqueue_transport_packet(self, packet, *, next_hop_id: str | None = None, exclude_peer_id: str | None = None, hop_owner=None):

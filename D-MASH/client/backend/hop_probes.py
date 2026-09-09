@@ -285,16 +285,30 @@ class HopProbes:
             self._put('export', key, {'tag': tag, 'candidate': candidate, 'peer': peer}, candidate['until'] - self.clock())
             self._exports.add(self._index('export', key))
         for peer in peers:
-            task = self._export_tasks.get(peer)
-            if task is None or task.done():
-                task = asyncio.create_task(self._flush_exports(peer))
-                self._export_tasks[peer] = task
-                task.add_done_callback(lambda done, p=peer: self._worker_done(self._export_tasks, p, done))
+            self._start_export(peer)
+
+    def _start_export(self, peer):
+        if self._closed or peer not in self.transport.node.active_connections:
+            return
+        task = self._export_tasks.get(peer)
+        if task is None or task.done():
+            task = asyncio.create_task(self._flush_exports(peer))
+            self._export_tasks[peer] = task
+            task.add_done_callback(lambda done: self._worker_done(self._export_tasks, peer, done))
+
+    def peer_disconnected(self, peer):
+        # Keep encrypted unsent exports, but leave no retry timer for an absent
+        # channel. A subsequent authenticated connection restarts the worker.
+        for workers in (self._export_tasks, self._connection_tasks):
+            task = workers.pop(peer, None)
+            if task: task.cancel()
 
     async def _flush_exports(self, target_peer):
         # Backpressure keeps unsent advertisements; successful peer exports
         # are removed individually. Each peer has its own independent worker.
         while not self._closed:
+            if target_peer not in self.transport.node.active_connections:
+                return
             own = [index for index in self._exports if index in self._rows
                    and json.loads(self._box.decrypt(self._rows[index]))['peer'] == target_peer]
             if not own: return
@@ -309,7 +323,7 @@ class HopProbes:
                     self._rows.pop(index, None); self._exports.discard(index)
                     continue
                 if not self.transport.node.can_route or peer not in self.transport.node.active_connections:
-                    continue
+                    return
                 label = None
                 try:
                     packet = {'type': 'HOP_ROOT_NCRH_V1', 'id': candidate['probe_id'], 'request_id': secrets.token_hex(32),
@@ -485,6 +499,7 @@ class HopProbes:
 
     def _reset_peer(self, peer):
         # A new authenticated channel must not inherit old semantic grants.
+        self.transport.hop_routes.revoke_through_peer(peer)
         self._sync.pop(peer, None)
         worker = self._export_tasks.pop(peer, None)
         if worker:
@@ -496,7 +511,7 @@ class HopProbes:
                 if task: task.cancel()
         for index, row in list(self._rows.items()):
             value = json.loads(self._box.decrypt(row))
-            if value.get('peer') == peer and ('label' in value or 'path_key' in value):
+            if value.get('peer') == peer and ('label' in value or 'path_key' in value or 'state' in value):
                 self._rows.pop(index, None)
             if 'candidates' in value:
                 candidates = [{**c, 'outgoing_label': None} if c['next_peer'] == peer else c
@@ -534,6 +549,7 @@ class HopProbes:
             if value['expires'] <= self.clock() or 'candidates' not in value: continue
             for candidate in self._candidates(value['tag']):
                 await self._advertise(value['tag'], candidate, [peer])
+        self._start_export(peer)
 
     async def close(self):
         self._closed = True

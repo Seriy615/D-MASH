@@ -113,7 +113,8 @@ class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
         crypto = NodeCryptoManager('33' * 32, base)
         routes = SimpleNamespace(issue=lambda *args, **kwargs: 'f' * 64,
                                  resolve=lambda *args: True,
-                                 revoke=lambda *args: True)
+                                 revoke=lambda *args: True,
+                                 revoke_through_peer=lambda peer: 0)
         class Sink:
             async def send_packet(self, packet): pass
         node = SimpleNamespace(active_connections={'peer-a': Sink()}, can_route=True)
