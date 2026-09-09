@@ -89,7 +89,7 @@ class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
             class Channel:
                 async def send_packet(self, packet): sent.append(packet)
             transport.node.active_connections = {'peer': Channel()}
-            probes = HopProbes(transport, capacity=1)
+            probes = HopProbes(transport, capacity=3)
             packet = {'type': kind, 'id': '1' * 64, 'request_id': '2' * 64,
                       'ncrh': '3' * 64, 'metric': 0, 'hop_limit': 0,
                       'lifetime': 10, 'trace': ['4' * 64]}
@@ -101,6 +101,7 @@ class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(statuses()[-1]['state'], 'UNKNOWN')
             await handler(packet, 'peer')
             self.assertEqual(statuses()[-1]['state'], 'KNOWN')
+            probes.capacity = len(probes._graph)
             with self.assertRaises(BufferError):
                 await handler({**packet, 'request_id': '7' * 64, 'ncrh': '8' * 64}, 'peer')
             self.assertEqual(statuses()[-1], {'type': 'HOP_NCRH_STATUS_V1',
@@ -113,7 +114,9 @@ class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
         routes = SimpleNamespace(issue=lambda *args, **kwargs: 'f' * 64,
                                  resolve=lambda *args: True,
                                  revoke=lambda *args: True)
-        node = SimpleNamespace(active_connections={}, can_route=True)
+        class Sink:
+            async def send_packet(self, packet): pass
+        node = SimpleNamespace(active_connections={'peer-a': Sink()}, can_route=True)
         return SimpleNamespace(system_db=SimpleNamespace(node_crypto=crypto),
                                hop_routes=routes, node=node,
                                _v3_authority_checks={}, _v3_bindings={},
@@ -134,10 +137,6 @@ class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual({c['ncrh'] for c in candidates},
                          {transport.system_db.node_crypto.extend_ncrh('4' * 64),
                           transport.system_db.node_crypto.extend_ncrh('5' * 64)})
-        self.assertIsNone(probes.recover_alias('peer-a', '6' * 64),
-                          'NCRH alone cannot create a forwarding binding')
-        fresh = probes.recover_alias('peer-a', candidates[0]['ncrh'])
-        self.assertEqual(fresh, 'f' * 64)
         await probes.close()
 
     async def test_connection_round_root_response_correlation_and_timeout(self):
@@ -196,7 +195,10 @@ class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
         await probes.receive_probe({**base, 'hop_route_label': '5' * 64}, 'peer-a')
         candidates = probes._candidates(tag)
         self.assertEqual(len(candidates), 1)
-        self.assertEqual(candidates[0]['outgoing_label'], '5' * 64)
+        self.assertIsNone(candidates[0]['outgoing_label'])
+        await probes.receive_alias_bind({'type': 'HOP_ALIAS_BIND_V1', 'request_id': '6' * 64,
+            'ncrh': '4' * 64, 'hop_route_label': '5' * 64, 'metric': 0, 'lifetime': 100}, 'peer-a')
+        self.assertEqual(probes._candidates(tag)[0]['outgoing_label'], '5' * 64)
         await probes.receive_probe({**base, 'id': '7' * 64, 'request_id': '8' * 64,
                                     'ncrh': '9' * 64, 'hop_route_label': 'a' * 64}, 'peer-a')
         self.assertEqual(len(probes._candidates(tag)), 2)
@@ -216,9 +218,10 @@ class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
         class Link:
             async def send_packet(self, packet): await a.receive_alias_bind(packet, 'B')
         b_transport.node.active_connections = {'A': Link()}
-        a._pending['7' * 64] = {'peer': 'B', 'ncrh': '4' * 64, 'kind': 'probe'}
-        await a.receive_status({'type': 'HOP_NCRH_STATUS_V1', 'request_id': '7' * 64,
-                                'ncrh': '4' * 64, 'state': 'KNOWN'}, 'B')
+        a._put('received', ['B', '7' * 64], {'ncrh': '4' * 64, 'tag': tag, 'label': None}, 100)
+        a_candidate['ncrh_in'] = '4' * 64
+        a_candidate['request_id'] = '7' * 64
+        a._install(tag, a_candidate)
         await b._send_alias_bind('A', '7' * 64, b_candidate)
         fresh = a._candidates(tag)[0]['outgoing_label']
         self.assertNotEqual(fresh, '5' * 64)
@@ -229,6 +232,32 @@ class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(local['outgoing_label'], fresh)
         self.assertEqual(remote['next_peer'], 'C')
         await a.close(); await b.close()
+
+    async def test_binding_is_peer_scoped_single_use_and_expires(self):
+        now = [100.0]
+        probes = HopProbes(self._transport(b'a' * 32), clock=lambda: now[0])
+        tag = origin_tag('locator')
+        candidate = {'path_key': 'p', 'mailbox_alias': None, 'metric': 1,
+                     'ncrh': '4' * 64, 'ncrh_in': '3' * 64, 'until': 200,
+                     'probe_id': '1' * 64, 'trace': ['2' * 64], 'propagate': False,
+                     'next_peer': 'B', 'outgoing_label': None, 'request_id': '7' * 64}
+        probes._install(tag, candidate)
+        probes._put('received', ['B', '7' * 64], {'ncrh': '3' * 64, 'tag': tag, 'label': None}, 10)
+        bind = {'type': 'HOP_ALIAS_BIND_V1', 'request_id': '7' * 64, 'ncrh': '3' * 64,
+                'hop_route_label': '6' * 64, 'metric': 0, 'lifetime': 100}
+        await probes.receive_alias_bind(bind, 'wrong-peer')
+        await probes.receive_alias_bind({**bind, 'ncrh': '8' * 64}, 'B')
+        self.assertIsNone(probes._candidates(tag)[0]['outgoing_label'])
+        await probes.receive_alias_bind(bind, 'B')
+        await probes.receive_alias_bind({**bind, 'hop_route_label': '9' * 64}, 'B')
+        self.assertEqual(probes._candidates(tag)[0]['outgoing_label'], '6' * 64)
+        self.assertEqual(probes._candidates(tag)[0]['until'], 200)
+        probes._put('received', ['B', 'a' * 64], {'ncrh': '3' * 64, 'tag': tag, 'label': None}, 10)
+        now[0] = 111
+        await probes.receive_alias_bind({**bind, 'request_id': 'a' * 64}, 'B')
+        self.assertEqual(probes._candidates(tag)[0]['outgoing_label'], '6' * 64)
+        with self.assertRaises(PermissionError): probes._issue('NODE', 'B', probes._candidates(tag)[0])
+        await probes.close()
 
     async def test_unsolicited_alias_binding_cannot_replace_candidate(self):
         transport = self._transport(b'a' * 32)

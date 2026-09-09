@@ -100,8 +100,7 @@ class P2PNode:
             previous = self.active_connections.get(peer_id)
             self.active_connections[peer_id] = channel
             if previous: await previous.close()
-            try: await self.transport.hop_probes.peer_connected(peer_id)
-            except Exception: pass
+            self.transport.hop_probes.schedule_peer_connected(peer_id)
             task = asyncio.create_task(self._listen_socket(channel, peer_id))
             self.connection_tasks.add(task)
             task.add_done_callback(self.connection_tasks.discard)
@@ -130,8 +129,7 @@ class P2PNode:
             previous = self.active_connections.get(peer_id)
             self.active_connections[peer_id] = channel
             if previous: await previous.close()
-            try: await self.transport.hop_probes.peer_connected(peer_id)
-            except Exception: pass
+            self.transport.hop_probes.schedule_peer_connected(peer_id)
             await self._listen_socket(channel, peer_id)
         except asyncio.CancelledError:
             raise

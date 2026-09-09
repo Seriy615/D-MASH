@@ -23,9 +23,11 @@ def validate_probe(packet):
     if not isinstance(packet, dict) or set(packet) != required:
         raise ValueError('invalid hop probe fields')
     if packet['type'] != 'HOP_PROBE_V3': raise ValueError('invalid hop probe operation')
-    for name in ('id', 'request_id', 'origin_tag', 'hop_route_label', 'ncrh'):
+    for name in ('id', 'request_id', 'origin_tag', 'ncrh'):
         if not isinstance(packet[name], str) or not _HEX.fullmatch(packet[name]):
             raise ValueError('invalid hop probe token')
+    if packet['hop_route_label'] is not None and (not isinstance(packet['hop_route_label'], str) or not _HEX.fullmatch(packet['hop_route_label'])):
+        raise ValueError('invalid offered hop label')
     for field, low, high in (('metric', 0, 15), ('hop_limit', 0, 15), ('lifetime', 1, 1800)):
         if type(packet[field]) is not int or not low <= packet[field] <= high:
             raise ValueError('invalid hop probe bound')
@@ -53,6 +55,7 @@ def validate_root(packet):
     if type(packet['hop_limit']) is not int or not 0 <= packet['hop_limit'] <= 15: raise ValueError('invalid root hop limit')
     if type(packet['lifetime']) is not int or not 1 <= packet['lifetime'] <= 1800: raise ValueError('invalid root lifetime')
     if not isinstance(packet['trace'], list) or not 1 <= len(packet['trace']) <= 16: raise ValueError('invalid root trace')
+    if len(set(packet['trace'])) != len(packet['trace']): raise ValueError('duplicate root trace')
     if len(packet['trace']) != packet['metric'] + 1 or any(not isinstance(v, str) or not _HEX.fullmatch(v) for v in packet['trace']):
         raise ValueError('invalid root trace')
 
@@ -82,7 +85,8 @@ class HopProbes:
         self._pending_tasks = {}
         self._sync = {}
         self._graph = {}
-        self._export_task = None
+        self._export_tasks = {}
+        self._connection_tasks = {}
         self._closed = False
 
     def _index(self, kind, value):
@@ -149,13 +153,19 @@ class HopProbes:
 
     def graph_snapshot(self):
         """Return the local logical NCRH graph without endpoint identities."""
+        knowledge = {}
+        for sealed in list(self._rows.values()):
+            value = json.loads(self._box.decrypt(sealed))
+            if value['expires'] > self.clock() and {'peer', 'ncrh', 'state'} <= value.keys():
+                knowledge.setdefault(value['ncrh'], []).append(
+                    {'peer': value['peer'], 'state': value['state']})
         edges = []
         for index, sealed in list(self._graph.items()):
             edge = json.loads(self._box.decrypt(sealed))
             if edge['expires'] <= self.clock():
                 del self._graph[index]
             else:
-                edges.append(edge)
+                edges.append({**edge, 'outward': knowledge.get(edge['ncrh_out'], [])})
         return edges
 
     def _record_edge(self, peer, ncrh_in, ncrh_out, metric, lifetime=1800):
@@ -169,27 +179,33 @@ class HopProbes:
         self._graph[index] = bytes(self._box.encrypt(json.dumps(edge, separators=(',', ':')).encode()))
 
     def _knows_ncrh(self, ncrh):
+        if ncrh == self.transport.system_db.node_crypto.derive_ncrh_root():
+            return True
         return any(ncrh in (edge['ncrh_in'], edge['ncrh_out'])
                    for edge in self.graph_snapshot())
 
     async def _send_control(self, peer, packet):
         channel = self.transport.node.active_connections.get(peer) if self.transport.node else None
         if channel is not None and hasattr(channel, 'send_packet'):
-            await channel.send_packet(packet)
+            try:
+                await asyncio.wait_for(channel.send_packet(packet), timeout=10)
+            except (TimeoutError, ConnectionError, OSError):
+                if hasattr(channel, 'close'): await channel.close()
+                raise
             return
-        result = self.transport._dispatch_mesh_packet(packet, next_hop_id=peer)
-        if hasattr(result, '__await__'): await result
+        raise ConnectionError('authenticated Node channel unavailable')
 
     async def _expire_pending(self, request_id, timeout=10.0):
         try:
             await asyncio.sleep(timeout)
             pending = self._pending.pop(request_id, None)
             if pending:
-                self._sync.setdefault(pending['peer'], {'sent': 0, 'replies': 0, 'timeouts': 0})['timeouts'] += 1
+                self._peer_state(pending['peer'])['timeouts'] += 1
         except asyncio.CancelledError:
             raise
         finally:
-            self._pending_tasks.pop(request_id, None)
+            task = self._pending_tasks.pop(request_id, None)
+            if task and task is not asyncio.current_task(): task.cancel()
 
     async def _track_and_send(self, peer, packet, kind):
         if len(self._pending) >= self.capacity:
@@ -197,9 +213,10 @@ class HopProbes:
         request_id = packet['request_id']
         self._pending[request_id] = {'peer': peer, 'ncrh': packet['ncrh'], 'kind': kind,
                                      'sent_at': self.clock()}
-        state = self._sync.setdefault(peer, {'sent': 0, 'replies': 0, 'timeouts': 0, 'advertisements': 0})
+        state = self._peer_state(peer)
         state['sent'] += 1
         if kind in {'probe', 'root'}: state['advertisements'] += 1
+        if kind == 'root': state['roots_sent'] += 1
         # Arm before sending: a blocked socket also has a bounded semantic
         # lifetime, and an immediate reply can cancel the existing timer.
         task = asyncio.create_task(self._expire_pending(request_id))
@@ -217,15 +234,22 @@ class HopProbes:
                                         'ncrh': ncrh, 'state': 'KNOWN' if known else 'UNKNOWN'})
 
     async def _send_alias_bind(self, peer, request_id, candidate):
-        if candidate.get('outgoing_label') is None:
+        if candidate.get('outgoing_label') is None and candidate['mailbox_alias'] is None:
             return
         label = self._issue('NODE', peer, candidate)
-        await self._send_control(peer, {'type': 'HOP_ALIAS_BIND_V1', 'request_id': request_id,
-                                        'ncrh': candidate['ncrh'], 'hop_route_label': label,
-                                        'metric': candidate['metric'],
-                                        'lifetime': max(1, min(1800, int(candidate['until'] - self.clock())))})
+        try:
+            await self._send_control(peer, {'type': 'HOP_ALIAS_BIND_V1', 'request_id': request_id,
+                                           'ncrh': candidate['ncrh'], 'hop_route_label': label,
+                                           'metric': candidate['metric'],
+                                           'lifetime': max(1, min(1800, int(candidate['until'] - self.clock())))})
+        except BaseException:
+            self.transport.hop_routes.revoke('NODE', peer, label)
+            raise
+        self._peer_state(peer)['bindings_sent'] += 1
 
     def _issue(self, role, owner, candidate):
+        if role == 'NODE' and owner == candidate['next_peer']:
+            raise PermissionError('reflected forwarding capability')
         if candidate['mailbox_alias'] is None and not candidate.get('outgoing_label'):
             raise PermissionError('logical path has no forwarding capability')
         ttl = min(1800, candidate['until'] - self.clock())
@@ -242,7 +266,7 @@ class HopProbes:
         if not candidates: return {'state': 'ROUTE_UNKNOWN'}
         connections = self.transport.node.active_connections if self.transport.node else {}
         candidate = min(candidates, key=lambda c: (c['mailbox_alias'] is None and c['next_peer'] not in connections, c['metric']))
-        cache_key = [owner, tag, candidate['path_key'], candidate['probe_id']]
+        cache_key = [owner, tag, candidate['path_key'], candidate['probe_id'], candidate.get('outgoing_label')]
         cached = self._get('device', cache_key)
         label = cached['label'] if cached else None
         if not label or not self.transport.hop_routes.resolve('DEVICE', owner, label):
@@ -250,40 +274,31 @@ class HopProbes:
             self._put('device', cache_key, {'label': label}, candidate['until'] - self.clock())
         return {'state': 'ROUTE_READY', 'hop_route_label': label, 'best_metric': candidate['metric']}
 
-    def recover_alias(self, authenticated_peer, ncrh):
-        """Issue a fresh hop alias for an already reconstructed NCRH path.
-
-        This is deliberately separate from Probe reconstruction. NCRH is only
-        a lookup hint: an authenticated peer and a locally stored candidate
-        with the same next hop are both required before a new label is issued.
-        """
-        if not isinstance(authenticated_peer, str) or not _HEX.fullmatch(ncrh or ''):
-            raise ValueError('invalid alias recovery request')
-        for row in list(self._rows.values()):
-            value = json.loads(self._box.decrypt(row))
-            if 'candidates' not in value: continue
-            for candidate in self._candidates(value['tag']):
-                if candidate['ncrh'] == ncrh and candidate['next_peer'] == authenticated_peer:
-                    return self._issue('NODE', authenticated_peer, candidate)
-        return None
-
     async def _advertise(self, tag, candidate, peers=None):
-        if candidate['metric'] >= 15: return
+        if candidate['metric'] >= 15 or not candidate.get('propagate', True): return
         connections = self.transport.node.active_connections if self.transport.node else {}
         peers = list(connections) if peers is None else peers
+        self._exports.intersection_update(self._rows)
         for peer in peers:
             if peer == candidate['next_peer']: continue
             key = [tag, candidate['path_key'], candidate['probe_id'], peer]
             self._put('export', key, {'tag': tag, 'candidate': candidate, 'peer': peer}, candidate['until'] - self.clock())
             self._exports.add(self._index('export', key))
-        if self._exports and (self._export_task is None or self._export_task.done()):
-            self._export_task = asyncio.create_task(self._flush_exports())
+        for peer in peers:
+            task = self._export_tasks.get(peer)
+            if task is None or task.done():
+                task = asyncio.create_task(self._flush_exports(peer))
+                self._export_tasks[peer] = task
+                task.add_done_callback(lambda done, p=peer: self._worker_done(self._export_tasks, p, done))
 
-    async def _flush_exports(self):
+    async def _flush_exports(self, target_peer):
         # Backpressure keeps unsent advertisements; successful peer exports
-        # are removed individually. This worker never performs socket sends.
-        while self._exports and not self._closed:
-            for index in list(self._exports)[:64]:
+        # are removed individually. Each peer has its own independent worker.
+        while not self._closed:
+            own = [index for index in self._exports if index in self._rows
+                   and json.loads(self._box.decrypt(self._rows[index]))['peer'] == target_peer]
+            if not own: return
+            for index in own[:64]:
                 row = self._rows.get(index)
                 value = json.loads(self._box.decrypt(row)) if row else None
                 if not value or value['expires'] <= self.clock():
@@ -298,20 +313,25 @@ class HopProbes:
                 label = None
                 try:
                     packet = {'type': 'HOP_ROOT_NCRH_V1', 'id': candidate['probe_id'], 'request_id': secrets.token_hex(32),
-                        'metric': candidate['metric'], 'hop_limit': 15 - candidate['metric'],
+                        'metric': candidate['metric'],
+                        'hop_limit': min(15 - candidate['metric'], candidate.get('remaining_hops', 15)),
                         'lifetime': max(1, min(1800, int(candidate['until'] - self.clock()))), 'trace': candidate['trace']}
                     if candidate['mailbox_alias'] is not None or candidate.get('outgoing_label'):
-                        label = self._issue('NODE', peer, candidate)
-                        packet.update(type='HOP_PROBE_V3', origin_tag=tag, hop_route_label=label)
+                        packet.update(type='HOP_PROBE_V3', origin_tag=tag, hop_route_label=None)
+                        self._put('offered', packet['request_id'],
+                                  {'tag': tag, 'path_key': candidate['path_key'], 'peer': peer}, 10)
                     packet['ncrh'] = candidate['ncrh']
                     await self._track_and_send(peer, packet, 'probe')
-                except (BufferError, PermissionError):
+                except (BufferError, PermissionError, ConnectionError, OSError, TimeoutError):
                     if label: self.transport.hop_routes.revoke('NODE', peer, label)
                     continue
                 except BaseException:
                     if label: self.transport.hop_routes.revoke('NODE', peer, label)
                     raise
-                self._rows.pop(index, None); self._exports.discard(index)
+                # An alias refresh may replace this export while the socket
+                # is suspended. Do not consume the newer advertisement.
+                if self._rows.get(index) == row:
+                    self._rows.pop(index, None); self._exports.discard(index)
             if self._exports:
                 await asyncio.sleep(.5)
 
@@ -342,8 +362,15 @@ class HopProbes:
         validate_probe(packet)
         tag = packet['origin_tag']
         known = self._knows_ncrh(packet['ncrh'])
+        try:
+            self._put('received', [peer, packet['request_id']],
+                      {'ncrh': packet['ncrh'], 'tag': tag, 'peer': peer, 'label': None}, min(10, packet['lifetime']))
+        except BufferError:
+            await self._send_status(peer, packet['request_id'], packet['ncrh'], known)
+            raise
         # Reply describes pre-advertisement knowledge, even if installation fails.
         await self._send_status(peer, packet['request_id'], packet['ncrh'], known)
+        self._peer_state(peer)['received'] += 1
         token = self._trace_token(packet['id'])
         if (packet['metric'] >= 15 or self._local(tag)
                 or token in packet['trace']):
@@ -353,19 +380,26 @@ class HopProbes:
         ncrh = self.transport.system_db.node_crypto.extend_ncrh(ncrh_in)
         path_key = self._index('path', [peer, ncrh_in]).hex()
         candidate = {'path_key': path_key, 'mailbox_alias': None, 'next_peer': peer,
-            'outgoing_label': packet['hop_route_label'], 'metric': metric, 'ncrh': ncrh,
+            'outgoing_label': (self._get('received', [peer, packet['request_id']]) or {}).get('label'),
+            'metric': metric, 'ncrh': ncrh,
             'ncrh_in': ncrh_in, 'until': self.clock() + packet['lifetime'],
-            'probe_id': packet['id'], 'trace': packet['trace'] + [token]}
+            'probe_id': packet['id'], 'trace': packet['trace'] + [token],
+            'propagate': bool(packet['hop_limit']), 'request_id': packet['request_id'],
+            'remaining_hops': max(0, packet['hop_limit'] - 1)}
+        received = self._get('received', [peer, packet['request_id']])
+        if received and received.get('binding_until'):
+            candidate['until'] = min(candidate['until'], received['binding_until'])
         self._record_edge(peer, ncrh_in, ncrh, metric, packet['lifetime'])
-        if self._install(tag, candidate) and packet['hop_limit']:
+        if self._install(tag, candidate) and packet['hop_limit'] and candidate.get('outgoing_label'):
             await self._advertise(tag, candidate)
-        await self._send_alias_bind(peer, packet['request_id'], candidate)
 
     async def receive_root(self, packet, peer):
         validate_root(packet)
         known = self._knows_ncrh(packet['ncrh'])
         # Reply describes pre-advertisement knowledge, even if installation fails.
         await self._send_status(peer, packet['request_id'], packet['ncrh'], known)
+        self._peer_state(peer)['received'] += 1
+        self._peer_state(peer)['roots_received'] += 1
         token = self._trace_token(packet['id'])
         if packet['metric'] >= 15 or token in packet['trace']:
             return
@@ -377,53 +411,122 @@ class HopProbes:
             # peer-issued binding may supply a usable outgoing label.
             'outgoing_label': None, 'metric': packet['metric'] + 1, 'ncrh': ncrh,
             'ncrh_in': packet['ncrh'], 'until': self.clock() + packet['lifetime'],
-            'probe_id': packet['id'], 'trace': packet['trace'] + [token]}
+            'probe_id': packet['id'], 'trace': packet['trace'] + [token],
+            'propagate': bool(packet['hop_limit']), 'request_id': packet['request_id'],
+            'remaining_hops': max(0, packet['hop_limit'] - 1)}
         self._record_edge(peer, packet['ncrh'], ncrh, candidate['metric'], packet['lifetime'])
         if self._install(tag, candidate) and packet['hop_limit']:
             await self._advertise(tag, candidate)
-        await self._send_alias_bind(peer, packet['request_id'], candidate)
 
     async def receive_status(self, packet, peer):
         validate_ncrh_status(packet)
         pending = self._pending.get(packet['request_id'])
         if pending is None or pending['peer'] != peer or pending['ncrh'] != packet['ncrh']:
             return
-        self._put('semantic-reply', [peer, packet['request_id']],
-                  {'ncrh': packet['ncrh'], 'state': packet['state']}, 10)
         self._pending.pop(packet['request_id'], None)
         task = self._pending_tasks.pop(packet['request_id'], None)
         if task: task.cancel()
-        state = self._sync.setdefault(peer, {'sent': 0, 'replies': 0, 'timeouts': 0, 'advertisements': 0})
+        state = self._peer_state(peer)
         state['replies'] += 1
         self._put('peer-knowledge', [peer, packet['ncrh']],
                   {'peer': peer, 'ncrh': packet['ncrh'], 'state': packet['state']}, 1800)
+        offered = self._get('offered', packet['request_id'])
+        if offered and offered['peer'] == peer:
+            for candidate in self._candidates(offered['tag']):
+                if candidate['path_key'] == offered['path_key'] and candidate['ncrh'] == packet['ncrh']:
+                    await self._send_alias_bind(peer, packet['request_id'], candidate)
+                    break
+            self._rows.pop(self._index('offered', packet['request_id']), None)
 
     async def receive_alias_bind(self, packet, peer):
         validate_alias_bind(packet)
-        reply_key = [peer, packet['request_id']]
-        reply = self._get('semantic-reply', reply_key)
-        if reply is None or reply['ncrh'] != packet['ncrh']:
+        key = [peer, packet['request_id']]
+        received = self._get('received', key)
+        if received is None or received['ncrh'] != packet['ncrh'] or received.get('label'):
             return
-        # A bind is accepted only for a path reconstructed from this peer. The
-        # label is runtime state and replaces the old outgoing alias in place.
-        for row in list(self._rows.values()):
-            value = json.loads(self._box.decrypt(row))
-            if 'candidates' not in value: continue
-            for candidate in self._candidates(value['tag']):
-                if candidate['ncrh'] == packet['ncrh'] and candidate['next_peer'] == peer:
-                    candidate = {**candidate, 'outgoing_label': packet['hop_route_label'],
-                                 'until': min(candidate['until'], self.clock() + packet['lifetime'])}
-                    self._install(value['tag'], candidate)
-                    self._rows.pop(self._index('semantic-reply', reply_key), None)
-                    return
+        # The sender owns the advertised prefix. Its capability leads BACK
+        # toward that sender, while our NCRH is the locally extended value.
+        ttl = received['expires'] - self.clock()
+        if ttl <= 0: return
+        self._put('received', key, {**received, 'label': packet['hop_route_label'],
+                                        'binding_until': self.clock() + packet['lifetime']}, ttl)
+        for candidate in self._candidates(received['tag']):
+            if (candidate['ncrh_in'] == packet['ncrh'] and candidate['next_peer'] == peer
+                    and candidate.get('request_id') == packet['request_id']):
+                self._peer_state(peer)['bindings_received'] += 1
+                updated = {**candidate, 'outgoing_label': packet['hop_route_label'],
+                           'until': min(candidate['until'], self.clock() + packet['lifetime'])}
+                if self._install(received['tag'], updated) and updated.get('propagate', True):
+                    await self._advertise(received['tag'], updated)
+                break
 
-    async def peer_connected(self, peer):
+    def _worker_done(self, workers, peer, task):
+        if workers.get(peer) is task: workers.pop(peer, None)
+        if not task.cancelled() and task.exception() is not None:
+            self._peer_state(peer)['errors'] += 1
+
+    def _peer_state(self, peer):
+        if peer not in self._sync and len(self._sync) >= self.capacity:
+            connected = self.transport.node.active_connections
+            for old in list(self._sync):
+                if old not in connected: del self._sync[old]
+            if len(self._sync) >= self.capacity: raise BufferError('peer sync capacity reached')
+        state = self._sync.setdefault(peer, {})
+        for key in ('sent', 'replies', 'timeouts', 'advertisements', 'received',
+                    'roots_sent', 'roots_received', 'bindings_sent', 'bindings_received', 'errors'):
+            state.setdefault(key, 0)
+        return state
+
+    def sync_snapshot(self):
+        """Local progress only: a semantic reply never implies DATA authority."""
+        return {peer: {**state,
+                       'pending': sum(p['peer'] == peer for p in self._pending.values())}
+                for peer, state in self._sync.items()}
+
+    def _reset_peer(self, peer):
+        # A new authenticated channel must not inherit old semantic grants.
+        self._sync.pop(peer, None)
+        worker = self._export_tasks.pop(peer, None)
+        if worker:
+            worker.cancel()
+        for request_id, pending in list(self._pending.items()):
+            if pending['peer'] == peer:
+                self._pending.pop(request_id, None)
+                task = self._pending_tasks.pop(request_id, None)
+                if task: task.cancel()
+        for index, row in list(self._rows.items()):
+            value = json.loads(self._box.decrypt(row))
+            if value.get('peer') == peer and ('label' in value or 'path_key' in value):
+                self._rows.pop(index, None)
+            if 'candidates' in value:
+                candidates = [{**c, 'outgoing_label': None} if c['next_peer'] == peer else c
+                              for c in value['candidates']]
+                self._put('paths', value['tag'], {**value, 'candidates': candidates},
+                          max(.001, value['expires'] - self.clock()))
+
+    def schedule_peer_connected(self, peer):
+        self._reset_peer(peer)
+        previous = self._connection_tasks.get(peer)
+        if previous: previous.cancel()
+        async def run():
+            try:
+                await self.peer_connected(peer, reset=False)
+            except (ConnectionError, OSError, TimeoutError, BufferError, RuntimeError):
+                # Branch stays unresolved; other peer workers continue.
+                pass
+        task = asyncio.create_task(run())
+        self._connection_tasks[peer] = task
+        task.add_done_callback(lambda done: self._worker_done(self._connection_tasks, peer, done))
+
+    async def peer_connected(self, peer, *, reset=True):
         # Every authenticated connection starts the same event-driven sync
         # round, whether or not this Node was recently restored.
+        if reset: self._reset_peer(peer)
         root = self.transport.system_db.node_crypto.derive_ncrh_root()
-        root_packet = {'type': 'HOP_ROOT_NCRH_V1', 'id': secrets.token_hex(32),
+        identity = secrets.token_hex(32)
+        root_packet = {'type': 'HOP_ROOT_NCRH_V1', 'id': identity,
             'request_id': secrets.token_hex(32), 'ncrh': root, 'metric': 0,
-            'hop_limit': 15, 'lifetime': 1800, 'trace': [self._trace_token(root)]}
+            'hop_limit': 15, 'lifetime': 1800, 'trace': [self._trace_token(identity)]}
         await self._track_and_send(peer, root_packet, 'root')
         # Event-triggered export of all currently valid reconstructed paths.
         for row in list(self._rows.values()):
@@ -434,9 +537,10 @@ class HopProbes:
 
     async def close(self):
         self._closed = True
-        if self._export_task:
-            self._export_task.cancel()
-            await asyncio.gather(self._export_task, return_exceptions=True)
+        workers = list(self._export_tasks.values()) + list(self._connection_tasks.values())
+        for task in workers: task.cancel()
+        if workers: await asyncio.gather(*workers, return_exceptions=True)
+        self._export_tasks.clear(); self._connection_tasks.clear()
         self._exports.clear()
         for task in list(self._pending_tasks.values()): task.cancel()
         if self._pending_tasks: await asyncio.gather(*self._pending_tasks.values(), return_exceptions=True)

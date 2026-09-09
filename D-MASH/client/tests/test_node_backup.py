@@ -69,6 +69,8 @@ class BackupTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(ram_salt), 32)
             self.assertNotEqual(ram_salt, b'a' * 32)
             self.assertEqual(identity.read_text(), '11' * 32); self.assertEqual(base.read_text(), (b'a' * 32).hex())
+            self.assertEqual(identity.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(base.stat().st_mode & 0o777, 0o600)
             restored_manager = restore_node_manager(decrypt_bundle(bundle['ciphertext'], __import__('base64').urlsafe_b64decode(bundle['recovery_key'] + '==')), str(identity), str(base))
             self.assertEqual(restored_manager.base_ncrh, b'a' * 32)
             self.assertNotEqual(restored_manager.secret_salt, b'a' * 32)

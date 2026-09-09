@@ -1,28 +1,15 @@
 # Transport v3 engineering record
 
-## Semantic status checkpoint (2026-09-09)
+## Authenticated recovery acceptance — 2026-09-09
 
-Root and Probe KNOWN/UNKNOWN responses describe NCRH knowledge before processing
-that advertisement. The correlated response is sent before reconstruction, so
-capacity failures cannot suppress it. A zero hop limit prevents propagation but
-allows local reconstruction; metric/loop terminal cases still receive status.
-The local NCRH graph now uses encrypted RAM rows, keyed blind indexes, capacity
-bounds and expiry. Distinct incoming peers remain distinct graph edges.
-
-Focused tests cover first UNKNOWN then KNOWN, terminal replies, capacity failure
-replies, graph encryption, capacity and expiry. Full test_all.py passes.
-This checkpoint does not complete automatic alias recovery: authenticated
-multi-node reconstruction, alias direction/correlation and independent peer
-export workers still require implementation and integration coverage.
-
-
-Recovery implementation status: the packet vocabulary below is present, but
-end-to-end automatic alias reconstruction is not yet proven. Root-only path
-knowledge has no forwarding label; advertisements must not fabricate one.
-NodeChannel rejects legacy DMP_C_DATA/DMP_C_PROBE/ROUTE_PROBE_V2 on the wire.
-Alias updates require a recent peer/request/NCRH-correlated semantic reply.
-The next protocol step must align advertised versus extended NCRH in alias
-negotiation and prove restart followed by DATA forwarding over real sessions.
+Recovery now has a response-driven alias exchange in the production NodeChannel
+path. The four-node acceptance test rebuilds a lost middle Node, checks the same
+NCRH chain and fresh labels, and delivers opaque HOP_DATA through the rebuilt
+path. A separate authenticated test holds one peer's send in flight while another
+peer becomes ready, then verifies that a timed-out response cannot install a label.
+NodeChannel rejects legacy locator-bearing Node packets. Final `tools/test_all.py`
+run passed: 184 backend tests, 11 Origin tests and 33 PWA suites (exit 0).
+No deployment performed.
 
 ## Hop-label data plane foundation — 2026-09-09
 
@@ -73,34 +60,79 @@ three path alternatives are retained, including equal-length alternatives
 distinguished by their path commitment, while each Device/Node hop label
 remains independent.
 
-Every authenticated Node connection starts an event-driven synchronization
-round, even when neither side was restored from backup. The sender transmits
-`HOP_ROOT_NCRH_V1` for its `RootNCRH` and all eligible `HOP_PROBE_V3`
-advertisements. Each advertisement has a fresh RAM-only `request_id`.
-The receiver answers `HOP_NCRH_STATUS_V1` with the same `request_id`, NCRH and
-`KNOWN`/`UNKNOWN`; a successful reconstruction may additionally send
-`HOP_ALIAS_BIND_V1` with a fresh hop label. Replies are accepted only from the
-authenticated peer that received the advertisement and only when both
-request_id and NCRH match. Missing replies expire independently and do not
-block other peers.
+Every authenticated Node connection starts the same synchronization round,
+regardless of whether a backup was restored. Old per-channel pending grants are
+cleared synchronously before reading that channel. Each peer has an independent
+export worker and connection task. The receiver loop starts without awaiting
+recovery socket writes. There is no periodic global topology synchronization.
 
-`HOP_ROOT_NCRH_V1` contains `{id,request_id,ncrh,metric,hop_limit,lifetime,trace}`.
-`HOP_PROBE_V3` adds `{origin_tag,hop_route_label}`. Status contains
-`{request_id,ncrh,state}`. Alias binding contains
-`{request_id,ncrh,hop_route_label,metric,lifetime}`. None of these packets
-contains Route_ID, route_locator, AccountID, DeviceID, DNSS or recipient data.
-The local graph records authenticated peer, NCRH-in, NCRH-out and metric.
-Logical candidate identity is `(authenticated peer, NCRH path)`; replacing a
-hop label updates that candidate rather than creating a duplicate. Multiple
-peers and multiple NCRH paths remain bounded alternatives.
+The exchange for a usable candidate is:
 
-Alias recovery is a separate authenticated-peer operation (`recover_alias` in
-the current backend boundary and `HOP_ALIAS_BIND_V1` wire exchange). It can
-issue a fresh hop-local label only when
-the Node already has a reconstructed candidate whose NCRH and next peer match;
-knowledge of NCRH alone never installs a forwarding binding. Old aliases,
-labels and Probe rows are runtime state and are intentionally absent from the
-Node recovery bundle.
+1. A advertises prefix X to B, with a fresh random RAM-only request ID. The
+   production Probe has `hop_route_label: null`; no label is issued yet.
+2. B computes KNOWN/UNKNOWN from its logical knowledge **before** processing
+   that advertisement, records short-lived correlation, and sends the status.
+   UNKNOWN remains UNKNOWN for this request even when installation then succeeds.
+   A zero hop limit stops propagation, not the status or local reconstruction.
+   Metric/loop terminal cases also send status. Capacity failures cannot suppress
+   the response. A failed control send closes only that authenticated connection.
+3. A accepts a status only for its pending `(peer, request_id, X)`. If its
+   original candidate remains authorized and usable, A issues a fresh random
+   label owned by B and sends ALIAS_BIND for X. KNOWN and UNKNOWN both acknowledge
+   receipt; neither is forwarding authority. A Root-only candidate cannot issue
+   a DATA capability or invent a mailbox destination.
+4. B accepts a bind only for the exact recently received `(A, request_id, X)`
+   and candidate generation. B's candidate uses `ncrh_in = X`, while its local
+   `ncrh = HMAC(Base_B, HOP_DOMAIN || X)` differs from X. The received label is
+   B's outgoing capability **toward A**. A label forwarding back to its own
+   ingress owner is rejected. Duplicate, expired, wrong-peer, wrong-NCRH and
+   superseded-request binds do not replace live candidates.
+5. Once B has the outgoing capability, it advertises its extended prefix to
+   eligible peers. C and D at a fork receive the same prefix and independently
+   receive fresh B-owned capabilities after responding. New Device label cache
+   entries include the outgoing capability generation so refreshes cannot reuse
+   a cached binding to the old remote label.
+
+Exact strict schemas (each also contains the shown `type`):
+
+| Type | Other fields |
+| --- | --- |
+| `HOP_ROOT_NCRH_V1` | `id, request_id, ncrh, metric, hop_limit, lifetime, trace` |
+| `HOP_PROBE_V3` | Root fields plus `origin_tag, hop_route_label` |
+| `HOP_NCRH_STATUS_V1` | `request_id, ncrh, state` (`KNOWN` or `UNKNOWN`) |
+| `HOP_ALIAS_BIND_V1` | `request_id, ncrh, hop_route_label, metric, lifetime` |
+
+Tokens are lowercase 64-hex strings. Probe's label field is null in current
+exports; a received legacy non-null field does not activate forwarding without
+the correlated bind. Metric/hop limit are integers 0..15, lifetime 1..1800 seconds,
+and trace has metric+1 unique per-advertisement loop tokens. Labels, request IDs,
+trace tokens and blinded lookup indexes are volatile. No packet includes RouteID,
+route_locator, back_route_id, AccountID, DeviceID, DNSS or recipient identity.
+
+Root advertisements use a fresh request ID and Probe ID but deterministic
+RootNCRH derived from persistent BaseNCRH. Roots reconstruct logical edges and
+propagate without a fabricated origin or forwarding label. Live authorized
+initiator advertisements supply the capabilities needed for DATA. Restoring
+Node secrets does not restore a Device's mailbox authority.
+
+The bounded local graph stores encrypted RAM edges keyed by a fresh HMAC of
+`(authenticated peer, NCRH_in)`, with NCRH_in/out, metric and expiry. Encrypted,
+expiring peer-knowledge rows associate outward peers and KNOWN/UNKNOWN with an
+advertised prefix; `graph_snapshot()` joins these relationships. Multiple peers
+may recognize one prefix, and one peer may supply multiple prefixes. Within an
+origin's candidate set, logical identity is the peer/input-prefix pair, never
+the random label. Up to three metric-ranked alternatives are retained.
+
+Semantic requests and received-bind correlation expire after 10 seconds. Socket
+writes also have a 10-second limit. A reply after timeout leaves that branch
+unresolved; another peer's worker continues independently. Reconnection starts a
+fresh round and re-exports all eligible candidates. Unsent exports survive socket
+failure within their TTL; a suspended old send cannot consume a newer export.
+A failed/cancelled binding send revokes its newly issued local capability.
+`sync_snapshot()` reports current-round advertisements, replies, pending requests,
+roots, bindings, errors and timeouts per peer. There is no all-network barrier:
+each validated bound route is independently usable. Root/Probe/status/bind are
+immediate authenticated control traffic, outside the 500 ms DATA aggregation.
 
 ## Blind Node backup and recovery — 2026-09-09
 
@@ -112,7 +144,7 @@ store; the store sees only that ID and ciphertext. The bundle uses PyNaCl
 SecretBox (XSalsa20-Poly1305) with a separate random 32-byte recovery key.
 Local storage uses restrictive directory/file permissions and atomic writes.
 Restore validates and stages both secrets together, rolls back on replacement
-failure, and writes no partial Node state. The restored process receives a new
+failure. The two-file replacement is not a power-loss-atomic filesystem transaction. The restored process receives a new
 RAM blind-index salt; it is never recovered from the bundle.
 
 The blind alias salt is CSPRNG-generated on every process startup and is never

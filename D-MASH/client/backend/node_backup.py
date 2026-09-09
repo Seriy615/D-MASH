@@ -123,9 +123,8 @@ def restore_node_files(payload, identity_path, base_ncrh_path):
             staged.append((temporary, path))
         for temporary, path in staged: os.replace(temporary, path)
         staged.clear()
-        for _, path in paths:
-            try: os.chmod(path, 0o600)
-            except OSError: pass
+        for path, _ in paths:
+            os.chmod(path, 0o600)
     except BaseException:
         for path, _ in paths:
             existed, value = previous[path]
