@@ -110,7 +110,15 @@ class NodeChannel:
 
     async def send_batch(self, packets):
         self._validate_batch(packets)
+        for packet in packets:
+            self._validate_wire(packet)
         await self.secure.send_json({"type": "MESH_BATCH", "packets": packets})
+
+    @staticmethod
+    def _validate_wire(packet):
+        # Historical local adapters must never reopen the raw-locator mesh.
+        if packet.get('type') in {'DMP_C_DATA', 'DMP_C_PROBE', 'ROUTE_PROBE_V2', 'HOP_REPLY_V3'}:
+            raise PermissionError('legacy Node wire packet disabled')
 
     async def send(self, value):
         envelope = json.loads(value)
@@ -120,11 +128,13 @@ class NodeChannel:
         if envelope.get("t") != "REAL":
             raise ValueError("invalid Node envelope")
         packet = json.loads(envelope["d"])
+        self._validate_wire(packet)
         operation = self._operation(packet)
         await self.secure.send_json({"type": operation, "packet": packet})
 
     async def send_packet(self, packet):
         """Send an authenticated control packet without mesh aggregation."""
+        self._validate_wire(packet)
         operation = self._operation(packet)
         await self.secure.send_json({"type": operation, "packet": packet})
 
@@ -145,6 +155,8 @@ class NodeChannel:
             if set(value) != {"type", "packets"}:
                 raise PermissionError("invalid Node batch")
             self._validate_batch(value["packets"])
+            for packet in value['packets']:
+                self._validate_wire(packet)
             self._received.extend(value["packets"])
             return json.dumps({"t": "REAL", "d": json.dumps(self._received.popleft())})
         expected = {"MESH_PROBE": {"DMP_C_PROBE", "ROUTE_PROBE_V2", "HOP_PROBE_V3", "HOP_ROOT_NCRH_V1", "HOP_NCRH_STATUS_V1", "HOP_ALIAS_BIND_V1", "HOP_REPLY_V3"}, "MESH_DATA": {"DMP_C_DATA", "HOP_DATA_V3"}}
@@ -152,6 +164,7 @@ class NodeChannel:
         if operation not in expected or not isinstance(packet, dict) or packet.get("type") not in expected[operation]:
             raise PermissionError("invalid Node operation")
         self._operation(packet)
+        self._validate_wire(packet)
         return json.dumps({"t": "REAL", "d": json.dumps(packet)})
 
     async def close(self, code=1000, reason=""):

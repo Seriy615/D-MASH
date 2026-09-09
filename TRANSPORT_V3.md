@@ -1,5 +1,13 @@
 # Transport v3 engineering record
 
+Recovery implementation status: the packet vocabulary below is present, but
+end-to-end automatic alias reconstruction is not yet proven. Root-only path
+knowledge has no forwarding label; advertisements must not fabricate one.
+NodeChannel rejects legacy DMP_C_DATA/DMP_C_PROBE/ROUTE_PROBE_V2 on the wire.
+Alias updates require a recent peer/request/NCRH-correlated semantic reply.
+The next protocol step must align advertised versus extended NCRH in alias
+negotiation and prove restart followed by DATA forwarding over real sessions.
+
 ## Hop-label data plane foundation — 2026-09-09
 
 `HopRoutes` now provides a volatile label table scoped by authenticated role

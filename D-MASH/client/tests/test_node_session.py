@@ -59,13 +59,18 @@ class NodeSessionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(ca.remote_dnss, cb.local_dnss)
             self.assertNotEqual(ca.local_dnss, ca.remote_dnss)
             self.assertEqual(ca.secure.session.peer_role, "NODE")
-            await ca.send(json.dumps({"t": "REAL", "d": json.dumps({"type": "DMP_C_DATA", "id": "packet-1", "envelope": {"ciphertext": "opaque"}})}))
+            wire_packet = {'type': 'HOP_DATA_V3', 'id': 'packet-1', 'hop_route_label': 'a' * 64,
+                           'envelope': {'version': 1, 'ciphertext': 'b3BhcXVl'}}
+            for legacy in ('DMP_C_DATA', 'DMP_C_PROBE', 'ROUTE_PROBE_V2'):
+                with self.assertRaises(PermissionError):
+                    await ca.send_packet({'type': legacy, 'route_id': 'forbidden'})
+            await ca.send(json.dumps({'t': 'REAL', 'd': json.dumps(wire_packet)}))
             for _ in range(100):
                 if b._process_envelope.called: break
                 await asyncio.sleep(.01)
             self.assertTrue(b._process_envelope.called)
             b._process_envelope.reset_mock()
-            packets = [{"type": "DMP_C_DATA", "id": f"batch-{i}", "envelope": {"ciphertext": "opaque"}} for i in range(3)]
+            packets = [{**wire_packet, 'id': f'batch-{i}'} for i in range(3)]
             await ca.send_batch(packets)
             for _ in range(100):
                 if b._process_envelope.await_count == 3: break
@@ -73,10 +78,10 @@ class NodeSessionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual([json.loads(json.loads(call.args[0])["d"]) for call in b._process_envelope.await_args_list], packets)
             b._process_envelope.reset_mock()
             engine = TactEngine(a.system_db, a)
-            alias = a.transport._blind('window-route')
-            await a.system_db.add_route_alias(alias, b.system_db.node_crypto.node_id, 1)
+            label = a.transport.hop_routes.issue('DEVICE', 'test-device',
+                next_peer=b.system_db.node_crypto.node_id, outgoing_label='a' * 64)
             for packet in packets:
-                await a.enqueue_transport_packet({**packet, 'route_id': 'window-route'})
+                await a.enqueue_transport_packet({**packet, 'hop_route_label': label}, hop_owner='test-device')
             await asyncio.sleep(.05)
             b._process_envelope.assert_not_called()
             for _ in range(150):

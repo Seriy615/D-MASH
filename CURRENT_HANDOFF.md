@@ -1,5 +1,21 @@
 # Active transport-v3 work — 2026-09-09
 
+## Recovery audit correction
+
+The earlier completion claims below overstate recovery acceptance. The
+current follow-up rejects legacy locator packets at both NodeChannel wire
+boundaries, rejects unsolicited alias updates, arms semantic timeouts before
+sending, and keeps Root-only candidates non-forwarding until a real peer
+capability exists. Root-only propagation uses Root advertisements without
+invented outgoing labels.
+
+Still required: a coherent correlated alias negotiation in the actual Probe
+direction (incoming NCRH versus locally extended NCRH), response-driven
+forwarding readiness, bounded encrypted graph/peer state, independent peer
+control send workers, and authenticated multi-node restart/fork/DATA tests.
+The existing manually installed alias test is not proof of automatic recovery.
+Do not call the full recovery protocol complete based on the regression suite.
+
 Checkout: `/Users/afsvu/Documents/Codex/D-MASH/D-MASH`; branch `transport-v3`.
 The earlier checkpoint is preserved in HANDOFF_TRANSPORT_V3.md. The current
 transport semantics are specified and tested in TRANSPORT_V3.md.

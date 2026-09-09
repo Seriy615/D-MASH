@@ -153,6 +153,9 @@ class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
         class Link:
             async def send_packet(self, packet): await a.receive_alias_bind(packet, 'B')
         b_transport.node.active_connections = {'A': Link()}
+        a._pending['7' * 64] = {'peer': 'B', 'ncrh': '4' * 64, 'kind': 'probe'}
+        await a.receive_status({'type': 'HOP_NCRH_STATUS_V1', 'request_id': '7' * 64,
+                                'ncrh': '4' * 64, 'state': 'KNOWN'}, 'B')
         await b._send_alias_bind('A', '7' * 64, b_candidate)
         fresh = a._candidates(tag)[0]['outgoing_label']
         self.assertNotEqual(fresh, '5' * 64)
@@ -163,3 +166,17 @@ class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(local['outgoing_label'], fresh)
         self.assertEqual(remote['next_peer'], 'C')
         await a.close(); await b.close()
+
+    async def test_unsolicited_alias_binding_cannot_replace_candidate(self):
+        transport = self._transport(b'a' * 32)
+        probes = HopProbes(transport)
+        tag = origin_tag('locator')
+        candidate = {'path_key': 'path', 'mailbox_alias': None, 'metric': 1,
+                     'ncrh': '4' * 64, 'ncrh_in': '3' * 64, 'until': probes.clock() + 100,
+                     'probe_id': '1' * 64, 'trace': ['2' * 64],
+                     'next_peer': 'B', 'outgoing_label': '5' * 64}
+        probes._install(tag, candidate)
+        await probes.receive_alias_bind({'type': 'HOP_ALIAS_BIND_V1', 'request_id': '7' * 64,
+            'ncrh': '4' * 64, 'hop_route_label': '6' * 64, 'metric': 1, 'lifetime': 100}, 'B')
+        self.assertEqual(probes._candidates(tag)[0]['outgoing_label'], '5' * 64)
+        await probes.close()

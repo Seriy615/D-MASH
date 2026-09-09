@@ -183,13 +183,17 @@ class HopProbes:
         state = self._sync.setdefault(peer, {'sent': 0, 'replies': 0, 'timeouts': 0, 'advertisements': 0})
         state['sent'] += 1
         if kind in {'probe', 'root'}: state['advertisements'] += 1
+        # Arm before sending: a blocked socket also has a bounded semantic
+        # lifetime, and an immediate reply can cancel the existing timer.
+        task = asyncio.create_task(self._expire_pending(request_id))
+        self._pending_tasks[request_id] = task
         try:
             await self._send_control(peer, packet)
         except BaseException:
             self._pending.pop(request_id, None)
+            task.cancel()
+            self._pending_tasks.pop(request_id, None)
             raise
-        task = asyncio.create_task(self._expire_pending(request_id))
-        self._pending_tasks[request_id] = task
 
     async def _send_status(self, peer, request_id, ncrh, known):
         await self._send_control(peer, {'type': 'HOP_NCRH_STATUS_V1', 'request_id': request_id,
@@ -205,6 +209,8 @@ class HopProbes:
                                         'lifetime': max(1, min(1800, int(candidate['until'] - self.clock())))})
 
     def _issue(self, role, owner, candidate):
+        if candidate['mailbox_alias'] is None and not candidate.get('outgoing_label'):
+            raise PermissionError('logical path has no forwarding capability')
         ttl = min(1800, candidate['until'] - self.clock())
         if ttl <= 0: raise PermissionError('expired advertised path')
         return self.transport.hop_routes.issue(role, owner,
@@ -214,7 +220,8 @@ class HopProbes:
 
     def status(self, owner, locator):
         tag = origin_tag(locator)
-        candidates = self._candidates(tag)
+        candidates = [c for c in self._candidates(tag)
+                      if c['mailbox_alias'] is not None or c.get('outgoing_label')]
         if not candidates: return {'state': 'ROUTE_UNKNOWN'}
         connections = self.transport.node.active_connections if self.transport.node else {}
         candidate = min(candidates, key=lambda c: (c['mailbox_alias'] is None and c['next_peer'] not in connections, c['metric']))
@@ -273,10 +280,12 @@ class HopProbes:
                     continue
                 label = None
                 try:
-                    label = self._issue('NODE', peer, candidate)
-                    packet = {'type': 'HOP_PROBE_V3', 'id': candidate['probe_id'], 'request_id': secrets.token_hex(32), 'origin_tag': tag,
-                        'hop_route_label': label, 'metric': candidate['metric'], 'hop_limit': 15 - candidate['metric'],
+                    packet = {'type': 'HOP_ROOT_NCRH_V1', 'id': candidate['probe_id'], 'request_id': secrets.token_hex(32),
+                        'metric': candidate['metric'], 'hop_limit': 15 - candidate['metric'],
                         'lifetime': max(1, min(1800, int(candidate['until'] - self.clock()))), 'trace': candidate['trace']}
+                    if candidate['mailbox_alias'] is not None or candidate.get('outgoing_label'):
+                        label = self._issue('NODE', peer, candidate)
+                        packet.update(type='HOP_PROBE_V3', origin_tag=tag, hop_route_label=label)
                     packet['ncrh'] = candidate['ncrh']
                     await self._track_and_send(peer, packet, 'probe')
                 except (BufferError, PermissionError):
@@ -343,10 +352,9 @@ class HopProbes:
         path_key = self._index('path', [peer, packet['ncrh']]).hex()
         known = any(c['path_key'] == path_key for c in self._candidates(tag))
         candidate = {'path_key': path_key, 'mailbox_alias': None, 'next_peer': peer,
-            # Root has no predecessor label yet. Allocate a fresh edge token
-            # so the reconstructed candidate can participate in propagation;
-            # the alias bind round replaces it with a scoped HopRoutes label.
-            'outgoing_label': secrets.token_hex(32), 'metric': packet['metric'] + 1, 'ncrh': ncrh,
+            # Root knowledge grants no DATA capability. Only a correlated
+            # peer-issued binding may supply a usable outgoing label.
+            'outgoing_label': None, 'metric': packet['metric'] + 1, 'ncrh': ncrh,
             'ncrh_in': packet['ncrh'], 'until': self.clock() + packet['lifetime'],
             'probe_id': packet['id'], 'trace': packet['trace'] + [token]}
         self._record_edge(peer, packet['ncrh'], ncrh, candidate['metric'])
@@ -359,6 +367,8 @@ class HopProbes:
         pending = self._pending.get(packet['request_id'])
         if pending is None or pending['peer'] != peer or pending['ncrh'] != packet['ncrh']:
             return
+        self._put('semantic-reply', [peer, packet['request_id']],
+                  {'ncrh': packet['ncrh'], 'state': packet['state']}, 10)
         self._pending.pop(packet['request_id'], None)
         task = self._pending_tasks.pop(packet['request_id'], None)
         if task: task.cancel()
@@ -368,6 +378,10 @@ class HopProbes:
 
     async def receive_alias_bind(self, packet, peer):
         validate_alias_bind(packet)
+        reply_key = [peer, packet['request_id']]
+        reply = self._get('semantic-reply', reply_key)
+        if reply is None or reply['ncrh'] != packet['ncrh']:
+            return
         # A bind is accepted only for a path reconstructed from this peer. The
         # label is runtime state and replaces the old outgoing alias in place.
         for row in list(self._rows.values()):
@@ -378,6 +392,7 @@ class HopProbes:
                     candidate = {**candidate, 'outgoing_label': packet['hop_route_label'],
                                  'until': min(candidate['until'], self.clock() + packet['lifetime'])}
                     self._install(value['tag'], candidate)
+                    self._rows.pop(self._index('semantic-reply', reply_key), None)
                     return
 
     async def peer_connected(self, peer):

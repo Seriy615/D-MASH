@@ -342,7 +342,8 @@ class TactTests(unittest.IsolatedAsyncioTestCase):
 
 class BatchTests(unittest.IsolatedAsyncioTestCase):
     async def test_batch_preserves_order_and_validates_all_before_dispatch(self):
-        packets = [{'type': 'DMP_C_DATA', 'id': str(i)} for i in range(3)]
+        packets = [{'type': 'HOP_DATA_V3', 'id': str(i), 'hop_route_label': 'a' * 64,
+                    'envelope': {'version': 1, 'ciphertext': 'b3BhcXVl'}} for i in range(3)]
         secure = SimpleNamespace(send_json=AsyncMock(), receive_json=AsyncMock(return_value={'type': 'MESH_BATCH', 'packets': packets}))
         channel = NodeChannel(secure, 'a', 'b')
         await channel.send_batch(packets)
