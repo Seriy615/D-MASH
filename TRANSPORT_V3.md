@@ -1,5 +1,20 @@
 # Transport v3 engineering record
 
+## S-TURN capability foundation — 2026-09-09
+
+`can_s_turn` is the canonical Node capability. `DMASH_CAN_S_TURN` is preferred;
+the legacy `DMASH_CAN_BE_TURN` setting is normalized to the same field, so
+there are no two independent truths. Service descriptors expose
+`signaling_wss` and `turn_urls` only after a successful health check. They
+contain no AccountID, DeviceID or DNSS.
+
+The runtime S-TURN primitive issues short-lived TURN REST-style credentials
+from a fresh RAM shared secret and creates one-use caller/callee signaling
+tickets. It relays only bounded opaque offer/answer/ICE/hangup payloads and
+prunes sessions at expiry. Secrets, tickets and session state are volatile;
+coturn installation and the production signaling WebSocket remain deployment
+work and are deliberately not claimed here.
+
 ## Authenticated recovery acceptance — 2026-09-09
 
 Recovery now has a response-driven alias exchange in the production NodeChannel

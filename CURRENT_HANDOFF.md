@@ -42,6 +42,23 @@ Final results: 184 backend tests, 11 Origin tests and 33 PWA suites passed
 
 ## Remaining broader plan
 
+## S-TURN capability and signaling foundation
+
+`NodeCapabilities.can_s_turn` is now canonical. `DMASH_CAN_S_TURN` is the
+preferred environment setting; `DMASH_CAN_BE_TURN` remains a compatibility
+alias and is normalized into the same value. A descriptor reports S-TURN only
+when an injected service health check is healthy, and includes signaling WSS
+and TURN URLs without Account, Device or DNSS fields.
+
+`backend/s_turn.py` provides the runtime primitive for short-lived TURN REST
+credentials and opaque caller/callee signaling tickets. Credentials use a
+RAM-only shared secret and expiry. Signaling sessions accept one-use tickets,
+relay only bounded offer/answer/ICE/hangup payloads, expire independently and
+delete state on close. Permanent TURN passwords and Account identity are not
+stored. coturn installation, systemd/firewall wiring and the production WSS
+endpoint remain infrastructure work; this module does not claim those are
+deployed.
+
 This checkpoint addresses authenticated route reconstruction and alias recovery.
 It does not complete the original overall product plan. Remaining work includes
 production PWA Probe orchestration across all route producers, durable transport

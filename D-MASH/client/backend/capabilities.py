@@ -17,7 +17,6 @@ _CAPABILITY_ENV = {
     "can_accept_devices": "DMASH_CAN_ACCEPT_DEVICES",
     "can_fallback_store": "DMASH_CAN_FALLBACK_STORE",
     "can_signal": "DMASH_CAN_SIGNAL",
-    "can_be_turn": "DMASH_CAN_BE_TURN",
     "can_relay_blob": "DMASH_CAN_RELAY_BLOB",
 }
 _PUBLIC_OPERATIONS = frozenset({
@@ -58,12 +57,20 @@ class NodeCapabilities:
     can_accept_devices: bool = False
     can_fallback_store: bool = False
     can_signal: bool = False
-    can_be_turn: bool = False
+    # `can_s_turn` is the canonical capability.  `can_be_turn` remains an
+    # input/output compatibility alias for older installers and callers.
+    can_s_turn: bool = False
+    can_be_turn: bool | None = None
     can_relay_blob: bool = False
 
     def __post_init__(self) -> None:
         if self.visibility not in {"public", "private"}:
             raise ValueError("DMASH_NODE_VISIBILITY must be public or private")
+        if self.can_be_turn is not None:
+            if self.can_s_turn and self.can_be_turn != self.can_s_turn:
+                raise ValueError("can_s_turn and can_be_turn disagree")
+            object.__setattr__(self, "can_s_turn", bool(self.can_be_turn))
+        object.__setattr__(self, "can_be_turn", self.can_s_turn)
 
     @classmethod
     def from_env(cls) -> "NodeCapabilities":
@@ -73,7 +80,36 @@ class NodeCapabilities:
             field: _bool_env(environment, getattr(defaults, field))
             for field, environment in _CAPABILITY_ENV.items()
         }
+        # New configuration wins when both names are present.  The old name
+        # is only an alias; it never creates a second independent capability.
+        if "DMASH_CAN_S_TURN" in os.environ:
+            values["can_s_turn"] = _bool_env("DMASH_CAN_S_TURN", defaults.can_s_turn)
+        elif "DMASH_CAN_BE_TURN" in os.environ:
+            values["can_s_turn"] = _bool_env("DMASH_CAN_BE_TURN", defaults.can_s_turn)
         return cls(visibility=visibility, **values)
+
+    def descriptor(self, *, signaling_wss: str | None = None,
+                   turn_urls: tuple[str, ...] = (), healthy: bool = False) -> dict:
+        """Serialize policy for directory/client selection.
+
+        S-TURN is advertised only after the local health check has succeeded;
+        configuration alone must not make a dead coturn endpoint selectable.
+        """
+        ready = bool(self.can_s_turn and healthy)
+        result = {
+            "can_route": self.can_route,
+            "can_accept_devices": self.can_accept_devices,
+            "can_fallback_store": self.can_fallback_store,
+            "can_signal": self.can_signal,
+            "can_s_turn": ready,
+            "can_relay_blob": self.can_relay_blob,
+        }
+        if ready:
+            if signaling_wss:
+                result["signaling_wss"] = signaling_wss
+            if turn_urls:
+                result["turn_urls"] = list(turn_urls)
+        return result
 
     def advertised_operations(self) -> FrozenSet[str]:
         """Return only implemented legacy operations allowed by local policy.

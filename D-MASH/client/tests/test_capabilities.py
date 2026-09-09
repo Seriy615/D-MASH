@@ -45,6 +45,29 @@ class NodeCapabilitiesTests(unittest.TestCase):
         self.assertFalse(capabilities.can_be_turn)
         self.assertFalse(capabilities.can_relay_blob)
 
+    def test_s_turn_is_canonical_and_old_environment_is_only_an_alias(self):
+        with patch.dict(os.environ, {"DMASH_CAN_BE_TURN": "1"}, clear=True):
+            capabilities = NodeCapabilities.from_env()
+        self.assertTrue(capabilities.can_s_turn)
+        self.assertTrue(capabilities.can_be_turn)
+        with patch.dict(os.environ, {"DMASH_CAN_BE_TURN": "1", "DMASH_CAN_S_TURN": "0"}, clear=True):
+            capabilities = NodeCapabilities.from_env()
+        self.assertFalse(capabilities.can_s_turn)
+        self.assertFalse(capabilities.can_be_turn)
+
+    def test_s_turn_descriptor_requires_live_health_and_contains_no_account_data(self):
+        capabilities = NodeCapabilities(can_s_turn=True, can_signal=True, can_relay_blob=True)
+        self.assertFalse(capabilities.descriptor(signaling_wss="wss://turn.example", healthy=False)["can_s_turn"])
+        descriptor = capabilities.descriptor(signaling_wss="wss://turn.example",
+                                             turn_urls=("turn:turn.example:3478",), healthy=True)
+        self.assertTrue(descriptor["can_s_turn"])
+        self.assertEqual(descriptor["turn_urls"], ["turn:turn.example:3478"])
+        self.assertFalse(any(key.lower() in descriptor for key in ("account_id", "device_id", "dnss")))
+
+    def test_legacy_constructor_alias_cannot_disagree(self):
+        with self.assertRaises(ValueError):
+            NodeCapabilities(can_s_turn=True, can_be_turn=False)
+
     def test_invalid_environment_value_is_rejected(self):
         with patch.dict(os.environ, {"DMASH_CAN_ROUTE": "sometimes"}, clear=False):
             with self.assertRaises(ValueError):
