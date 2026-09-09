@@ -11,6 +11,7 @@ from websockets.server import serve
 from backend.crypto import NodeCryptoManager
 from backend.database import DatabaseManager
 from backend.network import P2PNode
+from backend.tact import TactEngine
 from backend import node_session
 
 
@@ -32,6 +33,7 @@ class NodeSessionTests(unittest.IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self):
         for node in self.nodes:
+            if node.transport_batcher: await node.transport_batcher.close()
             for channel in list(node.active_connections.values()): await channel.close()
             for task in list(node.connection_tasks): task.cancel()
             await asyncio.gather(*node.connection_tasks, return_exceptions=True)
@@ -67,6 +69,20 @@ class NodeSessionTests(unittest.IsolatedAsyncioTestCase):
                 if b._process_envelope.await_count == 3: break
                 await asyncio.sleep(.01)
             self.assertEqual([json.loads(json.loads(call.args[0])["d"]) for call in b._process_envelope.await_args_list], packets)
+            b._process_envelope.reset_mock()
+            engine = TactEngine(a.system_db, a)
+            alias = a.transport._blind('window-route')
+            await a.system_db.add_route_alias(alias, b.system_db.node_crypto.node_id, 1)
+            for packet in packets:
+                await a.enqueue_transport_packet({**packet, 'route_id': 'window-route'})
+            await asyncio.sleep(.05)
+            b._process_envelope.assert_not_called()
+            for _ in range(150):
+                if b._process_envelope.await_count == 3: break
+                await asyncio.sleep(.01)
+            self.assertEqual([json.loads(json.loads(call.args[0])["d"])["id"] for call in b._process_envelope.await_args_list], [p['id'] for p in packets])
+            self.assertIsNone(engine._timer)
+            self.assertFalse(a.transient_transport_outbox)
             await ca.secure.send_json({"type": "PULL"})
             for _ in range(100):
                 if not b.active_connections: break

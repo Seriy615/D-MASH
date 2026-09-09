@@ -53,6 +53,7 @@ class P2PNode:
         # DMP-C packets carry raw opaque locators only while in flight.  Keep
         # them RAM-only rather than making even an encrypted copy durable.
         self.transient_transport_outbox = []
+        self.transport_batcher = None
         self.active_user_id = None
         self.active_user_db = None
         self.active_crypto = None
@@ -162,10 +163,49 @@ class P2PNode:
         if (len(self.transient_transport_outbox) >= 4096 or
                 sum(item["queue_bytes"] for item in self.transient_transport_outbox) + len(encoded) > 16 * 1024 * 1024):
             raise BufferError("transport queue is full")
-        self.transient_transport_outbox.append({
+        item = {
             "packet": json.loads(encoded), "queue_bytes": len(encoded), "next_hop_id": next_hop_id,
             "exclude_peer_id": exclude_peer_id,
-        })
+        }
+        self.transient_transport_outbox.append(item)
+        if self.transport_batcher is not None:
+            self.transport_batcher.accept(item)
+
+    async def resolve_transport_targets(self, item):
+        """Resolve at window close; raw locators never become durable here.
+
+        None retains unresolved work. An empty tuple means local delivery has
+        completed. Probe discovery retains its existing broadcast semantics.
+        """
+        packet = item['packet']
+        if packet['type'] == 'DMP_C_DATA':
+            locator = packet.get('route_id') or packet.get('route_alias')
+            if locator:
+                alias = self.transport._blind(locator)
+                route = await self.system_db.get_best_route_alias(alias)
+                if not route:
+                    return None
+                if route.get('is_local'):
+                    await self.transport._store_mailbox(alias, packet)
+                    return ()
+                peer = route['next_hop_id']
+                return (peer,) if peer != item.get('exclude_peer_id') else None
+            # Only historical rows without a locator can use their blind
+            # directed target; normal DATA never falls back to a stale hint.
+            if 'durable_id' not in item:
+                return None
+        target_hash = item.get('next_hop_hash')
+        target = item.get('next_hop_id')
+        if target_hash:
+            target = next((peer for peer in self.active_connections
+                           if self.system_db.node_crypto.get_blind_hash(peer) == target_hash), None)
+            return (target,) if target else None
+        if target:
+            return (target,)
+        peers = tuple(peer for peer in self.active_connections
+                      if peer != item.get('exclude_peer_id') and
+                      self.system_db.node_crypto.get_blind_hash(peer) != item.get('exclude_peer_hash'))
+        return peers or None
 
     async def _process_envelope(self, envelope_json: str, from_peer: str):
         try:
