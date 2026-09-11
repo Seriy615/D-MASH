@@ -1,5 +1,19 @@
 # Active transport-v3 work — 2026-09-09
 
+## Signaling follow-up — 2026-09-11
+
+Added `/signal/v1`, with ticket-scoped join, bidirectional event-driven relay,
+bounded queues, expiry and disconnect cleanup. Server tests exercise two
+WebSocket sessions, queued offers, answer/ICE relay and replay rejection.
+Session principals are random handles. Unknown principals cannot read, write or
+delete calls. Health defaults to false; credentials now match coturn's standard
+HMAC-SHA1/Base64 REST format. See TRANSPORT_V3.md for the wire contract.
+
+Calls remain incomplete: runtime initialization, admitted session creation,
+the concrete PWA ticket/WebSocket adapter, call button orchestration and browser
+audio acceptance still need implementation. Prior statements that only deployment
+remained were too broad. No deployment has been performed.
+
 ## Current recovery implementation
 
 Authenticated recovery is wired end to end: each connection advertises RootNCRH

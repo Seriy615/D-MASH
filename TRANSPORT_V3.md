@@ -1,5 +1,29 @@
 # Transport v3 engineering record
 
+## Signaling endpoint checkpoint — 2026-09-11
+
+`/signal/v1` is now a ticket-authenticated WebSocket endpoint. Its first frame
+is exactly `{type:"JOIN", session_id, ticket, role}`. A successful join returns
+`{type:"JOINED"}`; subsequent frames contain only `{type, payload}` for
+offer/answer/ice/hangup. The authenticated principal is a random local handle,
+never the caller/callee role string supplied by an unauthenticated client.
+Replayed tickets cannot close or read an existing call. Disconnect terminates
+the session and wakes its other socket; waiting for messages is event-driven.
+Sessions and pending messages have explicit count/byte bounds and expiry.
+
+The endpoint is disabled unless `app.state.s_turn_service` contains a healthy
+service. Health is no longer presumed from configured URLs. Runtime service
+initialization, session-creation admission, PWA ticket transport and a real
+browser audio acceptance test remain incomplete; these are implementation work,
+not merely a missing production deployment. Existing MSG signaling fallback is
+also still awaiting removal from the actual call UI.
+
+TURN REST credentials now use padded standard Base64 of HMAC-SHA1, matching
+[coturn's documented format](https://github.com/coturn/coturn/blob/master/README.turnserver).
+The supplied signing secret must match coturn's configured shared secret;
+a separately generated runtime key does not configure coturn automatically.
+No deployment performed.
+
 ## S-TURN capability foundation — 2026-09-09
 
 `can_s_turn` is the canonical Node capability. `DMASH_CAN_S_TURN` is preferred;

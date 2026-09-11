@@ -8,6 +8,7 @@ the runtime never stores permanent TURN passwords or Account identifiers.
 from __future__ import annotations
 
 import base64
+import asyncio
 import hashlib
 import hmac
 import secrets
@@ -31,9 +32,10 @@ class _Session:
     expires: float
     caller_ticket: str
     callee_ticket: str
-    joined: set[str] = field(default_factory=set)
+    joined: dict[str, str] = field(default_factory=dict)
     used_tickets: set[str] = field(default_factory=set)
     messages: list[tuple[str, dict]] = field(default_factory=list)
+    wake: dict[str, asyncio.Event] = field(default_factory=dict)
 
 
 class STurnService:
@@ -41,7 +43,12 @@ class STurnService:
 
     def __init__(self, *, signaling_wss: str | None = None,
                  turn_urls: tuple[str, ...] = (), shared_secret: bytes | None = None,
-                 clock=time.time, health_probe=None):
+                 clock=time.time, health_probe=None, capacity=1024,
+                 max_messages=128, max_queue_bytes=1024 * 1024):
+        if any(type(v) is not int or v < 1 for v in (capacity, max_messages, max_queue_bytes)):
+            raise ValueError("invalid signaling capacity")
+        self.capacity, self.max_messages, self.max_queue_bytes = capacity, max_messages, max_queue_bytes
+        self._closed = False
         if signaling_wss is not None and not signaling_wss.startswith("wss://"):
             raise ValueError("signaling_wss must use wss")
         if not isinstance(turn_urls, tuple) or any(not isinstance(url, str) or not url.startswith("turn:")
@@ -53,11 +60,11 @@ class STurnService:
         self.turn_urls = turn_urls
         self._secret = shared_secret or secrets.token_bytes(32)
         self.clock = clock
-        self.health_probe = health_probe or (lambda: True)
+        self.health_probe = health_probe or (lambda: False)
         self._sessions: dict[str, _Session] = {}
 
     def healthy(self) -> bool:
-        if not self.signaling_wss or not self.turn_urls:
+        if self._closed or not self.signaling_wss or not self.turn_urls:
             return False
         try:
             return bool(self.health_probe())
@@ -86,7 +93,8 @@ class STurnService:
             raise RuntimeError("S-TURN service is not healthy")
         expires = int(self.clock()) + ttl
         username = f"{expires}:{_b64(secrets.token_bytes(18))}"
-        password = _b64(hmac.new(self._secret, username.encode(), hashlib.sha256).digest())
+        # coturn TURN REST uses padded standard Base64 of HMAC-SHA1.
+        password = base64.b64encode(hmac.new(self._secret, username.encode(), hashlib.sha1).digest()).decode("ascii")
         return {"username": username, "credential": password, "expires_at": expires,
                 "turn_urls": list(self.turn_urls)}
 
@@ -100,6 +108,8 @@ class STurnService:
         if not self.healthy():
             raise RuntimeError("S-TURN service is not healthy")
         self._prune()
+        if len(self._sessions) >= self.capacity:
+            raise BufferError("signaling session capacity reached")
         caller_ticket, callee_ticket = _b64(secrets.token_bytes(32)), _b64(secrets.token_bytes(32))
         key = _b64(secrets.token_bytes(32))
         self._sessions[key] = _Session(
@@ -113,6 +123,8 @@ class STurnService:
         if session is None or session.expires <= self.clock():
             self._sessions.pop(session_id, None)
             raise PermissionError("expired signaling session")
+        if not isinstance(ticket, str) or not ticket.isascii():
+            raise PermissionError("invalid signaling ticket")
         if ticket in session.used_tickets:
             raise PermissionError("signaling ticket already used")
         if role == "caller" and hmac.compare_digest(ticket, session.caller_ticket):
@@ -122,33 +134,59 @@ class STurnService:
         else:
             raise PermissionError("invalid signaling ticket")
         session.used_tickets.add(ticket)
-        session.joined.add(principal)
-        return principal
+        handle = _b64(secrets.token_bytes(32))
+        session.joined[handle] = principal
+        session.wake[handle] = asyncio.Event()
+        return handle
 
     def relay(self, session_id: str, principal: str, message: dict) -> None:
         session = self._sessions.get(session_id)
         if session is None or session.expires <= self.clock() or principal not in session.joined:
             raise PermissionError("signaling session is not joined")
-        if principal not in {"caller", "callee"} or not isinstance(message, dict):
+        if not isinstance(message, dict):
             raise ValueError("invalid signaling message")
         if set(message) - {"type", "payload"} or message.get("type") not in {"offer", "answer", "ice", "hangup"}:
             raise ValueError("invalid signaling message")
         if not isinstance(message.get("payload"), str) or len(message["payload"]) > 256 * 1024:
             raise ValueError("invalid signaling payload")
+        size = len(message["payload"].encode("utf-8"))
+        if (size > 256 * 1024 or len(session.messages) >= self.max_messages
+                or sum(len(m["payload"].encode("utf-8")) for _, m in session.messages) + size > self.max_queue_bytes):
+            raise BufferError("signaling queue capacity reached")
         session.messages.append((principal, dict(message)))
+        for handle, event in session.wake.items():
+            if handle != principal: event.set()
 
     def receive(self, session_id: str, principal: str) -> list[dict]:
         session = self._sessions.get(session_id)
-        if session is None or session.expires <= self.clock() or principal not in session.joined:
+        if session is None or session.expires <= self.clock():
             self._sessions.pop(session_id, None)
+            raise PermissionError("signaling session is not joined")
+        if principal not in session.joined:
             raise PermissionError("signaling session is not joined")
         messages = [message for sender, message in session.messages if sender != principal]
         session.messages = [(sender, message) for sender, message in session.messages if sender == principal]
         return messages
 
     def close_session(self, session_id: str) -> None:
-        self._sessions.pop(session_id, None)
+        session = self._sessions.pop(session_id, None)
+        if session:
+            for event in session.wake.values(): event.set()
+
+    async def wait_messages(self, session_id: str, principal: str) -> list[dict]:
+        while True:
+            messages = self.receive(session_id, principal)
+            if messages: return messages
+            session = self._sessions[session_id]
+            event = session.wake[principal]
+            event.clear()
+            try:
+                await asyncio.wait_for(event.wait(), max(0, session.expires - self.clock()))
+            except TimeoutError:
+                self.close_session(session_id)
+                raise PermissionError('expired signaling session') from None
 
     def close(self) -> None:
-        self._sessions.clear()
+        self._closed = True
+        for sid in list(self._sessions): self.close_session(sid)
         self._secret = b""
