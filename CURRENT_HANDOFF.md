@@ -56,7 +56,7 @@ Final results: 184 backend tests, 11 Origin tests and 33 PWA suites passed
 
 ## Remaining broader plan
 
-## S-TURN capability and signaling foundation
+## S-TURN capability and signaling milestone — 2026-09-12
 
 `NodeCapabilities.can_s_turn` is now canonical. `DMASH_CAN_S_TURN` is the
 preferred environment setting; `DMASH_CAN_BE_TURN` remains a compatibility
@@ -66,12 +66,13 @@ and TURN URLs without Account, Device or DNSS fields.
 
 `backend/s_turn.py` provides the runtime primitive for short-lived TURN REST
 credentials and opaque caller/callee signaling tickets. Credentials use a
-RAM-only shared secret and expiry. Signaling sessions accept one-use tickets,
-relay only bounded offer/answer/ICE/hangup payloads, expire independently and
-delete state on close. Permanent TURN passwords and Account identity are not
-stored. coturn installation, systemd/firewall wiring and the production WSS
-endpoint remain infrastructure work; this module does not claim those are
-deployed.
+RAM-only shared secret and expiry. `STurnService.from_env()` requires explicit
+WSS/TURN/shared-secret configuration and performs bounded TURN-listener
+reachability before advertising the capability. Signaling sessions accept
+one-use tickets, relay only bounded offer/answer/ICE/hangup payloads, expire
+independently and delete state on close. Permanent TURN passwords and Account
+identity are not stored. coturn installation, systemd/firewall wiring and the
+production WSS endpoint remain infrastructure work; they are not deployed.
 
 `backend/session_protocol.py` now validates the encrypted Device payload shapes
 for `CALL_REQUEST_V2` and `FILE_SESSION_REQUEST`. Calls have bounded display
@@ -81,16 +82,24 @@ one-time signaling ticket. File sessions have opaque encrypted metadata,
 These validators never expose Account/Device identity to the Mesh; actual
 WebRTC/coturn transport integration remains pending.
 
-The PWA now loads `call_session.js` in the release and service-worker asset
-lists. `DmashCallSession` owns browser media tracks and RTCPeerConnection,
-translates offer/answer/ICE/hangup to the ephemeral S-TURN signaling contract,
-queues early ICE candidates and closes the peer/session on failure. Core can
-attach it through `Core.attachCallSignaling`; `sendVoipSignal` then bypasses the
-ordinary chat MSG path. A deployment-provided signaling adapter is still needed
-to create the S-TURN ticket, so this is client integration rather than a claim
-that coturn/WSS is already running.
+The PWA release and service worker now load `call_signaling.js` and
+`call_session.js`. `DmashCallSignaling.WebSocketSignaling` performs anonymous
+CREATE/PoW, consumes one-use tickets, validates the signaling endpoint, bounds
+incoming/outgoing queues and surfaces ephemeral ICE credentials.
+`DmashCallSession` owns browser media tracks and RTCPeerConnection, translates
+offer/answer/ICE/hangup to that signaling contract, queues early ICE candidates
+and closes resources on failure or cancellation. Core can attach it through
+`Core.attachCallSignaling`; `sendVoipSignal` then bypasses ordinary chat MSG.
+The legacy Core call button has not yet been migrated to create a session and
+send CALL_REQUEST_V2, so product-level call acceptance remains partial.
 
-This checkpoint addresses authenticated route reconstruction and alias recovery.
+Verification for this milestone: 209 backend tests, 11 Origin tests and 35 PWA
+JavaScript suites pass. A separate local Chrome acceptance helper connects two
+isolated contexts over direct ICE with synthetic audio and verifies audio stats
+and track cleanup. TURN-relay acceptance remains pending a live coturn service.
+
+This checkpoint addresses authenticated route reconstruction, alias recovery,
+and the server/client ephemeral signaling boundary.
 It does not complete the original overall product plan. Remaining work includes
 production PWA Probe orchestration across all route producers, durable transport
 ACK/recovery, legacy mailbox migration, password Node access, S-TURN/calls/files,

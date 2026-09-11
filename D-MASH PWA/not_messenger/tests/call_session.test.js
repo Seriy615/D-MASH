@@ -42,5 +42,36 @@ function makePeer() {
   assert.strictEqual(sent.at(-1).type, 'hangup');
   assert.strictEqual(tracks[0].stopped, true);
   await assert.rejects(() => new Session({ signaling, rtcFactory: () => makePeer(), mediaDevices }).startOffer('route-id'), /invalid call id/);
+  // An offer arriving during the microphone prompt must wait, then answer.
+  let allowMedia;
+  const calleeSignals = [];
+  const calleeTransport = {async open() {
+    this.delivery = this.onmessage({call_id: 'b'.repeat(64), type: 'offer',
+      payload: JSON.stringify({type: 'offer', sdp: 'remote'})});
+  }, async send(value) {calleeSignals.push(value);}, async close() {}};
+  const callee = new Session({signaling: calleeTransport, rtcFactory: makePeer,
+    mediaDevices: {getUserMedia: () => new Promise(resolve => {allowMedia = resolve;})}});
+  const accepting = callee.accept('b'.repeat(64));
+  while (!allowMedia) await Promise.resolve();
+  assert.equal(calleeSignals.length, 0);
+  allowMedia(await mediaDevices.getUserMedia());
+  await accepting;
+  await calleeTransport.delivery;
+  assert.equal(calleeSignals[0].type, 'answer');
+  assert.equal(callee.pc.remote.sdp, 'remote');
+  await callee.close();
+
+  // Cancelling while permission is pending stops tracks granted afterwards.
+  let grant;
+  const lateTrack = {stop() {this.stopped = true;}};
+  const cancelled = new Session({signaling: {async open() {}, async send() {}, async close() {}},
+    rtcFactory: () => {throw new Error('must not construct RTC after cancellation');},
+    mediaDevices: {getUserMedia: () => new Promise(resolve => {grant = resolve;})}});
+  const starting = cancelled.startOffer('c'.repeat(64));
+  while (!grant) await Promise.resolve();
+  await cancelled.close();
+  grant({getTracks: () => [lateTrack]});
+  await assert.rejects(starting, /cancelled/);
+  assert(lateTrack.stopped);
   console.log('call_session.test.js: ok');
 })().catch(error => { console.error(error); process.exitCode = 1; });

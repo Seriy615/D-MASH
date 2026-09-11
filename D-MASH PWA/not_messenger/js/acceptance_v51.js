@@ -283,6 +283,7 @@
                     loadScript(`js/vendor/argon2-bundled.min.js?v=${ver}`),
                     loadScript(`js/device_root.js?v=${ver}`),
                     loadScript(`js/storage.js?v=${ver}`),
+                    loadScript(`js/call_signaling.js?v=${ver}`),
                     loadScript(`js/call_session.js?v=${ver}`),
                     loadScript(`js/node_manager.js?v=${ver}`),
                     loadScript(`js/core_engine.js?v=${ver}`),

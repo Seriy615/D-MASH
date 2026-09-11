@@ -1,4 +1,6 @@
 import unittest
+import os
+from unittest.mock import patch
 
 from backend.s_turn import STurnService
 
@@ -89,6 +91,27 @@ class STurnTests(unittest.TestCase):
     def test_health_is_not_assumed_from_configuration(self):
         service = STurnService(signaling_wss='wss://turn.example/signal', turn_urls=('turn:turn.example:3478',))
         self.assertFalse(service.healthy())
+
+    def test_from_env_requires_shared_secret_and_probes_turn_listener(self):
+        env = {
+            "DMASH_SIGNALING_WSS": "wss://node.example/signal/v1",
+            "DMASH_TURN_URLS": "turn:turn.example:3478",
+            "DMASH_TURN_SHARED_SECRET_B64": "" + __import__('base64').b64encode(b"e" * 32).decode(),
+        }
+        with patch.dict(os.environ, env, clear=False), patch("backend.s_turn.socket.create_connection") as connect:
+            connect.return_value.__enter__.return_value = object()
+            service = STurnService.from_env()
+            self.assertIsNotNone(service)
+            self.assertTrue(service.healthy())
+            connect.assert_called_once_with(("turn.example", 3478), timeout=0.4)
+        with patch.dict(os.environ, {**env, "DMASH_TURN_SHARED_SECRET_B64": "bad"}, clear=False):
+            with self.assertRaises(ValueError): STurnService.from_env()
+
+    def test_call_secret_changes_ephemeral_session_binding(self):
+        first = self.service.create_session("d" * 32, b"a" * 32)
+        second = self.service.create_session("e" * 32, b"b" * 32)
+        self.assertNotEqual(self.service._sessions[first["session_id"]].call_hash,
+                            self.service._sessions[second["session_id"]].call_hash)
 
 
 if __name__ == "__main__":

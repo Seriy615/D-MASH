@@ -1,10 +1,15 @@
 # Transport v3 engineering record
 
-## Signaling endpoint checkpoint — 2026-09-11
+## Signaling endpoint checkpoint — 2026-09-12
 
-`/signal/v1` is now a ticket-authenticated WebSocket endpoint. Its first frame
-is exactly `{type:"JOIN", session_id, ticket, role}`. A successful join returns
-`{type:"JOINED"}`; subsequent frames contain only `{type, payload}` for
+`/signal/v1` is now a ticket-authenticated WebSocket endpoint. A caller may
+first send exactly `{type:"CREATE", call_id, secret_verifier}`. The endpoint
+returns a nonce challenge; only a valid bounded proof-of-work creates a
+short-lived session and returns caller/callee one-use tickets. The creator must
+join immediately as caller. An abandoned or disconnected creator deletes the
+session. A recipient joins with the callee ticket. The join frame is exactly
+`{type:"JOIN", session_id, ticket, role}`. A successful join returns
+`{type:"JOINED", ice_servers}`; subsequent frames contain only `{type, payload}` for
 offer/answer/ice/hangup. The authenticated principal is a random local handle,
 never the caller/callee role string supplied by an unauthenticated client.
 Replayed tickets cannot close or read an existing call. Disconnect terminates
@@ -12,17 +17,28 @@ the session and wakes its other socket; waiting for messages is event-driven.
 Sessions and pending messages have explicit count/byte bounds and expiry.
 
 The endpoint is disabled unless `app.state.s_turn_service` contains a healthy
-service. Health is no longer presumed from configured URLs. Runtime service
-initialization, session-creation admission, PWA ticket transport and a real
-browser audio acceptance test remain incomplete; these are implementation work,
-not merely a missing production deployment. Existing MSG signaling fallback is
-also still awaiting removal from the actual call UI.
+service. `core.lifespan` now constructs that service only from explicit
+`DMASH_SIGNALING_WSS`, `DMASH_TURN_URLS` and 32-byte Base64 shared-secret
+configuration. Its default probe checks TURN listener reachability with a short
+timeout; a deployment may replace this edge probe with an authenticated TURN
+allocation check. Health is never presumed from configured URLs. The shipped
+PWA adapter performs CREATE/PoW, consumes one-use tickets, applies bounded
+queues/backpressure and exposes the server's ephemeral ICE credentials.
+`CallSignalingSession` owns browser media and peer connection cleanup. The
+actual legacy Core call UI still needs to create this adapter and send the
+encrypted CALL_REQUEST_V2, so this checkpoint does not claim end-to-end product
+button integration.
 
 TURN REST credentials now use padded standard Base64 of HMAC-SHA1, matching
 [coturn's documented format](https://github.com/coturn/coturn/blob/master/README.turnserver).
 The supplied signing secret must match coturn's configured shared secret;
 a separately generated runtime key does not configure coturn automatically.
-No deployment performed.
+Focused coverage includes server-side CREATE/PoW, replay and abandonment,
+real local WebSocket offer/answer/ICE/hangup exchange, JavaScript queue bounds,
+permission cancellation, and a two-context headless Chrome direct-audio run
+using synthetic microphones. The Chrome run intentionally disables remote TURN
+servers because this checkout has no coturn listener; a direct ICE path connects
+and receives audio on both peers. No deployment performed.
 
 ## S-TURN capability foundation — 2026-09-09
 

@@ -43,6 +43,7 @@ if __package__:  # Package imports must share modules with legacy absolute impor
     from .registration_registry import RegistrationRegistry
     from .device_registration import DeviceRegistration
     from .dnss_mailbox import DnssMailbox
+    from .s_turn import STurnService
 else:  # Runtime scripts import backend modules as top-level modules.
     from database import DatabaseManager
     from network import P2PNode
@@ -56,6 +57,7 @@ else:  # Runtime scripts import backend modules as top-level modules.
     from registration_registry import RegistrationRegistry
     from device_registration import DeviceRegistration
     from dnss_mailbox import DnssMailbox
+    from s_turn import STurnService
 
 # --- D-MASH CONFIGURATION ---
 TACT_INTERVAL = 0.5
@@ -197,11 +199,18 @@ def wire_registration_registry() -> None:
 async def lifespan(app: FastAPI):
     # Registration is fail-closed until all startup wiring below succeeds.
     client_gateway.registration_registry_factory = None
+    app.state.s_turn_service = None
+    s_turn_service = None
     try:
         # 1. Инициализация Identity Ноды (Синхронно, блокирует старт до завершения PoW)
         node_signing_key = ensure_node_identity()
         state.node_crypto = NodeCryptoManager(node_signing_key, ensure_base_ncrh())
         state.capabilities = NodeCapabilities.from_env()
+        if getattr(state.capabilities, "can_s_turn", False):
+            s_turn_service = STurnService.from_env()
+            # The signaling endpoint remains fail-closed until the configured
+            # service is present and its bounded health probe succeeds.
+            app.state.s_turn_service = s_turn_service
         print(f"🌐 [CORE] Node ID: {state.node_crypto.node_id}")
         state.process_pool = create_crypto_executor()
         # 2. Запускаем Системную БД
@@ -259,12 +268,14 @@ async def lifespan(app: FastAPI):
         if state.db: await state.db.close()
         state.fallback_store = None
         if state.system_db: await state.system_db.close()
+        if s_turn_service: s_turn_service.close()
     finally:
         client_gateway.registration_registry_factory = None
         state.device_registration = None
         if state.dnss_mailbox:
             await state.dnss_mailbox.close()
-            state.dnss_mailbox = None
+        state.dnss_mailbox = None
+        app.state.s_turn_service = None
 
 app = FastAPI(lifespan=lifespan)
 
@@ -283,14 +294,17 @@ if __package__:  # Package tests must not load a second top-level core module.
     from .api import router as api_router
     from .client_gateway import router as client_gateway_router
     from .gateway_v3 import router as gateway_v3_router
+    from .signaling_gateway import router as signaling_router
 else:
     from api import router as api_router
     from client_gateway import router as client_gateway_router
     from gateway_v3 import router as gateway_v3_router
+    from signaling_gateway import router as signaling_router
 
 app.include_router(api_router)
 app.include_router(client_gateway_router)
 app.include_router(gateway_v3_router)
+app.include_router(signaling_router)
 
 backend_path = os.path.dirname(os.path.abspath(__file__))
 # Canonical checkout: ``client/frontend``. Docker/Compose: ``backend/frontend``.
