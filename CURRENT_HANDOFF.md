@@ -26,6 +26,17 @@ transfers an 8 MiB fixture over local direct ICE and verifies size/hash on the
 recipient. Live coturn/blob relay, authenticated Mesh delivery and production
 installer wiring remain pending; no deployment has been performed.
 
+## Account ratchet foundation — 2026-09-14
+
+Added the isolated `account_ratchet.js` primitive and executable test. It
+derives independent message keys from a 32-byte root, direction, bounded epoch
+and random 16-byte message ID with HKDF-SHA-256, derives an epoch root from
+fresh entropy, and classifies stale/current/acceptable/excessive epoch jumps.
+The module carries no route, Node, Device or Account identity and is loaded by
+the PWA release and service worker. It is a cryptographic foundation only:
+legacy packet framing remains active until the authenticated update/ACK,
+reorder/loss handling and compatibility wire integration are completed.
+
 ## Active-account audio call orchestration — 2026-09-14
 
 The PWA call button now uses `DmashCallRuntime`: it selects an S-TURN endpoint

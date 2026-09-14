@@ -18,6 +18,7 @@ const CORE_ASSETS = [
     './js/call_session.js',
     './js/call_signaling.js',
     './js/call_runtime.js',
+    './js/account_ratchet.js',
     './js/file_channel.js', './js/file_session.js', './js/file_runtime.js',
     './js/device_routes.js', './js/dmash_links.js', './js/quick_name_registry.js',
     './js/contact_payloads.js', './js/contact_transport.js', './js/pending_contact_requests.js',

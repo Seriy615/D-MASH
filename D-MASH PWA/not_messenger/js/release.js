@@ -38,6 +38,7 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-dev-20260914.2" });
         "js/acceptance_v51.js",
         "js/call_signaling.js",
         "js/call_runtime.js",
+        "js/account_ratchet.js",
         "js/file_channel.js",
         "js/file_session.js",
         "js/file_runtime.js",

@@ -50,6 +50,20 @@ cleanup. The local Chrome acceptance helper transfers an 8 MiB fixture over
 direct ICE and verifies the received hash; live coturn/blob relay and full
 Mesh delivery remain deployment/integration work. No deployment.
 
+## Account ratchet foundation — 2026-09-14
+
+`account_ratchet.js` now provides a standalone Account-layer KDF boundary for
+the next message protocol revision. A 32-byte root, explicit direction label,
+bounded epoch and random 16-byte message ID derive an independent 256-bit
+message key through HKDF-SHA-256. Fresh 32-byte entropy plus an epoch derive a
+new root, and the bounded epoch classifier distinguishes stale, current,
+acceptable advance and excessive jump for loss/reorder handling. The module
+accepts no RouteID, NodeID, DeviceID or Account identifier and is loaded by the
+PWA release/service worker. Tests cover determinism, direction/epoch/message
+separation, fresh-entropy changes and bounds. Existing legacy packet framing
+is intentionally unchanged until authenticated update/ACK semantics and
+backward-compatible wire integration are implemented.
+
 ## Signaling endpoint checkpoint — 2026-09-12
 
 `/signal/v1` is now a ticket-authenticated WebSocket endpoint. A caller may
