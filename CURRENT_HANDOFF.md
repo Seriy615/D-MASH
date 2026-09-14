@@ -1,4 +1,30 @@
-# Active transport-v3 work — 2026-09-09
+# Active transport-v3 work — 2026-09-14
+
+## Account file transfer controller — 2026-09-14
+
+The PWA file picker is now a dedicated encrypted DataChannel transfer. It
+selects a peer Node only when authenticated STATUS reports S-TURN and
+`can_relay_blob`, creates a short-lived signaling session, and sends an
+Account-encrypted `FILE_SESSION_REQUEST` inside a Device envelope of the same
+type. The request has only an ephemeral 64-hex session ID, expiry, signaling
+ticket, bounded size/chunk/hash fields and opaque Account-protected manifest
+metadata; no file bytes, RouteID, AccountID or DeviceID are exposed to the
+Mesh.
+
+The transfer uses an ordered/reliable `dmash-file-v1` DataChannel. The PWA
+generates a random AES-GCM key and nonce per transfer, encrypts 32 KiB chunks
+and an authenticated completion marker, waits for encrypted in-order ACKs,
+checks the whole-file SHA-256, and exposes progress/cancel/save controls.
+Files are limited to 64 MiB in the PWA. Incoming requests do not join or
+create a DataChannel until the user presses Accept. Account boot/logout and
+all session failures cancel and clear the transfer. Legacy DataURL/media and
+chat fallback are rejected.
+
+Focused tests cover the cryptographic channel, ordering, bounds, cancellation,
+consent and invitation-only delivery. The native Chrome acceptance helper
+transfers an 8 MiB fixture over local direct ICE and verifies size/hash on the
+recipient. Live coturn/blob relay, authenticated Mesh delivery and production
+installer wiring remain pending; no deployment has been performed.
 
 ## Active-account audio call orchestration — 2026-09-14
 
@@ -29,8 +55,7 @@ negotiation. The current outgoing request uses ringtone=null (receiver default),
 generic caller display name, and audio-only media capabilities. The receiving
 dialog uses the locally stored contact name. Pre-Account-login call contents
 remain Account-encrypted; only the Device event type can be observed then.
-The previous checkpoint's assertion that the entire S-TURN milestone was
-complete was too broad. No deployment has been performed.
+No deployment has been performed.
 
 ## Signaling follow-up — 2026-09-11
 

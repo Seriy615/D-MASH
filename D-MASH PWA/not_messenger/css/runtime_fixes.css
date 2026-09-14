@@ -133,6 +133,15 @@
 /* Node status belongs to device/global settings, not the account workspace. */
 #workspace .network-card { display: none !important; }
 
+.dmash-file-transfer {
+    position: fixed; z-index: 99999; bottom: 24px; right: 20px;
+    width: min(340px, calc(100vw - 40px)); padding: 18px;
+    background: var(--bg, #101010); color: var(--main, #e8e8e8);
+    border: 1px solid currentColor; border-radius: 12px;
+    display: grid; gap: 12px; overflow-wrap: anywhere;
+}
+.dmash-file-transfer progress { width: 100%; }
+.dmash-file-transfer button, .dmash-file-transfer a { padding: 10px; color: inherit; cursor: pointer; }
 @media (max-width: 480px) {
     .dmash-route-actions, .dmash-copy-row, .dmash-node-actions { grid-template-columns: 1fr; }
     .dmash-node-actions .gate-btn.danger { grid-column: auto; }

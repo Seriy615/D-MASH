@@ -33,10 +33,14 @@ class GatewayV3Tests(unittest.TestCase):
                 status = session.open(socket.receive_json())
                 self.assertEqual(status["node_id"], self.node_id)
                 self.assertEqual(status['s_turn'], {'can_s_turn': False})
+                self.assertFalse(status['can_relay_blob'])
                 descriptor = {'can_s_turn': True, 'signaling_wss': 'wss://example.test/signal/v1'}
                 self.app.state.s_turn_service = SimpleNamespace(descriptor=lambda: descriptor)
+                self.state.capabilities = SimpleNamespace(can_relay_blob=True)
                 socket.send_json(session.seal({'type': 'STATUS', 'request_id': '2'}))
-                self.assertEqual(session.open(socket.receive_json())['s_turn'], descriptor)
+                status = session.open(socket.receive_json())
+                self.assertEqual(status['s_turn'], descriptor)
+                self.assertTrue(status['can_relay_blob'])
                 socket.send_json(session.seal({"type": "REGISTER_INBOUND_LOCATOR", "locator": "victim"}))
                 self.assertEqual(session.open(socket.receive_json())["code"], "UNSUPPORTED_OPERATION")
 

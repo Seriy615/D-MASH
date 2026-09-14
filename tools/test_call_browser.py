@@ -5,6 +5,7 @@ Set DMASH_PLAYWRIGHT_MODULE to an installed playwright package when it is not
 on Node's module search path. Set DMASH_CHROME for a non-default Chrome binary.
 """
 import pathlib
+import os
 import socket
 import subprocess
 import sys
@@ -42,7 +43,8 @@ def main():
             deadline = time.monotonic() + 5
             while not server.started and time.monotonic() < deadline: time.sleep(.01)
             if not server.started: raise RuntimeError('Local server did not start')
-            return subprocess.run(['node', str(ROOT / 'tools/test_call_browser.cjs'),
+            script = 'test_file_browser.cjs' if os.getenv('DMASH_BROWSER_SCENARIO') == 'file' else 'test_call_browser.cjs'
+            return subprocess.run(['node', str(ROOT / 'tools' / script),
                                    f'http://127.0.0.1:{port}'], timeout=90).returncode
         finally:
             server.should_exit = True

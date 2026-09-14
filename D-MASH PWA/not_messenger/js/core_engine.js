@@ -210,6 +210,7 @@ const Core = {
     },
     async boot(identity, passphrase, options = {}) {
         this._accountTransitioning = true;
+        window.DmashFileRuntime?.cancel(this);
         // Account keys are shared by the historical crypto implementation.
         // Finish an in-flight Inbox transaction before replacing those keys.
         if (this._inboxAccountTask) await this._inboxAccountTask.catch(() => {});
@@ -570,6 +571,7 @@ const Core = {
     // NodeManager deliberately survive so another local account can be chosen
     // without a device lock or transport reconnect.
     async accountLogout() {
+        window.DmashFileRuntime?.cancel(this);
         const zero = value => {
             if (value instanceof Uint8Array) value.fill(0);
             else if (value && typeof value === 'object') Object.values(value).forEach(zero);
@@ -1097,7 +1099,8 @@ const Core = {
                         envelope.notification_event = 'INCOMING_BAZAR';
                     }
                     const result = await window.NodeManager.submitEnvelope(meshRoute.routeLocator, envelope,
-                        p?.type === 'voip_call_request' ? 'CALL_REQUEST' : 'MSG');
+                        p?.type === 'voip_call_request' ? 'CALL_REQUEST' :
+                        p?.type === 'voip_file_request' ? 'FILE_SESSION_REQUEST' : 'MSG');
                     this.shmon("INFO", `D-MASH: ${result.state}`);
                     if (!isVoip && !isReceipt && !queuedAlias && pid === this.activePeerId) {
                         // A DMP-C submission result is an authenticated node
@@ -1813,10 +1816,8 @@ const Core = {
     // Core.handleFileSelect   - Чтение файла и отправка в шифратор
     handleFileSelect: (ev) => {
         const f = ev.target.files[0]; if (!f) return;
-        const r = new FileReader(); r.onload = (e) => {
-            let t = f.type.startsWith('image/') ? 'image' : (f.type.startsWith('video/') ? 'video' : 'file');
-            Core.sendMessage({ type: t, name: f.name, data: e.target.result });
-        }; r.readAsDataURL(f);
+        ev.target.value = '';
+        void window.DmashFileRuntime.send(Core, f);
     },
     setRecordingToolbar: function(kind) {
         const voice = document.getElementById('voice-btn');
@@ -2122,6 +2123,7 @@ const Core = {
     },
     // Core.handleVoipSignal   - Роутер сигналов (Offer/Answer/ICE/Hangup)
     async handleVoipSignal(data, fromId) {
+        if (data?.type === 'voip_file_request') return window.DmashFileRuntime.incoming(this, data.request, fromId);
         if (data?.type === 'voip_call_request') return window.DmashCallRuntime.incoming(this, data.request, fromId);
         // SDP/ICE are accepted exclusively from the joined signaling socket.
         return false;

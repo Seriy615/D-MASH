@@ -63,6 +63,8 @@ class Store {
     const callWire = sent.at(-1).payload;
     assert.equal('type' in callWire, false, 'Mesh does not see the Device event type');
     assert.equal(DeviceEnvelope.open(a.outgoing.box.secretKey, callWire.ciphertext).type, 'CALL_REQUEST');
+    await NodeManager.submitEnvelope(config.routeLocator, plaintext, 'FILE_SESSION_REQUEST');
+    assert.equal(DeviceEnvelope.open(a.outgoing.box.secretKey, sent.at(-1).payload.ciphertext).type, 'FILE_SESSION_REQUEST');
     Core.activeIdentity = 'B';
     await assert.rejects(NodeManager.submitEnvelope(config.routeLocator, plaintext), /restored/);
     const publicSigning = nacl.sign.keyPair(), publicBox = nacl.box.keyPair();

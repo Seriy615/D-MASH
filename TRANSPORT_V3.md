@@ -26,6 +26,30 @@ separately. Real Mesh delivery and authenticated TURN relay acceptance remain
 required. Existing TCP-listener health is only a reachability check; it does
 not prove a successful TURN allocation. No deployment.
 
+## Account file transfer controller — 2026-09-14
+
+The PWA file picker now uses a dedicated `DmashFileRuntime` instead of the
+legacy Account message/media DataURL path. A file is offered only after an
+authenticated Device STATUS reports both S-TURN signaling and
+`can_relay_blob`. The Account payload is a strict `FILE_SESSION_REQUEST` with
+an ephemeral 64-hex session ID, expiry, signaling ticket, size/chunk/hash
+limits, and Account-protected opaque metadata. The Device envelope type is
+`FILE_SESSION_REQUEST`; raw file bytes and the manifest key never enter the
+Mesh control plane.
+
+The sender and recipient establish an ordered, reliable `dmash-file-v1`
+DataChannel through the ephemeral signaling session. Each 32 KiB chunk and
+the completion marker use AES-GCM with a per-transfer random key/nonce,
+direction/index authenticated data, in-order ACKs, whole-file SHA-256
+verification, a 64 MiB PWA limit, progress UI and cancellation cleanup. The
+receiver does not create a session or access the file before explicit consent.
+Account logout/boot cancels an active transfer, and no file request falls back
+to ordinary chat or legacy DataURL media. Focused JavaScript tests cover
+integrity, ordering, bounds, cancellation, invitation-only delivery and UI
+cleanup. The local Chrome acceptance helper transfers an 8 MiB fixture over
+direct ICE and verifies the received hash; live coturn/blob relay and full
+Mesh delivery remain deployment/integration work. No deployment.
+
 ## Signaling endpoint checkpoint — 2026-09-12
 
 `/signal/v1` is now a ticket-authenticated WebSocket endpoint. A caller may

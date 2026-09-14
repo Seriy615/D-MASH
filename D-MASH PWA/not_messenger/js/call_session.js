@@ -56,8 +56,12 @@
             const stream = await this.mediaDevices.getUserMedia({ audio: true, video });
             if (this.closed) { stream.getTracks().forEach(track => track.stop()); fail("call cancelled"); }
             this.stream = stream;
-            this.pc = this.rtcFactory({ iceServers: this.iceServers });
+            this._createPeer();
             this.stream.getTracks().forEach(track => this.pc.addTrack(track, this.stream));
+        }
+
+        _createPeer() {
+            this.pc = this.rtcFactory({ iceServers: this.iceServers });
             this.pc.onicecandidate = event => {
                 if (event.candidate) void this._send({ type: "ice", payload: JSON.stringify(event.candidate) }).catch(() => this.close());
             };

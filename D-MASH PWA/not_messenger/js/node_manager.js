@@ -660,13 +660,14 @@ const NodeManager = {
         // advertise itself; this helper never performs target discovery.
         return this.routeStatus(target);
     },
-    async selectCallService() {
+    async selectCallService({file = false} = {}) {
         const peers = this.connectedConnections().filter(connection => connection.client);
         if (!peers.length) throw new Error('Подключитесь к S-TURN ноде');
         try {
             return await Promise.any(peers.map(async connection => {
                 const status = await connection.client.request('STATUS', {});
                 if (status.s_turn?.can_s_turn !== true) throw new Error('S-TURN unavailable');
+                if (file && status.can_relay_blob !== true) throw new Error('File relay unavailable');
                 return window.DmashCallSignaling.validEndpoint(status.s_turn.signaling_wss);
             }));
         } catch (_) { throw new Error('Среди подключённых нод нет доступной S-TURN'); }
