@@ -57,12 +57,15 @@ the next message protocol revision. A 32-byte root, explicit direction label,
 bounded epoch and random 16-byte message ID derive an independent 256-bit
 message key through HKDF-SHA-256. Fresh 32-byte entropy plus an epoch derive a
 new root, and the bounded epoch classifier distinguishes stale, current,
-acceptable advance and excessive jump for loss/reorder handling. The module
-accepts no RouteID, NodeID, DeviceID or Account identifier and is loaded by the
-PWA release/service worker. Tests cover determinism, direction/epoch/message
-separation, fresh-entropy changes and bounds. Existing legacy packet framing
-is intentionally unchanged until authenticated update/ACK semantics and
-backward-compatible wire integration are implemented.
+acceptable advance and excessive jump for loss/reorder handling. Its
+`RatchetState` repeats one pending update until an authenticated ACK, advances
+the sender only after that ACK, accepts a recipient duplicate idempotently and
+rejects conflicting or unbounded updates. The module accepts no RouteID,
+NodeID, DeviceID or Account identifier and is loaded by the PWA release/service
+worker. Tests cover determinism, direction/epoch/message separation,
+fresh-entropy changes, repeat/loss handling, duplicate ACKs and bounds.
+Existing legacy packet framing is intentionally unchanged until these
+authenticated update/ACK semantics have a backward-compatible wire envelope.
 
 ## Signaling endpoint checkpoint — 2026-09-12
 

@@ -34,8 +34,11 @@ and random 16-byte message ID with HKDF-SHA-256, derives an epoch root from
 fresh entropy, and classifies stale/current/acceptable/excessive epoch jumps.
 The module carries no route, Node, Device or Account identity and is loaded by
 the PWA release and service worker. It is a cryptographic foundation only:
-legacy packet framing remains active until the authenticated update/ACK,
-reorder/loss handling and compatibility wire integration are completed.
+`RatchetState` repeats one pending update until an authenticated ACK, advances
+the sender only after that ACK, handles recipient duplicate delivery
+idempotently and rejects conflicting/unbounded updates. Legacy packet framing
+remains active until this state machine is placed behind an authenticated,
+backward-compatible wire envelope.
 
 ## Active-account audio call orchestration — 2026-09-14
 
