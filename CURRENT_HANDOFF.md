@@ -28,17 +28,25 @@ installer wiring remain pending; no deployment has been performed.
 
 ## Account ratchet foundation — 2026-09-14
 
-Added the isolated `account_ratchet.js` primitive and executable test. It
+Added the isolated `account_ratchet.js` primitive and executable test, then
+split packet/control orchestration into the separately loaded
+`account_ratchet_runtime.js` module so `core_engine.js` remains a thin adapter. It
 derives independent message keys from a 32-byte root, direction, bounded epoch
 and random 16-byte message ID with HKDF-SHA-256, derives an epoch root from
 fresh entropy, and classifies stale/current/acceptable/excessive epoch jumps.
-The module carries no route, Node, Device or Account identity and is loaded by
-the PWA release and service worker. It is a cryptographic foundation only:
+The modules carry no route, Node, Device or Account identity and are loaded by
+the PWA acceptance loader, release manifest and service worker. The runtime
+owns the wire packet and update/ACK orchestration:
 `RatchetState` repeats one pending update until an authenticated ACK, advances
 the sender only after that ACK, handles recipient duplicate delivery
-idempotently and rejects conflicting/unbounded updates. Legacy packet framing
-remains active until this state machine is placed behind an authenticated,
-backward-compatible wire envelope.
+idempotently and rejects conflicting/unbounded updates. Core now carries
+explicit classical or `HYBRID_MLKEM768_V1` suites in Account-encrypted
+`ratchet_update`/`ratchet_ack` controls. When the peer's ML-KEM-768 public key
+is present, a fresh classical seed and Kyber encapsulation are combined into
+the next root; decapsulation failure rejects that update without downgrade.
+After ACK, epoch packets use root/direction/epoch/message ID; epoch zero keeps
+the legacy packet for compatibility. Full multi-peer wire/reorder acceptance
+and old-root retirement remain the next ratchet work.
 
 ## Active-account audio call orchestration — 2026-09-14
 

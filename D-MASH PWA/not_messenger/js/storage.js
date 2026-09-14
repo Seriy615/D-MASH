@@ -386,3 +386,7 @@ deleteMessageGamma: async function(peerID, msgId) {
     base64ToUint8: (s) => new Uint8Array(atob(s).split('').map(c => c.charCodeAt(0))),
     uint8ToHex: (b) => Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('')
 };
+
+// Keep the classic lexical module usable by separately loaded PWA runtimes.
+// Acceptance may replace this with its encrypted registry adapter later.
+window.DMashStorage ||= Storage;

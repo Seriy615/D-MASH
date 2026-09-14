@@ -60,12 +60,19 @@ new root, and the bounded epoch classifier distinguishes stale, current,
 acceptable advance and excessive jump for loss/reorder handling. Its
 `RatchetState` repeats one pending update until an authenticated ACK, advances
 the sender only after that ACK, accepts a recipient duplicate idempotently and
-rejects conflicting or unbounded updates. The module accepts no RouteID,
-NodeID, DeviceID or Account identifier and is loaded by the PWA release/service
-worker. Tests cover determinism, direction/epoch/message separation,
-fresh-entropy changes, repeat/loss handling, duplicate ACKs and bounds.
-Existing legacy packet framing is intentionally unchanged until these
-authenticated update/ACK semantics have a backward-compatible wire envelope.
+rejects conflicting or unbounded updates. Core now sends explicit
+`CLASSICAL_ROOT_V1` or `HYBRID_MLKEM768_V1` update suites as Account-encrypted
+control messages; packet and update/ACK orchestration lives in the separately
+loaded `account_ratchet_runtime.js` module, while `core_engine.js` keeps only
+thin delegation methods. A peer with an authenticated ML-KEM-768 public key gets a
+fresh classical seed combined with a fresh Kyber encapsulation, and a failed
+advertised ML-KEM operation rejects the update without downgrade. After ACK,
+epoch packets use the ratchet root/direction/epoch/message ID. Epoch zero
+keeps the legacy packet for compatibility. The modules accept no RouteID,
+NodeID, DeviceID or Account identifier and are loaded by the PWA acceptance
+loader, release manifest and service worker. Tests cover determinism, direction/epoch/message separation,
+fresh-entropy changes, hybrid entropy, repeat/loss handling, duplicate ACKs
+and bounds. Full multi-peer wire/reorder acceptance remains pending.
 
 ## Signaling endpoint checkpoint — 2026-09-12
 

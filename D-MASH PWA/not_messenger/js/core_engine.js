@@ -81,6 +81,10 @@ const KyberWasm = {
     // KyberWasm.shmon         - Локальное логирование модуля
     shmon: (t, m) => console.log(`%c[KyberWasm][${t}] %c${m}`, "color:cyan;font-weight:bold;", "color:white;")
 };
+// Account ratchet runtime is a separate classic script. Expose the WASM
+// adapter explicitly so that module can use it without duplicating crypto
+// plumbing inside the UI engine.
+window.DmashKyberWasm = KyberWasm;
 
 // TURN credentials must be short-lived and supplied at runtime after authentication.
 const runtimeIceServers = window.DMASH_RUNTIME_CONFIG?.iceServers;
@@ -758,10 +762,20 @@ const Core = {
         return new Uint8Array(digest);
     },
 
+    ratchetDirection(pid) {
+        return window.DmashAccountRatchetRuntime.direction(this, pid);
+    },
+    async encryptRatchet(data, pid, secrets) {
+        return window.DmashAccountRatchetRuntime.encryptPacket(this, data, pid, secrets);
+    },
+    async decryptRatchet(raw, pid, secrets) {
+        return window.DmashAccountRatchetRuntime.decryptPacket(this, raw, pid, secrets);
+    },
+
     /**
      * ШИФРОВАНИЕ (V19.0 - АТОМНЫЙ БРОНЕКОНВЕРТ)
      */
-    async encrypt(data, pid, forceHandshake = false) {
+    async encrypt(data, pid, forceHandshake = false, ratchetOverride = null) {
         const aliasL1 = await Storage.getAlias(pid, "L1");
         let secrets = await Storage.getBox('blind_secrets', aliasL1);
         let peerInfo = await Storage.getBox('blind_peers', aliasL1);
@@ -794,6 +808,11 @@ const Core = {
             const res = new Uint8Array(1 + 24 + 32 + encrypted.length);
             res[0] = 0x01; res.set(nonce, 1); res.set(eph.publicKey, 25); res.set(encrypted, 57);
             return this.bytesToHex(res);
+        }
+
+        const ratchetSecrets = ratchetOverride ? {...secrets, ...ratchetOverride} : secrets;
+        if (ratchetSecrets.ratchetEpoch > 0 && /^[0-9a-f]{64}$/i.test(ratchetSecrets.ratchetRoot || '') && window.DmashAccountRatchet) {
+            return this.encryptRatchet(data, pid, ratchetSecrets);
         }
 
         // --- СТУПЕНЬ 3: АТОМНЫЙ T-RATCHET (0x00) ---
@@ -877,7 +896,9 @@ const Core = {
                 const newShift = this.randomInt32();
                 await Storage.putBox('blind_secrets', {
                     alias: aliasL1,
-                    data: { staticShared: this.bytesToHex(k.ss), psk: this.bytesToHex(newPSK), epochShift: newShift, msgCount: 0 }
+                    data: { staticShared: this.bytesToHex(k.ss), psk: this.bytesToHex(newPSK), epochShift: newShift,
+                        ratchetRoot: this.bytesToHex(k.ss), ratchetEpoch: 0, ratchetPreviousRoot: null, ratchetPreviousRoots: [], ratchetPending: null,
+                        ratchetLastUpdate: null, msgCount: 0 }
                 });
                 await this.sendKyberFinal(pid, k.ct, newPSK, newShift);
                 if (this.activePeerId === pid) this.selectPeer(pid);
@@ -894,12 +915,18 @@ const Core = {
                 const final = JSON.parse(new TextDecoder().decode(opened));
                 await Storage.putBox('blind_secrets', {
                     alias: aliasL1,
-                    data: { staticShared: this.bytesToHex(ss), psk: final.psk, epochShift: final.shift, msgCount: 0 }
+                    data: { staticShared: this.bytesToHex(ss), psk: final.psk, epochShift: final.shift,
+                        ratchetRoot: this.bytesToHex(ss), ratchetEpoch: 0, ratchetPreviousRoot: null, ratchetPreviousRoots: [], ratchetPending: null,
+                        ratchetLastUpdate: null, msgCount: 0 }
                 });
                 this.shmon("INFO", "КВАНТОВЫЙ КАНАЛ УСТАНОВЛЕН!");
                 if (this.activePeerId === pid) this.selectPeer(pid);
                 return null;
             }
+        }
+
+        if (type === 0x04) { // Account epoch ratchet packet
+            return this.decryptRatchet(raw, pid, secrets);
         }
 
         if (type === 0x00) { // Атомный T-Ratchet
@@ -1013,26 +1040,18 @@ const Core = {
     },
     // Core.deriveSharedKey       - Генерация статического ключа между двумя ID (Legacy/Fallback)
     deriveSharedKey: async (pid) => Core.hexToBytes(await Core.fastHash([Core.keys.pub_hex, pid].sort().join('') + "STATIC_SHARED_SECRET_V11")),
-    // Core.initHandshake         - Принудительное обновление PSK и временного сдвига (Epoch Shift)
+    _ratchetContext(pid, secrets = null) {
+        return window.DmashAccountRatchetRuntime.context(this, pid, secrets);
+    },
+    _handleRatchetUpdate(message, pid) {
+        return window.DmashAccountRatchetRuntime.handleUpdate(this, message, pid);
+    },
+    _handleRatchetAck(message, pid) {
+        return window.DmashAccountRatchetRuntime.handleAck(this, message, pid);
+    },
+    // Core.initHandshake - authenticated epoch update, retried until ACK.
     initHandshake: async function() {
-        const newShift = this.randomInt32();
-        const newPSK = this.bytesToHex(window.nacl.randomBytes(32));
-
-        // Шлем спец-пакет кенту
-        await this.sendMessage({
-            type: "voip_handshake",
-            shift: newShift,
-            psk: newPSK
-        });
-
-        // Сохраняем у себя в L2
-        const aliasL1 = await Storage.getAlias(this.activePeerId, "L1");
-        const secrets = await Storage.getBox('blind_secrets', aliasL1);
-        secrets.epochShift = newShift;
-        secrets.psk = newPSK;
-        await Storage.putBox('blind_secrets', { alias: aliasL1, data: secrets });
-
-        this.customAlert("СИСТЕМА", "Запрос на синхронизацию отправлен.");
+        return window.DmashAccountRatchetRuntime.initHandshake(this);
     },
     //                              через воип-канал, если база поплыла.
     /*
@@ -1042,7 +1061,7 @@ const Core = {
     Взаимодействие с API и доставка данных.
     */
     // Core.sendMessage        - Отправка данных на сервер (с поддержкой VOIP и Silent режимов)
-    async sendMessage(c = null, forceHandshake = false, targetPid = null, queuedAlias = null, suppressQueue = false) {
+    async sendMessage(c = null, forceHandshake = false, targetPid = null, queuedAlias = null, suppressQueue = false, ratchetOverride = null) {
         if (c && ['voip_offer', 'voip_answer', 'voip_ice', 'voip_hangup'].includes(c.type)) return false;
         // SEND is the sole commit control for captured media.  Recording
         // controls cancel only; neither voice nor circle auto-sends on stop.
@@ -1085,7 +1104,7 @@ const Core = {
                 const outbound = wireId ? { type: 'dmash_message', id: wireId, body: p } : p;
                 const dataToEncrypt = (typeof outbound === 'object') ? JSON.stringify(outbound) : outbound;
                 try {
-                    const blob = await this.encrypt(dataToEncrypt, pid, forceHandshake);
+                    const blob = await this.encrypt(dataToEncrypt, pid, forceHandshake, ratchetOverride);
                     if (!blob) return;
                     const signature = window.nacl.sign.detached(this.hexToBytes(blob), this.keys.sign.secretKey);
                     const envelope = {
@@ -1212,6 +1231,14 @@ const Core = {
         if (message && typeof message === 'object' && message.type === 'dmash_receipt') {
             await Storage.updateMessageTransportState(peerId, message.id, message.state);
             return current();
+        }
+        if (message && typeof message === 'object' && message.type === 'ratchet_update') {
+            try { return await this._handleRatchetUpdate(message, peerId); }
+            catch (error) { this.shmon('WARN', `Ratchet update rejected: ${error.message}`); return false; }
+        }
+        if (message && typeof message === 'object' && message.type === 'ratchet_ack') {
+            try { return await this._handleRatchetAck(message, peerId); }
+            catch (error) { this.shmon('WARN', `Ratchet ACK rejected: ${error.message}`); return false; }
         }
         if (message && typeof message === 'object' && message.type?.startsWith('voip_')) {
             await this.handleVoipSignal(message, peerId);
@@ -3045,7 +3072,8 @@ const Core = {
         // 2. ФИЛЬТРУЕМ ТЕХНИЧЕСКИЙ МУСОР (Хендшейки)
         if (isObject && parsed) {
             // Если в пакете ключи или системные метки - гасим его
-            if (parsed.t === "pqc_init" || parsed.psk || parsed.type === "sys" || parsed.shift !== undefined) {
+            if (parsed.t === "pqc_init" || parsed.psk || parsed.type === "sys" ||
+                parsed.type === "ratchet_update" || parsed.type === "ratchet_ack" || parsed.shift !== undefined) {
                 return "";
             }
 

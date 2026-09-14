@@ -286,6 +286,7 @@
                     loadScript(`js/call_signaling.js?v=${ver}`),
                     loadScript(`js/call_runtime.js?v=${ver}`),
                     loadScript(`js/account_ratchet.js?v=${ver}`),
+                    loadScript(`js/account_ratchet_runtime.js?v=${ver}`),
                     loadScript(`js/file_channel.js?v=${ver}`),
                     loadScript(`js/file_session.js?v=${ver}`),
                     loadScript(`js/file_runtime.js?v=${ver}`),
