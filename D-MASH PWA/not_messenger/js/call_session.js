@@ -78,16 +78,23 @@
             } catch (error) { await this.close(); throw error; }
         }
 
+        async prepareIncoming(callIdValue) {
+            if (this.callId || this.closed) fail('call session already used');
+            this.mediaReady = new Promise(resolve => { this.releaseMedia = resolve; });
+            try { await this._open(callIdValue, 'callee'); }
+            catch (error) { await this.close(); throw error; }
+        }
+
         async accept(callIdValue, options = {}) {
-            let releaseMedia;
             try {
                 // The bounded transport queue holds the offer while permission
                 // is pending. One consumer preserves order across media setup.
-                this.mediaReady = new Promise(resolve => { releaseMedia = resolve; });
-                await this._open(callIdValue, "callee");
+                if (!this.callId) await this.prepareIncoming(callIdValue);
+                if (this.callId !== callIdValue || this.role !== 'callee' || this.accepting || this.closed) fail('invalid call acceptance');
+                this.accepting = true;
                 await this._setupMedia(options);
             } catch (error) { await this.close(); throw error; }
-            finally { releaseMedia?.(); }
+            finally { this.releaseMedia?.(); }
         }
 
         async acceptOffer(callIdValue, offer, options = {}) {
@@ -159,6 +166,7 @@
         async close(notify = true) {
             if (this.closed) return;
             this.closed = true;
+            this.releaseMedia?.();
             if (this.pc) { this.pc.onconnectionstatechange = null; this.pc.close(); }
             if (this.stream) this.stream.getTracks().forEach(track => track.stop());
             this.pc = this.stream = null;

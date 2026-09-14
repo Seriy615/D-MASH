@@ -1041,6 +1041,7 @@ const Core = {
     */
     // Core.sendMessage        - Отправка данных на сервер (с поддержкой VOIP и Silent режимов)
     async sendMessage(c = null, forceHandshake = false, targetPid = null, queuedAlias = null, suppressQueue = false) {
+        if (c && ['voip_offer', 'voip_answer', 'voip_ice', 'voip_hangup'].includes(c.type)) return false;
         // SEND is the sole commit control for captured media.  Recording
         // controls cancel only; neither voice nor circle auto-sends on stop.
         if (this.isRecording && !c) { this.commitRecording(); return; }
@@ -1095,7 +1096,8 @@ const Core = {
                         envelope.notification_nonce = this.callNotificationNonce;
                         envelope.notification_event = 'INCOMING_BAZAR';
                     }
-                    const result = await window.NodeManager.submitEnvelope(meshRoute.routeLocator, envelope);
+                    const result = await window.NodeManager.submitEnvelope(meshRoute.routeLocator, envelope,
+                        p?.type === 'voip_call_request' ? 'CALL_REQUEST' : 'MSG');
                     this.shmon("INFO", `D-MASH: ${result.state}`);
                     if (!isVoip && !isReceipt && !queuedAlias && pid === this.activePeerId) {
                         // A DMP-C submission result is an authenticated node
@@ -2116,117 +2118,13 @@ const Core = {
     */
     // Core.initVoip           - Инициализация исходящего вызова (Offer)
     async initVoip() {
-        if (this.callState !== 'idle') return;
-        this.callPeerId = this.activePeerId;
-        if (!this.callPeerId) return;
-        this.activeCallId = crypto.randomUUID();
-        this.callNotificationNonce = crypto.randomUUID();
-        this.callState = 'calling';
-        this.updateCallUI('calling');
-
-        try {
-            const callPSK = this.bytesToHex(window.nacl.randomBytes(32));
-            this.activeCallPSK = callPSK;
-
-            this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-            this.localStream.getVideoTracks().forEach(t => t.enabled = false);
-            document.getElementById('localVideo').srcObject = this.localStream;
-
-            this.peerConnection = new RTCPeerConnection(iceConfig);
-            this.localStream.getTracks().forEach(track => this.peerConnection.addTrack(track, this.localStream));
-
-            this.peerConnection.onicecandidate = (e) => {
-                if (e.candidate) this.sendVoipSignal({ type: "voip_ice", candidate: e.candidate });
-            };
-
-            this.peerConnection.ontrack = (e) => {
-                document.getElementById('remoteVideo').srcObject = e.streams[0];
-                if (this.callState !== 'connected') {
-                    this.callState = 'connected';
-                    this.updateCallUI('connected');
-                    this.startTimer();
-                }
-            };
-
-            const offer = await this.peerConnection.createOffer();
-            await this.peerConnection.setLocalDescription(offer);
-
-            // Шлем оффер через sendMessage (он сам решит: 0x01 или 0x00)
-            this.sendVoipSignal({
-                type: "voip_offer",
-                sdp: this.peerConnection.localDescription,
-                call_psk: callPSK
-            });
-        } catch (e) { this.shmon("ERR", "VoIP Init Fail", e); this.endCall(false); }
+        return window.DmashCallRuntime.start(this);
     },
     // Core.handleVoipSignal   - Роутер сигналов (Offer/Answer/ICE/Hangup)
     async handleVoipSignal(data, fromId) {
-        this.shmon("INFO", `Сигнал VoIP: ${data.type} от ${fromId.substring(0,8)}`);
-
-        if (data.type === 'voip_offer') {
-            if (this.callState !== 'idle') return;
-            this.callPeerId = fromId;
-            this.activeCallId = data.call_id || crypto.randomUUID();
-            // The sender's external notification nonce is carried by the
-            // transport envelope and is intentionally not part of plaintext.
-            this.callNotificationNonce = null;
-            this.activeCallPSK = data.call_psk;
-
-            this.showIncomingCall(fromId, async () => {
-                this.callState = 'connecting';
-                this.updateCallUI('connecting');
-                try {
-                    this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                    document.getElementById('localVideo').srcObject = this.localStream;
-
-                    this.peerConnection = new RTCPeerConnection(iceConfig);
-                    this.localStream.getTracks().forEach(track => this.peerConnection.addTrack(track, this.localStream));
-
-                    this.peerConnection.onicecandidate = (e) => {
-                        if (e.candidate) this.sendVoipSignal({ type: "voip_ice", candidate: e.candidate });
-                    };
-
-                    this.peerConnection.ontrack = (e) => {
-                        document.getElementById('remoteVideo').srcObject = e.streams[0];
-                        if (this.callState !== 'connected') {
-                            this.callState = 'connected';
-                            this.updateCallUI('connected');
-                            this.startTimer();
-                        }
-                    };
-
-                    await this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-                    const answer = await this.peerConnection.createAnswer();
-                    await this.peerConnection.setLocalDescription(answer);
-
-                    this.sendVoipSignal({ type: "voip_answer", sdp: this.peerConnection.localDescription });
-
-                    // Обрабатываем ICE-кандидатов, если они пришли раньше оффера
-                    while (this.iceQueue.length > 0) {
-                        const cand = this.iceQueue.shift();
-                        await this.peerConnection.addIceCandidate(new RTCIceCandidate(cand));
-                    }
-                } catch (e) { this.shmon("ERR", "Answer Fail", e); this.endCall(false); }
-            });
-
-        } else if (data.type === 'voip_answer') {
-            if (this.peerConnection) {
-                await this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-            }
-        } else if (data.type === 'voip_ice') {
-            if (this.peerConnection && this.peerConnection.remoteDescription) {
-                await this.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(e => {});
-            } else {
-                this.iceQueue.push(data.candidate);
-            }
-        } else if (data.type === 'voip_hangup') {
-            // Реагируем на отбой только если он от текущего собеседника
-            if (fromId === this.callPeerId) {
-                this.shmon("INFO", "Собеседник повесил трубку");
-                this.endCall(false);
-            }
-            return;
-        }
+        if (data?.type === 'voip_call_request') return window.DmashCallRuntime.incoming(this, data.request, fromId);
+        // SDP/ICE are accepted exclusively from the joined signaling socket.
+        return false;
     },
     // Core.setupPC            - Создание PeerConnection и настройка треков
     setupPC: async function(targetId, withVideo = true) {
@@ -2283,11 +2181,18 @@ const Core = {
     },
     // Core.endCall            - Завершение звонка и очистка UI
     endCall(sendSignal = true) {
+        if (this._callModal && document.getElementById('accept-call')) this.closeModal();
+        this._callModal = false;
+        this._callAttempt = null;
+        clearTimeout(this._callExpiry);
+        const session = this.callSignalingSession;
+        this.callSignalingSession = null;
+        if (session) void (sendSignal ? session.hangup() : session.close()).catch(() => {});
         this.shmon("INFO", "Завершение звонка...");
         this.playSound('end');
 
         // Шлем отбой ТОЛЬКО тому, с кем базарили
-        if (sendSignal && this.callPeerId) {
+        if (sendSignal && this.callPeerId && !session) {
             this.sendVoipSignal({ type: "voip_hangup" });
         }
 
@@ -2302,10 +2207,12 @@ const Core = {
     },
     // Core.showIncomingCall   - Модальное окно входящего вызова
     async showIncomingCall(fromId, onAccept) {
+        const attempt = this._callAttempt;
         // ФИКС: Берем имя из слепой базы
         let peerName = "Неизвестный";
         const aliasL1 = await Storage.getAlias(fromId, "L1");
         const peerInfo = await Storage.getBox('blind_peers', aliasL1);
+        if (attempt && this._callAttempt !== attempt) return;
         if (peerInfo && peerInfo.name) peerName = peerInfo.name;
 
         const h = `
@@ -2315,6 +2222,7 @@ const Core = {
                 <button class="sys-modal-btn primary" id="accept-call">ПРИНЯТЬ</button>
             </div>`;
         this.openModal(`ОТ: ${peerName}`, h);
+        this._callModal = true;
 
         document.getElementById('accept-call').onclick = () => {
             this.closeModal();
@@ -2379,16 +2287,12 @@ const Core = {
     },
     sendVoipSignal: async function(data) {
         if (!Core.callPeerId) return;
-        // When an authenticated S-TURN signaling session is attached, ICE and
-        // SDP never enter the ordinary chat MSG path. The legacy fallback is
-        // retained only for peers that have not negotiated a signaling ticket.
+        // A call without a joined S-TURN session cannot emit signaling.
         if (this.callSignalingSession && typeof this.callSignalingSession.sendSignal === 'function') {
             await this.callSignalingSession.sendSignal(data);
             return;
         }
-        // Pass the call target explicitly: chat focus can change while ICE or
-        // hangup signals are still being emitted.
-        await Core.sendMessage(data, false, Core.callPeerId);
+        return false;
     },
     // Core.switchCamera       - Переключение между фронталкой и основой во время боя
     switchCamera: async function() {

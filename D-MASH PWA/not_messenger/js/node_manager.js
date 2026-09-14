@@ -660,14 +660,25 @@ const NodeManager = {
         // advertise itself; this helper never performs target discovery.
         return this.routeStatus(target);
     },
-    async submitEnvelope(routeLocator, envelope) {
+    async selectCallService() {
+        const peers = this.connectedConnections().filter(connection => connection.client);
+        if (!peers.length) throw new Error('Подключитесь к S-TURN ноде');
+        try {
+            return await Promise.any(peers.map(async connection => {
+                const status = await connection.client.request('STATUS', {});
+                if (status.s_turn?.can_s_turn !== true) throw new Error('S-TURN unavailable');
+                return window.DmashCallSignaling.validEndpoint(status.s_turn.signaling_wss);
+            }));
+        } catch (_) { throw new Error('Среди подключённых нод нет доступной S-TURN'); }
+    },
+    async submitEnvelope(routeLocator, envelope, deviceType = 'MSG') {
         if (this.connectedConnections().some(node => node.client)) {
             const record = await this.deviceInboxV3()._get('private-outbound:' + routeLocator);
             if (!record || record.accountSlot !== window.Core.activeIdentity) throw new Error('Private Device route must be restored before sending');
             const target = await window.PrivateRoutesV3.locator(window.DmashSecureSession.unb64(record.targetVerifyKey, 32));
             const ready = await this.routeStatus(routeLocator);
             if (!ready) throw new Error('Route unavailable');
-            const device = window.DeviceEnvelope.create(target, 'MSG', JSON.stringify(envelope));
+            const device = window.DeviceEnvelope.create(target, deviceType, JSON.stringify(envelope));
             const ciphertext = window.DeviceEnvelope.seal(window.DmashSecureSession.unb64(record.boxPublicKey, 32), device);
             return this.submitHopCiphertextV3(ready.connection, ready.result?.hop_route_label, ciphertext);
         }

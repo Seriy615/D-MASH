@@ -1,7 +1,7 @@
 "use strict";
 
 // One visible release identifier for the page and Service Worker generation.
-window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-dev-20260912.1" });
+window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-dev-20260914.1" });
 
 /*
  * Runtime repair loader.
@@ -37,6 +37,7 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-dev-20260912.1" });
         "js/acceptance_v50.js",
         "js/acceptance_v51.js",
         "js/call_signaling.js",
+        "js/call_runtime.js",
         "js/acceptance_v52.js",
         "js/acceptance_v54.js",
         "js/acceptance_v55.js"

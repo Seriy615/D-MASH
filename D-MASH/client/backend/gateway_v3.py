@@ -114,7 +114,10 @@ async def dmp_v3(websocket: WebSocket):
             if request.get("type") == "PING":
                 response = {"type": "PONG", "request_id": request_id}
             elif request.get("type") == "STATUS":
+                service = getattr(websocket.app.state, "s_turn_service", None)
+                s_turn = await asyncio.to_thread(service.descriptor) if service else {"can_s_turn": False}
                 response = {"type": "STATUS", "request_id": request_id,
+                            "s_turn": s_turn,
                             "node_id": state.node_crypto.node_id,
                             "mesh_peers": len(state.node.active_connections) if state.node else 0}
             elif request.get("type") in surface:

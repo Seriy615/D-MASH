@@ -6,7 +6,7 @@ from backend.session_protocol import validate_call_request, validate_file_sessio
 
 class SessionProtocolTests(unittest.TestCase):
     def setUp(self):
-        self.signaling = {"wss_endpoint": "wss://turn.example/signal", "one_time_key": "t" * 32}
+        self.signaling = {"wss_endpoint": "wss://turn.example/signal", "one_time_key": "t" * 32, "session_id": "s" * 43}
 
     def test_call_request_accepts_bounded_ringtone_and_opaque_signaling(self):
         request = {"version": 2, "call_id": "a" * 64, "expires_at": 2000,
@@ -15,6 +15,7 @@ class SessionProtocolTests(unittest.TestCase):
                    "media_capabilities": {"audio": True, "video": False}}
         self.assertEqual(validate_call_request(request), request)
         self.assertNotIn("account_id", validate_call_request(request))
+        self.assertIsNone(validate_call_request({**request, 'ringtone': None})['ringtone'])
 
     def test_call_ringtone_limits_and_mime_are_strict(self):
         request = {"version": 2, "call_id": "a" * 64, "expires_at": 2000,

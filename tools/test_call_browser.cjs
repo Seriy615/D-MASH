@@ -15,6 +15,7 @@ const {chromium} = require(process.env.DMASH_PLAYWRIGHT_MODULE || 'playwright');
             await page.goto(process.argv[2]);
             await page.addScriptTag({url: '/js/call_signaling.js'});
             await page.addScriptTag({url: '/js/call_session.js'});
+            await page.addScriptTag({url: '/js/call_runtime.js'});
             await page.evaluate(() => {
                 window.callEvents = [];
                 window.makePeer = config => {
@@ -34,6 +35,25 @@ const {chromium} = require(process.env.DMASH_PLAYWRIGHT_MODULE || 'playwright');
                     this.onerror = error => callEvents.push('error:' + error.name);
                     return receive.call(this, message);
                 };
+                const NativeSession = DmashCallSession.CallSignalingSession;
+                window.RuntimeSession = class extends NativeSession {
+                    constructor(config) { super({...config, rtcFactory: makePeer, useRemoteIceServers: false}); }
+                };
+                window.Core = {callState: 'idle', activePeerId: 'fixture-recipient',
+                    updateCallUI() {}, startTimer() {}, shmon() {},
+                    attachCallSignaling(session) {window.call = session; this.callSignalingSession = session;},
+                    async sendMessage(message) {this.sent = message; return true;},
+                    async showIncomingCall(peer, accept) {
+                        const button = document.createElement('button'); button.id = 'accept'; button.textContent = 'Accept';
+                        button.onclick = accept; document.body.append(button);
+                    },
+                    endCall() {
+                        this._callAttempt = null; clearTimeout(this._callExpiry);
+                        this.callState = 'idle'; void this.callSignalingSession?.close();
+                    }};
+                window.NodeManager = {async selectCallService() {return location.origin.replace('http:', 'ws:') + '/signal/v1';}};
+                const audio = document.createElement('audio'); audio.id = 'remoteVideo'; audio.autoplay = true;
+                document.body.append(audio);
             });
         }
         if (process.env.DMASH_CALL_BASELINE === '1') {
@@ -63,7 +83,14 @@ const {chromium} = require(process.env.DMASH_PLAYWRIGHT_MODULE || 'playwright');
             console.log('Direct RTC baseline connected without D-MASH signaling');
             return;
         }
-        const invite = await pages[0].evaluate(async () => {
+        const controller = process.env.DMASH_CALL_UI === '1';
+        const invite = await pages[0].evaluate(async controller => {
+            if (controller) {
+                window.DmashCallSession = {CallSignalingSession: RuntimeSession};
+                if (!await DmashCallRuntime.start(Core)) throw new Error('Controller failed to start call');
+                if (Core.sent.type !== 'voip_call_request') throw new Error('Wrong invitation type');
+                return Core.sent.request;
+            }
             const signaling = await DmashCallSignaling.WebSocketSignaling.create(location.origin.replace('http:', 'ws:') + '/signal/v1');
             window.call = new DmashCallSession.CallSignalingSession({signaling,
                 rtcFactory: makePeer, mediaDevices: navigator.mediaDevices, useRemoteIceServers: false});
@@ -73,8 +100,14 @@ const {chromium} = require(process.env.DMASH_PLAYWRIGHT_MODULE || 'playwright');
             };
             await call.startOffer(signaling.invitation.call_id);
             return signaling.invitation;
-        });
-        await pages[1].evaluate(async invite => {
+        }, controller);
+        await pages[1].evaluate(async ({invite, controller}) => {
+            if (controller) {
+                window.DmashCallSession = {CallSignalingSession: RuntimeSession};
+                if (!await DmashCallRuntime.incoming(Core, invite, 'fixture-caller')) throw new Error('Controller rejected invitation');
+                if (call.stream) throw new Error('Microphone started before acceptance');
+                return;
+            }
             const signaling = new DmashCallSignaling.WebSocketSignaling({endpoint: invite.signaling.wss_endpoint,
                 sessionId: invite.signaling.session_id, ticket: invite.signaling.one_time_key});
             window.call = new DmashCallSession.CallSignalingSession({signaling,
@@ -84,7 +117,8 @@ const {chromium} = require(process.env.DMASH_PLAYWRIGHT_MODULE || 'playwright');
                 audio.srcObject = event.streams[0]; document.body.append(audio);
             };
             await call.accept(invite.call_id);
-        }, invite);
+        }, {invite, controller});
+        if (controller) await pages[1].click('#accept');
         const results = [];
         for (const page of pages) {
             const deadline = Date.now() + 20000;
@@ -109,6 +143,6 @@ const {chromium} = require(process.env.DMASH_PLAYWRIGHT_MODULE || 'playwright');
             await page.waitForFunction(() => call.closed && tracks.every(t => t.readyState === 'ended'));
             assert(await page.evaluate(() => call.signaling.closed));
         }
-        console.log(JSON.stringify({passed: true, mode: 'local Chrome direct audio; synthetic microphones; no TURN relay', peers: results}));
+        console.log(JSON.stringify({passed: true, controller, mode: 'local Chrome direct audio; synthetic microphones; no TURN relay', peers: results}));
     } finally {await browser.close();}
 })().catch(error => {console.error(error); process.exitCode = 1;});

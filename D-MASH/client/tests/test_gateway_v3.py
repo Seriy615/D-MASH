@@ -30,7 +30,13 @@ class GatewayV3Tests(unittest.TestCase):
                 ready = session.open(socket.receive_json())
                 self.assertEqual(ready["capabilities"], ["PING", "STATUS"])
                 socket.send_json(session.seal({"type": "STATUS", "request_id": "1"}))
-                self.assertEqual(session.open(socket.receive_json())["node_id"], self.node_id)
+                status = session.open(socket.receive_json())
+                self.assertEqual(status["node_id"], self.node_id)
+                self.assertEqual(status['s_turn'], {'can_s_turn': False})
+                descriptor = {'can_s_turn': True, 'signaling_wss': 'wss://example.test/signal/v1'}
+                self.app.state.s_turn_service = SimpleNamespace(descriptor=lambda: descriptor)
+                socket.send_json(session.seal({'type': 'STATUS', 'request_id': '2'}))
+                self.assertEqual(session.open(socket.receive_json())['s_turn'], descriptor)
                 socket.send_json(session.seal({"type": "REGISTER_INBOUND_LOCATOR", "locator": "victim"}))
                 self.assertEqual(session.open(socket.receive_json())["code"], "UNSUPPORTED_OPERATION")
 

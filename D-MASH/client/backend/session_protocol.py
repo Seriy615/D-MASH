@@ -13,7 +13,7 @@ import re
 
 _HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 _MIME = {"audio/ogg", "audio/wav", "audio/webm", "audio/mpeg"}
-_SIGNAL_KEYS = {"wss_endpoint", "one_time_key"}
+_SIGNAL_KEYS = {"wss_endpoint", "one_time_key", "session_id"}
 
 
 def _token(value, name):
@@ -29,7 +29,26 @@ def _signaling(value):
         raise ValueError("invalid signaling endpoint")
     if not isinstance(value["one_time_key"], str) or not 16 <= len(value["one_time_key"]) <= 512:
         raise ValueError("invalid signaling ticket")
+    if not isinstance(value['session_id'], str) or not re.fullmatch(r'[A-Za-z0-9_-]{43}', value['session_id']):
+        raise ValueError('invalid signaling session')
     return dict(value)
+
+
+def _ringtone(ringtone):
+    if ringtone is None:  # Use the receiver's ordinary ringtone.
+        return
+    if not isinstance(ringtone, dict) or set(ringtone) != {"mime", "base64"}:
+        raise ValueError("invalid ringtone")
+    if ringtone["mime"] not in _MIME or not isinstance(ringtone["base64"], str):
+        raise ValueError("invalid ringtone")
+    if len(ringtone['base64']) > 4 * ((256 * 1024 + 2) // 3):
+        raise ValueError('ringtone exceeds 256 KiB')
+    try:
+        raw = base64.b64decode(ringtone["base64"], validate=True)
+    except (ValueError, binascii.Error) as exc:
+        raise ValueError("invalid ringtone encoding") from exc
+    if not 1 <= len(raw) <= 256 * 1024:
+        raise ValueError("ringtone exceeds 256 KiB")
 
 
 def validate_call_request(value: dict) -> dict:
@@ -43,17 +62,7 @@ def validate_call_request(value: dict) -> dict:
     _signaling(value["signaling"])
     if not isinstance(value["caller_display_name"], str) or not 1 <= len(value["caller_display_name"]) <= 128:
         raise ValueError("invalid caller display name")
-    ringtone = value["ringtone"]
-    if not isinstance(ringtone, dict) or set(ringtone) != {"mime", "base64"}:
-        raise ValueError("invalid ringtone")
-    if ringtone["mime"] not in _MIME or not isinstance(ringtone["base64"], str):
-        raise ValueError("invalid ringtone")
-    try:
-        raw = base64.b64decode(ringtone["base64"], validate=True)
-    except (ValueError, binascii.Error) as exc:
-        raise ValueError("invalid ringtone encoding") from exc
-    if not 1 <= len(raw) <= 256 * 1024:
-        raise ValueError("ringtone exceeds 256 KiB")
+    _ringtone(value['ringtone'])
     caps = value["media_capabilities"]
     if not isinstance(caps, dict) or len(caps) > 32 or any(not isinstance(k, str) or len(k) > 64 for k in caps):
         raise ValueError("invalid media capabilities")

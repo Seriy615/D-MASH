@@ -1,5 +1,37 @@
 # Active transport-v3 work — 2026-09-09
 
+## Active-account audio call orchestration — 2026-09-14
+
+The PWA call button now uses `DmashCallRuntime`: it selects an S-TURN endpoint
+from encrypted STATUS on an authenticated v3 connection, creates a signaling
+session, and sends an Account-encrypted invitation inside a Device-encrypted
+CALL_REQUEST. The call target is captured before asynchronous work; expired
+invitations do not enter the durable resend queue. Core rejects SDP/ICE/hangup
+in `sendMessage` and ignores legacy incoming mesh signaling. The old Core
+offer/answer handlers and sendVoipSignal MSG fallback were removed.
+
+Incoming calls consume the recipient ticket before displaying the acceptance
+dialog. Microphone permission and offer processing wait for acceptance.
+Cancellation, expiry, disconnect and late CREATE/media results close resources.
+Account transitions use existing endCall cleanup. The signaling descriptor is
+returned by STATUS without credentials or Account identity.
+
+Tests cover controller cancellation, no MSG signaling fallback, Device-hidden
+CALL_REQUEST type, encrypted STATUS service discovery, and existing suites.
+`DMASH_CALL_UI=1 ... tools/test_call_browser.py` exercises the real controller
+and WebSocket with two native Chrome peer connections and synthetic audio;
+the shell and invitation delivery are fixtures and TURN is disabled in that
+local test. This is not full multi-node product acceptance.
+
+Remaining call work: live coturn allocation/relay health and installer wiring,
+full Mesh/browser acceptance, custom ringtone/display configuration and video
+negotiation. The current outgoing request uses ringtone=null (receiver default),
+generic caller display name, and audio-only media capabilities. The receiving
+dialog uses the locally stored contact name. Pre-Account-login call contents
+remain Account-encrypted; only the Device event type can be observed then.
+The previous checkpoint's assertion that the entire S-TURN milestone was
+complete was too broad. No deployment has been performed.
+
 ## Signaling follow-up — 2026-09-11
 
 Added `/signal/v1`, with ticket-scoped join, bidirectional event-driven relay,

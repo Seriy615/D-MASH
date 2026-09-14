@@ -59,6 +59,10 @@ class Store {
     assert.throws(() => NodeManager.submitHopCiphertextV3(connection, undefined, 'opaque'), /hop route label/);
     const opened = DeviceEnvelope.open(a.outgoing.box.secretKey, submitted.payload.ciphertext);
     assert.deepEqual(JSON.parse(opened.account_payload), plaintext, 'Device transports opaque Account payload unchanged');
+    await NodeManager.submitEnvelope(config.routeLocator, plaintext, 'CALL_REQUEST');
+    const callWire = sent.at(-1).payload;
+    assert.equal('type' in callWire, false, 'Mesh does not see the Device event type');
+    assert.equal(DeviceEnvelope.open(a.outgoing.box.secretKey, callWire.ciphertext).type, 'CALL_REQUEST');
     Core.activeIdentity = 'B';
     await assert.rejects(NodeManager.submitEnvelope(config.routeLocator, plaintext), /restored/);
     const publicSigning = nacl.sign.keyPair(), publicBox = nacl.box.keyPair();

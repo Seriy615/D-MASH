@@ -1,5 +1,31 @@
 # Transport v3 engineering record
 
+## Active-account call controller — 2026-09-14
+
+Core.initVoip now invokes the shipped call controller. Service selection uses
+encrypted authenticated Device STATUS and its `s_turn` descriptor. The caller
+creates/joins signaling, sends one `voip_call_request` Account payload inside a
+Device CALL_REQUEST envelope, and exchanges SDP/ICE only over signaling WSS.
+Core's old mesh offer/answer handlers and MSG fallback are removed; sendMessage
+also refuses those signaling types. The target contact remains fixed while
+the user changes chat focus. Failed invitations are not queued for later retry.
+
+The callee joins signaling before presenting the prompt; a media-ready barrier
+holds the offer until acceptance. Decline/disconnect/expiry/cancellation close
+the socket and tracks. Late CREATE or microphone results cannot reopen a call.
+Signaling includes the opaque session_id in addition to endpoint and one-use
+ticket. ringtone=null selects receiver-default behavior. The current outgoing
+UI offers audio only and a generic display name; the incoming UI uses the
+locally stored contact name. Custom ringtone UX, video negotiation and locked
+Account call content are not implemented by this controller.
+
+The local Chrome controller acceptance test proves bidirectional audio over
+direct ICE, using a fixture shell, fixture invitation delivery and synthetic
+microphones. Device encryption/type privacy and encrypted STATUS are covered
+separately. Real Mesh delivery and authenticated TURN relay acceptance remain
+required. Existing TCP-listener health is only a reachability check; it does
+not prove a successful TURN allocation. No deployment.
+
 ## Signaling endpoint checkpoint — 2026-09-12
 
 `/signal/v1` is now a ticket-authenticated WebSocket endpoint. A caller may
