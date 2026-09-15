@@ -33,7 +33,14 @@ ICE and fixture invitation delivery, not live TURN acceptance.
 EMS deployment preparation also preserves node_identity.key sidecars (including
 BaseNCRH) during rsync and checks the new PWA assets. The release requires nginx
 to forward /dmash-client/v3 to the EMS Node, alongside the existing v1 path.
-Deployment outcome is recorded after the remote health/authentication checks.
+Deployed to EMS on 2026-09-15 UTC from commit
+b6a47451122232e34bc08836ba8ce9d8f78e7d34. `dmash-node` is active, production
+PWA serves the new modules and release `transport-v3-interim-20260916.1`, and
+the staging EMS nginx config forwards `/dmash-client/v3` to the Node v3
+endpoint. Production HTTPS UI acceptance passed against the published PWA.
+Rollback artifacts are retained by the deploy wrapper under the remote PWA
+and Node backup directories. This was an intermediate deploy; no live
+authenticated Mesh/ TURN acceptance was claimed.
 
 
 ## Ratchet ACK retry correction — 2026-09-15
