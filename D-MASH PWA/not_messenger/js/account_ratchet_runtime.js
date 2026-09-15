@@ -148,7 +148,7 @@
             // The ACK is authenticated under the root that was current when
             // the update arrived. This keeps ACKs valid across reordering.
             await core.sendMessage({type: 'ratchet_ack', suite, ack: contextValue.ratchet.updateToAck(update)}, false, pid, null, true,
-                {ratchetRoot: ackRoot, ratchetEpoch: previousEpoch});
+                {ratchetRoot: ackRoot, ratchetEpoch: update.from_epoch});
             if (result === 'advanced') {
                 const latest = await contextValue.storage.getBox('blind_secrets', contextValue.alias) || contextValue.secrets;
                 Object.assign(latest, {

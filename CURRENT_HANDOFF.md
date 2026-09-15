@@ -1,5 +1,16 @@
 # Active transport-v3 work — 2026-09-14
 
+## Ratchet ACK retry correction — 2026-09-15
+
+Repeated updates now receive an ACK encrypted with both the root and epoch
+of `update.from_epoch`. Previously duplicate handling selected the old root
+but labeled the packet with the receiver’s advanced epoch, making a lost ACK
+unrecoverable. A real NaCl packet test repeats an update after persisted state
+reload and verifies both ACKs decrypt while the sender remains at its original
+epoch. This closes that retry defect; full ratchet loss/reorder acceptance and
+post-quantum protocol validation remain unfinished. No deployment.
+
+
 ## Account file transfer controller — 2026-09-14
 
 The PWA file picker is now a dedicated encrypted DataChannel transfer. It
