@@ -3060,10 +3060,17 @@ const Core = {
 
     customPrompt: (t, tx, cb, options = {}) => {
         const inputType = options.inputType === 'password' ? 'password' : 'text';
-        Core.openModal(t, `<div>${tx}</div><input type="${inputType}" id="p-in" class="sys-modal-input"><button class="sys-modal-btn primary" id="p-ok">OK</button><button class="sys-modal-btn" onclick="Core.closeModal()">ОТМЕНА</button>`);
+        const safeChatPassword = inputType === 'password' && options.passwordManagerSafe;
+        const renderedType = safeChatPassword ? 'text' : inputType;
+        const inputClass = safeChatPassword ? 'sys-modal-input chat-secret-input' : 'sys-modal-input';
+        const inputAttrs = safeChatPassword
+            ? 'autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"'
+            : '';
+        Core.openModal(t, `<form id="sys-prompt-form" autocomplete="off" onsubmit="return false"><div>${tx}</div><input type="${renderedType}" id="p-in" class="${inputClass}" ${inputAttrs}><button type="button" class="sys-modal-btn primary" id="p-ok">OK</button><button type="button" class="sys-modal-btn" onclick="Core.closeModal()">ОТМЕНА</button></form>`);
         const input = document.getElementById('p-in');
         input.value = typeof options.value === 'string' ? options.value : '';
         input.readOnly = Boolean(options.readOnly);
+        if (safeChatPassword) input.style.webkitTextSecurity = 'disc';
         document.getElementById('p-ok').onclick = () => {
             const v = input.value; Core.closeModal();
             try { Promise.resolve(cb(v)).catch(error => Core.customAlert("ОШИБКА", error.message)); }

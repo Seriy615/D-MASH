@@ -412,9 +412,11 @@
             <div class="gate-container">
             <!-- СРАЗУ НА РУССКОМ, ЧТОБ НЕ ПРЫГАЛО -->
             <div id="gate-status-text" style="color:var(--main); font-size:0.7rem; margin-bottom:10px;">ДОСТУП ОГРАНИЧЕН</div>
-            <input type="text" id="p1" class="gate-input" placeholder="ИДЕНТИФИКАТОР" spellcheck="false" autocomplete="off">
-            <input type="password" id="p2" class="gate-input" placeholder="КЛЮЧ ДОСТУПА" autocomplete="off">
-            <button class="gate-btn" onclick="sys.init()">ВОЙТИ В СИСТЕМУ</button>
+            <form autocomplete="off" onsubmit="event.preventDefault(); sys.init();">
+                <input type="text" id="p1" class="gate-input" placeholder="ИДЕНТИФИКАТОР" spellcheck="false" autocomplete="off">
+                <input type="password" id="p2" class="gate-input" placeholder="КЛЮЧ ДОСТУПА" autocomplete="off">
+                <button type="submit" class="gate-btn">ВОЙТИ В СИСТЕМУ</button>
+            </form>
         </div>
     </div>
     <div id="workspace" style="display:none;"></div>

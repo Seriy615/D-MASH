@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user/device data lives.
  */
 
-const RELEASE_ID = 'transport-v3-interim-20260916.1';
+const RELEASE_ID = 'transport-v3-hotfix-20260916.2';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',
@@ -71,7 +71,15 @@ self.addEventListener('fetch', event => {
     if (networkFirst) {
         event.respondWith(
             fetch(event.request, { cache: 'no-store' }).then(response => {
-                if (response?.ok) caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
+                // Clone while the response body is still untouched.  Delaying
+                // clone() until caches.open() resolves races the browser's
+                // consumption of the response returned to the page.
+                if (response?.ok) {
+                    const cachedResponse = response.clone();
+                    event.waitUntil(caches.open(CACHE_NAME)
+                        .then(cache => cache.put(event.request, cachedResponse))
+                        .catch(() => {}));
+                }
                 return response;
             }).catch(() => caches.match(event.request))
         );
@@ -80,7 +88,12 @@ self.addEventListener('fetch', event => {
 
     event.respondWith(
         caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
-            if (response?.ok) caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
+            if (response?.ok) {
+                const cachedResponse = response.clone();
+                event.waitUntil(caches.open(CACHE_NAME)
+                    .then(cache => cache.put(event.request, cachedResponse))
+                    .catch(() => {}));
+            }
             return response;
         }).catch(() => {
             if (event.request.mode === 'navigate') return caches.match('./index.html');

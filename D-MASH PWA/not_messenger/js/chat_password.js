@@ -125,7 +125,7 @@
             catch(_) {if(attempt===generation) core.customAlert('ПАРОЛЬ ЧАТА','Неверный пароль или повреждённая защита');return;}
             if(attempt!==generation||storage.masterKey!==master) {secret.fill(0);return;}
             grant={id,master,secret,once:true};await core.selectPeer(id);
-        },{inputType:'password'});
+        },{inputType:'password',passwordManagerSafe:true});
         return false;
     }
     async function configure(core,storage) {
@@ -139,9 +139,9 @@
             if(!password) {await commit();return;}
             core.customPrompt('ПОВТОР ПАРОЛЯ','Повторите новый пароль:',async confirmation=>{
                 if(confirmation!==password) throw Error('Пароли не совпадают');await commit();
-            },{inputType:'password'});
-        },{inputType:'password'});
-        if(peer?.chatLock) core.customPrompt('ТЕКУЩИЙ ПАРОЛЬ','Введите текущий пароль:',old=>{if(current()) setNew(old);},{inputType:'password'});
+            },{inputType:'password',passwordManagerSafe:true});
+        },{inputType:'password',passwordManagerSafe:true});
+        if(peer?.chatLock) core.customPrompt('ТЕКУЩИЙ ПАРОЛЬ','Введите текущий пароль:',old=>{if(current()) setNew(old);},{inputType:'password',passwordManagerSafe:true});
         else setNew(null);
     }
     global.DmashChatPassword=Object.freeze({allow,configure,change,protect,reveal,clear,install,exclusive,location,queue});

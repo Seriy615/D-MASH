@@ -380,12 +380,13 @@ const NodeManager = {
         const endpoint = this.endpoints.find(item => item.url === url);
         if (!endpoint) throw new Error('Select a node first');
         clearTimeout(this.reconnectTimer);
-        this.connectEndpoint(endpoint);
+        const connection = this.connectEndpoint(endpoint);
         this.updateState();
+        return connection?.ready;
     },
     connectEndpoint(endpoint) {
         const existing = this.connections.get(endpoint.url);
-        if (existing?.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(existing.socket.readyState)) return;
+        if (existing?.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(existing.socket.readyState)) return existing;
         const connection = { endpoint, socket: null, capabilities: new Set(), state: 'connecting', error: null, pendingPings: new Map(), pendingRequests: new Map(), reconnectAttempt: existing?.reconnectAttempt || 0, reconnectTimer: null, pingTimer: null, lastLatencyMs: null, lastConnectedAt: null };
         this.connections.set(endpoint.url, connection);
         const disconnected = error => {
@@ -411,15 +412,27 @@ const NodeManager = {
                 connection.nodeId = connection.client.nodeId;
                 await this.blindLegacyRouteConfigV3();
                 connection.capabilities = connection.client.capabilities;
-                connection.authority = new window.DeviceAuthorityV3(connection.client);
-                if (connection.capabilities.has('REGISTER_DNSS')) await connection.authority.bind();
                 if (this.connections.get(endpoint.url) !== connection || connection.client.state !== 'connected') return;
                 connection.state = 'connected'; connection.error = null; connection.reconnectAttempt = 0;
                 connection.lastConnectedAt = Date.now(); this.updateState(); this.startPings(connection);
-                await this.probeActivePublicDeviceRoutes(connection);
-                if (connection.capabilities.has('REGISTER_ROUTE')) await this.probePrivateRoutesV3(connection);
-                if (connection.capabilities.has('PULL')) await this.pullDeviceMailboxV3();
+                // Authentication is complete at this point.  DNSS PoW and
+                // route/mailbox restoration are optional post-auth work and
+                // must not keep the connection in "connecting" or tear down a
+                // healthy encrypted STATUS channel when a PoW attempt fails.
+                connection.authority = new window.DeviceAuthorityV3(connection.client);
+                void (async () => {
+                    try {
+                        if (connection.capabilities.has('REGISTER_DNSS')) await connection.authority.bind();
+                        await this.probeActivePublicDeviceRoutes(connection);
+                        if (connection.capabilities.has('REGISTER_ROUTE')) await this.probePrivateRoutesV3(connection);
+                        if (connection.capabilities.has('PULL')) await this.pullDeviceMailboxV3();
+                    } catch (error) {
+                        if (this.connections.get(endpoint.url) !== connection || connection.client.state !== 'connected') return;
+                        connection.error = error.message; this.updateState();
+                    }
+                })();
             }).catch(error => connection.client.fail(error));
+            return connection;
         } catch (error) { disconnected(error); }
     },
     onMessage(connection, event) {
