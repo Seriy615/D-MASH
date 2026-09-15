@@ -619,7 +619,19 @@ async loadAllLibs() {
     // Реестр создаётся Core.boot после успешной разблокировки. Это действие
     // идемпотентно и не сохраняет пароль или ключи в localStorage.
     async loginAndSave() {
-        await this.init();
+        const form = document.querySelector('.gate-container form');
+        const submit = form?.querySelector('button[type="submit"]');
+        const status = document.getElementById('gate-status-text');
+        if (submit) submit.disabled = true;
+        if (status) status.textContent = 'ВХОД…';
+        try {
+            const ok = await this.init();
+            if (!ok) throw new Error('Проверьте идентификатор и ключ доступа.');
+        } catch (error) {
+            if (status) status.textContent = `ОШИБКА ВХОДА: ${error?.message || 'неизвестная ошибка'}`;
+            if (submit) submit.disabled = false;
+            console.error('D-MASH account login failed', error);
+        }
     },
 
 };

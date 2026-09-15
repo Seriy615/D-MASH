@@ -2,7 +2,7 @@
 
 ## Interim hotfix — 2026-09-16
 
-Follow-up release `transport-v3-hotfix-20260916.3` gates Device Inbox `PULL`
+Follow-up release `transport-v3-hotfix-20260916.4` gates Device Inbox `PULL`
 on completed v3 DNSS binding. While DNSS registration is pending, pulls are
 deferred and no `DNSS_NOT_AUTHENTICATED` warning is emitted; after registration
 the post-auth task triggers inbox/contact synchronization. The workspace keeps
@@ -13,7 +13,7 @@ Hotfix commit `c4cf22a1239aa3551bbdbcdbcc32db91e2661028` is deployed to EMS.
 The Service Worker clones successful network responses before handing the
 original response to the page, fixing the production `Response body is already
 used` race in both cache paths. Release
-`transport-v3-hotfix-20260916.3` invalidates the prior interim worker/cache.
+`transport-v3-hotfix-20260916.4` invalidates the prior interim worker/cache.
 
 The PWA NodeManager exposes an authenticated v3 connection as soon as the
 encrypted session is ready. DNSS PoW and route/mailbox restoration are

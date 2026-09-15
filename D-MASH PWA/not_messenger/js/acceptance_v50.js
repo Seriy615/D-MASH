@@ -632,6 +632,7 @@
                     <button class="dmash-settings-action" onclick="Core.copyMyId()">КОПИРОВАТЬ ID АККАУНТА</button>
                     <button class="dmash-settings-action" onclick="Core.setupAccountBiometrics()">БИОМЕТРИЯ АККАУНТА</button>
                     <button class="dmash-settings-action" onclick="Core.showMyQR()">PUBLIC / PRIVATE QR</button>
+                    <button class="dmash-settings-action" onclick="NodeManager.renderSettings()">УЗЛЫ И ПОДКЛЮЧЕНИЕ</button>
                     <button class="dmash-settings-action primary" onclick="Core.closeModal()">ЗАКРЫТЬ</button>
                 </div>`);
         };
