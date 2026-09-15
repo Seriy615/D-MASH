@@ -1,5 +1,26 @@
 # Transport v3 engineering record
 
+## Interim hotfix — 2026-09-16
+
+Hotfix commit `c4cf22a1239aa3551bbdbcdbcc32db91e2661028` is deployed to EMS.
+The Service Worker clones successful network responses before handing the
+original response to the page, fixing the production `Response body is already
+used` race in both cache paths. Release
+`transport-v3-hotfix-20260916.2` invalidates the prior interim worker/cache.
+
+The PWA NodeManager exposes an authenticated v3 connection as soon as the
+encrypted session is ready. DNSS PoW and route/mailbox restoration are
+post-auth tasks and no longer block or tear down the connection. Clean
+production acceptance verified the catalog URL, nginx Upgrade/WebSocket
+forwarding, v3 handshake, encrypted STATUS and a local Saved Messages write;
+the production UI flow verified rename, chat password setup/unlock and a
+protected local message.
+
+The E6 local protected-chat threat model work is deliberately deferred to a
+separate milestone: Argon2id descriptor migration, topology secrecy after
+device+master compromise, opaque secret handles outside application JS and
+the explicit offline-guessing boundary are not part of this hotfix.
+
 ## Interim PWA release — 2026-09-16
 
 Adds the default, renameable Account-local Saved Messages conversation. Text
@@ -33,11 +54,9 @@ ICE and fixture invitation delivery, not live TURN acceptance.
 EMS deployment preparation also preserves node_identity.key sidecars (including
 BaseNCRH) during rsync and checks the new PWA assets. The release requires nginx
 to forward /dmash-client/v3 to the EMS Node, alongside the existing v1 path.
-Deployed to EMS on 2026-09-15 UTC from commit
-b6a47451122232e34bc08836ba8ce9d8f78e7d34. `dmash-node` is active, production
-PWA serves the new modules and release `transport-v3-interim-20260916.1`, and
-the staging EMS nginx config forwards `/dmash-client/v3` to the Node v3
-endpoint. Production HTTPS UI acceptance passed against the published PWA.
+The interim implementation was first deployed as `b6a4745`; the published
+hotfix is `c4cf22a`. `dmash-node` is active and rollback artifacts remain on
+the EMS host.
 Rollback artifacts are retained by the deploy wrapper under the remote PWA
 and Node backup directories. This was an intermediate deploy; no live
 authenticated Mesh/ TURN acceptance was claimed.
