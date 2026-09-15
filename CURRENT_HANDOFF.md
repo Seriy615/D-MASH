@@ -2,11 +2,21 @@
 
 ## Interim hotfix — 2026-09-16
 
+Follow-up hotfix is prepared as the `transport-v3-hotfix-20260916.3` release.
+The v3 mailbox pull is now gated on the connection's DNSS state: a pending
+registration is deferred without issuing `PULL`, and a failed registration does
+not create a repeating `DNSS_NOT_AUTHENTICATED` warning storm. Once DNSS is
+ready, post-auth work triggers a fresh inbox/contact sync. The logged-in
+workspace keeps the network card and account settings expose node controls, so
+the calculator gate no longer strands an authenticated account without a way
+to connect its EMS node. A browser regression covers the gate, the network
+controls and existing contact rendering.
+
 Hotfix commit `c4cf22a1239aa3551bbdbcdbcc32db91e2661028` is deployed to EMS.
 The Service Worker now clones successful network responses synchronously before
 returning the original response, fixing the production `Response body is
 already used` race in both cache paths. Release id
-`transport-v3-hotfix-20260916.2` forces old interim workers and caches to
+`transport-v3-hotfix-20260916.3` forces old interim workers and caches to
 update.
 
 NodeManager marks the v3 socket authenticated immediately after the encrypted

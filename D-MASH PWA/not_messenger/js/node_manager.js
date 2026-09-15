@@ -387,7 +387,7 @@ const NodeManager = {
     connectEndpoint(endpoint) {
         const existing = this.connections.get(endpoint.url);
         if (existing?.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(existing.socket.readyState)) return existing;
-        const connection = { endpoint, socket: null, capabilities: new Set(), state: 'connecting', error: null, pendingPings: new Map(), pendingRequests: new Map(), reconnectAttempt: existing?.reconnectAttempt || 0, reconnectTimer: null, pingTimer: null, lastLatencyMs: null, lastConnectedAt: null };
+        const connection = { endpoint, socket: null, capabilities: new Set(), state: 'connecting', error: null, pendingPings: new Map(), pendingRequests: new Map(), reconnectAttempt: existing?.reconnectAttempt || 0, reconnectTimer: null, pingTimer: null, lastLatencyMs: null, lastConnectedAt: null, dnssReadyState: 'pending' };
         this.connections.set(endpoint.url, connection);
         const disconnected = error => {
             connection.authority?.close();
@@ -420,17 +420,25 @@ const NodeManager = {
                 // must not keep the connection in "connecting" or tear down a
                 // healthy encrypted STATUS channel when a PoW attempt fails.
                 connection.authority = new window.DeviceAuthorityV3(connection.client);
-                void (async () => {
-                    try {
-                        if (connection.capabilities.has('REGISTER_DNSS')) await connection.authority.bind();
-                        await this.probeActivePublicDeviceRoutes(connection);
-                        if (connection.capabilities.has('REGISTER_ROUTE')) await this.probePrivateRoutesV3(connection);
-                        if (connection.capabilities.has('PULL')) await this.pullDeviceMailboxV3();
-                    } catch (error) {
-                        if (this.connections.get(endpoint.url) !== connection || connection.client.state !== 'connected') return;
-                        connection.error = error.message; this.updateState();
-                    }
-                })();
+                connection.dnssReadyState = connection.capabilities.has('REGISTER_DNSS') ? 'pending' : 'ready';
+                connection.dnssReady = (connection.capabilities.has('REGISTER_DNSS')
+                    ? connection.authority.bind()
+                    : Promise.resolve(connection.authority))
+                    .then(() => { connection.dnssReadyState = 'ready'; return true; })
+                    .catch(error => {
+                        connection.dnssReadyState = 'failed'; connection.dnssError = error;
+                        return false;
+                    });
+                connection.postAuthReady = (async () => {
+                    if (!await connection.dnssReady) return;
+                    await this.probeActivePublicDeviceRoutes(connection);
+                    if (connection.capabilities.has('REGISTER_ROUTE')) await this.probePrivateRoutesV3(connection);
+                    if (connection.capabilities.has('PULL')) await this.pullDeviceMailboxV3();
+                    window.Core?.syncNetwork?.();
+                })().catch(error => {
+                    if (this.connections.get(endpoint.url) !== connection || connection.client.state !== 'connected') return;
+                    connection.error = error.message; this.updateState();
+                });
             }).catch(error => connection.client.fail(error));
             return connection;
         } catch (error) { disconnected(error); }
@@ -829,8 +837,11 @@ const NodeManager = {
         if (this._pullDeviceV3) return this._pullDeviceV3;
         this._pullDeviceV3 = (async () => {
             const inbox = this.deviceInboxV3();
+            let deferred = false;
             for (const connection of this.connectedConnections()) {
                 if (!connection.client || !connection.capabilities.has('PULL')) continue;
+                if (connection.dnssReadyState === 'pending') { deferred = true; continue; }
+                if (connection.dnssReadyState === 'failed') continue;
                 if (!await inbox.canPull()) throw new Error('Device Inbox needs free storage before PULL');
                 const result = await connection.client.request('PULL');
                 if (result.type !== 'MAILBOX_DRAIN_RESULT' || !Array.isArray(result.entries)) throw new Error('Invalid mailbox drain');
@@ -838,7 +849,7 @@ const NodeManager = {
             }
             const result = await inbox.drainTransport(ciphertext => this.receiveDeviceCiphertextV3(ciphertext));
             await inbox.drain();
-            return result;
+            return { ...result, deferred };
         })().finally(() => { this._pullDeviceV3 = null; });
         return this._pullDeviceV3;
     },

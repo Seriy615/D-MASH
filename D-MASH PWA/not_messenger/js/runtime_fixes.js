@@ -440,7 +440,6 @@
         const originalLaunchWorkspace = core.launchWorkspace.bind(core);
         core.launchWorkspace = async function repairedWorkspace() {
             const result = await originalLaunchWorkspace();
-            document.querySelector("#workspace .network-card")?.remove();
             return result;
         };
 
@@ -457,6 +456,7 @@
                     <button class="sys-modal-btn" onclick="Core.copyMyId()">КОПИРОВАТЬ ID АККАУНТА</button>
                     <button class="sys-modal-btn" onclick="Core.setupLazyLogin()">БЕСПАРОЛЬНЫЙ ВХОД АККАУНТА</button>
                     <button class="sys-modal-btn" onclick="Core.openAccountManager()">РЕЕСТР АККАУНТОВ</button>
+                    <button class="sys-modal-btn" onclick="NodeManager.renderSettings()">УЗЛЫ И ПОДКЛЮЧЕНИЕ</button>
                     <button class="sys-modal-btn primary" onclick="Core.closeModal()">ЗАКРЫТЬ</button>
                 </div>`;
             this.openModal("АККАУНТ", h);
