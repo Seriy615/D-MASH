@@ -172,7 +172,7 @@
         const wire = stored.wire || stored;
         const suite = wire.pqc ? 'HYBRID_MLKEM768_V1' : 'CLASSICAL_ROOT_V1';
         if (message?.suite !== suite) throw Error('Ratchet ACK suite mismatch');
-        const pending = contextValue.ratchet.payloadToUpdate(stored.entropy ? {...wire, entropy: stored.entropy} : wire);
+        const pending = contextValue.ratchet.payloadToUpdate(stored.entropy ? {version: wire.version, from_epoch: wire.from_epoch, epoch: wire.epoch, update_id: wire.update_id, entropy: stored.entropy} : wire);
         const acknowledged = contextValue.ratchet.ackToUpdate(message?.ack, pending.entropy);
         await contextValue.state.restorePending(pending);
         if (!contextValue.state.acknowledge(acknowledged)) return false;
@@ -194,7 +194,7 @@
             let pending = contextValue.secrets.ratchetPending;
             if (pending) {
                 wire = pending.wire || pending;
-                update = contextValue.ratchet.payloadToUpdate(pending.entropy ? {...wire, entropy: pending.entropy} : wire);
+                update = contextValue.ratchet.payloadToUpdate(pending.entropy ? {version: wire.version, from_epoch: wire.from_epoch, epoch: wire.epoch, update_id: wire.update_id, entropy: pending.entropy} : wire);
             } else {
                 const peerInfo = await contextValue.storage.getBox('blind_peers', contextValue.alias);
                 const canUsePqc = core.keys.kyber?.secretKey && /^[0-9a-f]{2368}$/i.test(peerInfo?.kyberPub || '');

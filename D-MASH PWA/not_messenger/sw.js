@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user/device data lives.
  */
 
-const RELEASE_ID = 'transport-v3-dev-20260914.2';
+const RELEASE_ID = 'transport-v3-interim-20260916.1';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',
@@ -19,6 +19,9 @@ const CORE_ASSETS = [
     './js/call_signaling.js',
     './js/call_runtime.js',
     './js/account_ratchet.js',
+    './js/saved_messages.js',
+    './js/chat_cipher.js',
+    './js/chat_password.js',
     './js/account_ratchet_runtime.js',
     './js/file_channel.js', './js/file_session.js', './js/file_runtime.js',
     './js/device_routes.js', './js/dmash_links.js', './js/quick_name_registry.js',

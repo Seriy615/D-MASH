@@ -1,7 +1,7 @@
 "use strict";
 
 // One visible release identifier for the page and Service Worker generation.
-window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-dev-20260914.2" });
+window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-interim-20260916.1" });
 
 /*
  * Runtime repair loader.
@@ -39,6 +39,9 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-dev-20260914.2" });
         "js/call_signaling.js",
         "js/call_runtime.js",
         "js/account_ratchet.js",
+        "js/saved_messages.js",
+        "js/chat_cipher.js",
+        "js/chat_password.js",
         "js/account_ratchet_runtime.js",
         "js/file_channel.js",
         "js/file_session.js",

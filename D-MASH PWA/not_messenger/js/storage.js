@@ -90,7 +90,7 @@ const Storage = {
             alias: aliasL3,
             // Outgoing data has only entered local transport at this point.
             // Do not claim DELIVERED or READ without authenticated receipts.
-            data: { text, ts: Date.now(), inbound, transportState: inbound ? null : (transportState || 'SENT'), wireId }
+            data: { text: window.DmashChatPassword ? await window.DmashChatPassword.protect(this, peerID, text) : text, ts: Date.now(), inbound, transportState: inbound ? null : (transportState || 'SENT'), wireId }
         });
 
         const peerInfo = await this.getBox('blind_peers', aliasL1) || { id: peerID, name: `Peer-${peerID.substring(0,4)}` };
@@ -169,7 +169,7 @@ const Storage = {
         for (let i = start; i <= end; i++) {
             const aliasL3 = await this.getAlias(aliasL1 + i, "L3");
             const msg = await this.getBox('blind_messages', aliasL3);
-            if (msg) messages.push({ ...msg, id: i });
+            if (msg) messages.push({ ...msg, text: window.DmashChatPassword ? await window.DmashChatPassword.reveal(this, peerID, msg.text) : msg.text, id: i });
         }
         return messages; // [Старое, ..., Новое]
     },
@@ -237,10 +237,12 @@ deleteMessageGamma: async function(peerID, msgId) {
             });
         }
 
+        const peer = await this.getBox('blind_peers', aliasL1);
+        const secretsAlias = window.DmashChatPassword ? await window.DmashChatPassword.location(this, aliasL1, 'L2', peer?.chatLock) : aliasL1;
         await new Promise((resolve, reject) => {
             const tx2 = this.db.transaction(['blind_peers', 'blind_secrets'], 'readwrite');
             tx2.objectStore('blind_peers').delete(aliasL1);
-            tx2.objectStore('blind_secrets').delete(aliasL1);
+            tx2.objectStore('blind_secrets').delete(secretsAlias);
             tx2.oncomplete = resolve;
             tx2.onerror = () => reject(tx2.error || new Error('peer deletion failed'));
             tx2.onabort = () => reject(tx2.error || new Error('peer deletion aborted'));

@@ -72,7 +72,7 @@ rollback() {
             --exclude='frontend/' \
             --exclude='backups/' \
             --exclude='deploy-backups/' \
-            --exclude='node_identity.key' \
+            --exclude='node_identity.key*' \
             --exclude='system.db' \
             --exclude='registration_registry.db' \
             --exclude='*.db' \
@@ -162,7 +162,7 @@ if [[ -d "$NODE_DST" ]]; then
         --exclude='frontend/' \
         --exclude='backups/' \
         --exclude='deploy-backups/' \
-        --exclude='node_identity.key' \
+        --exclude='node_identity.key*' \
         --exclude='system.db' \
         --exclude='registration_registry.db' \
         --exclude='*.db' \
@@ -213,7 +213,7 @@ rsync -a --delete \
     --exclude='frontend/' \
     --exclude='backups/' \
     --exclude='deploy-backups/' \
-    --exclude='node_identity.key' \
+    --exclude='node_identity.key*' \
     --exclude='system.db' \
     --exclude='registration_registry.db' \
     --exclude='*.db' \

@@ -213,6 +213,7 @@ const Core = {
         return window.DeviceRoot.migrateLegacyAccountPassphrase(accountPassphrase, calculatorMasterPin);
     },
     async boot(identity, passphrase, options = {}) {
+        window.DmashChatPassword?.clear();
         this._accountTransitioning = true;
         window.DmashFileRuntime?.cancel(this);
         // Account keys are shared by the historical crypto implementation.
@@ -440,7 +441,7 @@ const Core = {
     },
     async restoreAutomaticMeshRoutes(onlyPeerId = null) {
         if (!window.NodeManager || (window.NodeManager.transportMode || 'mesh') === 'legacy') return;
-        const peers = await Storage.loadPeersGamma();
+        const peers = (await Storage.loadPeersGamma()).filter(peer => !window.DmashSavedMessages?.isLocal(peer.id));
         for (const peer of peers) {
             if (!peer?.pairingContribution || (onlyPeerId && peer.id !== onlyPeerId)) continue;
             try {
@@ -575,6 +576,7 @@ const Core = {
     // NodeManager deliberately survive so another local account can be chosen
     // without a device lock or transport reconnect.
     async accountLogout() {
+        window.DmashChatPassword?.clear();
         window.DmashFileRuntime?.cancel(this);
         const zero = value => {
             if (value instanceof Uint8Array) value.fill(0);
@@ -613,11 +615,15 @@ const Core = {
         el.textContent = `${connected.length} УЗЛ. · PING ${pings.length ? `${Math.min(...pings)}–${Math.max(...pings)} ms` : '…'}`;
     },
     async queueOutbound(peerId, content, forceHandshake = false) {
-        const isControl = typeof content === 'object' && (content.type?.startsWith('voip_') || content.type === 'dmash_receipt');
+        const isControl = typeof content === 'object' && (content.type?.startsWith('voip_') || ['dmash_receipt','ratchet_update','ratchet_ack'].includes(content.type));
         if (forceHandshake || isControl || !peerId || content == null) return null;
-        const alias = await Storage.getAlias(`outbox:${crypto.randomUUID()}`, 'L3');
-        await Storage.putBox('blind_outbox', { alias, data: { peerID: peerId, content, createdAt: Date.now() } });
-        const seqId = await Storage.saveMessageGamma(peerId, content, false, true, 'QUEUED');
+        let alias, seqId;
+        if (window.DmashChatPassword) ({alias, seqId} = await window.DmashChatPassword.queue(Storage, peerId, content));
+        else {
+            alias = await Storage.getAlias(`outbox:${crypto.randomUUID()}`, 'L3');
+            await Storage.putBox('blind_outbox', {alias, data:{peerID:peerId,content,createdAt:Date.now()}});
+            seqId = await Storage.saveMessageGamma(peerId, content, false, true, 'QUEUED');
+        }
         if (peerId === this.activePeerId) {
             const log = document.getElementById('log');
             if (log) { log.insertAdjacentHTML('beforeend', this.buildMsgHtml({ text: content, inbound: false, transportState: 'QUEUED' }, Date.now(), seqId)); log.scrollTop = log.scrollHeight; }
@@ -632,13 +638,17 @@ const Core = {
         this._flushingOutbox = true;
         try {
             for (const item of await Storage.getAllBoxes('blind_outbox')) {
-                const sent = await this.sendMessage(item.content, false, item.peerID, item.alias, true);
+                let content;
+                try {content = window.DmashChatPassword ? await window.DmashChatPassword.reveal(Storage, item.peerID, item.content) : item.content;}
+                catch (_) {continue;}
+                const sent = await this.sendMessage(content, false, item.peerID, item.alias, true);
                 if (sent) await Storage.deleteBox('blind_outbox', item.alias);
             }
         } finally { this._flushingOutbox = false; }
     },
     // Core.terminateSession   - Экстренное затирание ключей в RAM и выход в "калькулятор"
     terminateSession: function() {
+        window.DmashChatPassword?.clear();
         console.log("[!!!] ШУХЕР! ГАСИМ ПРИБОРЫ...");
 
         const zero = value => {
@@ -1051,6 +1061,7 @@ const Core = {
     },
     // Core.initHandshake - authenticated epoch update, retried until ACK.
     initHandshake: async function() {
+        if (window.DmashSavedMessages?.isLocal(this.activePeerId)) return false;
         return window.DmashAccountRatchetRuntime.initHandshake(this);
     },
     //                              через воип-канал, если база поплыла.
@@ -1070,6 +1081,7 @@ const Core = {
         // ВАЖНО: Определяем, кому реально летит малява
         const pid = targetPid || this.activePeerId;
         if (!pid) return;
+        if (window.DmashSavedMessages?.isLocal(pid)) return window.DmashSavedMessages.send(this, Storage, c, forceHandshake);
 
         if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
             let meshRoute = window.NodeManager?.getMeshRoute(pid);
@@ -1097,10 +1109,11 @@ const Core = {
             if (meshRoute) {
                 const isVoip = typeof p === 'object' && p.type?.startsWith('voip_');
                 const isReceipt = typeof p === 'object' && p.type === 'dmash_receipt';
+                const isRatchet = typeof p === 'object' && ['ratchet_update', 'ratchet_ack'].includes(p.type);
                 // Assign an opaque per-message ID before E2EE encryption. It
                 // is referenced only by encrypted receipts; Entry Nodes never
                 // see it as routing or identity metadata.
-                const wireId = (!isVoip && !isReceipt && !forceHandshake) ? crypto.randomUUID() : null;
+                const wireId = (!isVoip && !isReceipt && !isRatchet && !forceHandshake) ? crypto.randomUUID() : null;
                 const outbound = wireId ? { type: 'dmash_message', id: wireId, body: p } : p;
                 const dataToEncrypt = (typeof outbound === 'object') ? JSON.stringify(outbound) : outbound;
                 try {
@@ -1121,7 +1134,7 @@ const Core = {
                         p?.type === 'voip_call_request' ? 'CALL_REQUEST' :
                         p?.type === 'voip_file_request' ? 'FILE_SESSION_REQUEST' : 'MSG');
                     this.shmon("INFO", `D-MASH: ${result.state}`);
-                    if (!isVoip && !isReceipt && !queuedAlias && pid === this.activePeerId) {
+                    if (!isVoip && !isReceipt && !isRatchet && !queuedAlias && pid === this.activePeerId) {
                         // A DMP-C submission result is an authenticated node
                         // acknowledgement, not a read receipt.  It is safe to
                         // show delivery only when the node explicitly reports
@@ -1164,7 +1177,8 @@ const Core = {
 
         const isVoip = typeof p === 'object' && p.type?.startsWith('voip_');
         const isReceipt = typeof p === 'object' && p.type === 'dmash_receipt';
-        const wireId = (!isVoip && !isReceipt && !forceHandshake) ? crypto.randomUUID() : null;
+                const isRatchet = typeof p === 'object' && ['ratchet_update', 'ratchet_ack'].includes(p.type);
+        const wireId = (!isVoip && !isReceipt && !isRatchet && !forceHandshake) ? crypto.randomUUID() : null;
         const outbound = wireId ? { type: 'dmash_message', id: wireId, body: p } : p;
         const isSilent = isVoip && (p.type === 'voip_ice' || p.type === 'voip_answer' || p.type === 'voip_hangup');
 
@@ -1172,7 +1186,7 @@ const Core = {
             const dataToEncrypt = (typeof outbound === 'object') ? JSON.stringify(outbound) : outbound;
 
             // Передаем pid в encrypt, чтобы он взял правильные ключи из базы
-            const blob = await this.encrypt(dataToEncrypt, pid, forceHandshake);
+            const blob = await this.encrypt(dataToEncrypt, pid, forceHandshake, ratchetOverride);
             if (!blob) return;
 
             const sig = window.nacl.sign.detached(this.hexToBytes(blob), this.keys.sign.secretKey);
@@ -1191,7 +1205,7 @@ const Core = {
             });
 
             // Сохраняем и обновляем UI только если это не системный сигнал и это текущий открытый чат
-            if (!isVoip && !isReceipt && pid === this.activePeerId) {
+            if (!isVoip && !isReceipt && !isRatchet && pid === this.activePeerId) {
                 const seqId = await Storage.saveMessageGamma(pid, p, false, true, 'SENT', wireId);
                 const log = document.getElementById('log');
                 if (log) {
@@ -1475,7 +1489,7 @@ const Core = {
     */
     // Core.renderPeers        - Отрисовка списка контактов в сайдбаре
     async renderPeers() {
-        const peers = await Storage.loadPeersGamma();
+        const peers = window.DmashSavedMessages ? window.DmashSavedMessages.peers(await Storage.loadPeersGamma()) : await Storage.loadPeersGamma();
         const list = document.getElementById('contact-list');
         if (!list) return;
         list.replaceChildren();
@@ -1516,7 +1530,8 @@ const Core = {
                 event.stopPropagation();
                 this.deleteChatFlow(peer.id, peer.name);
             });
-            row.append(copy, remove);
+            row.append(copy);
+            if (!window.DmashSavedMessages?.isLocal(peer.id)) row.append(remove);
             if (peer.unread) {
                 const unread = document.createElement('span');
                 unread.className = 'unread-dot';
@@ -1530,10 +1545,14 @@ const Core = {
     },
     // Core.selectPeer         - Открытие чата, проверка готовности квантового канала
     async selectPeer(id) {
+        if (window.DmashChatPassword && this.activePeerId && this.activePeerId !== id) this.closeChat(false);
+        if (window.DmashChatPassword && !await window.DmashChatPassword.allow(this, Storage, id)) return;
         this.shmon("INFO", `Открываю хату: ${id.substring(0,8)}`);
         try {
             this.activePeerId = id;
             this.openingPeerId = id;
+            const isLocal = !!window.DmashSavedMessages?.isLocal(id);
+            if (isLocal) await window.DmashSavedMessages.ensure(Storage);
             const aliasL1 = await Storage.getAlias(id, "L1");
             const peer = await Storage.getBox('blind_peers', aliasL1);
             const secrets = await Storage.getBox('blind_secrets', aliasL1);
@@ -1556,14 +1575,16 @@ const Core = {
             document.getElementById('chat-header').innerHTML = `
                 <button id="back-btn" class="action-btn" onclick="Core.closeChat()">←</button>
                 <div style="flex-grow:1; margin-left:10px; cursor:pointer;" onclick="Core.copyPeerId('${fullIdToCopy}')">
-                    <b id="chat-title">${peer ? peer.name.toUpperCase() : id.substring(0,8)}</b><br>
+                    <b id="chat-title">${peer ? this.escapeHtml(peer.name.toUpperCase()) : id.substring(0,8)}</b><br>
                     <small style="font-size:0.6rem; color:#555;">ID: ${id.substring(0,8)}... (КОПИРОВАТЬ)</small>
                 </div>
                 <div style="display:flex; gap:10px;">
                     <button class="action-btn" id="voip-btn" onclick="Core.initVoip()" style="${secrets ? '' : 'display:none'}">📞</button>
-                    <button class="action-btn" onclick="Core.renameCurrent()">✎</button>
+                    <button class="action-btn" onclick="Core.renameCurrent()">✎</button><button class="action-btn" title="Пароль чата" onclick="Core.configureChatPassword()">🔒</button>
                 </div>
             `;
+
+            if (isLocal) document.getElementById('chat-header').innerHTML = `<button class="action-btn" onclick="Core.closeChat()">←</button><div><b id="chat-title">${this.escapeHtml(peer?.name || "Избранное")}</b><br><small>Только на этом устройстве</small></div><button class="action-btn" onclick="Core.renameCurrent()">✎</button><button class="action-btn" title="Пароль чата" onclick="Core.configureChatPassword()">🔒</button>`;
 
             if (document.getElementById('main-grid')) document.getElementById('main-grid').classList.add('chat-active');
 
@@ -1580,7 +1601,7 @@ const Core = {
             const msgs = await Storage.loadMessagesGamma(id, 50, 0);
             this.chatOffset = msgs.length;
 
-            if (!secrets || !secrets.staticShared) {
+            if (!isLocal && (!secrets || !secrets.staticShared)) {
                 // КЛЮЧЕЙ НЕТ — ПОКАЗЫВАЕМ КНОПКУ ХЕНДШЕЙКА
                 log.innerHTML = `
                     <div id="init-zone" style="text-align:center; margin-top:100px; padding:20px;">
@@ -1643,7 +1664,7 @@ const Core = {
         if (this.historyPrefetch.has(key)) return;
         try {
             const page = await Storage.loadMessagesGamma(peerId, this.chatLimit, offset);
-            this.historyPrefetch.set(key, page);
+            if (this.activePeerId === peerId) this.historyPrefetch.set(key, page);
         } catch (_) { /* pagination remains available on demand */ }
     },
     // Core.loadChat           - Пагинация истории из IndexedDB (Gamma Storage)
@@ -1662,9 +1683,11 @@ const Core = {
         }
 
         // ВЫЗОВ НОВОЙ ФУНКЦИИ ИЗ STORAGE
-        const key = `${Core.activePeerId}:${Core.chatOffset}`;
+        const historyPeer = Core.activePeerId;
+        const key = `${historyPeer}:${Core.chatOffset}`;
         const rawBatch = Core.historyPrefetch.get(key) || await Storage.loadMessagesGamma(Core.activePeerId, Core.chatLimit, Core.chatOffset);
         Core.historyPrefetch.delete(key);
+        if (Core.activePeerId !== historyPeer) { Core.isLoadingHistory = false; return; }
 
         if (rawBatch.length === 0) {
             if (!prepend) log.innerHTML = '<div style="text-align:center; color:#333; margin-top:50px;">НЕТ СООБЩЕНИЙ</div>';
@@ -1758,6 +1781,7 @@ const Core = {
         });
     },
     // Core.renameCurrent      - Смена псевдонима собеседника
+    configureChatPassword() { return window.DmashChatPassword.configure(this, Storage); },
     renameCurrent: async function() {
         if (!this.activePeerId) return;
         const aliasL1 = await Storage.getAlias(this.activePeerId, "L1");
@@ -1813,6 +1837,9 @@ const Core = {
     },
     // Core.closeChat          - Закрытие окна чата
     closeChat: function(manual = true) {
+        window.DmashChatPassword?.clear();
+        for (const url of Core.blobURLs || []) URL.revokeObjectURL(url);
+        Core.blobURLs = [];
         if(Core.activeAudio) Core.activeAudio.pause();
 
         // Если закрыли кнопкой в интерфейсе — убираем якорь из истории
@@ -1825,7 +1852,7 @@ const Core = {
         Core.activePeerId = null;
         document.getElementById('main-grid').classList.remove('chat-active');
         document.getElementById('input-area').style.display = 'none';
-        document.getElementById('voip-btn').style.display = 'none';
+        if (document.getElementById('voip-btn')) document.getElementById('voip-btn').style.display = 'none';
         // Do not leave the deleted/previous conversation visible behind the
         // contact list, notably on desktop where both panes are shown.
         const log = document.getElementById('log');
@@ -1844,6 +1871,10 @@ const Core = {
     handleFileSelect: (ev) => {
         const f = ev.target.files[0]; if (!f) return;
         ev.target.value = '';
+        if (window.DmashSavedMessages?.isLocal(Core.activePeerId)) {
+            Core.customAlert('ИЗБРАННОЕ', 'Локальное сохранение файлов пока недоступно. Текст и записи сохраняются без транспорта.');
+            return;
+        }
         void window.DmashFileRuntime.send(Core, f);
     },
     setRecordingToolbar: function(kind) {
@@ -2146,6 +2177,7 @@ const Core = {
     */
     // Core.initVoip           - Инициализация исходящего вызова (Offer)
     async initVoip() {
+        if (window.DmashSavedMessages?.isLocal(this.activePeerId)) return false;
         return window.DmashCallRuntime.start(this);
     },
     // Core.handleVoipSignal   - Роутер сигналов (Offer/Answer/ICE/Hangup)

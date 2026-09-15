@@ -286,6 +286,9 @@
                     loadScript(`js/call_signaling.js?v=${ver}`),
                     loadScript(`js/call_runtime.js?v=${ver}`),
                     loadScript(`js/account_ratchet.js?v=${ver}`),
+                    loadScript(`js/saved_messages.js?v=${ver}`),
+                    loadScript(`js/chat_cipher.js?v=${ver}`),
+                    loadScript(`js/chat_password.js?v=${ver}`),
                     loadScript(`js/account_ratchet_runtime.js?v=${ver}`),
                     loadScript(`js/file_channel.js?v=${ver}`),
                     loadScript(`js/file_session.js?v=${ver}`),
@@ -297,6 +300,7 @@
                 ]);
 
                 patchStorage(appStorage());
+                global.DmashChatPassword?.install(appStorage());
                 patchNodeManager(global.NodeManager);
                 patchCore(global.Core);
                 void global.NodeManager?.loadOriginList?.("nodes.json").catch(() => {});

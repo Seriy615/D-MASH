@@ -1,5 +1,41 @@
 # Transport v3 engineering record
 
+## Interim PWA release — 2026-09-16
+
+Adds the default, renameable Account-local Saved Messages conversation. Text
+and recorded-message payloads use the encrypted Account vault with LOCAL state;
+no Probe, route lookup, Node submission or receipt is generated. File attachment
+to Saved Messages is not implemented in this interim release.
+
+Optional per-chat passwords protect local history only. The wrapping key mixes
+PBKDF2-HMAC-SHA256 (600,000 iterations, fresh 256-bit salt) output with a
+domain-separated output under the non-extractable Account vault AES key, then
+uses HKDF-SHA256. It wraps a fresh per-chat Curve25519 private key with AES-GCM.
+Passwords and unwrapped private/wrapping keys are not persisted. The local public
+key permits sealed history writes while locked; transport E2EE is unchanged.
+Password-derived, domain-separated alias entropy is stored only inside the
+Account-encrypted descriptor and participates in L2/L3 alias derivation.
+Setting/changing a password re-encrypts all existing message content and queued
+outbox content, rotates L2/L3 aliases, and deletes old rows in one IndexedDB
+transaction. Failure aborts the migration. Read/unread and receipt metadata stay
+inside the ordinary Account vault; the additional layer protects content.
+Removing a password requires the old password and migrates history back. There
+is no password reset/recovery path. Closing/switching chats or Accounts clears
+unwrapped keys and history caches. This is local storage protection, not a claim
+of post-quantum authentication or a completed ratchet milestone.
+
+New modules: saved_messages.js, chat_cipher.js, chat_password.js. Native Chrome
+checks exercise real IndexedDB migrations, wrong password/master/chat rejection,
+L2/L3 rotation, locked incoming writes, transaction abort, reopen/unlock, and UI
+rename/password/send with a fixture Account. Call/file browser checks use local
+ICE and fixture invitation delivery, not live TURN acceptance.
+
+EMS deployment preparation also preserves node_identity.key sidecars (including
+BaseNCRH) during rsync and checks the new PWA assets. The release requires nginx
+to forward /dmash-client/v3 to the EMS Node, alongside the existing v1 path.
+Deployment outcome is recorded after the remote health/authentication checks.
+
+
 ## Ratchet ACK retry correction — 2026-09-15
 
 Repeated updates now receive an ACK encrypted with both the root and epoch
