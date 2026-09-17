@@ -324,12 +324,8 @@
                 scheduleReload(220);
                 return result;
             };
-            const originalTerminate = core.terminateSession?.bind(core);
-            if (originalTerminate) core.terminateSession = function(...args) {
-                const result = originalTerminate(...args);
-                scheduleReload(40);
-                return result;
-            };
+            // terminateSession already clears RAM and restores the calculator
+            // synchronously. A delayed reload discards the next PIN keystrokes.
             Object.defineProperty(core, "__dmashV50ReloadHooks", { value: true });
         }
 

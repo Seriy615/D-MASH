@@ -57,7 +57,8 @@ class Store {
     const receiving = core.receiveAccountDeviceEnvelopeV3(localEnvelope, 'B');
     await decryptionStarted;
     let bootFinished = false;
-    const boot = core.boot('C', 'test-only').then(() => {bootFinished = true;});
+    const boot = assert.rejects(core.boot('C', 'test-only'), /УСТРОЙСТВО НЕ РАЗБЛОКИРОВАНО/)
+        .then(() => {bootFinished = true;});
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(bootFinished, false, 'Account key replacement waits for current Inbox handling');
     assert.equal(await core.receiveAccountDeviceEnvelopeV3(localEnvelope, 'B'), false, 'new handling pauses during Account transition');

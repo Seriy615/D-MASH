@@ -534,12 +534,23 @@ const sys = {
 
 
 // В ui_logic.js
-async loadAllLibs() {
+loadAllLibs() {
+    // Re-entry and concurrent unlocks share the initialized WASM runtime.
+    // Replacing KyberModule while its script is already loaded loses HEAPU8.
+    if (!this._libsReadyTask) {
+        this._libsReadyTask = this._loadAllLibs().then(ready => {
+            if (!ready) this._libsReadyTask = null;
+            return ready;
+        });
+    }
+    return this._libsReadyTask;
+},
+async _loadAllLibs() {
     try {
         const ver = window.DMASH_RELEASE?.id || "ui-foundation-20260825.1";
-        window.Module = { wasmBinaryFile: 'js/vendor/argon2.wasm' };
+        window.Module ||= { wasmBinaryFile: 'js/vendor/argon2.wasm' };
 
-        window.KyberModule = {
+        window.KyberModule ||= {
             locateFile: (path) => path.endsWith('.wasm') ? 'js/vendor/kyber768.wasm' : path,
             // Ждем нашу инъекцию
             onRuntimeInitialized: () => { console.log("🔥 WASM READY"); }
@@ -569,6 +580,7 @@ async loadAllLibs() {
             await new Promise(r => setTimeout(r, 200));
             wait++;
         }
+        if (!window.KyberModule?.HEAPU8) throw new Error('Kyber WASM initialization timed out');
         // ПРИНУДИТЕЛЬНАЯ ПРОПИСКА QR
         if (typeof window.QRCode === 'undefined' && typeof qrcode !== 'undefined') {
             window.QRCode = qrcode;
@@ -612,13 +624,14 @@ async loadAllLibs() {
         const v2 = document.getElementById('p2').value;
         // Вызываем Core.boot (Gamma-1 Standard)
         if (!v1 || !v2 || typeof Core === 'undefined') return false;
-        await Core.boot(v1, v2, { register: Boolean(document.getElementById('save-in-registry')?.checked) });
-        return Boolean(Core.keys?.sign);
+        return await Core.boot(v1, v2, { register: Boolean(document.getElementById('save-in-registry')?.checked) });
     },
 
     // Реестр создаётся Core.boot после успешной разблокировки. Это действие
     // идемпотентно и не сохраняет пароль или ключи в localStorage.
     async loginAndSave() {
+        if (this._loginPending) return;
+        this._loginPending = true;
         const form = document.querySelector('.gate-container form');
         const submit = form?.querySelector('button[type="submit"]');
         const status = document.getElementById('gate-status-text');
@@ -631,6 +644,9 @@ async loadAllLibs() {
             if (status) status.textContent = `ОШИБКА ВХОДА: ${error?.message || 'неизвестная ошибка'}`;
             if (submit) submit.disabled = false;
             console.error('D-MASH account login failed', error);
+        } finally {
+            this._loginPending = false;
+            if (submit) submit.disabled = false;
         }
     },
 

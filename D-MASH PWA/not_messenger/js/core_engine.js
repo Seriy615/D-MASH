@@ -187,7 +187,7 @@ const Core = {
         // transport credentials and public routes may be used.  Keep this
         // connection-driven (never a route refresh timer); account login is
         // intentionally not required for public DeviceRoutes.
-        await window.NodeManager?.onDeviceUnlocked?.();
+        void window.NodeManager?.onDeviceUnlocked?.().catch(error => this.shmon('WARN', `Node restore deferred: ${error.message}`));
         return deviceState;
     },
     async recoverDeviceAfterConfirmedMaster(masterPin) {
@@ -244,6 +244,7 @@ const Core = {
             const fullHash = result.hash;
 
             // 2. Распил 128-байтного выхлопа
+            this.gammaKeys ||= { master: null, sign: null, box: null };
             this.gammaKeys.master = fullHash.slice(0, 32);
             this.blindSalt = fullHash.slice(32, 64);
             const seedSign = fullHash.slice(64, 96);
@@ -316,11 +317,13 @@ const Core = {
             if (options.register === true) await Storage.registerAccount(identity, this.keys.pub_hex);
 
             this._accountTransitioning = false;
-            this.launchWorkspace();
+            await this.launchWorkspace();
+            return true;
 
         } catch (e) {
             console.error(e);
             if (statusEl) statusEl.innerText = "ОШИБКА ЯДРА: " + e.message;
+            throw e;
         } finally { this._accountTransitioning = false; }
     },
     async activeAccountPrivateRoutes(identity = this.activeIdentity) {
@@ -533,8 +536,9 @@ const Core = {
             }
         });
 
+        if (!this._workspaceListenersInstalled) {
         navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data.type === 'MAIL_FOUND') {
+            if (event.data?.type === 'MAIL_FOUND' && Core.keys?.pub_hex) {
                 Core.fastHash(Core.keys.pub_hex).then(myHash => {
                     if (event.data.hashes.includes(myHash)) Core.syncNetwork();
                 });
@@ -544,8 +548,10 @@ const Core = {
         window.addEventListener('dmash-node-state', event => {
             if (event.detail?.state === 'connected') this.flushOutboundQueue();
         });
-        this.updateNetworkSummary();
         window.addEventListener('dmash-delivery-available', () => Core.syncNetwork());
+        this._workspaceListenersInstalled = true;
+        }
+        this.updateNetworkSummary();
 
         const msgInp = document.getElementById('msgInput');
         msgInp.addEventListener('keydown', (e) => {
@@ -559,18 +565,18 @@ const Core = {
         const fileInp = document.getElementById('file-input');
         if (fileInp) fileInp.onchange = (e) => Core.handleFileSelect(e);
 
-        // 5. Запускаем процессы
-        try {
-            await NodeManager.autoConnect();
-            this.shmon("INFO", `Entry Node auto-connect: ${NodeManager.active?.label || 'selected node'}`);
-            await this.restoreAutomaticMeshRoutes();
-        } catch (error) {
-            this.shmon("WARN", `Entry Node auto-connect failed: ${error.message}`);
-        }
+        // Local contacts must be usable even while a Node is offline or mines
+        // resource work. Network restoration never gates the workspace.
         await Core.renderPeers();
         Core.syncNetwork();
         if (Core.syncInterval) clearInterval(Core.syncInterval);
         Core.syncInterval = setInterval(() => Core.syncNetwork(), 7000);
+        const account = this.activeIdentity;
+        this._workspaceNetworkReady = (async () => {
+            await NodeManager.autoConnect();
+            if (this.activeIdentity !== account || this._accountTransitioning) return;
+            await this.restoreAutomaticMeshRoutes();
+        })().catch(error => this.shmon('WARN', `Entry Node restoration deferred: ${error.message}`));
     },
     // Account logout clears only the active Account session. DeviceRoot and
     // NodeManager deliberately survive so another local account can be chosen
@@ -648,6 +654,7 @@ const Core = {
     },
     // Core.terminateSession   - Экстренное затирание ключей в RAM и выход в "калькулятор"
     terminateSession: function() {
+        window.DmashResourcePow?.cancelAll();
         window.DmashChatPassword?.clear();
         console.log("[!!!] ШУХЕР! ГАСИМ ПРИБОРЫ...");
 
@@ -1738,8 +1745,8 @@ const Core = {
             if (pairing?.contribution) {
                 existing.pairingContribution = pairing.contribution;
                 await Storage.putBox('blind_peers', { alias: aliasL1, data: existing });
-                await this.ensureAutomaticMeshRoute(cleanId, pairing.contribution);
                 await this.renderPeers();
+                void this.ensureAutomaticMeshRoute(cleanId, pairing.contribution).catch(error => this.shmon('WARN', `Route deferred: ${error.message}`));
                 return this.customAlert("PAIRING", "Pairing locator обновлён автоматически.");
             }
             return this.customAlert("ИНФО", "Этот пацан уже прописан в хате.");
@@ -1764,8 +1771,8 @@ const Core = {
             });
 
             this.shmon("INFO", `Кент ${alias} добавлен в базу.`);
-            if (pairing?.contribution) await this.ensureAutomaticMeshRoute(cleanId, pairing.contribution);
             await this.renderPeers();
+            if (pairing?.contribution) void this.ensureAutomaticMeshRoute(cleanId, pairing.contribution).catch(error => this.shmon('WARN', `Route deferred: ${error.message}`));
           } catch (error) {
             this.shmon("ERR", `Pairing QR import failed: ${error.message}`);
             this.customAlert("ОШИБКА QR", `Контакт не добавлен: ${error.message}`);
@@ -2520,7 +2527,7 @@ const Core = {
             this.device = Object.freeze({ id: state.identity.deviceId, fingerprints: state.identity.fingerprints, signing: state.identity.signing, agreement: state.identity.agreement });
             this.quickNameRegistry = null;
             this.pendingContactRequestStore = null;
-            await window.NodeManager?.onDeviceUnlocked?.();
+            void window.NodeManager?.onDeviceUnlocked?.().catch(error => this.shmon('WARN', `Node restore deferred: ${error.message}`));
             return true;
         } catch (error) {
             Core.customAlert("ОТКАЗ", error?.message || "БИОМЕТРИЯ УСТРОЙСТВА НЕДОСТУПНА");
@@ -2717,6 +2724,7 @@ const Core = {
                 await Storage.putBox('blind_peers', {alias, data: {...existing, id: peerId, curvePub, kyberPub,
                     name: existing?.name || body.display_name, pairingContribution: body.contribution,
                     last_ts: Date.now(), unread: existing?.unread || false}});
+                await this.renderPeers();
                 // Already protected by the Account contact task. A boot may
                 // be waiting for it, so finish route installation before release.
                 if (this._accountRouteTask) await this._accountRouteTask.catch(() => {});

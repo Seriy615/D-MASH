@@ -131,7 +131,7 @@
 .dmash-quick-choice small { display: block; margin-top: 3px; color: #aaa; font-size: .68rem; overflow-wrap: anywhere; }
 
 /* Node status belongs to device/global settings, not the account workspace. */
-#workspace .network-card { display: none !important; }
+#workspace .network-card { display: block; }
 
 .dmash-file-transfer {
     position: fixed; z-index: 99999; bottom: 24px; right: 20px;

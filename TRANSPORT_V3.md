@@ -1,5 +1,28 @@
 # Transport v3 engineering record
 
+## PWA hotfix .5 — 2026-09-17
+
+Release `transport-v3-hotfix-20260916.5` keeps Account contacts/history available
+without a Node: workspace rendering and contact persistence no longer await
+network restoration or resource PoW. PoW runs in a Dedicated Worker, with
+termination cancellation; local route handoff no longer waits for probes.
+Node controls display the actual v3 WebSocket URL and DNSS readiness.
+
+Repeated login reuses initialized WASM, recreates cleared Account key containers,
+and reports boot failures. Workspace listeners are installed once. First SW
+installation and panic lock no longer schedule reloads that discard PIN input;
+the release notice cannot intercept calculator clicks. Existing immediate SW
+response cloning and pending-DNSS PULL gating remain intact.
+
+Validation: 209 Node + 11 Origin Python tests and 45 PWA JS suites pass.
+Real Chromium calculator setup/login/local-note/panic/re-login passes without
+crypto or login stubs; the real EMS v3 connection completes DNSS and encrypted
+STATUS + PULL (`MAILBOX_DRAIN_RESULT`). A separate browser test proves persisted
+contacts/local protected notes work with permanently stalled Node auto-connect,
+and checks real PoW Worker output/cancellation. This does not establish two-user
+message delivery or E6 protection; the larger security milestone remains separate.
+
+
 ## Interim hotfix — 2026-09-16
 
 Follow-up release `transport-v3-hotfix-20260916.4` gates Device Inbox `PULL`

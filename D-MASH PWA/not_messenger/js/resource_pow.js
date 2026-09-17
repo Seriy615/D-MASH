@@ -9,6 +9,8 @@
  * only for proof-of-work. Backend resource_pow.py mirrors these bytes exactly.
  */
 (function (global) {
+    const workerUrl = global.document?.currentScript?.src;
+    const workers = new Set();
     const VERSION = 1;
     const DOMAIN = new TextEncoder().encode("D-MASH|ACTIVATION-POW|V2\0");
     const TYPES = new Set(["DNSS", "ENTRY_GRANT", "PRIVATE_ROUTE"]);
@@ -136,7 +138,34 @@
         throw new Error("PoW nonce space exhausted");
     }
 
-    const api = Object.freeze({ VERSION, sha256, leadingZeroBits, activationDigest, mineActivationPow });
+    function mineOffThread(options = {}) {
+        if (!workerUrl || typeof global.Worker !== 'function') return mineActivationPow(options);
+        return new Promise((resolve, reject) => {
+            const worker = new global.Worker(workerUrl);
+            const job = {worker, reject}; workers.add(job);
+            const finish = () => { workers.delete(job); worker.terminate(); };
+            worker.onmessage = ({data}) => {
+                if (data.progress) { options.onProgress?.(data.progress); return; }
+                finish();
+                if (data.error) reject(new Error(data.error)); else resolve(data.proof);
+            };
+            worker.onerror = event => { finish(); reject(new Error(event.message || 'PoW worker failed')); };
+            const {onProgress, ...input} = options;
+            try { worker.postMessage(input); } catch (error) { finish(); reject(error); }
+        });
+    }
+    function cancelAll() {
+        for (const job of workers) { job.worker.terminate(); job.reject(new Error('PoW cancelled')); }
+        workers.clear();
+    }
+    if (!global.document && typeof global.importScripts === 'function') {
+        global.onmessage = async ({data}) => {
+            try { global.postMessage({proof: await mineActivationPow({...data,
+                onProgress: progress => global.postMessage({progress})})}); }
+            catch (error) { global.postMessage({error: error.message}); }
+        };
+    }
+    const api = Object.freeze({ VERSION, sha256, leadingZeroBits, activationDigest, mineActivationPow: mineOffThread, cancelAll });
     global.DmashResourcePow = api;
     if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

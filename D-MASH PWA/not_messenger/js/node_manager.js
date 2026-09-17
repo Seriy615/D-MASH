@@ -326,10 +326,12 @@ const NodeManager = {
             identity.style.cssText = 'line-height:1.25';
             const name = document.createElement('div');
             name.style.fontWeight = '700';
-            name.textContent = `${marker} ${endpoint.label}: ${state}${latency}`;
+            const readiness = connection?.dnssReadyState === 'pending' ? ' · регистрация устройства…'
+                : connection?.dnssReadyState === 'failed' ? ` · регистрация: ${connection.dnssError?.message || 'ошибка'}` : '';
+            name.textContent = `${marker} ${endpoint.label}: ${state}${latency}${readiness}`;
             const url = document.createElement('div');
             url.style.cssText = 'margin-top:2px;font-size:.72rem';
-            url.textContent = endpoint.url;
+            url.textContent = connection?.socket?.url || endpoint.dmpcEndpoint || endpoint.url;
             identity.append(name, url);
             const controls = document.createElement('div'); controls.style.cssText = 'display:flex;gap:6px;margin-top:8px';
             const square = button => {
@@ -427,6 +429,9 @@ const NodeManager = {
                     .then(() => { connection.dnssReadyState = 'ready'; return true; })
                     .catch(error => {
                         connection.dnssReadyState = 'failed'; connection.dnssError = error;
+                        if (this.connections.get(endpoint.url) === connection) {
+                            connection.error = error.message; this.updateState();
+                        }
                         return false;
                     });
                 connection.postAuthReady = (async () => {
@@ -783,7 +788,9 @@ const NodeManager = {
                 targetVerifyKey: b64(pair.outgoing.signing.publicKey)});
         if (window.Core.activeIdentity !== accountSlot) return;
         this.setMeshRoute(peerId, outboundAlias, await inbox.routeAlias(pair.backRouteLocator));
-        await this.probePrivateRoutesV3();
+        // Local Account/Device handoff is complete. Network work cannot keep
+        // the Account lifecycle lock occupied while resource PoW is pending.
+        void this.probePrivateRoutesV3().catch(error => window.Core?.shmon?.('WARN', `Private route advertisement deferred: ${error.message}`));
     },
     async probePrivateRoutesV3(connection = null) {
         const inbox = this.deviceInboxV3();
@@ -1015,7 +1022,7 @@ const NodeManager = {
         const title = document.createElement('h4'); title.textContent = 'НАСТРОЙКИ УЗЛА';
         const identity = document.createElement('p');
         identity.style.cssText = 'margin:0 0 14px;text-align:left;color:#ccc;font-size:.8rem;word-break:break-word;white-space:pre-line';
-        identity.textContent = `${endpoint.label}\n${endpoint.url}`;
+        identity.textContent = `${endpoint.label}\n${endpoint.dmpcEndpoint || endpoint.url}`;
         const autoConnect = document.createElement('label');
         autoConnect.style.cssText = 'display:block;text-align:left;margin:0 0 10px;font-size:.78rem;color:#ccc';
         const autoToggle = document.createElement('input'); autoToggle.type = 'checkbox'; autoToggle.checked = endpoint.autoConnect === true;
