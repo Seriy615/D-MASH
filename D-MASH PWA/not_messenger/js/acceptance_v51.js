@@ -255,10 +255,11 @@
     function patchSystem(system) {
         if (!system || system[SYS_PATCH] || typeof system.loadScript !== "function") return false;
         const loadScript = system.loadScript.bind(system);
-        system.loadAllLibs = async function fastFoundationLoad() {
+        let foundationTask;
+        const loadFoundation = async function fastFoundationLoad() {
             try {
                 const ver = global.DMASH_RELEASE?.id || "v51";
-                global.Module = { wasmBinaryFile: "js/vendor/argon2.wasm" };
+                global.Module ||= { wasmBinaryFile: "js/vendor/argon2.wasm" };
                 global.KyberModule = global.KyberModule || {
                     locateFile: path => path.endsWith(".wasm") ? "js/vendor/kyber768.wasm" : path
                 };
@@ -268,11 +269,14 @@
                 const kyberReady = Promise.all([
                     loadScript(`js/vendor/kyber768.js?v=${ver}`)
                 ]).then(async () => {
-                    for (let i = 0; i < 100 && !global.KyberModule?.HEAPU8; i++) await new Promise(r => setTimeout(r, 50));
-                    if (!global.KyberModule?.HEAPU8) throw new Error("Kyber WASM did not initialize");
+                    const ready = () => global.KyberModule?.HEAPU8 &&
+                        ['_malloc', '_free', '_wasm_keypair', '_wasm_encapsulate', '_wasm_decapsulate'].every(name => typeof global.KyberModule[name] === 'function');
+                    for (let i = 0; i < 100 && !ready(); i++) await new Promise(r => setTimeout(r, 50));
+                    if (!ready()) throw new Error("Kyber WASM did not initialize");
                     return true;
                 });
                 global.__dmashAccountCryptoReady = kyberReady;
+                void kyberReady.catch(() => {}); // Account boot reports initialization errors.
                 void Promise.all([
                     loadScript(`js/vendor/html5-qrcode.min.js?v=${ver}`),
                     loadScript(`js/vendor/qrcode.min.js?v=${ver}`),
@@ -309,6 +313,13 @@
                 console.error("[D-MASH] foundation load failed", error);
                 return false;
             }
+        };
+        system.loadAllLibs = function () {
+            if (!foundationTask) foundationTask = loadFoundation().then(ready => {
+                if (!ready) foundationTask = null;
+                return ready;
+            });
+            return foundationTask;
         };
         global.DMashSys = system;
         Object.defineProperty(system, SYS_PATCH, { value: true });

@@ -22,6 +22,11 @@ const {chromium} = require(process.env.DMASH_PLAYWRIGHT_MODULE || 'playwright');
         await page.waitForTimeout(1200); // setup's one-second calculator reset
         await digits('3333');
         await page.locator('#p1').waitFor({state:'visible'});
+        await page.evaluate(async () => {
+            await Promise.all([sys.loadAllLibs(), sys.loadAllLibs(), sys.loadAllLibs()]);
+            await window.__dmashAccountCryptoReady;
+            if (window.Module === window.KyberModule || typeof KyberModule._malloc !== 'function') throw Error('WASM runtimes are not isolated');
+        });
         const login = async () => {
             await page.locator('#p1').fill('browser-login-regression');
             await page.locator('#p2').fill('Test-only-login-2026!');

@@ -1,5 +1,17 @@
 # Active transport-v3 work — 2026-09-14
 
+## WASM follow-up .6 — 2026-09-17
+
+The .5 production calculator acceptance exposed a nondeterministic login failure:
+Kyber's Emscripten `var Module` shared the global scope with Argon2. Its exported
+functions could land on the wrong object (`M._malloc is not a function`). Release
+`transport-v3-hotfix-20260917.6` scopes the Kyber runtime in a closure, memoizes the
+active v51 foundation loader and checks all required Kyber exports before boot.
+The calculator regression now also invokes concurrent/repeated foundation loads
+and verifies the runtime objects remain separate. The .5 network/asset and
+fixture-contact checks passed, but its full production login check did not.
+
+
 ## PWA hotfix .5 — 2026-09-17
 
 Release `transport-v3-hotfix-20260916.5` keeps Account contacts/history available
