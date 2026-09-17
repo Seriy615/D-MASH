@@ -132,7 +132,10 @@
             }
             if ((nonce - startNonce + 1) % 4096 === 0) {
                 onProgress?.({ attempts: nonce - startNonce + 1, elapsedMs: (global.performance?.now?.() ?? Date.now()) - started });
-                await new Promise(resolve => setTimeout(resolve, 0));
+                // A Dedicated Worker is cancelled by terminate(). Yielding
+                // through browser timers here can throttle PoW in background
+                // tabs; only the main-thread fallback needs cooperative yields.
+                if (typeof global.importScripts !== 'function') await new Promise(resolve => setTimeout(resolve, 0));
             }
         }
         throw new Error("PoW nonce space exhausted");

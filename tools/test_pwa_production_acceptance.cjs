@@ -24,14 +24,20 @@ const endpointFromCatalog = value => value.replace(/\/(dmp-c|dmash-client)\/v1$/
     });
     try {
         await page.goto(base + '/', { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(1200);
+        await page.evaluate(() => navigator.serviceWorker.ready);
+        await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+        const worker = context.serviceWorkers()[0];
+        await worker.evaluate(() => {
+            self.__acceptanceErrors = [];
+            self.addEventListener('unhandledrejection', event => self.__acceptanceErrors.push(String(event.reason?.message || event.reason)));
+        });
         // Exercise both SW fetch branches repeatedly.  A stale worker or a
         // delayed clone() must not produce an unhandled Response-body error.
         await page.evaluate(async root => {
             for (let round = 0; round < 3; round++) {
                 await Promise.all(Array.from({ length: 12 }, (_, i) =>
-                    fetch(`${root}/js/core_engine.js?acceptance=${round}-${i}`, { cache: 'no-store' })));
-                await fetch(`${root}/manifest.json?acceptance=${round}`, { cache: 'no-store' });
+                    fetch(`${root}/js/core_engine.js?acceptance=${round}-${i}`, { cache: 'no-store' }).then(response => response.arrayBuffer())));
+                await (await fetch(`${root}/manifest.json?acceptance=${round}`, { cache: 'no-store' })).arrayBuffer();
             }
         }, base);
         await page.waitForFunction(() => typeof window.sys?.loadAllLibs === 'function', null, { timeout: 15000 });
@@ -55,7 +61,7 @@ const endpointFromCatalog = value => value.replace(/\/(dmp-c|dmash-client)\/v1$/
             const node = NodeManager.add(catalog.nodes[0].url, catalog.nodes[0].label, { public: true });
             await NodeManager.connect(node.url);
             const connection = NodeManager.connections.get(node.url);
-            if (connection?.state !== 'connected' || connection.client?.state !== 'connected') throw Error('PWA NodeManager did not authenticate');
+            if (connection?.state !== 'connected' || connection.client?.state !== 'connected') throw Error(`PWA NodeManager did not authenticate: ${connection?.state}; ${connection?.error || connection?.client?.state}`);
             const status = await NodeManager.requestOn(connection, 'STATUS');
             if (status.type !== 'STATUS' || status.node_id !== connection.nodeId) throw Error('encrypted STATUS mismatch');
 
@@ -75,6 +81,7 @@ const endpointFromCatalog = value => value.replace(/\/(dmp-c|dmash-client)\/v1$/
         }, base);
         assert.deepEqual(failures, [], `production browser errors: ${failures.join('; ')}`);
         assert.deepEqual(await page.evaluate(() => window.__dmashUnhandled), []);
+        assert.deepEqual(await worker.evaluate(() => self.__acceptanceErrors), []);
         console.log(JSON.stringify({ passed: true, ...result, checks: ['service-worker asset storm', 'v3 WELCOME', 'encrypted STATUS', 'Saved Messages local send'] }));
     } finally {
         await browser.close();

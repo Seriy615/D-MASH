@@ -110,7 +110,10 @@
                     challenge.type !== "CHALLENGE" || challenge.protocol !== "DMP-C" || challenge.version !== 3 ||
                     challenge.suite !== SUITE || challenge.role !== "NODE" || challenge.peer_role !== this.role ||
                     challenge.public_key !== expectedNodeId || !Number.isSafeInteger(challenge.expires_at) ||
-                    challenge.expires_at <= now || challenge.expires_at > now + 15) throw new Error("Invalid challenge");
+                    // Allow small clock skew when the Node issues its 15s
+                    // challenge. The Node still enforces its original deadline;
+                    // expired challenges and all signature checks stay strict.
+                    challenge.expires_at <= now || challenge.expires_at > now + 20) throw new Error("Invalid challenge");
                 const nodeKey = unhex(expectedNodeId);
                 unb64(challenge.nonce, 32);
                 const ephemeral = unb64(challenge.ephemeral, 32);

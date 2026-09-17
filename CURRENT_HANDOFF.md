@@ -1,5 +1,23 @@
 # Active transport-v3 work — 2026-09-14
 
+## Connection/PoW follow-up .7 — 2026-09-17
+
+Release `transport-v3-hotfix-20260917.7` also fixes intermittent `Invalid challenge`
+when EMS's clock is slightly ahead of the browser. The client permits up to five
+seconds of positive clock skew for the signed 15-second challenge; expired
+challenges remain rejected, and the Node retains its original expiry deadline.
+A signed-handshake test covers the tolerance boundary, expiry and bad signatures.
+
+The .6 production real-login/re-login passed, but DNSS work exceeded the former
+240-second test budget. Dedicated Worker mining no longer yields via browser
+setTimeout every 4096 nonces (unnecessary off the main thread and susceptible to
+background timer throttling). Main-thread fallback still yields; Worker cancel
+still terminates the worker. The real-PoW test allows 600 seconds within the
+900-second proof expiry. No resource difficulty or authentication check is bypassed.
+SW acceptance now consumes fetched response bodies and monitors unhandled
+rejections inside the Service Worker itself, in addition to the page.
+
+
 ## WASM follow-up .6 — 2026-09-17
 
 The .5 production calculator acceptance exposed a nondeterministic login failure:

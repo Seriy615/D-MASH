@@ -52,7 +52,7 @@ const {chromium} = require(process.env.DMASH_PLAYWRIGHT_MODULE || 'playwright');
             await page.getByRole('button', {name:'Настройки', exact:true}).click();
             await page.getByRole('button', {name:'УЗЛЫ И ПОДКЛЮЧЕНИЕ', exact:true}).click();
             await page.getByRole('button', {name:'ЗАПРОСИТЬ УЗЕЛ', exact:true}).click();
-            await page.waitForFunction(() => [...NodeManager.connections.values()].some(c => c.dnssReadyState === 'ready'), null, {timeout:240000});
+            await page.waitForFunction(() => [...NodeManager.connections.values()].some(c => c.dnssReadyState === 'ready'), null, {timeout:600000});
             const result = await page.evaluate(async () => {
                 const c = NodeManager.connectedConnections()[0];
                 const status = await c.client.request('STATUS');
