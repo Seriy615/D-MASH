@@ -39,5 +39,13 @@ function account() {
         assert(opened, 'both original and retried ACK decrypt before sender advances');
         assert.deepEqual(JSON.parse(opened).ack, ratchet.updateToAck(update));
     }
+    const delayed = await runtime.encryptPacket(receiver, 'delayed epoch-one message', sender.keys.pub_hex,
+        {ratchetRoot: hex(root), ratchetEpoch: 1});
+    stored = {staticShared: hex(root), ratchetRoot: hex(root), ratchetEpoch: 1,
+        ratchetPending: ratchet.updateToPayload(update)};
+    await runtime.handleAck(sender, {type: 'ratchet_ack', suite: 'CLASSICAL_ROOT_V1', ack: ratchet.updateToAck(update)}, receiver.keys.pub_hex);
+    assert.equal(stored.ratchetEpoch, 2);
+    assert.equal(await runtime.decryptPacket(sender, unhex(delayed), receiver.keys.pub_hex, stored),
+        'delayed epoch-one message', 'initiator retains prior receive epoch after ACK advances its root');
     console.log('Ratchet lost ACK retry preserves originating epoch and root');
 })().catch(error => {console.error(error); process.exitCode = 1;});

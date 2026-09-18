@@ -659,7 +659,18 @@ const NodeManager = {
         const beaconHandle = await window.DeviceRoot.notificationBeaconHandle();
         return Promise.all(eligible.map(item => this.requestOn(item, 'REGISTER_NOTIFICATION_BEACON', { beacon_handle: beaconHandle })));
     },
-    startProbe(routeLocator, backRouteLocator, options = {}) {
+    async startProbe(routeLocator, backRouteLocator, options = {}) {
+        const nodes = this.connectedConnections().filter(node => node.client);
+        if (nodes.length) {
+            const outbound = await this.deviceInboxV3()._get('private-outbound:' + routeLocator);
+            if (!outbound || outbound.accountSlot !== window.Core?.activeIdentity) throw new Error('Private Device route must be restored before probing');
+            const results = await Promise.allSettled(nodes.map(node => this.probePrivateRoutesV3(node, {
+                routeAlias: backRouteLocator, accountSlot: outbound.accountSlot, targetVerifyKey: outbound.targetVerifyKey
+            })));
+            const successful = results.find(result => result.status === 'fulfilled' && result.value.length);
+            if (!successful) throw results.find(result => result.status === 'rejected')?.reason || new Error('Private inbound route unavailable');
+            return successful.value[0];
+        }
         return this.requestAll('START_PROBE', {
             route_locator: routeLocator, back_route_locator: backRouteLocator, hop_limit: 15, ...options
         }).then(results => results[0]);
@@ -792,14 +803,16 @@ const NodeManager = {
         // the Account lifecycle lock occupied while resource PoW is pending.
         void this.probePrivateRoutesV3().catch(error => window.Core?.shmon?.('WARN', `Private route advertisement deferred: ${error.message}`));
     },
-    async probePrivateRoutesV3(connection = null) {
+    async probePrivateRoutesV3(connection = null, selector = null) {
         const inbox = this.deviceInboxV3();
         const connections = connection ? [connection] : this.connectedConnections();
+        const results = [];
         for (const row of await inbox.store.all()) {
             const route = await inbox._open(row);
             if (route.record !== 'private_route') continue;
+            if (selector && (route.routeAlias !== selector.routeAlias || route.accountSlot !== selector.accountSlot ||
+                route.targetVerifyKey !== selector.targetVerifyKey)) continue;
             const routeId = await window.PrivateRoutesV3.locator(window.DmashSecureSession.unb64(route.signingPublicKey, 32));
-            const target = await window.PrivateRoutesV3.locator(window.DmashSecureSession.unb64(route.targetVerifyKey, 32));
             for (const node of connections) {
                 if (!node.authority || !node.capabilities.has('REGISTER_ROUTE')) continue;
                 const label = 'private-lifetime:' + node.nodeId + ':' + routeId;
@@ -815,10 +828,13 @@ const NodeManager = {
                     const resource = {kind: 'PRIVATE', routeId, signing,
                         generation: route.generation, expiresAt: lifetime.expiresAt};
                     await node.authority.route('REGISTER_ROUTE', resource);
-                    await node.authority.route('START_PROBE', resource, {route_locator: target});
+                    // Advertise our registered inbound route. Probe does not
+                    // search for the recipient; routeStatus resolves that hop.
+                    results.push(await node.authority.route('START_PROBE', resource, {route_locator: routeId}));
                 } finally { key.fill(0); signing.secretKey.fill(0); }
             }
         }
+        return results;
     },
     async receiveDeviceCiphertextV3(ciphertext) {
         const inbox = this.deviceInboxV3();

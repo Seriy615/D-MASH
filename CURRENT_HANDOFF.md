@@ -1,5 +1,52 @@
 # Active transport-v3 work — 2026-09-14
 
+## Release .8 — 2026-09-18
+
+The real two-account regression additionally found that completed handshake
+controls returned the same null result as crypto failure and therefore remained
+in Device Inbox, repeatedly sending SOS responses. Successful controls now have
+an explicit consumed outcome. Failed Kyber-final transmission retains its capsule
+in Account-encrypted storage and retries the same material. Initial SOS/ECDH
+intents are deduplicated in the local outbox while the peer route is unavailable;
+control retries do not appear as chat history.
+
+Ratchet ACK advancement now retains the same bounded two previous receive epochs
+as the responder. The regression reproduces a late epoch-one ciphertext failing
+after the initiator processes the epoch-two ACK, then verifies successful decrypt
+with the fix. No wire format or suite downgrade was introduced.
+
+SHA-256 PoW round addition no longer allocates rest arrays. Independent native
+SHA-256 vectors cover block/padding boundaries; a local 20,000-hash comparison
+improved from ~1060 ms to ~213 ms. Difficulty and digest transcript are unchanged.
+Node shutdown now awaits the asynchronous HopProbes.close coroutine.
+
+Validation before deployment: all 209 Node + 11 Origin Python tests and 48 PWA
+JS suites pass. Both real Chromium two-account runs (private pairing and public
+contact request/accept/confirm) pass against EMS: initial key exchange, messages
+in both directions, two ratchet epochs, delayed prior-epoch ciphertext after ACK,
+recipient disconnect/reconnect with queued delivery, and retirement of completed
+handshake controls. Public-mode run also exercised a real initial Route unavailable
+failure followed by automatic successful retry. Crypto and transport were not
+stubbed. Browser tests start at calculator setup in clean contexts.
+
+
+## Two-account transport correction — 2026-09-17
+
+A real two-browser run exposed two PWA/Node protocol mismatches before Account
+ratchet processing. Core's send path used NodeManager.startProbe, which still
+sent an unsigned legacy START_PROBE on a v3 connection (INVALID_ROUTE_AUTHORITY).
+The private-route helper also advertised the recipient's locator instead of its
+own registered inbound route (ROUTE_BINDING_REJECTED). The v3 send path now uses
+Device route authority, selects only the matching Account-owned inbound route,
+and advertises that route. Recipient lookup remains ROUTE_STATUS.
+
+Regression coverage includes wrong Account/wrong inbound capability rejection,
+and a real two-context browser runner for private pairing or public contact
+request/accept/confirm, initial Account key exchange, bidirectional messages and
+two ratchet epochs. No crypto or transport implementation is stubbed in that
+runner. Browser polling awaits asynchronous storage reads explicitly.
+
+
 ## Connection/PoW follow-up .7 — 2026-09-17
 
 Release `transport-v3-hotfix-20260917.7` also fixes intermittent `Invalid challenge`

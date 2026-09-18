@@ -1,0 +1,43 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const nacl=require('../js/vendor/nacl-fast.min.js');
+const rows=new Map(),hex=value=>Buffer.from(value).toString('hex');
+const storage={getAlias:async id=>id,getBox:async(table,id)=>structuredClone(rows.get(table+id)||null),putBox:async(table,{alias,data})=>rows.set(table+alias,structuredClone(data))};
+const context={console,Uint8Array,TextEncoder,TextDecoder,DataView,crypto,URL,Map,Set,Storage:storage,
+ localStorage:{getItem:()=>null},sessionStorage:{getItem:()=>null},document:{getElementById:()=>null},setTimeout:()=>0,
+ window:{nacl,crypto,location:{},addEventListener(){}}};
+vm.createContext(context);vm.runInContext(fs.readFileSync(require.resolve('../js/core_engine.js'),'utf8'),context);
+const core=context.window.Core;core.shmon=()=>{};core.activePeerId=null;
+core.keys={sign:nacl.sign.keyPair(),box:nacl.box.keyPair(),kyber:{secretKey:new Uint8Array(2400)}};
+const peer=nacl.sign.keyPair(),peerId=hex(peer.publicKey),ss=nacl.randomBytes(32),capsule=nacl.randomBytes(1088);
+let encapsulations=0,sends=0;
+context.window.DmashKyberWasm.init=()=>true;
+context.window.DmashKyberWasm.encapsulate=()=>{encapsulations++;return {ss,ct:capsule,success:true};};
+context.window.NodeManager={transportMode:'mesh',getMeshRoute:()=>({routeLocator:'blind-out',backRouteLocator:'blind-in'}),startProbe:async()=>({}),submitEnvelope:async()=>{if(++sends===1) throw Error('network failed');return {state:'NODE_ACCEPTED'};}};
+(async()=>{
+ const eph=nacl.box.keyPair(),nonce=nacl.randomBytes(24);
+ const body=Buffer.from(JSON.stringify({t:'pqc_init',c_pub:hex(eph.publicKey),k_pub:'ab'.repeat(1184),data:'test'}));
+ const encrypted=nacl.box(body,nonce,core.keys.box.publicKey,eph.secretKey);
+ const packet=hex(Buffer.concat([Buffer.from([1]),nonce,eph.publicKey,encrypted]));
+ assert.equal(await core.decrypt(packet,peerId,true),null,'failed final must retain inbound work');
+ const before=await storage.getBox('blind_secrets',peerId);
+ assert(before.pendingKyberFinal);assert.equal(encapsulations,1);
+ assert.equal((await core.decrypt(packet,peerId,true)).handshakeProcessed,true);
+ const after=await storage.getBox('blind_secrets',peerId);
+ assert.equal(after.pendingKyberFinal,undefined);assert.equal(after.staticShared,before.staticShared);
+ assert.equal(encapsulations,1,'retry must reuse persisted Kyber material');assert.equal(sends,2);
+ assert.equal((await core.decrypt(packet,peerId,true)).handshakeProcessed,true);assert.equal(sends,2,'consumed control does not resend final');
+ const sos=hex(Buffer.concat([Buffer.from([2]),eph.publicKey,Buffer.alloc(1184,1)]));
+ core.sendMessage=async()=>false;assert.equal(await core.decrypt(sos,peerId,true),null);
+ core.sendMessage=async()=>true;assert.equal((await core.decrypt(sos,peerId,true)).handshakeProcessed,true);
+ assert.equal(await core.decrypt('02',peerId,true),null,'malformed SOS is not processed');
+ const queued=await core.queueOutbound(peerId,'start','SOS');
+ assert.equal(await core.queueOutbound(peerId,'start','SOS'),queued,'handshake retries deduplicate');
+ assert.equal((await storage.getBox('blind_outbox',queued)).forceHandshake,'SOS');
+ storage.getAllBoxes=async table=>[...rows].filter(([key])=>key.startsWith(table)).map(([key,data])=>({...data,alias:key.slice(table.length)}));
+ storage.deleteBox=async(table,key)=>rows.delete(table+key);
+ context.window.NodeManager.connectedConnections=()=>[{}];
+ core.sendMessage=async(content,force,pid)=>{assert.equal(content,'start');assert.equal(force,'SOS');assert.equal(pid,peerId);return true;};
+ await core.flushOutboundQueue();assert.equal(await storage.getBox('blind_outbox',queued),null);
+ console.log('Handshake control outcomes and durable failed-final retry passed');
+})().catch(error=>{console.error(error);process.exitCode=1;});

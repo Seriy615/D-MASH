@@ -263,7 +263,7 @@ async def lifespan(app: FastAPI):
         if state.tact: await state.tact.close()
         if state.node:
             state.node.transport.hop_routes.close()
-            state.node.transport.hop_probes.close()
+            await state.node.transport.hop_probes.close()
         state.process_pool.shutdown(wait=False) # <--- НЕ ЗАБУДЬТЕ ЗАКРЫТЬ
         if state.db: await state.db.close()
         state.fallback_store = None

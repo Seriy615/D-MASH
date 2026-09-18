@@ -45,10 +45,23 @@ class Store {
         authority: {route: async (operation, resource, payload) => {sent.push({operation, routeId: resource.routeId, target: payload?.route_locator});}}};
     await NodeManager.probePrivateRoutesV3(connection);
     assert.equal(sent[0].routeId, a.backRouteLocator, 'Device reconstructs transient routing context from capability');
-    assert.equal(sent[1].target, a.routeLocator);
+    assert.equal(sent[1].target, a.backRouteLocator);
     const plaintext = {ciphertext: 'opaque Account ciphertext', sender_proof: 'opaque Account proof'};
     connection.client = {request: async (operation, payload) => {sent.push({operation, payload}); return {state: 'NODE_ACCEPTED'};}};
     NodeManager.connections.set('test', connection);
+    const signedAt = sent.length;
+    connection.authority.route = async (operation, resource, payload) => {
+        sent.push({operation, routeId: resource.routeId, target: payload?.route_locator});
+        return {state: 'PROBE_STARTED'};
+    };
+    assert.equal((await NodeManager.startProbe(config.routeLocator, config.backRouteLocator)).state, 'PROBE_STARTED');
+    assert.deepEqual(sent.slice(signedAt).map(item => item.operation), ['REGISTER_ROUTE', 'START_PROBE']);
+    assert.equal(sent.at(-1).routeId, a.backRouteLocator);
+    assert.equal(sent.at(-1).target, a.backRouteLocator);
+    await assert.rejects(NodeManager.startProbe(config.routeLocator, 'wrong-inbound'), /inbound route/);
+    Core.activeIdentity = 'wrong-account';
+    await assert.rejects(NodeManager.startProbe(config.routeLocator, config.backRouteLocator), /restored/);
+    Core.activeIdentity = 'A';
     NodeManager.routeStatus = async () => ({connection, result: {hop_route_label: 'ef'.repeat(32)}});
     const result = await NodeManager.submitEnvelope(config.routeLocator, plaintext);
     assert.equal(result.state, 'NODE_ACCEPTED');

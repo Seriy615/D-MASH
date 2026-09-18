@@ -622,7 +622,17 @@ const Core = {
     },
     async queueOutbound(peerId, content, forceHandshake = false) {
         const isControl = typeof content === 'object' && (content.type?.startsWith('voip_') || ['dmash_receipt','ratchet_update','ratchet_ack'].includes(content.type));
-        if (forceHandshake || isControl || !peerId || content == null) return null;
+        if (!peerId || content == null) return null;
+        if (forceHandshake === true || forceHandshake === 'SOS') {
+            // Route activation may still be doing resource work. Retain one
+            // Account-encrypted intent per handshake stage, without inserting
+            // control messages into chat history or duplicating retries.
+            const alias = await Storage.getAlias(`handshake-outbox:${peerId}:${forceHandshake}`, 'L3');
+            const value = window.DmashChatPassword ? await window.DmashChatPassword.protect(Storage, peerId, content) : content;
+            await Storage.putBox('blind_outbox', {alias, data: {peerID: peerId, content: value, forceHandshake, createdAt: Date.now()}});
+            return alias;
+        }
+        if (isControl || forceHandshake) return null;
         let alias, seqId;
         if (window.DmashChatPassword) ({alias, seqId} = await window.DmashChatPassword.queue(Storage, peerId, content));
         else {
@@ -647,7 +657,7 @@ const Core = {
                 let content;
                 try {content = window.DmashChatPassword ? await window.DmashChatPassword.reveal(Storage, item.peerID, item.content) : item.content;}
                 catch (_) {continue;}
-                const sent = await this.sendMessage(content, false, item.peerID, item.alias, true);
+                const sent = await this.sendMessage(content, item.forceHandshake || false, item.peerID, item.alias, true);
                 if (sent) await Storage.deleteBox('blind_outbox', item.alias);
             }
         } finally { this._flushingOutbox = false; }
@@ -879,26 +889,34 @@ const Core = {
     /**
      * ДЕШИФРОВАНИЕ (V19.0 - АТОМНЫЙ ПРИЕМ)
      */
-    async decrypt(hb, pid) {
+    async decrypt(hb, pid, controlResult = false) {
+        const processed = () => controlResult ? {handshakeProcessed: true} : null;
         const raw = this.hexToBytes(hb);
         const type = raw[0];
         const aliasL1 = await Storage.getAlias(pid, "L1");
         let secrets = await Storage.getBox('blind_secrets', aliasL1);
 
         if (type === 0x02) { // Принят SOS
+            if (raw.length !== 1217) return null;
             this.shmon("WARN", `Тихая ротация: SOS от ${pid.substring(0,8)}`);
             const hisCurve = this.bytesToHex(raw.slice(1, 33));
             const hisKyber = this.bytesToHex(raw.slice(33, 1217));
             let peer = await Storage.getBox('blind_peers', aliasL1) || { id: pid, name: `Peer-${pid.substring(0,4)}` };
             peer.curvePub = hisCurve; peer.kyberPub = hisKyber;
             await Storage.putBox('blind_peers', { alias: aliasL1, data: peer });
-            await this.sendMessage({ type: "sys", content: "sync" }, true, pid);
-            return null;
+            const sent = await this.sendMessage({ type: "sys", content: "sync" }, true, pid);
+            return sent ? processed() : null;
         }
 
         if (type === 0x01) { // Принят ECDH
             this.shmon("CRYPTO", "Вскрытие 0x01 оболочки...");
-            if (secrets?.staticShared) return null;
+            if (secrets?.staticShared) {
+                if (secrets.pendingKyberFinal) {
+                    const pending = secrets.pendingKyberFinal;
+                    if (!await this.sendKyberFinal(pid, this.hexToBytes(pending.capsule), this.hexToBytes(pending.psk), pending.shift)) return null;
+                }
+                return processed();
+            }
             const nonce = raw.slice(1, 25); const ephPub = raw.slice(25, 57);
             const opened = window.nacl.box.open(raw.slice(57), nonce, ephPub, this.keys.box.secretKey);
             if (opened) {
@@ -915,17 +933,18 @@ const Core = {
                     alias: aliasL1,
                     data: { staticShared: this.bytesToHex(k.ss), psk: this.bytesToHex(newPSK), epochShift: newShift,
                         ratchetRoot: this.bytesToHex(k.ss), ratchetEpoch: 0, ratchetPreviousRoot: null, ratchetPreviousRoots: [], ratchetPending: null,
-                        ratchetLastUpdate: null, msgCount: 0 }
+                        ratchetLastUpdate: null, msgCount: 0,
+                        pendingKyberFinal: {capsule: this.bytesToHex(k.ct), psk: this.bytesToHex(newPSK), shift: newShift} }
                 });
-                await this.sendKyberFinal(pid, k.ct, newPSK, newShift);
+                const sent = await this.sendKyberFinal(pid, k.ct, newPSK, newShift);
                 if (this.activePeerId === pid) this.selectPeer(pid);
-                return null;
+                return sent ? processed() : null;
             }
         }
 
         if (type === 0x03) { // Финал квантового моста
             this.shmon("CRYPTO", "Финализация квантового моста...");
-            if (secrets?.staticShared) return null;
+            if (secrets?.staticShared) return processed();
             const encapsulated = raw.slice(1, 1089); const ss = (KyberWasm.decapsulate(encapsulated, this.keys.kyber.secretKey)).ss;
             const opened = window.nacl.secretbox.open(raw.slice(1113), raw.slice(1089, 1113), ss);
             if (opened) {
@@ -938,7 +957,7 @@ const Core = {
                 });
                 this.shmon("INFO", "КВАНТОВЫЙ КАНАЛ УСТАНОВЛЕН!");
                 if (this.activePeerId === pid) this.selectPeer(pid);
-                return null;
+                return processed();
             }
         }
 
@@ -1022,13 +1041,19 @@ const Core = {
                     kind: 'E2EE_HANDSHAKE'
                 });
                 this.shmon("INFO", `D-MASH Kyber final: ${result.state}`);
+                const latest = await Storage.getBox('blind_secrets', aliasL1);
+                if (latest?.pendingKyberFinal?.capsule === this.bytesToHex(capsule)) {
+                    delete latest.pendingKyberFinal;
+                    await Storage.putBox('blind_secrets', {alias: aliasL1, data: latest});
+                }
+                return true;
             } catch (error) {
                 this.shmon("ERR", `D-MASH Kyber final failed: ${error.message}`);
             }
             setTimeout(() => this.syncNetwork(), 500);
-            return;
+            return false;
         }
-        await fetch('../api/pidorskiy_api.php', {
+        const response = await fetch('../api/pidorskiy_api.php', {
             method: 'POST',
             headers: { 'X-DMASH-AGENT': 'V1Silent-Node', 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1040,6 +1065,7 @@ const Core = {
         });
 
         setTimeout(() => this.syncNetwork(), 500);
+        return response.ok;
     },
     // Core.sendEmergencyHandshake - Отправка SOS-пакета при потере синхронизации
     async sendEmergencyHandshake(pid) {
@@ -1242,10 +1268,11 @@ const Core = {
         const peerId = route.peerId, envelope = JSON.parse(deviceEnvelope.account_payload);
         if (!envelope.sender_proof || !window.nacl.sign.detached.verify(this.hexToBytes(envelope.ciphertext),
             this.hexToBytes(envelope.sender_proof), this.hexToBytes(peerId))) throw new Error('Account sender proof rejected');
-        const plaintext = await this.decrypt(envelope.ciphertext, peerId);
+        const plaintext = await this.decrypt(envelope.ciphertext, peerId, true);
         if (!current()) return false;
-        // Historical decrypt returns null for both control success and error.
-        // Retain these until the explicit epoch-ratchet outcome replaces it.
+        if (plaintext?.handshakeProcessed === true) return true;
+        // Failed/incomplete crypto remains durable for retry; successful
+        // handshake control packets are retired by Device Inbox exactly once.
         if (plaintext === null) return false;
         let message = plaintext;
         try { message = JSON.parse(plaintext); } catch (_) { /* Historical text payload. */ }

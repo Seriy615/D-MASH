@@ -27,7 +27,9 @@
     const H0 = new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
     const enc = new TextEncoder();
     const rotr = (x, n) => (x >>> n) | (x << (32 - n));
-    const add = (...values) => values.reduce((sum, value) => (sum + value) >>> 0, 0);
+    // At most five uint32 terms: their sum is exact in a JS Number. Avoid
+    // allocating a rest array/reducer for every SHA-256 compression round.
+    const add = (a, b, c = 0, d = 0, e = 0) => (a + b + c + d + e) >>> 0;
     const asBytes = (value, name) => {
         if (value instanceof Uint8Array) return new Uint8Array(value);
         if (typeof value === "string" && value.length) return enc.encode(value);

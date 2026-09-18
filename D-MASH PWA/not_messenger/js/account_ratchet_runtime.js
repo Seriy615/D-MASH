@@ -175,9 +175,19 @@
         const pending = contextValue.ratchet.payloadToUpdate(stored.entropy ? {version: wire.version, from_epoch: wire.from_epoch, epoch: wire.epoch, update_id: wire.update_id, entropy: stored.entropy} : wire);
         const acknowledged = contextValue.ratchet.ackToUpdate(message?.ack, pending.entropy);
         await contextValue.state.restorePending(pending);
+        const previousRoot = core.bytesToHex(contextValue.state.root);
+        const previousEpoch = contextValue.state.epoch;
         if (!contextValue.state.acknowledge(acknowledged)) return false;
         contextValue.secrets.ratchetRoot = core.bytesToHex(contextValue.state.root);
         contextValue.secrets.ratchetEpoch = contextValue.state.epoch;
+        // The initiator can receive delayed packets from before the ACK too.
+        // Keep the same bounded two-epoch receive history as the update peer.
+        contextValue.secrets.ratchetPreviousRoot = previousRoot;
+        contextValue.secrets.ratchetPreviousRoots = [
+            {epoch: previousEpoch, root: previousRoot},
+            ...(Array.isArray(contextValue.secrets.ratchetPreviousRoots) ? contextValue.secrets.ratchetPreviousRoots : [])
+        ].filter((entry, index, all) => /^[0-9a-f]{64}$/i.test(entry?.root || '') &&
+            Number.isSafeInteger(entry.epoch) && all.findIndex(candidate => candidate.epoch === entry.epoch) === index).slice(0, 2);
         contextValue.secrets.ratchetLastUpdate = contextValue.ratchet.updateToPayload(pending);
         contextValue.secrets.ratchetPending = null;
         await contextValue.storage.putBox('blind_secrets', {alias: contextValue.alias, data: contextValue.secrets});
