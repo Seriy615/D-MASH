@@ -1,0 +1,15 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {DeviceRoot}=require('../js/device_root.js');
+const material=value=>({root:new Uint8Array(32).fill(value),identity:{signing:{secretKey:new Uint8Array(64).fill(value)},agreement:{secretKey:new Uint8Array(32).fill(value)}}});
+const old=material(7),next=material(9);let observed=0;
+DeviceRoot.state=old;
+const bad=DeviceRoot.onLock(()=>{throw Error('Observer failure');});
+const unsubscribe=DeviceRoot.onLock(()=>{assert.equal(DeviceRoot.state,null);assert(old.root.every(b=>b===0));observed++;});
+DeviceRoot._replaceState(next);
+assert.equal(observed,1);assert.equal(DeviceRoot.state,next);
+assert(old.identity.signing.secretKey.every(b=>b===0));assert(old.identity.agreement.secretKey.every(b=>b===0));
+unsubscribe();bad();DeviceRoot.lock();
+assert.equal(observed,1);assert(next.root.every(b=>b===0));assert.equal(DeviceRoot.state,null);
+assert.throws(()=>DeviceRoot.onLock(null));
+console.log('PASS root replacement/lock revokes owners, clears identity secrets and isolates observer failures');

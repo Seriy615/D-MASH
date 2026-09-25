@@ -110,6 +110,7 @@
         }),
         store: null,
         state: null,
+        _lockObservers: new Set(),
         _crypto: global.crypto,
 
         setStoreForTests(store) { this.store = store; },
@@ -287,7 +288,7 @@
                 const root = new Uint8Array(plaintext);
                 if (root.length !== ROOT_BYTES) throw new Error("invalid root length");
                 const identity = await this.deviceIdentity(root);
-                this.state = { root, identity, created: false, record };
+                this._replaceState({ root, identity, created: false, record });
                 return this.state;
             } catch (error) {
                 if (this.state?.root) this.lock();
@@ -296,22 +297,28 @@
             } finally { prfOutput?.fill(0); }
         },
         async deviceIdentity(root) {
-            const edSeed = await this.derive(root, this.domains.identityEd25519, VERSION, "");
-            const xSeed = await this.derive(root, this.domains.identityX25519, VERSION, "");
-            if (!global.nacl?.sign?.keyPair?.fromSeed || !global.nacl?.box?.keyPair?.fromSecretKey) {
-                throw new DeviceRootError("NACL_UNAVAILABLE", "Device identity primitives are unavailable.");
-            }
-            const signing = global.nacl.sign.keyPair.fromSeed(edSeed);
-            const agreement = global.nacl.box.keyPair.fromSecretKey(xSeed);
-            const idDigest = new Uint8Array(await this._crypto.subtle.digest("SHA-256", join(utf8("dmash/device-id/v1"), signing.publicKey, agreement.publicKey)));
-            return Object.freeze({
-                // DeviceID is public/pseudonymous: SHA-256 over public keys and a
-                // protocol label, never a hash of DeviceRoot.
-                deviceId: "d1_" + b64(idDigest).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", ""),
-                signing,
-                agreement,
-                fingerprints: Object.freeze({ signing: b64(signing.publicKey), agreement: b64(agreement.publicKey) })
-            });
+            let edSeed, xSeed, signing, agreement;
+            try {
+                edSeed = await this.derive(root, this.domains.identityEd25519, VERSION, "");
+                xSeed = await this.derive(root, this.domains.identityX25519, VERSION, "");
+                if (!global.nacl?.sign?.keyPair?.fromSeed || !global.nacl?.box?.keyPair?.fromSecretKey) {
+                    throw new DeviceRootError("NACL_UNAVAILABLE", "Device identity primitives are unavailable.");
+                }
+                signing = global.nacl.sign.keyPair.fromSeed(edSeed);
+                agreement = global.nacl.box.keyPair.fromSecretKey(xSeed);
+                const idDigest = new Uint8Array(await this._crypto.subtle.digest("SHA-256", join(utf8("dmash/device-id/v1"), signing.publicKey, agreement.publicKey)));
+                return Object.freeze({
+                    // DeviceID is public/pseudonymous: SHA-256 over public keys and a
+                    // protocol label, never a hash of DeviceRoot.
+                    deviceId: "d1_" + b64(idDigest).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", ""),
+                    signing,
+                    agreement,
+                    fingerprints: Object.freeze({ signing: b64(signing.publicKey), agreement: b64(agreement.publicKey) })
+                });
+            } catch (error) {
+                signing?.secretKey.fill(0); agreement?.secretKey.fill(0);
+                throw error;
+            } finally { edSeed?.fill(0); xSeed?.fill(0); }
         },
         async transportIdentity(nodeId) {
             if (!this.state?.root || !/^[0-9a-f]{64}$/i.test(nodeId || "")) {
@@ -387,7 +394,7 @@
             record.migration = { version: 1, state: "complete", binding };
             await store.put(record);
             await store.put({ id: "migration", version: 1, state: "complete" });
-            this.state = { root, identity, created: false, record };
+            this._replaceState({ root, identity, created: false, record });
             return this.state;
         },
         async _legacyVaultExists() {
@@ -484,7 +491,7 @@
                 created = true;
             }
             const identity = await this.deviceIdentity(root);
-            this.state = { root, identity, created, record };
+            this._replaceState({ root, identity, created, record });
             return this.state;
         },
         // Changing the calculator master secret must also rotate the local
@@ -571,9 +578,25 @@
             });
             this.store = null;
         },
+        onLock(listener) {
+            if (typeof listener !== "function") throw new TypeError("Lock listener must be a function");
+            this._lockObservers.add(listener);
+            return () => this._lockObservers.delete(listener);
+        },
+        _replaceState(state) {
+            if (this.state) this.lock();
+            this.state = state;
+        },
         lock() {
-            if (this.state?.root) this.state.root.fill(0);
+            const wasUnlocked = Boolean(this.state);
+            for (const key of [this.state?.root, this.state?.identity?.signing?.secretKey, this.state?.identity?.agreement?.secretKey]) {
+                if (key instanceof Uint8Array && key.byteLength) key.fill(0);
+            }
             this.state = null;
+            if (!wasUnlocked) return;
+            for (const listener of [...this._lockObservers]) {
+                try { listener(); } catch (_) { /* One observer cannot prevent other owners from locking. */ }
+            }
         }
     };
 

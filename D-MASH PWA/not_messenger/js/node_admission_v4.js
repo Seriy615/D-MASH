@@ -1,7 +1,7 @@
 'use strict';
 // Kpwd is password-equivalent, not PAKE. Never store it outside encrypted Node storage.
 (function(global){
- const PROFILE='ARGON2ID_64M_T3_P1_V1',scriptUrl=global.document?.currentScript?.src;
+ const PROFILE='ARGON2ID_64M_T3_P1_V1',scriptUrl=global.document?.currentScript?.src||global.DMASH_NODE_WORKER_URLS?.admission;
  const text=value=>new TextEncoder().encode(value),hex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
  const field=(value,length)=>{if(typeof value!=='string'||!(new RegExp('^[0-9a-f]{'+length+'}$')).test(value))throw Error('Invalid admission field');};
  function challengeBytes(challenge,issuer,applicant,transcriptHash){

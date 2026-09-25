@@ -36,8 +36,9 @@ plan controls milestone scope; no current v3 client is silently upgraded.
   Do not ship the old Probe schema as a privacy-compliant v4 advertisement.
 - One bounded next-hop queue handles locally submitted opaque payloads and
   transit. First-arrival aggregation remains 500 ms, with peer/route/global
-  quotas, expiry, loop/duplicate guards and backpressure. No padding, cover
-  traffic or global periodic Probe refresh is introduced.
+  quotas, expiry, loop/duplicate guards and backpressure. No padding or global periodic Probe refresh is introduced. Route-carried
+  cover DATA is permitted by the subsequent explicit user instruction, with
+  bounded injection through existing grants (see TRANSPORT_V4_DISCOVERY.md).
 - Store-and-forward serves any authorized next hop, including transit. Use
   domain-separated keyed aliases bound to authenticated Node ownership and a
   directional store grant; NodeID or raw DNSS alone cannot retrieve a queue.
@@ -295,3 +296,21 @@ production identity/resource PoW, persisted DNSS reconnect, opaque ciphertext
 exchange and revocation. This is an Account-free channel test on loopback, not
 deployed WSS/transit, route ownership, mailbox or N1–N8 acceptance. Discovery's
 candidate design and unresolved issues are in TRANSPORT_V4_DISCOVERY.md.
+
+
+## Dedicated browser Worker lifecycle (implemented, not activated)
+
+NodeRuntimeHostV4 owns one dedicated Worker per unlocked DeviceRoot session.
+It transfers only independently stored Node seed/Base NCRH and a derived Node
+storage key, using exact-sized buffers and clearing source material. The Worker
+owns sockets, routing, admission work, relationship storage and optional cover.
+DeviceRoot lock/replacement immediately rejects host operations, requests stop,
+and enforces termination within 250 ms. Root lock clears Root and Device identity
+secret arrays; this is lifecycle enforcement, not a physical RAM erasure claim.
+
+Actual Chrome/Python transit passes with encrypted DeviceRoot persistence,
+root-lock cancellation, Node identity reuse after unlock and responsive UI.
+Unit tests cover bounded RPCs, buffer isolation and single-session ownership.
+Cross-tab leadership, Account logout integration, Account route APIs, native WSS
+endpoint mounting and complete N5 lifecycle audit remain open. Release .12 caches
+these modules without enabling v4 in the application.

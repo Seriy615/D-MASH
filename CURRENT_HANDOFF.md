@@ -1,3 +1,27 @@
+# Execution checkpoint — dedicated Node Worker and DeviceRoot lifecycle
+
+Dedicated Worker owns v4 sockets, routing, admission, encrypted relationship store
+and cover timer. Host transfers exact-sized copies of Node-only material and
+wipes originals; no Account or DeviceRoot is sent to the Worker. DeviceRoot lock
+and replacement close the host, reject pending RPCs and cancel connections/mining.
+Fallback termination is bounded to 250 ms. Same unlocked Root session has one host;
+cross-tab ownership and Account logout integration remain open.
+
+Actual Chrome Worker transit PASS with real encrypted DeviceRoot persistence,
+late binding, early/established-route cover, genuine payload delivery, UI heartbeat,
+lock cancellation and stable Node identity after unlock. Final log:
+/tmp/dmash-v4-worker-final-browser.log. Full suite PASS: 252 backend + 11 Origin
++ 60 JS (/tmp/dmash-v4-worker-all-tests.log). Both sessions exited 0.
+
+Release prepared: transport-v3-worker-lifecycle-20260925.12. Service worker caches
+v4 modules, but index.html does not activate v4. Source/EMS before this checkpoint:
+fb9fbbf; deployed files: 7af9044, release .11. Next: commit, synchronize, deploy,
+exact-revision verification and real EMS v3 regression after Root changes. Then
+native v4 endpoint and Account bindings/Inbox/recovery; entire plan remains active.
+No N0 privacy or N1–N8 completion claim; numeric TTL origin inference remains open.
+
+---
+
 # Execution checkpoint — route-carried DUMMY/cover DATA
 
 Both routing runtimes now inject opaque cover through existing transit grants,

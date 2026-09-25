@@ -1,6 +1,6 @@
 'use strict';
 (function(global){
- const workerUrl=global.document?.currentScript?.src,workers=new Set();
+ const workerUrl=global.document?.currentScript?.src||global.DMASH_NODE_WORKER_URLS?.channel,workers=new Set();
  const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===keys;
  const policy=value=>{
   if(!exact(value,'difficulty,password_challenge,type,version')||value.type!=='NODE_POLICY'||value.version!==4||!Number.isInteger(value.difficulty)||value.difficulty<20||value.difficulty>24||!(value.password_challenge===null||typeof value.password_challenge==='object'))throw Error('Invalid Node policy');

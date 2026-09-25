@@ -4,7 +4,7 @@
 (function (global) {
     const PREFIX = '0520';
     const MAX_MINING_MS = 15 * 60 * 1000;
-    const scriptUrl = global.document?.currentScript?.src;
+    const scriptUrl = global.document?.currentScript?.src || global.DMASH_NODE_WORKER_URLS?.identity;
     const hex = bytes => Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
     const hash = value => hex(global.DmashBlake3.blake3(new TextEncoder().encode(value)));
     const verify = nodeId => typeof nodeId === 'string' && /^[0-9a-f]{64}$/.test(nodeId) && hash(nodeId).startsWith(PREFIX);
