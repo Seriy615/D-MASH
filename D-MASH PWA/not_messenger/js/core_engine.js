@@ -1069,12 +1069,27 @@ const Core = {
     },
     // Core.sendEmergencyHandshake - Отправка SOS-пакета при потере синхронизации
     async sendEmergencyHandshake(pid) {
-        if (this._lastHandshakeTime && Date.now() - this._lastHandshakeTime < 5000) return;
-        this._lastHandshakeTime = Date.now();
-
-        // Просто шлем SOS в фоне, юзер не должен видеть паники
+        if (!/^[0-9a-f]{64}$/i.test(pid || '') || !this.keys?.sign) return false;
+        const keys = this.keys, now = Date.now();
+        this._emergencyHandshakeRetries ||= new WeakMap();
+        if (!this._emergencyHandshakeRetries.has(keys)) {
+            this._emergencyHandshakeRetries.set(keys, new Map());
+        }
+        const peers = this._emergencyHandshakeRetries.get(keys);
+        for (const [peer, retry] of peers) {
+            if (!retry.pending && retry.until <= now) peers.delete(peer);
+        }
+        pid = pid.toLowerCase();
+        if (peers.has(pid) || peers.size >= 1024) return false;
+        const retry = {pending: true, until: now + 5000};
+        peers.set(pid, retry);
         this.shmon("WARN", "Тихий перезапуск линии...");
-        await this.sendMessage({ type: "sys", content: "re-sync" }, "SOS");
+        try {
+            return await this.sendMessage({ type: "sys", content: "re-sync" }, "SOS", pid) === true;
+        } finally {
+            retry.pending = false;
+            retry.until = Date.now() + 5000;
+        }
     },
     // Core.fastHash           - Обертка над SHA-256
     fastHash: async (m) => {

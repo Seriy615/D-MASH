@@ -7,7 +7,7 @@ const coreSource = fs.readFileSync(path.join(jsDir, 'core_engine.js'), 'utf8');
 const runtimeSource = fs.readFileSync(path.join(jsDir, 'account_ratchet_runtime.js'), 'utf8');
 
 assert.match(runtimeSource, /DmashAccountRatchetRuntime/);
-assert.match(runtimeSource, /HYBRID_MLKEM768_V1/);
+assert.match(runtimeSource, /HYBRID_MLKEM768_V2/);
 assert.match(runtimeSource, /ratchetRoot/);
 assert.match(coreSource, /return window\.DmashAccountRatchetRuntime\.encryptPacket/);
 assert.match(coreSource, /return window\.DmashAccountRatchetRuntime\.handleUpdate/);

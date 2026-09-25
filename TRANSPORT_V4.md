@@ -132,3 +132,36 @@ Account-side crash idempotency remain follow-up work; one pass tries each row on
 H1-H4/R1-R2 still require executable failing regressions before Account integration.
 Production SHA, SW state, two-browser acceptance, real TURN and deployment are
 NOT RUN for this checkpoint. v4 is not implemented or advertised by this change.
+
+## Account control correction, 2026-09-25 (independent of transport v4)
+
+Ratchet control suites are now `CLASSICAL_ROOT_V2` and `HYBRID_MLKEM768_V2`.
+This versions collision/ACK semantics; it does not change the underlying
+primitive's version-1 update representation or claim new PCS/PQ properties.
+Version-1 control suites are refused explicitly; both peers must update before
+starting a new ratchet update. Existing stored roots/history are preserved, and
+pending material can be retried under v2 after both runtimes update. No automatic
+fallback to v1 collision handling is permitted.
+
+For simultaneous proposals from the same epoch, the lexicographically smaller
+random 128-bit update ID wins. The winner records the discarded remote proposal
+ID (bounded to two entries) and keeps its own pending material. The loser
+atomically discards its proposal when persisting the winner's derived root and
+ACK intent. A repeated discarded proposal is consumed without an ACK or root
+change. Equal IDs with conflicting proposals are rejected. This is deterministic
+state convergence, not fresh X25519 compromise recovery.
+
+Per-Account/peer serialization protects propose/apply/ACK persistence; queued
+operations reject a changed Account session. On receive, new root, receive history,
+last update and `ratchetPendingAck` persist before ACK transmission. Send false
+or exception leaves the incoming Inbox record and ACK intent retryable. Only
+successful send clears the matching ACK intent. Lost ACKs are recreated on an
+identical update under the original epoch/root. Autonomous retry scheduling,
+full vault transaction/session pinning and crash-interleaving acceptance remain
+required; these changes do not mark all N4 reliability complete.
+
+Emergency recovery now requires an explicit peer ID, and uses independent
+bounded five-second retry slots per Account key generation and peer. Chat
+selection cannot redirect recovery. `tools/diagnose_initial_handshake.cjs`
+executes real NaCl/Kyber fault scenarios H1-H3 with simulated storage/network;
+all three currently FAIL and are tracked rather than claimed fixed.

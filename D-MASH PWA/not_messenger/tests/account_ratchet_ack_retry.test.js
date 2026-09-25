@@ -25,7 +25,7 @@ function account() {
         acknowledgements.push(await runtime.encryptPacket(receiver, message, pid, {...stored, ...override}));
         return true;
     };
-    const control = {type: 'ratchet_update', suite: 'CLASSICAL_ROOT_V1', update: ratchet.updateToPayload(update)};
+    const control = {type: 'ratchet_update', suite: 'CLASSICAL_ROOT_V2', update: ratchet.updateToPayload(update)};
     await runtime.handleUpdate(receiver, control, sender.keys.pub_hex);
     assert.equal(stored.ratchetEpoch, 2);
     // Lose the first ACK. Reloaded storage must recognize a repeated update
@@ -43,7 +43,7 @@ function account() {
         {ratchetRoot: hex(root), ratchetEpoch: 1});
     stored = {staticShared: hex(root), ratchetRoot: hex(root), ratchetEpoch: 1,
         ratchetPending: ratchet.updateToPayload(update)};
-    await runtime.handleAck(sender, {type: 'ratchet_ack', suite: 'CLASSICAL_ROOT_V1', ack: ratchet.updateToAck(update)}, receiver.keys.pub_hex);
+    await runtime.handleAck(sender, {type: 'ratchet_ack', suite: 'CLASSICAL_ROOT_V2', ack: ratchet.updateToAck(update)}, receiver.keys.pub_hex);
     assert.equal(stored.ratchetEpoch, 2);
     assert.equal(await runtime.decryptPacket(sender, unhex(delayed), receiver.keys.pub_hex, stored),
         'delayed epoch-one message', 'initiator retains prior receive epoch after ACK advances its root');

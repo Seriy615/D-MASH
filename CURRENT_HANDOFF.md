@@ -1,3 +1,37 @@
+# Execution update — 2026-09-25
+
+Authorization now explicitly includes continued development through the entire
+plan, commit/push, deployment for testing and EMS repository synchronization.
+
+- `1c7a1154e3281b55883167eaafae379f96ae7099` is pushed to `origin/transport-v3`.
+  `/home/jcode/D-MASH` on EMS was moved from old detached `5dbda4a` to tracking
+  `transport-v3` at this SHA without touching untracked `tools/get_commit.sh`
+  or `tools/deploy-ems.sh`.
+- The required `get_commit.sh` initially failed on the root-owned lock file.
+  The same script succeeded with its documented sudo invocation. It deploys
+  **PWA only**, explicitly excluding Node runtime. Backup:
+  `/srv/messenger.d-mash.ru/backups/manual-rollback-20260925T114654Z`.
+- Published `release.js`, `sw.js`, `device_inbox.js` bytes match that commit;
+  release is `transport-v3-n0-20260925.9`. Script's old release-name regex printed
+  `unknown`; byte verification establishes the real release instead.
+- Real Chromium two-account private-pairing acceptance PASS: authenticated
+  registration, initial exchange, bidirectional messages, two ratchet epochs,
+  delayed prior-epoch message, reconnect/queued delivery and retired handshake
+  controls. Log `/tmp/dmash-ems-n0-two-accounts.log` (local test-only accounts).
+  This remains v3 browser evidence, not v4 transit or TURN acceptance.
+- EMS Node service is active but backend code was not updated by get_commit.sh.
+  Node deployment needs a separately verified backend path; do not attribute the
+  local legacy HTTP fix to production yet.
+
+Current local continuation: H4 explicit-peer recovery and R1/R2 ratchet collision,
+serialization and persist-before-ACK corrections, with version-2 control suites
+and mixed-version refusal. See TRANSPORT_V4.md for the exact delta. Targeted tests
+pass. H1-H3 are reproducibly FAIL with real bundled crypto in
+`node tools/diagnose_initial_handshake.cjs`; their replacement state machine is
+next. This is an ongoing checkpoint, not completion of N0–N8.
+
+---
+
 # Current checkpoint — unified Node N0, 2026-09-25
 
 Base and fetched `origin/transport-v3`: `aa0ad8aac716570bf9b65b8901e4548c255251f3`.
