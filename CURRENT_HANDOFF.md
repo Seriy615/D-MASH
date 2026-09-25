@@ -1,3 +1,86 @@
+# Current checkpoint — unified Node N0, 2026-09-25
+
+Base and fetched `origin/transport-v3`: `aa0ad8aac716570bf9b65b8901e4548c255251f3`.
+This checkpoint is prepared for commit/push and EMS verification; see subsequent
+execution entries for exact deployed evidence.
+The user-provided `D-MASH_Codex_Development_Plan.md` is the controlling plan;
+its original contents have been preserved. Older entries below are historical.
+
+## Changes and evidence
+
+- `TRANSPORT_V4.md` records the proposed versioned NODE-only contract,
+  directional stable DNSS, separate admission/resource grants, common
+  forwarding/store queues, privacy audit and migration gates. It explicitly
+  leaves the Probe/authority redesign and browser fingerprint boundary open.
+  No v4 endpoint, role change or browser transit is claimed.
+- The legacy HTTP router now rejects requests with 410 before runtime state,
+  key derivation, persistence or peer dialing. Regression tests cover 13
+  endpoints plus bogus credentials/loopback headers. Before the guard, the
+  tests produced 13 assertion failures. Both runtime entrypoints mount this
+  same router. Public nginx exposure was NOT inspected; server deployment
+  remains unchanged. The old server-hosted HTTP Account UI is retired.
+- I1 reproduced with a failing first Account callback and a valid next record.
+  Pending and staged Inbox drains now isolate per-record decrypt/handler errors,
+  retain failed ciphertext, continue valid records, and abort on root lock/change.
+  Tests use actual NaCl envelopes and AES-GCM storage with memory-backed IO;
+  they cover tampering, retry, dedupe and mid-callback lock. This is UNIT evidence,
+  not IndexedDB/browser acceptance. Durable quarantine/backoff and crash-after-
+  Account-persist idempotency remain unfinished.
+- Removed the tracked BaseNCRH sidecar from the working tree/distribution, with
+  a private local backup outside the repository. Added secret-sidecar ignore
+  rules. The lifecycle test was also creating/loading this default runtime
+  secret; it now uses explicit test material. No deployed usage or rotation is
+  established. Git history is unchanged; historical exposure remains.
+- `requirements-test.txt` includes runtime requirements plus `httpx==0.27.2`.
+  The pre-existing `/tmp/dmash-v3-py312` environment lacked required libraries;
+  the initial test run failed on imports. Reference verification uses a fresh
+  repository `.venv`, Python 3.12.14 and Node 24.19.0.
+
+Validation command: `.venv/bin/python tools/test_all.py`.
+Local result: **211 backend tests, 11 Origin tests, 49 PWA JS suites PASS**.
+Regression failure log: `/tmp/dmash-n0-http-before.log`; full verification:
+`/tmp/dmash-n0-final.log`. `git diff --check` passes. No crypto authentication,
+PoW threshold, route ownership check or mailbox ACK semantics were weakened.
+
+## Current milestone table
+
+| Stage | Status | Evidence / remaining gate |
+|---|---|---|
+| N0 | PARTIAL | Source contract/privacy audit, HTTP and I1 regressions/fixes. H1-H4/R1-R2 regressions and privacy-safe Probe authority/metric design still open. |
+| N1 | PLANNED | JS NODE peer, v4 wire/interoperability, general admission and stable directional DNSS not implemented. |
+| N2 | PLANNED | No N1 -> browser -> N2 transit evidence; no Account-independent browser Node runtime. |
+| N3 | PARTIAL (v3 foundation) | Multi-Account encrypted Inbox exists; unified Node integration/migration pending. |
+| N4 | PARTIAL | I1 isolation corrected; initial handshake collision/recovery and ratchet collision/durable ACK remain. |
+| N5 | PARTIAL | Legacy HTTP disabled locally, source sidecar removed. Deployed inventory/rotation, verifier migration, crypto/PFS/PCS review remain. |
+| N6 | PARTIAL (v3 foundation) | General Node password gate, descriptor and installer migration remain. |
+| N7 | PARTIAL (v3 foundation) | Existing signaling/call/file code; real TURN relay, unified admission and media acceptance NOT RUN. |
+| N8 | NOT RUN | Local unit/ASGI/interop suites pass; v4 browser/transit, migration, production acceptance and release remain. |
+| A-M / E6 | INCOMPLETE | Existing A-K transport/storage/media foundations are v3-specific; L reliability/security and M full acceptance are incomplete. E6 protected-history threat model remains separate. |
+
+## Next implementation work
+
+1. Close N0 Probe/root/origin-tag/metric/grant semantics against the external-peer
+   observer model. Current `metric`, `trace.length`, global origin tags and
+   endpoint-only operations are explicit blockers, not anonymity guarantees.
+2. Add real-crypto failing H1-H4 and R1-R2 regression fixtures before moving
+   Account state. Do not grow the acceptance monkey-patch chain.
+3. Implement shared v4 Node handshake/admission/authorization, then browser
+   transit through two authenticated neighbors without Account login. Follow
+   the plan's N1/N2 no-bypass test before declaring the unified model ready.
+4. Before any release, inventory existing BaseNCRH usage without exporting
+   secrets, back up and rotate affected runtime state with recovery/re-advertising;
+   verify old mailbox/history migration and mixed-version refusal.
+
+At this checkpoint, pushed/deployed verification is pending. The following
+execution session is authorized to commit, push and deploy for acceptance.
+`get_commit.sh`: NOT RUN. Page/SW release, two-browser tests, direct/relay media,
+server nginx and post-deploy acceptance: NOT RUN. The prior release evidence
+below must not be attributed to this checkpoint.
+
+---
+
+# Historical checkpoints (retain for provenance)
+
 # Active transport-v3 work — 2026-09-14
 
 ## Release .8 — 2026-09-18

@@ -1,3 +1,7 @@
+> Historical v3 implementation contract. The new unified Node requirements and
+> unresolved privacy gates are documented in [TRANSPORT_V4.md](TRANSPORT_V4.md).
+> v3 remains the implemented wire; v4 is not enabled by documentation changes.
+
 # Transport v3 engineering record
 
 ## Release .8 — 2026-09-18

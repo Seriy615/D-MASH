@@ -144,8 +144,11 @@
         }
         async _process(envelope, policy) {
             if (!policy) return 'DEVICE_STORED';
+            const root = this._root();
             if (policy.scope === 'DEVICE' && !envelope.route_id) envelope = {...envelope, route_id: policy.routeId};
-            if (await this._dispatch(envelope, policy)) {
+            const processed = await this._dispatch(envelope, policy);
+            this._check(root);
+            if (processed) {
                 await this._write('packet:' + envelope.packet_id, { record: 'seen', packetId: envelope.packet_id }, false, Date.now() + 30 * 86400000);
                 return 'PROCESSED';
             }
@@ -179,22 +182,52 @@
                 return this._process(envelope, policy);
             });
         }
+        async *_drainRecords(root, results) {
+            const rows = await this.store.all();
+            this._check(root);
+            let opened = 0, firstError = null;
+            for (const row of rows) {
+                this._check(root);
+                let record;
+                try {
+                    record = await this._open(row);
+                    opened++;
+                } catch (error) {
+                    this._check(root);
+                    firstError ||= error;
+                    // Preserve corrupt ciphertext for recovery. Never mark it
+                    // consumed and never expose its contents in diagnostics.
+                    results.push('DEVICE_STORED');
+                    continue;
+                }
+                this._check(root);
+                yield record;
+            }
+            // Do not turn a wrong root (or wholly corrupt store) into a
+            // successful empty drain. Individual failures remain isolated.
+            if (!opened && firstError) throw firstError;
+        }
         drain(accountSlot = null) {
             return this._exclusive(async () => {
                 const root = this._root(), results = [];
-                for (const row of await this.store.all()) {
-                    const record = await this._open(row);
-                    this._check(root);
-                    if (record.record !== 'pending') continue;
-                    // A route may be restored after the Node already drained
-                    // its mailbox. Keep unknown-route payloads encrypted until
-                    // local authority is available; never infer an Account.
-                    const policy = record.policy || (record.envelope.route_alias
-                        ? await this.policyByAlias(record.envelope.route_alias)
-                        : await this._get('route:' + record.envelope.route_id));
-                    if (!policy) continue;
-                    if (accountSlot !== null && (policy.scope !== 'ACCOUNT' || policy.accountSlot !== accountSlot)) continue;
-                    results.push(await this._process(record.envelope, policy));
+                for await (const record of this._drainRecords(root, results)) {
+                    try {
+                        if (record?.record !== 'pending') continue;
+                        // A route may be restored after the Node already drained
+                        // its mailbox. Keep unknown-route payloads encrypted until
+                        // local authority is available; never infer an Account.
+                        const policy = record.policy || (record.envelope.route_alias
+                            ? await this.policyByAlias(record.envelope.route_alias)
+                            : await this._get('route:' + record.envelope.route_id));
+                        if (!policy) continue;
+                        if (accountSlot !== null && (policy.scope !== 'ACCOUNT' || policy.accountSlot !== accountSlot)) continue;
+                        results.push(await this._process(record.envelope, policy));
+                    } catch (_) {
+                        this._check(root);
+                        // Handler, policy or persistence failure retains this
+                        // pending packet without starving subsequent records.
+                        results.push('DEVICE_STORED');
+                    }
                 }
                 return results;
             });
@@ -214,15 +247,16 @@
             });
         }
         async drainTransport(receiver) {
-            const results = [];
-            for (const row of await this.store.all()) {
-                const record = await this._open(row);
-                if (record.record !== 'transport') continue;
+            const root = this._root(), results = [];
+            for await (const record of this._drainRecords(root, results)) {
+                if (record?.record !== 'transport') continue;
                 try {
                     const result = await receiver(record.ciphertext);
+                    this._check(root);
                     await this._write(record.label, {record: 'transport_seen'}, false, Date.now() + 86400000);
                     results.push(result);
                 } catch (_) {
+                    this._check(root);
                     // Keep even unknown/temporarily undecryptable Device boxes.
                     // A bad entry must not prevent the rest of a drain.
                     results.push('DEVICE_STORED');

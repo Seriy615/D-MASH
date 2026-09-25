@@ -78,6 +78,9 @@ class RegistrationLifecycleTests(unittest.TestCase):
         try:
             with (
                 patch.object(core, "ensure_node_identity", return_value=node_key_hex),
+                # This lifecycle test must not load or create a real runtime
+                # secret in the checkout. File persistence has its own suite.
+                patch.object(core, "ensure_base_ncrh", return_value=b"\x53" * 32),
                 patch.object(core.NodeCapabilities, "from_env", return_value=FakeCapabilities()),
                 patch.object(core, "create_crypto_executor"),
                 patch.object(core, "DatabaseManager", FakeDatabase),

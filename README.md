@@ -4,21 +4,22 @@ D-MASH is an experimental privacy-oriented messenger prototype. The repository c
 
 > This is a prototype. It has not received an independent security audit. Do not use it for sensitive communication without reviewing the implementation and threat model.
 
-## Current version
+## Current development state
 
-The current tree is the code-only M1.5 baseline. It includes:
+Active development is on `transport-v3`, based on `aa0ad8a` (2026-09-18).
+The current implementation still has distinct DEVICE and NODE network roles.
+The PWA does **not** yet relay third-party Mesh packets. The target is a unified
+Node runtime, including browsers, with Account-independent transit.
 
-- browser PWA client in `D-MASH PWA/not_messenger`;
-- Python node runtime in `D-MASH/client/backend`;
-- authenticated DMP-C WebSocket client gateway;
-- node-to-node WebSocket transport with encrypted node-local state;
-- opaque locator registration, probe propagation, shortest-route candidate selection, envelope submission, mailbox pull, and acknowledgement operations;
-- encrypted local message storage and E2EE message handling;
-- service-worker releases with release-scoped static caches;
-- optional Tact traffic-shaping and DSP audio modules;
-- notification and personal-bot integration under `origin`.
+- [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md): current milestone status and evidence.
+- [D-MASH_Codex_Development_Plan.md](D-MASH_Codex_Development_Plan.md): development requirements.
+- [TRANSPORT_V4.md](TRANSPORT_V4.md): proposed unified contract, source privacy audit,
+  migration gates and unresolved architecture decisions.
+- [TRANSPORT_V3.md](TRANSPORT_V3.md): historical v3 implementation contract.
 
-The mesh transport implementation is still being integrated and validated. A connected PWA proves an authenticated control session, not successful end-to-end message delivery. The legacy PHP relay remains in the tree for compatibility and must be treated as a separate transport mode.
+N0 is partial. Existing Probe metrics/traces and endpoint-facing resource
+operations do not meet the new endpoint-privacy requirement. Neither unit tests
+nor renaming a role establishes anonymity or real browser transit.
 
 ## Repository layout
 
@@ -34,7 +35,7 @@ tools/                      Operational deployment utilities
 
 ## Requirements
 
-- Python 3.10 or newer
+- Python 3.12 for the reference test/runtime environment
 - `pip`
 - `ffmpeg` for the optional DSP modules
 - Docker and Docker Compose for the multi-node local setup
@@ -106,40 +107,44 @@ The PWA transport modes are explicit:
 
 Mesh mode must not silently fall back to the legacy relay. Without an active node or an armed route, delivery is reported as unavailable rather than being presented as delivered.
 
-## DMP-C operations
+## Transport and local state
 
-The client gateway currently exposes these authenticated operations over its WebSocket session:
+The active v3 gateway authenticates DEVICE sessions and independently authorizes
+DNSS, route registration, probes, route status, submission and mailbox drain.
+Python Node peers use a separate NODE authorization flow. The proposed v4
+contract is not yet enabled. Mesh mode has no silent fallback to the PHP relay.
 
-- `PING` and `STATUS` for session and node status;
-- `REGISTER_INBOUND_LOCATOR` and `UNREGISTER_INBOUND_LOCATOR`;
-- `START_PROBE` for opaque route discovery;
-- `SUBMIT_ENVELOPE` for encrypted envelope submission;
-- `PULL` for mailbox retrieval;
-- `ACK` for confirmed delivery acknowledgement.
+V3 mailbox PULL leases all currently authorized rows within quota, awaits send,
+and deletes only the leased rows after successful send. Send failure retains
+mail; a crash between send/delete can duplicate delivery. There is no mandatory
+client ACK in this v3 drain. The PWA persists opaque payloads locally and
+processes them only under the matching Account. Hop acceptance is not Account
+DELIVERED or READ. Bad local Inbox records are isolated during drain and retained
+for recovery; persistent quarantine/backoff remains unfinished.
 
-The mesh packet carries an opaque route value and encrypted envelope. The node does not need the message plaintext or a public recipient ID to forward the packet. Persistent routing state is stored under node-local blinded aliases.
+The retired HTTP control API (login/logout/connect/debug/state/peers/messages/
+rename/read/send) now returns 410 before touching runtime state. Use the host
+peer CLI above for peer administration. It is not a browser admin API.
 
-## Mailbox behavior
-
-A destination node can retain an encrypted envelope when the destination PWA is offline. The client later performs `PULL`, verifies and decrypts the envelope locally, and sends `ACK`. A `PULL` operation alone is not a delivery acknowledgement.
+Node identity and BaseNCRH sidecars are runtime secrets, excluded from source
+distribution. Preserve existing files across upgrades. A previously tracked
+BaseNCRH requires deployed-instance inventory and controlled rotation if used;
+repository removal does not revoke deployed copies or erase Git history.
 
 ## Testing
 
-Run the Python tests from `D-MASH/client` with the project dependencies installed:
+From the repository root, use an isolated Python 3.12 environment:
 
 ```bash
-python -m unittest discover -s tests -v
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements-test.txt
+.venv/bin/python tools/test_all.py
 ```
 
-The transport tests cover opaque locators, authenticated gateway behavior, mailbox retention until acknowledgement, shortest-route candidate selection, invalid signatures, and packet metadata invariants.
-
-For a local mesh stress run:
-
-```bash
-python D-MASH/stress_test.py
-```
-
-A passing unit or synthetic integration test does not replace browser acceptance. End-to-end acceptance must use two real PWA sessions, separate entry nodes, a paired route, and instrumentation proving that the compatibility relay was not called.
+The runner includes backend, Origin and all PWA `*.test.js` suites; Node.js is
+required (reference version 24.19.0). ASGI tests explicitly pin `httpx` with the
+runtime dependencies. Passing local tests is not real-browser, TURN, deployment
+or v4 transit acceptance. Never reset user storage to pass acceptance.
 
 ## Deployment model
 

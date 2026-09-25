@@ -4,7 +4,7 @@ import json
 import uuid
 import time
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -14,7 +14,13 @@ import asyncio
 
 # ``core`` imports this router while it is initializing.  Define it before
 # importing runtime state so package imports resolve that intentional cycle.
-router = APIRouter()
+async def deny_retired_http():
+    # This router has no authenticated admin boundary. Never let a public
+    # request reach legacy Account state, key derivation, DB reads or dialing.
+    raise HTTPException(410, "Legacy HTTP control API unavailable; use authenticated DMP-C or the host peer CLI.")
+
+
+router = APIRouter(dependencies=[Depends(deny_retired_http)])
 
 if __package__:
     from .core import state

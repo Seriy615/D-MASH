@@ -19,3 +19,7 @@ backups/
 server-smoke*
 notification-secrets.json
 notification-secrets.key
+
+# Persistent Node secret sidecars are runtime state, never distributable assets.
+*.key.*
+*.basencrh
