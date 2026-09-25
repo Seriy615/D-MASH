@@ -8,14 +8,14 @@ self.DMASH_NODE_WORKER_URLS=Object.freeze({
 importScripts('vendor/nacl-fast.min.js','vendor/blake3.min.js','secure_session.js',
  'node_identity.js','node_relationships_v4.js','node_admission_v4.js','node_registration_v4.js',
  'resource_pow.js','node_socket_v4.js','node_channel_v4.js','probe_primitives_v4.js',
- 'route_discovery_v4.js','recipient_payload_v4.js','node_routing_v4.js');
-let closed=false,initializing=false,signing=null,store=null,runtime=null,gate=null;
+ 'route_discovery_v4.js','recipient_payload_v4.js','node_routing_v4.js','node_inbox_v4.js','node_local_delivery_v4.js');
+let closed=false,ready=false,initializing=false,signing=null,store=null,runtime=null,gate=null,inbox=null,local=null;
 const abort=new AbortController(),connecting=new Set(),requests=new Set();
 const hex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
 const wipe=value=>{if(value instanceof Uint8Array&&value.byteLength)value.fill(0);};
 async function stop(){
- if(closed)return;closed=true;abort.abort();
- try{await runtime?.close();}finally{store?.close();gate?.close();wipe(signing?.secretKey);self.close();}
+ if(closed)return;closed=true;ready=false;abort.abort();inbox?.close();local?.close();store?.close();gate?.close();
+ try{await runtime?.close();}finally{wipe(signing?.secretKey);self.close();}
 }
 async function initialize(data){
  if(initializing||runtime||closed)throw Error();initializing=true;
@@ -26,13 +26,16 @@ async function initialize(data){
   store=await DmashNodeRelationshipsV4.open(data.storageKey,nodeId,{isCurrent:()=>!closed});
   if(closed)throw Error();
   runtime=new DmashNodeRoutingV4(data.baseNcrh);
+  inbox=await DmashNodeInboxV4.open(data.storageKey,nodeId,{isCurrent:()=>!closed});
+  local=new DmashNodeLocalDeliveryV4(runtime,inbox);await inbox.pruneSeen();
+  const restored=await local.restore();
   if(data.credential)gate=new DmashNodeAdmissionV4.PasswordGate(data.credential);
-  return {nodeId,worker:true};
+  ready=true;return {nodeId,worker:true,...restored};
  }catch(error){self.postMessage({id:data.id,ok:false});await stop();throw error;}
  finally{wipe(data.seed);wipe(data.storageKey);wipe(data.baseNcrh);wipe(data.credential?.key);}
 }
 async function connect(data){
- if(!runtime||closed||connecting.size>=2||connecting.has(data.nodeId)||runtime.peers.has(data.nodeId))throw Error();
+ if(!ready||closed||connecting.size>=2||connecting.has(data.nodeId)||runtime.peers.has(data.nodeId))throw Error();
  if(typeof data.url!=='string'||data.url.length>2048)throw Error();
  if(data.password!==undefined&&(typeof data.password!=='string'||!data.password||new TextEncoder().encode(data.password).length>1024))throw Error();
  connecting.add(data.nodeId);let secure,channel;const derived=[];
@@ -55,8 +58,14 @@ self.onmessage=async({data})=>{
   if(data.type==='INIT')result=await initialize(data);
   else if(data.type==='CONNECT')result=await connect(data);
   else{
-   if(!runtime||closed)throw Error();
-   if(data.type==='STATS')result={...runtime.stats,owned:runtime.owned.length,peers:runtime.peers.size,
+   if(!ready||closed)throw Error();
+   if(data.type==='BIND_LOCAL')result=await local.bind(data);
+   else if(data.type==='INSTALL_RECIPIENT_KEYS')result=await local.installRecipientKeys(data.routeId,data.recipientKeys);
+   else if(data.type==='DISCOVER')result=await local.discover(data.certificate);
+   else if(data.type==='SUBMIT')result=local.send(data.handle,data.payload,data.replyRouteId);
+   else if(data.type==='INBOX_LIST')result=await inbox.list(data.accountSlot,data.limit);
+   else if(data.type==='INBOX_ACK')result=await inbox.acknowledge(data.handle,data.accountSlot);
+   else if(data.type==='STATS')result={...runtime.stats,owned:runtime.owned.length,peers:runtime.peers.size,
     queued:[...runtime.queues.values()].reduce((n,q)=>n+q.length,0),sending:runtime.senders.size,
     cover:runtime.coverHistory.length,worker:true};
    else if(data.type==='INJECT_COVER')result=runtime.injectCoverOnce(data.size);
@@ -65,5 +74,5 @@ self.onmessage=async({data})=>{
   }
   if(!closed)self.postMessage({id:data.id,ok:true,result});
  }catch(_){if(!closed)self.postMessage({id:data.id,ok:false});}
- finally{requests.delete(data.id);}
+ finally{requests.delete(data.id);wipe(data.discoverySeed);wipe(data.discoveryBox);if(Array.isArray(data.recipientKeys))for(const key of data.recipientKeys)wipe(key);}
 };

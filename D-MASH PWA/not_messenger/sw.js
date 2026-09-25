@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user/device data lives.
  */
 
-const RELEASE_ID = 'transport-v3-v4-pow-20260925.13';
+const RELEASE_ID = 'transport-v3-node-inbox-20260925.14';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',
@@ -18,7 +18,7 @@ const CORE_ASSETS = [
     './js/node_identity.js', './js/node_admission_v4.js', './js/node_registration_v4.js',
     './js/node_relationships_v4.js', './js/node_socket_v4.js', './js/node_channel_v4.js',
     './js/probe_primitives_v4.js', './js/route_discovery_v4.js', './js/recipient_payload_v4.js',
-    './js/node_routing_v4.js', './js/node_runtime_host_v4.js', './js/node_runtime_worker_v4.js',
+    './js/node_routing_v4.js', './js/node_inbox_v4.js', './js/node_local_delivery_v4.js', './js/node_runtime_host_v4.js', './js/node_runtime_worker_v4.js',
     './js/vendor/blake3.min.js',
     './js/call_session.js',
     './js/call_signaling.js',

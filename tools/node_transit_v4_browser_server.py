@@ -18,7 +18,7 @@ from backend.node_service_v4 import NodeServiceV4
 from backend.gateway_v4 import router
 from backend.node_routing_v4 import NodeRoutingV4
 from backend.route_discovery_v4 import issue_certificate
-from backend.recipient_payload_v4 import seal_payload,open_payload
+from backend.recipient_payload_v4 import seal_payload,open_payload,cover_box
 
 async def main():
     keys=[]
@@ -29,13 +29,16 @@ async def main():
     owner,sign=SigningKey.generate(),SigningKey.generate();box,recipient=PrivateKey.generate(),PrivateKey.generate()
     now=int(time.time());cert=issue_certificate(owner,sign.verify_key,box.public_key,recipient.public_key,
         generation=1,issued_at=now,expires_at=now+3600)
-    delivered=asyncio.Queue();discarded=0;accepted=0
+    delivered=asyncio.Queue();discarded=0;accepted=0;local_cert=None
     async def receive(peer,packet):
         nonlocal discarded,accepted
         result=open_payload([recipient],packet['payload'])
         if result['status']=='discard':discarded+=1;return
-        if result['status']!='accepted' or result['payload'] not in ('browser-transit-acceptance','browser-transit-after-cover'):
+        if result['status']!='accepted' or result['payload'] not in ('browser-transit-acceptance','browser-transit-after-cover','browser-local-submit'):
             raise AssertionError('Payload mismatch')
+        if result['payload']=='browser-local-submit':
+            reply=dict(peer=peer,label=packet['offer'],expires_at=packet['expires_at'],channel=runtimes[1].peers[peer])
+            runtimes[1].send(reply,seal_payload(bytes.fromhex(local_cert['recipient_box']),'native-reply-to-browser'),discard)
         accepted+=1;await delivered.put((packet['label'],result['payload']))
     async def discard(peer,packet):pass
     servers=[];services=[];server_tasks=[];sockets=[]
@@ -79,8 +82,23 @@ async def main():
                 runtimes[0].send(route,seal_payload(recipient.public_key,'browser-transit-after-cover'),discard)
                 _,payload=await asyncio.wait_for(delivered.get(),10)
                 if payload!='browser-transit-after-cover' or accepted!=2:raise AssertionError('Real payload after cover lost')
-                print(json.dumps({'event':'cover','discarded':discarded,'accepted':accepted}),flush=True)
-                if await commands.get()!='disconnected':raise AssertionError('Missing disconnect check')
+                print(json.dumps({'event':'cover','discarded':discarded,'accepted':accepted,'certificate':cert}),flush=True)
+                command=await commands.get()
+                if command.startswith('local:'):
+                    local_cert=json.loads(command[6:])
+                    local_route=await asyncio.wait_for(runtimes[0].discover(local_cert),30)
+                    payload=seal_payload(bytes.fromhex(local_cert['recipient_box']),'opaque-for-locked-account')
+                    runtimes[0].send(local_route,payload,discard)
+                    print(json.dumps({'event':'local_sent'}),flush=True)
+                    if await commands.get()!='local_keys':raise AssertionError('Missing local keys check')
+                    runtimes[0].send(local_route,cover_box(1024),discard)
+                    print(json.dumps({'event':'local_cover'}),flush=True)
+                    if await commands.get()!='local_submit':raise AssertionError('Missing local submit check')
+                    _,payload=await asyncio.wait_for(delivered.get(),15)
+                    if payload!='browser-local-submit':raise AssertionError('Wrong local payload')
+                    print(json.dumps({'event':'local_submitted'}),flush=True)
+                    command=await commands.get()
+                if command!='disconnected':raise AssertionError('Missing disconnect check')
                 async with asyncio.timeout(5):
                     while any(runtime.peers for runtime in runtimes):await asyncio.sleep(.02)
                 try:runtimes[0].send(route,'opaque',discard)

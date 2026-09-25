@@ -1,3 +1,41 @@
+# Execution checkpoint — persistent Worker Inbox and local Node API
+
+Prepared release `transport-v3-node-inbox-20260925.14`. Previous deployed/source
+revision `0d3043863bd254457124f390f03cefd345bbe284` (.13) was verified exactly:
+193 files, no differences, service active/running, NRestarts=0. Public v4 Worker
+reconnect/lock and v3 two-Account late-pairing regressions passed on that release.
+Logs: /tmp/dmash-v4-pow-remote-worker.log, /tmp/dmash-v4-pow-ems-accounts.log.
+
+New local Worker RPC supports bind, recipient-key installation, discover, submit,
+Inbox list and local persistence receipt. It carries no Account or route-owner
+private key. Submit reports queued only, never end-to-end delivery. Inbox and
+route/discovery material persist encrypted under distinct Node storage domains;
+blind lookup keys, Node identity binding, CAS duplicates, separate bounded binding
+metadata, atomic deferred-to-pending promotion and local seen tombstones.
+Wrong keys fail closed; damaged rows do not block other rows. Missing recipient
+keys defer opaque boxes, known-key MAC failures discard cover silently. Local
+receipt is issued only after Account persistence; it is not a network/mailbox ACK.
+
+Real IndexedDB Chrome test PASS: concurrent tabs, duplicate insert, reload,
+record/byte quotas, corruption isolation, ACK shrinking an over-quota queue,
+full-queue deferred promotion, wrong key/identity and close aborting transactions.
+Log /tmp/dmash-v4-inbox-indexeddb.log. Real Worker/native network test PASS:
+N1 -> browser -> N2 transit, late bind, cover, local deferred receive/key install,
+local discover/submit/reply, lock and restored bindings plus pending Inbox after
+unlock. Log /tmp/dmash-v4-local-api-worker.log. Account payloads in this test are
+synthetic opaque strings; it proves routing/storage, not Account UI migration.
+Full suite: 263 backend + 11 Origin + 61 JS PASS
+(/tmp/dmash-v4-inbox-all-tests.log).
+
+Next: commit, push, EMS sync/deploy and public release acceptance. Then integrate
+real Account contacts and persistence with the local API, including private route
+certificate exchange, renewal/revocation, cross-tab Node ownership and mailbox.
+Seen entries share a bounded quota and expire after 30 days; sustained-load quota
+and retention policy remain incomplete. H1/H2/H3 and N0–N8 remain open. Account UI
+still uses v3; production cover is not enabled. No full N3 completion claim.
+
+---
+
 # Execution checkpoint — public WSS v4 verified; PoW prefix optimization
 
 EMS now runs native /mesh/v4 at wss://stage-api-ems.d-mash.ru/mesh/v4.

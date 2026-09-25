@@ -57,12 +57,31 @@
    if(this.pending.size>=16)return Promise.reject(Error('Node worker request quota'));
    const id=++this.sequence;
    return new Promise((resolve,reject)=>{
-    const timer=setTimeout(()=>{this.pending.delete(id);reject(Error('Node worker operation expired'));this.close();},type==='CONNECT'?310000:30000);
+    const timer=setTimeout(()=>{this.pending.delete(id);reject(Error('Node worker operation expired'));this.close();},type==='CONNECT'?310000:type==='DISCOVER'?190000:30000);
     this.pending.set(id,{resolve,reject,timer});
     try{this.worker.postMessage({id,type,...fields},transfer);}catch(error){clearTimeout(timer);this.pending.delete(id);reject(error);}
    });
   }
   connect({url,nodeId,password}){return this.call('CONNECT',{url,nodeId,password});}
+  // These key-bearing APIs consume the supplied private byte arrays.
+  async bindLocal({certificate,accountSlot,discoverySeed,discoveryBox,recipientKeys=[]}){
+   if(!Array.isArray(recipientKeys)||recipientKeys.length>2)throw Error('Invalid recipient keys');
+   const material=[discoverySeed,discoveryBox,...recipientKeys];
+   if(material.some(value=>!(value instanceof Uint8Array)||value.length!==32))throw Error('Invalid local route material');
+   const copies=material.map(value=>value.slice());
+   try{return await this.call('BIND_LOCAL',{certificate,accountSlot,discoverySeed:copies[0],discoveryBox:copies[1],recipientKeys:copies.slice(2)},copies.map(value=>value.buffer));}
+   finally{for(const value of [...material,...copies])if(value.byteLength)value.fill(0);}
+  }
+  async installRecipientKeys(routeId,recipientKeys){
+   if(!Array.isArray(recipientKeys)||recipientKeys.length<1||recipientKeys.length>2||recipientKeys.some(value=>!(value instanceof Uint8Array)||value.length!==32))throw Error('Invalid recipient keys');
+   const copies=recipientKeys.map(value=>value.slice());
+   try{return await this.call('INSTALL_RECIPIENT_KEYS',{routeId,recipientKeys:copies},copies.map(value=>value.buffer));}
+   finally{for(const value of [...recipientKeys,...copies])if(value.byteLength)value.fill(0);}
+  }
+  discover(certificate){return this.call('DISCOVER',{certificate});}
+  submit(handle,payload,replyRouteId){return this.call('SUBMIT',{handle,payload,replyRouteId});}
+  inboxList(accountSlot,limit=32){return this.call('INBOX_LIST',{accountSlot,limit});}
+  acknowledgeInbox(handle,accountSlot){return this.call('INBOX_ACK',{handle,accountSlot});}
   stats(){return this.call('STATS');}
   injectCoverOnce(size=1024){return this.call('INJECT_COVER',{size});}
   coverPolicy(enabled,policy){return this.call('COVER_POLICY',{enabled,policy});}

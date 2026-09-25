@@ -65,3 +65,10 @@ as their only neighbor. `tools/test_node_v4_remote.py` exercises the latter.
 The native test exposed an initiator clock-window mismatch with JS; both now use
 the same bounded tolerance, without extending the responder AUTH deadline.
 These tests do not exercise Account migration or mailbox recovery.
+
+
+Release `transport-v3-node-inbox-20260925.14` adds the browser Worker local API and
+encrypted IndexedDB Inbox modules to the Service Worker asset manifest. Native
+state/configuration are unchanged. Account UI still uses v3. Check both public
+Worker authorization and page/active-SW release consistency after deployment;
+local Inbox tests alone are not public deployment or Account migration evidence.

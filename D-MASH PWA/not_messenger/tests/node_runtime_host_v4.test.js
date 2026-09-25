@@ -23,6 +23,16 @@ const materials=()=>({seed:new Uint8Array(32).fill(1),storageKey:new Uint8Array(
  const host=await Host.startMaterials(input),worker=instances.at(-1),init=worker.messages[0];
  assert.equal(init.seed.buffer.byteLength,32,'unrelated bytes from a backing buffer must never reach the actor');
  assert(backing.subarray(32).every(b=>b===99));assert(input.seed.every(b=>b===0));assert(input.storageKey.every(b=>b===0));
+ const localBuffer=new Uint8Array(128).fill(21),ownerSecret=new Uint8Array(32).fill(44),recipientKey=new Uint8Array(32).fill(31);
+ await host.bindLocal({certificate:{route_id:'a'.repeat(64)},accountSlot:'opaque-slot',discoverySeed:localBuffer.subarray(16,48),discoveryBox:new Uint8Array(32).fill(9),recipientKeys:[recipientKey],ownerSecret});
+ const binding=worker.messages.at(-1);
+ assert.equal(binding.type,'BIND_LOCAL');assert.equal(binding.discoverySeed.buffer.byteLength,32);assert.equal(binding.recipientKeys[0].buffer.byteLength,32);
+ assert(!('ownerSecret' in binding));assert(ownerSecret.every(value=>value===44));assert(recipientKey.every(value=>value===0));
+ assert(localBuffer.subarray(16,48).every(value=>value===0));assert(localBuffer.subarray(48).every(value=>value===21));
+ const installBuffer=new Uint8Array(96).fill(17);
+ await host.installRecipientKeys('a'.repeat(64),[installBuffer.subarray(32,64)]);
+ assert.equal(worker.messages.at(-1).recipientKeys[0].buffer.byteLength,32);
+ assert(installBuffer.subarray(32,64).every(value=>value===0));assert(installBuffer.subarray(64).every(value=>value===17));
  worker.hold=true;const pending=Array.from({length:16},()=>host.stats());
  await assert.rejects(host.stats(),/quota/);host.close();
  assert((await Promise.allSettled(pending)).every(row=>row.status==='rejected'));await assert.rejects(host.stats(),/closed/);

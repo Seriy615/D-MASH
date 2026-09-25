@@ -1,7 +1,8 @@
 # Unified Node transport v4 — N0 contract and audit
 
 Status: DESIGN / PARTIAL, 2026-09-25. Audited base: `aa0ad8a` on
-`origin/transport-v3`. This document does not describe a deployed protocol.
+`origin/transport-v3`. The experimental Node transport is deployed on EMS; this document also records
+unimplemented target requirements and must not be read as full acceptance.
 `TRANSPORT_V3.md` remains the historical implementation contract. The development
 plan controls milestone scope; no current v3 client is silently upgraded.
 
@@ -351,3 +352,34 @@ The process host closes listeners before the relationship store. Pre-upgrade
 admission applies the same connection quotas as native peers; public WSS mounting
 needs a reverse-proxy location to the application and ordinary TLS validation.
 No Account traffic switches automatically; explicit v3 migration remains active.
+
+
+## Local Worker delivery and durable Inbox (partial N3)
+
+The Node Worker owns encrypted IndexedDB Inbox and local route bindings, separately
+from Account state. Its local API accepts discovery/recipient capabilities only;
+Account Root and route-owner signing secret are excluded from the transferred
+material. `DISCOVER` returns a process-local handle. `SUBMIT` accepts an opaque
+Account payload and owned reply binding and returns only `queued: true`.
+`INBOX_LIST` is scoped to a local Account slot. `INBOX_ACK` retires a pending row
+only after the caller has persisted Account processing; no network ACK is added.
+
+Without recipient keys a canonical bounded box is deferred. Installing matching
+keys atomically promotes valid boxes to pending Account payloads and discards
+failed MACs, even when the record quota is full. Per-route packet IDs deduplicate
+through local seen tombstones; this is not Account authenticity or delivery proof.
+Encrypted bindings and Inbox survive Worker restart; full DeviceRoot lock aborts
+transactions and closes the actor. Different storage keys/Node identities fail
+closed. Corrupt rows are retained and skipped so other records remain consumable.
+
+Default limits: 4096 packet/tombstone rows, 32 MiB encrypted packet storage;
+32 route bindings plus owner metadata in a separate 256 KiB budget. List batches
+are at most 128, outbound discovery handles 128 and concurrent discovery four.
+Seen tombstones expire after 30 days during initialization; pending/deferred rows
+are not silently expired. Further sustained-load retention/fairness work is needed.
+
+The real browser fixture covers Worker-to-native delivery, missing-key recovery,
+local replies and restart persistence with synthetic opaque Account payloads.
+Account UI remains on v3. Real Account integration, private contact certificate
+exchange, binding renewal/revocation, cross-tab actor ownership, durable outgoing
+mailbox and the H1/H2/H3 recovery matrix remain open.
