@@ -12,6 +12,13 @@ const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
    page.on('pageerror',error=>failures.push(name+': '+error.message));
    page.on('console',message=>{if(/WARN|ERR|failed/i.test(message.text())) console.log(name,message.text());});
    await page.goto(base);
+   if (process.env.DMASH_EXPECT_RELEASE) {
+    await page.waitForFunction(expected => window.DMASH_RELEASE?.id === expected, process.env.DMASH_EXPECT_RELEASE);
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+    const worker = context.serviceWorkers()[0];
+    assert.equal(await worker.evaluate(() => RELEASE_ID), process.env.DMASH_EXPECT_RELEASE, 'active SW generation must match the page');
+   }
    const digits=async value=>{for(const digit of value) await page.getByRole('button',{name:digit,exact:true}).click();await page.getByRole('button',{name:'=',exact:true}).click();};
    await page.getByText('УСТАНОВКА MASTER-КОДА',{exact:true}).waitFor();await digits('3333');
    await page.getByText('УСТАНОВКА WIPE-КОДА',{exact:true}).waitFor();await digits('9876');

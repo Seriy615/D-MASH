@@ -5,7 +5,7 @@ const { Initiator } = require('../js/secure_session.js');
 const input = JSON.parse(fs.readFileSync(0, 'utf8'));
 (async () => {
     const signing = nacl.sign.keyPair.fromSeed(new Uint8Array(32).fill(41));
-    const handshake = new Initiator(signing, input.role || 'DEVICE');
+    const handshake = new Initiator(signing, input.role || 'DEVICE', input.version ?? 3);
     handshake.private.set(new Uint8Array(32).fill(73));
     const hello = handshake.initiate();
     if (!input.challenge) { process.stdout.write(JSON.stringify(hello)); return; }

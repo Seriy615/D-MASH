@@ -1,4 +1,4 @@
-"""DMP-C v3 shared role-bound handshake and encrypted record primitives.
+"""DMP-C v3/v4 explicit version-bound handshake and encrypted record primitives.
 
 No permissions or network fallback are implicit in a cryptographic session.
 Callers must authenticate the expected peer key and authorize its role/resources.
@@ -22,6 +22,18 @@ ROLES = frozenset({"DEVICE", "NODE"})
 MAX_RECORD_BYTES = 1024 * 1024
 MAX_SEQUENCE = 2**32 - 1
 DOMAIN = b"D-MASH|DMP-C|3|"
+
+
+def profile_domain(version):
+    if type(version) is not int or version not in (3, 4):
+        raise ValueError("incompatible protocol version")
+    return f"D-MASH|DMP-C|{version}|".encode("ascii")
+
+
+def profile_role(role, version):
+    profile_domain(version)
+    if role not in ({"NODE"} if version == 4 else ROLES):
+        raise ValueError("invalid role for protocol version")
 
 
 def canonical(value):
@@ -78,11 +90,12 @@ def _public_hex(value):
     return value
 
 
-def validate_hello(hello, expected_role):
+def validate_hello(hello, expected_role, *, version=VERSION):
+    profile_role(expected_role, version)
     if (not isinstance(hello, dict) or set(hello) != {
             "type", "protocol", "version", "suite", "role", "public_key", "ephemeral", "nonce"}
             or hello["type"] != "HELLO" or hello["protocol"] != "DMP-C"
-            or hello["version"] != VERSION or hello["suite"] != SUITE
+            or hello["version"] != version or hello["suite"] != SUITE
             or expected_role not in ROLES or hello["role"] != expected_role):
         raise ValueError("invalid hello or role")
     _public_hex(hello["public_key"])
@@ -90,15 +103,16 @@ def validate_hello(hello, expected_role):
     unb64(hello["nonce"], 32)
 
 
-def transcript(hello, challenge):
-    return DOMAIN + b"HANDSHAKE\x00" + canonical([hello, challenge])
+def transcript(hello, challenge, *, version=VERSION):
+    return profile_domain(version) + b"HANDSHAKE\x00" + canonical([hello, challenge])
 
 
 class Handshake:
     """One-shot ephemeral state. Long-lived signing keys belong to the caller."""
-    def __init__(self, signing_key, role):
-        if role not in ROLES:
-            raise ValueError("invalid role")
+    def __init__(self, signing_key, role, *, version=VERSION):
+        profile_role(role, version)
+        self.version = version
+        self.domain = profile_domain(version)
         self.signing_key = signing_key
         self.role = role
         self.private = bytearray(secrets.token_bytes(32))
@@ -110,7 +124,7 @@ class Handshake:
         if self.done or self.hello is not None:
             raise ValueError("handshake already used")
         self.hello = {
-            "type": "HELLO", "protocol": "DMP-C", "version": VERSION,
+            "type": "HELLO", "protocol": "DMP-C", "version": self.version,
             "suite": SUITE, "role": self.role,
             "public_key": self.signing_key.verify_key.encode().hex(),
             "ephemeral": b64(crypto_scalarmult_base(bytes(self.private))),
@@ -121,18 +135,18 @@ class Handshake:
     def respond(self, hello, expected_role, *, now=None):
         if self.done or self.hello is not None or self.role != "NODE":
             raise ValueError("invalid responder state")
-        validate_hello(hello, expected_role)
+        validate_hello(hello, expected_role, version=self.version)
         self.hello = dict(hello)
         self.challenge = {
-            "type": "CHALLENGE", "protocol": "DMP-C", "version": VERSION,
+            "type": "CHALLENGE", "protocol": "DMP-C", "version": self.version,
             "suite": SUITE, "role": "NODE", "peer_role": expected_role,
             "public_key": self.signing_key.verify_key.encode().hex(),
             "ephemeral": b64(crypto_scalarmult_base(bytes(self.private))),
             "nonce": b64(secrets.token_bytes(32)),
             "expires_at": (int(time.time()) if now is None else now) + 15,
         }
-        digest = hashlib.sha256(transcript(self.hello, self.challenge)).digest()
-        return {**self.challenge, "signature": b64(self.signing_key.sign(DOMAIN + b"RESPONDER\x00" + digest).signature)}
+        digest = hashlib.sha256(transcript(self.hello, self.challenge, version=self.version)).digest()
+        return {**self.challenge, "signature": b64(self.signing_key.sign(self.domain + b"RESPONDER\x00" + digest).signature)}
 
     def finish(self, response, expected_node_id, *, now=None):
         if self.done or self.hello is None or self.challenge is not None:
@@ -144,7 +158,7 @@ class Handshake:
             if (set(challenge) != {"type", "protocol", "version", "suite", "role", "peer_role",
                                   "public_key", "ephemeral", "nonce", "expires_at"}
                     or challenge["type"] != "CHALLENGE" or challenge["protocol"] != "DMP-C"
-                    or challenge["version"] != VERSION or challenge["suite"] != SUITE
+                    or challenge["version"] != self.version or challenge["suite"] != SUITE
                     or challenge["role"] != "NODE" or challenge["peer_role"] != self.role
                     or challenge["public_key"] != _public_hex(expected_node_id)
                     or type(challenge["expires_at"]) is not int
@@ -152,10 +166,10 @@ class Handshake:
                 raise ValueError("invalid challenge")
             unb64(challenge["nonce"], 32)
             unb64(challenge["ephemeral"], 32)
-            digest = hashlib.sha256(transcript(self.hello, challenge)).digest()
-            VerifyKey(bytes.fromhex(expected_node_id)).verify(DOMAIN + b"RESPONDER\x00" + digest, signature)
-            auth = {"type": "AUTH", "version": VERSION,
-                    "signature": b64(self.signing_key.sign(DOMAIN + b"INITIATOR\x00" + digest).signature)}
+            digest = hashlib.sha256(transcript(self.hello, challenge, version=self.version)).digest()
+            VerifyKey(bytes.fromhex(expected_node_id)).verify(self.domain + b"RESPONDER\x00" + digest, signature)
+            auth = {"type": "AUTH", "version": self.version,
+                    "signature": b64(self.signing_key.sign(self.domain + b"INITIATOR\x00" + digest).signature)}
             session = self._session(challenge["ephemeral"], digest, True, "NODE")
             return auth, session
         finally:
@@ -166,12 +180,12 @@ class Handshake:
             raise ValueError("invalid responder state")
         try:
             if (not isinstance(auth, dict) or set(auth) != {"type", "version", "signature"}
-                    or auth["type"] != "AUTH" or auth["version"] != VERSION
+                    or auth["type"] != "AUTH" or auth["version"] != self.version
                     or (int(time.time()) if now is None else now) >= self.challenge["expires_at"]):
                 raise ValueError("invalid authentication")
-            digest = hashlib.sha256(transcript(self.hello, self.challenge)).digest()
+            digest = hashlib.sha256(transcript(self.hello, self.challenge, version=self.version)).digest()
             VerifyKey(bytes.fromhex(self.hello["public_key"])).verify(
-                DOMAIN + b"INITIATOR\x00" + digest, unb64(auth["signature"], 64))
+                self.domain + b"INITIATOR\x00" + digest, unb64(auth["signature"], 64))
             return self._session(self.hello["ephemeral"], digest, False, self.hello["role"])
         finally:
             self.close()
@@ -182,9 +196,9 @@ class Handshake:
         # authenticate their distinct suite and additional inputs; no implicit
         # empty ML-KEM value or downgrade is accepted by this suite.
         ikm = b"X25519\x00" + len(shared).to_bytes(4, "big") + shared
-        keys = hkdf(ikm, digest, DOMAIN + SUITE.encode("ascii"), 64)
+        keys = hkdf(ikm, digest, self.domain + SUITE.encode("ascii"), 64)
         send, receive = (keys[:32], keys[32:]) if initiator else (keys[32:], keys[:32])
-        return SecureSession(send, receive, digest, self.role, peer_role)
+        return SecureSession(send, receive, digest, self.role, peer_role, version=self.version)
 
     def close(self):
         self.private[:] = bytes(len(self.private))
@@ -193,7 +207,10 @@ class Handshake:
 
 
 class SecureSession:
-    def __init__(self, send_key, receive_key, transcript_hash, local_role, peer_role):
+    def __init__(self, send_key, receive_key, transcript_hash, local_role, peer_role, *, version=VERSION):
+        profile_role(local_role, version)
+        profile_role(peer_role, version)
+        self.version = version
         self.send_key = bytearray(send_key)
         self.receive_key = bytearray(receive_key)
         self.transcript_hash = transcript_hash
@@ -213,14 +230,14 @@ class SecureSession:
         nonce = bytes(16) + sequence.to_bytes(8, "big")
         ciphertext = SecretBox(bytes(self.send_key)).encrypt(raw, nonce).ciphertext
         self.send_sequence += 1
-        return {"type": "SECURE", "version": VERSION, "sequence": sequence, "ciphertext": b64(ciphertext)}
+        return {"type": "SECURE", "version": self.version, "sequence": sequence, "ciphertext": b64(ciphertext)}
 
     def open(self, frame):
         if self.closed:
             raise ValueError("session closed")
         try:
             if (not isinstance(frame, dict) or set(frame) != {"type", "version", "sequence", "ciphertext"}
-                    or frame["type"] != "SECURE" or frame["version"] != VERSION
+                    or frame["type"] != "SECURE" or frame["version"] != self.version
                     or type(frame["sequence"]) is not int
                     or frame["sequence"] != self.receive_sequence or self.receive_sequence > MAX_SEQUENCE
                     or not isinstance(frame["ciphertext"], str)

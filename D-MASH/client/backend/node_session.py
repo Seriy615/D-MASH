@@ -34,6 +34,8 @@ async def authorize_node(secure, local_id, remote_id):
     Fresh per-connection NODE DNSS and transcript-bound work cannot be replayed
     into a different socket. DEVICE DNSS persistence is a separate lifecycle.
     """
+    if secure.session.version != 3:
+        raise PermissionError("v3 Node authorization cannot authorize a different protocol version")
     if secure.session.local_role != "NODE" or secure.session.peer_role != "NODE":
         raise PermissionError("Node role required")
     local_dnss = secrets.token_hex(16)

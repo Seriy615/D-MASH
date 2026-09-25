@@ -1,3 +1,43 @@
+# Current execution checkpoint — N1 crypto foundation, 2026-09-25
+
+`01a26a8fcd765ef7382912e4fe7844e923d6054b` is pushed and deployed to EMS Node
+and PWA. Existing `tools/dmash-deploy-ems` updated Node while preserving runtime
+keys/databases, followed by the required `tools/get_commit.sh` PWA publication.
+All 155 deployed source files match that immutable commit (new read-only checker:
+`tools/verify_ems_revision.py`). Node service is active. PWA release:
+`transport-v3-account-control-20260925.10`. Public contact-flow acceptance with
+page + active SW release checks is running; log
+`/tmp/dmash-ems-account-control-public.log`. Do not call it PASS until completed.
+
+Deploy evidence: `/tmp/dmash-ems-account-control-deploy.log`; rollback snapshots:
+`/opt/dmash-node/deploy-backups/backend-20260925T115922Z`,
+`/opt/dmash-node/deploy-backups/frontend-20260925T115922Z`,
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20260925T115935Z`.
+Root-owned objects created by sudo get_commit blocked a subsequent jcode fetch;
+ownership of `/home/jcode/D-MASH/.git` was restored to jcode (no Git history or
+untracked scripts changed). Repeat this targeted ownership restoration after
+sudo deployments if necessary; do not disable Git ownership checks globally.
+
+EMS inventory additionally confirms the live BaseNCRH does not match the removed
+tracked value; only this EMS instance was checked, without printing either secret.
+Live local HTTP `/api/state` and `/api/debug/outbox` return 410 after deploy.
+
+Local N1 work now adds an explicit NODE-only v4 crypto profile in Python and JS,
+versioned signatures/KDF/records, real interop and refusal of v3 resource grants
+on v4. Default callers stay v3. No v4 network endpoint or browser transit is
+active. `tools/test_all.py`: 217 backend + 11 Origin tests and 53 PWA suites PASS
+(`/tmp/dmash-v4-crypto-tests.log`). This crypto foundation still needs commit/push
+and later deployment alongside the complete resource/runtime contract.
+
+NEXT: finish public-browser result and inventory checks, then implement v4
+Node admission/directional registration and the browser NodeRuntime. Close the
+Probe/authority privacy design before advertising a privacy-compliant v4 path.
+H1-H3 remain real-crypto FAIL in the diagnostic; their versioned, confirmed,
+durable initial-exchange state machine is also outstanding. Do not stop at
+this checkpoint or mark the whole development goal complete.
+
+---
+
 # Execution update — 2026-09-25
 
 Authorization now explicitly includes continued development through the entire

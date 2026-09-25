@@ -165,3 +165,20 @@ bounded five-second retry slots per Account key generation and peer. Chat
 selection cannot redirect recovery. `tools/diagnose_initial_handshake.cjs`
 executes real NaCl/Kyber fault scenarios H1-H3 with simulated storage/network;
 all three currently FAIL and are tracked rather than claimed fixed.
+
+## N1 crypto profile implementation (opt-in, not deployed endpoint)
+
+`Handshake(..., version=4)` in Python and `Initiator(signing, 'NODE', 4)` in
+JavaScript select version 4 explicitly. HELLO, CHALLENGE, AUTH and SECURE records
+carry version 4; all signature/transcript/KDF domains use `D-MASH|DMP-C|4|`.
+Unknown versions, DEVICE roles in v4, and mismatched peer versions are rejected.
+The existing suite, ephemeral X25519, directional keys, replay sequence and
+bounds remain unchanged. Python SecureSocket accepts the same explicit version.
+Existing callers default to v3; there is no automatic negotiation or downgrade.
+
+Real bundled TweetNaCl/WebCrypto <-> PyNaCl interop verifies both encrypted
+directions. Python/Python v4, replay, version tampering and mixed-version refusal
+are covered. The old `authorize_node` explicitly refuses a v4 session so v3
+permissions cannot accidentally become the unified Node resource contract.
+No `/mesh/v4` endpoint, universal admission/grants, browser transit or v4 privacy
+acceptance is implied by this crypto foundation. Those remain the next N1/N2 work.

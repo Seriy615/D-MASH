@@ -44,8 +44,8 @@ class SecureSocket:
         await self.socket.close(code=code, reason=reason)
 
 
-async def accept_secure(socket, signing_key, expected_role):
-    handshake = Handshake(signing_key, "NODE")
+async def accept_secure(socket, signing_key, expected_role, *, version=3):
+    handshake = Handshake(signing_key, "NODE", version=version)
     async def receive():
         raw = await (socket.receive_text() if hasattr(socket, "receive_text") else socket.recv())
         if not isinstance(raw, str) or len(raw) > 4096:
@@ -65,8 +65,8 @@ async def accept_secure(socket, signing_key, expected_role):
         handshake.close()
 
 
-async def connect_secure(socket, signing_key, role, expected_node_id=None):
-    handshake = Handshake(signing_key, role)
+async def connect_secure(socket, signing_key, role, expected_node_id=None, *, version=3):
+    handshake = Handshake(signing_key, role, version=version)
     session = None
     try:
         async with asyncio.timeout(HANDSHAKE_TIMEOUT):

@@ -1,9 +1,16 @@
 "use strict";
 
-// Shared v3 wire layer; does not grant Device or Node operations by itself.
+// Shared explicitly selected v3/v4 cryptographic layer; does not grant Device or Node operations by itself.
 (function (global) {
     const SUITE = "X25519-HKDF-SHA256-XSALSA20POLY1305";
-    const DOMAIN = "D-MASH|DMP-C|3|";
+    const domain = version => {
+        if (![3, 4].includes(version)) throw new Error("Incompatible protocol version");
+        return `D-MASH|DMP-C|${version}|`;
+    };
+    const validRole = (role, version) => {
+        domain(version);
+        if (!(version === 4 ? ["NODE"] : ["DEVICE", "NODE"]).includes(role)) throw new Error("Invalid role for protocol version");
+    };
     const MAX_RECORD_BYTES = 1024 * 1024;
     const text = value => new TextEncoder().encode(value);
     const join = (...parts) => {
@@ -52,7 +59,9 @@
         return bytes;
     };
     class Session {
-        constructor(sendKey, receiveKey, transcriptHash) {
+        constructor(sendKey, receiveKey, transcriptHash, {version = 3, localRole = "DEVICE", peerRole = "NODE"} = {}) {
+            validRole(localRole, version); validRole(peerRole, version);
+            this.version = version; this.localRole = localRole; this.peerRole = peerRole;
             this.sendKey = new Uint8Array(sendKey); this.receiveKey = new Uint8Array(receiveKey);
             this.transcriptHash = transcriptHash;
             this.sendSequence = 0; this.receiveSequence = 0; this.closed = false;
@@ -65,13 +74,13 @@
             const sequence = this.sendSequence;
             const ciphertext = global.nacl.secretbox(raw, nonce(sequence), this.sendKey);
             this.sendSequence++;
-            return { type: "SECURE", version: 3, sequence, ciphertext: b64(ciphertext) };
+            return { type: "SECURE", version: this.version, sequence, ciphertext: b64(ciphertext) };
         }
         open(frame) {
             if (this.closed) throw new Error("Session closed");
             try {
                 if (!frame || Object.keys(frame).sort().join(",") !== "ciphertext,sequence,type,version" ||
-                    frame.type !== "SECURE" || frame.version !== 3 || !Number.isSafeInteger(frame.sequence) ||
+                    frame.type !== "SECURE" || frame.version !== this.version || !Number.isSafeInteger(frame.sequence) ||
                     frame.sequence !== this.receiveSequence || frame.sequence > 0xffffffff ||
                     typeof frame.ciphertext !== "string" || frame.ciphertext.length > Math.floor((MAX_RECORD_BYTES + 18) / 3) * 4) throw new Error("Invalid record");
                 const raw = global.nacl.secretbox.open(unb64(frame.ciphertext), nonce(frame.sequence), this.receiveKey);
@@ -86,15 +95,16 @@
         close() { this.sendKey.fill(0); this.receiveKey.fill(0); this.closed = true; }
     }
     class Initiator {
-        constructor(signing, role = "DEVICE") {
-            if (!["DEVICE", "NODE"].includes(role)) throw new Error("Invalid role");
+        constructor(signing, role = "DEVICE", version = 3) {
+            validRole(role, version);
+            this.version = version; this.domain = domain(version);
             this.signing = signing; this.role = role;
             this.private = global.crypto.getRandomValues(new Uint8Array(32));
             this.used = false;
         }
         initiate() {
             if (this.used || this.hello) throw new Error("Handshake already used");
-            this.hello = { type: "HELLO", protocol: "DMP-C", version: 3, suite: SUITE,
+            this.hello = { type: "HELLO", protocol: "DMP-C", version: this.version, suite: SUITE,
                 role: this.role, public_key: hex(this.signing.publicKey),
                 ephemeral: b64(global.nacl.scalarMult.base(this.private)),
                 nonce: b64(global.crypto.getRandomValues(new Uint8Array(32))) };
@@ -107,7 +117,7 @@
                 const challenge = { ...response }, signature = unb64(challenge.signature, 64);
                 delete challenge.signature;
                 if (Object.keys(challenge).sort().join(",") !== "ephemeral,expires_at,nonce,peer_role,protocol,public_key,role,suite,type,version" ||
-                    challenge.type !== "CHALLENGE" || challenge.protocol !== "DMP-C" || challenge.version !== 3 ||
+                    challenge.type !== "CHALLENGE" || challenge.protocol !== "DMP-C" || challenge.version !== this.version ||
                     challenge.suite !== SUITE || challenge.role !== "NODE" || challenge.peer_role !== this.role ||
                     challenge.public_key !== expectedNodeId || !Number.isSafeInteger(challenge.expires_at) ||
                     // Allow small clock skew when the Node issues its 15s
@@ -117,16 +127,16 @@
                 const nodeKey = unhex(expectedNodeId);
                 unb64(challenge.nonce, 32);
                 const ephemeral = unb64(challenge.ephemeral, 32);
-                const hash = await digest(join(text(DOMAIN + "HANDSHAKE\0"), text(canonical([this.hello, challenge]))));
-                if (!global.nacl.sign.detached.verify(join(text(DOMAIN + "RESPONDER\0"), hash), signature, nodeKey)) throw new Error("Node signature failed");
-                const auth = { type: "AUTH", version: 3, signature: b64(global.nacl.sign.detached(join(text(DOMAIN + "INITIATOR\0"), hash), this.signing.secretKey)) };
+                const hash = await digest(join(text(this.domain + "HANDSHAKE\0"), text(canonical([this.hello, challenge]))));
+                if (!global.nacl.sign.detached.verify(join(text(this.domain + "RESPONDER\0"), hash), signature, nodeKey)) throw new Error("Node signature failed");
+                const auth = { type: "AUTH", version: this.version, signature: b64(global.nacl.sign.detached(join(text(this.domain + "INITIATOR\0"), hash), this.signing.secretKey)) };
                 const shared = global.nacl.scalarMult(this.private, ephemeral);
                 if (!shared.some(b => b !== 0)) throw new Error("Invalid shared secret");
                 const ikm = join(text("X25519\0"), new Uint8Array([0, 0, 0, 32]), shared);
                 let keys;
-                try { keys = await hkdf(ikm, hash, text(DOMAIN + SUITE), 64); }
+                try { keys = await hkdf(ikm, hash, text(this.domain + SUITE), 64); }
                 finally { shared.fill(0); ikm.fill(0); }
-                try { return { auth, session: new Session(keys.subarray(0, 32), keys.subarray(32), hash) }; }
+                try { return { auth, session: new Session(keys.subarray(0, 32), keys.subarray(32), hash, {version: this.version, localRole: this.role, peerRole: "NODE"}) }; }
                 finally { keys.fill(0); }
             } finally { this.close(); }
         }
