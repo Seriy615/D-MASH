@@ -1,0 +1,6 @@
+@noble/hashes 2.4.0, BLAKE3 only. MIT license.
+Source: https://github.com/paulmillr/noble-hashes/tree/2.4.0
+Build: cd tools/vendor && npm ci --ignore-scripts && npm run build
+Package integrity and esbuild 0.28.2 are pinned in package-lock.json.
+Upstream independent 2022 audit excluded BLAKE3; do not claim independent audit coverage for this component.
+This adapter is for Node identity work parity with backend BLAKE3, not new Account cryptography.

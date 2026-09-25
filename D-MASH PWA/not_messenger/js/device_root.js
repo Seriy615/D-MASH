@@ -402,28 +402,61 @@
             return databases.some((database) => database.name === "dm_gamma_vault");
         },
         async deviceMaterial(name, create) {
-            if (!this.state?.root || typeof name !== "string" || !name || typeof create !== "function") {
-                throw new DeviceRootError("DEVICE_LOCKED", "Device identity must be unlocked before accessing device key material.");
-            }
-            const materials = this.state.record.materials || {};
-            const domainRoot = await this.derive(this.state.root, this.domains.mlKemSeedRoot, VERSION, name);
-            const key = await this._crypto.subtle.importKey("raw", domainRoot, "AES-GCM", false, ["encrypt", "decrypt"]);
-            const materialAad = utf8("dmash/device-material/v1|" + name);
-            if (materials[name]) {
-                try {
-                    const plaintext = await this._crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(materials[name].iv), additionalData: materialAad }, key, unb64(materials[name].ciphertext));
-                    return new Uint8Array(plaintext);
-                } catch (_) {
-                    throw new DeviceRootError("STORAGE_CORRUPT", "Device key material is corrupt. It was not regenerated.");
+            const session = this.state;
+            const store = this._store();
+            const current = () => {
+                if (!session?.root || this.state !== session || this._store() !== store) {
+                    throw new DeviceRootError("DEVICE_LOCKED", "Device identity session changed during key material access.");
                 }
+            };
+            current();
+            if (typeof name !== "string" || !name || typeof create !== "function") {
+                throw new DeviceRootError("INVALID_KDF_INPUT", "Invalid device material request.");
             }
-            const created = await create();
-            const bytes = created instanceof Uint8Array ? created : new Uint8Array(created);
-            const iv = this._crypto.getRandomValues(new Uint8Array(12));
-            const ciphertext = await this._crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: materialAad }, key, bytes);
-            this.state.record.materials = { ...materials, [name]: { iv: b64(iv), ciphertext: b64(new Uint8Array(ciphertext)) } };
-            await this._store().put(this.state.record);
-            return bytes;
+            // Serialize all material names: concurrent whole-record writes must
+            // preserve each other's ciphertext. A failed operation cannot poison
+            // the queue. The queue belongs to this unlocked session only.
+            const operation = (session.materialQueue || Promise.resolve()).then(async () => {
+                current();
+                let domainRoot, bytes;
+                let returned = false;
+                try {
+                    domainRoot = await this.derive(session.root, this.domains.mlKemSeedRoot, VERSION, name);
+                    current();
+                    const key = await this._crypto.subtle.importKey("raw", domainRoot, "AES-GCM", false, ["encrypt", "decrypt"]);
+                    domainRoot.fill(0);
+                    current();
+                    const materialAad = utf8("dmash/device-material/v1|" + name);
+                    const existing = session.record.materials?.[name];
+                    if (existing) {
+                        try {
+                            bytes = new Uint8Array(await this._crypto.subtle.decrypt({ name: "AES-GCM", iv: decodeB64(existing.iv, 12), additionalData: materialAad }, key, decodeB64(existing.ciphertext)));
+                        } catch (_) {
+                            throw new DeviceRootError("STORAGE_CORRUPT", "Device key material is corrupt. It was not regenerated.");
+                        }
+                    } else {
+                        const created = await create();
+                        bytes = created instanceof Uint8Array ? created : new Uint8Array(created);
+                        current();
+                        const iv = this._crypto.getRandomValues(new Uint8Array(12));
+                        const ciphertext = await this._crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: materialAad }, key, bytes);
+                        current();
+                        const record = { ...session.record, materials: { ...session.record.materials,
+                            [name]: { iv: b64(iv), ciphertext: b64(new Uint8Array(ciphertext)) } } };
+                        await store.put(record);
+                        current();
+                        session.record = record;
+                    }
+                    current();
+                    returned = true;
+                    return bytes;
+                } finally {
+                    domainRoot?.fill(0);
+                    if (!returned) bytes?.fill(0);
+                }
+            });
+            session.materialQueue = operation.catch(() => {});
+            return operation;
         },
         async unlock(masterPin) {
             this._requireCrypto();
