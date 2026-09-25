@@ -1,3 +1,39 @@
+# Execution checkpoint — exclusive browser Node owner and local API version
+
+Inbox release .14 (`cceba8420cda8c4ad0b342859f8b062b9837c40f`) is pushed,
+synchronized and deployed to EMS. Exact match: 196 files, no differences;
+service active/running, NRestarts=0. Public Worker reconnect/lock PASS
+(/tmp/dmash-v4-inbox-remote-worker.log). Live two-Account late-pairing PASS:
+initial exchange, bidirectional messages, ratchet epochs 1/2, delayed previous
+packet, reconnect queue and control Inbox retirement. Page/active SW .14 asserted.
+Log /tmp/dmash-v4-inbox-ems-accounts.log. Transient connection/route-unavailable
+retries occurred before success; no immediate-readiness claim.
+
+Prepared .15 (`transport-v3-node-owner-20260925.15`): the Worker takes an exclusive
+origin-wide Web Lock before opening Node storage. The lock lives until Worker
+exit, including forced termination; it is not released prematurely by host
+cleanup. A competing tab fails instead of creating a second actor for the same
+origin-wide databases. Missing Web Locks support fails closed. Host/actor INIT
+now require local API version 1 in both directions, refusing old/mixed actors.
+This is local IPC versioning, not a network protocol change.
+
+Real Chrome two-tab test PASS: rejection without harming winner, inactive-tab
+lock isolation, owner-tab close, hard Worker termination, root lock, reload,
+persistent identity and missing/unknown API refusal. Log
+/tmp/dmash-v4-worker-ownership-api.log. 61 JS suites PASS
+(/tmp/dmash-v4-owner-js-tests.log). Real Worker/native transit, cover and local
+Inbox restore PASS after the ownership change and before the API-version guard
+(/tmp/dmash-v4-owned-transit.log); the final API guard is covered by the later
+real-Worker test. Backend is unchanged from 263 + 11 passing suites.
+
+Next: commit/deploy .15 and verify public Worker/API and SW release. Continue N3
+Account/route integration and N4 reliability. Exclusive ownership does not yet
+provide shared-tab RPC, ownership takeover UI, or cross-tab global lock broadcast.
+Active Account UI still uses v3; automatic v4 peering, private certificate
+exchange/renewal, mailbox and full plan acceptance remain open.
+
+---
+
 # Execution checkpoint — persistent Worker Inbox and local Node API
 
 Prepared release `transport-v3-node-inbox-20260925.14`. Previous deployed/source

@@ -383,3 +383,19 @@ local replies and restart persistence with synthetic opaque Account payloads.
 Account UI remains on v3. Real Account integration, private contact certificate
 exchange, binding renewal/revocation, cross-tab actor ownership, durable outgoing
 mailbox and the H1/H2/H3 recovery matrix remain open.
+
+
+### Browser actor ownership and IPC compatibility
+
+Before opening origin-wide Node databases, the dedicated Worker acquires the
+exclusive Web Lock `dmash-node-runtime-v4` with `ifAvailable`. Competing actors
+and runtimes without Web Locks fail closed. The lock remains held until Worker
+exit, including tab close/crash/forced termination, avoiding a gap between host
+cleanup and actual socket/transaction shutdown. A subsequent actor reuses the
+persisted identity and state. This is single-owner exclusion, not a shared-tab
+RPC service or automatic ownership transfer UI. DeviceRoot lock remains local
+to its context; a global cross-tab lock broadcast is not implemented.
+
+Local INIT messages and responses require `apiVersion: 1`; missing and unknown
+versions are rejected in either direction so a stale host/Worker pair cannot
+silently start with different local API semantics. Network wire remains v4.

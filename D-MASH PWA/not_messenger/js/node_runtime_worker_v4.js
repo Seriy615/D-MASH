@@ -17,12 +17,26 @@ async function stop(){
  if(closed)return;closed=true;ready=false;abort.abort();inbox?.close();local?.close();store?.close();gate?.close();
  try{await runtime?.close();}finally{wipe(signing?.secretKey);self.close();}
 }
+async function claimActor(){
+ // Inbox/relationship DB names are origin-wide, so ownership must be too.
+ // Hold the browser-managed lock until this Worker actually exits, including
+ // the host's bounded termination fallback. Page cleanup alone is too early.
+ if(!self.navigator?.locks)throw Error('Exclusive Node ownership unavailable');
+ await new Promise((resolve,reject)=>{
+  self.navigator.locks.request('dmash-node-runtime-v4',{mode:'exclusive',ifAvailable:true},async lock=>{
+   if(!lock)throw Error('Node already active in another context');
+   resolve();await new Promise(()=>{});
+  }).catch(reject);
+ });
+}
 async function initialize(data){
  if(initializing||runtime||closed)throw Error();initializing=true;
  try{
+  if(data.apiVersion!==1)throw Error('Incompatible Node worker API');
   for(const value of [data.seed,data.storageKey,data.baseNcrh])if(!(value instanceof Uint8Array)||value.length!==32)throw Error();
   signing=nacl.sign.keyPair.fromSeed(data.seed);const nodeId=hex(signing.publicKey);
   if(!DmashNodeIdentity.verify(nodeId))throw Error();
+  await claimActor();if(closed)throw Error();
   store=await DmashNodeRelationshipsV4.open(data.storageKey,nodeId,{isCurrent:()=>!closed});
   if(closed)throw Error();
   runtime=new DmashNodeRoutingV4(data.baseNcrh);
@@ -30,7 +44,7 @@ async function initialize(data){
   local=new DmashNodeLocalDeliveryV4(runtime,inbox);await inbox.pruneSeen();
   const restored=await local.restore();
   if(data.credential)gate=new DmashNodeAdmissionV4.PasswordGate(data.credential);
-  ready=true;return {nodeId,worker:true,...restored};
+  ready=true;return {apiVersion:1,nodeId,worker:true,...restored};
  }catch(error){self.postMessage({id:data.id,ok:false});await stop();throw error;}
  finally{wipe(data.seed);wipe(data.storageKey);wipe(data.baseNcrh);wipe(data.credential?.key);}
 }
