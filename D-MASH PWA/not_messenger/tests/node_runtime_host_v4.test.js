@@ -2,7 +2,7 @@
 // IPC/lifecycle tests use a controlled Worker adapter. Real Worker crypto/socket
 // acceptance is tools/test_node_transit_browser.cjs with DMASH_TRANSIT_WORKER=1.
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const instances=[];let actorVersion=1;
+const instances=[];let actorVersion=2;
 class WorkerAdapter{
  constructor(){this.messages=[];this.hold=false;this.terminated=false;instances.push(this);}
  postMessage(message,transfer=[]){
@@ -20,10 +20,10 @@ const Host=context.DmashNodeRuntimeHostV4;
 const materials=()=>({seed:new Uint8Array(32).fill(1),storageKey:new Uint8Array(32).fill(2),baseNcrh:new Uint8Array(32).fill(3)});
 (async()=>{
  actorVersion=undefined;await assert.rejects(Host.startMaterials(materials()),/Incompatible/);
- actorVersion=2;await assert.rejects(Host.startMaterials(materials()),/Incompatible/);actorVersion=1;
+ actorVersion=1;await assert.rejects(Host.startMaterials(materials()),/Incompatible/);actorVersion=2;
  const backing=new Uint8Array(256).fill(99),input={...materials(),seed:backing.subarray(0,32)};
  const host=await Host.startMaterials(input),worker=instances.at(-1),init=worker.messages[0];
- assert.equal(init.apiVersion,1);
+ assert.equal(init.apiVersion,2);
  assert.equal(init.seed.buffer.byteLength,32,'unrelated bytes from a backing buffer must never reach the actor');
  assert(backing.subarray(32).every(b=>b===99));assert(input.seed.every(b=>b===0));assert(input.storageKey.every(b=>b===0));
  const localBuffer=new Uint8Array(128).fill(21),ownerSecret=new Uint8Array(32).fill(44),recipientKey=new Uint8Array(32).fill(31);

@@ -45,9 +45,9 @@
    host.worker.onerror=()=>host.close();
    const cancel=()=>host.close();signal?.addEventListener('abort',cancel,{once:true});
    host.cleanup=()=>signal?.removeEventListener('abort',cancel);
-    host.identity=await host.call('INIT',{apiVersion:1,seed:copies[0],storageKey:copies[1],baseNcrh:copies[2],
+    host.identity=await host.call('INIT',{apiVersion:2,seed:copies[0],storageKey:copies[1],baseNcrh:copies[2],
      credential:credential?{profile:credential.profile,salt:credential.salt,epoch:credential.epoch,key:copies[3]}:null},copies.map(key=>key.buffer));
-    if(host.identity?.apiVersion!==1)throw Error('Incompatible Node worker API');
+    if(host.identity?.apiVersion!==2)throw Error('Incompatible Node worker API');
     if(signal?.aborted||host.closed)throw Error('Node worker cancelled');return host;
    }catch(error){host.close();throw error;}
    finally{for(const key of [...material,...copies])if(key.byteLength)key.fill(0);}
@@ -81,7 +81,7 @@
   }
   discover(certificate){return this.call('DISCOVER',{certificate});}
   submit(handle,payload,replyRouteId){return this.call('SUBMIT',{handle,payload,replyRouteId});}
-  inboxList(accountSlot,limit=32){return this.call('INBOX_LIST',{accountSlot,limit});}
+  inboxList(accountSlot,limit=32,after=null){return this.call('INBOX_LIST',{accountSlot,limit,after});}
   acknowledgeInbox(handle,accountSlot){return this.call('INBOX_ACK',{handle,accountSlot});}
   stats(){return this.call('STATS');}
   injectCoverOnce(size=1024){return this.call('INJECT_COVER',{size});}

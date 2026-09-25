@@ -139,8 +139,9 @@
    const inserted=await this.store.cas(key,null,await this.encrypt(key,value));this.check();
    return {status:deferred?'deferred':'stored',inserted};
   }
-  async list(accountSlot,limit=32){
+  async list(accountSlot,limit=32,after=null){
    this.check();if(!slot(accountSlot)||!Number.isInteger(limit)||limit<1||limit>128)throw Error('Invalid Inbox selector');
+   if(after!==null&&(!Number.isSafeInteger(after.receivedAt)||after.receivedAt<0||!token(after.handle)))throw Error('Invalid Inbox cursor');
    const records=[];let unreadable=0,deferred=0;
    for(const row of await this.store.all()){
     if(row.key==='owner')continue;
@@ -149,7 +150,9 @@
      if(value.accountSlot===accountSlot){if(value.kind==='pending')records.push({handle:row.key,...value});else if(value.kind==='deferred')deferred++;}
     }catch(error){this.check();unreadable++;}
    }
-   records.sort((a,b)=>a.receivedAt-b.receivedAt);return {records:records.slice(0,limit),unreadable,deferred};
+   records.sort((a,b)=>a.receivedAt-b.receivedAt||(a.handle<b.handle?-1:a.handle>b.handle?1:0));
+   const remaining=after?records.filter(row=>row.receivedAt>after.receivedAt||(row.receivedAt===after.receivedAt&&row.handle>after.handle)):records;
+   return {records:remaining.slice(0,limit),unreadable,deferred};
   }
   async acknowledge(handle,accountSlot){
    this.check();if(!token(handle)||!slot(accountSlot))throw Error('Invalid Inbox receipt');

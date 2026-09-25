@@ -396,6 +396,34 @@ persisted identity and state. This is single-owner exclusion, not a shared-tab
 RPC service or automatic ownership transfer UI. DeviceRoot lock remains local
 to its context; a global cross-tab lock broadcast is not implemented.
 
-Local INIT messages and responses require `apiVersion: 1`; missing and unknown
+Local INIT messages and responses require `apiVersion: 2`; missing and unknown
 versions are rejected in either direction so a stale host/Worker pair cannot
 silently start with different local API semantics. Network wire remains v4.
+
+
+### Account Inbox consumer (partial N3, release .16)
+
+`Core.attachNodeInboxV4(host)` explicitly attaches the consumer; regular Account
+sync drains it. This does not automatically start a Node or migrate contacts.
+`receiveAccountNodeRecordV4` resolves a local route using Account-encrypted
+`pairing_material` under `Storage.getAlias('node-route-v4:' + routeId, 'L2')`.
+The stored `peerId` determines the signature verifier; the packet cannot choose
+its own sender. Account slot, active key/salt generation, envelope bounds and
+sender proof are checked before the shared Account decrypt/persist pipeline.
+Account transitions serialize with that pipeline. No Account keys enter Worker.
+
+The consumer acknowledges the Node Inbox only after successful Account handling.
+A failed write or local receipt leaves the record retryable; existing logical
+message IDs prevent duplicate history after persist-before-ACK failure. Four
+batches of 32 records bound a sync pass. A `(receivedAt, handle)` cursor continues
+past rejected/incomplete entries and survives retirement of earlier entries, so
+an invalid first page cannot permanently starve valid later mail. Rejected rows
+are retained; quarantine/backoff policy remains open. The cursor resets when the
+Account session changes and holds only opaque weakly keyed session tokens, not
+old Account secret objects. Local IPC version 2 prevents older Workers silently
+ignoring pagination. Missing and other versions fail closed.
+
+The Account integration test uses real recipient and Account ratchet crypto with
+an explicitly pre-established epoch fixture, plus controlled storage failures.
+It is not proof of initial handshake, contact setup, live v4 Account networking,
+production Account vault migration or peer-receipt retry. Those remain required.

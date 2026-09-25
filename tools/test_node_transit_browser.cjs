@@ -121,7 +121,11 @@ const sources=new Map([...allowed].map(name=>[name,fs.readFileSync(path.join(roo
     if(pending.records.length!==2||!pending.records.some(row=>row.payload==='opaque-for-locked-account')||!pending.records.some(row=>row.payload==='native-reply-to-browser'))throw Error('Pending payload lost at root lock');
     let isolated=false;try{await replacement.acknowledgeInbox(pending.records[0].handle,'locked-slot-B');}catch(_){isolated=true;}
     if(!isolated)throw Error('Local receipt slot failure');
-    for(const record of pending.records)if(!await replacement.acknowledgeInbox(record.handle,'locked-slot-A'))throw Error('Local receipt failure');
+    const first=(await replacement.inboxList('locked-slot-A',1)).records[0];
+    if(!await replacement.acknowledgeInbox(first.handle,'locked-slot-A'))throw Error('First local receipt failed');
+    const next=await replacement.inboxList('locked-slot-A',1,{handle:first.handle,receivedAt:first.receivedAt});
+    if(next.records.length!==1||next.records[0].handle===first.handle)throw Error('Worker Inbox cursor did not survive retirement');
+    if(!await replacement.acknowledgeInbox(next.records[0].handle,'locked-slot-A'))throw Error('Second local receipt failed');
     if((await replacement.inboxList('locked-slot-A')).records.length)throw Error('Local Inbox still pending');
     const connecting=replacement.connect({url:`ws://127.0.0.1:${node.port}/mesh/v4`,nodeId:node.nodeId});
     DeviceRoot.lock();let cancelled=false;try{await connecting;}catch(_){cancelled=true;}

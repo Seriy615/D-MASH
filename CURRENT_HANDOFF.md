@@ -1,3 +1,42 @@
+# Execution checkpoint — Account consumer for Node Inbox (partial N3)
+
+Previous release .15, `36ba94fb5cbcd54285729e2c7f2aaec65cc31d73`, was pushed,
+synchronized and deployed to EMS: exact 196-file match, active/running,
+NRestarts=0. Real public Worker WSS authorization twice/reconnect/lock PASS
+(/tmp/dmash-v4-owner-remote-worker.log), public page/active SW .15 and cached new
+modules PASS (/tmp/dmash-v4-owner-release.log).
+
+Prepared .16 (`transport-v3-account-inbox-20260925.16`). Core now exposes an
+explicit Node Inbox attachment and v4 receiver. Account-encrypted local route
+mapping selects the expected peer, then the actual sender-proof/decrypt/persist
+pipeline is shared with v3. Slot and key/salt generation guard every async phase;
+Account switch waits for in-flight consumption. No Account key goes to Worker.
+The consumer retains failed records, ACKs only after Account handling succeeds,
+and paginates past invalid records in bounded 4x32 passes. Cursor remains valid
+when the previous row is retired. IPC now requires version 2 in both directions;
+old version 1 must be refused because it ignored the cursor.
+
+Tests PASS: 263 backend + 11 Origin + 62 JS suites
+(/tmp/dmash-v4-account-inbox-tests.log). New Account test uses real recipient
+crypto and real Account ratchet encryption/signatures with an established epoch
+fixture. It covers wrong Account, failed persistence, lost local receipt without
+duplicate history, 129 rejected entries before valid mail, and key replacement
+while listing. Account storage faults are controlled; this is not production
+vault or initial-handshake evidence. Browser Worker/native transit + local Inbox
+cursor after retirement PASS (/tmp/dmash-v4-account-inbox-transit.log). Real
+cross-tab ownership and missing/old/unknown IPC refusal PASS
+(/tmp/dmash-v4-account-inbox-owner.log).
+
+Next: commit/deploy .16, public Worker and v3 Account regression because Core
+handling was factored. Then implement v4 outbound Account adapter, route/contact
+provisioning and actual two-Account v4 network acceptance. attachNodeInboxV4 is
+explicit and UI still operates over v3; no N3 completion claim. Route renewal,
+mailbox, H1/H2/H3, remaining N0–N8/A–M/E6 requirements remain open.
+User requested overall progress: approximate 35%, range 30–40%, engineering
+estimate of remaining work rather than green-test fraction.
+
+---
+
 # Execution checkpoint — exclusive browser Node owner and local API version
 
 Inbox release .14 (`cceba8420cda8c4ad0b342859f8b062b9837c40f`) is pushed,

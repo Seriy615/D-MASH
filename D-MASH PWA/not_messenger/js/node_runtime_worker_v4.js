@@ -32,7 +32,7 @@ async function claimActor(){
 async function initialize(data){
  if(initializing||runtime||closed)throw Error();initializing=true;
  try{
-  if(data.apiVersion!==1)throw Error('Incompatible Node worker API');
+  if(data.apiVersion!==2)throw Error('Incompatible Node worker API');
   for(const value of [data.seed,data.storageKey,data.baseNcrh])if(!(value instanceof Uint8Array)||value.length!==32)throw Error();
   signing=nacl.sign.keyPair.fromSeed(data.seed);const nodeId=hex(signing.publicKey);
   if(!DmashNodeIdentity.verify(nodeId))throw Error();
@@ -44,7 +44,7 @@ async function initialize(data){
   local=new DmashNodeLocalDeliveryV4(runtime,inbox);await inbox.pruneSeen();
   const restored=await local.restore();
   if(data.credential)gate=new DmashNodeAdmissionV4.PasswordGate(data.credential);
-  ready=true;return {apiVersion:1,nodeId,worker:true,...restored};
+  ready=true;return {apiVersion:2,nodeId,worker:true,...restored};
  }catch(error){self.postMessage({id:data.id,ok:false});await stop();throw error;}
  finally{wipe(data.seed);wipe(data.storageKey);wipe(data.baseNcrh);wipe(data.credential?.key);}
 }
@@ -77,7 +77,7 @@ self.onmessage=async({data})=>{
    else if(data.type==='INSTALL_RECIPIENT_KEYS')result=await local.installRecipientKeys(data.routeId,data.recipientKeys);
    else if(data.type==='DISCOVER')result=await local.discover(data.certificate);
    else if(data.type==='SUBMIT')result=local.send(data.handle,data.payload,data.replyRouteId);
-   else if(data.type==='INBOX_LIST')result=await inbox.list(data.accountSlot,data.limit);
+   else if(data.type==='INBOX_LIST')result=await inbox.list(data.accountSlot,data.limit,data.after);
    else if(data.type==='INBOX_ACK')result=await inbox.acknowledge(data.handle,data.accountSlot);
    else if(data.type==='STATS')result={...runtime.stats,owned:runtime.owned.length,peers:runtime.peers.size,
     queued:[...runtime.queues.values()].reduce((n,q)=>n+q.length,0),sending:runtime.senders.size,

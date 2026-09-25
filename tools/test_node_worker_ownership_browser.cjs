@@ -40,7 +40,7 @@ const sources=new Map(names.map(name=>['/js/'+name,fs.readFileSync(path.join(__d
   await two.reload();await vacant(two);await unlock(two);assert.equal(await start(two),id);
   await two.evaluate(()=>DeviceRoot.lock());await vacant(two);
   await unlock(two);
-  for(const apiVersion of [null,2])assert.equal(await two.evaluate(async apiVersion=>{
+  for(const apiVersion of [null,1,3])assert.equal(await two.evaluate(async apiVersion=>{
    const identity=await DmashNodeIdentity.unlockDeviceIdentity(DeviceRoot),actor=new Worker('/js/node_runtime_worker_v4.js');let timer;
    try{
     const seed=identity.signing.secretKey.slice(0,32);

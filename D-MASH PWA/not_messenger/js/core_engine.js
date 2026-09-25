@@ -1272,6 +1272,35 @@ const Core = {
         this._inboxAccountTask = task;
         return task.finally(() => { if (this._inboxAccountTask === task) this._inboxAccountTask = null; });
     },
+    attachNodeInboxV4(host) {
+        this.nodeInboxV4?.close();
+        this.nodeInboxV4 = new window.DmashAccountNodeInboxV4(host, this);
+        return this.nodeInboxV4;
+    },
+    receiveAccountNodeRecordV4(record, accountSlot) {
+        if (this._accountTransitioning) return Promise.resolve(false);
+        if (this._inboxAccountTask) return this._inboxAccountTask.catch(() => {}).then(() => this.receiveAccountNodeRecordV4(record, accountSlot));
+        const task = this._receiveAccountNodeRecordV4(record, accountSlot);
+        this._inboxAccountTask = task;
+        return task.finally(() => { if (this._inboxAccountTask === task) this._inboxAccountTask = null; });
+    },
+    async _receiveAccountNodeRecordV4(record, accountSlot) {
+        const keys = this.keys, salt = this.blindSalt;
+        const current = () => !this._accountTransitioning && this.activeIdentity === accountSlot &&
+            this.keys === keys && !!keys?.sign && this.blindSalt === salt && !!salt;
+        if (!current()) return false;
+        if (record?.accountSlot !== accountSlot || !/^[0-9a-f]{64}$/.test(record?.routeId || '') ||
+            typeof record.payload !== 'string' || record.payload.length > 16384) throw Error('Invalid local Node record');
+        const alias = await Storage.getAlias('node-route-v4:' + record.routeId, 'L2');
+        if (!current()) return false;
+        const route = await Storage.getBox('pairing_material', alias);
+        if (!current() || !/^[0-9a-f]{64}$/.test(route?.peerId || '')) return false;
+        const envelope = JSON.parse(record.payload);
+        if (!envelope || envelope.version !== 1 || typeof envelope.ciphertext !== 'string' ||
+            !/^(?:[0-9a-f]{2})+$/.test(envelope.ciphertext) || !/^[0-9a-f]{128}$/.test(envelope.sender_proof || ''))
+            throw Error('Invalid Account envelope');
+        return this._consumeAccountInboxPayload(envelope, route.peerId, current);
+    },
     async _receiveAccountDeviceEnvelopeV3(deviceEnvelope, accountSlot) {
         if (this._accountTransitioning) return false;
         const current = () => this.activeIdentity === accountSlot && !!this.keys?.sign && !!this.blindSalt;
@@ -1281,6 +1310,9 @@ const Core = {
         const route = await Storage.getBox('pairing_material', accountAlias);
         if (!current() || !/^[0-9a-f]{64}$/i.test(route?.peerId || '')) return false;
         const peerId = route.peerId, envelope = JSON.parse(deviceEnvelope.account_payload);
+        return this._consumeAccountInboxPayload(envelope, peerId, current);
+    },
+    async _consumeAccountInboxPayload(envelope, peerId, current) {
         if (!envelope.sender_proof || !window.nacl.sign.detached.verify(this.hexToBytes(envelope.ciphertext),
             this.hexToBytes(envelope.sender_proof), this.hexToBytes(peerId))) throw new Error('Account sender proof rejected');
         const plaintext = await this.decrypt(envelope.ciphertext, peerId, true);
@@ -1323,6 +1355,10 @@ const Core = {
     },
     // Core.syncNetwork        - Опрос сервера (PULL), получение и сортировка новых маляв
     async syncNetwork() {
+        if (this.nodeInboxV4 && !this.nodeInboxV4.closed) {
+            try { await this.nodeInboxV4.drain(); }
+            catch (error) { this.shmon('WARN', 'Local Node Inbox sync deferred: ' + error.message); }
+        }
         if (window.NodeManager?.connectedConnections?.().some(connection => connection.client)) {
             try {
                 await window.NodeManager.pullDeviceMailboxV3();
