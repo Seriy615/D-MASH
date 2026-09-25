@@ -1,3 +1,35 @@
+# Deployment checkpoint — v4 channel foundations published
+
+Pushed, EMS source synchronized and Node + PWA deployed at
+`bdb62d717cb38ce11ee739682da822b25ae22b83`. Tracked dmash-deploy-ems and canonical
+untracked get_commit.sh both succeeded. Current SSH enters root; source owner is
+codex (uid 1000, /home/jcode), no jcode account. Source sync used sudo -u codex;
+canonical publication used process-scoped safe.directory and restored root-owned
+.git entries to codex afterward. Both untracked EMS scripts remain preserved.
+
+Read-only exact revision check: 174 source files, no missing/changed files.
+Service active/running, NRestarts=0. Deploy log:
+`/tmp/dmash-v4-channel-foundation-deploy.log`; canonical PWA backup:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20260925T131615Z`.
+PWA release ID remains transport-v3-device-material-20260925.11: no loaded v4
+runtime/SW change was activated. Do not confuse publishing libraries with v4 cutover.
+
+Actual two-Account EMS late-pairing acceptance PASS (session 76459 exited 0),
+log `/tmp/dmash-v4-foundation-ems-acceptance.log`: advertisement before pairing,
+initial exchange, both message directions, ratchet epochs 1/2, delayed prior-epoch
+packet, recipient reconnect/queued delivery and Inbox control retirement.
+
+Latest user steering: derive NCRH per route (HMAC, secret BaseNCRH, decoded 32-byte
+RouteID), and choose random Probe hop TTL. New probe_primitives_v4 JS/Python
+modules implement route/HOP domain separation, cryptographic uniform TTL 4–15
+(configurable nondegenerate range within 1–15), strict consume-to-zero stop.
+Three Python tests and one JS suite PASS, including real WebCrypto/Python parity
+and rejection sampling edge. Not yet wired to v4 Probe runtime; v3 unchanged.
+Next: integrate these into actual N0/N2 discovery/transit. The entire N0–N8 and
+compatible A–M/E6 goal remains active.
+
+---
+
 # Execution checkpoint — composed v4 Node channels, 2026-09-25
 
 Implemented shared Python/browser channel admission, mutual password policies,

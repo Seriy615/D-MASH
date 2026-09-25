@@ -1,0 +1,26 @@
+'use strict';
+const assert=require('node:assert/strict'),{createHmac,webcrypto}=require('node:crypto'),vm=require('node:vm'),fs=require('node:fs');
+const source=require.resolve('../js/probe_primitives_v4.js');
+const api=require(source);
+(async()=>{
+ const base=new Uint8Array(32).fill(7),route=new Uint8Array(32).fill(11);
+ const root=await api.routeNcrh(base,route);
+ assert.equal(root,createHmac('sha256',base).update(Buffer.concat([Buffer.from('D-MASH|NCRH|V4|ROUTE\0'),route])).digest('hex'));
+ assert.equal(root,await api.routeNcrh(base,route));
+ assert.notEqual(root,await api.routeNcrh(base,new Uint8Array(32).fill(12)));
+ assert.notEqual(root,await api.routeNcrh(new Uint8Array(32).fill(8),route));
+ assert.notEqual(root,await api.extendNcrh(base,Buffer.from(route).toString('hex')));
+ await assert.rejects(api.routeNcrh(base,'0'.repeat(64)));
+ await assert.rejects(api.routeNcrh(new Uint8Array(31),route));
+ assert.throws(()=>api.extendNcrh(base,'AA'.repeat(32)));
+ for(const ttl of [0,16,-1,1.1,NaN,true,'4'])assert.throws(()=>api.consumeHop(ttl));
+ for(const pair of [[0,15],[4,16],[4,4],[5,4],[true,15]])assert.throws(()=>api.sampleHopTtl(...pair));
+ let budget=15,visits=0;while(budget){budget=api.consumeHop(budget);visits++;}assert.equal(visits,15);
+ const samples=[0xffffffff,0,11];let calls=0;
+ const context={Uint8Array,Uint32Array,TextEncoder,crypto:{subtle:webcrypto.subtle,getRandomValues(out){calls++;assert(samples.length);out[0]=samples.shift();return out;}}};
+ vm.createContext(context);vm.runInContext(fs.readFileSync(source,'utf8'),context);
+ assert.equal(context.DmashProbePrimitivesV4.sampleHopTtl(),4);
+ assert.equal(calls,2,'biased high tail must be rejected');
+ assert.equal(context.DmashProbePrimitivesV4.sampleHopTtl(),15);
+ console.log('PASS route-scoped NCRH, domain separation, random TTL rejection sampling and exhausted-hop stop');
+})().catch(error=>{console.error(error);process.exitCode=1;});

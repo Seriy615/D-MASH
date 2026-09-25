@@ -5,6 +5,53 @@ new Node channels. The development plan remains authoritative. The v3 graph's
 global origin_tag, public root advertisements, metric and trace cannot simply
 be copied into v4. The new authenticated channel by itself does not fix them.
 
+## User steering: route-scoped NCRH, 2026-09-25
+
+The user identified that a device-wide NCRH would correlate independent local
+routes now that the phone itself is a Node. Adopt route-specific derivation for
+v4 instead of exporting a common device root. Proposed exact construction:
+`HMAC-SHA256(BaseNCRH, "D-MASH|NCRH|V4|ROUTE\0" || canonical_route_id_bytes)`.
+The separator denotes one zero byte. RouteID is exactly the 32 decoded bytes
+of the route identifier, not its hex/base64 text. BaseNCRH is an independent
+secret 32-byte random Node material, never NodeID/AccountID/password or a public root.
+Keep the result stable across ordinary reconnects; use distinct route IDs for
+distinct directional/public/private routes. Account IDs do not enter this KDF.
+
+Only the local route owner needs RouteID for initial derivation. Transit must
+not request that global identifier: further hop transformations operate on the
+received NCRH with a separate v4 HOP domain. NCRH remains an index, never proof
+of route ownership or permission to claim/deliver/drain a mailbox. Do not export
+the old device-root advertisement alongside these values: it would undermine
+the intended separation. Existing v3 functions stay explicit migration code.
+
+This removes the common deterministic value across different local routes;
+it does not make repeated observations of the same route unlinkable, hide the
+adjacent Node identity, or by itself prove origin/terminal indistinguishability.
+Equal graph values can also mean shared transit, so equality alone is not proof
+that an Account terminates on that device. Probe semantics/metrics/authority
+still need separate review. The opaque-discovery candidate below must reconcile
+whether/where to expose such route-specific NCRH; this steering is not permission
+to reintroduce a global cleartext route locator or device-root announcement.
+
+## User steering: random Probe hop TTL
+
+Every newly originated Probe samples its hop TTL with the system CSPRNG, uniformly
+from the configured inclusive range (initial default 4–15, hard maximum 15).
+Sample once per Probe, independently of its RouteID, NCRH and Account. Copies
+of that same Probe keep the sampled budget; retransmission does not replenish it.
+Each receiver consumes one hop: an incoming TTL of 1 allows local processing but
+no onward forwarding; 2 becomes 1 on the next wire. Reject zero, non-integers and
+values above 15 on receipt. No public initial-TTL field, decrement counter,
+absolute metric or path trace is added. Time expiry remains an independent bound.
+
+Randomization makes observed TTL ambiguous about distance; a value near the
+maximum still constrains possible distance and it is not an anonymity proof.
+Untrusted relays can lie about TTL, so rate/fan-out/deduplication/expiry quotas
+are still required. A short draw can miss distant routes: event-driven retries
+must be bounded and may create a fresh Probe with a fresh draw, never a global
+periodic refresh or unlimited expanding search. Default range is a resource
+policy, not a claim of guaranteed network reachability.
+
 ## Local capabilities and opaque discovery
 
 A local route binding holds its independent route signing/box keys, the local
