@@ -1,3 +1,29 @@
+# Execution checkpoint — mounted opt-in native v4 gateway
+
+Native /mesh/v4 router now shares the application lifecycle. Explicit
+DMASH_NODE_V4_ENABLED flag defaults off. Private visibility requires protected
+password credential; can_route=false refuses enabling. Node identity is preserved.
+Independent Base NCRH and relationship storage key persist in a 0700 state directory;
+material files must be owner-only regular non-symlink files. Missing keys with an
+existing DB fail closed. Deploy/rollback excludes node_v4_state runtime contents.
+
+Listener reserves quota before WebSocket upgrade. Uvicorn frame/queue limits are
+2 MiB / 16, compression disabled. v4 modules support both package tests and the
+existing main.py top-level runtime imports. The real browser fixture now uses
+NodeServiceV4 and the actual FastAPI gateway, not a custom WebSocket handler.
+Chrome Worker transit PASS: /tmp/dmash-v4-gateway-browser.log. Full suite PASS:
+262 backend + 11 Origin + 60 JS (/tmp/dmash-v4-service-all-tests.log). A focused
+follow-up covers the final pre-upgrade test and missing-key guard.
+
+Before this slice, source and exact deployed revision were
+5a0d51329e541ac5f3304649f79482df50463bcd (191 files, service active, NRestarts=0).
+Next: commit/sync/deploy, explicitly enable /mesh/v4 on EMS using protected persistent
+state and a dedicated nginx location, then run tools/test_worker_v4_remote.cjs with
+an out-of-band pinned public NodeID. Browser Account traffic remains v3 until N3
+integration. Numeric TTL privacy, H1/H2/H3, Inbox/mailbox and N3–N8 remain open.
+
+---
+
 # Execution checkpoint — Worker publication and native listener ownership
 
 Worker release 6efe70f4d4293f7474d1e26e492f83c1a3fdd100 was committed, pushed,

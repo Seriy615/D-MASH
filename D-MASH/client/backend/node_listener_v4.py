@@ -8,8 +8,12 @@ import asyncio
 import time
 from collections import deque
 
-from .secure_socket import accept_secure
-from .node_channel_v4 import authorize_node_v4
+if __package__:
+    from .secure_socket import accept_secure
+    from .node_channel_v4 import authorize_node_v4
+else:
+    from secure_socket import accept_secure
+    from node_channel_v4 import authorize_node_v4
 
 
 class NodeListenerV4:
@@ -33,7 +37,7 @@ class NodeListenerV4:
         self.pending = 0
         self.closed = False
 
-    async def handle(self, socket):
+    async def handle(self, socket, *, accept=False):
         now = self.monotonic()
         while self.attempts and self.attempts[0] <= now - 60:
             self.attempts.popleft()
@@ -51,6 +55,8 @@ class NodeListenerV4:
         peer = None
         secure = channel = None
         try:
+            if accept:
+                await socket.accept()
             secure, _ = await accept_secure(socket, self.signing_key, 'NODE', version=4)
             peer = secure.session.peer_id
             if peer in self.reserved or peer in self.runtime.peers:

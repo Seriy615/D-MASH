@@ -6,7 +6,8 @@ from unittest.mock import AsyncMock, patch
 from backend.node_listener_v4 import NodeListenerV4
 
 class Socket:
-    def __init__(self): self.codes = []
+    def __init__(self): self.codes = []; self.accepted = False
+    async def accept(self): self.accepted = True
     async def close(self, code=1000, reason=''): self.codes.append(code)
 
 class ListenerTests(unittest.IsolatedAsyncioTestCase):
@@ -21,10 +22,12 @@ class ListenerTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.Future()
         a, b = Socket(), Socket()
         with patch('backend.node_listener_v4.accept_secure', handshake):
-            task = asyncio.create_task(listener.handle(a))
+            task = asyncio.create_task(listener.handle(a, accept=True))
             await entered.wait()
-            await listener.handle(b)
+            await listener.handle(b, accept=True)
             self.assertEqual(b.codes, [1013])
+            self.assertTrue(a.accepted)
+            self.assertFalse(b.accepted)
             await listener.close()
             self.assertTrue(task.cancelled())
             self.assertEqual(listener.pending, 0)

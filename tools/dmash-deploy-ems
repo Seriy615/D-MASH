@@ -69,6 +69,7 @@ rollback() {
     if [[ -d "$NODE_BACKUP" ]]; then
         log "Rolling Node backend code back"
         rsync -a --delete \
+            --exclude='node_v4_state/' \
             --exclude='frontend/' \
             --exclude='backups/' \
             --exclude='deploy-backups/' \
@@ -159,6 +160,7 @@ log "Creating Node backend code backup"
 mkdir -p "$NODE_BACKUP_ROOT" "$NODE_BACKUP"
 if [[ -d "$NODE_DST" ]]; then
     rsync -a \
+        --exclude='node_v4_state/' \
         --exclude='frontend/' \
         --exclude='backups/' \
         --exclude='deploy-backups/' \
@@ -210,6 +212,7 @@ systemctl stop "$SERVICE"
 log "Updating EMS Node backend"
 mkdir -p "$NODE_DST"
 rsync -a --delete \
+    --exclude='node_v4_state/' \
     --exclude='frontend/' \
     --exclude='backups/' \
     --exclude='deploy-backups/' \

@@ -7,7 +7,10 @@ steps; passing this proof never grants mailbox or route ownership.
 import re
 import time
 
-from .resource_pow import MIN_ACTIVATION_DIFFICULTY, MAX_ACTIVATION_DIFFICULTY, verify_activation_pow
+if __package__:
+    from .resource_pow import MIN_ACTIVATION_DIFFICULTY, MAX_ACTIVATION_DIFFICULTY, verify_activation_pow
+else:
+    from resource_pow import MIN_ACTIVATION_DIFFICULTY, MAX_ACTIVATION_DIFFICULTY, verify_activation_pow
 
 
 def _hex(value, length):

@@ -8,9 +8,14 @@ import asyncio
 import threading
 import time
 
-from .node_admission_v4 import _context, password_proof
-from .node_registration_v4 import resource, verify_registration
-from .resource_pow import activation_pow_difficulty, mine_activation_pow
+if __package__:
+    from .node_admission_v4 import _context, password_proof
+    from .node_registration_v4 import resource, verify_registration
+    from .resource_pow import activation_pow_difficulty, mine_activation_pow
+else:
+    from node_admission_v4 import _context, password_proof
+    from node_registration_v4 import resource, verify_registration
+    from resource_pow import activation_pow_difficulty, mine_activation_pow
 
 
 def _policy(value):

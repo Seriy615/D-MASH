@@ -4,7 +4,10 @@ import re
 import secrets
 from nacl.exceptions import CryptoError
 from nacl.public import PrivateKey
-from .route_discovery_v4 import seal,open_box
+if __package__:
+    from .route_discovery_v4 import seal,open_box
+else:
+    from route_discovery_v4 import seal,open_box
 
 
 def seal_payload(recipient_public,payload):

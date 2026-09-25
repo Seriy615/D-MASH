@@ -3,17 +3,19 @@ import asyncio
 import json
 from pathlib import Path
 import secrets
+import socket
+import uvicorn
+from fastapi import FastAPI
 import sys
 import tempfile
 import time
 
 from nacl.public import PrivateKey
 from nacl.signing import SigningKey
-from websockets.server import serve
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'D-MASH/client'))
 from backend.crypto import NodeCryptoManager
-from backend.node_listener_v4 import NodeListenerV4
-from backend.node_relationships_v4 import RelationshipStore
+from backend.node_service_v4 import NodeServiceV4
+from backend.gateway_v4 import router
 from backend.node_routing_v4 import NodeRoutingV4
 from backend.route_discovery_v4 import issue_certificate
 from backend.recipient_payload_v4 import seal_payload,open_payload
@@ -23,7 +25,7 @@ async def main():
     while len(keys)<2:
         key=SigningKey.generate()
         if NodeCryptoManager.verify_node_pow(key.verify_key.encode().hex()):keys.append(key)
-    runtimes=[NodeRoutingV4(secrets.token_bytes(32)) for _ in keys]
+    runtimes=[]
     owner,sign=SigningKey.generate(),SigningKey.generate();box,recipient=PrivateKey.generate(),PrivateKey.generate()
     now=int(time.time());cert=issue_certificate(owner,sign.verify_key,box.public_key,recipient.public_key,
         generation=1,issued_at=now,expires_at=now+3600)
@@ -36,14 +38,20 @@ async def main():
             raise AssertionError('Payload mismatch')
         accepted+=1;await delivered.put((packet['label'],result['payload']))
     async def discard(peer,packet):pass
-    servers=[];stores=[];listeners=[]
+    servers=[];services=[];server_tasks=[];sockets=[]
     with tempfile.TemporaryDirectory() as tmp:
         try:
             for i,key in enumerate(keys):
-                store=RelationshipStore(Path(tmp)/f'{i}.db',key.verify_key.encode().hex(),secrets.token_bytes(32));stores.append(store)
-                listener=NodeListenerV4(key,store,runtimes[i],difficulty=20);listeners.append(listener)
-                servers.append(await serve(listener.handle,'127.0.0.1',0,max_size=2*1024*1024,max_queue=16))
-            print(json.dumps({'nodes':[dict(port=s.sockets[0].getsockname()[1],nodeId=k.verify_key.encode().hex()) for s,k in zip(servers,keys)]}),flush=True)
+                service=NodeServiceV4(key,Path(tmp)/str(i));services.append(service)
+                service.listener.difficulty=20
+                runtimes.append(service.runtime)
+                app=FastAPI();app.state.node_v4=service;app.include_router(router)
+                listener=socket.socket();listener.bind(('127.0.0.1',0));sockets.append(listener)
+                server=uvicorn.Server(uvicorn.Config(app,log_level='critical',lifespan='off',ws_max_size=2*1024*1024,ws_max_queue=16))
+                servers.append(server);server_tasks.append(asyncio.create_task(server.serve(sockets=[listener])))
+                async with asyncio.timeout(5):
+                    while not server.started:await asyncio.sleep(.01)
+            print(json.dumps({'nodes':[dict(port=s.getsockname()[1],nodeId=k.verify_key.encode().hex()) for s,k in zip(sockets,keys)]}),flush=True)
             commands=asyncio.Queue();loop=asyncio.get_running_loop()
             loop.add_reader(sys.stdin.fileno(),lambda:commands.put_nowait(sys.stdin.readline().strip()))
             try:
@@ -82,9 +90,9 @@ async def main():
                 await commands.get()
             finally:loop.remove_reader(sys.stdin.fileno())
         finally:
-            await asyncio.gather(*(listener.close() for listener in listeners))
-            for server in servers:server.close()
-            await asyncio.gather(*(server.wait_closed() for server in servers))
-            for store in stores:store.close()
+            await asyncio.gather(*(service.close() for service in services))
+            for server in servers:server.should_exit=True
+            await asyncio.gather(*server_tasks)
+            for listener in sockets:listener.close()
 
 asyncio.run(main())

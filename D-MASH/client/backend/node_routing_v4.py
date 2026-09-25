@@ -11,9 +11,14 @@ import re
 import secrets
 import time
 
-from .probe_primitives_v4 import route_ncrh, extend_ncrh, sample_hop_ttl, consume_hop
-from .recipient_payload_v4 import cover_box
-from .route_discovery_v4 import create_query, answer_query, verify_reply, verify_certificate
+if __package__:
+    from .probe_primitives_v4 import route_ncrh, extend_ncrh, sample_hop_ttl, consume_hop
+    from .recipient_payload_v4 import cover_box
+    from .route_discovery_v4 import create_query, answer_query, verify_reply, verify_certificate
+else:
+    from probe_primitives_v4 import route_ncrh, extend_ncrh, sample_hop_ttl, consume_hop
+    from recipient_payload_v4 import cover_box
+    from route_discovery_v4 import create_query, answer_query, verify_reply, verify_certificate
 
 TOKEN=re.compile('[0-9a-f]{64}')
 

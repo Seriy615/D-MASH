@@ -10,7 +10,10 @@ import sqlite3
 from pathlib import Path
 from nacl.secret import SecretBox
 
-from .node_registration_v4 import _hex
+if __package__:
+    from .node_registration_v4 import _hex
+else:
+    from node_registration_v4 import _hex
 
 
 class RelationshipStore:

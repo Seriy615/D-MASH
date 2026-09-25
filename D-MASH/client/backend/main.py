@@ -9,6 +9,7 @@ from core import lifespan
 from api import router
 from client_gateway import router as client_gateway_router
 from gateway_v3 import router as gateway_v3_router
+from gateway_v4 import router as gateway_v4_router
 from signaling_gateway import router as signaling_router
 
 # --- СОЗДАЕМ ПРИЛОЖЕНИЕ ---
@@ -26,6 +27,7 @@ app.add_middleware(
 app.include_router(router)
 app.include_router(client_gateway_router)
 app.include_router(gateway_v3_router)
+app.include_router(gateway_v4_router)
 app.include_router(signaling_router)
 
 # 3. Статика (Frontend)
@@ -64,6 +66,9 @@ if __name__ == "__main__":
         "main:app",
         host=host,
         port=port,
+        ws_max_size=2 * 1024 * 1024,
+        ws_max_queue=16,
+        ws_per_message_deflate=False,
         reload=False,
         ssl_keyfile=ssl_key, 
         ssl_certfile=ssl_cert

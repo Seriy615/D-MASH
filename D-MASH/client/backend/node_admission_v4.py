@@ -10,8 +10,12 @@ import secrets
 import time
 from nacl.pwhash import argon2id
 
-from .node_registration_v4 import _hex
-from .crypto import NodeCryptoManager
+if __package__:
+    from .node_registration_v4 import _hex
+    from .crypto import NodeCryptoManager
+else:
+    from node_registration_v4 import _hex
+    from crypto import NodeCryptoManager
 
 PROFILE = 'ARGON2ID_64M_T3_P1_V1'
 DOMAIN = b'D-MASH|NODE-ADMISSION|V4\0'

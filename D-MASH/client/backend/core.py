@@ -44,6 +44,7 @@ if __package__:  # Package imports must share modules with legacy absolute impor
     from .device_registration import DeviceRegistration
     from .dnss_mailbox import DnssMailbox
     from .s_turn import STurnService
+    from .node_service_v4 import NodeServiceV4
 else:  # Runtime scripts import backend modules as top-level modules.
     from database import DatabaseManager
     from network import P2PNode
@@ -58,6 +59,7 @@ else:  # Runtime scripts import backend modules as top-level modules.
     from device_registration import DeviceRegistration
     from dnss_mailbox import DnssMailbox
     from s_turn import STurnService
+    from node_service_v4 import NodeServiceV4
 
 # --- D-MASH CONFIGURATION ---
 TACT_INTERVAL = 0.5
@@ -201,11 +203,15 @@ async def lifespan(app: FastAPI):
     client_gateway.registration_registry_factory = None
     app.state.s_turn_service = None
     s_turn_service = None
+    app.state.node_v4 = None
+    node_v4 = None
     try:
         # 1. Инициализация Identity Ноды (Синхронно, блокирует старт до завершения PoW)
         node_signing_key = ensure_node_identity()
         state.node_crypto = NodeCryptoManager(node_signing_key, ensure_base_ncrh())
         state.capabilities = NodeCapabilities.from_env()
+        node_v4 = NodeServiceV4.from_env(state.node_crypto.signing_key, state.capabilities)
+        app.state.node_v4 = node_v4
         if getattr(state.capabilities, "can_s_turn", False):
             s_turn_service = STurnService.from_env()
             # The signaling endpoint remains fail-closed until the configured
@@ -270,6 +276,8 @@ async def lifespan(app: FastAPI):
         if state.system_db: await state.system_db.close()
         if s_turn_service: s_turn_service.close()
     finally:
+        app.state.node_v4 = None
+        if node_v4: await node_v4.close()
         client_gateway.registration_registry_factory = None
         state.device_registration = None
         if state.dnss_mailbox:

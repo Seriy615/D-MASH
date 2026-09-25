@@ -326,3 +326,28 @@ miner or release the original reservation. Session completion/shutdown releases
 ownership and closes the channel. Storage and credential ownership remain with
 the process host. Endpoint adapters must still enforce pre-upgrade, frame/queue
 and TLS policy; this module alone does not mount a production listener.
+
+
+## Native endpoint and configuration
+
+`/mesh/v4` is mounted but rejects upgrade until `DMASH_NODE_V4_ENABLED=1`.
+`DMASH_NODE_V4_STATE_DIR` defaults to `node_v4_state` in the process directory;
+use a protected persistent directory (0700) outside deployment for a server.
+The original Node signing identity is reused. The state directory contains
+independent 32-byte `storage.key`, `base_ncrh.key` and encrypted `relationships.db`.
+Do not rotate/drop these files during deployment or restore. Existing recovery
+bundle support does not yet include v4 relationship state; backup integration is open.
+
+Private visibility requires `DMASH_NODE_V4_CREDENTIAL_FILE`, an owner-only JSON file
+with exactly `profile`, `salt`, `epoch`, `key`. Profile is
+`ARGON2ID_64M_T3_P1_V1`; salt/key are canonical base64 of 16/32 bytes; epoch is
+32 lowercase hex characters. The key is password-equivalent. Use the existing
+password_credential function with an interactive secret input; never place a raw
+password or credential JSON in command arguments, Git, logs or public descriptors.
+Installer provisioning/rotation and outbound private-peer credential selection
+remain N6 work. A private Node without this credential fails startup when v4 is enabled.
+
+The process host closes listeners before the relationship store. Pre-upgrade
+admission applies the same connection quotas as native peers; public WSS mounting
+needs a reverse-proxy location to the application and ordinary TLS validation.
+No Account traffic switches automatically; explicit v3 migration remains active.
