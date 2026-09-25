@@ -233,3 +233,12 @@ fresh authority/session binding, request budgets/deduplication/expiry and honest
 unavailable on failure. Do not add global periodic refresh, resurrect expired
 capabilities, send contributions to transit, or count a fresh advertisement
 manually injected by a test as proof the actual runtime recovery exists.
+
+Browser relationship persistence is implemented separately from Python storage:
+IndexedDB revision CAS transactions, AES-GCM with keyed-alias AAD, bounded records
+and a fixed encrypted store identity binding. The DeviceRoot KDF context is
+`dmash/node-storage`, version 4, `directional-relationships`. Root/key/session
+changes cannot silently recreate an existing relationship. Concurrent tabs converge
+on one outbound DNSS. Runtime lifecycle integration must call close() on full lock;
+per-operation session guards and transaction aborts are present, but this library
+alone does not own the device lifecycle. Actual two-tab browser acceptance passed.

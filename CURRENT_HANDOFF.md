@@ -646,3 +646,12 @@ before QR scan/contribution knowledge. Added passing routing-order regression in
 `test_hop_discovery.py` (15 tests in that suite). Early cached route works; after
 expiry, v3 START_PROBE only advertises self and does not solicit target recovery.
 V4 event-driven late-binding recovery is an OPEN requirement in TRANSPORT_V4.md.
+
+Browser directional store follow-up: `node_relationships_v4.js` now implements
+real IndexedDB CAS transactions, encrypted records, keyed aliases, root-bound
+opening, wrong-key/identity detection, quota and corruption refusal. Actual Chrome
+with two concurrent tabs passed persistence/reload, conflict, quota, corruption,
+DeviceRoot lock/reopen and opaque-lookup checks
+(`/tmp/dmash-node-relationships-browser.log`). Not yet connected to NodeRuntime.
+EMS source repository synchronized to `252b55427996d91606bc6d5b873f069c92a20245`;
+live code remains the separately verified `7f91105` release `.11`.
