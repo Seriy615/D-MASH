@@ -314,3 +314,15 @@ Unit tests cover bounded RPCs, buffer isolation and single-session ownership.
 Cross-tab leadership, Account logout integration, Account route APIs, native WSS
 endpoint mounting and complete N5 lifecycle audit remain open. Release .12 caches
 these modules without enabling v4 in the application.
+
+
+## Native incoming connection owner
+
+NodeListenerV4 applies aggregate limits before v4 handshake/registration work:
+eight live connections, two concurrent pending admissions and sixteen attempts per
+rolling minute by default. The peer ID is reserved after authenticated handshake,
+before password/resource admission; a duplicate cannot trigger another registration
+miner or release the original reservation. Session completion/shutdown releases
+ownership and closes the channel. Storage and credential ownership remain with
+the process host. Endpoint adapters must still enforce pre-upgrade, frame/queue
+and TLS policy; this module alone does not mount a production listener.

@@ -81,6 +81,7 @@ class NodeRoutingV4:
         channel.require_authorized()
         self.peers[peer]=channel
         task=asyncio.create_task(self._read(peer,channel));self.tasks.add(task);task.add_done_callback(self.tasks.discard)
+        return task
 
     async def _read(self,peer,channel):
         try:

@@ -12,8 +12,7 @@ from nacl.signing import SigningKey
 from websockets.server import serve
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'D-MASH/client'))
 from backend.crypto import NodeCryptoManager
-from backend.secure_socket import accept_secure
-from backend.node_channel_v4 import authorize_node_v4
+from backend.node_listener_v4 import NodeListenerV4
 from backend.node_relationships_v4 import RelationshipStore
 from backend.node_routing_v4 import NodeRoutingV4
 from backend.route_discovery_v4 import issue_certificate
@@ -37,22 +36,13 @@ async def main():
             raise AssertionError('Payload mismatch')
         accepted+=1;await delivered.put((packet['label'],result['payload']))
     async def discard(peer,packet):pass
-    servers=[];stores=[]
+    servers=[];stores=[];listeners=[]
     with tempfile.TemporaryDirectory() as tmp:
         try:
             for i,key in enumerate(keys):
                 store=RelationshipStore(Path(tmp)/f'{i}.db',key.verify_key.encode().hex(),secrets.token_bytes(32));stores.append(store)
-                async def handle(socket,key=key,store=store,runtime=runtimes[i]):
-                    secure=None;channel=None
-                    try:
-                        secure,_=await accept_secure(socket,key,'NODE',version=4)
-                        channel=await authorize_node_v4(secure,store,difficulty=20)
-                        runtime.add_peer(secure.session.peer_id,channel)
-                        await socket.wait_closed()
-                    except Exception:
-                        if channel:await channel.close()
-                        elif secure:await secure.close()
-                servers.append(await serve(handle,'127.0.0.1',0,max_size=2*1024*1024))
+                listener=NodeListenerV4(key,store,runtimes[i],difficulty=20);listeners.append(listener)
+                servers.append(await serve(listener.handle,'127.0.0.1',0,max_size=2*1024*1024,max_queue=16))
             print(json.dumps({'nodes':[dict(port=s.sockets[0].getsockname()[1],nodeId=k.verify_key.encode().hex()) for s,k in zip(servers,keys)]}),flush=True)
             commands=asyncio.Queue();loop=asyncio.get_running_loop()
             loop.add_reader(sys.stdin.fileno(),lambda:commands.put_nowait(sys.stdin.readline().strip()))
@@ -92,7 +82,7 @@ async def main():
                 await commands.get()
             finally:loop.remove_reader(sys.stdin.fileno())
         finally:
-            await asyncio.gather(*(runtime.close() for runtime in runtimes))
+            await asyncio.gather(*(listener.close() for listener in listeners))
             for server in servers:server.close()
             await asyncio.gather(*(server.wait_closed() for server in servers))
             for store in stores:store.close()

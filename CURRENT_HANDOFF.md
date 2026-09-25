@@ -1,3 +1,36 @@
+# Execution checkpoint — Worker publication and native listener ownership
+
+Worker release 6efe70f4d4293f7474d1e26e492f83c1a3fdd100 was committed, pushed,
+synchronized and deployed to EMS. Exact source verification: 190 files, no changed
+or missing files. dmash-node active/running, NRestarts=0. PWA page and active SW
+release transport-v3-worker-lifecycle-20260925.12 verified by real Chrome acceptance.
+
+Live EMS two-Account late-pairing regression PASS (exit 0): early advertisement,
+initial key exchange, bidirectional messages, ratchet epochs 1/2, delayed prior-epoch
+packet, disconnect/reconnect queued delivery and Inbox control retirement.
+Log: /tmp/dmash-v4-worker-ems-acceptance.log. Initial exchange required retries while
+route status was unavailable; eventual success is not immediate route readiness.
+
+New native NodeListenerV4 owns incoming connections: up to eight live connections,
+two pending admissions, sixteen attempted handshakes per rolling minute; authenticated
+duplicate peers are rejected before registration mining and cannot remove the first
+connection's reservation. Shutdown cancels pending admissions and runtime readers.
+It uses real mutual channel authorization. Endpoint adapters still must provide
+pre-upgrade limits, frame/queue limits and TLS; production mounting remains open.
+Five ownership/quota tests and six routing tests PASS. Real browser fixture now
+uses this listener rather than its former inline handshake wrapper. Real Chrome
+Worker transit PASS (exit 0), including root lock, cover, late binding and identity
+persistence: /tmp/dmash-v4-listener-browser.log. Focused suite log:
+/tmp/dmash-v4-listener-tests.log (11 tests).
+
+Source remains v4-inactive in the PWA and production endpoint is not mounted.
+Next: validate listener integration, commit/sync, then mount explicit native v4
+endpoint with storage/config lifecycle, Account local delivery and Inbox integration.
+N0–N8/compatible A–M/E6 goal remains active; numeric TTL boundary privacy question,
+H1/H2/H3 and cross-tab ownership remain unresolved.
+
+---
+
 # Execution checkpoint — dedicated Node Worker and DeviceRoot lifecycle
 
 Dedicated Worker owns v4 sockets, routing, admission, encrypted relationship store
