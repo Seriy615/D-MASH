@@ -48,6 +48,25 @@
             worker.postMessage({type:'MINE_NODE_IDENTITY', timeoutMs});
         });
     }
+    async function unlockDeviceIdentity(deviceRoot, options = {}) {
+        const session = deviceRoot?.state;
+        if (!session?.root || typeof deviceRoot.deviceMaterial !== 'function') throw Error('Device must be unlocked');
+        let seed, signing;
+        try {
+            // Independent random seed behind the installation root; never derive
+            // from an Account or reuse the older DEVICE signing identity.
+            seed = await deviceRoot.deviceMaterial('node-ed25519-pow-v4', () => mine(options));
+            if (deviceRoot.state !== session || options.signal?.aborted) throw Error('Device session changed');
+            if (!(seed instanceof Uint8Array) || seed.length !== 32) throw Error('Invalid persisted Node identity');
+            signing = global.nacl.sign.keyPair.fromSeed(seed);
+            const nodeId = hex(signing.publicKey);
+            if (!verify(nodeId)) throw Error('Persisted Node identity work rejected');
+            return Object.freeze({nodeId, signing});
+        } catch (error) {
+            signing?.secretKey.fill(0);
+            throw error;
+        } finally { seed?.fill(0); }
+    }
     if (typeof WorkerGlobalScope !== 'undefined' && global instanceof WorkerGlobalScope) {
         importScripts('vendor/nacl-fast.min.js', 'vendor/blake3.min.js');
         let mining = false;
@@ -92,6 +111,6 @@
             finally { mining = false; }
         };
     }
-    global.DmashNodeIdentity = Object.freeze({verify, hash, mine, PREFIX});
+    global.DmashNodeIdentity = Object.freeze({verify, hash, mine, unlockDeviceIdentity, PREFIX});
     if (typeof module !== 'undefined') module.exports = global.DmashNodeIdentity;
 })(typeof window !== 'undefined' ? window : globalThis);

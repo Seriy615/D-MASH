@@ -170,7 +170,7 @@ class Handshake:
             VerifyKey(bytes.fromhex(expected_node_id)).verify(self.domain + b"RESPONDER\x00" + digest, signature)
             auth = {"type": "AUTH", "version": self.version,
                     "signature": b64(self.signing_key.sign(self.domain + b"INITIATOR\x00" + digest).signature)}
-            session = self._session(challenge["ephemeral"], digest, True, "NODE")
+            session = self._session(challenge["ephemeral"], digest, True, "NODE", challenge["public_key"])
             return auth, session
         finally:
             self.close()
@@ -186,11 +186,11 @@ class Handshake:
             digest = hashlib.sha256(transcript(self.hello, self.challenge, version=self.version)).digest()
             VerifyKey(bytes.fromhex(self.hello["public_key"])).verify(
                 self.domain + b"INITIATOR\x00" + digest, unb64(auth["signature"], 64))
-            return self._session(self.hello["ephemeral"], digest, False, self.hello["role"])
+            return self._session(self.hello["ephemeral"], digest, False, self.hello["role"], self.hello["public_key"])
         finally:
             self.close()
 
-    def _session(self, ephemeral, digest, initiator, peer_role):
+    def _session(self, ephemeral, digest, initiator, peer_role, peer_id):
         shared = crypto_scalarmult(bytes(self.private), unb64(ephemeral, 32))
         # Suite-tagged, length-delimited combiner. Future hybrid suites must
         # authenticate their distinct suite and additional inputs; no implicit
@@ -198,7 +198,10 @@ class Handshake:
         ikm = b"X25519\x00" + len(shared).to_bytes(4, "big") + shared
         keys = hkdf(ikm, digest, self.domain + SUITE.encode("ascii"), 64)
         send, receive = (keys[:32], keys[32:]) if initiator else (keys[32:], keys[:32])
-        return SecureSession(send, receive, digest, self.role, peer_role, version=self.version)
+        session = SecureSession(send, receive, digest, self.role, peer_role, version=self.version)
+        session.local_id = self.signing_key.verify_key.encode().hex()
+        session.peer_id = peer_id
+        return session
 
     def close(self):
         self.private[:] = bytes(len(self.private))
@@ -211,6 +214,7 @@ class SecureSession:
         profile_role(local_role, version)
         profile_role(peer_role, version)
         self.version = version
+        self.local_id = self.peer_id = None
         self.send_key = bytearray(send_key)
         self.receive_key = bytearray(receive_key)
         self.transcript_hash = transcript_hash

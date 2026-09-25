@@ -1,3 +1,35 @@
+# Execution checkpoint — v4 registration / durable directions, 2026-09-25
+
+Live EMS Node + PWA and the EMS source repository are at
+`7f91105f3f30bb265bfed99ccc3e9f1de3cb4500`; release `.11`
+`transport-v3-device-material-20260925.11`. Exact-source verifier: 163 files,
+missing/changed empty. Service active, zero restarts since deployment.
+Canonical get_commit.sh succeeded after tracked dmash-deploy-ems.
+Log `/tmp/dmash-ems-node-identity-deploy.log`; PWA backup
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20260925T122057Z`.
+
+Real private-contact browser acceptance PASS, including page/active SW release,
+initial exchange, bidirectional messages, ratchet epochs 1/2, late prior packet,
+reconnect queue and retired controls. Initial route restoration was delayed and
+logged Route unavailable before recovery; do not claim a latency target from this
+run. Log `/tmp/dmash-ems-device-material-private.log`.
+
+New local v4 work: authenticated session identity metadata, identical JS/Python
+registration proof checks, encrypted SQLite relationship persistence with atomic
+writes/quotas and explicit failure on identity/key/DNSS changes. Real production
+minimum resource work passes cross-runtime positive and negative vectors.
+Node PoW identity now reloads via encrypted DeviceRoot material API; real browser
+persistence/corruption/lock checks PASS
+(`/tmp/dmash-node-identity-persistence-browser.log`). Not runtime-enabled.
+
+Final full suite: 227 backend + 11 Origin + 54 JS suites PASS
+(`/tmp/dmash-v4-late-pairing-tests.log`), including quota and Probe-before-QR
+regressions. The development goal remains active. NEXT: browser durable relations,
+v4 admission/password/session authorization and real transit; N0 authority/privacy
+redesign and H1-H3 confirmed Account exchange remain open. No completion claim.
+
+---
+
 # Execution checkpoint — Node identity work and material persistence, 2026-09-25
 
 Native browser Worker mining now passes unchanged production BLAKE3 prefix 0520,
@@ -608,3 +640,9 @@ Do **not** overclaim node-storage privacy or legacy removal:
 2. Before committing the uncommitted WebAuthn/Global Settings work, separately audit every dirty hunk and its dependencies; avoid unsafe hunk partitioning.
 3. Define and execute a backed-up, controlled legacy migration/removal plan; retain the legacy privacy/relay guards until the replacement path is proven.
 4. Do not deploy or promote solely based on these source-suite results.
+
+User steering during this checkpoint: explicitly asked about a Probe arriving
+before QR scan/contribution knowledge. Added passing routing-order regression in
+`test_hop_discovery.py` (15 tests in that suite). Early cached route works; after
+expiry, v3 START_PROBE only advertises self and does not solicit target recovery.
+V4 event-driven late-binding recovery is an OPEN requirement in TRANSPORT_V4.md.

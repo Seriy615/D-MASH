@@ -182,3 +182,54 @@ are covered. The old `authorize_node` explicitly refuses a v4 session so v3
 permissions cannot accidentally become the unified Node resource contract.
 No `/mesh/v4` endpoint, universal admission/grants, browser transit or v4 privacy
 acceptance is implied by this crypto foundation. Those remain the next N1/N2 work.
+
+
+## Directional registration foundation, 2026-09-25
+
+Secure sessions now expose local/peer public IDs from their authenticated
+handshake. The v4 resource string is exactly:
+`D-MASH|NODE-DNSS|V4|issuer_hex|recipient_hex|dnss_hex|transcript_sha256_hex`.
+All hex is lowercase, Node IDs/hash are 32 bytes, DNSS is 16 bytes; self pairs
+are refused. The existing SHA-256 activation proof binds recipient as node,
+issuer as applicant, DNSS kind, that resource and expiry. Both runtimes enforce
+production difficulty 20–24, at most 180 seconds validity, integer wire fields
+and exact proof schema; optional elapsed_ms is not part of the wire proof.
+Acceptance of a proof alone does not grant routes, mailbox ownership or admission.
+
+Python RelationshipStore persists random independent outbound and verified inbound
+DNSS behind keyed aliases and authenticated encryption. A store binding detects
+wrong storage keys/Node identity, rather than silently allocating fresh aliases.
+Atomic SQLite transactions protect concurrent startup/writes. Existing peer DNSS
+cannot change without explicit recovery; corrupt records are preserved/rejected.
+A bounded relationship quota fails without evicting existing mailbox relationships.
+No socket authorization is persisted. Browser equivalent storage, password policy,
+actual channel integration, revocation/migration and resource acceptance ACKs remain
+unfinished. These foundations are not enabled on the live v3 network.
+
+Browser Node identity can now load its independent PoW seed from DeviceRoot
+material storage, verifies PoW on every load and rejects a changed root session.
+Real browser Worker/persistence verification passed with native Python BLAKE3
+cross-check, cancellation, bounded worker admission and corrupt-storage refusal.
+The runtime still must own cancellation/socket/key cleanup at full device lock.
+
+## Required ordering: Probe before QR/contribution
+
+A transit Node must accept valid bounded advertisements without local Account
+contact knowledge. A Node later scanning QR derives its local pair locators and
+may query a previously learned route; receiving an advertisement never marks
+that Node as terminal or authorizes Account delivery. Contributions stay local.
+
+Executable v3 routing-order regression confirms: advertisement before contact
+lookup, no forward authority before alias binding, later lookup succeeds while
+leased, expiry fails closed, stale alias binding cannot revive the route, fresh
+advertisement plus binding restores it. This is a routing test, not QR UI evidence.
+
+An outstanding liveness gap is now explicit: current START_PROBE advertises the
+local inbound route; it does not solicit a missing target advertisement. Learning
+a contact after all remote advertisement state expires cannot by itself guarantee
+remote-route recovery. V4 needs bounded event-driven discovery/re-advertisement
+on late contact binding, send and path loss, with common transit/local grammar,
+fresh authority/session binding, request budgets/deduplication/expiry and honest
+unavailable on failure. Do not add global periodic refresh, resurrect expired
+capabilities, send contributions to transit, or count a fresh advertisement
+manually injected by a test as proof the actual runtime recovery exists.

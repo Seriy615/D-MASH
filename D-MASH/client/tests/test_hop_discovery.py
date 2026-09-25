@@ -45,6 +45,48 @@ class HopProbeSemanticsTests(unittest.TestCase):
 
 
 class HopProbeNcrhTests(unittest.IsolatedAsyncioTestCase):
+    async def test_probe_before_local_contact_knowledge_and_after_expiry(self):
+        # This is a routing-order test, not a QR UI or production-PoW test.
+        # No contribution, Account or local mailbox is installed on this hop.
+        now = [100.0]
+        transport = self._transport(b'a' * 32)
+        transport.hop_routes = HopRoutes(clock=lambda: now[0])
+        probes = HopProbes(transport, clock=lambda: now[0])
+        locator = 'opaque-locator-derived-only-after-pairing'
+        packet = {'type':'HOP_PROBE_V3', 'id':'1'*64, 'request_id':'2'*64,
+                  'origin_tag':origin_tag(locator), 'hop_route_label':'3'*64,
+                  'ncrh':'4'*64, 'metric':0, 'hop_limit':0, 'lifetime':30,
+                  'trace':['5'*64]}
+        binding = {'type':'HOP_ALIAS_BIND_V1', 'request_id':'2'*64,
+                   'ncrh':'4'*64, 'hop_route_label':'6'*64, 'metric':0, 'lifetime':30}
+        try:
+            await probes.receive_probe(packet, 'peer-a')
+            # Knowledge of a Probe alone must not manufacture forwarding rights.
+            self.assertEqual(probes.status('local-client', locator)['state'], 'ROUTE_UNKNOWN')
+            await probes.receive_alias_bind(binding, 'peer-a')
+            # Later QR-derived lookup reuses the path learned before the contact.
+            now[0] += 5
+            ready = probes.status('local-client', locator)
+            self.assertEqual(ready['state'], 'ROUTE_READY')
+            grant = transport.hop_routes.resolve('DEVICE','local-client',ready['hop_route_label'])
+            self.assertEqual(grant['next_peer'], 'peer-a')
+            self.assertIsNone(grant['mailbox_alias'])
+            self.assertFalse(transport._v3_bindings)
+            # Expired evidence is not resurrected merely by learning the locator.
+            now[0] += 30
+            self.assertEqual(probes.status('local-client', locator)['state'], 'ROUTE_UNKNOWN')
+            await probes.receive_alias_bind(binding, 'peer-a')
+            self.assertEqual(probes.status('local-client', locator)['state'], 'ROUTE_UNKNOWN')
+            # Fresh authorized advertisement restores the route. The v4 runtime
+            # must trigger this recovery without requiring a global periodic Probe.
+            packet.update(id='7'*64, request_id='8'*64)
+            binding['request_id']='8'*64
+            await probes.receive_probe(packet,'peer-a')
+            await probes.receive_alias_bind(binding,'peer-a')
+            self.assertEqual(probes.status('local-client',locator)['state'],'ROUTE_READY')
+        finally:
+            await probes.close()
+
     async def test_graph_is_encrypted_bounded_and_expires(self):
         now = [100.0]
         probes = HopProbes(self._transport(b'a' * 32), clock=lambda: now[0], capacity=2)

@@ -13,5 +13,5 @@ const input = JSON.parse(fs.readFileSync(0, 'utf8'));
     const { auth, session } = await handshake.finish(input.challenge, input.nodeId, 100);
     const frame = session.seal({ type: 'PING', text: 'Привет 🌐', number: 17 });
     const opened = input.frame ? session.open(input.frame) : null;
-    process.stdout.write(JSON.stringify({ auth, frame, opened, erased: !handshake.private.some(Boolean) }));
+    process.stdout.write(JSON.stringify({ auth, frame, opened, localId: session.localId, peerId: session.peerId, erased: !handshake.private.some(Boolean) }));
 })().catch(error => { console.error(error.message); process.exitCode = 1; });

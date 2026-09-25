@@ -59,9 +59,10 @@
         return bytes;
     };
     class Session {
-        constructor(sendKey, receiveKey, transcriptHash, {version = 3, localRole = "DEVICE", peerRole = "NODE"} = {}) {
+        constructor(sendKey, receiveKey, transcriptHash, {version = 3, localRole = "DEVICE", peerRole = "NODE", localId = null, peerId = null} = {}) {
             validRole(localRole, version); validRole(peerRole, version);
             this.version = version; this.localRole = localRole; this.peerRole = peerRole;
+            this.localId = localId; this.peerId = peerId;
             this.sendKey = new Uint8Array(sendKey); this.receiveKey = new Uint8Array(receiveKey);
             this.transcriptHash = transcriptHash;
             this.sendSequence = 0; this.receiveSequence = 0; this.closed = false;
@@ -136,7 +137,7 @@
                 let keys;
                 try { keys = await hkdf(ikm, hash, text(this.domain + SUITE), 64); }
                 finally { shared.fill(0); ikm.fill(0); }
-                try { return { auth, session: new Session(keys.subarray(0, 32), keys.subarray(32), hash, {version: this.version, localRole: this.role, peerRole: "NODE"}) }; }
+                try { return { auth, session: new Session(keys.subarray(0, 32), keys.subarray(32), hash, {version: this.version, localRole: this.role, peerRole: "NODE", localId: this.hello.public_key, peerId: challenge.public_key}) }; }
                 finally { keys.fill(0); }
             } finally { this.close(); }
         }

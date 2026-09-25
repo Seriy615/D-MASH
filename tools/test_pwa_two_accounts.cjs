@@ -89,7 +89,7 @@ const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
   console.log('PASS completed handshake controls retired from Device Inbox');
   assert.deepEqual(failures,[]);
  } catch(error) {
-  for(let i=0;i<pages.length;i++) console.error('DIAGNOSTIC',i,await pages[i].evaluate(()=>({ui:document.body.innerText.slice(-1500),connections:[...NodeManager.connections.values()].map(c=>({state:c.state,dnss:c.dnssReadyState,error:c.error}))})).catch(()=>null));
+  for(let i=0;i<pages.length;i++) console.error('DIAGNOSTIC',i,await pages[i].evaluate(()=>({accountUnlocked:Boolean(window.Core?.keys),deviceUnlocked:Boolean(window.DeviceRoot?.state?.root),routeCount:Object.keys(NodeManager.getRouteConfig()).length,pendingRequests:NodeManager.pendingRequests.size,connections:[...NodeManager.connections.values()].map(c=>({state:c.state,dnss:c.dnssReadyState,hasError:Boolean(c.error)}))})).catch(()=>null));
   throw error;
  } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
