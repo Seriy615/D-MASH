@@ -149,3 +149,123 @@ removing explicit wire markers is only a narrower, testable protocol property.
 No padding, cover traffic, global refresh or misleading capabilities are authorized
 by this proposal. Protocol/cryptographic review is still needed; green tests alone
 cannot prove its privacy claims.
+
+## Active short-TTL probes and separate discovery authority
+
+Random initial TTL only blurs passive distance inference. A malicious admitted
+neighbor can send TTL=1: if only the Account's terminal can answer an authenticated
+query, the response reveals a locally held terminal capability. Do not claim
+endpoint privacy from random TTL alone.
+
+Resolve this in the v4 route contract by separating discovery keys from recipient
+payload keys. The route signing authority certifies a discovery signing key,
+discovery box key, recipient box public key, generation and bounded validity.
+Discovery agents (including explicitly authorized store/forward delegates) may
+hold the two discovery secrets and this certificate; they never receive the
+route owner's signing secret or recipient payload decryption secret. All agents
+answer with the same certificate/challenge proof grammar. A valid answer proves
+current discovery authority, not Account termination. Delegation provisioning,
+next-hop binding, retention, expiry/renewal and revocation still need runtime
+implementation; merely adding certificate code does not close N0.
+
+Implement the certificate as version 4, four fixed 32-byte public values
+(route_id/discovery_sign/discovery_box/recipient_box), generation, issued_at and
+expires_at as unsigned big-endian u64, signed by route_id. Validity is at most
+30 days, issued_at may be at most 60 seconds ahead, generation starts at one.
+Signature input begins `D-MASH|DISCOVERY-CERT|V4\0`. RouteID is the Ed25519 route
+verification key; no NodeID or AccountID occurs in this certificate. The caller
+must obtain/pin the certificate from the existing authenticated contact/route
+flow, not accept an arbitrary certificate from the first neighbor.
+
+Opaque queries/replies use existing NaCl box with fresh ephemeral X25519 key and
+24-byte nonce: binary ephemeral public key || nonce || box, encoded canonical
+base64. Query lifetime is at most 180 seconds. A query contains a random challenge,
+independent reply box public key, route_id, version, type and expiry. The encrypted
+reply carries the pinned certificate and a discovery-key signature over the query
+challenge/reply key/expiry and SHA-256 of the signed certificate transcript. The
+initiator verifies both signatures, all bindings and expiry before accepting a
+route. The route ID and certificate remain inside these encrypted envelopes.
+An outer observed NCRH is not part of the ownership proof and grants no rights.
+
+## User steering: route-carried cover DATA, supersedes earlier no-cover scope
+
+The user now explicitly proposes that any authorized transit Node may originate
+DUMMY traffic on a route passing through it. This supersedes the earlier blanket
+no-cover requirement for this feature; preserve the first-arrival 500 ms batching
+contract. Cover DATA uses an existing valid peer/session label and normal DATA
+queue/grants, with a syntactically valid opaque recipient-envelope-sized payload
+whose authentication will fail at the recipient. No visible DUMMY type/bit,
+distinct length or transport response identifies it to intervening Nodes.
+A Node does not acquire foreign route labels or mailbox rights by generating it.
+
+Terminal handling must authenticate/decrypt before durable Account Inbox insertion.
+A payload failing every eligible local recipient-envelope key is silently dropped
+without Account handler invocation, receipt, ratchet mutation or contact discovery.
+Malformed outer frames still follow ordinary resource/protocol rejection policy;
+valid opaque data gets the same hop acceptance handling regardless of terminal
+success. Unopenable data cannot be positively identified as cover: wrong-key,
+corrupt and obsolete-key traffic has the same outcome. Preserve pending key/route
+migration windows and distinguish locked/unavailable keys from actual failed
+cryptographic authentication; the former is a bounded deferred-delivery condition.
+
+Cover injection is bounded by per-route/peer/global byte and work budgets, respects
+backpressure, active grants and route expiry, and cannot starve real queued data.
+Do not probe unknown routes, wake/advertise all contacts, or publish an Account-
+specific activity flag as a side effect. Because an intermediate store cannot
+distinguish cover, it consumes normal offline mailbox quotas; never exempt it with
+a visible bypass flag. Define retention/overflow policy before enabling generation.
+
+Adding cover only to windows containing real data does not hide start/stop activity.
+If idle cover is enabled, a separate bounded local scheduler creates arrivals;
+first-arrival windows still begin at that arrival and end 500 ms later rather than
+becoming a permanent global batching timer. Rate, idle behavior, mobile/background
+lifecycle and privacy/performance acceptance remain to be implemented. Colluding
+hops can still correlate unchanged ciphertext, lengths and timing; cover alone
+is not proof of anonymity or endpoint/runtime indistinguishability.
+
+## Implemented routing slice and limits, 2026-09-25
+
+`node_routing_v4.py/js` now compose admitted channels, the discovery certificate
+exchange and NCRH/TTL primitives. They operate without any Account API. Callers
+supply locally authorized discovery bindings and opaque delivery handlers; the
+runtime never receives recipient payload keys itself. This slice is not mounted
+in production or connected to the PWA Account lifecycle.
+
+Wire batches are `{type:MESH_BATCH,version:4,packets:[...]}` (1–32 packets,
+256 KiB input limit). Probe packets have exactly type/version/box/return_label/
+ncrh/ttl/expires_at; DATA packets exactly type/version/label/offer/payload/
+expires_at. All labels are random 32-byte hex capabilities scoped to one adjacent
+channel. A forwarded Probe gets a new return label and transformed NCRH, with
+TTL reduced once. Its label maps to the incoming peer's return capability.
+An encrypted signed reply travels as ordinary DATA and its reverse offer is
+replaced at each hop, installing the usable forward direction. The origin only
+publishes a route handle after verifying its pinned certificate and reply proof.
+Handles bind the actual channel object, not just the peer's persistent NodeID.
+
+First-arrival windows use monotonic time and close after 500 ms; expiry uses wall
+clock independently. Peer senders operate independently, with a 10-second send
+timeout; failure revokes the peer's labels and pending queue. There is no durable
+store/retry guarantee in this slice yet. Current bounds: 8 peers, 32 local bindings,
+4096 labels and duplicate entries, 128 queued packets per peer, 1 MiB queued bytes
+across peers, 32 incoming Probes per peer/minute, 180-second packet lifetime.
+Only 64 most recently retained valid Probes are available for late local binding,
+subject to expiry and live incoming peer. Eviction/expiry requires fresh discovery;
+no indefinite retention or global refresh is introduced. Invalid/unknown/expired
+labels never create bindings. Stale DATA is silently discarded without killing
+an otherwise usable peer. Every packet still requires current channel admission.
+
+Actual Chrome two-socket transit passes: Python N1 and N2 have only the browser as
+a neighbor, no direct bypass; browser has zero owned routes and no Account runtime.
+Discovery starts without preinstalled hop labels, recipient binding is installed
+only after N2 receives the early Probe, then an opaque payload reaches the holder
+of the independent recipient key. Incoming/outgoing labels differ; stopping the
+browser makes the route unavailable. Loopback WebSocket evidence is distinct from
+remote WSS, worker/UI performance, multi-path/fork/shortest-route selection, public
+and private Account migration, listener admission quotas and full N2 acceptance.
+
+Still missing: runtime certificate/delegate provisioning and generation/revocation
+storage, descriptor migration, native/PWA host lifecycle, Worker isolation, route
+selection/alternative recovery, expired-cache event-driven Account integration,
+mailbox persistence, DUMMY generation/filtering and real production v4 cutover.
+The earlier design candidate and endpoint-privacy limits remain open; no N0–N8
+completion claim is justified by this routing slice.

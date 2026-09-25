@@ -1,3 +1,37 @@
+# Execution checkpoint — real v4 browser transit (local, not production)
+
+New JS/Python routing now installs hop labels through real encrypted discovery,
+validates route-owner certificates and independent discovery signatures, rewrites
+NCRH/labels and consumes random hop TTL. There is no Account dependency at transit.
+Separate discovery keys can answer without decrypting recipient payloads. Delegation
+provisioning/rotation/revocation is still an integration task, not an N0 privacy proof.
+
+Actual Python N1 -> Chrome B -> Python N2 PASS with no direct bypass, zero owned
+routes at B, encrypted payload and label rewriting, and unavailable after B closes.
+The follow-up run also passed Probe arriving before N2 installs its local keys:
+bounded live Probe cache is retried when binding is installed.
+Logs: /tmp/dmash-v4-real-browser-transit.log and
+/tmp/dmash-v4-real-browser-late-transit.log. No camera/QR UI or Account migration
+was part of these tests; loopback WS is not production WSS acceptance.
+
+First complete suite passed 245 backend + 11 Origin + 56 JS suites in
+/tmp/dmash-v4-routing-all-tests.log. Final full suite PASS:
+246 backend + 11 Origin + 57 JS suites (/tmp/dmash-v4-routing-final-tests.log).
+Final real-browser late-binding transit PASS
+(/tmp/dmash-v4-real-browser-final-transit.log). Subsequent discovery-grant expiry
+clamping and canonical opaque-box validation were verified by focused Python
+routing/discovery (8 tests) and JS routing/discovery suites. Total backend count
+is now 247 with the added grant-expiry test; do not misreport 247 as the full
+suite run above. No live test process remains from these runs.
+
+Source/pushed/EMS before this uncommitted slice: c9b299d. Running deployment:
+bdb62d717cb38ce11ee739682da822b25ae22b83, v3 release .11; v4 remains unmounted.
+Next: finish final checks and commit/sync, then lifecycle/Worker and real v4 endpoint,
+multi-path/route recovery, Account integration/H1-H3, mailbox and the user's DUMMY
+traffic. Full N0–N8/compatible A–M/E6 scope remains active and incomplete.
+
+---
+
 # Deployment checkpoint — v4 channel foundations published
 
 Pushed, EMS source synchronized and Node + PWA deployed at
@@ -762,3 +796,19 @@ was retried directly as the current repository owner codex. Do not recreate user
 change SSH config or overwrite deployment scripts to restore the old login name.
 Before the next deployment recheck the canonical script and current sudo access;
 retain exact-SHA/backup/runtime-state requirements. No new deploy in this step.
+
+## Latest active work / user steering (after c9b299d)
+
+Uncommitted route_discovery_v4.py starts certificate-bound encrypted discovery:
+separate route-owner, delegated discovery signing/box and recipient payload keys.
+Its purpose is to avoid equating ability to answer an active TTL=1 probe with
+Account termination and permit offline route delegates without recipient keys.
+JS counterpart, regression/interop and actual routing/runtime integration are
+NOT yet implemented/tested. Do not count this module as working transit or N0.
+
+User additionally proposed DUMMY traffic along existing routes by transit Nodes.
+This explicitly supersedes the earlier no-cover prohibition for that feature.
+Design requirements are in TRANSPORT_V4_DISCOVERY.md: common opaque DATA grammar,
+valid existing hop grants, silent terminal authentication failure before durable
+Inbox, bounded injection/queues/deferred handling and preserved 500 ms first-arrival
+windows. No generator is currently active or production-enabled.
