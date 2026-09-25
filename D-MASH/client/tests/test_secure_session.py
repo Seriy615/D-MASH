@@ -10,6 +10,27 @@ from backend.secure_session import Handshake, hkdf, MAX_SEQUENCE
 
 
 class SecureSessionTests(unittest.TestCase):
+    def test_signed_challenge_clock_tolerance_matches_browser(self):
+        for version in (3,4):
+            for delta in (-1,0,1,15,16,20,21):
+                with self.subTest(version=version,delta=delta):
+                    a,b=SigningKey.generate(),SigningKey.generate()
+                    i,r=Handshake(a,'NODE',version=version),Handshake(b,'NODE',version=version)
+                    response=r.respond(i.initiate(),'NODE',now=1000+delta-15)
+                    if 1<=delta<=20:
+                        auth,session=i.finish(response,b.verify_key.encode().hex(),now=1000)
+                        session.close()
+                        with self.assertRaises(ValueError):r.accept(auth,now=response['expires_at'])
+                    else:
+                        with self.assertRaises(ValueError):i.finish(response,b.verify_key.encode().hex(),now=1000)
+                    r.close()
+            a,b=SigningKey.generate(),SigningKey.generate()
+            i,r=Handshake(a,'NODE',version=version),Handshake(b,'NODE',version=version)
+            response=r.respond(i.initiate(),'NODE',now=1001)
+            response['signature']='A'*88
+            with self.assertRaises(Exception):i.finish(response,b.verify_key.encode().hex(),now=1000)
+            r.close()
+
     def test_browser_python_interoperability(self):
         harness = pathlib.Path(__file__).resolve().parents[3] / "D-MASH PWA/not_messenger/tests/secure_session_peer.cjs"
         def browser(value):

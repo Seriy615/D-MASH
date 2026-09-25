@@ -1,6 +1,9 @@
-# v4 discovery design candidate — not yet implemented or a privacy proof
+# v4 discovery — implemented transport, partial integration
 
-This proposal addresses the outstanding N0 gate before reusing v3 Probe on the
+The primitives and bounded JS/Python routing runtimes are implemented and tested
+through the native FastAPI gateway and a real browser Worker. Account/Inbox,
+mailbox and provisioning integration remain incomplete; this is not an N0 privacy
+proof. The design addresses the outstanding N0 gate before reusing v3 Probe on the
 new Node channels. The development plan remains authoritative. The v3 graph's
 global origin_tag, public root advertisements, metric and trace cannot simply
 be copied into v4. The new authenticated channel by itself does not fix them.

@@ -51,6 +51,30 @@
     };
     const hex = bytes => Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
 
+    function compress(h, w, padded, offset) {
+        for (let i = 0; i < 16; i++) {
+            const at = offset + i * 4;
+            w[i] = ((padded[at] << 24) | (padded[at + 1] << 16) | (padded[at + 2] << 8) | padded[at + 3]) >>> 0;
+        }
+        for (let i = 16; i < 64; i++) {
+            const s0 = (rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3)) >>> 0;
+            const s1 = (rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10)) >>> 0;
+            w[i] = add(w[i - 16], s0, w[i - 7], s1);
+        }
+        let [a,b,c,d,e,f,g,hh] = h;
+        for (let i = 0; i < 64; i++) {
+            const S1 = (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) >>> 0;
+            const ch = ((e & f) ^ (~e & g)) >>> 0;
+            const t1 = add(hh, S1, ch, K[i], w[i]);
+            const S0 = (rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) >>> 0;
+            const maj = ((a & b) ^ (a & c) ^ (b & c)) >>> 0;
+            const t2 = add(S0, maj);
+            hh = g; g = f; f = e; e = add(d, t1); d = c; c = b; b = a; a = add(t1, t2);
+        }
+        h[0]=add(h[0],a); h[1]=add(h[1],b); h[2]=add(h[2],c); h[3]=add(h[3],d);
+        h[4]=add(h[4],e); h[5]=add(h[5],f); h[6]=add(h[6],g); h[7]=add(h[7],hh);
+    }
+
     function sha256(message) {
         const input = message instanceof Uint8Array ? message : new Uint8Array(message);
         const bitLength = BigInt(input.length) * 8n;
@@ -62,33 +86,39 @@
         const h = new Uint32Array(H0);
         const w = new Uint32Array(64);
         for (let offset = 0; offset < padded.length; offset += 64) {
-            for (let i = 0; i < 16; i++) {
-                const at = offset + i * 4;
-                w[i] = ((padded[at] << 24) | (padded[at + 1] << 16) | (padded[at + 2] << 8) | padded[at + 3]) >>> 0;
-            }
-            for (let i = 16; i < 64; i++) {
-                const s0 = (rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3)) >>> 0;
-                const s1 = (rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10)) >>> 0;
-                w[i] = add(w[i - 16], s0, w[i - 7], s1);
-            }
-            let [a,b,c,d,e,f,g,hh] = h;
-            for (let i = 0; i < 64; i++) {
-                const S1 = (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) >>> 0;
-                const ch = ((e & f) ^ (~e & g)) >>> 0;
-                const t1 = add(hh, S1, ch, K[i], w[i]);
-                const S0 = (rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) >>> 0;
-                const maj = ((a & b) ^ (a & c) ^ (b & c)) >>> 0;
-                const t2 = add(S0, maj);
-                hh = g; g = f; f = e; e = add(d, t1); d = c; c = b; b = a; a = add(t1, t2);
-            }
-            h[0]=add(h[0],a); h[1]=add(h[1],b); h[2]=add(h[2],c); h[3]=add(h[3],d);
-            h[4]=add(h[4],e); h[5]=add(h[5],f); h[6]=add(h[6],g); h[7]=add(h[7],hh);
+            compress(h, w, padded, offset);
         }
         const out = new Uint8Array(32);
         for (let i = 0; i < 8; i++) {
             out[i*4] = h[i] >>> 24; out[i*4+1] = h[i] >>> 16; out[i*4+2] = h[i] >>> 8; out[i*4+3] = h[i];
         }
         return out;
+    }
+
+    // Only the nonce changes during a mining job. Cache the SHA-256 state after
+    // complete prefix blocks, and reuse buffers for the final one/two blocks.
+    // This preserves every transcript byte and the exact required work target.
+    function nonceHasher(prefix) {
+        const blocks = Math.floor(prefix.length / 64) * 64;
+        const initial = new Uint32Array(H0), w = new Uint32Array(64);
+        for (let at = 0; at < blocks; at += 64) compress(initial, w, prefix, at);
+        const remainder = prefix.length - blocks;
+        const tail = new Uint8Array(Math.ceil((remainder + 8 + 1 + 8) / 64) * 64);
+        tail.set(prefix.subarray(blocks)); tail[remainder + 8] = 0x80;
+        const bits = BigInt(prefix.length + 8) * 8n;
+        for (let i = 0; i < 8; i++) tail[tail.length - 1 - i] = Number((bits >> BigInt(i * 8)) & 255n);
+        const view = new DataView(tail.buffer), h = new Uint32Array(8), digest = new Uint8Array(32);
+        return nonce => {
+            view.setUint32(remainder, Math.floor(nonce / 0x100000000), false);
+            view.setUint32(remainder + 4, nonce >>> 0, false);
+            h.set(initial);
+            for (let at = 0; at < tail.length; at += 64) compress(h, w, tail, at);
+            for (let i = 0; i < 8; i++) {
+                digest[i*4] = h[i] >>> 24; digest[i*4+1] = h[i] >>> 16;
+                digest[i*4+2] = h[i] >>> 8; digest[i*4+3] = h[i];
+            }
+            return digest;
+        };
     }
 
     function leadingZeroBits(digest) {
@@ -119,11 +149,10 @@
         if (!Number.isInteger(difficulty) || difficulty < 0 || difficulty > 256) throw new RangeError("difficulty must be 0..256");
         if (!Number.isSafeInteger(startNonce) || startNonce < 0) throw new RangeError("startNonce must be a non-negative safe integer");
         const { prefix, item } = activationPrefix(nodeId, activationType, deviceTransportKey, resource, expiresAt);
-        const work = new Uint8Array(prefix.length + 8); work.set(prefix);
+        const hashNonce = nonceHasher(prefix);
         const started = global.performance?.now?.() ?? Date.now();
         for (let nonce = startNonce; Number.isSafeInteger(nonce); nonce++) {
-            work.set(u64(nonce), prefix.length);
-            const digest = sha256(work);
+            const digest = hashNonce(nonce);
             if (leadingZeroBits(digest) >= difficulty) {
                 return Object.freeze({
                     v: VERSION, type: activationType,

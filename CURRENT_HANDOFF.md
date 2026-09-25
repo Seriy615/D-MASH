@@ -1,3 +1,38 @@
+# Execution checkpoint — public WSS v4 verified; PoW prefix optimization
+
+EMS now runs native /mesh/v4 at wss://stage-api-ems.d-mash.ru/mesh/v4.
+Deployed/source at activation: 7f5b74f379a5521bfc444780c41278fca49b34a3,
+193-file exact match; active/running, NRestarts=0. StateDirectory permission 0700,
+storage/Base NCRH files 0600. First enable attempt failed under ProtectSystem and
+rolled back; StateDirectory fixed this without weakening the filesystem sandbox.
+Configuration and rollback are documented in NODE_V4_DEPLOYMENT.md.
+
+Real Chrome Worker public WSS PASS with unchanged production difficulty, repeated
+mutual authorization, stable persisted NodeID and DeviceRoot lock; no Account login.
+Log: /tmp/dmash-v4-remote-worker-diagnostic.log. Initial harness assumed Core was
+loaded by the shell and was corrected to load only Node dependencies. A subsequent
+Worker authorization attempt returned a generic failure; the diagnostic retry passed.
+Do not claim its exact cause established or long-run reliability proved.
+
+Native N1 -> EMS -> N2 encrypted discovery and DATA PASS with only EMS as each
+Node's neighbor, recipient decryption and hop-label rewrite; no direct bypass.
+Log: /tmp/dmash-v4-remote-native-clock.log. First native attempt rejected challenge;
+Python upper clock bound was stricter than JS. Both initiators now accept at most
+20 seconds ahead while the responder keeps its original 15-second AUTH deadline.
+17 focused secure-session tests PASS (/tmp/dmash-v4-native-clock-tests.log).
+
+Browser resource PoW now caches immutable-prefix SHA state and reuses tail buffers.
+No transcript, hash, nonce range or difficulty change. Native SHA comparisons cover
+all block remainders and nonce boundaries through MAX_SAFE_INTEGER. Local Node
+benchmark of 98,304 identical candidates: 1240 ms before, 199 ms after; not a phone
+performance guarantee. Full suite after optimization, before the clock follow-up:
+262 backend + 11 Origin + 60 JS PASS (/tmp/dmash-v4-pow-prefix-all-tests.log).
+Release .13 prepared; next commit/deploy and both live v4 Worker and v3 Account
+regressions. Active PWA remains v3 pending N3 local Node/Inbox integration. Full
+plan remains active; no privacy, Account migration or N8 completion claim.
+
+---
+
 # Execution checkpoint — mounted opt-in native v4 gateway
 
 Native /mesh/v4 router now shares the application lifecycle. Explicit

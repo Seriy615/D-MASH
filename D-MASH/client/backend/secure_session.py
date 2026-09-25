@@ -162,7 +162,8 @@ class Handshake:
                     or challenge["role"] != "NODE" or challenge["peer_role"] != self.role
                     or challenge["public_key"] != _public_hex(expected_node_id)
                     or type(challenge["expires_at"]) is not int
-                    or not current < challenge["expires_at"] <= current + 15):
+                    # Match JS clock tolerance; the responder retains its 15s deadline.
+                    or not current < challenge["expires_at"] <= current + 20):
                 raise ValueError("invalid challenge")
             unb64(challenge["nonce"], 32)
             unb64(challenge["ephemeral"], 32)
