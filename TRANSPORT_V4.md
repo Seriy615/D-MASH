@@ -57,7 +57,7 @@ plan controls milestone scope; no current v3 client is silently upgraded.
 |---|---|---|
 | HELLO/CHALLENGE/AUTH | DEVICE or NODE, stable signing identity, version, suite, ephemeral keys, nonce/expiry | Explicit class discriminator; use single NODE grammar and version-bound mutual authentication. |
 | WSS upgrade | URL, Origin, User-Agent, TLS/network features, peer IP | Distinct client path today. Shared `/mesh/v4` removes artificial path class, but browser-controlled headers/fingerprints remain. |
-| Password admission | Fresh challenge, KDF descriptor, transcript-bound proof | Current Device admission cannot gate all Nodes; enforce resource policy independently of role. Credential is password-equivalent, not PAKE. |
+| Password admission | Fresh challenge, KDF descriptor, transcript-bound proof | The current v3 gateway has no Node-password gate; the earlier DEVICE-only proposal is insufficient for unified Nodes. Enforce resource policy independently of role. Stored Kpwd is password-equivalent, not PAKE. |
 | REGISTER_DNSS / NODE_REGISTER | Different operations and authority; Node DNSS freshly generated per socket | Distinguishes runtime class and lacks durable general Node relationship. Replace with common directional registration and independent grants. |
 | REGISTER_ROUTE / START_PROBE | Route locator and route authority presented by a Device | Reveals endpoint-facing semantics. Local ownership must remain local; advertisement authority redesign is open. |
 | HOP_PROBE_V3 | Stable origin_tag, id/request_id, NCRH, label, metric, hop_limit, lifetime, trace | `trace.length == metric + 1`, metric starts at zero and increments. Exposes exact advertisement distance; origin_tag hashes a locator and is correlatable. N0 blocker. |
@@ -242,3 +242,23 @@ changes cannot silently recreate an existing relationship. Concurrent tabs conve
 on one outbound DNSS. Runtime lifecycle integration must call close() on full lock;
 per-operation session guards and transaction aborts are present, but this library
 alone does not own the device lifecycle. Actual two-tab browser acceptance passed.
+
+## Password admission cryptographic foundation
+
+The current deployed v3 gateway has no implemented Node password gate; the plan's
+older DEVICE-only policy must not be treated as existing protection. V4 foundations
+now implement exact `ARGON2ID_64M_T3_P1_V1` (64 MiB, three passes, parallelism one,
+16-byte random salt, 32-byte Kpwd), and HMAC-SHA-256 over a v4 domain plus issuer,
+applicant, authenticated session transcript, profile, salt, credential epoch,
+fresh nonce and 90-second expiry. Browser derivation requires a bounded cancellable
+Worker; native Python/browser Argon2 and transcript bytes match in real tests.
+HMAC proofs also pass real JS/Python interop with genuine Node identity work.
+
+PasswordGate checks NODE-only v4 sessions and both identity PoWs, consumes each
+challenge once, rejects socket/transcript replay, limits tracked sessions, and
+keeps bounded exponential failure cooldown across replacement sockets. Per-session
+forget and global revocation APIs exist. This does not yet provide a network endpoint:
+listener-level rate limits, configuration/installer credential storage/rotation,
+mutual directional gate integration and resource-operation enforcement remain open.
+Kpwd is password-equivalent; captured proof/salt permits offline password guessing.
+No PAKE claim, raw-password wire field or role-based browser exemption is introduced.

@@ -45,6 +45,16 @@ const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
    await Promise.all(pages.map((page,i)=>eventually(page,async peer=>Boolean((await Storage.getBox('blind_peers',await Storage.getAlias(peer,'L1')))?.kyberPub),packages[1-i].user_id,600000)));
    console.log('PASS public contact request/accept/confirm with real Account key bundles');
    await Promise.all(pages.map(page=>page.evaluate(()=>Core.closeModal())));
+  } else if(process.env.DMASH_LATE_PAIRING==='1') {
+   await pages[0].evaluate(async peer=>{Core.closeModal();await Core.addPeerFlow(JSON.stringify(peer));},packages[1]);
+   const earlyRoute=await pages[0].evaluate(async peer=>{
+    const pair=await PrivateRoutesV3.pair(await Core.ensurePairingContribution(),peer.contribution);
+    try{return pair.backRouteLocator;}finally{pair.close();}
+   },packages[1]);
+   await eventually(pages[0],async route=>Boolean(await NodeManager.routeStatus(route)),earlyRoute,600000);
+   assert.equal(await pages[1].evaluate(peer=>Boolean(NodeManager.getMeshRoute(peer)),packages[0].user_id),false);
+   console.log('PASS early route advertisement at Entry before Bob imports pairing package');
+   await pages[1].evaluate(async peer=>{Core.closeModal();await Core.addPeerFlow(JSON.stringify(peer));},packages[0]);
   } else {
    await Promise.all(pages.map((page,i)=>page.evaluate(async peer=>{Core.closeModal();await Core.addPeerFlow(JSON.stringify(peer));},packages[1-i])));
   }

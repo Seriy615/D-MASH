@@ -1,3 +1,36 @@
+# Execution checkpoint — late pairing evidence and password foundation
+
+User's Probe-before-QR scenario now has both routing regression and real EMS
+browser evidence. `DMASH_LATE_PAIRING=1` makes Alice advertise her inbound route
+before Bob imports the pairing package. Live release `.11` passed that ordering,
+then initial key exchange, both message directions, epochs 1/2, delayed packet,
+reconnect queue and control retirement. Log `/tmp/dmash-ems-late-pairing-browser.log`.
+This is v3 shared-Entry evidence, not camera scanning or browser transit. After
+advertisement expiry, event-driven remote-route recovery is still OPEN for v4.
+
+New password foundations: JS/Python fixed Argon2id profile, cancellable bounded
+browser Worker, transcript/identity/nonce/expiry-bound HMAC, password gate with
+real Node PoW checks, one-attempt challenges, session limits, reconnect cooldown
+and revocation. Native browser/Python KDF and real JS/Python HMAC parity PASS.
+`/tmp/dmash-node-password-browser.log`; full suite before final cooldown addition:
+231 backend + 11 Origin + 54 JS PASS (`/tmp/dmash-v4-password-tests.log`). Final
+password suite separately 5 tests PASS (`/tmp/dmash-node-admission-final.log`).
+Current gateway has no existing password gate; corrected the audit's earlier
+assumption. New v4 code is NOT wired into deployed endpoint or runtime yet.
+
+Pushed/EMS source before this checkpoint: `4ad3183df81a91f93d9b66c3948295fc188c2e51`.
+Live EMS remains `7f91105f3f30bb265bfed99ccc3e9f1de3cb4500`, release
+`transport-v3-device-material-20260925.11`, verified 163-file exact source match.
+Preserve the distinction between source synchronization and running deployment.
+
+Next: compose v4 admission + fresh resource authorization + persistent directional
+relationships into shared Node channels, then NodeRuntime/two-WSS transit. Keep
+N0 privacy/authority and late-binding discovery gates open until actually solved.
+H1-H3 Account confirmation/recovery, N5–N8 and broader plan remain unfinished;
+the active development goal must continue beyond local PASS/commit/deploy.
+
+---
+
 # Execution checkpoint — v4 registration / durable directions, 2026-09-25
 
 Live EMS Node + PWA and the EMS source repository are at
