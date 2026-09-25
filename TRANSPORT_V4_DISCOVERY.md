@@ -269,3 +269,56 @@ selection/alternative recovery, expired-cache event-driven Account integration,
 mailbox persistence, DUMMY generation/filtering and real production v4 cutover.
 The earlier design candidate and endpoint-privacy limits remain open; no N0–N8
 completion claim is justified by this routing slice.
+
+### Numeric TTL boundary remains an explicit N0 gate
+
+With globally enforced maximum 15 and mandatory decrement, receiving TTL=15
+reveals that an honest adjacent peer originated this Probe. Random sampling
+4–15 only changes how frequently that exact observation occurs. This is stronger
+than a general timing leak and must not be silently accepted as origin hiding.
+An async clarification is pending on whether to retain this numeric-counter
+behavior or prioritize the strict origin-hiding requirement and revise the TTL
+mechanism. Until resolved, current code is a tested routing implementation with
+this known protocol distinction, not completed N0 privacy.
+
+## Cover DATA implementation contract
+
+RecipientEnvelopeV2 is inside the existing opaque NaCl box, with exact fields
+`type:RECIPIENT_PAYLOAD`, `version:2`, random 32-byte hex `packet_id` and string
+`payload` (the opaque serialized Account envelope). A terminal adapter returns
+accepted only after box authentication and this inner schema check. No available
+recipient keys returns deferred, not discard; authenticated runtime/storage
+lifecycle owns deferred persistence. A failed box or invalid inner envelope returns
+only a local discard outcome. Neither outcome becomes a wire receipt or flag.
+
+Cover boxes have a genuine fresh ephemeral X25519 public key and nonce, followed
+by random bytes in place of authenticated ciphertext, with canonical base64 and
+normal envelope size bounds. They have no DUMMY discriminator. Probability of
+accidental successful tag authentication is cryptographically negligible, not a
+logical certainty; normal payload/Account validation remains required afterward.
+Discovery return handlers must likewise silently ignore unopenable/invalid replies
+instead of closing an admitted channel when cover arrives on a return capability.
+
+Initial injection policy is at most four packets and 16 KiB of decoded cover bytes
+per minute per Node, at most two per peer per minute, using live transit mappings
+only. Injection yields to existing queued/sending work and expires with the current
+channel/label; no foreign grants, probes or route activation are manufactured.
+Idle scheduling and product defaults are separate lifecycle integration work.
+
+Cover injection and an explicit start/stop idle scheduler are now implemented in
+both routing runtimes. The default scheduling interval is cryptographically
+sampled between 15 and 45 seconds; configurable bounds are 15–300 seconds. It
+never creates a route, refreshes a Probe or bypasses a busy queue. Rolling 60-second
+packet/byte/peer budgets still apply. Runtime close cancels the scheduler. It is
+not enabled by default or connected to production/PWA policy yet. Default cover
+size is 1024 decoded bytes; a caller may select 256–16384. This is not a traffic-
+distribution matching or anonymity guarantee; size/timing correlation remains.
+
+RecipientPayloadV4 implements the inner V2 envelope codec and returns local
+accepted/discard/deferred outcomes. Hosts still must connect accepted records to
+the durable local Inbox and persist/retry deferred records as part of N3; this
+codec itself does not provide durable storage or Account authentication.
+Real Chrome transit acceptance now injects cover from B while N1 discovery is
+pending, and again after a route exists. No channel is closed, N2 discards cover,
+its accepted-payload count stays unchanged, then a second real payload succeeds.
+This test uses the recipient codec at the delivery handler and no Account runtime.

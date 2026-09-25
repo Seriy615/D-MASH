@@ -1,3 +1,35 @@
+# Execution checkpoint — route-carried DUMMY/cover DATA
+
+Both routing runtimes now inject opaque cover through existing transit grants,
+using normal DATA/offer framing and first-arrival queues. No DUMMY wire flag.
+Rolling 60-second caps: four packets, 16 KiB decoded bytes and two packets per
+neighbor; injection yields to existing queued/sending work. Optional explicit
+start/stop idle scheduler uses random 15–45 second default delay, no Probe refresh
+or route activation. Runtime close stops it; no production generator is enabled.
+
+RecipientEnvelopeV2 codec returns accepted/discard/deferred locally; missing keys
+are deferred, never misclassified as cover. A valid envelope still carries an
+opaque Account payload that needs later Account authentication. Durable Inbox and
+deferred storage integration remain N3 work. Discovery now silently ignores invalid
+opaque replies so cover on a pending return capability cannot kill the channel.
+
+PASS actual Chrome B between isolated Python N1/N2, including early cover during
+pending discovery, late recipient binding, cover after routing, no extra accepted
+payloads and real delivery after cover. Logs:
+/tmp/dmash-v4-real-browser-cover.log and
+/tmp/dmash-v4-real-browser-early-cover.log.
+Full suite PASS: 252 backend + 11 Origin + 58 JS
+(/tmp/dmash-v4-cover-all-tests.log). All these test sessions have exited 0.
+
+Before this commit, source and deployed files are 7af9044 (183-file exact match,
+service active, NRestarts=0). v4 is still not mounted in production; v3 release .11.
+Next: commit/sync this slice, then Worker socket/routing host and root lifecycle,
+real v4 endpoint, route selection/recovery and Account integration/H1-H3. Numeric
+TTL maximum/origin inference clarification remains pending; do not relax N0 by
+assuming consent. Entire N0–N8/compatible A–M/E6 goal remains incomplete and active.
+
+---
+
 # Execution checkpoint — real v4 browser transit (local, not production)
 
 New JS/Python routing now installs hop labels through real encrypted discovery,
@@ -812,3 +844,19 @@ Design requirements are in TRANSPORT_V4_DISCOVERY.md: common opaque DATA grammar
 valid existing hop grants, silent terminal authentication failure before durable
 Inbox, bounded injection/queues/deferred handling and preserved 500 ms first-arrival
 windows. No generator is currently active or production-enabled.
+
+## Publication verification after routing commit
+
+7af9044cbb364b6c5d2cfaacf6c5c8a69742d986 is pushed and EMS-synced. Both tracked
+Node/PWA deploy and canonical get_commit.sh completed (session 63818 exited 0).
+Log /tmp/dmash-v4-routing-foundation-deploy.log; PWA backup
+/srv/messenger.d-mash.ru/backups/manual-rollback-20260925T135010Z.
+Compared with prior running bdb62d7, deployed backend/PWA scope only adds nine
+files; loaded v3 sources are unchanged. v4 endpoint/runtime is still unmounted.
+
+Pending async clarification: numeric TTL at its allowed maximum (15) reveals that
+an honest neighbor originated that Probe, since relays must decrement. Random
+TTL reduces but does not remove this explicit boundary leak. User was asked
+whether strict origin hiding takes priority (requiring different TTL semantics)
+or the numeric counter's limited leak is acceptable. No answer yet; do not assume
+approval to relax N0. This blocks claiming N0 privacy, not independent development.

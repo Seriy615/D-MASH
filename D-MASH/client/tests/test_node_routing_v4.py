@@ -107,3 +107,41 @@ class NodeRoutingV4Tests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(packet['expires_at'],now+20)
             self.assertEqual(node.labels[('peer',packet['offer'])]['expires'],now+20)
         finally:await node.close()
+
+    async def test_cover_uses_existing_grants_and_rolling_budget(self):
+        mono=[1000.0];node=NodeRoutingV4(bytes(32),monotonic=lambda:mono[0]);events=asyncio.Queue()
+        class Sink:
+            def __init__(self,peer):self.peer=peer
+            async def send_operation(self,value):await events.put((self.peer,value))
+            async def close(self):pass
+        now=int(time.time());counts={'left':0,'right':0}
+        try:
+            self.assertFalse(node.inject_cover_once())
+            for peer in counts:
+                node.peers[peer]=Sink(peer);node._label('incoming',(peer,'ab'*32),now+120)
+            for _ in range(4):
+                self.assertTrue(node.inject_cover_once(1024))
+                self.assertFalse(node.inject_cover_once(1024),'queued traffic must take priority')
+                peer,batch=await asyncio.wait_for(events.get(),2);counts[peer]+=1
+                packet=batch['packets'][0]
+                self.assertEqual(set(packet),{'type','version','label','offer','payload','expires_at'})
+                self.assertEqual(packet['type'],'DATA');self.assertEqual(packet['label'],'ab'*32)
+            self.assertEqual(sorted(counts.values()),[2,2]);self.assertFalse(node.inject_cover_once())
+            mono[0]+=59.9;self.assertFalse(node.inject_cover_once())
+            mono[0]+=.2;self.assertTrue(node.inject_cover_once(16384))
+            await asyncio.wait_for(events.get(),2)
+            self.assertFalse(node.inject_cover_once(256),'decoded byte budget must also apply')
+        finally:await node.close()
+
+    async def test_cover_scheduler_lifecycle_and_no_grant_no_emission(self):
+        node=NodeRoutingV4(bytes(32))
+        try:
+            with self.assertRaises(ValueError):node.start_cover(minimum=14)
+            node.start_cover();timer=node.cover_timer
+            self.assertIsNotNone(timer);self.assertGreaterEqual(timer.when()-asyncio.get_running_loop().time(),14.9)
+            node.stop_cover();self.assertTrue(timer.cancelled());self.assertIsNone(node.cover_timer)
+            node.start_cover();timer=node.cover_timer
+            self.assertFalse(node.inject_cover_once());self.assertFalse(node.queues)
+            await node.close();self.assertTrue(timer.cancelled());self.assertIsNone(node.cover_timer)
+            with self.assertRaises(ValueError):node.start_cover()
+        finally:await node.close()

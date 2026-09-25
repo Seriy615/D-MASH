@@ -13,7 +13,7 @@
   constructor(base,{clock=()=>Date.now()/1000,monotonic=()=>performance.now()/1000}={}){
    if(!(base instanceof Uint8Array)||base.length!==32)throw Error('Invalid BaseNCRH');
    this.base=base.slice();this.clock=clock;this.monotonic=monotonic;this.peers=new Map();this.owned=[];this.labels=new Map();this.seen=new Map();
-   this.queues=new Map();this.timers=new Map();this.senders=new Map();this.tasks=new Set();this.pending=new Set();this.rates=new Map();this.probes=[];
+   this.queues=new Map();this.timers=new Map();this.senders=new Map();this.tasks=new Set();this.pending=new Set();this.rates=new Map();this.probes=[];this.coverHistory=[];this.coverTimer=null;this.coverPolicy=null;
    this.closed=false;this.stats={forwarded:0,received:0,probes:0,batches:0};
   }
   prune(){
@@ -106,7 +106,7 @@
    result.catch(()=>{});const pending={reject};this.pending.add(pending);
    const accept=async(peer,packet)=>{
     if(done)return;
-    const valid=await global.DmashRouteDiscoveryV4.verifyReply(packet.payload,state,{clock:()=>Math.floor(this.clock())});
+    let valid;try{valid=await global.DmashRouteDiscoveryV4.verifyReply(packet.payload,state,{clock:()=>Math.floor(this.clock())});}catch(_){return;}
     if(valid&&!done&&!this.closed&&expires>this.clock()&&this.peers.has(peer))resolve({peer,label:packet.offer,expires_at:Math.min(expires,packet.expires_at),channel:this.peers.get(peer)});
    };
    try{
@@ -127,6 +127,34 @@
    if(route.expires_at<=this.clock()||this.peers.get(route.peer)!==route.channel)throw Error('Node route expired or replaced');
    opaque(payload);const offer=this.label(route.peer,replyHandler,route.expires_at);
    this.enqueue(route.peer,{type:'DATA',version:4,label:route.label,offer,payload,expires_at:route.expires_at});
+  }
+  startCover({minimum=15,maximum=45}={}){
+   if(this.closed||!Number.isInteger(minimum)||!Number.isInteger(maximum)||minimum<15||minimum>=maximum||maximum>300)throw Error('Invalid cover scheduling policy');
+   this.stopCover();this.coverPolicy={minimum,maximum};this.scheduleCover();
+  }
+  stopCover(){this.coverPolicy=null;clearTimeout(this.coverTimer);this.coverTimer=null;}
+  scheduleCover(){
+   if(this.closed||!this.coverPolicy)return;
+   const {minimum,maximum}=this.coverPolicy,width=(maximum-minimum)*1000+1,limit=Math.floor(0x100000000/width)*width,sample=new Uint32Array(1);
+   do{crypto.getRandomValues(sample);}while(sample[0]>=limit);
+   this.coverTimer=setTimeout(()=>{
+    this.coverTimer=null;if(this.closed||!this.coverPolicy)return;
+    try{this.injectCoverOnce();}catch(_){}finally{this.scheduleCover();}
+   },minimum*1000+sample[0]%width);
+  }
+  injectCoverOnce(size=1024){
+   if(this.closed||[...this.queues.values()].some(queue=>queue.length)||this.senders.size)return false;
+   const now=this.monotonic();this.coverHistory=this.coverHistory.filter(row=>row.at>now-60);
+   if(!Number.isInteger(size)||size<256||size>16384)throw Error('Invalid cover size');
+   if(this.coverHistory.length>=4||this.coverHistory.reduce((sum,row)=>sum+row.size,0)+size>16384)return false;
+   this.prune();const candidates=[];
+   for(const row of this.labels.values())if(Array.isArray(row.target)&&this.peers.has(row.target[0])&&row.expires>this.clock()+2&&this.coverHistory.filter(entry=>entry.peer===row.target[0]).length<2)candidates.push(row);
+   if(!candidates.length)return false;
+   const limit=Math.floor(0x100000000/candidates.length)*candidates.length,sample=new Uint32Array(1);
+   do{crypto.getRandomValues(sample);}while(sample[0]>=limit);
+   const row=candidates[sample[0]%candidates.length],peer=row.target[0];
+   this.send({peer,label:row.target[1],expires_at:row.expires,channel:this.peers.get(peer)},global.DmashRecipientPayloadV4.coverBox(size),async()=>{});
+   this.coverHistory.push({at:now,peer,size});return true;
   }
   async receive(peer,packet){
    if(!packet||packet.version!==4||!Number.isSafeInteger(packet.expires_at)||packet.expires_at>this.clock()+180)throw Error('Invalid Node packet');
@@ -158,7 +186,7 @@
    }else throw Error('Unsupported Node packet');
   }
   async close(){
-   this.closed=true;
+   this.closed=true;this.stopCover();
    for(const pending of this.pending)pending.reject(Error('Node runtime closed'));
    for(const timer of this.timers.values())clearTimeout(timer);
    for(const channel of this.peers.values())channel.close();

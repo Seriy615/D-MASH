@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http'),{spawn}=require('node:child_process');
 const {chromium}=require(process.env.DMASH_PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve(__dirname,'..');
-const scripts=['vendor/nacl-fast.min.js','vendor/blake3.min.js','secure_session.js','node_identity.js','node_relationships_v4.js','node_admission_v4.js','node_registration_v4.js','resource_pow.js','node_socket_v4.js','node_channel_v4.js','probe_primitives_v4.js','route_discovery_v4.js','node_routing_v4.js'];
+const scripts=['vendor/nacl-fast.min.js','vendor/blake3.min.js','secure_session.js','node_identity.js','node_relationships_v4.js','node_admission_v4.js','node_registration_v4.js','resource_pow.js','node_socket_v4.js','node_channel_v4.js','probe_primitives_v4.js','route_discovery_v4.js','recipient_payload_v4.js','node_routing_v4.js'];
 const allowed=new Set(scripts.map(name=>'/js/'+name));
 (async()=>{
  const helper=spawn(path.join(root,'.venv/bin/python'),[path.join(__dirname,'node_transit_v4_browser_server.py')],{stdio:['pipe','pipe','pipe']});
@@ -38,15 +38,38 @@ const allowed=new Set(scripts.map(name=>'/js/'+name));
    }
    if(runtime.owned.length||runtime.peers.size!==2)throw Error('Invalid browser transit topology');
   },info);
-  helper.stdin.write('start\n');const delivered=await next();assert.equal(delivered.event,'delivered');assert(delivered.onlyBrowserPath&&delivered.labelRewrite&&delivered.lateBinding);
+  helper.stdin.write('start\n');const early=await next();assert.equal(early.event,'early_probe');
+  await page.evaluate(async()=>{
+   const runtime=window.transit.runtime;
+   const until=Date.now()+5000;
+   while(runtime.senders.size||[...runtime.queues.values()].some(queue=>queue.length)){
+    if(Date.now()>until)throw Error('Early cover queue did not drain');await new Promise(resolve=>setTimeout(resolve,20));
+   }
+   if(!runtime.injectCoverOnce(1024))throw Error('Early cover injection rejected');
+   await new Promise(resolve=>setTimeout(resolve,800));
+  });
+  helper.stdin.write('bind\n');const delivered=await next();assert.equal(delivered.event,'delivered');assert(delivered.onlyBrowserPath&&delivered.labelRewrite&&delivered.lateBinding);
+  const injected=await page.evaluate(async()=>{
+   const runtime=window.transit.runtime;
+   for(let i=0;i<3;i++){
+    const until=Date.now()+5000;
+    while(runtime.senders.size||[...runtime.queues.values()].some(queue=>queue.length)){
+     if(Date.now()>until)throw Error('Cover queue did not drain');await new Promise(resolve=>setTimeout(resolve,20));
+    }
+    if(!runtime.injectCoverOnce(1024))throw Error('Granted cover injection rejected');
+   }
+   if(runtime.injectCoverOnce(1024))throw Error('Cover budget exceeded');
+   return runtime.coverHistory.length;
+  });
+  assert.equal(injected,4);helper.stdin.write('cover\n');const covered=await next();assert.equal(covered.event,'cover');assert(covered.discarded>=1);assert.equal(covered.accepted,2);
   const result=await page.evaluate(async()=>{
    const {runtime,store,signing}=window.transit;const result={...runtime.stats,owned:runtime.owned.length,noAccount:!window.Core};
    await runtime.close();store.close();signing.secretKey.fill(0);return result;
   });
-  assert(result.noAccount);assert.equal(result.owned,0);assert.equal(result.forwarded,2);assert(result.probes>=1);
+  assert(result.noAccount);assert.equal(result.owned,0);assert.equal(result.forwarded,3);assert(result.probes>=1);
   helper.stdin.write('disconnected\n');const disconnected=await next();assert(disconnected.unavailable);
   helper.stdin.end('stop\n');assert.equal(await helperExit,0);
-  console.log('PASS Python N1 -> real Chrome Node B -> Python N2: genuine discovery, signed route proof, random TTL/NCRH rewriting, late local route binding after cached Probe, opaque payload and label rewrite, no Account or route keys at B, no bypass, disconnect becomes unavailable');
+  console.log('PASS Python N1 -> real Chrome Node B -> Python N2: genuine discovery, signed route proof, random TTL/NCRH rewriting, late local route binding after cached Probe, opaque payload and label rewrite, no Account or route keys at B, no bypass, cover during pending discovery and after route installation silently discarded, real payload after cover, disconnect becomes unavailable');
  }finally{
   if(browser)await browser.close();if(server.listening)await new Promise(resolve=>server.close(resolve));
   if(!exited){helper.stdin.end('stop\n');const timer=setTimeout(()=>helper.kill('SIGKILL'),5000);await helperExit;clearTimeout(timer);}

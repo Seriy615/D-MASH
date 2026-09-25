@@ -16,7 +16,8 @@ from backend.secure_socket import accept_secure
 from backend.node_channel_v4 import authorize_node_v4
 from backend.node_relationships_v4 import RelationshipStore
 from backend.node_routing_v4 import NodeRoutingV4
-from backend.route_discovery_v4 import issue_certificate,seal,open_box
+from backend.route_discovery_v4 import issue_certificate
+from backend.recipient_payload_v4 import seal_payload,open_payload
 
 async def main():
     keys=[]
@@ -27,11 +28,14 @@ async def main():
     owner,sign=SigningKey.generate(),SigningKey.generate();box,recipient=PrivateKey.generate(),PrivateKey.generate()
     now=int(time.time());cert=issue_certificate(owner,sign.verify_key,box.public_key,recipient.public_key,
         generation=1,issued_at=now,expires_at=now+3600)
-    delivered=asyncio.get_running_loop().create_future()
+    delivered=asyncio.Queue();discarded=0;accepted=0
     async def receive(peer,packet):
-        payload=open_box(recipient,packet['payload'])
-        if payload!={'opaque':'browser-transit-acceptance'}:raise AssertionError('Payload mismatch')
-        if not delivered.done():delivered.set_result(packet['label'])
+        nonlocal discarded,accepted
+        result=open_payload([recipient],packet['payload'])
+        if result['status']=='discard':discarded+=1;return
+        if result['status']!='accepted' or result['payload'] not in ('browser-transit-acceptance','browser-transit-after-cover'):
+            raise AssertionError('Payload mismatch')
+        accepted+=1;await delivered.put((packet['label'],result['payload']))
     async def discard(peer,packet):pass
     servers=[];stores=[]
     with tempfile.TemporaryDirectory() as tmp:
@@ -61,12 +65,23 @@ async def main():
                 async with asyncio.timeout(10):
                     while not runtimes[1].probes:await asyncio.sleep(.02)
                 if runtimes[1].owned:raise AssertionError('Route bound before early Probe')
+                print(json.dumps({'event':'early_probe'}),flush=True)
+                if await commands.get()!='bind':raise AssertionError('Missing late binding command')
+                if discovery.done() or any(len(runtime.peers)!=1 for runtime in runtimes):raise AssertionError('Early cover broke pending discovery')
                 runtimes[1].bind_local(cert,sign,box,receive)
                 route=await asyncio.wait_for(discovery,30)
-                runtimes[0].send(route,seal(bytes(recipient.public_key),{'opaque':'browser-transit-acceptance'}),discard)
-                destination_label=await asyncio.wait_for(delivered,15)
+                runtimes[0].send(route,seal_payload(recipient.public_key,'browser-transit-acceptance'),discard)
+                destination_label,_=await asyncio.wait_for(delivered.get(),15)
                 if destination_label==route['label']:raise AssertionError('Hop label not rewritten')
                 print(json.dumps({'event':'delivered','labelRewrite':True,'onlyBrowserPath':True,'lateBinding':True}),flush=True)
+                if await commands.get()!='cover':raise AssertionError('Missing cover check')
+                async with asyncio.timeout(5):
+                    while not discarded:await asyncio.sleep(.02)
+                if accepted!=1 or any(len(runtime.peers)!=1 for runtime in runtimes):raise AssertionError('Cover changed delivery or channel state')
+                runtimes[0].send(route,seal_payload(recipient.public_key,'browser-transit-after-cover'),discard)
+                _,payload=await asyncio.wait_for(delivered.get(),10)
+                if payload!='browser-transit-after-cover' or accepted!=2:raise AssertionError('Real payload after cover lost')
+                print(json.dumps({'event':'cover','discarded':discarded,'accepted':accepted}),flush=True)
                 if await commands.get()!='disconnected':raise AssertionError('Missing disconnect check')
                 async with asyncio.timeout(5):
                     while any(runtime.peers for runtime in runtimes):await asyncio.sleep(.02)

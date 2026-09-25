@@ -12,6 +12,7 @@ import secrets
 import time
 
 from .probe_primitives_v4 import route_ncrh, extend_ncrh, sample_hop_ttl, consume_hop
+from .recipient_payload_v4 import cover_box
 from .route_discovery_v4 import create_query, answer_query, verify_reply, verify_certificate
 
 TOKEN=re.compile('[0-9a-f]{64}')
@@ -28,7 +29,7 @@ class NodeRoutingV4:
     def __init__(self,base_ncrh,*,clock=time.time,monotonic=time.monotonic):
         if not isinstance(base_ncrh,bytes) or len(base_ncrh)!=32:raise ValueError('Invalid BaseNCRH')
         self.base=base_ncrh;self.clock=clock;self.monotonic=monotonic;self.peers={};self.owned=[];self.labels={};self.seen={}
-        self.queues={};self.timers={};self.senders={};self.tasks=set();self.pending=set();self.rates={};self.probes=[]
+        self.queues={};self.timers={};self.senders={};self.tasks=set();self.pending=set();self.rates={};self.probes=[];self.cover_history=[];self.cover_timer=None;self.cover_policy=None
         self.closed=False;self.stats=dict(forwarded=0,received=0,probes=0,batches=0)
 
     def _prune(self):
@@ -153,7 +154,10 @@ class NodeRoutingV4:
         blob,state=create_query(certificate,now=int(self.clock()));expires=state['query']['expires_at']
         future=asyncio.get_running_loop().create_future();self.pending.add(future)
         async def accept(peer,packet):
-            if not future.done() and verify_reply(packet['payload'],state,now=int(self.clock())):
+            if future.done():return
+            try:valid=verify_reply(packet['payload'],state,now=int(self.clock()))
+            except Exception:return
+            if valid:
                 future.set_result(dict(peer=peer,label=packet['offer'],expires_at=min(expires,packet['expires_at']),channel=self.peers.get(peer)))
         try:
             self._dedupe('PROBE',blob,expires)
@@ -176,6 +180,47 @@ class NodeRoutingV4:
         _opaque(payload)
         offer=self._label(route['peer'],reply_handler,expires)
         self._enqueue(route['peer'],dict(type='DATA',version=4,label=route['label'],offer=offer,payload=payload,expires_at=expires))
+
+    def start_cover(self,*,minimum=15,maximum=45):
+        if self.closed or type(minimum) is not int or type(maximum) is not int or not 15<=minimum<maximum<=300:
+            raise ValueError('Invalid cover scheduling policy')
+        self.stop_cover();self.cover_policy=(minimum,maximum);self._schedule_cover()
+
+    def stop_cover(self):
+        self.cover_policy=None
+        if self.cover_timer:self.cover_timer.cancel()
+        self.cover_timer=None
+
+    def _schedule_cover(self):
+        if self.closed or self.cover_policy is None:return
+        minimum,maximum=self.cover_policy
+        delay=(minimum*1000+secrets.randbelow((maximum-minimum)*1000+1))/1000
+        self.cover_timer=asyncio.get_running_loop().call_later(delay,self._cover_tick)
+
+    def _cover_tick(self):
+        self.cover_timer=None
+        if self.closed or self.cover_policy is None:return
+        try:self.inject_cover_once()
+        except (ValueError,ConnectionError,BufferError):pass
+        finally:self._schedule_cover()
+
+    def inject_cover_once(self,size=1024):
+        if self.closed or any(self.queues.values()) or self.senders:return False
+        now=self.monotonic();self.cover_history[:]=[row for row in self.cover_history if row[0]>now-60]
+        if type(size) is not int or not 256<=size<=16384:raise ValueError('Invalid cover size')
+        if len(self.cover_history)>=4 or sum(row[2] for row in self.cover_history)+size>16384:return False
+        self._prune();candidates=[]
+        for row in self.labels.values():
+            target=row['target']
+            if (isinstance(target,tuple) and target[0] in self.peers and row['expires']>self.clock()+2
+                    and sum(row[1]==target[0] for row in self.cover_history)<2):
+                candidates.append((target,row['expires']))
+        if not candidates:return False
+        target,expires=secrets.choice(candidates)
+        async def discard(peer,packet):pass
+        self.send(dict(peer=target[0],label=target[1],expires_at=expires,channel=self.peers[target[0]]),cover_box(size),discard)
+        self.cover_history.append((now,target[0],size))
+        return True
 
     async def _receive(self,peer,packet):
         if not isinstance(packet,dict) or packet.get('version')!=4 or type(packet.get('version')) is not int:raise ValueError('Invalid Node packet')
@@ -219,7 +264,7 @@ class NodeRoutingV4:
         else:raise ValueError('Unsupported Node packet')
 
     async def close(self):
-        self.closed=True
+        self.closed=True;self.stop_cover()
         for future in self.pending:
             if not future.done():future.set_exception(ConnectionError('Node runtime closed'))
         for timer in self.timers.values():timer.cancel()
