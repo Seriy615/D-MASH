@@ -91,15 +91,7 @@ def mine_resource_pow(node_id: BytesLike, resource: BytesLike, difficulty: int, 
     raise RuntimeError("nonce space exhausted")
 
 
-def activation_pow_digest(node_id: BytesLike, activation_type: str,
-                          device_transport_key: BytesLike, resource: BytesLike,
-                          nonce: int, expires_at: int) -> bytes:
-    """Digest for a one-time activation proof transcript V2.
-
-    The device key and expiry are deliberately in the work transcript: a proof
-    cannot be moved between devices, activation kinds, resources, or windows.
-    The bytes are mirrored in not_messenger/js/resource_pow.js.
-    """
+def _activation_prefix(node_id, activation_type, device_transport_key, resource, expires_at):
     if not isinstance(activation_type, str) or activation_type not in {"DNSS", "ENTRY_GRANT", "PRIVATE_ROUTE"}:
         raise ValueError("invalid activation type")
     if (not isinstance(expires_at, int) or isinstance(expires_at, bool) or
@@ -110,13 +102,20 @@ def activation_pow_digest(node_id: BytesLike, activation_type: str,
     item = _bytes(resource, "resource")
     if not key or not item:
         raise ValueError("device_transport_key and resource must not be empty")
-    resource_pow_digest(node, b"", nonce)  # validate nonce without duplicating rules
-    payload = (_ACTIVATION_DOMAIN + len(node).to_bytes(2, "big") + node +
+    return (_ACTIVATION_DOMAIN + len(node).to_bytes(2, "big") + node +
                activation_type.encode("ascii") + b"\x00" +
                len(key).to_bytes(2, "big") + key +
-               len(item).to_bytes(4, "big") + item + expires_at.to_bytes(8, "big") +
-               nonce.to_bytes(8, "big"))
-    return hashlib.sha256(payload).digest()
+               len(item).to_bytes(4, "big") + item + expires_at.to_bytes(8, "big"))
+
+
+def activation_pow_digest(node_id: BytesLike, activation_type: str,
+                          device_transport_key: BytesLike, resource: BytesLike,
+                          nonce: int, expires_at: int) -> bytes:
+    """SHA-256 activation transcript V2, mirrored exactly in browser JS."""
+    if type(nonce) is not int or not 0 <= nonce < 2**64:
+        raise ValueError("nonce must be an unsigned 64-bit integer")
+    return hashlib.sha256(_activation_prefix(node_id, activation_type,
+        device_transport_key, resource, expires_at) + nonce.to_bytes(8, "big")).digest()
 
 
 def verify_activation_pow(node_id: BytesLike, activation_type: str,
@@ -144,7 +143,8 @@ def verify_activation_pow(node_id: BytesLike, activation_type: str,
 def mine_activation_pow(node_id: BytesLike, activation_type: str,
                         device_transport_key: BytesLike, resource: BytesLike,
                         expires_at: int, difficulty: int | None = None,
-                        start_nonce: int = 0) -> dict[str, object]:
+                        start_nonce: int = 0, *, cancelled=None,
+                        deadline: float | None = None) -> dict[str, object]:
     """Mine and return the JSON-safe activation proof."""
     if difficulty is None:
         difficulty = activation_pow_difficulty()
@@ -152,9 +152,17 @@ def mine_activation_pow(node_id: BytesLike, activation_type: str,
         raise ValueError("difficulty must be between 0 and 256")
     if not isinstance(start_nonce, int) or isinstance(start_nonce, bool) or not 0 <= start_nonce < 2**64:
         raise ValueError("start_nonce must be an unsigned 64-bit integer")
+    # Reuse the fixed transcript hash state. Work threshold and digest bytes
+    # are unchanged; avoid re-encoding/re-hashing identities on every nonce.
+    prefix_hash = hashlib.sha256(_activation_prefix(node_id, activation_type,
+        device_transport_key, resource, expires_at))
     for nonce in range(start_nonce, 2**64):
-        digest = activation_pow_digest(node_id, activation_type, device_transport_key,
-                                       resource, nonce, expires_at)
+        if (nonce - start_nonce) % 4096 == 0:
+            if (cancelled is not None and cancelled()) or (deadline is not None and time.monotonic() >= deadline):
+                raise TimeoutError("activation work cancelled or expired")
+        candidate = prefix_hash.copy()
+        candidate.update(nonce.to_bytes(8, "big"))
+        digest = candidate.digest()
         if _leading_zero_bits(digest) >= difficulty:
             wire_resource = resource.hex() if isinstance(resource, bytes) else resource
             return {"v": ACTIVATION_POW_VERSION, "type": activation_type, "resource": wire_resource,

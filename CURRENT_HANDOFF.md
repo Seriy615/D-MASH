@@ -1,3 +1,34 @@
+# Execution checkpoint — composed v4 Node channels, 2026-09-25
+
+Implemented shared Python/browser channel admission, mutual password policies,
+fresh directional resource work and persistent DNSS acknowledgment. Browser
+socket pins the Node identity, bounds frames/queues and cancels work on close.
+Python mining checks cancellation/deadline without changing the digest contract.
+PasswordGate now exists in JS, including revocation during asynchronous HMAC.
+No Account runtime is loaded by the real browser channel acceptance.
+
+Full local suite: 236 backend + 11 Origin + 54 JS suites PASS
+(`/tmp/dmash-v4-channel-final-tests.log`). Actual Chrome/Python WebSocket mutual
+password, revocation, reconnect and opaque payload test PASS
+(`/tmp/dmash-node-channel-mutual-browser.log`); initial wrong-password variant
+also PASS (`/tmp/dmash-node-channel-negative-browser.log`). Stronger refusal-reason
+and in-flight revocation assertions PASS in the actual browser
+(`/tmp/dmash-node-channel-race-browser.log`).
+
+The channel is not mounted in production and grants no route/mailbox ownership.
+TRANSPORT_V4_DISCOVERY.md is a candidate, not implemented discovery or N0 closure.
+Next required work: finalize discovery authority/label lifecycle, implement shared
+routing runtime and actual N1 -> browser -> N2 transit; preserve late-QR recovery.
+H1-H3 and the remaining N0–N8/compatible A–M/E6 scope remain open.
+
+Before this commit, pushed/EMS source is 25caf4f; running EMS remains 7f91105,
+release transport-v3-device-material-20260925.11. Latest SSH revalidation enters
+as root, while /home/jcode/D-MASH and .git are owned by codex uid 1000; jcode
+is still absent. Use sudo -u codex for source Git operations. Canonical untracked
+get_commit.sh remains PWA-only and requires root; preserve both server scripts.
+
+---
+
 # Execution checkpoint — late pairing evidence and password foundation
 
 User's Probe-before-QR scenario now has both routing regression and real EMS
@@ -688,3 +719,14 @@ DeviceRoot lock/reopen and opaque-lookup checks
 (`/tmp/dmash-node-relationships-browser.log`). Not yet connected to NodeRuntime.
 EMS source repository synchronized to `252b55427996d91606bc6d5b873f069c92a20245`;
 live code remains the separately verified `7f91105` release `.11`.
+
+EMS access changed during the last source sync: `ssh -G ems-vps` now selects user
+`codex` with ~/.ssh/jcode_ems_vps_ed25519 at 85.198.64.183. `getent passwd jcode`
+is empty. Remote uid 1000 owns /home/jcode/D-MASH and .git as codex; origin is
+still git@github.com:Seriy615/D-MASH.git, HEAD was 4ad3183, and the same two local
+untracked deployment scripts remain. dmash-node is active. The attempted
+`su - jcode` sync failed before any mutation. Source-only fast-forward to 25caf4f
+was retried directly as the current repository owner codex. Do not recreate users,
+change SSH config or overwrite deployment scripts to restore the old login name.
+Before the next deployment recheck the canonical script and current sudo access;
+retain exact-SHA/backup/runtime-state requirements. No new deploy in this step.

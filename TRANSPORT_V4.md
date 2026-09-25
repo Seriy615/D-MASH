@@ -262,3 +262,36 @@ listener-level rate limits, configuration/installer credential storage/rotation,
 mutual directional gate integration and resource-operation enforcement remain open.
 Kpwd is password-equivalent; captured proof/salt permits offline password guessing.
 No PAKE claim, raw-password wire field or role-based browser exemption is introduced.
+
+## Composed Node channel (implemented, not production mounted)
+
+After the signed v4 NODE handshake, both directions use the same encrypted
+sequence: `NODE_POLICY` → `NODE_ADMISSION` → `NODE_ADMITTED` → `NODE_REGISTER`
+→ `NODE_AUTHORIZED`. Policy contains version 4, difficulty 20–24 and either a
+password challenge or null. Admission carries the exact password proof or null;
+an OPEN side refuses unsolicited proofs. A caller can require a peer password
+policy, refusing an OPEN downgrade. Admission succeeds on both sides before
+relationship creation/resource work. Registration is the exact directional
+DNSS/proof format above; authorization acknowledges the received DNSS and version.
+No compatibility fallback or implicit route/store authority is granted.
+
+Resource mining and peer registration validation run concurrently. Disconnect,
+invalid registration or cancellation terminates mining. Overall authorization
+has a 300-second deadline; each resource proof has at most 180 seconds validity
+and is checked again after local mining. Persist the verified peer direction
+before its acknowledgment; a reconnect still requires fresh transcript-bound
+work. Password revocation is checked before persistence and each channel operation,
+including after an awaited receive. Browser HMAC verification also checks that
+revocation/forget did not occur while WebCrypto was running.
+
+The browser socket pins the expected authenticated Node ID, requires WSS except
+loopback tests, limits handshake frames to 4096 bytes, encrypted frames to 2 MiB,
+and queued receive/send bytes to 4 MiB (receive count 64). Handshake timeout is
+15 seconds. Closing clears session keys and rejects pending reads. These are
+per-socket limits; listener-wide quotas and runtime lifecycle ownership remain open.
+
+Real Chrome/Python WebSocket acceptance covers both directional password gates,
+production identity/resource PoW, persisted DNSS reconnect, opaque ciphertext
+exchange and revocation. This is an Account-free channel test on loopback, not
+deployed WSS/transit, route ownership, mailbox or N1–N8 acceptance. Discovery's
+candidate design and unresolved issues are in TRANSPORT_V4_DISCOVERY.md.

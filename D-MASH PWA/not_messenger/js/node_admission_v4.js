@@ -46,6 +46,60 @@
    worker.postMessage({password,salt});
   });
  }
+ function context(session){
+  if(session.version!==4||session.closed||session.localRole!=='NODE'||session.peerRole!=='NODE'||session.localId===session.peerId||!global.DmashNodeIdentity.verify(session.localId)||!global.DmashNodeIdentity.verify(session.peerId))throw Error('Authenticated Node work required');
+ }
+ async function passwordCredential(password,options={}){
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  return {profile:PROFILE,salt:btoa(String.fromCharCode(...salt)),epoch:hex(crypto.getRandomValues(new Uint8Array(16))),key:await derivePasswordKey(password,salt,options)};
+ }
+ class PasswordGate{
+  constructor(credential,{clock=()=>Date.now()/1000}={}){
+   if(credential?.profile!==PROFILE||!(credential.key instanceof Uint8Array)||credential.key.length!==32)throw Error('Invalid Node password credential');
+   this.credential={...credential,key:credential.key.slice()};this.clock=clock;
+   this.pending=new Map();this.attempted=new Map();this.authorized=new Set();this.failures=new Map();
+   this.overloadUntil=0;this.generation=0;this.closed=false;
+  }
+  challenge(session){
+   context(session);if(this.closed)throw Error('Node gate closed');
+   const now=Math.floor(this.clock());
+   for(const [peer,row] of this.failures)if(row.expires<=now)this.failures.delete(peer);
+   const failure=this.failures.get(session.peerId);
+   if(now<this.overloadUntil||(failure&&failure.until>now))throw Error('Node admission cooldown');
+   if(!failure&&this.failures.size>=4096)throw Error('Node admission failure quota');
+   if(this.attempted.has(session)||this.attempted.size>=256)throw Error('Node admission attempt limit');
+   const challenge={type:'NODE_PASSWORD_CHALLENGE',version:4,profile:PROFILE,salt:this.credential.salt,epoch:this.credential.epoch,nonce:hex(crypto.getRandomValues(new Uint8Array(32))),expires_at:now+90};
+   challengeBytes(challenge,session.localId,session.peerId,session.transcriptHash);
+   const token={challenge,generation:this.generation};
+   this.pending.set(session,token);this.attempted.set(session,token);return {...challenge};
+  }
+  async verify(session,response){
+   context(session);if(this.closed)throw Error('Node gate closed');
+   const token=this.pending.get(session);this.pending.delete(session);
+   if(!token)return false;
+   const failed=()=>{
+    const now=Math.floor(this.clock());
+    if(!this.failures.has(session.peerId)&&this.failures.size>=4096){this.overloadUntil=now+60;return false;}
+    const count=Math.min(7,(this.failures.get(session.peerId)?.count||0)+1);
+    this.failures.set(session.peerId,{count,until:now+Math.min(60,2**(count-1)),expires:now+600});return false;
+   };
+   if(Math.floor(this.clock())>=token.challenge.expires_at)return failed();
+   if(!response||Object.keys(response).sort().join(',')!=='proof,type,version'||response.type!=='NODE_PASSWORD_PROOF'||response.version!==4)return failed();
+   try{
+    field(response.proof,64);
+    const signature=Uint8Array.from(response.proof.match(/../g),b=>parseInt(b,16));
+    const key=await crypto.subtle.importKey('raw',this.credential.key,{name:'HMAC',hash:'SHA-256'},false,['verify']);
+    const valid=await crypto.subtle.verify('HMAC',key,signature,challengeBytes(token.challenge,session.localId,session.peerId,session.transcriptHash));
+    if(this.closed||session.closed||token.generation!==this.generation||this.attempted.get(session)!==token)return false;
+    if(Math.floor(this.clock())>=token.challenge.expires_at||!valid)return failed();
+    this.failures.delete(session.peerId);this.authorized.add(session);return true;
+   }catch(_){return failed();}
+  }
+  require(session){context(session);if(this.closed||!this.authorized.has(session))throw Error('Node password admission required');}
+  forget(session){this.pending.delete(session);this.attempted.delete(session);this.authorized.delete(session);}
+  revokeAll(){this.generation++;this.pending.clear();this.attempted.clear();this.authorized.clear();}
+  close(){this.revokeAll();this.closed=true;this.credential.key.fill(0);}
+ }
  if(typeof WorkerGlobalScope!=='undefined'&&global instanceof WorkerGlobalScope){
   importScripts('vendor/argon2-bundled.min.js');
   let used=false;
@@ -59,7 +113,7 @@
    }catch(_){global.postMessage({error:true});}
   };
  }
- const api=Object.freeze({PROFILE,challengeBytes,passwordProof,derivePasswordKey});
+ const api=Object.freeze({PROFILE,challengeBytes,passwordProof,derivePasswordKey,passwordCredential,PasswordGate});
  global.DmashNodeAdmissionV4=api;
  if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
