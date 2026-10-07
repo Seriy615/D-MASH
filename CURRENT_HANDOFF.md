@@ -31,6 +31,14 @@ TTL для Probe; route-carried DUMMY/cover с корректным terminal dis
 в FORGE_SYNC.md после операции. Перенос production runtime/доменов/секретов
 не следует из синхронизации репозитория. EMS не является новым dev-хостом.
 
+**Forge source sync выполнен:** checkout `/home/jcode/D-MASH`, user `codex`,
+ветка `transport-v3`. Базовый handoff `c14b0b07f9229988f8bbb83f88b3b73504784272`
+проверен по HEAD/tree и file hashes; локальный прежний context сохранён в
+protected off-checkout backup. Итог и GitHub SSH limitation —
+[FORGE_SYNC.md](FORGE_SYNC.md). Origin fetch теперь HTTPS, write auth требует
+настройки; production runtime/данные не переносились. Последний documentation
+commit также доставляется на Forge, его полный SHA получить из Git.
+
 ## 2. Точный checkpoint и что проверено сейчас
 
 | Параметр | Значение |
