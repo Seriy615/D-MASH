@@ -135,6 +135,17 @@ const Storage = {
         }
         return false;
     },
+    async markMessageSendFailure(peerID,wireId,reason) {
+        const aliasL1=await this.getAlias(peerID,'L1'),secrets=await this.getBox('blind_secrets',aliasL1);
+        for(let seq=secrets?.msgCount||0;seq>=1;seq--){
+            const alias=await this.getAlias(aliasL1+seq,'L3'),message=await this.getBox('blind_messages',alias);
+            if(!message||message.inbound||message.wireId!==wireId)continue;
+            if(['DELIVERED','READ'].includes(message.transportState))return false;
+            message.transportState='FAILED';message.failureReason=String(reason).slice(0,64);
+            await this.putBox('blind_messages',{alias,data:message});return true;
+        }
+        return false;
+    },
 
     markInboundMessagesRead: async function(peerID) {
         const aliasL1 = await this.getAlias(peerID, 'L1');
@@ -280,21 +291,23 @@ deleteMessageGamma: async function(peerID, msgId) {
      */
     putBox: async function(storeName, { alias, data }) {
         const blob = await this.encryptBox(data);
-        return new Promise((res) => {
+        return new Promise((res,rej) => {
             const tx = this.db.transaction(storeName, 'readwrite');
             tx.objectStore(storeName).put({ alias, blob });
             tx.oncomplete = () => res();
+            tx.onerror=()=>rej(tx.error||new Error('Vault write failed'));tx.onabort=()=>rej(tx.error||new Error('Vault write aborted'));
         });
     },
 
     getBox: async function(storeName, alias) {
-        return new Promise((res) => {
+        return new Promise((res,rej) => {
             const tx = this.db.transaction(storeName, 'readonly');
             tx.objectStore(storeName).get(alias).onsuccess = async (e) => {
                 if (!e.target.result) return res(null);
                 const dec = await this.decryptBox(e.target.result.blob);
                 res(dec);
             };
+            tx.onerror=()=>rej(tx.error||new Error('Vault read failed'));tx.onabort=()=>rej(tx.error||new Error('Vault read aborted'));
         });
     },
 

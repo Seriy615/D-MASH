@@ -1,3 +1,68 @@
+# Live checkpoint — .23 call-start/public relay acceptance PASS
+
+Release .23 `1ba5e550678fad2fdfba77a03d7fab6eeeccd029` is pushed, deployed and
+synchronized via EMS get_commit.sh. Exact source match: 202 files, no missing or
+changed. dmash-node, dedicated dmash-sturn and existing coturn active/running,
+NRestarts=0. Isolated committed-source full tests PASS: 264 backend + 11 Origin
++ 65 JS suites (`/tmp/dmash-call-release-all-tests.log`). Local RTC Chrome PASS.
+Public fresh two-Account acceptance PASS (`/tmp/dmash-call-release-live-accounts.log`):
+Request/Accept/Confirm and actual visible sidebar/chat clicks, initial exchange,
+messages, ratchet 1/2/delayed old epoch/reconnect, actual call UI start/accept,
+forced relay candidates on both sides, inbound audio RTP both sides, hangup to
+idle. Microphones are synthetic. See EMS_STURN_DEPLOYMENT.md for service setup;
+SDP/ICE signaling is not E2EE, so full N5/N7 privacy is still incomplete.
+
+Uncommitted recorded-note implementation: Account-owned authenticated profile,
+4096-character fragments inside existing signed/ratcheted packets, window eight
+awaiting durable peer receipts, encrypted outbox/assembly state, 16 MiB encoded
+DataURL bound, 32 MiB receiver reservations, quota/expiry/complete tombstones,
+one Gamma history note and final verified digest receipt. Known oversized-note
+reproduction is covered by real Account crypto + v3/v4 envelope bounds in
+account_recorded_media.test.js. Loss/restart/disk failure/Account isolation,
+final-receipt loss/deduplication/conflict, profile timeout/quota/expiry and
+transient permit storage retry PASS with controlled transport/storage. Actual
+Chrome local recording/playback/damaged-note/gesture regression PASS. Recorder
+callbacks retain original peer; late permission/chat/Account/cancel races PASS.
+Assets are wired into release loader/SW. EMS two-Account actual recording and
+playback candidate acceptance PASS (`/tmp/dmash-recorded-media-ems-candidate.log`):
+UI voice 17942 encoded chars/video-note 259034 chars, actual encrypted private
+routes, one receiving history row, playback advances and final receipt retires
+the outbox. Private route readiness initially failed then recovered, not immediate.
+Intent-before-history and receiver-history-before-assembly crash tests PASS.
+Final .24 candidate full regression PASS: 264 backend + 11 Origin + 67 JS suites
+(`/tmp/dmash-recorded-media-release24-all-tests.log`), including both crash windows.
+Manual review, diff check and credential-pattern scan PASS. Preparing commit/deploy.
+
+Next: finish real delivery acceptance, update release, full regression,
+commit/push/deploy and exact source/deployed acceptance. Then real v4 Account/
+contact integration and every remaining N0–N8/A–M/E6 requirement. Current v3
+migration tests do not prove complete v4 UI cutover, crash/fault/mobile matrix,
+installer or signaling privacy. Goal remains active; no full completion claim.
+
+---
+
+# Live checkpoint — .22 public first-request loss acceptance PASS
+
+Release .22 `4e5c5aa481490f9f4f26b31e716f827eaf33be30` is pushed, deployed
+and synchronized through EMS get_commit.sh. Exact source match: 201 files,
+no missing/changed; service active/running, NRestarts=0. Browser .22 page/SW
+acceptance PASS (`/tmp/dmash-v4-public-request-retry-live.log`): deliberately drop
+first initial public request after local Node acceptance; autonomous durable retry
+reaches recipient; held confirmation keeps outgoing/accepted cards visible;
+Request/Accept/Confirm, actual sidebar/chat clicks, initial exchange, messages,
+ratchet 1/2, delayed prior epoch, reconnect and control retirement all pass.
+Transient route-unavailable retries preceded initial exchange; do not claim
+immediate route readiness. Full 263 backend + 11 Origin + 64 JS suites PASS.
+
+Next: implement the recorded-note fragmentation/profile/receipt design in
+ACCOUNT_RECORDED_MEDIA.md (currently a proposal, no transfer implementation),
+then real v4 Account/contact integration and the rest of N0–N8/A–M/E6. Existing
+old public states lacking initial ciphertext do not yet gain automatic retry;
+full recovery/migration, ratchet/session phase matrix and privacy gates remain
+required. Goal remains active; no full completion claim.
+
+---
+
 # Execution checkpoint — durable first public request
 
 Release .21 `b0a82f358a275416f95029f7a3ff3fd8d278e665` is pushed, EMS

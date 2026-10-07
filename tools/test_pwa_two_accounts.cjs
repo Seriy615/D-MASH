@@ -1,15 +1,26 @@
 'use strict';
 const assert = require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
 const {chromium} = require(process.env.DMASH_PLAYWRIGHT_MODULE || 'playwright');
 const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
 (async () => {
  const browser = await chromium.launch({executablePath:process.env.DMASH_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,
-  args:process.env.DMASH_TEST_CALL==='1'?['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--autoplay-policy=no-user-gesture-required']:[]});
+  args:(process.env.DMASH_TEST_CALL==='1'||process.env.DMASH_TEST_MEDIA==='1')?['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--autoplay-policy=no-user-gesture-required']:[]});
  const pages=[]; const failures=[];
  const eventually=async(page,fn,arg,timeout=120000)=>{const end=Date.now()+timeout;while(Date.now()<end){if(await page.evaluate(fn,arg)) return;await page.waitForTimeout(500);}throw Error('Async state did not converge');};
  try {
   for (const name of ['Alice','Bob']) {
-   const context=await browser.newContext(process.env.DMASH_TEST_CALL==='1'?{permissions:['microphone']}:{}); const page=await context.newPage();pages.push(page);
+   const context=await browser.newContext({...(process.env.DMASH_TEST_CALL==='1'||process.env.DMASH_TEST_MEDIA==='1'?{permissions:['microphone','camera']}:{}),...(process.env.DMASH_TEST_PWA_ROOT?{serviceWorkers:'block'}:{})});
+   if(process.env.DMASH_TEST_PWA_ROOT){
+    const root=path.resolve(process.env.DMASH_TEST_PWA_ROOT);
+    await context.route('**/not_messenger/**',async route=>{
+     const suffix=decodeURIComponent(new URL(route.request().url()).pathname.split('/not_messenger/')[1]||'index.html'),file=path.resolve(root,suffix);
+     if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return route.continue();
+     const type={'.js':'application/javascript','.html':'text/html','.json':'application/json','.css':'text/css','.wasm':'application/wasm'}[path.extname(file)]||'application/octet-stream';
+     return route.fulfill({path:file,contentType:type});
+    });
+   }
+   const page=await context.newPage();pages.push(page);
    page.on('pageerror',error=>failures.push(name+': '+error.message));
    page.on('console',message=>{if(/WARN|ERR|failed/i.test(message.text())) console.log(name,message.text());});
    await page.goto(base);
@@ -124,6 +135,37 @@ const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
   await pages[1].evaluate(()=>NodeManager.connect());
   await eventually(pages[1],async peer=>(await Storage.loadMessagesGamma(peer,50,0)).some(m=>m.inbound&&m.text==='Queued while Bob disconnected'),packages[0].user_id);
   console.log('PASS recipient reconnect and queued message delivery');
+  if(process.env.DMASH_TEST_MEDIA==='1'){
+   for(const [index,type] of [[0,'voice'],[1,'video_note']]){
+    const peer=packages[1-index].user_id;
+    await pages[index].evaluate(async({peer,type})=>{
+     Core.closeModal();await Core.selectPeer(peer);
+     if(!window.DmashAccountRecordedMedia)throw Error('Recorded-note module missing');
+     if(type==='voice')await Core.uiVoice();else await Core.startCircleRecording(null);
+     if(!Core.isRecording)throw Error('Actual recording UI did not start');
+    },{peer,type});
+    await pages[index].waitForTimeout(type==='voice'?1200:3500);
+    await pages[index].getByRole('button',{name:'SEND',exact:true}).click();
+    await eventually(pages[index],async({peer,type})=>(await Storage.loadMessagesGamma(peer,50,0)).some(m=>!m.inbound&&m.text?.type===type),{peer,type});
+    const source=await pages[index].evaluate(async({peer,type})=>{
+     const row=(await Storage.loadMessagesGamma(peer,50,0)).find(m=>!m.inbound&&m.text?.type===type);
+     return {wireId:row.wireId,length:row.text.data.length};
+    },{peer,type});
+    if(type==='video_note')assert(source.length>32768,'actual video must exceed a single Device frame');
+    await eventually(pages[1-index],async({peer,type})=>(await Storage.loadMessagesGamma(peer,50,0)).some(m=>m.inbound&&m.text?.type===type),{peer:packages[index].user_id,type},600000);
+    await pages[1-index].evaluate(async({peer,type})=>{
+     const rows=(await Storage.loadMessagesGamma(peer,50,0)).filter(m=>m.inbound&&m.text?.type===type);
+     if(rows.length!==1)throw Error('Recorded-note history duplicated');
+     const stub=document.createElement('div');stub.id='stub-media-acceptance';document.body.appendChild(stub);
+     await Core.decryptMedia('media-acceptance',rows[0].text);
+     const player=stub.querySelector(type==='voice'?'audio':'video');if(!player)throw Error('Receiving player absent');
+     await player.play();await new Promise(resolve=>setTimeout(resolve,300));
+     if(!(player.currentTime>0))throw Error('Received recording playback did not advance');player.pause();stub.remove();
+    },{peer:packages[index].user_id,type});
+    await eventually(pages[index],async peer=>!(await Storage.getAllBoxes('blind_outbox')).some(row=>row.record==='media_outbound'&&row.peerID===peer&&row.status!=='failed'),peer);
+    console.log('PASS actual recorded '+type+': '+source.length+' encoded bytes through EMS, single receiving history, playable Blob and durable final receipt');
+   }
+  }
   if(process.env.DMASH_TEST_CALL==='1'){
    for(const page of pages)await page.evaluate(()=>{
     Core.closeModal();const Native=window.RTCPeerConnection;

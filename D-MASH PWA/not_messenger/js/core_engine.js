@@ -650,10 +650,12 @@ const Core = {
         return alias;
     },
     async flushOutboundQueue() {
+        if(this.recordedMedia)await this.recordedMedia.flush();
         if (this._flushingOutbox || !window.NodeManager?.connectedConnections().length) return;
         this._flushingOutbox = true;
         try {
             for (const item of await Storage.getAllBoxes('blind_outbox')) {
+                if(item.record==='media_outbound')continue;
                 let content;
                 try {content = window.DmashChatPassword ? await window.DmashChatPassword.reveal(Storage, item.peerID, item.content) : item.content;}
                 catch (_) {continue;}
@@ -1204,7 +1206,10 @@ const Core = {
     Взаимодействие с API и доставка данных.
     */
     // Core.sendMessage        - Отправка данных на сервер (с поддержкой VOIP и Silent режимов)
-    async sendMessage(c = null, forceHandshake = false, targetPid = null, queuedAlias = null, suppressQueue = false, ratchetOverride = null) {
+    async sendMessage(c = null, forceHandshake = false, targetPid = null, queuedAlias = null, suppressQueue = false, ratchetOverride = null, wireOverride = null, sessionGuard = null) {
+        const current=()=>!sessionGuard||sessionGuard();
+        if(!current())return false;
+        if(wireOverride!==null&&(typeof wireOverride!=='string'||!wireOverride||wireOverride.length>128))throw Error('Invalid Account operation ID');
         if (c && ['voip_offer', 'voip_answer', 'voip_ice', 'voip_hangup'].includes(c.type)) return false;
         // SEND is the sole commit control for captured media.  Recording
         // controls cancel only; neither voice nor circle auto-sends on stop.
@@ -1214,12 +1219,17 @@ const Core = {
         const pid = targetPid || this.activePeerId;
         if (!pid) return;
         if (window.DmashSavedMessages?.isLocal(pid)) return window.DmashSavedMessages.send(this, Storage, c, forceHandshake);
+        if(!forceHandshake&&c&&['voice','video_note','video'].includes(c.type)&&window.DmashAccountRecordedMedia){
+            try{return await this.getRecordedMedia().queue(pid,c);}catch(error){this.customAlert('ЗАПИСЬ НЕ ОТПРАВЛЕНА',error.message);return false;}
+        }
 
         if (this.accountTransportMode() !== 'legacy') {
             let meshRoute = await this.getAccountTransportRoute(pid);
+            if(!current())return false;
             if (!meshRoute && !this.nodeTransportV4) {
                 await this.restoreAutomaticMeshRoutes(pid);
                 meshRoute = await this.getAccountTransportRoute(pid);
+                if(!current())return false;
             }
             let p = c;
             const inp = document.getElementById('msgInput');
@@ -1229,6 +1239,7 @@ const Core = {
                 // and may be repeated while the mesh converges.
                 try {
                     const probe = await this.prepareAccountTransportRoute(meshRoute);
+                    if(!current())return false;
                     this.shmon("INFO", `D-MASH: ${probe.state}`);
                 } catch (error) {
                     this.shmon("ERR", `D-MASH probe failed: ${error.message}`);
@@ -1244,11 +1255,12 @@ const Core = {
                 // Assign an opaque per-message ID before E2EE encryption. It
                 // is referenced only by encrypted receipts; Entry Nodes never
                 // see it as routing or identity metadata.
-                const wireId = (!isVoip && !isReceipt && !isRatchet && !forceHandshake) ? crypto.randomUUID() : null;
+                const wireId = (!isVoip && !isReceipt && !isRatchet && !forceHandshake) ? (wireOverride||crypto.randomUUID()) : null;
                 const outbound = wireId ? { type: 'dmash_message', id: wireId, body: p } : p;
                 const dataToEncrypt = (typeof outbound === 'object') ? JSON.stringify(outbound) : outbound;
                 try {
                     const blob = await this.encrypt(dataToEncrypt, pid, forceHandshake, ratchetOverride);
+                    if(!current())return false;
                     if (!blob) return;
                     const signature = window.nacl.sign.detached(this.hexToBytes(blob), this.keys.sign.secretKey);
                     const envelope = {
@@ -1264,6 +1276,7 @@ const Core = {
                     const result = await this.submitAccountTransportEnvelope(meshRoute, envelope,
                         p?.type === 'voip_call_request' ? 'CALL_REQUEST' :
                         p?.type === 'voip_file_request' ? 'FILE_SESSION_REQUEST' : 'MSG');
+                    if(!current())return false;
                     this.shmon("INFO", `D-MASH: ${result.state}`);
                     if (!isVoip && !isReceipt && !isRatchet && !isHandshakeConfirm && !forceHandshake && !queuedAlias && pid === this.activePeerId) {
                         // A DMP-C submission result is an authenticated node
@@ -1310,7 +1323,7 @@ const Core = {
         const isReceipt = typeof p === 'object' && p.type === 'dmash_receipt';
                 const isRatchet = typeof p === 'object' && ['ratchet_update', 'ratchet_ack'].includes(p.type);
         const isHandshakeConfirm = typeof p === 'object' && p.type === 'pqc_confirm';
-        const wireId = (!isVoip && !isReceipt && !isRatchet && !forceHandshake) ? crypto.randomUUID() : null;
+        const wireId = (!isVoip && !isReceipt && !isRatchet && !forceHandshake) ? (wireOverride||crypto.randomUUID()) : null;
         const outbound = wireId ? { type: 'dmash_message', id: wireId, body: p } : p;
         const isSilent = isVoip && (p.type === 'voip_ice' || p.type === 'voip_answer' || p.type === 'voip_hangup');
 
@@ -1319,6 +1332,7 @@ const Core = {
 
             // Передаем pid в encrypt, чтобы он взял правильные ключи из базы
             const blob = await this.encrypt(dataToEncrypt, pid, forceHandshake, ratchetOverride);
+            if(!current())return false;
             if (!blob) return;
 
             const sig = window.nacl.sign.detached(this.hexToBytes(blob), this.keys.sign.secretKey);
@@ -1361,9 +1375,14 @@ const Core = {
         this.nodeInboxV4 = new window.DmashAccountNodeInboxV4(host, this);
         return this.nodeInboxV4;
     },
+    getRecordedMedia() {
+        if(!window.DmashAccountRecordedMedia)return null;
+        this.recordedMedia ||= new window.DmashAccountRecordedMedia(this,Storage);
+        return this.recordedMedia;
+    },
     attachNodeTransportV4(host) {
         this.nodeTransportV4?.close();
-        this.nodeTransportV4 = new window.DmashAccountNodeTransportV4(host, this);
+        this.nodeTransportV4 = new window.DmashAccountNodeTransportV4(host, this, Storage);
         this.attachNodeInboxV4(host);
         return this.nodeTransportV4;
     },
@@ -1430,6 +1449,7 @@ const Core = {
         let message = plaintext;
         try { message = JSON.parse(plaintext); } catch (_) { /* Historical text payload. */ }
         if (message && typeof message === 'object' && message.type === 'dmash_receipt') {
+            if(await this.getRecordedMedia()?.receipt(peerId,message.id,message.state))return current();
             await Storage.updateMessageTransportState(peerId, message.id, message.state);
             return current();
         }
@@ -1442,10 +1462,16 @@ const Core = {
             catch (error) { this.shmon('WARN', `Ratchet ACK rejected: ${error.message}`); return false; }
         }
         if (message && typeof message === 'object' && message.type?.startsWith('voip_')) {
+            const handled=await this.getRecordedMedia()?.profile(message,peerId,current);
+            if(handled!==null&&handled!==undefined)return current()&&handled===true;
             await this.handleVoipSignal(message, peerId);
             return current();
         }
         const wrapped = message && typeof message === 'object' && message.type === 'dmash_message' && typeof message.id === 'string';
+        if(wrapped&&message.body?.type==='dmash_media_fragment'){
+            const media=this.getRecordedMedia();if(!media)return false;
+            return media.fragment(message.body,message.id,peerId,current);
+        }
         if (wrapped && message.body?.type === 'pqc_confirm' && /^[0-9a-f]{64}$/i.test(message.body.attempt_id || '')) return current();
         if (wrapped && await Storage.hasMessageWireId(peerId, message.id)) return current();
         if (!current()) return false;
@@ -1462,6 +1488,7 @@ const Core = {
     },
     // Core.syncNetwork        - Опрос сервера (PULL), получение и сортировка новых маляв
     async syncNetwork() {
+        if(this.recordedMedia)void this.recordedMedia.flush().catch(error=>this.shmon('WARN','Recorded-note retry deferred: '+error.message));
         if (this.nodeInboxV4 && !this.nodeInboxV4.closed) {
             try { await this.nodeInboxV4.drain(); }
             catch (error) { this.shmon('WARN', 'Local Node Inbox sync deferred: ' + error.message); }
@@ -1949,6 +1976,7 @@ const Core = {
             if (pairing?.contribution) {
                 existing.pairingContribution = pairing.contribution;
                 await Storage.putBox('blind_peers', { alias: aliasL1, data: existing });
+                this.recordedMedia?.allowPeer(cleanId);
                 await this.renderPeers();
                 void this.ensureAutomaticMeshRoute(cleanId, pairing.contribution).catch(error => this.shmon('WARN', `Route deferred: ${error.message}`));
                 return this.customAlert("PAIRING", "Pairing locator обновлён автоматически.");
@@ -1975,6 +2003,7 @@ const Core = {
             });
 
             this.shmon("INFO", `Кент ${alias} добавлен в базу.`);
+            this.recordedMedia?.allowPeer(cleanId);
             await this.renderPeers();
             if (pairing?.contribution) void this.ensureAutomaticMeshRoute(cleanId, pairing.contribution).catch(error => this.shmon('WARN', `Route deferred: ${error.message}`));
           } catch (error) {
@@ -2011,6 +2040,7 @@ const Core = {
     // Core.deleteChatFlow     - Полное удаление переписки и ключей кента
     deleteChatFlow: function(id, name) {
         Core.customConfirm("СНОС ЧАТА", `Ликвидировать всю переписку с ${name}?`, async () => {
+            await Core.recordedMedia?.forgetPeer(id);
             let nodeCleanup = null;
             try {
                 nodeCleanup = await window.NodeManager?.removeMeshRoute?.(id);
@@ -2139,35 +2169,59 @@ const Core = {
         return types.find(type => MediaRecorder.isTypeSupported(type)) || '';
     },
     // Core.uiVoice            - Record locally; SEND commits it.
+    recordingContext: function() {
+        const keys=this.keys,salt=this.blindSalt,slot=this.activeIdentity,peer=this.activePeerId;
+        const current=()=>!!keys&&!!peer&&!this._accountTransitioning&&this.keys===keys&&this.blindSalt===salt&&this.activeIdentity===slot;
+        return {peer,current};
+    },
     uiVoice: async function() {
-        if (!Core.isRecording) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const mimeType = Core.supportedRecorderMime(['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus']);
-                Core.mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined); Core.audioChunks = [];
-                Core.mediaRecorder.ondataavailable = e => Core.audioChunks.push(e.data);
-                Core.mediaRecorder.onstop = () => {
-                    const commit = Core.commitRecordingOnStop;
-                    Core.isRecording = false; Core.commitRecordingOnStop = false;
-                    stream.getTracks().forEach(t => t.stop()); Core.resetRecordingToolbar();
-                    if (!commit || !Core.audioChunks.length) return;
-                    const r = new FileReader(); r.onload = e => Core.sendMessage({ type: 'voice', name: 'voice_msg', data: e.target.result, mime: Core.mediaRecorder?.mimeType || mimeType });
-                    r.readAsDataURL(new Blob(Core.audioChunks, { type: Core.mediaRecorder?.mimeType || mimeType || 'application/octet-stream' }));
-                };
-                Core.commitRecordingOnStop = false; Core.isRecordingCircle = false;
-                Core.mediaRecorder.start(); Core.isRecording = true; Core.setRecordingToolbar('voice'); Core.startRecordingTimer();
-            } catch (e) { Core.customAlert("МИКРОФОН", "ОТКАЗАНО"); }
-        }
+        return this.beginRecordingCapture(false, null);
+    },
+    beginRecordingCapture: async function(video, deviceId, context=this.recordingContext()) {
+        if(this.isRecording||this._recordingRequest||!context.current())return;
+        const request={};this._recordingRequest=request;
+        let stream;
+        try {
+            stream=await navigator.mediaDevices.getUserMedia({audio:true,...(video?{video:deviceId?{deviceId:{exact:deviceId},width:400,height:400}:{facingMode:'user',width:400,height:400}}:{})});
+            if(this._recordingRequest!==request||!context.current()||this.activePeerId!==context.peer){stream.getTracks().forEach(track=>track.stop());return;}
+            const mimeType=this.supportedRecorderMime(video?['video/mp4','video/webm;codecs=vp8,opus','video/webm']:['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus']);
+            const recorder=new MediaRecorder(stream,mimeType?{mimeType}:undefined),chunks=[];
+            this.localStream=stream;this.mediaRecorder=recorder;this.audioChunks=chunks;
+            this.commitRecordingOnStop=false;this.isRecordingCircle=video;
+            let preview;
+            if(video){
+                preview=document.createElement('video');preview.id='circle-preview';
+                if(stream.getVideoTracks()[0]?.getSettings().facingMode==='user')preview.className='mirrored';
+                preview.style='position:fixed; bottom:120px; right:20px; width:160px; height:160px; border-radius:50%; object-fit:cover; border:3px solid var(--main); z-index:10000; background:#000;';
+                preview.autoplay=true;preview.muted=true;preview.srcObject=stream;document.body.appendChild(preview);
+            }
+            recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+            recorder.onstop=()=>{
+                const owned=this.mediaRecorder===recorder,commit=owned&&this.commitRecordingOnStop&&context.current();
+                stream.getTracks().forEach(track=>track.stop());preview?.remove();
+                if(owned){this.mediaRecorder=null;if(this.localStream===stream)this.localStream=null;this.isRecording=false;this.isRecordingCircle=false;this.commitRecordingOnStop=false;this.resetRecordingToolbar();}
+                if(!commit||!chunks.length)return;
+                const reader=new FileReader();
+                reader.onload=e=>{if(context.current())void this.sendMessage({type:video?'video_note':'voice',name:video?'circle':'voice_msg',data:e.target.result,mime:recorder.mimeType||mimeType},false,context.peer,null,false,null,null,context.current);};
+                reader.readAsDataURL(new Blob(chunks,{type:recorder.mimeType||mimeType||'application/octet-stream'}));
+            };
+            recorder.start();this.isRecording=true;this.setRecordingToolbar(video?'circle':'voice');this.startRecordingTimer();
+        } catch(error){
+            stream?.getTracks().forEach(track=>track.stop());
+            if(this._recordingRequest===request&&context.current()){this.resetRecordingToolbar();this.customAlert(video?'КАМЕРА':'МИКРОФОН',video?'Не удалось запустить камеру.':'ОТКАЗАНО');}
+        } finally {if(this._recordingRequest===request)this._recordingRequest=null;}
     },
     // Core.uiCircle           - Логика записи видео-кружка (с выбором камеры)
     uiCircle: async function() {
         const cBtn = document.getElementById('circle-btn');
 
-        if (Core.isRecording) return;
+        if (Core.isRecording || Core._recordingRequest) return;
+        const context=Core.recordingContext(); Core._circleSelection=context;
 
         try {
             // 1. Получаем список всех камер
             const devices = await navigator.mediaDevices.enumerateDevices();
+            if(!context.current()||Core.activePeerId!==context.peer)return;
             const cameras = devices.filter(d => d.kind === 'videoinput');
 
             if (cameras.length > 1) {
@@ -2191,55 +2245,10 @@ const Core = {
     },
     // Core.startCircleRecording - Инициализация захвата видео 400x400
     startCircleRecording: async function(deviceId) {
-        Core.closeModal(); // Закрываем выбор камер
-        const cBtn = document.getElementById('circle-btn');
-
-        try {
-            Core.isRecordingCircle = true;
-            Core.commitRecordingOnStop = false;
-
-            const constraints = {
-                audio: true,
-                video: deviceId ? { deviceId: { exact: deviceId }, width: 400, height: 400 } : { facingMode: 'user', width: 400, height: 400 }
-            };
-
-            Core.localStream = await navigator.mediaDevices.getUserMedia(constraints);
-            const mimeType = Core.supportedRecorderMime(['video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm']);
-            Core.mediaRecorder = new MediaRecorder(Core.localStream, mimeType ? { mimeType } : undefined);
-            Core.audioChunks = [];
-
-            const preview = document.createElement('video');
-            preview.id = "circle-preview";
-            // Зеркалим только если это фронталка (обычно первая в списке или по метке)
-            const tracks = Core.localStream.getVideoTracks();
-            if (tracks[0] && tracks[0].getSettings().facingMode === 'user') preview.className = "mirrored";
-
-            preview.style = "position:fixed; bottom:120px; right:20px; width:160px; height:160px; border-radius:50%; object-fit:cover; border:3px solid var(--main); z-index:10000; background:#000;";
-            preview.autoplay = true; preview.muted = true; preview.srcObject = Core.localStream;
-            document.body.appendChild(preview);
-
-            Core.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) Core.audioChunks.push(e.data); };
-
-            Core.mediaRecorder.onstop = () => {
-                if (Core.commitRecordingOnStop && Core.audioChunks.length > 0) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => Core.sendMessage({ type: 'video_note', name: 'circle', data: e.target.result, mime: Core.mediaRecorder?.mimeType || mimeType });
-                    reader.readAsDataURL(new Blob(Core.audioChunks, { type: Core.mediaRecorder?.mimeType || mimeType || 'application/octet-stream' }));
-                }
-                Core.killAllMedia();
-                document.getElementById('circle-preview')?.remove();
-                Core.isRecording = false; Core.isRecordingCircle = false; Core.commitRecordingOnStop = false; Core.resetRecordingToolbar();
-            };
-
-            Core.mediaRecorder.start();
-            Core.isRecording = true;
-            Core.setRecordingToolbar('circle');
-            Core.startRecordingTimer();
-        } catch (e) {
-            console.error(e);
-            Core.killAllMedia(); Core.resetCircleUI();
-            Core.customAlert("ОШИБКА", "Не удалось запустить камеру.");
-        }
+        this.closeModal();
+        const context=this._circleSelection||this.recordingContext();this._circleSelection=null;
+        if(!context.current()||this.activePeerId!==context.peer)return;
+        return this.beginRecordingCapture(true,deviceId,context);
     },
     // Core.stopCircleUI       - Остановка превью и записи кружка
     stopCircleUI: function() {
@@ -2261,6 +2270,8 @@ const Core = {
     },
     // Core.killAllMedia       - Жесткая остановка всех камер и микрофонов (освобождение ресурсов)
     killAllMedia: function() {
+        this._recordingRequest=null;this._circleSelection=null;
+        this.commitRecordingOnStop=false;
         console.log("[*] Система: Полная зачистка ресурсов...");
 
         // 1. Останавливаем всё, что живет в Core.localStream
@@ -2977,6 +2988,7 @@ const Core = {
                 await Storage.putBox('blind_peers', {alias, data: {...existing, id: peerId, curvePub, kyberPub,
                     name: existing?.name || body.display_name, pairingContribution: body.contribution,
                     last_ts: Date.now(), unread: existing?.unread || false}});
+                this.recordedMedia?.allowPeer(peerId);
                 await this.renderPeers();
                 // Already protected by the Account contact task. A boot may
                 // be waiting for it, so finish route installation before release.
@@ -3418,6 +3430,7 @@ const Core = {
         const states = {
             QUEUED: " <span class=\"m-state\" title=\"Улетит при первой возможности\">⌛</span>",
             SENT: " <span class=\"m-state\" title=\"Sent to transport\">✓</span>",
+            FAILED: " <span class=\"m-state\" title=\"Запись не отправлена: формат недоступен или срок передачи истёк\">НЕ ОТПРАВЛЕНО</span>",
             DELIVERED: " <span class=\"m-state\" title=\"Delivered to device\">✓✓</span>",
             READ: " <span class=\"m-state m-state--read\" title=\"Read by account\">✓✓</span>"
         };

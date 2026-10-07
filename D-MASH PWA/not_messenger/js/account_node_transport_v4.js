@@ -1,9 +1,9 @@
 'use strict';
 (function(global){
  class AccountNodeTransportV4{
-  constructor(host,core){
+  constructor(host,core,storage=global.DMashStorage||global.Storage){
    if(!host?.discover||!host?.submit||!core)throw Error('Local Node transport unavailable');
-   this.host=host;this.core=core;this.closed=false;this.routes=new WeakMap();
+   this.host=host;this.core=core;this.storage=storage;this.closed=false;this.routes=new WeakMap();
   }
   capture(){
    const core=this.core,keys=core.keys,salt=core.blindSalt,slot=core.activeIdentity;
@@ -18,12 +18,12 @@
    if(!/^[0-9a-f]{64}$/.test(peerId||'')||!/^[0-9a-f]{64}$/.test(localRouteId||''))throw Error('Invalid Account route mapping');
    global.DmashRouteDiscoveryV4.verifyCertificate(certificate);
    certificate={...certificate};
-   const inbound=await global.Storage.getAlias('node-route-v4:'+localRouteId,'L2');this.check(session);
-   const previous=await global.Storage.getBox('pairing_material',inbound);this.check(session);
+   const inbound=await this.storage.getAlias('node-route-v4:'+localRouteId,'L2');this.check(session);
+   const previous=await this.storage.getBox('pairing_material',inbound);this.check(session);
    if(previous&&previous.peerId!==peerId)throw Error('Local route already belongs to another peer');
-   const outbound=await global.Storage.getAlias('node-peer-v4:'+peerId,'L2');this.check(session);
-   await global.Storage.putBox('pairing_material',{alias:inbound,data:{peerId}});this.check(session);
-   await global.Storage.putBox('pairing_material',{alias:outbound,data:{certificate,localRouteId}});this.check(session);
+   const outbound=await this.storage.getAlias('node-peer-v4:'+peerId,'L2');this.check(session);
+   await this.storage.putBox('pairing_material',{alias:inbound,data:{peerId}});this.check(session);
+   await this.storage.putBox('pairing_material',{alias:outbound,data:{certificate,localRouteId}});this.check(session);
    this.routes.get(session.keys)?.delete(peerId);
    return this.getRoute(peerId);
   }
@@ -34,8 +34,8 @@
    if(!routes){routes=new Map();this.routes.set(session.keys,routes);}
    const cached=routes.get(peerId);
    if(cached&&cached.session.current())return cached;
-   const alias=await global.Storage.getAlias('node-peer-v4:'+peerId,'L2');this.check(session);
-   const saved=await global.Storage.getBox('pairing_material',alias);this.check(session);
+   const alias=await this.storage.getAlias('node-peer-v4:'+peerId,'L2');this.check(session);
+   const saved=await this.storage.getBox('pairing_material',alias);this.check(session);
    if(!saved)return null;
    global.DmashRouteDiscoveryV4.verifyCertificate(saved.certificate);
    if(!/^[0-9a-f]{64}$/.test(saved.localRouteId||''))throw Error('Invalid local reply route');
