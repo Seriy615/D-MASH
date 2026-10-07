@@ -1740,7 +1740,8 @@ const Core = {
         for(const pending of progress){
             const item=document.createElement('button');item.className='contact-progress-item sys-modal-btn';
             const name=document.createElement('b');name.textContent=pending.name||'Новый контакт';
-            const status=document.createElement('small');status.textContent=pending.role==='caller'&&pending.status==='requested'?'ОЖИДАЕМ ПРИНЯТИЯ':'ОЖИДАЕМ ПОДТВЕРЖДЕНИЯ';
+            const status=document.createElement('small');status.textContent=pending.status==='request_expired'?'ЗАПРОС ИСТЁК':
+                pending.status==='request_pending'?'ОТПРАВКА ПРИ ВОССТАНОВЛЕНИИ СВЯЗИ':pending.role==='caller'&&pending.status==='requested'?'ОЖИДАЕМ ПРИНЯТИЯ':'ОЖИДАЕМ ПОДТВЕРЖДЕНИЯ';
             item.append(name,document.createElement('br'),status);
             item.onclick=()=>this.openContactProgress(pending.id);list.append(item);
         }
@@ -1748,6 +1749,7 @@ const Core = {
     async openContactProgress(id) {
         const pending=(await this.getContactFlowV3().listForAccount()).find(item=>item.id===id);
         if(!pending){await this.renderPeers();return;}
+        if(pending.status==='request_expired'){this.customAlert('ЗАПРОС ИСТЁК','Автоматические повторы завершены. Откройте публичную ссылку собеседника, чтобы создать новый запрос.');return;}
         this.openModal('КОНТАКТ: '+this.escapeHtml(pending.name),'<div>Запрос ещё не завершён. Чат появится после подтверждения Account собеседника. Получателю нужно открыть приложение.</div><button class="sys-modal-btn" id="contact-progress-retry">ПРОВЕРИТЬ СНОВА</button>');
         const button=document.getElementById('contact-progress-retry');
         if(button)button.onclick=async()=>{button.disabled=true;try{await this.syncNetwork();await this.renderPeers();this.closeModal();}finally{button.disabled=false;}};
@@ -2937,6 +2939,20 @@ const Core = {
         this.contactFlowV3 = new window.ContactFlowV3({store: window.NodeManager.deviceInboxV3(),
             activeAccount: () => this._accountTransitioning ? null : this.activeIdentity,
             onChange: () => this.renderPeers(),
+            sendInitial: async (certificate,envelope,reply,slot) => {
+                const keys=this.keys;
+                if(this._accountTransitioning||this.activeIdentity!==slot||!keys)throw Error('Account changed');
+                const local=window.NodeManager.activePublicDeviceRoutes().find(route=>route.routeId===reply.routeId);
+                if(!local)throw Error('Contact reply route is disabled or retired');
+                const nodes=window.NodeManager.connectedConnections().filter(node=>node.authority&&node.capabilities.has('REGISTER_ROUTE'));
+                const results=await Promise.allSettled(nodes.map(node=>window.NodeManager.activatePublicRouteOnConnection(local,node)));
+                if(this._accountTransitioning||this.activeIdentity!==slot||this.keys!==keys)throw Error('Account changed');
+                if(!results.some(result=>result.status==='fulfilled'&&['ACTIVATED','READVERTISED'].includes(result.value?.state)))throw Error('Contact reply registration unavailable');
+                const ready=await window.NodeManager.ensurePublicRouteV3(certificate.routeId,reply.routeId);
+                if(this._accountTransitioning||this.activeIdentity!==slot||this.keys!==keys)throw Error('Account changed');
+                if(!ready?.connection.client)throw Error('Contact request route unavailable');
+                return window.NodeManager.submitDeviceEnvelopeV3(certificate.routeId,'CONN_REQUEST',envelope,certificate,ready.connection);
+            },
             makeBootstrap: options => this.withContactAccountV3(options.slot, async () => {
                 const contribution = await this.ensurePairingContribution();
                 if (this.activeIdentity !== options.slot || !this.keys?.sign) throw Error('Account locked');

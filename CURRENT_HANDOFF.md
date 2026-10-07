@@ -1,3 +1,48 @@
+# Execution checkpoint — durable first public request
+
+Release .21 `b0a82f358a275416f95029f7a3ff3fd8d278e665` is pushed, EMS
+synchronized via get_commit.sh and deployed: exact 201-file match, active/running,
+NRestarts=0. Published registry runtime PASS on real Chrome IDB with delayed
+WebCrypto, migration failure preservation/retry and account CRUD
+(`/tmp/dmash-v4-registry-contact-public-registry.log`). Public two-Account browser
+acceptance .21 PASS: visible outgoing/accepted waiting cards with held remote
+confirmation, real public Request/Accept/Confirm, both sidebar peers visible,
+actual click to open both chats, initial exchange, bidirectional messages,
+ratchet 1/2, delayed old epoch, reconnect and control retirement
+(`/tmp/dmash-v4-registry-contact-public-ui.log`). Fresh Accounts are evidence;
+full existing-state recovery remains separate.
+
+Prepared .22 `transport-v3-public-request-retry-20261008.22`: persist the exact
+initial encrypted public request before route lookup/submission, with immutable
+ID/request/certificate/Account owner. Reserve attempts/backoff before network
+work; 5 s -> 5 min delays, 256 attempt cap, 24 h TTL. Owning Account local sync
+resumes retries; accepted bootstrap stops initial retries. Late Account changes
+cancel submission after route lookup. Retry advertises only the request's local
+reply route, not all public routes. Failed first send displays a durable queued
+request. Accept/Confirm send=false is a failed operation, not establishment.
+Old states without an initial envelope stay readable; no invented ciphertext
+migration is claimed. See CONTACT_REQUEST_RETRY.md.
+
+Expanded real encrypted Device Inbox/NaCl contact test PASS: failed initial
+send, persisted-envelope restart retry, backoff, Account isolation, accepted
+bootstrap stopping retry, expiry/budget bounds, send=false Accept/Confirm.
+Full regression PASS: 263 backend + 11 Origin + 64 JS suites
+(`/tmp/dmash-v4-public-request-retry-all-tests.log`). Next: commit/push/deploy,
+exact revision verification and deployed public UI acceptance with the first
+initial request deliberately dropped before recipient delivery.
+
+Large recorded-note failure is now reproduced with actual Account ratchet
+cipher/signature and Device envelope validation in
+`tools/diagnose_recorded_media_size.cjs`: 33700 media bytes -> 90627 Account
+payload bytes -> Device envelope size limit. Diagnostic intentionally exits 1;
+it is not a passing release check. Bounded/chunked note delivery remains work;
+raising a frame limit or perpetually queuing the oversized packet is not the
+requested solution. Next substantive work remains large-note transfer and real
+v4 Account/contact integration, followed by full N0–N8/A–M/E6 evidence matrix.
+Goal remains active; no full completion claim.
+
+---
+
 # Execution checkpoint — IndexedDB login fix and public contact visibility
 
 Release .20 `d51f146b2a9e93597e9acbeb1c5495b3e460a425` is pushed, deployed

@@ -510,10 +510,17 @@
                 protocol_capabilities: ["CONTACT_BOOTSTRAP_V3", "DMP_C_V3"]
             });
 
+            let deferred=false;
             const transport = new global.ContactTransport({
                 validator: global.ContactPayloads,
                 encrypt: ({ plaintext, recipientCertificate: certificate }) => sealForCertificate(certificate, plaintext),
                 submit: async ({ routeLocator, envelope }) => {
+                    if(global.ContactFlowV3&&global.NodeManager.transportMode!=='legacy'){
+                        const flow=core.getContactFlowV3();
+                        await flow.recordOutgoing(request,recipientCertificate,requestAccountSlot,envelope);
+                        deferred=!await flow.dispatchInitial(request.request_id,requestAccountSlot);
+                        return {state:deferred?'REQUEST_DEFERRED':'NODE_ACCEPTED'};
+                    }
                     const ready = global.NodeManager.ensurePublicRouteV3
                         ? await global.NodeManager.ensurePublicRouteV3(routeLocator, reply.routeId)
                         : await global.NodeManager.routeStatus(routeLocator);
@@ -538,7 +545,7 @@
                 recipientCertificate,
                 payload: request
             });
-            this.customAlert("ОТПРАВЛЕНО", "Запрос в контакты отправлен через Public Route.");
+            this.customAlert(deferred?'ЗАПРОС СОХРАНЁН':'ОТПРАВЛЕНО',deferred?'Запрос появится у собеседника после восстановления маршрута. Повторы выполняются автоматически.':'Запрос в контакты отправлен через Public Route.');
         };
 
         // Quick Names are a chooser, not a prefilled text field.

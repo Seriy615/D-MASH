@@ -4,8 +4,9 @@
     // persists transitions and sends opaque Device payloads. A failed send
     // leaves the exact signed message available for an idempotent retry.
     class ContactFlowV3 {
-        constructor({store, activeAccount, makeBootstrap, importPeer, send, onChange = async () => {}}) {
-            Object.assign(this, {store, activeAccount, makeBootstrap, importPeer, send, onChange});
+        constructor({store, activeAccount, makeBootstrap, importPeer, send, sendInitial = null,
+                     clock = () => Date.now(), onChange = async () => {}}) {
+            Object.assign(this, {store, activeAccount, makeBootstrap, importPeer, send, sendInitial, clock, onChange});
             this.serial = Promise.resolve();
         }
         exclusive(fn) {const result = this.serial.then(fn); this.serial = result.catch(() => {}); return result;}
@@ -23,21 +24,52 @@
             }
             return this.activeAccount()===slot?results:[];
         }
-        recordOutgoing(request, certificate, slot = this.activeAccount()) {
+        recordOutgoing(request, certificate, slot = this.activeAccount(), envelope = null) {
             return this.exclusive(async () => {
                 request = global.ContactPayloads.validateRequest(request);
                 if (!request.protocol_capabilities.includes('CONTACT_BOOTSTRAP_V3')) throw Error('Contact bootstrap v3 is required');
                 if (!global.DeviceRoutes.verifyCertificate(certificate) || !global.DeviceRoutes.verifyCertificate(request.reply_route_certificate)) throw Error('Invalid contact route certificate');
                 if (!slot || this.activeAccount() !== slot) throw Error('Откройте выбранный Account для нового контакта');
+                if(envelope){
+                    envelope=global.ContactTransport.validateEnvelope(envelope);
+                    if(envelope.type!=='CONTACT_REQUEST_V1'||envelope.request_id!==request.request_id)throw Error('Initial contact envelope context changed');
+                }
                 const existing = await this.read(request.request_id);
                 if (existing) {
                     if (existing.slot !== slot || existing.peerCertificate.routeId !== certificate.routeId ||
                         global.DmashSecureSession.canonical(existing.request) !== global.DmashSecureSession.canonical(request)) throw Error('Contact request context changed');
+                    if(envelope&&existing.initialEnvelope&&global.DmashSecureSession.canonical(existing.initialEnvelope)!==global.DmashSecureSession.canonical(envelope))throw Error('Initial contact ciphertext changed');
+                    if(envelope&&!existing.initialEnvelope){existing.initialEnvelope=envelope;existing.createdAt=this.clock();existing.expiresAt=this.clock()+86400000;existing.attempts=0;existing.nextRetryAt=0;await this.write(request.request_id,existing);}
                     return;
                 }
                 await this.write(request.request_id, {role: 'caller', slot, request,
-                    localCertificate: request.reply_route_certificate, peerCertificate: certificate, status: 'requested'});
+                    localCertificate: request.reply_route_certificate, peerCertificate: certificate,
+                    status: envelope?'request_pending':'requested',...(envelope?{initialEnvelope:envelope,
+                        createdAt:this.clock(),expiresAt:this.clock()+86400000,attempts:0,nextRetryAt:0}:{})});
                 await this.onChange();
+            });
+        }
+        async _dispatchInitial(state,slot){
+            if(state.role!=='caller'||state.accept||!state.initialEnvelope||!this.sendInitial||this.activeAccount()!==slot)return false;
+            const now=this.clock(),id=state.request.request_id;
+            if(now>=state.expiresAt||state.attempts>=256){state.status='request_expired';await this.write(id,state);return false;}
+            if(state.nextRetryAt>now)return false;
+            state.attempts=(state.attempts||0)+1;
+            state.nextRetryAt=now+Math.min(300000,5000*2**Math.min(state.attempts-1,6));
+            state.status='request_pending';await this.write(id,state);
+            if(this.activeAccount()!==slot)return false;
+            try{
+                const sent=await this.sendInitial(state.peerCertificate,state.initialEnvelope,state.localCertificate,slot);
+                if(this.activeAccount()!==slot)return false;
+                if(sent===false)throw Error('Initial request was not queued');
+                state.status='requested';state.lastSentAt=this.clock();await this.write(id,state);return true;
+            }catch(_){return false;}
+        }
+        dispatchInitial(id,slot=this.activeAccount()){
+            return this.exclusive(async()=>{
+                const state=await this.read(id);
+                if(!state||state.slot!==slot||this.activeAccount()!==slot)throw Error('Contact request owner changed');
+                const sent=await this._dispatchInitial(state,slot);await this.onChange();return sent;
             });
         }
         accept(request, localCertificate, displayName, slot = this.activeAccount()) {
@@ -58,7 +90,7 @@
                 if (state.localCertificate.routeId !== localCertificate.routeId ||
                     global.DmashSecureSession.canonical(state.request) !== global.DmashSecureSession.canonical(request)) throw Error('Contact request context changed');
                 if (state.status === 'established') return state.status;
-                await this.send(state.peerCertificate, state.accept);
+                if(await this.send(state.peerCertificate, state.accept)===false)throw Error('Contact acceptance was not queued');
                 state.status = 'accept_sent'; state.lastSentAt = Date.now(); await this.write(request.request_id, state);
                 await this.onChange();
                 return state.status;
@@ -92,9 +124,10 @@
                     if(this.activeAccount()!==slot)break;
                     if (state.record !== 'contact_flow' || state.slot !== slot || state.status === 'established') continue;
                     const id = state.request.request_id;
+                    if(state.role==='caller'&&!state.accept&&state.initialEnvelope){await this._dispatchInitial(state,slot);continue;}
                     if (state.role === 'acceptor' && state.accept && !state.confirm) {
                         if ((!state.lastSentAt || Date.now() - state.lastSentAt >= 30000) && state.accept.body.expires_at > Math.floor(Date.now() / 1000)) {
-                            await this.send(state.peerCertificate, state.accept);
+                            if(await this.send(state.peerCertificate, state.accept)===false)throw Error('Contact acceptance was not queued');
                             state.lastSentAt = Date.now(); state.status = 'accept_sent'; await this.write(id, state);
                         }
                         continue;
@@ -108,7 +141,7 @@
                             await this.write(id, state);
                         }
                         await this.importPeer(state.accept.body, slot);
-                        await this.send(state.peerCertificate, state.confirm);
+                        if(await this.send(state.peerCertificate, state.confirm)===false)throw Error('Contact confirmation was not queued');
                     } else if (state.role === 'acceptor' && state.confirm) {
                         await this.importPeer(state.confirm.body, slot);
                     } else continue;

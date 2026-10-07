@@ -39,7 +39,16 @@ const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
     Core.closeModal();const route=await DeviceRoutes.issue({type:'public-contact',allowedAccounts:[]});
     await NodeManager.probeActivePublicDeviceRoutes();return {v:1,r:route.routeId,c:route.certificate};
    });
+   if(process.env.DMASH_DROP_INITIAL_CONTACT==='1'){
+    await pages[0].evaluate(()=>{const submit=NodeManager.submitDeviceEnvelopeV3.bind(NodeManager);window.initialContactDropped=0;
+     NodeManager.submitDeviceEnvelopeV3=async(...args)=>{if(args[1]==='CONN_REQUEST'&&!window.initialContactDropped++){return {state:'NODE_ACCEPTED'};}return submit(...args);};});
+   }
    await pages[0].evaluate(async descriptor=>{Core.closeModal();await Core.sendPublicContactRequest(descriptor,'Alice','Two-browser acceptance');},descriptor);
+   if(process.env.DMASH_DROP_INITIAL_CONTACT==='1'){
+    await eventually(pages[1],async()=>(await Core.getPendingContactRequestStore().list()).some(r=>r.status==='pending'));
+    assert(await pages[0].evaluate(()=>window.initialContactDropped>=2));
+    console.log('PASS dropped initial public request retransmitted autonomously from durable state');
+   }
    if(process.env.DMASH_TEST_CONTACT_UI==='1'){
     await pages[0].evaluate(()=>{Core.closeModal();const flow=Core.getContactFlowV3();window.resumeContactAcceptance=flow.resume.bind(flow);flow.resume=async()=>({paused:true});});
     await pages[0].locator('#contact-list .contact-progress-item').waitFor({state:'visible',timeout:10000});
