@@ -1,3 +1,29 @@
+# Execution checkpoint — concurrent initial attempts
+
+Release .18 `51774fa4a2a4e760917b9275a3a35b8a149f7422` is pushed,
+synchronized via EMS get_commit.sh and deployed: exact 199-file match,
+service active/running, NRestarts=0. Live two-Account acceptance PASS,
+including page/active SW .18, late pairing, initial exchange, no confirmation
+in history, bidirectional messages, ratchet epochs 1/2, delayed old-epoch packet,
+recipient reconnect and control Inbox retirement.
+Log `/tmp/dmash-v4-handshake-controls-live.log`; route unavailable retries
+occurred before successful initial exchange.
+
+Prepared .19 `transport-v3-handshake-single-flight-20261008.19`: concurrent
+initial encrypt operations for one Account key generation/peer share one task,
+then later retries reuse the persisted packet. Previous reproduction returned
+two different packets and saved only the second. H1 now covers this race and
+Account lock during delayed alias lookup. Session checks guard initial storage
+lookups/persistence; full vault write-transaction isolation remains outstanding.
+All 63 JS suites PASS (`/tmp/dmash-v4-handshake-single-flight-js.log`);
+expanded real NaCl/Kyber diagnostic H1-H3 PASS after the lock regression.
+Next: commit/push/deploy .19, verify exact revision and live acceptance.
+Then continue actual Account outbound/contact provisioning on v4 and the
+remaining N4 state machine/recovery/versioning/crash matrix. Full N0–N8/A–M/E6
+goal remains active; N3/N4 remain partial.
+
+---
+
 # Execution checkpoint — initial handshake retention deployed; control history fix
 
 Release .17 `11ce1b4ac53ce15bd0d7605de4ef763c43cf3a1e` is pushed,

@@ -803,9 +803,28 @@ const Core = {
      * ШИФРОВАНИЕ (V19.0 - АТОМНЫЙ БРОНЕКОНВЕРТ)
      */
     async encrypt(data, pid, forceHandshake = false, ratchetOverride = null) {
+        if (forceHandshake !== true) return this._encryptAccountPacket(data, pid, forceHandshake, ratchetOverride);
+        // Concurrent clicks join the same creation operation before any
+        // storage await. A later retry reads the durable packet below.
+        const keys = this.keys, salt = this.blindSalt, slot = this.activeIdentity;
+        if (!keys) throw Error('Account locked');
+        this._initialEncryptTasks ||= new WeakMap();
+        let tasks = this._initialEncryptTasks.get(keys);
+        if (!tasks) { tasks = new Map(); this._initialEncryptTasks.set(keys, tasks); }
+        if (tasks.has(pid)) return tasks.get(pid);
+        const current = () => this.keys === keys && this.blindSalt === salt && this.activeIdentity === slot && !this._accountTransitioning;
+        const task = this._encryptAccountPacket(data, pid, forceHandshake, ratchetOverride, current);
+        tasks.set(pid, task);
+        try { return await task; }
+        finally { if (tasks.get(pid) === task) tasks.delete(pid); }
+    },
+    async _encryptAccountPacket(data, pid, forceHandshake = false, ratchetOverride = null, current = () => true) {
         const aliasL1 = await Storage.getAlias(pid, "L1");
+        if (!current()) throw Error('Account session changed');
         let secrets = await Storage.getBox('blind_secrets', aliasL1);
+        if (!current()) throw Error('Account session changed');
         let peerInfo = await Storage.getBox('blind_peers', aliasL1);
+        if (!current()) throw Error('Account session changed');
 
         if (!peerInfo) return null;
         if (forceHandshake === true && secrets?.pendingKyberInit?.packet) {
@@ -844,9 +863,11 @@ const Core = {
             eph.secretKey.fill(0);
             const packet = this.bytesToHex(res);
             const latest = await Storage.getBox('blind_secrets', aliasL1) || {};
+            if (!current()) throw Error('Account session changed');
             await Storage.putBox('blind_secrets', {alias: aliasL1, data: {
                 ...latest, pendingKyberInit: {attempt_id: attemptId, packet}
             }});
+            if (!current()) throw Error('Account session changed');
             return packet;
         }
 

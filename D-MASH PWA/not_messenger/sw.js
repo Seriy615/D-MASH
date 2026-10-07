@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user/device data lives.
  */
 
-const RELEASE_ID = 'transport-v3-handshake-controls-20261008.18';
+const RELEASE_ID = 'transport-v3-handshake-single-flight-20261008.19';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',

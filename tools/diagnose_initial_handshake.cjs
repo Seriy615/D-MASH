@@ -30,6 +30,21 @@ const state = (local, peer) => local.storage.getBox('blind_secrets', peer.core.k
 const scenarios = {
     H1: async () => {
         const [a, b] = await pair();
+        const simultaneousClicks = await Promise.all([
+            a.core.encrypt('init', b.core.keys.pub_hex, true),
+            a.core.encrypt('init', b.core.keys.pub_hex, true),
+        ]);
+        assert.equal(simultaneousClicks[0], simultaneousClicks[1], 'concurrent clicks join one durable initial attempt');
+        const [locked, peer] = await pair();
+        let resume;
+        locked.storage.getAlias = () => new Promise(resolve => {resume = () => resolve(peer.core.keys.pub_hex);});
+        const interrupted = locked.core.encrypt('init', peer.core.keys.pub_hex, true);
+        locked.core.keys = null;
+        resume();
+        await assert.rejects(interrupted, /Account session changed/,
+            'Account lock during initial storage lookup cancels creation');
+        assert.equal([...locked.rows.keys()].some(key => key.startsWith('blind_secrets')), false,
+            'a cancelled initial attempt cannot populate another Account vault');
         const [ai, bi] = await Promise.all([a.core.encrypt('init', b.core.keys.pub_hex, true), b.core.encrypt('init', a.core.keys.pub_hex, true)]);
         await Promise.all([deliver(b, a, ai), deliver(a, b, bi)]);
         await deliver(b, a, a.outgoing[0].ciphertext);

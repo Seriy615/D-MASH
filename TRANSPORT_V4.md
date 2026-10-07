@@ -165,8 +165,22 @@ required; these changes do not mark all N4 reliability complete.
 Emergency recovery now requires an explicit peer ID, and uses independent
 bounded five-second retry slots per Account key generation and peer. Chat
 selection cannot redirect recovery. `tools/diagnose_initial_handshake.cjs`
-executes real NaCl/Kyber fault scenarios H1-H3 with simulated storage/network;
-all three currently FAIL and are tracked rather than claimed fixed.
+executes real NaCl/Kyber fault scenarios H1-H3 with simulated storage/network.
+As of releases .17/.18, H1 converges crossed proposals through a durable attempt
+and deterministic AccountID winner. H3 retains final capsules until signed,
+encrypted peer confirmation; the accepted-capsule receipt recreates confirmation
+on duplicate final, and a failed confirmation send leaves the Inbox final for
+retry. These controls do not enter user history. The diagnostic passes H1-H3,
+but H2 only checks that a peer responds after one-sided state loss. It does not
+prove replay-safe recovery or subsequent bidirectional messaging. Confirmed
+ESTABLISHED separation, explicit initial-frame version negotiation,
+autonomous bounded retries/expiry and the full
+crash/reload/loss/reorder matrix remain open. N4 is PARTIAL.
+Release .19 additionally joins concurrent initial encrypt calls per Account key
+generation and peer before storage awaits. It rechecks the captured Account
+generation after storage lookups and persistence. The diagnostic covers parallel
+clicks and lock during alias lookup. This does not prove vault transaction
+isolation during every async write or serialize all per-peer state transitions.
 
 ## N1 crypto profile implementation (opt-in, not deployed endpoint)
 
