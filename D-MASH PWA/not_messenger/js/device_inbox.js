@@ -64,6 +64,14 @@
                 tx.onabort = () => reject(failure || tx.error);
             });
         }
+        async deleteKeys(keys) {
+            const db = await this.open();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('records', 'readwrite'), store = tx.objectStore('records');
+                for (const key of keys) store.delete(key);
+                tx.oncomplete = resolve; tx.onabort = () => reject(tx.error);
+            });
+        }
         close() { this.db?.close(); this.db = null; this.opening = null; }
     }
 

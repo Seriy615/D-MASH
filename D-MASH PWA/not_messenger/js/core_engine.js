@@ -727,7 +727,10 @@ const Core = {
         window.addEventListener('devicemotion', (e) => {
             // Panic gestures are deliberately opt-in. Moving a phone while
             // scanning a QR must never destroy an unlocked session.
-            if (localStorage.getItem('cfg_panic_gesture') !== 'true' || this.callState !== 'idle') return;
+            if (localStorage.getItem('cfg_panic_gesture') !== 'true' || this.callState !== 'idle' ||
+                this.isRecording || this.isRecordingCircle || this.flipLockSuppressed || (!this.keys && !window.DeviceRoot?.state?.root)) {
+                lastX = lastY = lastZ = undefined; return;
+            }
 
             let accel = e.accelerationIncludingGravity;
             if (accel && lastX !== undefined) {
@@ -748,7 +751,7 @@ const Core = {
         window.addEventListener('deviceorientation', (e) => {
             // Flip-Lock is an explicit opt-in safety control. QR scanning and
             // normal phone rotation must not silently return to calculator.
-            if (localStorage.getItem('cfg_panic_gesture') !== 'true' || this.callState !== 'idle' || this.isRecordingCircle || this.flipLockSuppressed) return;
+            if (localStorage.getItem('cfg_panic_gesture') !== 'true' || this.callState !== 'idle' || this.isRecording || this.isRecordingCircle || this.flipLockSuppressed || (!this.keys && !window.DeviceRoot?.state?.root)) return;
 
             // Если телефон перевернут (угол больше 110 градусов)
             if (e.beta !== null && Math.abs(e.beta) > 110) {
@@ -1103,19 +1106,19 @@ const Core = {
         const sig = window.nacl.sign.detached(this.hexToBytes(blob), this.keys.sign.secretKey);
 
         this.shmon("INFO", `Сброс квантового финала для ${pid.substring(0,8)}...`);
-        if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
-            let meshRoute = window.NodeManager?.getMeshRoute(pid);
-            if (!meshRoute) {
+        if (this.accountTransportMode() !== 'legacy') {
+            let meshRoute = await this.getAccountTransportRoute(pid);
+            if (!meshRoute && !this.nodeTransportV4) {
                 await this.restoreAutomaticMeshRoutes(pid);
-                meshRoute = window.NodeManager?.getMeshRoute(pid);
+                meshRoute = await this.getAccountTransportRoute(pid);
             }
             if (!meshRoute) {
                 this.shmon("WARN", "Mesh route is restoring from pairing data. Wait for Entry Node connection.");
                 return;
             }
             try {
-                await window.NodeManager.startProbe(meshRoute.routeLocator, meshRoute.backRouteLocator);
-                const result = await window.NodeManager.submitEnvelope(meshRoute.routeLocator, {
+                await this.prepareAccountTransportRoute(meshRoute);
+                const result = await this.submitAccountTransportEnvelope(meshRoute, {
                     version: 1,
                     packet_id: crypto.randomUUID(),
                     ciphertext: blob,
@@ -1212,11 +1215,11 @@ const Core = {
         if (!pid) return;
         if (window.DmashSavedMessages?.isLocal(pid)) return window.DmashSavedMessages.send(this, Storage, c, forceHandshake);
 
-        if ((window.NodeManager?.transportMode || 'mesh') !== 'legacy') {
-            let meshRoute = window.NodeManager?.getMeshRoute(pid);
-            if (!meshRoute) {
+        if (this.accountTransportMode() !== 'legacy') {
+            let meshRoute = await this.getAccountTransportRoute(pid);
+            if (!meshRoute && !this.nodeTransportV4) {
                 await this.restoreAutomaticMeshRoutes(pid);
-                meshRoute = window.NodeManager?.getMeshRoute(pid);
+                meshRoute = await this.getAccountTransportRoute(pid);
             }
             let p = c;
             const inp = document.getElementById('msgInput');
@@ -1225,9 +1228,7 @@ const Core = {
                 // Route setup is deliberately explicit. A probe is idempotent
                 // and may be repeated while the mesh converges.
                 try {
-                    const probe = await window.NodeManager.startProbe(
-                        meshRoute.routeLocator, meshRoute.backRouteLocator
-                    );
+                    const probe = await this.prepareAccountTransportRoute(meshRoute);
                     this.shmon("INFO", `D-MASH: ${probe.state}`);
                 } catch (error) {
                     this.shmon("ERR", `D-MASH probe failed: ${error.message}`);
@@ -1260,7 +1261,7 @@ const Core = {
                         envelope.notification_nonce = this.callNotificationNonce;
                         envelope.notification_event = 'INCOMING_BAZAR';
                     }
-                    const result = await window.NodeManager.submitEnvelope(meshRoute.routeLocator, envelope,
+                    const result = await this.submitAccountTransportEnvelope(meshRoute, envelope,
                         p?.type === 'voip_call_request' ? 'CALL_REQUEST' :
                         p?.type === 'voip_file_request' ? 'FILE_SESSION_REQUEST' : 'MSG');
                     this.shmon("INFO", `D-MASH: ${result.state}`);
@@ -1288,7 +1289,7 @@ const Core = {
                 : "Mesh route для контакта ещё восстанавливается из pairing. Legacy Relay не использовался.";
             this.shmon("WARN", message);
             if (!suppressQueue) await this.queueOutbound(pid, p, forceHandshake);
-            if (forceHandshake && this.customConfirm) {
+            if (forceHandshake && this.customConfirm && !this.nodeTransportV4) {
                 this.customConfirm(
                     "D-MASH MESH",
                     `${message}<br><br>Переключить режим на <b>Legacy Relay (explicit)</b> и повторить обмен ключами?`,
@@ -1359,6 +1360,22 @@ const Core = {
         this.nodeInboxV4?.close();
         this.nodeInboxV4 = new window.DmashAccountNodeInboxV4(host, this);
         return this.nodeInboxV4;
+    },
+    attachNodeTransportV4(host) {
+        this.nodeTransportV4?.close();
+        this.nodeTransportV4 = new window.DmashAccountNodeTransportV4(host, this);
+        this.attachNodeInboxV4(host);
+        return this.nodeTransportV4;
+    },
+    accountTransportMode() { return this.nodeTransportV4 ? 'node-v4' : (window.NodeManager?.transportMode || 'mesh'); },
+    async getAccountTransportRoute(pid) {
+        return this.nodeTransportV4 ? this.nodeTransportV4.getRoute(pid) : window.NodeManager?.getMeshRoute(pid);
+    },
+    prepareAccountTransportRoute(route) {
+        return this.nodeTransportV4 ? this.nodeTransportV4.prepare(route) : window.NodeManager.startProbe(route.routeLocator, route.backRouteLocator);
+    },
+    submitAccountTransportEnvelope(route, envelope, kind) {
+        return this.nodeTransportV4 ? this.nodeTransportV4.submit(route, envelope) : window.NodeManager.submitEnvelope(route.routeLocator, envelope, kind);
     },
     receiveAccountNodeRecordV4(record, accountSlot) {
         if (this._accountTransitioning) return Promise.resolve(false);
@@ -1989,7 +2006,7 @@ const Core = {
             if (nodeCleanup?.state === 'NODE_NOT_CONNECTED') {
                 Core.customAlert("ЗАЧИСТКА", "Данные контакта удалены с устройства. Entry Node была недоступна, её blind locator истечёт по TTL.");
             } else if (!nodeCleanup?.nodeRemoved && window.NodeManager?.transportMode === 'mesh') {
-                Core.customAlert("ЗАЧИСТКА", "Данные контакта удалены с устройства. Не удалось подтвердить очистку locator на Entry Node.");
+                Core.customAlert("ЗАЧИСТКА", "Контакт, ключи и локальный маршрут удалены. Один из Entry Node не подтвердил отзыв: оставшийся locator истечёт по TTL.");
             } else {
                 Core.customAlert("ГОТОВО", "Хата, ключи и Mesh locator зачищены.");
             }
@@ -2262,35 +2279,69 @@ const Core = {
     async decryptMedia(id, rawData) {
         const stub = document.getElementById(`stub-${id}`);
         if (!stub) return;
+        const attempt = {}; stub._mediaAttempt = attempt;
+        const current = () => stub._mediaAttempt === attempt && stub.isConnected;
         stub.innerHTML = '<span style="color:var(--op); font-size:0.7rem;">РАСШИФРОВКА...</span>';
 
+        let url, timer;
         try {
             if (!rawData?.data || typeof rawData.data !== 'string') throw new Error('Некорректные данные медиа');
             const match = rawData.data.match(/^data:([^;,]+)(?:;[^,]*)?,([\s\S]+)$/);
             if (!match) throw new Error('Неизвестный формат медиа');
-            // The FileReader data URL is already the decrypted media payload.
-            // Feeding it directly to the media element avoids a second atob()
-            // pass, which Safari rejects for some valid large recorded blobs.
-            const url = rawData.data;
+            if (!/^(audio|video|image|application)\/[a-z0-9.+-]+$/i.test(match[1])) throw new Error('Недопустимый тип медиа');
+            // MediaRecorder can return codecs=vp8,opus. FileReader includes
+            // that comma in the data URL header, where URL decoders mistake it
+            // for the payload separator. The container carries its codecs;
+            // keep the base MIME and use the explicit base64 delimiter.
+            const delimiter=rawData.data.indexOf(';base64,');
+            const mediaUrl=delimiter<0?rawData.data:'data:'+match[1]+';base64,'+rawData.data.slice(delimiter+8);
+            const controller = new AbortController();
+            timer = setTimeout(() => controller.abort(), 15000);
+            const response = await fetch(mediaUrl, {signal: controller.signal});
+            const blob = await response.blob(); clearTimeout(timer);
+            if (!current()) return;
+            if (!blob.size) throw new Error('Пустое медиа');
+            url = URL.createObjectURL(blob);
+            this.blobURLs ||= []; this.blobURLs.push(url);
+            stub.replaceChildren();
+            const fail = message => {
+                clearTimeout(timer);
+                if (!current()) return;
+                stub.replaceChildren();
+                const note = document.createElement('span');note.textContent=message;stub.appendChild(note);
+                const retry = document.createElement('button');retry.className='sys-modal-btn';retry.textContent='ПОВТОРИТЬ';
+                retry.onclick=()=>this.decryptMedia(id,rawData);stub.appendChild(retry);
+                const download=document.createElement('a');download.href=url;download.download=rawData.name||'media';download.textContent='СКАЧАТЬ';stub.appendChild(download);
+            };
+            const player = tag => {
+                const element=document.createElement(tag);element.src=url;element.preload='auto';element.controls=true;
+                if(tag==='video')element.playsInline=true;
+                timer=setTimeout(()=>fail('МЕДИА НЕ ЗАГРУЗИЛОСЬ'),15000);
+                element.addEventListener('loadedmetadata',()=>clearTimeout(timer),{once:true});
+                element.addEventListener('error',()=>fail('БРАУЗЕР НЕ МОЖЕТ ВОСПРОИЗВЕСТИ ФОРМАТ'),{once:true});
+                return element;
+            };
 
             if (rawData.type === 'video_note') {
-                stub.innerHTML = `<div class="circle-note-container"><video src="${url}" playsinline preload="metadata"></video></div>`;
-                const video = stub.querySelector('video');
+                const container=document.createElement('div');container.className='circle-note-container';stub.appendChild(container);
+                const video=player('video');video.controls=false;container.appendChild(video);
                 video.addEventListener('click', event => {
                     event.preventDefault();
                     if (video.paused) video.play().catch(() => {}); else video.pause();
                 });
                 video.addEventListener('ended', () => { video.currentTime = 0; });
             } else if (rawData.type === 'video') {
-                stub.innerHTML = `<div class="video-attachment"><video src="${url}" controls autoplay style="width:100%; border-radius:8px;"></video></div>`;
+                const video=player('video');video.style.width='100%';video.style.borderRadius='8px';stub.appendChild(video);
             } else if (rawData.type === 'image') {
-                stub.innerHTML = `<img src="${url}" class="img-attachment" onclick="window.open('${url}')">`;
+                const image=document.createElement('img');image.src=url;image.className='img-attachment';image.onclick=()=>window.open(url);stub.appendChild(image);
             } else if (rawData.type === 'voice') {
-                stub.innerHTML = `<audio src="${url}" class="voice-player" controls preload="metadata"></audio>`;
+                const audio=player('audio');audio.className='voice-player';stub.appendChild(audio);
             } else {
-                stub.innerHTML = `<a href="${url}" download="${rawData.name}" class="file-attachment">СКАЧАТЬ ${rawData.name}</a>`;
+                const link=document.createElement('a');link.href=url;link.download=rawData.name||'file';link.className='file-attachment';link.textContent='СКАЧАТЬ '+(rawData.name||'file');stub.appendChild(link);
             }
         } catch (e) {
+            clearTimeout(timer);
+            if (!current()) return;
             this.shmon('ERR', `Media decode failed: ${e.message}`);
             stub.innerHTML = `<span style="color:var(--accent)">ОШИБКА РАСШИФРОВКИ</span><button class="sys-modal-btn" style="padding:5px; font-size:.6rem; margin-top:8px;" onclick="Core.decryptMediaEncoded('${id}', '${this.encodeMediaPayload(rawData)}')">ПОВТОРИТЬ</button>`;
         }

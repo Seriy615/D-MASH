@@ -249,6 +249,9 @@ deleteMessageGamma: async function(peerID, msgId) {
         });
         const queued = await this.getAllBoxes('blind_outbox');
         await Promise.all(queued.filter(item => item?.peerID === peerID).map(item => this.deleteBox('blind_outbox', item.alias)));
+        const mappings = await this.getAllBoxes('pairing_material');
+        await Promise.all(mappings.filter(item => item?.peerId === peerID).map(item => this.deleteBox('pairing_material', item.alias)));
+        await this.deleteBox('pairing_material', await this.getAlias('node-peer-v4:' + peerID, 'L2'));
     },
 
     async getAllBoxes(storeName) {

@@ -1,5 +1,29 @@
 # Unified Node transport v4 — N0 contract and audit
 
+## Local Account submit adapter, release .20 (opt-in / PARTIAL N3)
+
+`Core.attachNodeTransportV4(host)` attaches the Account sender and existing Inbox
+consumer to one local Worker host. Account peer mappings are encrypted in
+`pairing_material`: the sender stores the verified destination certificate and
+an already bound local reply RouteID; the receiver maps its local RouteID to the
+expected Account peer. These mappings remain outside the Worker. A conflicting
+peer mapping for an existing inbound route is refused.
+
+Initial/final and ordinary Account envelopes remain signed/E2EE Account packets.
+The adapter passes a certificate to local `DISCOVER`, then an opaque serialized
+envelope, opaque local grant handle and reply RouteID to local `SUBMIT`. Worker
+recipient encryption and the existing forwarding queue own network transmission.
+`LOCAL_NODE_QUEUED` only acknowledges the local queue; DELIVERED/READ still require
+encrypted Account receipts. Account generation changes cancel late grants; failed
+submit invalidates the cached handle. Attachment selects v4 explicitly and refuses
+silent v3/legacy fallback.
+
+This is an explicit local API integration, not automatic UI cutover. Account v4
+route/contact provisioning, socket restoration, outbox resume with v4 neighbors,
+contact unbind/migration, production two-Account v4 acceptance and broad vault
+transaction/session pinning remain required. Unit evidence uses real Account
+initial crypto with a controlled host; it does not prove network acceptance.
+
 Status: DESIGN / PARTIAL, 2026-09-25. Audited base: `aa0ad8a` on
 `origin/transport-v3`. The experimental Node transport is deployed on EMS; this document also records
 unimplemented target requirements and must not be read as full acceptance.

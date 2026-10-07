@@ -1,3 +1,45 @@
+# Execution checkpoint — contact deletion, recorded media, local Account v4 sender
+
+Release .19 `9cf2baf1f2b9237641219b41da731d8e8233bf5e` is deployed on EMS,
+exact 199-file match, active/running, NRestarts=0. Live two-Account .19 page/SW,
+late pairing, initial exchange, bidirectional messages, ratchet 1/2, delayed old
+epoch, reconnect and control retirement PASS
+(`/tmp/dmash-v4-handshake-single-flight-live.log`). Transient route unavailable
+retries preceded successful exchange.
+
+Prepared .20 `transport-v3-contact-media-20261008.20` addresses user reports:
+- Private contact deletion uses signed UNREGISTER_ROUTE, erases encrypted local
+  private inbound/outbound material, policy and pending records; reconnect cannot
+  advertise the deleted contact. Unregistered deletion is idempotent. Account
+  deletion also removes its peer route mappings. Unconfirmed remote revocation
+  remains explicitly reported as TTL retirement, not successful server deletion.
+- MediaRecorder MIME can contain a comma in codecs=vp8,opus. FileReader retains
+  that comma in the data URL header, breaking normal decoding. Playback normalizes
+  to base MIME and explicit base64 delimiter, then creates a Blob URL. Media
+  metadata has a bounded deadline/error/retry/download path. Chrome actual
+  MediaRecorder audio/video playback and malformed input PASS; Safari/real phone
+  acceptance is not yet evidence.
+- Opt-in motion panic now respects recording and scanner suppression, resets
+  stale motion samples and leaves explicitly enabled gestures operational.
+- An explicit AccountNodeTransportV4 adapter persists Account-encrypted peer
+  certificate/local reply mappings and routes initial/final/message/ratchet
+  envelopes through local Worker discover/submit, with no v3 fallback after
+  attachment. No Account keys/peer ID reach Worker discovery. Local queue status
+  is not a peer receipt. Unit test uses real Account initial NaCl/Kyber crypto,
+  controlled local host; it is not a v4 network acceptance. UI, v4 automatic
+  contact provisioning, autonomous outbox resume and full migration remain open.
+
+Full .20 regression PASS: 263 backend + 11 Origin + 64 JS suites
+(`/tmp/dmash-v4-contact-media-all-tests.log`). Private signed-revocation and
+readd regression PASS. Actual recorded media browser tool PASS
+(`tools/test_recorded_media_browser.cjs`). Final panic guard adjusted to retain
+panic with Node root unlocked but no active Account; focused browser rerun next.
+Next: commit/push/deploy .20, exact revision verification, public recorded-media
+and two-Account deletion acceptance. Then continue real v4 two-Account network
+integration and the remaining N0–N8/A–M/E6 matrix. Goal remains active.
+
+---
+
 # Execution checkpoint — concurrent initial attempts
 
 Release .18 `51774fa4a2a4e760917b9275a3a35b8a149f7422` is pushed,

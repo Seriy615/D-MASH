@@ -209,12 +209,44 @@ const NodeManager = {
     async removeMeshRoute(peerId) {
         const routes = this.getRouteConfig();
         const route = routes[peerId];
-        if (!route) return { removed: false, nodeRemoved: false };
+        if (!route) return { removed: false, nodeRemoved: true, state: 'NOT_REGISTERED' };
         delete routes[peerId];
         sessionStorage.setItem(this.routeConfigKey, JSON.stringify(routes));
         const remainingHandles = Object.values(routes).map(item => item?.locatorHandle).filter(Boolean);
         if (remainingHandles[0]) sessionStorage.setItem(this.inboundHandleKey, remainingHandles[0]);
         else sessionStorage.removeItem(this.inboundHandleKey);
+
+        const inbox = this._deviceInboxV3;
+        if (inbox && route.backRouteLocator) {
+            const selected = [], keys = [route.backRouteLocator];
+            for (const row of await inbox.store.all()) {
+                let record; try { record = await inbox._open(row); } catch (_) { continue; }
+                if (record.record === 'private_route' && record.routeAlias === route.backRouteLocator) {
+                    selected.push(record); keys.push(row.key);
+                }
+                if (record.record === 'pending' && record.envelope?.route_alias === route.backRouteLocator) keys.push(row.key);
+            }
+            if (selected.length) {
+                keys.push(await inbox._alias(inbox._root(), 'private-outbound:' + route.routeLocator));
+                this._removedPrivateRoutes ||= new Set(); this._removedPrivateRoutes.add(route.backRouteLocator);
+                await inbox.store.deleteKeys(keys);
+                const nodes = this.connectedConnections().filter(node => node.authority && node.capabilities.has('UNREGISTER_ROUTE'));
+                if (!nodes.length) return {removed:true,nodeRemoved:false,state:'NODE_NOT_CONNECTED'};
+                const results = await Promise.allSettled(nodes.map(async node => {
+                    for (const record of selected) {
+                        const signing = window.nacl.sign.keyPair.fromSecretKey(window.DmashSecureSession.unb64(record.signingSecretKey,64));
+                        try {
+                            const routeId = await window.PrivateRoutesV3.locator(signing.publicKey);
+                            const lifetime = await inbox._get('private-lifetime:' + node.nodeId + ':' + routeId);
+                            if (!lifetime || lifetime.expiresAt <= Math.floor(Date.now()/1000)) continue;
+                            await node.authority.route('UNREGISTER_ROUTE',{kind:'PRIVATE',routeId,signing,
+                                generation:record.generation,expiresAt:lifetime.expiresAt});
+                        } finally { signing.secretKey.fill(0); }
+                    }
+                }));
+                return {removed:true,nodeRemoved:results.every(result=>result.status==='fulfilled'),state:'PRIVATE_ROUTE_REMOVED'};
+            }
+        }
 
         if (!route.backRouteLocator || !this.connectedConnections().length) {
             return { removed: true, nodeRemoved: false, state: 'NODE_NOT_CONNECTED' };
@@ -798,6 +830,7 @@ const NodeManager = {
             {record: 'private_outbound', accountSlot, boxPublicKey: b64(pair.outgoing.box.publicKey),
                 targetVerifyKey: b64(pair.outgoing.signing.publicKey)});
         if (window.Core.activeIdentity !== accountSlot) return;
+        this._removedPrivateRoutes?.delete(await inbox.routeAlias(pair.backRouteLocator));
         this.setMeshRoute(peerId, outboundAlias, await inbox.routeAlias(pair.backRouteLocator));
         // Local Account/Device handoff is complete. Network work cannot keep
         // the Account lifecycle lock occupied while resource PoW is pending.
@@ -810,6 +843,7 @@ const NodeManager = {
         for (const row of await inbox.store.all()) {
             const route = await inbox._open(row);
             if (route.record !== 'private_route') continue;
+            if (this._removedPrivateRoutes?.has(route.routeAlias)) continue;
             if (selector && (route.routeAlias !== selector.routeAlias || route.accountSlot !== selector.accountSlot ||
                 route.targetVerifyKey !== selector.targetVerifyKey)) continue;
             const routeId = await window.PrivateRoutesV3.locator(window.DmashSecureSession.unb64(route.signingPublicKey, 32));
@@ -827,7 +861,12 @@ const NodeManager = {
                 try {
                     const resource = {kind: 'PRIVATE', routeId, signing,
                         generation: route.generation, expiresAt: lifetime.expiresAt};
+                    if (this._removedPrivateRoutes?.has(route.routeAlias)) continue;
                     await node.authority.route('REGISTER_ROUTE', resource);
+                    if (this._removedPrivateRoutes?.has(route.routeAlias)) {
+                        await node.authority.route('UNREGISTER_ROUTE', resource);
+                        continue;
+                    }
                     // Advertise our registered inbound route. Probe does not
                     // search for the recipient; routeStatus resolves that hop.
                     results.push(await node.authority.route('START_PROBE', resource, {route_locator: routeId}));

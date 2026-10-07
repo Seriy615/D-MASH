@@ -102,6 +102,23 @@ const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
    }return true;
   })));
   console.log('PASS completed handshake controls retired from Device Inbox');
+  if(process.env.DMASH_TEST_DELETE==='1'){
+   await pages[0].evaluate(async peer=>{
+    const route=NodeManager.getMeshRoute(peer),confirm=Core.customConfirm,alert=Core.customAlert;
+    let task,outcome;const remove=NodeManager.removeMeshRoute.bind(NodeManager);
+    NodeManager.removeMeshRoute=async id=>{outcome=await remove(id);return outcome;};
+    Core.customConfirm=(_title,_message,action)=>{task=action();};Core.customAlert=()=>{};
+    try{
+     Core.deleteChatFlow(peer,'Acceptance contact');await task;
+     if(!outcome?.nodeRemoved)throw Error('Entry did not confirm private route revocation');
+     if(NodeManager.getMeshRoute(peer))throw Error('Deleted route remained in local config');
+     if(await NodeManager.deviceInboxV3().policyByAlias(route.backRouteLocator))throw Error('Deleted local delivery policy remained');
+     if(await Storage.getBox('blind_peers',await Storage.getAlias(peer,'L1')))throw Error('Deleted contact remained in vault');
+     if((await Storage.loadMessagesGamma(peer,50,0)).length)throw Error('Deleted history remained');
+    }finally{NodeManager.removeMeshRoute=remove;Core.customConfirm=confirm;Core.customAlert=alert;}
+   },packages[1].user_id);
+   console.log('PASS signed private contact deletion: Entry confirmation, local delivery policy, peer/history and route removal');
+  }
   assert.deepEqual(failures,[]);
  } catch(error) {
   for(let i=0;i<pages.length;i++) console.error('DIAGNOSTIC',i,await pages[i].evaluate(()=>({accountUnlocked:Boolean(window.Core?.keys),deviceUnlocked:Boolean(window.DeviceRoot?.state?.root),routeCount:Object.keys(NodeManager.getRouteConfig()).length,pendingRequests:NodeManager.pendingRequests.size,connections:[...NodeManager.connections.values()].map(c=>({state:c.state,dnss:c.dnssReadyState,hasError:Boolean(c.error)}))})).catch(()=>null));

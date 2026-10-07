@@ -18,6 +18,7 @@ class Store {
     async all() {return structuredClone([...this.rows.values()]);}
     async get(key) {return structuredClone(this.rows.get(key) || null);}
     async write(record, absent) {if (absent && this.rows.has(record.key)) return false; this.rows.set(record.key, structuredClone(record)); return true;}
+    async deleteKeys(keys) {for(const key of keys)this.rows.delete(key);}
 }
 (async () => {
     const root = nacl.randomBytes(32), store = new Store();
@@ -100,6 +101,21 @@ class Store {
     assert.equal(ready.connection, connection);
     NodeManager.routeStatus = async () => null;
     assert.equal(await NodeManager.ensurePublicRouteV3(certificate.routeId, 'source-route'), null, 'missing destination remains unavailable without target-search Probe');
+    Core.activeIdentity='A';connection.capabilities.add('UNREGISTER_ROUTE');
+    await new Promise(resolve=>setImmediate(resolve));
+    sent.length=0;
+    const removed=await NodeManager.removeMeshRoute(peer);
+    assert.equal(removed.nodeRemoved,true,'signed private route revocation is confirmed');
+    assert.equal(sent.some(item=>item.operation==='UNREGISTER_ROUTE'),true);
+    assert.equal(sent.some(item=>item.operation==='UNREGISTER_INBOUND_LOCATOR'),false,'private capability never uses legacy locator cleanup');
+    assert.equal(await inbox.policyByAlias(config.backRouteLocator),null,'deleted contact loses local delivery policy');
+    assert.equal(await inbox._get('private-outbound:'+config.routeLocator),null,'outbound routing key is erased');
+    sent.length=0;await NodeManager.probePrivateRoutesV3(connection);
+    assert.equal(sent.length,0,'reconnect cannot advertise a deleted contact');
+    assert.equal((await NodeManager.removeMeshRoute(peer)).nodeRemoved,true,'unregistered contact deletion is idempotent');
+    await NodeManager.installPrivateRouteV3(peer,a);
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(NodeManager._removedPrivateRoutes.has(config.backRouteLocator),false,'readding contact enables its new local binding');
     a.close();
     console.log('Device blind private-route storage and opaque Account handoff tests passed');
 })().catch(error => {console.error(error); process.exitCode = 1;});
