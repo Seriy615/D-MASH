@@ -24,9 +24,9 @@ context.window.NodeManager={transportMode:'mesh',getMeshRoute:()=>({routeLocator
  assert(before.pendingKyberFinal);assert.equal(encapsulations,1);
  assert.equal((await core.decrypt(packet,peerId,true)).handshakeProcessed,true);
  const after=await storage.getBox('blind_secrets',peerId);
- assert.equal(after.pendingKyberFinal,undefined);assert.equal(after.staticShared,before.staticShared);
+ assert.deepEqual(after.pendingKyberFinal,before.pendingKyberFinal,'Node acceptance cannot retire an unconfirmed final');assert.equal(after.staticShared,before.staticShared);
  assert.equal(encapsulations,1,'retry must reuse persisted Kyber material');assert.equal(sends,2);
- assert.equal((await core.decrypt(packet,peerId,true)).handshakeProcessed,true);assert.equal(sends,2,'consumed control does not resend final');
+ assert.equal((await core.decrypt(packet,peerId,true)).handshakeProcessed,true);assert.equal(sends,3,'repeated init retransmits the persisted final');assert.deepEqual((await storage.getBox('blind_secrets',peerId)).pendingKyberFinal,before.pendingKyberFinal);
  const sos=hex(Buffer.concat([Buffer.from([2]),eph.publicKey,Buffer.alloc(1184,1)]));
  core.sendMessage=async()=>false;assert.equal(await core.decrypt(sos,peerId,true),null);
  core.sendMessage=async()=>true;assert.equal((await core.decrypt(sos,peerId,true)).handshakeProcessed,true);

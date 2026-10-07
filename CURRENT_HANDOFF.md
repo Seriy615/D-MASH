@@ -1,3 +1,48 @@
+# Execution checkpoint — retained Kyber final across Node acceptance (partial N4)
+
+Release .16 `93d93a22dca149ec7eeae31ce49fe8308d3167e1` is deployed and exact
+verified on EMS: 198 files, no missing/changed files; service active, NRestarts=0.
+Public Worker WSS reconnect/lock PASS. Live two-Account browser acceptance on .16
+PASS: contact late pairing, initial key exchange, bidirectional messages, ratchet
+epochs 1/2, delayed old-epoch message, offline reconnect delivery and control
+Inbox retirement. Log `/tmp/dmash-v4-account-inbox-live-accounts.log`.
+Transient `Route unavailable` retries occurred before route delivery.
+Full .16 regression PASS: 263 backend + 11 Origin + 62 JS suites
+(`/tmp/dmash-v4-account-inbox-final-tests.log`). Python 3.12 venv was recreated
+using the bundled interpreter after the previous `/tmp` interpreter symlink broke.
+
+Prepared .17 (`transport-v3-handshake-retention-20261008.17`): initial proposals
+carry a durable random attempt ID and the exact retry packet. Crossed proposals
+choose the lower AccountID as initiator; the losing local attempt is retired,
+winning retransmissions reuse the saved packet, and finals for other attempts are
+silently ignored. A Kyber final is retained after adjacent Node acceptance and
+retransmitted for duplicate init. Recipient emits an encrypted `pqc_confirm` only
+after saving the shared secret. Responder retires the final only after decrypting
+that control under the matching secret and verifying the Account signature.
+The initiator persists its accepted capsule/attempt receipt; a duplicate final
+resends confirmation after a lost confirmation or failed local send. A different
+capsule cannot solicit that receipt or overwrite the accepted secret. H3 covers
+lost final and lost confirmation through the real Account receiver.
+
+Bundled real NaCl + Kyber diagnostic now PASS H1/H2/H3
+(`tools/diagnose_initial_handshake.cjs`); focused retry test also PASS.
+H1 exercises crossed actual KEM proposals, deterministic winner and same-attempt
+final. H3 exercises retry and remote encrypted confirmation/retirement. H2 still
+only proves a response after one side loses state; broad stale-session, replay,
+loss/reorder, crash/reload phase matrix remains outstanding. Explicit handshake
+wire-version negotiation, bounded retry/backoff and pending-final expiry are also
+not complete. N4 remains partial.
+
+Full .17 suite PASS: 263 backend + 11 Origin + 63 JS suites
+(`/tmp/dmash-v4-handshake-all-tests.log`). All 63 JS suites rerun PASS after
+the lost-confirmation fix (`/tmp/dmash-v4-handshake-js-final.log`).
+Next: commit/push/deploy and run deployed two-Account acceptance;
+then continue actual v4 outbound Account transport, route certificate/contact
+provisioning, mailbox and the N0–N8/A–M/E6 matrix. Full N0–N8/A–M/E6 plan remains active. Estimate remains roughly
+35% complete, 30–40% range, and is not a test-pass percentage.
+
+---
+
 # Execution checkpoint — Account consumer for Node Inbox (partial N3)
 
 Previous release .15, `36ba94fb5cbcd54285729e2c7f2aaec65cc31d73`, was pushed,

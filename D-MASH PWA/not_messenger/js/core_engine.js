@@ -808,6 +808,11 @@ const Core = {
         let peerInfo = await Storage.getBox('blind_peers', aliasL1);
 
         if (!peerInfo) return null;
+        if (forceHandshake === true && secrets?.pendingKyberInit?.packet) {
+            // Repeated sends carry one durable logical attempt. Never mint a
+            // second ephemeral proposal while its winner is being resolved.
+            return secrets.pendingKyberInit.packet;
+        }
 
         // --- СТУПЕНЬ 1: SOS (Если нет Curve или форсируем) ---
         if (!peerInfo.curvePub || forceHandshake === "SOS") {
@@ -824,8 +829,10 @@ const Core = {
             this.shmon("CRYPTO", "Запуск ECDH-передачи...");
             const eph = window.nacl.box.keyPair();
             const nonce = window.nacl.randomBytes(24);
+            const attemptId = this.bytesToHex(window.nacl.randomBytes(32));
             const payload = {
                 t: "pqc_init",
+                attempt_id: attemptId,
                 k_pub: this.bytesToHex(this.keys.kyber.publicKey),
                 c_pub: this.bytesToHex(this.keys.box.publicKey),
                 data: data
@@ -834,7 +841,13 @@ const Core = {
             const encrypted = window.nacl.box(msgUint8, nonce, this.hexToBytes(peerInfo.curvePub), eph.secretKey);
             const res = new Uint8Array(1 + 24 + 32 + encrypted.length);
             res[0] = 0x01; res.set(nonce, 1); res.set(eph.publicKey, 25); res.set(encrypted, 57);
-            return this.bytesToHex(res);
+            eph.secretKey.fill(0);
+            const packet = this.bytesToHex(res);
+            const latest = await Storage.getBox('blind_secrets', aliasL1) || {};
+            await Storage.putBox('blind_secrets', {alias: aliasL1, data: {
+                ...latest, pendingKyberInit: {attempt_id: attemptId, packet}
+            }});
+            return packet;
         }
 
         const ratchetSecrets = ratchetOverride ? {...secrets, ...ratchetOverride} : secrets;
@@ -908,19 +921,39 @@ const Core = {
             return sent ? processed() : null;
         }
 
-        if (type === 0x01) { // Принят ECDH
+        if (type === 0x01) { // Account initial key proposal
             this.shmon("CRYPTO", "Вскрытие 0x01 оболочки...");
-            if (secrets?.staticShared) {
-                if (secrets.pendingKyberFinal) {
-                    const pending = secrets.pendingKyberFinal;
-                    if (!await this.sendKyberFinal(pid, this.hexToBytes(pending.capsule), this.hexToBytes(pending.psk), pending.shift)) return null;
-                }
-                return processed();
-            }
             const nonce = raw.slice(1, 25); const ephPub = raw.slice(25, 57);
             const opened = window.nacl.box.open(raw.slice(57), nonce, ephPub, this.keys.box.secretKey);
             if (opened) {
-                const payload = JSON.parse(new TextDecoder().decode(opened));
+                let payload;
+                try { payload = JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(opened)); }
+                finally { opened.fill(0); }
+                if (!payload || payload.t !== 'pqc_init' || !/^[0-9a-f]{64}$/i.test(payload.c_pub || '') ||
+                    !/^[0-9a-f]{2368}$/i.test(payload.k_pub || '') ||
+                    (payload.attempt_id !== undefined && !/^[0-9a-f]{64}$/i.test(payload.attempt_id))) return null;
+                const pendingInit = secrets?.pendingKyberInit;
+                if (pendingInit) {
+                    const localWins = this.keys.pub_hex.toLowerCase() < pid.toLowerCase();
+                    if (localWins) {
+                        const resent = await this.sendMessage('init', true, pid);
+                        return resent ? processed() : null;
+                    }
+                    // The lower AccountID owns crossed initial proposals.
+                    // Retire only this losing local init and accept the winner.
+                    const latest = await Storage.getBox('blind_secrets', aliasL1) || {};
+                    if (latest.pendingKyberInit?.attempt_id !== pendingInit.attempt_id) return null;
+                    delete latest.pendingKyberInit;
+                    await Storage.putBox('blind_secrets', {alias: aliasL1, data: latest});
+                    secrets = latest;
+                }
+                if (secrets?.staticShared) {
+                    if (secrets.pendingKyberFinal) {
+                        const pending = secrets.pendingKyberFinal;
+                        if (!await this.sendKyberFinal(pid, this.hexToBytes(pending.capsule), this.hexToBytes(pending.psk), pending.shift, pending.attempt_id)) return null;
+                    }
+                    return processed();
+                }
                 let peer = await Storage.getBox('blind_peers', aliasL1) || { id: pid, name: `Peer-${pid.substring(0,4)}` };
                 peer.curvePub = payload.c_pub; peer.kyberPub = payload.k_pub;
                 await Storage.putBox('blind_peers', { alias: aliasL1, data: peer });
@@ -934,31 +967,47 @@ const Core = {
                     data: { staticShared: this.bytesToHex(k.ss), psk: this.bytesToHex(newPSK), epochShift: newShift,
                         ratchetRoot: this.bytesToHex(k.ss), ratchetEpoch: 0, ratchetPreviousRoot: null, ratchetPreviousRoots: [], ratchetPending: null,
                         ratchetLastUpdate: null, msgCount: 0,
-                        pendingKyberFinal: {capsule: this.bytesToHex(k.ct), psk: this.bytesToHex(newPSK), shift: newShift} }
+                        pendingKyberFinal: {capsule: this.bytesToHex(k.ct), psk: this.bytesToHex(newPSK), shift: newShift,
+                            attempt_id: payload.attempt_id || this.bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256', raw)))} }
                 });
-                const sent = await this.sendKyberFinal(pid, k.ct, newPSK, newShift);
+                const pendingAttempt = (await Storage.getBox('blind_secrets', aliasL1)).pendingKyberFinal.attempt_id;
+                const sent = await this.sendKyberFinal(pid, k.ct, newPSK, newShift, pendingAttempt);
                 if (this.activePeerId === pid) this.selectPeer(pid);
                 return sent ? processed() : null;
             }
         }
 
-        if (type === 0x03) { // Финал квантового моста
+        if (type === 0x03) { // Account key exchange final
             this.shmon("CRYPTO", "Финализация квантового моста...");
-            if (secrets?.staticShared) return processed();
-            const encapsulated = raw.slice(1, 1089); const ss = (KyberWasm.decapsulate(encapsulated, this.keys.kyber.secretKey)).ss;
-            const opened = window.nacl.secretbox.open(raw.slice(1113), raw.slice(1089, 1113), ss);
-            if (opened) {
-                const final = JSON.parse(new TextDecoder().decode(opened));
-                await Storage.putBox('blind_secrets', {
-                    alias: aliasL1,
-                    data: { staticShared: this.bytesToHex(ss), psk: final.psk, epochShift: final.shift,
-                        ratchetRoot: this.bytesToHex(ss), ratchetEpoch: 0, ratchetPreviousRoot: null, ratchetPreviousRoots: [], ratchetPending: null,
-                        ratchetLastUpdate: null, msgCount: 0 }
-                });
-                this.shmon("INFO", "КВАНТОВЫЙ КАНАЛ УСТАНОВЛЕН!");
-                if (this.activePeerId === pid) this.selectPeer(pid);
+            if (secrets?.staticShared && !secrets.pendingKyberInit) {
+                const receipt = secrets.kyberFinalReceipt;
+                if (receipt?.attempt_id && receipt.capsule === this.bytesToHex(raw.slice(1, 1089))) {
+                    return {...processed(), confirmation: {type: 'pqc_confirm', attempt_id: receipt.attempt_id}};
+                }
                 return processed();
             }
+            const encapsulated = raw.slice(1, 1089); const ss = KyberWasm.decapsulate(encapsulated, this.keys.kyber.secretKey).ss;
+            const opened = window.nacl.secretbox.open(raw.slice(1113), raw.slice(1089, 1113), ss);
+            if (opened) {
+                let final;
+                try { final = JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(opened)); }
+                finally { opened.fill(0); }
+                if (!final || typeof final.psk !== 'string' || !/^[0-9a-f]{64}$/i.test(final.psk) ||
+                    !Number.isInteger(final.shift) || (secrets?.pendingKyberInit &&
+                     final.attempt_id !== secrets.pendingKyberInit.attempt_id)) { ss.fill(0); return processed(); }
+                const confirmationId = final.attempt_id || null;
+                const next = { staticShared: this.bytesToHex(ss), psk: final.psk, epochShift: final.shift,
+                    ratchetRoot: this.bytesToHex(ss), ratchetEpoch: 0, ratchetPreviousRoot: null, ratchetPreviousRoots: [], ratchetPending: null,
+                    ratchetLastUpdate: null, msgCount: 0,
+                    kyberFinalReceipt: confirmationId ? {attempt_id: confirmationId, capsule: this.bytesToHex(encapsulated)} : null };
+                delete next.pendingKyberInit;
+                await Storage.putBox('blind_secrets', {alias: aliasL1, data: next});
+                ss.fill(0);
+                this.shmon("INFO", "КВАНТОВЫЙ КАНАЛ УСТАНОВЛЕН!");
+                if (this.activePeerId === pid) this.selectPeer(pid);
+                return {...processed(), ...(confirmationId ? {confirmation: {type: 'pqc_confirm', attempt_id: confirmationId}} : {})};
+            }
+            ss.fill(0);
         }
 
         if (type === 0x04) { // Account epoch ratchet packet
@@ -997,17 +1046,29 @@ const Core = {
             // 4. Внутренний слой (Argon2 на ts из пакета)
             const finalKey = await this.deriveFinalKey(ss, psk, secrets.epochShift, ts);
             const decrypted = window.nacl.secretbox.open(innerCipher, innerNonce, finalKey);
-            if (decrypted) return new TextDecoder().decode(decrypted);
+            if (decrypted) {
+                const plaintext = new TextDecoder().decode(decrypted);decrypted.fill(0);
+                let control;try{control=JSON.parse(plaintext);}catch(_){}
+                if (control?.type === 'dmash_message' && control.body?.type === 'pqc_confirm' &&
+                    secrets.pendingKyberFinal?.attempt_id === control.body.attempt_id) {
+                    const latest=await Storage.getBox('blind_secrets',aliasL1);
+                    if(latest?.pendingKyberFinal?.attempt_id===control.body.attempt_id){
+                        delete latest.pendingKyberFinal;await Storage.putBox('blind_secrets',{alias:aliasL1,data:latest});
+                    }
+                }
+                return plaintext;
+            }
         }
         return null;
     },
     // Core.sendKyberFinal     - Завершение квантового рукопожатия (Тип 0x03)
-    async sendKyberFinal(pid, capsule, psk, shift) {
+    async sendKyberFinal(pid, capsule, psk, shift, attemptId = null) {
         const nonce = window.nacl.randomBytes(24);
         const aliasL1 = await Storage.getAlias(pid, "L1");
         const secrets = await Storage.getBox('blind_secrets', aliasL1);
 
-        const payload = { psk: this.bytesToHex(psk), shift: shift, data: "🤝 Квантовый мост наведен" };
+        const payload = { psk: this.bytesToHex(psk), shift: shift, data: "🤝 Квантовый мост наведен",
+            ...(attemptId ? {attempt_id: attemptId} : {}) };
         const ss = this.hexToBytes(secrets.staticShared);
         const encrypted = window.nacl.secretbox(new TextEncoder().encode(JSON.stringify(payload)), nonce, ss);
 
@@ -1041,11 +1102,10 @@ const Core = {
                     kind: 'E2EE_HANDSHAKE'
                 });
                 this.shmon("INFO", `D-MASH Kyber final: ${result.state}`);
-                const latest = await Storage.getBox('blind_secrets', aliasL1);
-                if (latest?.pendingKyberFinal?.capsule === this.bytesToHex(capsule)) {
-                    delete latest.pendingKyberFinal;
-                    await Storage.putBox('blind_secrets', {alias: aliasL1, data: latest});
-                }
+                // NODE_ACCEPTED proves only adjacent-node acceptance. Keep the
+                // exact capsule and its secrets until an authenticated Account
+                // message proves the remote peer processed this final. A
+                // repeated init can then retransmit without new KEM material.
                 return true;
             } catch (error) {
                 this.shmon("ERR", `D-MASH Kyber final failed: ${error.message}`);
@@ -1317,7 +1377,13 @@ const Core = {
             this.hexToBytes(envelope.sender_proof), this.hexToBytes(peerId))) throw new Error('Account sender proof rejected');
         const plaintext = await this.decrypt(envelope.ciphertext, peerId, true);
         if (!current()) return false;
-        if (plaintext?.handshakeProcessed === true) return true;
+        if (plaintext?.handshakeProcessed === true) {
+            if (plaintext.confirmation) {
+                const sent = await this.sendMessage(plaintext.confirmation, false, peerId);
+                return current() && sent === true;
+            }
+            return true;
+        }
         // Failed/incomplete crypto remains durable for retry; successful
         // handshake control packets are retired by Device Inbox exactly once.
         if (plaintext === null) return false;
@@ -1340,6 +1406,7 @@ const Core = {
             return current();
         }
         const wrapped = message && typeof message === 'object' && message.type === 'dmash_message' && typeof message.id === 'string';
+        if (wrapped && message.body?.type === 'pqc_confirm' && /^[0-9a-f]{64}$/i.test(message.body.attempt_id || '')) return current();
         if (wrapped && await Storage.hasMessageWireId(peerId, message.id)) return current();
         if (!current()) return false;
         const content = wrapped ? message.body : message, isCurrent = this.activePeerId === peerId;
