@@ -1,7 +1,7 @@
 "use strict";
 
 // One visible release identifier for the page and Service Worker generation.
-window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-public-request-retry-20261008.22" });
+window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-call-start-20261008.23" });
 
 /*
  * Runtime repair loader.

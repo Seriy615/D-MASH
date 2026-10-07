@@ -60,8 +60,8 @@ class STurnService:
         if not isinstance(turn_urls, tuple) or any(not isinstance(url, str) or not url.startswith("turn:")
                                                    for url in turn_urls):
             raise ValueError("invalid TURN URLs")
-        if shared_secret is not None and (not isinstance(shared_secret, bytes) or len(shared_secret) != 32):
-            raise ValueError("shared_secret must be 32 bytes")
+        if shared_secret is not None and (not isinstance(shared_secret, bytes) or not 32 <= len(shared_secret) <= 128):
+            raise ValueError("shared_secret must be 32 to 128 bytes")
         self.signaling_wss = signaling_wss
         self.turn_urls = turn_urls
         self._secret = shared_secret or secrets.token_bytes(32)
@@ -86,8 +86,8 @@ class STurnService:
             secret = base64.b64decode(encoded_secret, validate=True)
         except (ValueError, binascii.Error):
             raise ValueError("DMASH_TURN_SHARED_SECRET_B64 must be standard Base64") from None
-        if len(secret) != 32:
-            raise ValueError("DMASH_TURN_SHARED_SECRET_B64 must decode to 32 bytes")
+        if not 32 <= len(secret) <= 128:
+            raise ValueError("DMASH_TURN_SHARED_SECRET_B64 must decode to 32 to 128 bytes")
 
         def probe() -> bool:
             for value in turn_urls:

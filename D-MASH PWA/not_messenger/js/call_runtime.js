@@ -13,15 +13,21 @@
         const session = new global.DmashCallSession.CallSignalingSession({signaling,
             rtcFactory: config => new global.RTCPeerConnection(config), mediaDevices: global.navigator.mediaDevices});
         core.attachCallSignaling(session);
-        session.onclose = () => { if (core._callAttempt === attempt) core.endCall(false); };
+        attempt.session=session;
+        session.onclose = () => {
+            if(session.failure)attempt.failure=session.failure;
+            if (core._callAttempt === attempt) core.endCall(false);
+        };
+        session.onconnected=()=>{
+            if(core._callAttempt!==attempt||core.callState==='connected')return;
+            core.callState='connected';core.updateCallUI('connected');core.startTimer();
+        };
         session.ontrack = event => {
             if (core._callAttempt !== attempt) return;
             const element = global.document.getElementById('remoteVideo');
             if (element) { element.srcObject = event.streams[0]; void element.play?.().catch(() => {}); }
             core.remoteStream = event.streams[0];
-            if (core.callState !== 'connected') {
-                core.callState = 'connected'; core.updateCallUI('connected'); core.startTimer();
-            }
+            if(session.pc?.connectionState==='connected')session.onconnected();
         };
         return session;
     }
@@ -41,7 +47,9 @@
             Math.max(0, request.expires_at * 1000 - Date.now()));
     }
     async function start(core) {
-        if (core.callState !== 'idle' || !core.activePeerId) return false;
+        if (!core.activePeerId) {core.customAlert?.('ЗВОНОК','Откройте чат с собеседником.');return false;}
+        if (core.callState !== 'idle') return false;
+        const keys=core.keys,slot=core.activeIdentity;
         const peer = core.activePeerId, attempt = begin(core, peer, 'calling');
         core.updateCallUI('calling');
         let signaling;
@@ -65,8 +73,13 @@
             expiry(core, request, attempt);
             return true;
         } catch (error) {
+            const report=(core._callAttempt===attempt||(!core._callAttempt&&attempt.session?.failure===error&&!attempt.session?.cancelled))&&core.keys===keys&&core.activeIdentity===slot;
             signaling?.close();
             if (core._callAttempt === attempt) { core.shmon('ERR', error.message); core.endCall(false); }
+            if(report){
+                const reason=error.name==='NotAllowedError'?'Разрешите доступ к микрофону в настройках браузера.':error.message;
+                core.customAlert?.('ЗВОНОК НЕ НАЧАЛСЯ',reason||'Не удалось установить соединение.');
+            }
             return false;
         }
     }

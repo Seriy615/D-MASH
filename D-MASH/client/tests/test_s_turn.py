@@ -92,6 +92,16 @@ class STurnTests(unittest.TestCase):
         service = STurnService(signaling_wss='wss://turn.example/signal', turn_urls=('turn:turn.example:3478',))
         self.assertFalse(service.healthy())
 
+    def test_printable_turn_rest_secret_and_bounds(self):
+        secret=b'abcdef0123456789'*4
+        service=STurnService(signaling_wss='wss://turn.example/signal',turn_urls=('turn:turn.example:3479',),shared_secret=secret,health_probe=lambda:True)
+        credentials=service.issue_turn_credentials('c'*32)
+        import base64,hashlib,hmac
+        expected=base64.b64encode(hmac.new(secret,credentials['username'].encode(),hashlib.sha1).digest()).decode()
+        self.assertEqual(credentials['credential'],expected)
+        for size in (31,129):
+            with self.assertRaises(ValueError):STurnService(shared_secret=b's'*size)
+
     def test_from_env_requires_shared_secret_and_probes_turn_listener(self):
         env = {
             "DMASH_SIGNALING_WSS": "wss://node.example/signal/v1",

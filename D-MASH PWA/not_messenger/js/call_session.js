@@ -61,12 +61,13 @@
         }
 
         _createPeer() {
-            this.pc = this.rtcFactory({ iceServers: this.iceServers });
+            this.pc = this.rtcFactory({ iceServers: this.iceServers,iceTransportPolicy:this.useRemoteIceServers?'relay':'all' });
             this.pc.onicecandidate = event => {
                 if (event.candidate) void this._send({ type: "ice", payload: JSON.stringify(event.candidate) }).catch(() => this.close());
             };
             this.pc.ontrack = event => { if (typeof this.ontrack === "function") this.ontrack(event); };
             this.pc.onconnectionstatechange = () => {
+                if(this.pc?.connectionState==='connected')this.onconnected?.();
                 if (this.pc && ["failed", "closed"].includes(this.pc.connectionState)) void this.close();
             };
         }
@@ -79,7 +80,7 @@
             await this.pc.setLocalDescription(offer);
             await this._send({ type: "offer", payload: JSON.stringify(this.pc.localDescription) });
             return this.pc.localDescription;
-            } catch (error) { await this.close(); throw error; }
+            } catch (error) { this.failure=error; await this.close(); throw error; }
         }
 
         async prepareIncoming(callIdValue) {
@@ -163,6 +164,7 @@
         }
 
         async hangup() {
+            this.cancelled=true;
             try { if (!this.closed && this.callId) await this._send({ type: "hangup", payload: "" }); }
             finally { await this.close(false); }
         }

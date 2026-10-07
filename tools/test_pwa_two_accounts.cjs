@@ -3,12 +3,13 @@ const assert = require('node:assert/strict');
 const {chromium} = require(process.env.DMASH_PLAYWRIGHT_MODULE || 'playwright');
 const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
 (async () => {
- const browser = await chromium.launch({executablePath:process.env.DMASH_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
+ const browser = await chromium.launch({executablePath:process.env.DMASH_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,
+  args:process.env.DMASH_TEST_CALL==='1'?['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--autoplay-policy=no-user-gesture-required']:[]});
  const pages=[]; const failures=[];
  const eventually=async(page,fn,arg,timeout=120000)=>{const end=Date.now()+timeout;while(Date.now()<end){if(await page.evaluate(fn,arg)) return;await page.waitForTimeout(500);}throw Error('Async state did not converge');};
  try {
   for (const name of ['Alice','Bob']) {
-   const context=await browser.newContext(); const page=await context.newPage();pages.push(page);
+   const context=await browser.newContext(process.env.DMASH_TEST_CALL==='1'?{permissions:['microphone']}:{}); const page=await context.newPage();pages.push(page);
    page.on('pageerror',error=>failures.push(name+': '+error.message));
    page.on('console',message=>{if(/WARN|ERR|failed/i.test(message.text())) console.log(name,message.text());});
    await page.goto(base);
@@ -123,6 +124,28 @@ const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
   await pages[1].evaluate(()=>NodeManager.connect());
   await eventually(pages[1],async peer=>(await Storage.loadMessagesGamma(peer,50,0)).some(m=>m.inbound&&m.text==='Queued while Bob disconnected'),packages[0].user_id);
   console.log('PASS recipient reconnect and queued message delivery');
+  if(process.env.DMASH_TEST_CALL==='1'){
+   for(const page of pages)await page.evaluate(()=>{
+    Core.closeModal();const Native=window.RTCPeerConnection;
+    window.RTCPeerConnection=class extends Native{constructor(config){super({...config,iceTransportPolicy:'relay'});}};
+   });
+   await pages[0].locator('#voip-btn').click();
+   await pages[1].locator('#accept-call').waitFor({state:'visible',timeout:90000});
+   await pages[1].locator('#accept-call').click();
+   await Promise.all(pages.map(page=>page.waitForFunction(()=>Core.callState==='connected'&&Core.peerConnection?.connectionState==='connected',null,{timeout:60000})));
+   for(const page of pages)await eventually(page,async()=>{
+    const stats=await Core.peerConnection.getStats();let pair,received=false;
+    for(const row of stats.values()){
+     if(row.type==='transport'&&row.selectedCandidatePairId)pair=stats.get(row.selectedCandidatePairId);
+     if(row.type==='inbound-rtp'&&(row.kind==='audio'||row.mediaType==='audio')&&row.bytesReceived>0)received=true;
+    }
+    if(!pair)return false;
+    return received&&stats.get(pair.localCandidateId)?.candidateType==='relay'&&stats.get(pair.remoteCandidateId)?.candidateType==='relay';
+   });
+   console.log('PASS real public call UI: encrypted Account invitation, authenticated signaling, temporary TURN credentials, forced relay both sides and inbound audio RTP');
+   await pages[0].evaluate(()=>Core.endCall());
+   await eventually(pages[1],()=>Core.callState==='idle');
+  }
   await Promise.all(pages.map(page=>eventually(page,async()=>{
    const inbox=NodeManager.deviceInboxV3();await inbox.drain();
    for(const row of await inbox.store.all()) {const r=await inbox._open(row);if(r.record!=='pending'||r.policy?.scope!=='ACCOUNT')continue;
