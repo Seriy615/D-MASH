@@ -1,3 +1,7 @@
+> Current checkpoint and new-server transfer context: [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md).
+> This document describes a specific contract/deployment slice; historical release
+> numbers below are not the current runtime SHA.
+
 # EMS call startup — dedicated S-TURN deployment
 
 Before this change, the running dmash-node process had no S-TURN URLs, secret or

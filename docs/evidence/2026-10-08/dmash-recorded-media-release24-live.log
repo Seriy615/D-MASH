@@ -1,0 +1,26 @@
+Alice logged in; real EMS registration started
+Bob logged in; real EMS registration started
+PASS both Devices authenticated and DNSS registered
+PASS dropped initial public request retransmitted autonomously from durable state
+PASS outgoing and accepted public requests remain visible while remote confirmation is held
+PASS public contact request/accept/confirm with real Account key bundles
+PASS pairing contacts persisted and local Device routes installed
+PASS both contacts visible in sidebar and chat opens through an actual click
+Alice requested key exchange
+Alice %c[D-MASH][WARN] %cШлю SOS (0x02)... color:#ff9f0a; font-weight:bold; color:#ccc; 
+Alice %c[D-MASH][ERR] %cD-MASH send failed: Route unavailable color:#ff003c; font-weight:bold; color:#ccc; 
+Alice %c[D-MASH][WARN] %cШлю SOS (0x02)... color:#ff9f0a; font-weight:bold; color:#ccc; 
+Alice %c[D-MASH][ERR] %cD-MASH send failed: Route unavailable color:#ff003c; font-weight:bold; color:#ccc; 
+Alice %c[D-MASH][WARN] %cШлю SOS (0x02)... color:#ff9f0a; font-weight:bold; color:#ccc; 
+Bob %c[D-MASH][WARN] %cТихая ротация: SOS от b75bcd87 color:#ff9f0a; font-weight:bold; color:#ccc; 
+PASS initial Account key exchange
+PASS handshake confirmations excluded from user history
+PASS bidirectional messages before ratchet update
+PASS ratchet epoch 1 and bidirectional messages
+PASS delayed prior-epoch packet after initiator ACK
+PASS ratchet epoch 2 and bidirectional messages
+PASS recipient reconnect and queued message delivery
+PASS actual recorded voice: 17526 encoded bytes through EMS, single receiving history, playable Blob and durable final receipt
+PASS actual recorded video_note: 256394 encoded bytes through EMS, single receiving history, playable Blob and durable final receipt
+PASS real public call UI: encrypted Account invitation, authenticated signaling, temporary TURN credentials, forced relay both sides and inbound audio RTP
+PASS completed handshake controls retired from Device Inbox

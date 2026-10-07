@@ -1,3 +1,7 @@
+> Current checkpoint and new-server transfer context: [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md).
+> This document describes a specific contract/deployment slice; historical release
+> numbers below are not the current runtime SHA.
+
 # Native Node v4 deployment
 
 The application mounts `/mesh/v4`. It rejects WebSocket upgrade while

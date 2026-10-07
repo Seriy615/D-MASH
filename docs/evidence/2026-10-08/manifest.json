@@ -1,0 +1,59 @@
+{
+  "snapshot_date": "2026-10-08",
+  "timezone": "Europe/Moscow",
+  "runtime_sha": "ed200730dab2e64fc8446e344ce54dbd37cfeec5",
+  "release": "transport-v3-recorded-fragments-20261008.24",
+  "full_tests_exit_code": 0,
+  "live_browser_exit_code": 0,
+  "exact_verifier_exit_code": 0,
+  "files": [
+    {
+      "file": "dmash-recorded-media-release24-all-tests.log",
+      "sha256": "8dc61af65ba75f4d99b9f420c97cbd86d6e988e5a8440a79c9e56d9f31731386",
+      "bytes": 62098,
+      "original_path": "/tmp/dmash-recorded-media-release24-all-tests.log"
+    },
+    {
+      "file": "dmash-recorded-media-release24-live.log",
+      "sha256": "969b5682fa62ffea664d33edf62b74f91776f06d45ae972a7d1d98ff7ea75234",
+      "bytes": 1985,
+      "original_path": "/tmp/dmash-recorded-media-release24-live.log"
+    },
+    {
+      "file": "dmash-recorded-media-release24-verify.log",
+      "sha256": "9492629fcb6a9e0b9be6a4ec58f92394a9198981d30cb2bb2c94c8cba3b6d6e9",
+      "bytes": 47,
+      "original_path": "/tmp/dmash-recorded-media-release24-verify.log"
+    },
+    {
+      "file": "dmash-recorded-media-release24-deploy.log",
+      "sha256": "be644674f72172ca1af3a5444631bb2d990ad77b180b8f6e62fb3a91632e347f",
+      "bytes": 2688,
+      "original_path": "/tmp/dmash-recorded-media-release24-deploy.log"
+    },
+    {
+      "file": "dmash-recorded-media-release24-services.log",
+      "sha256": "4e777c9d08a5f38cd11b5b2756b3b4b0ed37aaf459b6bb75cf02b96aa8d0c607",
+      "bytes": 209,
+      "original_path": "/tmp/dmash-recorded-media-release24-services.log"
+    },
+    {
+      "file": "dmash-handoff-ems-inventory.log",
+      "sha256": "1c41e9d2e01f5e12c0300d5febe5add2c784e77b95d30385023e19c5c90d623e",
+      "bytes": 1405,
+      "original_path": "/tmp/dmash-handoff-ems-inventory.log"
+    },
+    {
+      "file": "dmash-handoff-exact-verify.log",
+      "sha256": "9492629fcb6a9e0b9be6a4ec58f92394a9198981d30cb2bb2c94c8cba3b6d6e9",
+      "bytes": 47,
+      "original_path": "/tmp/dmash-handoff-exact-verify.log"
+    },
+    {
+      "file": "dmash-call-release-local-rtc.log",
+      "sha256": "c5b38f98590266be38c41ac0b09cb5bedcb7d8522ef8bb6744b25b188358f210",
+      "bytes": 221,
+      "original_path": "/tmp/dmash-call-release-local-rtc.log"
+    }
+  ]
+}

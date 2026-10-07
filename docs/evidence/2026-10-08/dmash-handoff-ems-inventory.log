@@ -1,0 +1,38 @@
+ed200730dab2e64fc8446e344ce54dbd37cfeec5
+NRestarts=0
+WorkingDirectory=/opt/dmash-node/backend
+User=root
+Group=
+Id=dmash-node.service
+ActiveState=active
+SubState=running
+FragmentPath=/etc/systemd/system/dmash-node.service
+DropInPaths=/etc/systemd/system/dmash-node.service.d/40-node-v4.conf /etc/systemd/system/dmash-node.service.d/50-sturn.conf /etc/systemd/system/dmash-node.service.d/notifications.conf /etc/systemd/system/dmash-node.service.d/routing-discovery-v1.conf
+
+NRestarts=0
+WorkingDirectory=
+User=turnserver
+Group=turnserver
+Id=dmash-sturn.service
+ActiveState=active
+SubState=running
+FragmentPath=/etc/systemd/system/dmash-sturn.service
+DropInPaths=
+
+NRestarts=0
+WorkingDirectory=
+User=turnserver
+Group=turnserver
+Id=coturn.service
+ActiveState=active
+SubState=running
+FragmentPath=/usr/lib/systemd/system/coturn.service
+DropInPaths=
+775 codex:codex regular file /home/jcode/D-MASH/tools/get_commit.sh
+644 root:root regular file /etc/systemd/system/dmash-node.service.d/40-node-v4.conf
+644 root:root regular file /etc/systemd/system/dmash-node.service.d/50-sturn.conf
+600 root:root regular file /etc/dmash-sturn/node.env
+600 root:root regular file /etc/dmash-sturn/rest.secret
+640 root:turnserver regular file /etc/dmash-sturn/turnserver.conf
+700 root:root directory /var/lib/dmash-node-v4
+0109585710612424260917132c4f505c462c702ae074466616aa35093a950c59  /home/jcode/D-MASH/tools/get_commit.sh

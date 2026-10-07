@@ -1,4 +1,4 @@
-# Recorded-note transport — PARTIAL Account implementation, EMS candidate acceptance PASS; published acceptance pending
+# Recorded-note transport — PARTIAL Account implementation, EMS published .24 acceptance PASS; full N7 remains PARTIAL
 
 The previous inline recorded data path exceeds the frame bound even for a short video.
 `tools/diagnose_recorded_media_size.cjs` reproduces 33700 recording bytes becoming
@@ -60,8 +60,12 @@ Microphone/camera are synthetic. Private route readiness initially failed and
 recovered through existing retry; immediate readiness is not claimed.
 Crash tests also cover intent-before-local-history and receiver-history-before-
 assembly-completion writes. This does not prove every production crash window,
-mobile quota or full v4 UI cutover. Preparing release .24; deployed acceptance
-remains pending.
+mobile quota or full v4 UI cutover. Release .24 was committed/pushed/deployed at
+`ed200730dab2e64fc8446e344ce54dbd37cfeec5`. Published page/active SW .24 acceptance
+PASS: voice 17526/video-note 256394 encoded characters, single receiving history
+row, advancing playback, final receipt retirement, public contact/ratchet/reconnect
+and forced TURN call. Portable evidence: docs/evidence/2026-10-08. Synthetic
+mic/camera are not real-mobile evidence. See CURRENT_HANDOFF.md for current scope.
 
 Required evidence: real Account/recipient crypto; offline sender/recipient and
 locked different Account; loss/duplicate/reorder of every fragment/receipt; crash
@@ -79,5 +83,6 @@ bounds, keys, peer identity and Node wire metadata are unchanged. No browser
 vault migration/deletion is performed. During rollback do not discard pending
 media rows or downgrade an active transfer to an older outbox reader; retain
 encrypted state and resume .24 to settle it. Existing public/private route and
-ratchet recovery limitations remain independent work. Published version .24
-and active SW exact-source acceptance must still be checked after deployment.
+ratchet recovery limitations remain independent work. Published version .24 and active SW exact-source/behavior acceptance passed.
+These results cover bounded v3 migration delivery; actual ordinary v4 Account
+UI cutover and broad migration/fault/mobile acceptance remain incomplete.

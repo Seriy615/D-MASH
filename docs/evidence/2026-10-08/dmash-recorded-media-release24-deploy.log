@@ -1,0 +1,57 @@
+From github.com:Seriy615/D-MASH
+   1ba5e55..ed20073  transport-v3 -> origin/transport-v3
+Updating 1ba5e55..ed20073
+Fast-forward
+ ACCOUNT_RECORDED_MEDIA.md                          |  83 ++++++++
+ CURRENT_HANDOFF.md                                 |  65 ++++++
+ .../not_messenger/js/account_node_transport_v4.js  |  18 +-
+ .../not_messenger/js/account_recorded_media.js     | 219 +++++++++++++++++++++
+ D-MASH PWA/not_messenger/js/core_engine.js         | 157 ++++++++-------
+ D-MASH PWA/not_messenger/js/release.js             |   3 +-
+ D-MASH PWA/not_messenger/js/storage.js             |  17 +-
+ D-MASH PWA/not_messenger/sw.js                     |   3 +-
+ .../tests/account_recorded_media.test.js           |  88 +++++++++
+ .../not_messenger/tests/recording_context.test.js  |  28 +++
+ tools/test_pwa_two_accounts.cjs                    |  46 ++++-
+ 11 files changed, 640 insertions(+), 87 deletions(-)
+ create mode 100644 ACCOUNT_RECORDED_MEDIA.md
+ create mode 100644 D-MASH PWA/not_messenger/js/account_recorded_media.js
+ create mode 100644 D-MASH PWA/not_messenger/tests/account_recorded_media.test.js
+ create mode 100644 D-MASH PWA/not_messenger/tests/recording_context.test.js
+
+[1;36m[23:19:29][0m Fetching Git refs
+
+[1;36m[23:19:31][0m Target commit
+commit: ed200730dab2e64fc8446e344ce54dbd37cfeec5
+subject: Deliver recorded notes through bounded Account fragments and durable receipts
+date: 2026-10-08T02:19:11+03:00
+
+[1;36m[23:19:31][0m Creating production backup: /srv/messenger.d-mash.ru/backups/manual-rollback-20261007T231929Z
+
+[1;36m[23:19:31][0m Extracting PWA from Git commit
+
+[1;36m[23:19:31][0m Normalizing public file permissions
+
+[1;36m[23:19:31][0m Deploying DIRECTLY TO PRODUCTION
+
+[1;36m[23:19:32][0m Applying nginx read permissions
+
+[1;36m[23:19:32][0m Validating nginx configuration
+2026/10/07 23:19:32 [warn] 884895#884895: protocol options redefined for 0.0.0.0:443 in /etc/nginx/sites-enabled/dmash-messenger:48
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+[1;36m[23:19:32][0m Checking nginx filesystem access
+
+[1;36m[23:19:34][0m Checking public HTTPS
+
+============================================================
+ D-MASH PRODUCTION ROLLBACK OK
+============================================================
+ commit : ed200730dab2e64fc8446e344ce54dbd37cfeec5
+ short  : ed200730dab2
+ release: unknown
+ backup : /srv/messenger.d-mash.ru/backups/manual-rollback-20261007T231929Z
+ prod   : /srv/messenger.d-mash.ru/public_html/not_messenger
+ url    : https://messenger.d-mash.ru/not_messenger/
+============================================================

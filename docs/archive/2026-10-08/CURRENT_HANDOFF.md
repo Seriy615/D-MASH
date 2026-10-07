@@ -1,0 +1,1431 @@
+# Архив: не является текущим заданием
+
+Снимок до консолидации контекста 8 октября 2026 года. Актуальное состояние
+и порядок работы: [CURRENT_HANDOFF](../../../CURRENT_HANDOFF.md).
+Указания, SHA и статусы ниже исторические.
+
+---
+
+# Deployed checkpoint — .24 exact 205-file source match; live acceptance running
+
+Committed/pushed/deployed .24 SHA `ed200730dab2e64fc8446e344ce54dbd37cfeec5`,
+release `transport-v3-recorded-fragments-20261008.24`. EMS codex-owned checkout
+fast-forwarded and original `/home/jcode/D-MASH/tools/get_commit.sh FULLSHA`
+completed (`/tmp/dmash-recorded-media-release24-deploy.log`); backup
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261007T231929Z`.
+No backend restart for PWA changes. Exact revision verifier PASS: 205 files, no
+missing/changed (`/tmp/dmash-recorded-media-release24-verify.log`). dmash-node,
+dmash-sturn and coturn active/running/NRestarts=0. Full final 264 backend + 11
+Origin + 67 JS suites PASS before commit; changed bytes were tested, credential
+pattern scan/manual review/diff check PASS. See ACCOUNT_RECORDED_MEDIA.md for
+additive schema and rollback limitations.
+
+Actual deployed browser regression is RUNNING in exec session 1487, log
+`/tmp/dmash-recorded-media-release24-live.log`. It checks page/active SW .24,
+fresh public Request/Accept/Confirm with the initial request deliberately lost,
+waiting cards and actual chat clicks, initial/ratchet/messages/reconnect, actual
+UI voice/video recording delivered and played through EMS, final receipts, and
+real forced-TURN call UI/RTP/hangup. Check this exact handle; do not restart just
+because an observation times out. Last observed both Accounts logged in, EMS
+registration underway; no deployed behavioral PASS yet. Candidate private
+recording acceptance remains PASS as documented below.
+
+Next substantive stage after live .24 acceptance: connect NodeRuntimeHostV4 to
+DeviceRoot lifecycle, preserve encrypted identities/bindings, automatic v4 local
+route/peer/contact mapping and authenticated migration. Current release support
+loads Account adapters but never starts/attaches Node host in ordinary UI;
+ensureAutomaticMeshRoute still installs private v3 Device routes. Native
+/mesh/v4 and browser Worker are separately deployed/tested; neither proves N3
+Account UI cutover. Need actual Account->Worker->EMS->Worker->Account evidence,
+then safe public/private flow integration, mailbox recovery and every remaining
+N0–N8/A–M/E6 item. No goal completion claim.
+
+---
+
+# Live checkpoint — .23 call-start/public relay acceptance PASS
+
+Release .23 `1ba5e550678fad2fdfba77a03d7fab6eeeccd029` is pushed, deployed and
+synchronized via EMS get_commit.sh. Exact source match: 202 files, no missing or
+changed. dmash-node, dedicated dmash-sturn and existing coturn active/running,
+NRestarts=0. Isolated committed-source full tests PASS: 264 backend + 11 Origin
++ 65 JS suites (`/tmp/dmash-call-release-all-tests.log`). Local RTC Chrome PASS.
+Public fresh two-Account acceptance PASS (`/tmp/dmash-call-release-live-accounts.log`):
+Request/Accept/Confirm and actual visible sidebar/chat clicks, initial exchange,
+messages, ratchet 1/2/delayed old epoch/reconnect, actual call UI start/accept,
+forced relay candidates on both sides, inbound audio RTP both sides, hangup to
+idle. Microphones are synthetic. See EMS_STURN_DEPLOYMENT.md for service setup;
+SDP/ICE signaling is not E2EE, so full N5/N7 privacy is still incomplete.
+
+Uncommitted recorded-note implementation: Account-owned authenticated profile,
+4096-character fragments inside existing signed/ratcheted packets, window eight
+awaiting durable peer receipts, encrypted outbox/assembly state, 16 MiB encoded
+DataURL bound, 32 MiB receiver reservations, quota/expiry/complete tombstones,
+one Gamma history note and final verified digest receipt. Known oversized-note
+reproduction is covered by real Account crypto + v3/v4 envelope bounds in
+account_recorded_media.test.js. Loss/restart/disk failure/Account isolation,
+final-receipt loss/deduplication/conflict, profile timeout/quota/expiry and
+transient permit storage retry PASS with controlled transport/storage. Actual
+Chrome local recording/playback/damaged-note/gesture regression PASS. Recorder
+callbacks retain original peer; late permission/chat/Account/cancel races PASS.
+Assets are wired into release loader/SW. EMS two-Account actual recording and
+playback candidate acceptance PASS (`/tmp/dmash-recorded-media-ems-candidate.log`):
+UI voice 17942 encoded chars/video-note 259034 chars, actual encrypted private
+routes, one receiving history row, playback advances and final receipt retires
+the outbox. Private route readiness initially failed then recovered, not immediate.
+Intent-before-history and receiver-history-before-assembly crash tests PASS.
+Final .24 candidate full regression PASS: 264 backend + 11 Origin + 67 JS suites
+(`/tmp/dmash-recorded-media-release24-all-tests.log`), including both crash windows.
+Manual review, diff check and credential-pattern scan PASS. Preparing commit/deploy.
+
+Next: finish real delivery acceptance, update release, full regression,
+commit/push/deploy and exact source/deployed acceptance. Then real v4 Account/
+contact integration and every remaining N0–N8/A–M/E6 requirement. Current v3
+migration tests do not prove complete v4 UI cutover, crash/fault/mobile matrix,
+installer or signaling privacy. Goal remains active; no full completion claim.
+
+---
+
+# Live checkpoint — .22 public first-request loss acceptance PASS
+
+Release .22 `4e5c5aa481490f9f4f26b31e716f827eaf33be30` is pushed, deployed
+and synchronized through EMS get_commit.sh. Exact source match: 201 files,
+no missing/changed; service active/running, NRestarts=0. Browser .22 page/SW
+acceptance PASS (`/tmp/dmash-v4-public-request-retry-live.log`): deliberately drop
+first initial public request after local Node acceptance; autonomous durable retry
+reaches recipient; held confirmation keeps outgoing/accepted cards visible;
+Request/Accept/Confirm, actual sidebar/chat clicks, initial exchange, messages,
+ratchet 1/2, delayed prior epoch, reconnect and control retirement all pass.
+Transient route-unavailable retries preceded initial exchange; do not claim
+immediate route readiness. Full 263 backend + 11 Origin + 64 JS suites PASS.
+
+Next: implement the recorded-note fragmentation/profile/receipt design in
+ACCOUNT_RECORDED_MEDIA.md (currently a proposal, no transfer implementation),
+then real v4 Account/contact integration and the rest of N0–N8/A–M/E6. Existing
+old public states lacking initial ciphertext do not yet gain automatic retry;
+full recovery/migration, ratchet/session phase matrix and privacy gates remain
+required. Goal remains active; no full completion claim.
+
+---
+
+# Execution checkpoint — durable first public request
+
+Release .21 `b0a82f358a275416f95029f7a3ff3fd8d278e665` is pushed, EMS
+synchronized via get_commit.sh and deployed: exact 201-file match, active/running,
+NRestarts=0. Published registry runtime PASS on real Chrome IDB with delayed
+WebCrypto, migration failure preservation/retry and account CRUD
+(`/tmp/dmash-v4-registry-contact-public-registry.log`). Public two-Account browser
+acceptance .21 PASS: visible outgoing/accepted waiting cards with held remote
+confirmation, real public Request/Accept/Confirm, both sidebar peers visible,
+actual click to open both chats, initial exchange, bidirectional messages,
+ratchet 1/2, delayed old epoch, reconnect and control retirement
+(`/tmp/dmash-v4-registry-contact-public-ui.log`). Fresh Accounts are evidence;
+full existing-state recovery remains separate.
+
+Prepared .22 `transport-v3-public-request-retry-20261008.22`: persist the exact
+initial encrypted public request before route lookup/submission, with immutable
+ID/request/certificate/Account owner. Reserve attempts/backoff before network
+work; 5 s -> 5 min delays, 256 attempt cap, 24 h TTL. Owning Account local sync
+resumes retries; accepted bootstrap stops initial retries. Late Account changes
+cancel submission after route lookup. Retry advertises only the request's local
+reply route, not all public routes. Failed first send displays a durable queued
+request. Accept/Confirm send=false is a failed operation, not establishment.
+Old states without an initial envelope stay readable; no invented ciphertext
+migration is claimed. See CONTACT_REQUEST_RETRY.md.
+
+Expanded real encrypted Device Inbox/NaCl contact test PASS: failed initial
+send, persisted-envelope restart retry, backoff, Account isolation, accepted
+bootstrap stopping retry, expiry/budget bounds, send=false Accept/Confirm.
+Full regression PASS: 263 backend + 11 Origin + 64 JS suites
+(`/tmp/dmash-v4-public-request-retry-all-tests.log`). Next: commit/push/deploy,
+exact revision verification and deployed public UI acceptance with the first
+initial request deliberately dropped before recipient delivery.
+
+Large recorded-note failure is now reproduced with actual Account ratchet
+cipher/signature and Device envelope validation in
+`tools/diagnose_recorded_media_size.cjs`: 33700 media bytes -> 90627 Account
+payload bytes -> Device envelope size limit. Diagnostic intentionally exits 1;
+it is not a passing release check. Bounded/chunked note delivery remains work;
+raising a frame limit or perpetually queuing the oversized packet is not the
+requested solution. Next substantive work remains large-note transfer and real
+v4 Account/contact integration, followed by full N0–N8/A–M/E6 evidence matrix.
+Goal remains active; no full completion claim.
+
+---
+
+# Execution checkpoint — IndexedDB login fix and public contact visibility
+
+Release .20 `d51f146b2a9e93597e9acbeb1c5495b3e460a425` is pushed, deployed
+and EMS synchronized through get_commit.sh: exact 201-file match, active/running,
+NRestarts=0. Deployed recorded-media browser playback/decoder error/panic guards
+PASS (`/tmp/dmash-v4-contact-media-public-playback.log`). Private two-Account
+acceptance including signed contact deletion and Entry confirmation PASS
+(`/tmp/dmash-v4-contact-media-live-accounts.log`). Public Request/Accept/Confirm,
+visible contact rows and actual click to open both chats, subsequent messaging,
+ratchet/reconnect PASS (`/tmp/dmash-v4-public-contact-ui.log`). Fresh test Accounts
+passed; this does not prove recovery of every existing user's pending state.
+
+Prepared .21 `transport-v3-registry-contact-status-20261008.21`:
+- Fix reported inactive IndexedDB transaction at login. Registry aliases/AES
+  ciphertext are computed before opening get/put/delete transactions. Migration
+  precomputes encrypted rows, commits accounts and marker atomically, then retires
+  only unchanged migrated legacy rows. Failed migration retains old records and
+  permits retry. Real Chrome IDB with delayed WebCrypto exercises CRUD, metadata
+  preservation and failure/retry (`tools/test_secure_registry_browser.cjs` PASS).
+- Public request progress stays visible in sidebar before authenticated contact
+  establishment. Completed flows disappear in favor of the actual peer chat;
+  pending rows cannot be used as established peers. Resume isolates corrupt/failing
+  unrelated records so one broken historical state cannot block all contacts.
+- Public route disable calls signed UNREGISTER_ROUTE and removes local delivery
+  policy/pending records. Failed activation/reissue cannot show a success status.
+  Outgoing requests select an active reply route; a disabled current route is not
+  silently used. These are v3 migration UI/runtime fixes, not v4 contact cutover.
+
+Full regression PASS: 263 backend + 11 Origin + 64 JS
+(`/tmp/dmash-v4-registry-contact-all-tests.log`). Final 64 JS rerun PASS after
+active reply-route selection changes (`/tmp/dmash-v4-registry-contact-js-final.log`).
+Focused route lifecycle tests also PASS after the final registration/disable race guard.
+Next: commit/push/deploy .21; exact-SHA, public registry CRUD/failure and public
+visible waiting-state + actual chat-click acceptance. User-reported login/media
+and public UI bugs steer current work. Then continue actual v4 two-Account
+integration and full N0–N8/A–M/E6 scope; no completion claim.
+Recorded media still has an outstanding large-payload transport requirement:
+inline Device envelope is bounded at 32 KiB, so notes above its limit require a
+real bounded transfer/chunk path rather than perpetual resend of an oversized
+single packet. Playback fix is separate evidence and does not prove large-note
+network delivery. Authenticated stale-state recovery, confirmed-established
+separation, bounded retry/versioning, mailbox and remaining milestones stay open.
+
+---
+
+# Execution checkpoint — contact deletion, recorded media, local Account v4 sender
+
+Release .19 `9cf2baf1f2b9237641219b41da731d8e8233bf5e` is deployed on EMS,
+exact 199-file match, active/running, NRestarts=0. Live two-Account .19 page/SW,
+late pairing, initial exchange, bidirectional messages, ratchet 1/2, delayed old
+epoch, reconnect and control retirement PASS
+(`/tmp/dmash-v4-handshake-single-flight-live.log`). Transient route unavailable
+retries preceded successful exchange.
+
+Prepared .20 `transport-v3-contact-media-20261008.20` addresses user reports:
+- Private contact deletion uses signed UNREGISTER_ROUTE, erases encrypted local
+  private inbound/outbound material, policy and pending records; reconnect cannot
+  advertise the deleted contact. Unregistered deletion is idempotent. Account
+  deletion also removes its peer route mappings. Unconfirmed remote revocation
+  remains explicitly reported as TTL retirement, not successful server deletion.
+- MediaRecorder MIME can contain a comma in codecs=vp8,opus. FileReader retains
+  that comma in the data URL header, breaking normal decoding. Playback normalizes
+  to base MIME and explicit base64 delimiter, then creates a Blob URL. Media
+  metadata has a bounded deadline/error/retry/download path. Chrome actual
+  MediaRecorder audio/video playback and malformed input PASS; Safari/real phone
+  acceptance is not yet evidence.
+- Opt-in motion panic now respects recording and scanner suppression, resets
+  stale motion samples and leaves explicitly enabled gestures operational.
+- An explicit AccountNodeTransportV4 adapter persists Account-encrypted peer
+  certificate/local reply mappings and routes initial/final/message/ratchet
+  envelopes through local Worker discover/submit, with no v3 fallback after
+  attachment. No Account keys/peer ID reach Worker discovery. Local queue status
+  is not a peer receipt. Unit test uses real Account initial NaCl/Kyber crypto,
+  controlled local host; it is not a v4 network acceptance. UI, v4 automatic
+  contact provisioning, autonomous outbox resume and full migration remain open.
+
+Full .20 regression PASS: 263 backend + 11 Origin + 64 JS suites
+(`/tmp/dmash-v4-contact-media-all-tests.log`). Private signed-revocation and
+readd regression PASS. Actual recorded media browser tool PASS
+(`tools/test_recorded_media_browser.cjs`). Final panic guard adjusted to retain
+panic with Node root unlocked but no active Account; focused browser rerun next.
+Next: commit/push/deploy .20, exact revision verification, public recorded-media
+and two-Account deletion acceptance. Then continue real v4 two-Account network
+integration and the remaining N0–N8/A–M/E6 matrix. Goal remains active.
+
+---
+
+# Execution checkpoint — concurrent initial attempts
+
+Release .18 `51774fa4a2a4e760917b9275a3a35b8a149f7422` is pushed,
+synchronized via EMS get_commit.sh and deployed: exact 199-file match,
+service active/running, NRestarts=0. Live two-Account acceptance PASS,
+including page/active SW .18, late pairing, initial exchange, no confirmation
+in history, bidirectional messages, ratchet epochs 1/2, delayed old-epoch packet,
+recipient reconnect and control Inbox retirement.
+Log `/tmp/dmash-v4-handshake-controls-live.log`; route unavailable retries
+occurred before successful initial exchange.
+
+Prepared .19 `transport-v3-handshake-single-flight-20261008.19`: concurrent
+initial encrypt operations for one Account key generation/peer share one task,
+then later retries reuse the persisted packet. Previous reproduction returned
+two different packets and saved only the second. H1 now covers this race and
+Account lock during delayed alias lookup. Session checks guard initial storage
+lookups/persistence; full vault write-transaction isolation remains outstanding.
+All 63 JS suites PASS (`/tmp/dmash-v4-handshake-single-flight-js.log`);
+expanded real NaCl/Kyber diagnostic H1-H3 PASS after the lock regression.
+Next: commit/push/deploy .19, verify exact revision and live acceptance.
+Then continue actual Account outbound/contact provisioning on v4 and the
+remaining N4 state machine/recovery/versioning/crash matrix. Full N0–N8/A–M/E6
+goal remains active; N3/N4 remain partial.
+
+---
+
+# Execution checkpoint — initial handshake retention deployed; control history fix
+
+Release .17 `11ce1b4ac53ce15bd0d7605de4ef763c43cf3a1e` is pushed,
+synchronized through EMS get_commit.sh and deployed: exact 199-file match,
+service active/running, NRestarts=0. Public page and active SW .17 checked by
+the two-Account acceptance. Live late pairing, initial exchange, bidirectional
+messages, ratchet epochs 1/2, delayed old-epoch packet, offline reconnect delivery
+and control Inbox retirement PASS (`/tmp/dmash-v4-handshake-live-accounts.log`).
+Route unavailable retries occurred before successful initial exchange.
+Public v4 Worker reconnect/DeviceRoot lock also PASS
+(`/tmp/dmash-v4-handshake-remote-worker.log`).
+
+Prepared .18 `transport-v3-handshake-controls-20261008.18`: initial handshake
+controls and pqc_confirm are excluded from outbound user history. Failed
+confirmation sends retain the final Inbox record for retry and cannot add queued
+user history. Real NaCl/Kyber H3 now tests both successful and failed confirmation
+through the Account receiver with the corresponding chat selected.
+All 63 JS suites PASS (`/tmp/dmash-v4-handshake-controls-js.log`).
+Next: commit/push/deploy .18 and deployed acceptance.
+N4 remains partial: state-machine phases, confirmed-established separation,
+authenticated stale-state recovery, wire-version negotiation, per-peer bounded
+retry/backoff and full crash/loss/reorder matrix remain required. Continue full
+N0–N8/A–M/E6 scope after this checkpoint; no completion claim.
+
+---
+
+# Execution checkpoint — retained Kyber final across Node acceptance (partial N4)
+
+Release .16 `93d93a22dca149ec7eeae31ce49fe8308d3167e1` is deployed and exact
+verified on EMS: 198 files, no missing/changed files; service active, NRestarts=0.
+Public Worker WSS reconnect/lock PASS. Live two-Account browser acceptance on .16
+PASS: contact late pairing, initial key exchange, bidirectional messages, ratchet
+epochs 1/2, delayed old-epoch message, offline reconnect delivery and control
+Inbox retirement. Log `/tmp/dmash-v4-account-inbox-live-accounts.log`.
+Transient `Route unavailable` retries occurred before route delivery.
+Full .16 regression PASS: 263 backend + 11 Origin + 62 JS suites
+(`/tmp/dmash-v4-account-inbox-final-tests.log`). Python 3.12 venv was recreated
+using the bundled interpreter after the previous `/tmp` interpreter symlink broke.
+
+Prepared .17 (`transport-v3-handshake-retention-20261008.17`): initial proposals
+carry a durable random attempt ID and the exact retry packet. Crossed proposals
+choose the lower AccountID as initiator; the losing local attempt is retired,
+winning retransmissions reuse the saved packet, and finals for other attempts are
+silently ignored. A Kyber final is retained after adjacent Node acceptance and
+retransmitted for duplicate init. Recipient emits an encrypted `pqc_confirm` only
+after saving the shared secret. Responder retires the final only after decrypting
+that control under the matching secret and verifying the Account signature.
+The initiator persists its accepted capsule/attempt receipt; a duplicate final
+resends confirmation after a lost confirmation or failed local send. A different
+capsule cannot solicit that receipt or overwrite the accepted secret. H3 covers
+lost final and lost confirmation through the real Account receiver.
+
+Bundled real NaCl + Kyber diagnostic now PASS H1/H2/H3
+(`tools/diagnose_initial_handshake.cjs`); focused retry test also PASS.
+H1 exercises crossed actual KEM proposals, deterministic winner and same-attempt
+final. H3 exercises retry and remote encrypted confirmation/retirement. H2 still
+only proves a response after one side loses state; broad stale-session, replay,
+loss/reorder, crash/reload phase matrix remains outstanding. Explicit handshake
+wire-version negotiation, bounded retry/backoff and pending-final expiry are also
+not complete. N4 remains partial.
+
+Full .17 suite PASS: 263 backend + 11 Origin + 63 JS suites
+(`/tmp/dmash-v4-handshake-all-tests.log`). All 63 JS suites rerun PASS after
+the lost-confirmation fix (`/tmp/dmash-v4-handshake-js-final.log`).
+Next: commit/push/deploy and run deployed two-Account acceptance;
+then continue actual v4 outbound Account transport, route certificate/contact
+provisioning, mailbox and the N0–N8/A–M/E6 matrix. Full N0–N8/A–M/E6 plan remains active. Estimate remains roughly
+35% complete, 30–40% range, and is not a test-pass percentage.
+
+---
+
+# Execution checkpoint — Account consumer for Node Inbox (partial N3)
+
+Previous release .15, `36ba94fb5cbcd54285729e2c7f2aaec65cc31d73`, was pushed,
+synchronized and deployed to EMS: exact 196-file match, active/running,
+NRestarts=0. Real public Worker WSS authorization twice/reconnect/lock PASS
+(/tmp/dmash-v4-owner-remote-worker.log), public page/active SW .15 and cached new
+modules PASS (/tmp/dmash-v4-owner-release.log).
+
+Prepared .16 (`transport-v3-account-inbox-20260925.16`). Core now exposes an
+explicit Node Inbox attachment and v4 receiver. Account-encrypted local route
+mapping selects the expected peer, then the actual sender-proof/decrypt/persist
+pipeline is shared with v3. Slot and key/salt generation guard every async phase;
+Account switch waits for in-flight consumption. No Account key goes to Worker.
+The consumer retains failed records, ACKs only after Account handling succeeds,
+and paginates past invalid records in bounded 4x32 passes. Cursor remains valid
+when the previous row is retired. IPC now requires version 2 in both directions;
+old version 1 must be refused because it ignored the cursor.
+
+Tests PASS: 263 backend + 11 Origin + 62 JS suites
+(/tmp/dmash-v4-account-inbox-tests.log). New Account test uses real recipient
+crypto and real Account ratchet encryption/signatures with an established epoch
+fixture. It covers wrong Account, failed persistence, lost local receipt without
+duplicate history, 129 rejected entries before valid mail, and key replacement
+while listing. Account storage faults are controlled; this is not production
+vault or initial-handshake evidence. Browser Worker/native transit + local Inbox
+cursor after retirement PASS (/tmp/dmash-v4-account-inbox-transit.log). Real
+cross-tab ownership and missing/old/unknown IPC refusal PASS
+(/tmp/dmash-v4-account-inbox-owner.log).
+
+Next: commit/deploy .16, public Worker and v3 Account regression because Core
+handling was factored. Then implement v4 outbound Account adapter, route/contact
+provisioning and actual two-Account v4 network acceptance. attachNodeInboxV4 is
+explicit and UI still operates over v3; no N3 completion claim. Route renewal,
+mailbox, H1/H2/H3, remaining N0–N8/A–M/E6 requirements remain open.
+User requested overall progress: approximate 35%, range 30–40%, engineering
+estimate of remaining work rather than green-test fraction.
+
+---
+
+# Execution checkpoint — exclusive browser Node owner and local API version
+
+Inbox release .14 (`cceba8420cda8c4ad0b342859f8b062b9837c40f`) is pushed,
+synchronized and deployed to EMS. Exact match: 196 files, no differences;
+service active/running, NRestarts=0. Public Worker reconnect/lock PASS
+(/tmp/dmash-v4-inbox-remote-worker.log). Live two-Account late-pairing PASS:
+initial exchange, bidirectional messages, ratchet epochs 1/2, delayed previous
+packet, reconnect queue and control Inbox retirement. Page/active SW .14 asserted.
+Log /tmp/dmash-v4-inbox-ems-accounts.log. Transient connection/route-unavailable
+retries occurred before success; no immediate-readiness claim.
+
+Prepared .15 (`transport-v3-node-owner-20260925.15`): the Worker takes an exclusive
+origin-wide Web Lock before opening Node storage. The lock lives until Worker
+exit, including forced termination; it is not released prematurely by host
+cleanup. A competing tab fails instead of creating a second actor for the same
+origin-wide databases. Missing Web Locks support fails closed. Host/actor INIT
+now require local API version 1 in both directions, refusing old/mixed actors.
+This is local IPC versioning, not a network protocol change.
+
+Real Chrome two-tab test PASS: rejection without harming winner, inactive-tab
+lock isolation, owner-tab close, hard Worker termination, root lock, reload,
+persistent identity and missing/unknown API refusal. Log
+/tmp/dmash-v4-worker-ownership-api.log. 61 JS suites PASS
+(/tmp/dmash-v4-owner-js-tests.log). Real Worker/native transit, cover and local
+Inbox restore PASS after the ownership change and before the API-version guard
+(/tmp/dmash-v4-owned-transit.log); the final API guard is covered by the later
+real-Worker test. Backend is unchanged from 263 + 11 passing suites.
+
+Next: commit/deploy .15 and verify public Worker/API and SW release. Continue N3
+Account/route integration and N4 reliability. Exclusive ownership does not yet
+provide shared-tab RPC, ownership takeover UI, or cross-tab global lock broadcast.
+Active Account UI still uses v3; automatic v4 peering, private certificate
+exchange/renewal, mailbox and full plan acceptance remain open.
+
+---
+
+# Execution checkpoint — persistent Worker Inbox and local Node API
+
+Prepared release `transport-v3-node-inbox-20260925.14`. Previous deployed/source
+revision `0d3043863bd254457124f390f03cefd345bbe284` (.13) was verified exactly:
+193 files, no differences, service active/running, NRestarts=0. Public v4 Worker
+reconnect/lock and v3 two-Account late-pairing regressions passed on that release.
+Logs: /tmp/dmash-v4-pow-remote-worker.log, /tmp/dmash-v4-pow-ems-accounts.log.
+
+New local Worker RPC supports bind, recipient-key installation, discover, submit,
+Inbox list and local persistence receipt. It carries no Account or route-owner
+private key. Submit reports queued only, never end-to-end delivery. Inbox and
+route/discovery material persist encrypted under distinct Node storage domains;
+blind lookup keys, Node identity binding, CAS duplicates, separate bounded binding
+metadata, atomic deferred-to-pending promotion and local seen tombstones.
+Wrong keys fail closed; damaged rows do not block other rows. Missing recipient
+keys defer opaque boxes, known-key MAC failures discard cover silently. Local
+receipt is issued only after Account persistence; it is not a network/mailbox ACK.
+
+Real IndexedDB Chrome test PASS: concurrent tabs, duplicate insert, reload,
+record/byte quotas, corruption isolation, ACK shrinking an over-quota queue,
+full-queue deferred promotion, wrong key/identity and close aborting transactions.
+Log /tmp/dmash-v4-inbox-indexeddb.log. Real Worker/native network test PASS:
+N1 -> browser -> N2 transit, late bind, cover, local deferred receive/key install,
+local discover/submit/reply, lock and restored bindings plus pending Inbox after
+unlock. Log /tmp/dmash-v4-local-api-worker.log. Account payloads in this test are
+synthetic opaque strings; it proves routing/storage, not Account UI migration.
+Full suite: 263 backend + 11 Origin + 61 JS PASS
+(/tmp/dmash-v4-inbox-all-tests.log).
+
+Next: commit, push, EMS sync/deploy and public release acceptance. Then integrate
+real Account contacts and persistence with the local API, including private route
+certificate exchange, renewal/revocation, cross-tab Node ownership and mailbox.
+Seen entries share a bounded quota and expire after 30 days; sustained-load quota
+and retention policy remain incomplete. H1/H2/H3 and N0–N8 remain open. Account UI
+still uses v3; production cover is not enabled. No full N3 completion claim.
+
+---
+
+# Execution checkpoint — public WSS v4 verified; PoW prefix optimization
+
+EMS now runs native /mesh/v4 at wss://stage-api-ems.d-mash.ru/mesh/v4.
+Deployed/source at activation: 7f5b74f379a5521bfc444780c41278fca49b34a3,
+193-file exact match; active/running, NRestarts=0. StateDirectory permission 0700,
+storage/Base NCRH files 0600. First enable attempt failed under ProtectSystem and
+rolled back; StateDirectory fixed this without weakening the filesystem sandbox.
+Configuration and rollback are documented in NODE_V4_DEPLOYMENT.md.
+
+Real Chrome Worker public WSS PASS with unchanged production difficulty, repeated
+mutual authorization, stable persisted NodeID and DeviceRoot lock; no Account login.
+Log: /tmp/dmash-v4-remote-worker-diagnostic.log. Initial harness assumed Core was
+loaded by the shell and was corrected to load only Node dependencies. A subsequent
+Worker authorization attempt returned a generic failure; the diagnostic retry passed.
+Do not claim its exact cause established or long-run reliability proved.
+
+Native N1 -> EMS -> N2 encrypted discovery and DATA PASS with only EMS as each
+Node's neighbor, recipient decryption and hop-label rewrite; no direct bypass.
+Log: /tmp/dmash-v4-remote-native-clock.log. First native attempt rejected challenge;
+Python upper clock bound was stricter than JS. Both initiators now accept at most
+20 seconds ahead while the responder keeps its original 15-second AUTH deadline.
+17 focused secure-session tests PASS (/tmp/dmash-v4-native-clock-tests.log).
+
+Browser resource PoW now caches immutable-prefix SHA state and reuses tail buffers.
+No transcript, hash, nonce range or difficulty change. Native SHA comparisons cover
+all block remainders and nonce boundaries through MAX_SAFE_INTEGER. Local Node
+benchmark of 98,304 identical candidates: 1240 ms before, 199 ms after; not a phone
+performance guarantee. Full suite after optimization, before the clock follow-up:
+262 backend + 11 Origin + 60 JS PASS (/tmp/dmash-v4-pow-prefix-all-tests.log).
+Release .13 prepared; next commit/deploy and both live v4 Worker and v3 Account
+regressions. Active PWA remains v3 pending N3 local Node/Inbox integration. Full
+plan remains active; no privacy, Account migration or N8 completion claim.
+
+---
+
+# Execution checkpoint — mounted opt-in native v4 gateway
+
+Native /mesh/v4 router now shares the application lifecycle. Explicit
+DMASH_NODE_V4_ENABLED flag defaults off. Private visibility requires protected
+password credential; can_route=false refuses enabling. Node identity is preserved.
+Independent Base NCRH and relationship storage key persist in a 0700 state directory;
+material files must be owner-only regular non-symlink files. Missing keys with an
+existing DB fail closed. Deploy/rollback excludes node_v4_state runtime contents.
+
+Listener reserves quota before WebSocket upgrade. Uvicorn frame/queue limits are
+2 MiB / 16, compression disabled. v4 modules support both package tests and the
+existing main.py top-level runtime imports. The real browser fixture now uses
+NodeServiceV4 and the actual FastAPI gateway, not a custom WebSocket handler.
+Chrome Worker transit PASS: /tmp/dmash-v4-gateway-browser.log. Full suite PASS:
+262 backend + 11 Origin + 60 JS (/tmp/dmash-v4-service-all-tests.log). A focused
+follow-up covers the final pre-upgrade test and missing-key guard.
+
+Before this slice, source and exact deployed revision were
+5a0d51329e541ac5f3304649f79482df50463bcd (191 files, service active, NRestarts=0).
+Next: commit/sync/deploy, explicitly enable /mesh/v4 on EMS using protected persistent
+state and a dedicated nginx location, then run tools/test_worker_v4_remote.cjs with
+an out-of-band pinned public NodeID. Browser Account traffic remains v3 until N3
+integration. Numeric TTL privacy, H1/H2/H3, Inbox/mailbox and N3–N8 remain open.
+
+---
+
+# Execution checkpoint — Worker publication and native listener ownership
+
+Worker release 6efe70f4d4293f7474d1e26e492f83c1a3fdd100 was committed, pushed,
+synchronized and deployed to EMS. Exact source verification: 190 files, no changed
+or missing files. dmash-node active/running, NRestarts=0. PWA page and active SW
+release transport-v3-worker-lifecycle-20260925.12 verified by real Chrome acceptance.
+
+Live EMS two-Account late-pairing regression PASS (exit 0): early advertisement,
+initial key exchange, bidirectional messages, ratchet epochs 1/2, delayed prior-epoch
+packet, disconnect/reconnect queued delivery and Inbox control retirement.
+Log: /tmp/dmash-v4-worker-ems-acceptance.log. Initial exchange required retries while
+route status was unavailable; eventual success is not immediate route readiness.
+
+New native NodeListenerV4 owns incoming connections: up to eight live connections,
+two pending admissions, sixteen attempted handshakes per rolling minute; authenticated
+duplicate peers are rejected before registration mining and cannot remove the first
+connection's reservation. Shutdown cancels pending admissions and runtime readers.
+It uses real mutual channel authorization. Endpoint adapters still must provide
+pre-upgrade limits, frame/queue limits and TLS; production mounting remains open.
+Five ownership/quota tests and six routing tests PASS. Real browser fixture now
+uses this listener rather than its former inline handshake wrapper. Real Chrome
+Worker transit PASS (exit 0), including root lock, cover, late binding and identity
+persistence: /tmp/dmash-v4-listener-browser.log. Focused suite log:
+/tmp/dmash-v4-listener-tests.log (11 tests).
+
+Source remains v4-inactive in the PWA and production endpoint is not mounted.
+Next: validate listener integration, commit/sync, then mount explicit native v4
+endpoint with storage/config lifecycle, Account local delivery and Inbox integration.
+N0–N8/compatible A–M/E6 goal remains active; numeric TTL boundary privacy question,
+H1/H2/H3 and cross-tab ownership remain unresolved.
+
+---
+
+# Execution checkpoint — dedicated Node Worker and DeviceRoot lifecycle
+
+Dedicated Worker owns v4 sockets, routing, admission, encrypted relationship store
+and cover timer. Host transfers exact-sized copies of Node-only material and
+wipes originals; no Account or DeviceRoot is sent to the Worker. DeviceRoot lock
+and replacement close the host, reject pending RPCs and cancel connections/mining.
+Fallback termination is bounded to 250 ms. Same unlocked Root session has one host;
+cross-tab ownership and Account logout integration remain open.
+
+Actual Chrome Worker transit PASS with real encrypted DeviceRoot persistence,
+late binding, early/established-route cover, genuine payload delivery, UI heartbeat,
+lock cancellation and stable Node identity after unlock. Final log:
+/tmp/dmash-v4-worker-final-browser.log. Full suite PASS: 252 backend + 11 Origin
++ 60 JS (/tmp/dmash-v4-worker-all-tests.log). Both sessions exited 0.
+
+Release prepared: transport-v3-worker-lifecycle-20260925.12. Service worker caches
+v4 modules, but index.html does not activate v4. Source/EMS before this checkpoint:
+fb9fbbf; deployed files: 7af9044, release .11. Next: commit, synchronize, deploy,
+exact-revision verification and real EMS v3 regression after Root changes. Then
+native v4 endpoint and Account bindings/Inbox/recovery; entire plan remains active.
+No N0 privacy or N1–N8 completion claim; numeric TTL origin inference remains open.
+
+---
+
+# Execution checkpoint — route-carried DUMMY/cover DATA
+
+Both routing runtimes now inject opaque cover through existing transit grants,
+using normal DATA/offer framing and first-arrival queues. No DUMMY wire flag.
+Rolling 60-second caps: four packets, 16 KiB decoded bytes and two packets per
+neighbor; injection yields to existing queued/sending work. Optional explicit
+start/stop idle scheduler uses random 15–45 second default delay, no Probe refresh
+or route activation. Runtime close stops it; no production generator is enabled.
+
+RecipientEnvelopeV2 codec returns accepted/discard/deferred locally; missing keys
+are deferred, never misclassified as cover. A valid envelope still carries an
+opaque Account payload that needs later Account authentication. Durable Inbox and
+deferred storage integration remain N3 work. Discovery now silently ignores invalid
+opaque replies so cover on a pending return capability cannot kill the channel.
+
+PASS actual Chrome B between isolated Python N1/N2, including early cover during
+pending discovery, late recipient binding, cover after routing, no extra accepted
+payloads and real delivery after cover. Logs:
+/tmp/dmash-v4-real-browser-cover.log and
+/tmp/dmash-v4-real-browser-early-cover.log.
+Full suite PASS: 252 backend + 11 Origin + 58 JS
+(/tmp/dmash-v4-cover-all-tests.log). All these test sessions have exited 0.
+
+Before this commit, source and deployed files are 7af9044 (183-file exact match,
+service active, NRestarts=0). v4 is still not mounted in production; v3 release .11.
+Next: commit/sync this slice, then Worker socket/routing host and root lifecycle,
+real v4 endpoint, route selection/recovery and Account integration/H1-H3. Numeric
+TTL maximum/origin inference clarification remains pending; do not relax N0 by
+assuming consent. Entire N0–N8/compatible A–M/E6 goal remains incomplete and active.
+
+---
+
+# Execution checkpoint — real v4 browser transit (local, not production)
+
+New JS/Python routing now installs hop labels through real encrypted discovery,
+validates route-owner certificates and independent discovery signatures, rewrites
+NCRH/labels and consumes random hop TTL. There is no Account dependency at transit.
+Separate discovery keys can answer without decrypting recipient payloads. Delegation
+provisioning/rotation/revocation is still an integration task, not an N0 privacy proof.
+
+Actual Python N1 -> Chrome B -> Python N2 PASS with no direct bypass, zero owned
+routes at B, encrypted payload and label rewriting, and unavailable after B closes.
+The follow-up run also passed Probe arriving before N2 installs its local keys:
+bounded live Probe cache is retried when binding is installed.
+Logs: /tmp/dmash-v4-real-browser-transit.log and
+/tmp/dmash-v4-real-browser-late-transit.log. No camera/QR UI or Account migration
+was part of these tests; loopback WS is not production WSS acceptance.
+
+First complete suite passed 245 backend + 11 Origin + 56 JS suites in
+/tmp/dmash-v4-routing-all-tests.log. Final full suite PASS:
+246 backend + 11 Origin + 57 JS suites (/tmp/dmash-v4-routing-final-tests.log).
+Final real-browser late-binding transit PASS
+(/tmp/dmash-v4-real-browser-final-transit.log). Subsequent discovery-grant expiry
+clamping and canonical opaque-box validation were verified by focused Python
+routing/discovery (8 tests) and JS routing/discovery suites. Total backend count
+is now 247 with the added grant-expiry test; do not misreport 247 as the full
+suite run above. No live test process remains from these runs.
+
+Source/pushed/EMS before this uncommitted slice: c9b299d. Running deployment:
+bdb62d717cb38ce11ee739682da822b25ae22b83, v3 release .11; v4 remains unmounted.
+Next: finish final checks and commit/sync, then lifecycle/Worker and real v4 endpoint,
+multi-path/route recovery, Account integration/H1-H3, mailbox and the user's DUMMY
+traffic. Full N0–N8/compatible A–M/E6 scope remains active and incomplete.
+
+---
+
+# Deployment checkpoint — v4 channel foundations published
+
+Pushed, EMS source synchronized and Node + PWA deployed at
+`bdb62d717cb38ce11ee739682da822b25ae22b83`. Tracked dmash-deploy-ems and canonical
+untracked get_commit.sh both succeeded. Current SSH enters root; source owner is
+codex (uid 1000, /home/jcode), no jcode account. Source sync used sudo -u codex;
+canonical publication used process-scoped safe.directory and restored root-owned
+.git entries to codex afterward. Both untracked EMS scripts remain preserved.
+
+Read-only exact revision check: 174 source files, no missing/changed files.
+Service active/running, NRestarts=0. Deploy log:
+`/tmp/dmash-v4-channel-foundation-deploy.log`; canonical PWA backup:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20260925T131615Z`.
+PWA release ID remains transport-v3-device-material-20260925.11: no loaded v4
+runtime/SW change was activated. Do not confuse publishing libraries with v4 cutover.
+
+Actual two-Account EMS late-pairing acceptance PASS (session 76459 exited 0),
+log `/tmp/dmash-v4-foundation-ems-acceptance.log`: advertisement before pairing,
+initial exchange, both message directions, ratchet epochs 1/2, delayed prior-epoch
+packet, recipient reconnect/queued delivery and Inbox control retirement.
+
+Latest user steering: derive NCRH per route (HMAC, secret BaseNCRH, decoded 32-byte
+RouteID), and choose random Probe hop TTL. New probe_primitives_v4 JS/Python
+modules implement route/HOP domain separation, cryptographic uniform TTL 4–15
+(configurable nondegenerate range within 1–15), strict consume-to-zero stop.
+Three Python tests and one JS suite PASS, including real WebCrypto/Python parity
+and rejection sampling edge. Not yet wired to v4 Probe runtime; v3 unchanged.
+Next: integrate these into actual N0/N2 discovery/transit. The entire N0–N8 and
+compatible A–M/E6 goal remains active.
+
+---
+
+# Execution checkpoint — composed v4 Node channels, 2026-09-25
+
+Implemented shared Python/browser channel admission, mutual password policies,
+fresh directional resource work and persistent DNSS acknowledgment. Browser
+socket pins the Node identity, bounds frames/queues and cancels work on close.
+Python mining checks cancellation/deadline without changing the digest contract.
+PasswordGate now exists in JS, including revocation during asynchronous HMAC.
+No Account runtime is loaded by the real browser channel acceptance.
+
+Full local suite: 236 backend + 11 Origin + 54 JS suites PASS
+(`/tmp/dmash-v4-channel-final-tests.log`). Actual Chrome/Python WebSocket mutual
+password, revocation, reconnect and opaque payload test PASS
+(`/tmp/dmash-node-channel-mutual-browser.log`); initial wrong-password variant
+also PASS (`/tmp/dmash-node-channel-negative-browser.log`). Stronger refusal-reason
+and in-flight revocation assertions PASS in the actual browser
+(`/tmp/dmash-node-channel-race-browser.log`).
+
+The channel is not mounted in production and grants no route/mailbox ownership.
+TRANSPORT_V4_DISCOVERY.md is a candidate, not implemented discovery or N0 closure.
+Next required work: finalize discovery authority/label lifecycle, implement shared
+routing runtime and actual N1 -> browser -> N2 transit; preserve late-QR recovery.
+H1-H3 and the remaining N0–N8/compatible A–M/E6 scope remain open.
+
+Before this commit, pushed/EMS source is 25caf4f; running EMS remains 7f91105,
+release transport-v3-device-material-20260925.11. Latest SSH revalidation enters
+as root, while /home/jcode/D-MASH and .git are owned by codex uid 1000; jcode
+is still absent. Use sudo -u codex for source Git operations. Canonical untracked
+get_commit.sh remains PWA-only and requires root; preserve both server scripts.
+
+---
+
+# Execution checkpoint — late pairing evidence and password foundation
+
+User's Probe-before-QR scenario now has both routing regression and real EMS
+browser evidence. `DMASH_LATE_PAIRING=1` makes Alice advertise her inbound route
+before Bob imports the pairing package. Live release `.11` passed that ordering,
+then initial key exchange, both message directions, epochs 1/2, delayed packet,
+reconnect queue and control retirement. Log `/tmp/dmash-ems-late-pairing-browser.log`.
+This is v3 shared-Entry evidence, not camera scanning or browser transit. After
+advertisement expiry, event-driven remote-route recovery is still OPEN for v4.
+
+New password foundations: JS/Python fixed Argon2id profile, cancellable bounded
+browser Worker, transcript/identity/nonce/expiry-bound HMAC, password gate with
+real Node PoW checks, one-attempt challenges, session limits, reconnect cooldown
+and revocation. Native browser/Python KDF and real JS/Python HMAC parity PASS.
+`/tmp/dmash-node-password-browser.log`; full suite before final cooldown addition:
+231 backend + 11 Origin + 54 JS PASS (`/tmp/dmash-v4-password-tests.log`). Final
+password suite separately 5 tests PASS (`/tmp/dmash-node-admission-final.log`).
+Current gateway has no existing password gate; corrected the audit's earlier
+assumption. New v4 code is NOT wired into deployed endpoint or runtime yet.
+
+Pushed/EMS source before this checkpoint: `4ad3183df81a91f93d9b66c3948295fc188c2e51`.
+Live EMS remains `7f91105f3f30bb265bfed99ccc3e9f1de3cb4500`, release
+`transport-v3-device-material-20260925.11`, verified 163-file exact source match.
+Preserve the distinction between source synchronization and running deployment.
+
+Next: compose v4 admission + fresh resource authorization + persistent directional
+relationships into shared Node channels, then NodeRuntime/two-WSS transit. Keep
+N0 privacy/authority and late-binding discovery gates open until actually solved.
+H1-H3 Account confirmation/recovery, N5–N8 and broader plan remain unfinished;
+the active development goal must continue beyond local PASS/commit/deploy.
+
+---
+
+# Execution checkpoint — v4 registration / durable directions, 2026-09-25
+
+Live EMS Node + PWA and the EMS source repository are at
+`7f91105f3f30bb265bfed99ccc3e9f1de3cb4500`; release `.11`
+`transport-v3-device-material-20260925.11`. Exact-source verifier: 163 files,
+missing/changed empty. Service active, zero restarts since deployment.
+Canonical get_commit.sh succeeded after tracked dmash-deploy-ems.
+Log `/tmp/dmash-ems-node-identity-deploy.log`; PWA backup
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20260925T122057Z`.
+
+Real private-contact browser acceptance PASS, including page/active SW release,
+initial exchange, bidirectional messages, ratchet epochs 1/2, late prior packet,
+reconnect queue and retired controls. Initial route restoration was delayed and
+logged Route unavailable before recovery; do not claim a latency target from this
+run. Log `/tmp/dmash-ems-device-material-private.log`.
+
+New local v4 work: authenticated session identity metadata, identical JS/Python
+registration proof checks, encrypted SQLite relationship persistence with atomic
+writes/quotas and explicit failure on identity/key/DNSS changes. Real production
+minimum resource work passes cross-runtime positive and negative vectors.
+Node PoW identity now reloads via encrypted DeviceRoot material API; real browser
+persistence/corruption/lock checks PASS
+(`/tmp/dmash-node-identity-persistence-browser.log`). Not runtime-enabled.
+
+Final full suite: 227 backend + 11 Origin + 54 JS suites PASS
+(`/tmp/dmash-v4-late-pairing-tests.log`), including quota and Probe-before-QR
+regressions. The development goal remains active. NEXT: browser durable relations,
+v4 admission/password/session authorization and real transit; N0 authority/privacy
+redesign and H1-H3 confirmed Account exchange remain open. No completion claim.
+
+---
+
+# Execution checkpoint — Node identity work and material persistence, 2026-09-25
+
+Native browser Worker mining now passes unchanged production BLAKE3 prefix 0520,
+independent Python verification, cancellation, one-worker admission and responsive
+main thread (`/tmp/dmash-node-identity-browser.log`). BLAKE3 is reproducibly bundled
+from pinned @noble/hashes 2.4.0 with MIT license and provenance; upstream's independent
+2022 audit excluded BLAKE3. This module is not yet wired into the runtime or SW.
+
+DeviceRoot material operations are serialized within an unlocked session, reject
+stale session results and clear failed temporary secrets. Failed persistence does
+not publish an in-memory material record. Real AES-GCM tests cover concurrent names,
+same-name deduplication, restart, failed persistence and lock/session replacement.
+Remaining: cross-tab transactions, already-issued writes at lock, coordination with
+master-secret/biometric record writers and complete vault session pinning.
+
+Full local verification: 218 backend + 11 Origin tests, 54 JS suites PASS
+(`/tmp/dmash-node-identity-all-tests.log`). Candidate PWA release:
+`transport-v3-device-material-20260925.11`. This checkpoint is not N1 completion:
+v4 admission, durable directional DNSS, browser transit and N0 privacy redesign
+remain unfinished. H1-H3 still require the versioned confirmed handshake.
+
+---
+
+# Current execution checkpoint — N1 crypto foundation, 2026-09-25
+
+`01a26a8fcd765ef7382912e4fe7844e923d6054b` is pushed and deployed to EMS Node
+and PWA. Existing `tools/dmash-deploy-ems` updated Node while preserving runtime
+keys/databases, followed by the required `tools/get_commit.sh` PWA publication.
+All 155 deployed source files match that immutable commit (new read-only checker:
+`tools/verify_ems_revision.py`). Node service is active. PWA release:
+`transport-v3-account-control-20260925.10`. Public contact-flow acceptance with
+page + active SW release checks completed PASS; log
+`/tmp/dmash-ems-account-control-public.log`.
+
+Deploy evidence: `/tmp/dmash-ems-account-control-deploy.log`; rollback snapshots:
+`/opt/dmash-node/deploy-backups/backend-20260925T115922Z`,
+`/opt/dmash-node/deploy-backups/frontend-20260925T115922Z`,
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20260925T115935Z`.
+Root-owned objects created by sudo get_commit blocked a subsequent jcode fetch;
+ownership of `/home/jcode/D-MASH/.git` was restored to jcode (no Git history or
+untracked scripts changed). Repeat this targeted ownership restoration after
+sudo deployments if necessary; do not disable Git ownership checks globally.
+
+EMS inventory additionally confirms the live BaseNCRH does not match the removed
+tracked value; only this EMS instance was checked, without printing either secret.
+Live local HTTP `/api/state` and `/api/debug/outbox` return 410 after deploy.
+
+Local N1 work now adds an explicit NODE-only v4 crypto profile in Python and JS,
+versioned signatures/KDF/records, real interop and refusal of v3 resource grants
+on v4. Default callers stay v3. No v4 network endpoint or browser transit is
+active. `tools/test_all.py`: 217 backend + 11 Origin tests and 53 PWA suites PASS
+(`/tmp/dmash-v4-crypto-tests.log`). This crypto foundation was committed/pushed as `4df0cbc9e1e89257fd9283a8bb50797b01cdc153`
+and synchronized to the EMS source repository; live deployment remains `01a26a8`.
+
+NEXT: finish public-browser result and inventory checks, then implement v4
+Node admission/directional registration and the browser NodeRuntime. Close the
+Probe/authority privacy design before advertising a privacy-compliant v4 path.
+H1-H3 remain real-crypto FAIL in the diagnostic; their versioned, confirmed,
+durable initial-exchange state machine is also outstanding. Do not stop at
+this checkpoint or mark the whole development goal complete.
+
+---
+
+# Execution update — 2026-09-25
+
+Authorization now explicitly includes continued development through the entire
+plan, commit/push, deployment for testing and EMS repository synchronization.
+
+- `1c7a1154e3281b55883167eaafae379f96ae7099` is pushed to `origin/transport-v3`.
+  `/home/jcode/D-MASH` on EMS was moved from old detached `5dbda4a` to tracking
+  `transport-v3` at this SHA without touching untracked `tools/get_commit.sh`
+  or `tools/deploy-ems.sh`.
+- The required `get_commit.sh` initially failed on the root-owned lock file.
+  The same script succeeded with its documented sudo invocation. It deploys
+  **PWA only**, explicitly excluding Node runtime. Backup:
+  `/srv/messenger.d-mash.ru/backups/manual-rollback-20260925T114654Z`.
+- Published `release.js`, `sw.js`, `device_inbox.js` bytes match that commit;
+  release is `transport-v3-n0-20260925.9`. Script's old release-name regex printed
+  `unknown`; byte verification establishes the real release instead.
+- Real Chromium two-account private-pairing acceptance PASS: authenticated
+  registration, initial exchange, bidirectional messages, two ratchet epochs,
+  delayed prior-epoch message, reconnect/queued delivery and retired handshake
+  controls. Log `/tmp/dmash-ems-n0-two-accounts.log` (local test-only accounts).
+  This remains v3 browser evidence, not v4 transit or TURN acceptance.
+- EMS Node service is active but backend code was not updated by get_commit.sh.
+  Node deployment needs a separately verified backend path; do not attribute the
+  local legacy HTTP fix to production yet.
+
+Current local continuation: H4 explicit-peer recovery and R1/R2 ratchet collision,
+serialization and persist-before-ACK corrections, with version-2 control suites
+and mixed-version refusal. See TRANSPORT_V4.md for the exact delta. Targeted tests
+pass. H1-H3 are reproducibly FAIL with real bundled crypto in
+`node tools/diagnose_initial_handshake.cjs`; their replacement state machine is
+next. This is an ongoing checkpoint, not completion of N0–N8.
+
+---
+
+# Current checkpoint — unified Node N0, 2026-09-25
+
+Base and fetched `origin/transport-v3`: `aa0ad8aac716570bf9b65b8901e4548c255251f3`.
+This checkpoint is prepared for commit/push and EMS verification; see subsequent
+execution entries for exact deployed evidence.
+The user-provided `D-MASH_Codex_Development_Plan.md` is the controlling plan;
+its original contents have been preserved. Older entries below are historical.
+
+## Changes and evidence
+
+- `TRANSPORT_V4.md` records the proposed versioned NODE-only contract,
+  directional stable DNSS, separate admission/resource grants, common
+  forwarding/store queues, privacy audit and migration gates. It explicitly
+  leaves the Probe/authority redesign and browser fingerprint boundary open.
+  No v4 endpoint, role change or browser transit is claimed.
+- The legacy HTTP router now rejects requests with 410 before runtime state,
+  key derivation, persistence or peer dialing. Regression tests cover 13
+  endpoints plus bogus credentials/loopback headers. Before the guard, the
+  tests produced 13 assertion failures. Both runtime entrypoints mount this
+  same router. Public nginx exposure was NOT inspected; server deployment
+  remains unchanged. The old server-hosted HTTP Account UI is retired.
+- I1 reproduced with a failing first Account callback and a valid next record.
+  Pending and staged Inbox drains now isolate per-record decrypt/handler errors,
+  retain failed ciphertext, continue valid records, and abort on root lock/change.
+  Tests use actual NaCl envelopes and AES-GCM storage with memory-backed IO;
+  they cover tampering, retry, dedupe and mid-callback lock. This is UNIT evidence,
+  not IndexedDB/browser acceptance. Durable quarantine/backoff and crash-after-
+  Account-persist idempotency remain unfinished.
+- Removed the tracked BaseNCRH sidecar from the working tree/distribution, with
+  a private local backup outside the repository. Added secret-sidecar ignore
+  rules. The lifecycle test was also creating/loading this default runtime
+  secret; it now uses explicit test material. No deployed usage or rotation is
+  established. Git history is unchanged; historical exposure remains.
+- `requirements-test.txt` includes runtime requirements plus `httpx==0.27.2`.
+  The pre-existing `/tmp/dmash-v3-py312` environment lacked required libraries;
+  the initial test run failed on imports. Reference verification uses a fresh
+  repository `.venv`, Python 3.12.14 and Node 24.19.0.
+
+Validation command: `.venv/bin/python tools/test_all.py`.
+Local result: **211 backend tests, 11 Origin tests, 49 PWA JS suites PASS**.
+Regression failure log: `/tmp/dmash-n0-http-before.log`; full verification:
+`/tmp/dmash-n0-final.log`. `git diff --check` passes. No crypto authentication,
+PoW threshold, route ownership check or mailbox ACK semantics were weakened.
+
+## Current milestone table
+
+| Stage | Status | Evidence / remaining gate |
+|---|---|---|
+| N0 | PARTIAL | Source contract/privacy audit, HTTP and I1 regressions/fixes. H1-H4/R1-R2 regressions and privacy-safe Probe authority/metric design still open. |
+| N1 | PLANNED | JS NODE peer, v4 wire/interoperability, general admission and stable directional DNSS not implemented. |
+| N2 | PLANNED | No N1 -> browser -> N2 transit evidence; no Account-independent browser Node runtime. |
+| N3 | PARTIAL (v3 foundation) | Multi-Account encrypted Inbox exists; unified Node integration/migration pending. |
+| N4 | PARTIAL | I1 isolation corrected; initial handshake collision/recovery and ratchet collision/durable ACK remain. |
+| N5 | PARTIAL | Legacy HTTP disabled locally, source sidecar removed. Deployed inventory/rotation, verifier migration, crypto/PFS/PCS review remain. |
+| N6 | PARTIAL (v3 foundation) | General Node password gate, descriptor and installer migration remain. |
+| N7 | PARTIAL (v3 foundation) | Existing signaling/call/file code; real TURN relay, unified admission and media acceptance NOT RUN. |
+| N8 | NOT RUN | Local unit/ASGI/interop suites pass; v4 browser/transit, migration, production acceptance and release remain. |
+| A-M / E6 | INCOMPLETE | Existing A-K transport/storage/media foundations are v3-specific; L reliability/security and M full acceptance are incomplete. E6 protected-history threat model remains separate. |
+
+## Next implementation work
+
+1. Close N0 Probe/root/origin-tag/metric/grant semantics against the external-peer
+   observer model. Current `metric`, `trace.length`, global origin tags and
+   endpoint-only operations are explicit blockers, not anonymity guarantees.
+2. Add real-crypto failing H1-H4 and R1-R2 regression fixtures before moving
+   Account state. Do not grow the acceptance monkey-patch chain.
+3. Implement shared v4 Node handshake/admission/authorization, then browser
+   transit through two authenticated neighbors without Account login. Follow
+   the plan's N1/N2 no-bypass test before declaring the unified model ready.
+4. Before any release, inventory existing BaseNCRH usage without exporting
+   secrets, back up and rotate affected runtime state with recovery/re-advertising;
+   verify old mailbox/history migration and mixed-version refusal.
+
+At this checkpoint, pushed/deployed verification is pending. The following
+execution session is authorized to commit, push and deploy for acceptance.
+`get_commit.sh`: NOT RUN. Page/SW release, two-browser tests, direct/relay media,
+server nginx and post-deploy acceptance: NOT RUN. The prior release evidence
+below must not be attributed to this checkpoint.
+
+---
+
+# Historical checkpoints (retain for provenance)
+
+# Active transport-v3 work — 2026-09-14
+
+## Release .8 — 2026-09-18
+
+The real two-account regression additionally found that completed handshake
+controls returned the same null result as crypto failure and therefore remained
+in Device Inbox, repeatedly sending SOS responses. Successful controls now have
+an explicit consumed outcome. Failed Kyber-final transmission retains its capsule
+in Account-encrypted storage and retries the same material. Initial SOS/ECDH
+intents are deduplicated in the local outbox while the peer route is unavailable;
+control retries do not appear as chat history.
+
+Ratchet ACK advancement now retains the same bounded two previous receive epochs
+as the responder. The regression reproduces a late epoch-one ciphertext failing
+after the initiator processes the epoch-two ACK, then verifies successful decrypt
+with the fix. No wire format or suite downgrade was introduced.
+
+SHA-256 PoW round addition no longer allocates rest arrays. Independent native
+SHA-256 vectors cover block/padding boundaries; a local 20,000-hash comparison
+improved from ~1060 ms to ~213 ms. Difficulty and digest transcript are unchanged.
+Node shutdown now awaits the asynchronous HopProbes.close coroutine.
+
+Validation before deployment: all 209 Node + 11 Origin Python tests and 48 PWA
+JS suites pass. Both real Chromium two-account runs (private pairing and public
+contact request/accept/confirm) pass against EMS: initial key exchange, messages
+in both directions, two ratchet epochs, delayed prior-epoch ciphertext after ACK,
+recipient disconnect/reconnect with queued delivery, and retirement of completed
+handshake controls. Public-mode run also exercised a real initial Route unavailable
+failure followed by automatic successful retry. Crypto and transport were not
+stubbed. Browser tests start at calculator setup in clean contexts.
+
+
+## Two-account transport correction — 2026-09-17
+
+A real two-browser run exposed two PWA/Node protocol mismatches before Account
+ratchet processing. Core's send path used NodeManager.startProbe, which still
+sent an unsigned legacy START_PROBE on a v3 connection (INVALID_ROUTE_AUTHORITY).
+The private-route helper also advertised the recipient's locator instead of its
+own registered inbound route (ROUTE_BINDING_REJECTED). The v3 send path now uses
+Device route authority, selects only the matching Account-owned inbound route,
+and advertises that route. Recipient lookup remains ROUTE_STATUS.
+
+Regression coverage includes wrong Account/wrong inbound capability rejection,
+and a real two-context browser runner for private pairing or public contact
+request/accept/confirm, initial Account key exchange, bidirectional messages and
+two ratchet epochs. No crypto or transport implementation is stubbed in that
+runner. Browser polling awaits asynchronous storage reads explicitly.
+
+
+## Connection/PoW follow-up .7 — 2026-09-17
+
+Release `transport-v3-hotfix-20260917.7` also fixes intermittent `Invalid challenge`
+when EMS's clock is slightly ahead of the browser. The client permits up to five
+seconds of positive clock skew for the signed 15-second challenge; expired
+challenges remain rejected, and the Node retains its original expiry deadline.
+A signed-handshake test covers the tolerance boundary, expiry and bad signatures.
+
+The .6 production real-login/re-login passed, but DNSS work exceeded the former
+240-second test budget. Dedicated Worker mining no longer yields via browser
+setTimeout every 4096 nonces (unnecessary off the main thread and susceptible to
+background timer throttling). Main-thread fallback still yields; Worker cancel
+still terminates the worker. The real-PoW test allows 600 seconds within the
+900-second proof expiry. No resource difficulty or authentication check is bypassed.
+SW acceptance now consumes fetched response bodies and monitors unhandled
+rejections inside the Service Worker itself, in addition to the page.
+
+
+## WASM follow-up .6 — 2026-09-17
+
+The .5 production calculator acceptance exposed a nondeterministic login failure:
+Kyber's Emscripten `var Module` shared the global scope with Argon2. Its exported
+functions could land on the wrong object (`M._malloc is not a function`). Release
+`transport-v3-hotfix-20260917.6` scopes the Kyber runtime in a closure, memoizes the
+active v51 foundation loader and checks all required Kyber exports before boot.
+The calculator regression now also invokes concurrent/repeated foundation loads
+and verifies the runtime objects remain separate. The .5 network/asset and
+fixture-contact checks passed, but its full production login check did not.
+
+
+## PWA hotfix .5 — 2026-09-17
+
+Release `transport-v3-hotfix-20260916.5` keeps Account contacts/history available
+without a Node: workspace rendering and contact persistence no longer await
+network restoration or resource PoW. PoW runs in a Dedicated Worker, with
+termination cancellation; local route handoff no longer waits for probes.
+Node controls display the actual v3 WebSocket URL and DNSS readiness.
+
+Repeated login reuses initialized WASM, recreates cleared Account key containers,
+and reports boot failures. Workspace listeners are installed once. First SW
+installation and panic lock no longer schedule reloads that discard PIN input;
+the release notice cannot intercept calculator clicks. Existing immediate SW
+response cloning and pending-DNSS PULL gating remain intact.
+
+Validation: 209 Node + 11 Origin Python tests and 45 PWA JS suites pass.
+Real Chromium calculator setup/login/local-note/panic/re-login passes without
+crypto or login stubs; the real EMS v3 connection completes DNSS and encrypted
+STATUS + PULL (`MAILBOX_DRAIN_RESULT`). A separate browser test proves persisted
+contacts/local protected notes work with permanently stalled Node auto-connect,
+and checks real PoW Worker output/cancellation. This does not establish two-user
+message delivery or E6 protection; the larger security milestone remains separate.
+
+
+## Interim hotfix — 2026-09-16
+
+Follow-up hotfix is prepared as the `transport-v3-hotfix-20260916.4` release.
+The v3 mailbox pull is now gated on the connection's DNSS state: a pending
+registration is deferred without issuing `PULL`, and a failed registration does
+not create a repeating `DNSS_NOT_AUTHENTICATED` warning storm. Once DNSS is
+ready, post-auth work triggers a fresh inbox/contact sync. The logged-in
+workspace keeps the network card and account settings expose node controls, so
+the calculator gate no longer strands an authenticated account without a way
+to connect its EMS node. A browser regression covers the gate, the network
+controls and existing contact rendering.
+
+Hotfix commit `c4cf22a1239aa3551bbdbcdbcc32db91e2661028` is deployed to EMS.
+The Service Worker now clones successful network responses synchronously before
+returning the original response, fixing the production `Response body is
+already used` race in both cache paths. Release id
+`transport-v3-hotfix-20260916.4` forces old interim workers and caches to
+update.
+
+NodeManager marks the v3 socket authenticated immediately after the encrypted
+session is established. DNSS resource PoW, route restoration and mailbox pull
+continue independently and cannot hold or tear down a healthy STATUS channel.
+Clean production acceptance verified the catalog endpoint, nginx WebSocket
+Upgrade path, v3 handshake, encrypted STATUS and a Saved Messages LOCAL write.
+The production UI acceptance also passed chat rename, password setup, unlock
+and protected send.
+
+This hotfix deliberately does not include the E6 local protected-chat threat
+model refactor. Argon2id descriptor versioning, topology separation after
+device+master compromise, opaque secret handles in a Dedicated Worker/WASM and
+the offline-guessing boundary remain a separate milestone. No full
+live-runtime-compromise claim is made.
+
+## Interim PWA release — 2026-09-16
+
+Adds the default, renameable Account-local Saved Messages conversation. Text
+and recorded-message payloads use the encrypted Account vault with LOCAL state;
+no Probe, route lookup, Node submission or receipt is generated. File attachment
+to Saved Messages is not implemented in this interim release.
+
+Optional per-chat passwords protect local history only. The wrapping key mixes
+PBKDF2-HMAC-SHA256 (600,000 iterations, fresh 256-bit salt) output with a
+domain-separated output under the non-extractable Account vault AES key, then
+uses HKDF-SHA256. It wraps a fresh per-chat Curve25519 private key with AES-GCM.
+Passwords and unwrapped private/wrapping keys are not persisted. The local public
+key permits sealed history writes while locked; transport E2EE is unchanged.
+Password-derived, domain-separated alias entropy is stored only inside the
+Account-encrypted descriptor and participates in L2/L3 alias derivation.
+Setting/changing a password re-encrypts all existing message content and queued
+outbox content, rotates L2/L3 aliases, and deletes old rows in one IndexedDB
+transaction. Failure aborts the migration. Read/unread and receipt metadata stay
+inside the ordinary Account vault; the additional layer protects content.
+Removing a password requires the old password and migrates history back. There
+is no password reset/recovery path. Closing/switching chats or Accounts clears
+unwrapped keys and history caches. This is local storage protection, not a claim
+of post-quantum authentication or a completed ratchet milestone.
+
+New modules: saved_messages.js, chat_cipher.js, chat_password.js. Native Chrome
+checks exercise real IndexedDB migrations, wrong password/master/chat rejection,
+L2/L3 rotation, locked incoming writes, transaction abort, reopen/unlock, and UI
+rename/password/send with a fixture Account. Call/file browser checks use local
+ICE and fixture invitation delivery, not live TURN acceptance.
+
+EMS deployment preparation also preserves node_identity.key sidecars (including
+BaseNCRH) during rsync and checks the new PWA assets. The release requires nginx
+to forward /dmash-client/v3 to the EMS Node, alongside the existing v1 path.
+The interim implementation was first deployed as `b6a4745`; the published
+hotfix is `c4cf22a`. `dmash-node` is active and rollback artifacts remain on
+the EMS host.
+Rollback artifacts are retained by the deploy wrapper under the remote PWA
+and Node backup directories. This was an intermediate deploy; no live
+authenticated Mesh/ TURN acceptance was claimed.
+
+
+## Ratchet ACK retry correction — 2026-09-15
+
+Repeated updates now receive an ACK encrypted with both the root and epoch
+of `update.from_epoch`. Previously duplicate handling selected the old root
+but labeled the packet with the receiver’s advanced epoch, making a lost ACK
+unrecoverable. A real NaCl packet test repeats an update after persisted state
+reload and verifies both ACKs decrypt while the sender remains at its original
+epoch. This closes that retry defect; full ratchet loss/reorder acceptance and
+post-quantum protocol validation remain unfinished. No deployment.
+
+
+## Account file transfer controller — 2026-09-14
+
+The PWA file picker is now a dedicated encrypted DataChannel transfer. It
+selects a peer Node only when authenticated STATUS reports S-TURN and
+`can_relay_blob`, creates a short-lived signaling session, and sends an
+Account-encrypted `FILE_SESSION_REQUEST` inside a Device envelope of the same
+type. The request has only an ephemeral 64-hex session ID, expiry, signaling
+ticket, bounded size/chunk/hash fields and opaque Account-protected manifest
+metadata; no file bytes, RouteID, AccountID or DeviceID are exposed to the
+Mesh.
+
+The transfer uses an ordered/reliable `dmash-file-v1` DataChannel. The PWA
+generates a random AES-GCM key and nonce per transfer, encrypts 32 KiB chunks
+and an authenticated completion marker, waits for encrypted in-order ACKs,
+checks the whole-file SHA-256, and exposes progress/cancel/save controls.
+Files are limited to 64 MiB in the PWA. Incoming requests do not join or
+create a DataChannel until the user presses Accept. Account boot/logout and
+all session failures cancel and clear the transfer. Legacy DataURL/media and
+chat fallback are rejected.
+
+Focused tests cover the cryptographic channel, ordering, bounds, cancellation,
+consent and invitation-only delivery. The native Chrome acceptance helper
+transfers an 8 MiB fixture over local direct ICE and verifies size/hash on the
+recipient. Live coturn/blob relay, authenticated Mesh delivery and production
+installer wiring remain pending; no deployment has been performed.
+
+## Account ratchet foundation — 2026-09-14
+
+Added the isolated `account_ratchet.js` primitive and executable test, then
+split packet/control orchestration into the separately loaded
+`account_ratchet_runtime.js` module so `core_engine.js` remains a thin adapter. It
+derives independent message keys from a 32-byte root, direction, bounded epoch
+and random 16-byte message ID with HKDF-SHA-256, derives an epoch root from
+fresh entropy, and classifies stale/current/acceptable/excessive epoch jumps.
+The modules carry no route, Node, Device or Account identity and are loaded by
+the PWA acceptance loader, release manifest and service worker. The runtime
+owns the wire packet and update/ACK orchestration:
+`RatchetState` repeats one pending update until an authenticated ACK, advances
+the sender only after that ACK, handles recipient duplicate delivery
+idempotently and rejects conflicting/unbounded updates. Core now carries
+explicit classical or `HYBRID_MLKEM768_V1` suites in Account-encrypted
+`ratchet_update`/`ratchet_ack` controls. When the peer's ML-KEM-768 public key
+is present, a fresh classical seed and Kyber encapsulation are combined into
+the next root; decapsulation failure rejects that update without downgrade.
+After ACK, epoch packets use root/direction/epoch/message ID; epoch zero keeps
+the legacy packet for compatibility. Full multi-peer wire/reorder acceptance
+and old-root retirement remain the next ratchet work.
+
+## Active-account audio call orchestration — 2026-09-14
+
+The PWA call button now uses `DmashCallRuntime`: it selects an S-TURN endpoint
+from encrypted STATUS on an authenticated v3 connection, creates a signaling
+session, and sends an Account-encrypted invitation inside a Device-encrypted
+CALL_REQUEST. The call target is captured before asynchronous work; expired
+invitations do not enter the durable resend queue. Core rejects SDP/ICE/hangup
+in `sendMessage` and ignores legacy incoming mesh signaling. The old Core
+offer/answer handlers and sendVoipSignal MSG fallback were removed.
+
+Incoming calls consume the recipient ticket before displaying the acceptance
+dialog. Microphone permission and offer processing wait for acceptance.
+Cancellation, expiry, disconnect and late CREATE/media results close resources.
+Account transitions use existing endCall cleanup. The signaling descriptor is
+returned by STATUS without credentials or Account identity.
+
+Tests cover controller cancellation, no MSG signaling fallback, Device-hidden
+CALL_REQUEST type, encrypted STATUS service discovery, and existing suites.
+`DMASH_CALL_UI=1 ... tools/test_call_browser.py` exercises the real controller
+and WebSocket with two native Chrome peer connections and synthetic audio;
+the shell and invitation delivery are fixtures and TURN is disabled in that
+local test. This is not full multi-node product acceptance.
+
+Remaining call work: live coturn allocation/relay health and installer wiring,
+full Mesh/browser acceptance, custom ringtone/display configuration and video
+negotiation. The current outgoing request uses ringtone=null (receiver default),
+generic caller display name, and audio-only media capabilities. The receiving
+dialog uses the locally stored contact name. Pre-Account-login call contents
+remain Account-encrypted; only the Device event type can be observed then.
+No deployment has been performed.
+
+## Signaling follow-up — 2026-09-11
+
+Added `/signal/v1`, with ticket-scoped join, bidirectional event-driven relay,
+bounded queues, expiry and disconnect cleanup. Server tests exercise two
+WebSocket sessions, queued offers, answer/ICE relay and replay rejection.
+Session principals are random handles. Unknown principals cannot read, write or
+delete calls. Health defaults to false; credentials now match coturn's standard
+HMAC-SHA1/Base64 REST format. See TRANSPORT_V3.md for the wire contract.
+
+Calls remain incomplete: runtime initialization, admitted session creation,
+the concrete PWA ticket/WebSocket adapter, call button orchestration and browser
+audio acceptance still need implementation. Prior statements that only deployment
+remained were too broad. No deployment has been performed.
+
+## Current recovery implementation
+
+Authenticated recovery is wired end to end: each connection advertises RootNCRH
+and eligible routes, tracks exact peer/request/NCRH statuses, and issues fresh
+peer-owned labels after semantic replies. The receiver binds the label to the
+advertised incoming prefix, not its own extended NCRH. The old reflected
+`recover_alias` helper is removed. Root-only knowledge never grants DATA authority.
+
+KNOWN/UNKNOWN describes knowledge before processing the current advertisement.
+Hop-limit, loop/metric termination and capacity failure do not suppress status.
+The graph and outward peer knowledge are encrypted, bounded and expiring RAM
+state. Same peer/input NCRH is one logical candidate despite label replacement;
+multiple prefixes and fork peers remain distinct. Independent peer export workers
+and bounded timeouts isolate slow branches. Reconnection invalidates old handshake
+grants before reading the new channel. Device label caching tracks remote label
+changes. See TRANSPORT_V3.md for exact schemas, direction and lifecycle.
+
+## Acceptance coverage
+
+`test_recovery_protocol.py` uses four real authenticated NodeChannel/WebSocket
+Nodes, with only expensive PoW fixture cost reduced. No forwarding table is
+manually populated. An authorized initiator advertises to a middle Node and a
+fork. The middle Node loses all runtime tables; its signing identity and BaseNCRH
+are reused with a fresh RAM salt. Reconnection reconstructs the same logical
+prefixes, replaces labels and delivers opaque HOP_DATA to the original mailbox.
+Both fork peers receive the same prefix. Every observed advertisement has a
+correlated semantic response; binds follow statuses and never authorize a Root.
+A second real-channel test blocks one peer while another becomes ready, and
+rejects a late reply after a forced semantic timeout.
+
+Focused unit tests cover graph bounds/encryption/expiry, pre-advertisement status,
+terminal responses, capacity failure, same-peer path alternatives, label refresh,
+wrong-peer/wrong-NCRH/replayed/expired bindings and reflection rejection.
+Existing tests also verify persistent BaseNCRH, corrupt-file fail-closed behavior,
+fresh startup salt, encrypted backup contents and restore permissions.
+
+Full validation command: `/tmp/dmash-v3-py312/bin/python tools/test_all.py`.
+Final results: 184 backend tests, 11 Origin tests and 33 PWA suites passed
+(exit 0), log `/tmp/dmash-recovery-final.log`. No deployment.
+
+## Remaining broader plan
+
+## S-TURN capability and signaling milestone — 2026-09-12
+
+`NodeCapabilities.can_s_turn` is now canonical. `DMASH_CAN_S_TURN` is the
+preferred environment setting; `DMASH_CAN_BE_TURN` remains a compatibility
+alias and is normalized into the same value. A descriptor reports S-TURN only
+when an injected service health check is healthy, and includes signaling WSS
+and TURN URLs without Account, Device or DNSS fields.
+
+`backend/s_turn.py` provides the runtime primitive for short-lived TURN REST
+credentials and opaque caller/callee signaling tickets. Credentials use a
+RAM-only shared secret and expiry. `STurnService.from_env()` requires explicit
+WSS/TURN/shared-secret configuration and performs bounded TURN-listener
+reachability before advertising the capability. Signaling sessions accept
+one-use tickets, relay only bounded offer/answer/ICE/hangup payloads, expire
+independently and delete state on close. Permanent TURN passwords and Account
+identity are not stored. coturn installation, systemd/firewall wiring and the
+production WSS endpoint remain infrastructure work; they are not deployed.
+
+`backend/session_protocol.py` now validates the encrypted Device payload shapes
+for `CALL_REQUEST_V2` and `FILE_SESSION_REQUEST`. Calls have bounded display
+name, allowlisted/decoded ringtone (256 KiB maximum), media capabilities and
+one-time signaling ticket. File sessions have opaque encrypted metadata,
+50 GiB size ceiling, bounded chunks, SHA-256 integrity and resumable flag.
+These validators never expose Account/Device identity to the Mesh; actual
+WebRTC/coturn transport integration remains pending.
+
+The PWA release and service worker now load `call_signaling.js` and
+`call_session.js`. `DmashCallSignaling.WebSocketSignaling` performs anonymous
+CREATE/PoW, consumes one-use tickets, validates the signaling endpoint, bounds
+incoming/outgoing queues and surfaces ephemeral ICE credentials.
+`DmashCallSession` owns browser media tracks and RTCPeerConnection, translates
+offer/answer/ICE/hangup to that signaling contract, queues early ICE candidates
+and closes resources on failure or cancellation. Core can attach it through
+`Core.attachCallSignaling`; `sendVoipSignal` then bypasses ordinary chat MSG.
+The legacy Core call button has not yet been migrated to create a session and
+send CALL_REQUEST_V2, so product-level call acceptance remains partial.
+
+Verification for this milestone: 209 backend tests, 11 Origin tests and 35 PWA
+JavaScript suites pass. A separate local Chrome acceptance helper connects two
+isolated contexts over direct ICE with synthetic audio and verifies audio stats
+and track cleanup. TURN-relay acceptance remains pending a live coturn service.
+
+This checkpoint addresses authenticated route reconstruction, alias recovery,
+and the server/client ephemeral signaling boundary.
+It does not complete the original overall product plan. Remaining work includes
+production PWA Probe orchestration across all route producers, durable transport
+ACK/recovery, legacy mailbox migration, password Node access, S-TURN/calls/files,
+epoch ratchet and complete browser/product acceptance. Existing backup restoration
+stages and rolls back two secret files on replacement errors; it is not an atomic
+two-file transaction across power loss. Node-only NCRH knowledge cannot recreate
+Device mailbox ownership without the existing Device authority flow.
+
+## Historical handoff (retained verbatim below)
+
+# D-MASH — Current Engineering Handoff
+
+**Updated:** 2026-09-04 UTC  
+**Chosen handoff:** `CURRENT_HANDOFF.md` (the active, repository-specific handoff; `LAST_HANDOFF.md` is historical routing/device architecture context).  
+**Repository:** `/home/jcode/D-MASH` on `main`  
+**Working-tree safety:** the tree is broad and dirty (including pre-existing/parallel work). Do not reset, broadly stage, or overwrite unrelated changes.
+
+## Committed this session
+
+- `3c03e8b` — **Add isolated contact transport boundary**
+  - Adds `not_messenger/js/contact_transport.js` and its executable test.
+  - This is an isolated boundary; it is **not** a claim that the full contact transport/e2e flow is complete.
+- `6f1dd9a` — **Fix private route lifecycle reconnect races**
+  - Updates private-route lifecycle/reconnect behavior in `core_engine.js` and `node_manager.js`, with `private_route_lifecycle.test.js` coverage.
+
+## Uncommitted, fully tested work — do not casually partition
+
+Device-level WebAuthn PRF / biometric unlock and device-level **Global Settings** are implemented in the current working tree, including focused executable PWA tests:
+
+- `account_biometric_security.test.js`
+- `biometric_account_login_disabled.test.js`
+- `device_biometric_unlock_integration.test.js`
+- `global_settings_ui.test.js`
+- updated `device_root.test.js`
+
+The implementation touches overlapping large hunks in `core_engine.js`, `device_root.js`, and `ui_logic.js` (and related PWA files). It was deliberately left **uncommitted** because safe hunk-level partitioning from unrelated dirty changes could not be guaranteed. Do not use a blanket `git add`; review and stage only after an explicit dependency/ownership audit.
+
+## Validation completed in this session
+
+- Full backend suite with `.venv-m1`: **88 passed**.
+- Full PWA executable test suite: **17 suites passed**.
+- The above includes the WebAuthn/device-biometric/Global Settings coverage and the current legacy guards.
+
+## PoW and replay posture
+
+Resource-PoW enforcement is fail-closed for new resource registration/activation paths: an absent, malformed, expired, wrong-context, or replayed proof is rejected. Replay tracking consumes an accepted proof so it cannot be used again; proofs are bound to the intended node/resource/device context. Existing normal data-plane operations (DATA, ACK, PULL, reconnect/probe, and repeat valid registration) are not assigned PoW merely for retransmission. Preserve this distinction when changing gateway or registry code.
+
+## Legacy / privacy evidence and limitations
+
+Legacy tests/import-compatibility evidence is present in the current tree, including `test_legacy_relay_disabled.py`, `test_legacy_privacy_guard.py`, `test_registration_lifecycle.py`, and compatibility handling in the registry/import paths. These establish the tested guardrails, not completion of a legacy migration.
+
+Do **not** overclaim node-storage privacy or legacy removal:
+
+- legacy API/P2P persistence and migration/removal still need a controlled audit and migration plan;
+- browser acceptance has not been completed (the executable PWA suite is not a substitute for real browser/WebAuthn acceptance);
+- no production deployment or real multi-device/browser acceptance is implied by the source tests;
+- contact transport remains an isolated committed boundary, not a completed end-to-end contact workflow.
+
+## Next work
+
+1. Run direct browser acceptance for device biometric enrollment/unlock, PRF availability/failure paths, Global Settings navigation, and private-route reconnect behavior.
+2. Before committing the uncommitted WebAuthn/Global Settings work, separately audit every dirty hunk and its dependencies; avoid unsafe hunk partitioning.
+3. Define and execute a backed-up, controlled legacy migration/removal plan; retain the legacy privacy/relay guards until the replacement path is proven.
+4. Do not deploy or promote solely based on these source-suite results.
+
+User steering during this checkpoint: explicitly asked about a Probe arriving
+before QR scan/contribution knowledge. Added passing routing-order regression in
+`test_hop_discovery.py` (15 tests in that suite). Early cached route works; after
+expiry, v3 START_PROBE only advertises self and does not solicit target recovery.
+V4 event-driven late-binding recovery is an OPEN requirement in TRANSPORT_V4.md.
+
+Browser directional store follow-up: `node_relationships_v4.js` now implements
+real IndexedDB CAS transactions, encrypted records, keyed aliases, root-bound
+opening, wrong-key/identity detection, quota and corruption refusal. Actual Chrome
+with two concurrent tabs passed persistence/reload, conflict, quota, corruption,
+DeviceRoot lock/reopen and opaque-lookup checks
+(`/tmp/dmash-node-relationships-browser.log`). Not yet connected to NodeRuntime.
+EMS source repository synchronized to `252b55427996d91606bc6d5b873f069c92a20245`;
+live code remains the separately verified `7f91105` release `.11`.
+
+EMS access changed during the last source sync: `ssh -G ems-vps` now selects user
+`codex` with ~/.ssh/jcode_ems_vps_ed25519 at 85.198.64.183. `getent passwd jcode`
+is empty. Remote uid 1000 owns /home/jcode/D-MASH and .git as codex; origin is
+still git@github.com:Seriy615/D-MASH.git, HEAD was 4ad3183, and the same two local
+untracked deployment scripts remain. dmash-node is active. The attempted
+`su - jcode` sync failed before any mutation. Source-only fast-forward to 25caf4f
+was retried directly as the current repository owner codex. Do not recreate users,
+change SSH config or overwrite deployment scripts to restore the old login name.
+Before the next deployment recheck the canonical script and current sudo access;
+retain exact-SHA/backup/runtime-state requirements. No new deploy in this step.
+
+## Latest active work / user steering (after c9b299d)
+
+Uncommitted route_discovery_v4.py starts certificate-bound encrypted discovery:
+separate route-owner, delegated discovery signing/box and recipient payload keys.
+Its purpose is to avoid equating ability to answer an active TTL=1 probe with
+Account termination and permit offline route delegates without recipient keys.
+JS counterpart, regression/interop and actual routing/runtime integration are
+NOT yet implemented/tested. Do not count this module as working transit or N0.
+
+User additionally proposed DUMMY traffic along existing routes by transit Nodes.
+This explicitly supersedes the earlier no-cover prohibition for that feature.
+Design requirements are in TRANSPORT_V4_DISCOVERY.md: common opaque DATA grammar,
+valid existing hop grants, silent terminal authentication failure before durable
+Inbox, bounded injection/queues/deferred handling and preserved 500 ms first-arrival
+windows. No generator is currently active or production-enabled.
+
+## Publication verification after routing commit
+
+7af9044cbb364b6c5d2cfaacf6c5c8a69742d986 is pushed and EMS-synced. Both tracked
+Node/PWA deploy and canonical get_commit.sh completed (session 63818 exited 0).
+Log /tmp/dmash-v4-routing-foundation-deploy.log; PWA backup
+/srv/messenger.d-mash.ru/backups/manual-rollback-20260925T135010Z.
+Compared with prior running bdb62d7, deployed backend/PWA scope only adds nine
+files; loaded v3 sources are unchanged. v4 endpoint/runtime is still unmounted.
+
+Pending async clarification: numeric TTL at its allowed maximum (15) reveals that
+an honest neighbor originated that Probe, since relays must decrement. Random
+TTL reduces but does not remove this explicit boundary leak. User was asked
+whether strict origin hiding takes priority (requiring different TTL semantics)
+or the numeric counter's limited leak is acceptable. No answer yet; do not assume
+approval to relax N0. This blocks claiming N0 privacy, not independent development.

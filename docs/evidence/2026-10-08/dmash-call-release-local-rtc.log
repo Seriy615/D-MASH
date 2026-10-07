@@ -1,0 +1,1 @@
+{"passed":true,"controller":true,"mode":"local Chrome direct audio; synthetic microphones; no TURN relay","peers":[{"connection":"connected","audioPacketsReceived":7},{"connection":"connected","audioPacketsReceived":7}]}

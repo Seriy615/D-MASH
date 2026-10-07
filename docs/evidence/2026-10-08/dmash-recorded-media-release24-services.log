@@ -1,0 +1,14 @@
+NRestarts=0
+Id=dmash-node.service
+ActiveState=active
+SubState=running
+
+NRestarts=0
+Id=dmash-sturn.service
+ActiveState=active
+SubState=running
+
+NRestarts=0
+Id=coturn.service
+ActiveState=active
+SubState=running

@@ -1,3 +1,7 @@
+> Current checkpoint and new-server transfer context: [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md).
+> This document describes a specific contract/deployment slice; historical release
+> numbers below are not the current runtime SHA.
+
 > Historical v3 implementation contract. The new unified Node requirements and
 > unresolved privacy gates are documented in [TRANSPORT_V4.md](TRANSPORT_V4.md).
 > v3 remains the implemented wire; v4 is not enabled by documentation changes.
