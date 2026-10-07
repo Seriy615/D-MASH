@@ -4,13 +4,25 @@
     // persists transitions and sends opaque Device payloads. A failed send
     // leaves the exact signed message available for an idempotent retry.
     class ContactFlowV3 {
-        constructor({store, activeAccount, makeBootstrap, importPeer, send}) {
-            Object.assign(this, {store, activeAccount, makeBootstrap, importPeer, send});
+        constructor({store, activeAccount, makeBootstrap, importPeer, send, onChange = async () => {}}) {
+            Object.assign(this, {store, activeAccount, makeBootstrap, importPeer, send, onChange});
             this.serial = Promise.resolve();
         }
         exclusive(fn) {const result = this.serial.then(fn); this.serial = result.catch(() => {}); return result;}
         read(id) {return this.store._get('contact-flow:' + id);}
         write(id, state) {return this.store._write('contact-flow:' + id, {...state, record: 'contact_flow'});}
+        async listForAccount() {
+            const slot=this.activeAccount(),results=[];if(!slot)return results;
+            for(const row of await this.store.store.all()){
+                if(this.activeAccount()!==slot)return [];
+                let state;try{state=await this.store._open(row);}catch(_){continue;}
+                if(!state||state.record!=='contact_flow'||state.slot!==slot||state.status==='established'||
+                    typeof state.request?.request_id!=='string'||!['caller','acceptor'].includes(state.role))continue;
+                results.push({id:state.request.request_id,role:state.role,status:state.status,
+                    name:state.role==='acceptor'?state.request.sender_display_name:(state.accept?.body?.display_name||'Новый контакт')});
+            }
+            return this.activeAccount()===slot?results:[];
+        }
         recordOutgoing(request, certificate, slot = this.activeAccount()) {
             return this.exclusive(async () => {
                 request = global.ContactPayloads.validateRequest(request);
@@ -25,6 +37,7 @@
                 }
                 await this.write(request.request_id, {role: 'caller', slot, request,
                     localCertificate: request.reply_route_certificate, peerCertificate: certificate, status: 'requested'});
+                await this.onChange();
             });
         }
         accept(request, localCertificate, displayName, slot = this.activeAccount()) {
@@ -47,6 +60,7 @@
                 if (state.status === 'established') return state.status;
                 await this.send(state.peerCertificate, state.accept);
                 state.status = 'accept_sent'; state.lastSentAt = Date.now(); await this.write(request.request_id, state);
+                await this.onChange();
                 return state.status;
             });
         }
@@ -63,15 +77,19 @@
                 state[phase.toLowerCase()] = message;
                 if (phase === 'ACCEPT' || state.status !== 'established') state.status = 'bootstrap_received';
                 await this.write(id, state);
+                await this.onChange();
                 return 'DEVICE_STORED';
             });
         }
         resume() {
             return this.exclusive(async () => {
                 const slot = this.activeAccount();
-                if (!slot) return;
+                const result={processed:0,failed:0};if (!slot) return result;
                 for (const row of await this.store.store.all()) {
+                    if(this.activeAccount()!==slot)break;
+                    try {
                     const state = await this.store._open(row);
+                    if(this.activeAccount()!==slot)break;
                     if (state.record !== 'contact_flow' || state.slot !== slot || state.status === 'established') continue;
                     const id = state.request.request_id;
                     if (state.role === 'acceptor' && state.accept && !state.confirm) {
@@ -95,7 +113,10 @@
                         await this.importPeer(state.confirm.body, slot);
                     } else continue;
                     state.status = 'established'; await this.write(id, state);
+                    result.processed++;
+                    } catch (_) {result.failed++;}
                 }
+                await this.onChange();return result;
             });
         }
     }

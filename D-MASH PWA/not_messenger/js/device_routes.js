@@ -286,6 +286,10 @@
         activePublicRoutes() {
             return this.list().filter(route => route.active);
         },
+        currentActivePublicRoute() {
+            const active=this.activePublicRoutes();
+            return active.find(route=>route.current)||active[0]||null;
+        },
         activate(routeId, active = true) {
             if (typeof routeId !== "string" || !routeId) throw new RouteError("INVALID_ROUTE_ID", "Route ID is invalid.");
             if (typeof active !== "boolean") throw new RouteError("INVALID_ACTIVE_STATE", "Route activation state is invalid.");

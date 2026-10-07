@@ -494,7 +494,7 @@
             if (recipientCertificate.routeId !== String(descriptor.r)) throw new Error("RouteCertificate does not match RouteID");
             if (!global.DeviceRoutes.verifyCertificate(recipientCertificate)) throw new Error("RouteCertificate signature is invalid");
 
-            let reply = global.DeviceRoutes.current();
+            let reply = global.DeviceRoutes.currentActivePublicRoute ? global.DeviceRoutes.currentActivePublicRoute() : global.DeviceRoutes.current();
             if (!reply) reply = await global.DeviceRoutes.issue({ type: "public-contact", allowedAccounts: [] });
             await global.NodeManager?.probeActivePublicDeviceRoutes?.();
             const replyCertificate = plainCertificate(reply.certificate);

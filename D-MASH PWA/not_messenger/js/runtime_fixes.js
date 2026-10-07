@@ -260,6 +260,11 @@
                     const resource = {kind: 'PUBLIC', routeId: route.routeId, signing,
                         generation: grant.generation, expiresAt: grant.expires_at, entryGrant: grant};
                     await connection.authority.route('REGISTER_ROUTE', resource);
+                    if (!global.DeviceRoutes.activePublicRoutes().some(item => item.routeId === route.routeId)) {
+                        await connection.authority.route('UNREGISTER_ROUTE', resource);
+                        await inbox.store.deleteKeys([await inbox.routeAlias(route.routeId)]);
+                        return {state:'ROUTE_DISABLED'};
+                    }
                     await connection.authority.route('START_PROBE', resource, {route_locator: route.routeId});
                     return {state: 'ACTIVATED'};
                 });
@@ -722,7 +727,7 @@
                 }
                 const results = await global.NodeManager.probeActivePublicDeviceRoutes();
                 const failures = results.filter(item => item.status === "rejected");
-                if (failures.length === results.length) throw failures[0]?.reason || new Error("Route activation failed");
+                if (!results.some(item => item.status === 'fulfilled' && ['ACTIVATED','READVERTISED'].includes(item.value?.state))) throw failures[0]?.reason || new Error("Нет подключённой Node для регистрации Route");
                 this.setRouteStatus("Route зарегистрирован: EntryGrant + PoW + Probe готовы.", "ok");
             } catch (error) { this.setRouteStatus(error.message, "error"); }
         };
@@ -732,7 +737,10 @@
                 const route = await global.DeviceRoutes.reissue();
                 this.openPublicRoutes(); this.setRouteStatus("Новый RouteID создан. Выполняется новый PoW…");
                 const connected = global.NodeManager?.connectedConnections?.() || [];
-                if (connected.length) await global.NodeManager.probeActivePublicDeviceRoutes();
+                if (connected.length) {
+                    const results=await global.NodeManager.probeActivePublicDeviceRoutes();
+                    if(!results.some(item=>item.status==='fulfilled'&&['ACTIVATED','READVERTISED'].includes(item.value?.state))) throw results.find(item=>item.status==='rejected')?.reason||new Error('Регистрация нового Route не подтверждена');
+                }
                 this.setRouteStatus(connected.length ? "Reissue зарегистрирован и объявлен." : "Reissue локальный; PoW при подключении к Node.", "ok");
                 return route;
             } catch (error) { this.setRouteStatus(error.message, "error"); }
@@ -744,8 +752,17 @@
             global.DeviceRoutes.activate(id, !route.active);
             this.openPublicRoutes();
             if (!route.active) {
-                try { await global.NodeManager.probeActivePublicDeviceRoutes(); this.setRouteStatus("Route активирован и объявлен.", "ok"); }
+                try {
+                    const results=await global.NodeManager.probeActivePublicDeviceRoutes();
+                    if(!results.some(item=>item.status==='fulfilled'&&['ACTIVATED','READVERTISED'].includes(item.value?.state))) throw results.find(item=>item.status==='rejected')?.reason||new Error('Регистрация Route не подтверждена');
+                    this.setRouteStatus("Route активирован и объявлен.", "ok");
+                }
                 catch (error) { this.setRouteStatus(error.message, "error"); }
+            } else {
+                try {
+                    const result=await global.NodeManager.unregisterPublicRoute(route);
+                    this.setRouteStatus(result.nodeRemoved?'Route отключён локально и отозван на подключённых Entry Node.':'Route отключён локально. Отзыв на Entry Node не подтверждён; запись истечёт по TTL.',result.nodeRemoved?'ok':'error');
+                } catch(error) {this.setRouteStatus('Route отключён локально; отзыв не подтверждён: '+error.message,'error');}
             }
         };
 

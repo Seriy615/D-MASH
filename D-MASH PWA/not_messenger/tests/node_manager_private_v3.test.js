@@ -116,6 +116,15 @@ class Store {
     await NodeManager.installPrivateRouteV3(peer,a);
     await new Promise(resolve=>setImmediate(resolve));
     assert.equal(NodeManager._removedPrivateRoutes.has(config.backRouteLocator),false,'readding contact enables its new local binding');
+    await inbox.registerRoute(certificate.routeId,{scope:'DEVICE'});
+    await inbox._write('grant:'+connection.nodeId+':'+certificate.routeId,{record:'grant',grant:{generation:1,expires_at:Math.floor(Date.now()/1000)+3600}});
+    const withRouteKeys=DeviceRoutes.withRouteKeys;
+    DeviceRoutes.withRouteKeys=async(id,callback)=>{assert.equal(id,certificate.routeId);return callback({signing:publicSigning});};
+    try{
+        sent.length=0;const revoked=await NodeManager.unregisterPublicRoute({routeId:certificate.routeId});
+        assert.equal(revoked.nodeRemoved,true);assert.equal(sent.some(item=>item.operation==='UNREGISTER_ROUTE'),true);
+        assert.equal(await inbox.policyByAlias(await inbox.routeAlias(certificate.routeId)),null,'disabled public route cannot dispatch new requests locally');
+    }finally{DeviceRoutes.withRouteKeys=withRouteKeys;}
     a.close();
     console.log('Device blind private-route storage and opaque Account handoff tests passed');
 })().catch(error => {console.error(error); process.exitCode = 1;});

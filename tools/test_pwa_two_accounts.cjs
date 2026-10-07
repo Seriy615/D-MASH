@@ -40,8 +40,18 @@ const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
     await NodeManager.probeActivePublicDeviceRoutes();return {v:1,r:route.routeId,c:route.certificate};
    });
    await pages[0].evaluate(async descriptor=>{Core.closeModal();await Core.sendPublicContactRequest(descriptor,'Alice','Two-browser acceptance');},descriptor);
+   if(process.env.DMASH_TEST_CONTACT_UI==='1'){
+    await pages[0].evaluate(()=>{Core.closeModal();const flow=Core.getContactFlowV3();window.resumeContactAcceptance=flow.resume.bind(flow);flow.resume=async()=>({paused:true});});
+    await pages[0].locator('#contact-list .contact-progress-item').waitFor({state:'visible',timeout:10000});
+   }
    await eventually(pages[1],async()=>(await Core.getPendingContactRequestStore().list()).some(r=>r.status==='pending'));
    await pages[1].evaluate(async()=>{const request=(await Core.getPendingContactRequestStore().list()).find(r=>r.status==='pending');await Core.acceptPendingContactRequest(request.id,'Bob',Core.bytesToHex(Core.keys.sign.publicKey));});
+   if(process.env.DMASH_TEST_CONTACT_UI==='1'){
+    await pages[1].evaluate(()=>Core.closeModal());
+    await pages[1].locator('#contact-list .contact-progress-item').waitFor({state:'visible',timeout:10000});
+    await pages[0].evaluate(async()=>{Core.getContactFlowV3().resume=window.resumeContactAcceptance;delete window.resumeContactAcceptance;await Core.getContactFlowV3().resume();});
+    console.log('PASS outgoing and accepted public requests remain visible while remote confirmation is held');
+   }
    await Promise.all(pages.map((page,i)=>eventually(page,async peer=>Boolean((await Storage.getBox('blind_peers',await Storage.getAlias(peer,'L1')))?.kyberPub),packages[1-i].user_id,600000)));
    console.log('PASS public contact request/accept/confirm with real Account key bundles');
    await Promise.all(pages.map(page=>page.evaluate(()=>Core.closeModal())));
@@ -60,7 +70,16 @@ const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
   }
   await Promise.all(pages.map((page,i)=>page.waitForFunction(peer=>Boolean(NodeManager.getMeshRoute(peer)),packages[1-i].user_id,{timeout:20000})));
   console.log('PASS pairing contacts persisted and local Device routes installed');
-  await Promise.all(pages.map((page,i)=>page.evaluate(peer=>Core.selectPeer(peer),packages[1-i].user_id)));
+  if(process.env.DMASH_TEST_CONTACT_UI==='1'){
+   for(let i=0;i<pages.length;i++){
+    const peer=packages[1-i].user_id;
+    const name=await pages[i].evaluate(async peer=>(await Storage.getBox('blind_peers',await Storage.getAlias(peer,'L1'))).name,peer);
+    const item=pages[i].locator('#contact-list .peer-item').filter({hasText:name});
+    await item.waitFor({state:'visible',timeout:30000});await item.click();
+    await pages[i].waitForFunction(peer=>Core.activePeerId===peer,peer);
+   }
+   console.log('PASS both contacts visible in sidebar and chat opens through an actual click');
+  }else await Promise.all(pages.map((page,i)=>page.evaluate(peer=>Core.selectPeer(peer),packages[1-i].user_id)));
   await pages[0].getByRole('button',{name:'ОБМЕНЯТЬСЯ КЛЮЧАМИ',exact:true}).click();
   console.log('Alice requested key exchange');
   await Promise.all(pages.map((page,i)=>eventually(page,async peer=>Boolean((await Storage.getBox('blind_secrets',await Storage.getAlias(peer,'L1')))?.staticShared),packages[1-i].user_id,600000)));

@@ -44,6 +44,7 @@ function device(slot) {
         bootstrap_encryption_public: a.certificate.boxPublicKey, protocol_capabilities: ['CONTACT_BOOTSTRAP_V3', 'DMP_C_V3']};
     await assert.rejects(b.flow.accept({...request, protocol_capabilities: ['CONTACT_ACCEPT_V1', 'DMP_C_V2']}, b.certificate, 'Bob'), /обновить/);
     await a.flow.recordOutgoing(request, b.certificate);
+    assert.equal((await a.flow.listForAccount())[0].status,'requested','outgoing request stays visible while awaiting acceptance');
     a.active = 'Other';
     await assert.rejects(a.flow.recordOutgoing(request, b.certificate, 'A'), /выбранный Account/);
     a.active = 'A';
@@ -55,14 +56,18 @@ function device(slot) {
     await assert.rejects(b.flow.accept(request, a.certificate, 'Bob'), /context changed/);
     assert.equal(b.sent.length, 0, 'changed request context must not resend a prepared Accept');
     await b.flow.accept(request, b.certificate, 'Bob');
+    assert.equal((await b.flow.listForAccount())[0].name,'Alice','accepted request remains visible until peer confirmation');
     assert.deepEqual((await b.flow.read(request.request_id)).accept, prepared, 'retry sends exactly the persisted signed Accept');
     const acceptEnvelope = Envelope.open(a.box.secretKey, b.sent[0]);
     a.active = 'Different Account';
     await a.flow.receive(a.certificate.routeId, JSON.parse(acceptEnvelope.account_payload));
     await a.flow.resume(); assert.equal(a.imported.length, 0);
-    a.active = 'A'; await a.flow.resume();
+    a.active = 'A';
+    a.store.store.rows=new Map([['corrupt',{key:'corrupt',iv:'AAAA',ciphertext:'AAAA',size:128}],...a.store.store.rows]);
+    const resumed=await a.flow.resume();assert.equal(resumed.failed,1);assert.equal(resumed.processed,1,'corrupt unrelated state cannot block a valid accepted contact');
     assert.deepEqual(a.imported, [b.bundle]);
     assert.equal((await a.flow.read(request.request_id)).status, 'established');
+    assert.equal((await a.flow.listForAccount()).length,0,'completed bootstrap leaves only the real peer chat');
     const confirmEnvelope = Envelope.open(b.box.secretKey, a.sent[0]);
     b.active = null;
     await b.flow.receive(b.certificate.routeId, JSON.parse(confirmEnvelope.account_payload));

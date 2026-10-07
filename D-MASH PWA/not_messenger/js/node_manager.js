@@ -254,6 +254,26 @@ const NodeManager = {
         await this.request('UNREGISTER_INBOUND_LOCATOR', { locator: route.backRouteLocator });
         return { removed: true, nodeRemoved: true };
     },
+    async unregisterPublicRoute(route) {
+        if (!route?.routeId) throw Error('Public route is unavailable');
+        const inbox = this.deviceInboxV3(), alias = await inbox.routeAlias(route.routeId);
+        const keys = [alias];
+        for (const row of await inbox.store.all()) {
+            let value; try { value = await inbox._open(row); } catch (_) { continue; }
+            if (value.record === 'pending' && value.envelope?.route_id === route.routeId) keys.push(row.key);
+        }
+        await inbox.store.deleteKeys(keys);
+        const nodes = this.connectedConnections().filter(node => node.authority && node.capabilities.has('UNREGISTER_ROUTE'));
+        if (!nodes.length) return {nodeRemoved:false,state:'NODE_NOT_CONNECTED'};
+        const results = await Promise.allSettled(nodes.map(async node => {
+            const grant=(await inbox._get('grant:'+node.nodeId+':'+route.routeId))?.grant;
+            if (!grant || grant.expires_at <= Math.floor(Date.now()/1000)) return;
+            await window.DeviceRoutes.withRouteKeys(route.routeId, ({signing}) => node.authority.route('UNREGISTER_ROUTE',{
+                kind:'PUBLIC',routeId:route.routeId,signing,generation:grant.generation,expiresAt:grant.expires_at,entryGrant:grant
+            }));
+        }));
+        return {nodeRemoved:results.every(result=>result.status==='fulfilled'),state:'PUBLIC_ROUTE_DISABLED'};
+    },
     save() {
         localStorage.setItem(this.storageKey, JSON.stringify(this.endpoints));
         if (this.active) localStorage.setItem(this.activeKey, this.active.url);

@@ -1,3 +1,48 @@
+# Execution checkpoint — IndexedDB login fix and public contact visibility
+
+Release .20 `d51f146b2a9e93597e9acbeb1c5495b3e460a425` is pushed, deployed
+and EMS synchronized through get_commit.sh: exact 201-file match, active/running,
+NRestarts=0. Deployed recorded-media browser playback/decoder error/panic guards
+PASS (`/tmp/dmash-v4-contact-media-public-playback.log`). Private two-Account
+acceptance including signed contact deletion and Entry confirmation PASS
+(`/tmp/dmash-v4-contact-media-live-accounts.log`). Public Request/Accept/Confirm,
+visible contact rows and actual click to open both chats, subsequent messaging,
+ratchet/reconnect PASS (`/tmp/dmash-v4-public-contact-ui.log`). Fresh test Accounts
+passed; this does not prove recovery of every existing user's pending state.
+
+Prepared .21 `transport-v3-registry-contact-status-20261008.21`:
+- Fix reported inactive IndexedDB transaction at login. Registry aliases/AES
+  ciphertext are computed before opening get/put/delete transactions. Migration
+  precomputes encrypted rows, commits accounts and marker atomically, then retires
+  only unchanged migrated legacy rows. Failed migration retains old records and
+  permits retry. Real Chrome IDB with delayed WebCrypto exercises CRUD, metadata
+  preservation and failure/retry (`tools/test_secure_registry_browser.cjs` PASS).
+- Public request progress stays visible in sidebar before authenticated contact
+  establishment. Completed flows disappear in favor of the actual peer chat;
+  pending rows cannot be used as established peers. Resume isolates corrupt/failing
+  unrelated records so one broken historical state cannot block all contacts.
+- Public route disable calls signed UNREGISTER_ROUTE and removes local delivery
+  policy/pending records. Failed activation/reissue cannot show a success status.
+  Outgoing requests select an active reply route; a disabled current route is not
+  silently used. These are v3 migration UI/runtime fixes, not v4 contact cutover.
+
+Full regression PASS: 263 backend + 11 Origin + 64 JS
+(`/tmp/dmash-v4-registry-contact-all-tests.log`). Final 64 JS rerun PASS after
+active reply-route selection changes (`/tmp/dmash-v4-registry-contact-js-final.log`).
+Focused route lifecycle tests also PASS after the final registration/disable race guard.
+Next: commit/push/deploy .21; exact-SHA, public registry CRUD/failure and public
+visible waiting-state + actual chat-click acceptance. User-reported login/media
+and public UI bugs steer current work. Then continue actual v4 two-Account
+integration and full N0–N8/A–M/E6 scope; no completion claim.
+Recorded media still has an outstanding large-payload transport requirement:
+inline Device envelope is bounded at 32 KiB, so notes above its limit require a
+real bounded transfer/chunk path rather than perpetual resend of an oversized
+single packet. Playback fix is separate evidence and does not prove large-note
+network delivery. Authenticated stale-state recovery, confirmed-established
+separation, bounded retry/versioning, mailbox and remaining milestones stay open.
+
+---
+
 # Execution checkpoint — contact deletion, recorded media, local Account v4 sender
 
 Release .19 `9cf2baf1f2b9237641219b41da731d8e8233bf5e` is deployed on EMS,

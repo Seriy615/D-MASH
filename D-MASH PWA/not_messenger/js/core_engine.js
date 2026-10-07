@@ -1681,11 +1681,14 @@ const Core = {
     */
     // Core.renderPeers        - Отрисовка списка контактов в сайдбаре
     async renderPeers() {
+        const slot=this.activeIdentity,keys=this.keys;
         const peers = window.DmashSavedMessages ? window.DmashSavedMessages.peers(await Storage.loadPeersGamma()) : await Storage.loadPeersGamma();
+        const progress=this.contactFlowV3?await this.contactFlowV3.listForAccount():[];
+        if(this.activeIdentity!==slot||this.keys!==keys)return;
         const list = document.getElementById('contact-list');
         if (!list) return;
         list.replaceChildren();
-        if (peers.length === 0) {
+        if (peers.length === 0 && progress.length === 0) {
             const empty = document.createElement('p');
             empty.className = 'dmash-muted';
             empty.textContent = 'НЕТ СВЯЗЕЙ';
@@ -1734,6 +1737,20 @@ const Core = {
             } else item.append(row);
             list.append(item);
         }
+        for(const pending of progress){
+            const item=document.createElement('button');item.className='contact-progress-item sys-modal-btn';
+            const name=document.createElement('b');name.textContent=pending.name||'Новый контакт';
+            const status=document.createElement('small');status.textContent=pending.role==='caller'&&pending.status==='requested'?'ОЖИДАЕМ ПРИНЯТИЯ':'ОЖИДАЕМ ПОДТВЕРЖДЕНИЯ';
+            item.append(name,document.createElement('br'),status);
+            item.onclick=()=>this.openContactProgress(pending.id);list.append(item);
+        }
+    },
+    async openContactProgress(id) {
+        const pending=(await this.getContactFlowV3().listForAccount()).find(item=>item.id===id);
+        if(!pending){await this.renderPeers();return;}
+        this.openModal('КОНТАКТ: '+this.escapeHtml(pending.name),'<div>Запрос ещё не завершён. Чат появится после подтверждения Account собеседника. Получателю нужно открыть приложение.</div><button class="sys-modal-btn" id="contact-progress-retry">ПРОВЕРИТЬ СНОВА</button>');
+        const button=document.getElementById('contact-progress-retry');
+        if(button)button.onclick=async()=>{button.disabled=true;try{await this.syncNetwork();await this.renderPeers();this.closeModal();}finally{button.disabled=false;}};
     },
     // Core.selectPeer         - Открытие чата, проверка готовности квантового канала
     async selectPeer(id) {
@@ -2919,6 +2936,7 @@ const Core = {
         if (this.contactFlowV3) return this.contactFlowV3;
         this.contactFlowV3 = new window.ContactFlowV3({store: window.NodeManager.deviceInboxV3(),
             activeAccount: () => this._accountTransitioning ? null : this.activeIdentity,
+            onChange: () => this.renderPeers(),
             makeBootstrap: options => this.withContactAccountV3(options.slot, async () => {
                 const contribution = await this.ensurePairingContribution();
                 if (this.activeIdentity !== options.slot || !this.keys?.sign) throw Error('Account locked');

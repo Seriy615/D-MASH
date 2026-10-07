@@ -99,7 +99,7 @@
                     const hmac = await crypto.subtle.importKey("raw", raw, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
                     return { aes, hmac };
                 } finally { raw.fill(0); }
-            })();
+            })().catch(error=>{keysPromise=null;throw error;});
             return keysPromise;
         }
 
@@ -127,7 +127,7 @@
             return JSON.parse(dec(new Uint8Array(clear)));
         }
 
-        async function readAndEraseLegacy() {
+        async function readLegacy() {
             let databases = null;
             try { databases = await indexedDB.databases?.(); } catch (_) {}
             if (Array.isArray(databases) && !databases.some(item => item?.name === LEGACY_DB)) return [];
@@ -143,15 +143,27 @@
                         const readTx = db.transaction("accounts", "readonly");
                         const rows = await idbRequest(readTx.objectStore("accounts").getAll()).catch(() => []);
                         await txDone(readTx).catch(() => {});
-                        const clearTx = db.transaction("accounts", "readwrite");
-                        clearTx.objectStore("accounts").clear();
-                        await txDone(clearTx).catch(() => {});
                         db.close();
-                        try { indexedDB.deleteDatabase(LEGACY_DB); } catch (_) {}
                         resolve(Array.isArray(rows) ? rows : []);
                     } catch (_) { try { db.close(); } catch (_) {} resolve([]); }
                 };
             });
+        }
+
+        async function retireLegacy(records) {
+            if(!records.length)return;
+            const db=await new Promise((resolve,reject)=>{const request=indexedDB.open(LEGACY_DB);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+            try {
+                if(!db.objectStoreNames.contains('accounts'))return;
+                const tx=db.transaction('accounts','readwrite'),store=tx.objectStore('accounts');
+                const done=txDone(tx);
+                for(const record of records){
+                    if(!record?.id)continue;
+                    const request=store.get(record.id);
+                    request.onsuccess=()=>{if(JSON.stringify(request.result)===JSON.stringify(record))store.delete(record.id);};
+                }
+                await done;
+            } finally {db.close();}
         }
 
         async function ensureMigrated() {
@@ -163,22 +175,16 @@
                 await txDone(metaTx).catch(() => {});
                 if (marker?.done) return;
 
-                const legacy = await readAndEraseLegacy();
-                if (legacy.length) {
-                    const writeTx = db.transaction(ACCOUNTS_STORE, "readwrite");
-                    const store = writeTx.objectStore(ACCOUNTS_STORE);
-                    for (const record of legacy) {
-                        if (!record?.id) continue;
-                        store.put({ alias: await aliasFor(record.id), blob: await seal(record) });
-                    }
-                    await txDone(writeTx);
-                }
-                const markTx = db.transaction(META_STORE, "readwrite");
-                markTx.objectStore(META_STORE).put({ key: "legacy-migrated", done: true, at: Date.now() });
-                await txDone(markTx);
+                const legacy = await readLegacy(),prepared=[];
+                for(const record of legacy){if(record?.id)prepared.push({alias:await aliasFor(record.id),blob:await seal(record)});}
+                const writeTx=db.transaction([ACCOUNTS_STORE,META_STORE],'readwrite'),done=txDone(writeTx);
+                for(const record of prepared)writeTx.objectStore(ACCOUNTS_STORE).put(record);
+                writeTx.objectStore(META_STORE).put({key:'legacy-migrated',done:true,at:Date.now()});
+                await done;
+                await retireLegacy(legacy);
                 try { storage.registry_instance?.close?.(); } catch (_) {}
                 storage.registry_instance = null;
-            })();
+            })().catch(error=>{migrationPromise=null;throw error;});
             return migrationPromise;
         }
 
@@ -201,8 +207,9 @@
         storage.getRegistryAccount = async function secureRegistryGet(id) {
             await ensureMigrated();
             const db = await openSecure();
+            const alias = await aliasFor(id);
             const tx = db.transaction(ACCOUNTS_STORE, "readonly");
-            const row = await idbRequest(tx.objectStore(ACCOUNTS_STORE).get(await aliasFor(id)));
+            const row = await idbRequest(tx.objectStore(ACCOUNTS_STORE).get(alias));
             await txDone(tx).catch(() => {});
             return row?.blob ? openBlob(row.blob) : undefined;
         };
@@ -211,23 +218,26 @@
             current.id = identity;
             current.pk = pubHex;
             const db = await openSecure();
+            const record={alias:await aliasFor(identity),blob:await seal(current)};
             const tx = db.transaction(ACCOUNTS_STORE, "readwrite");
-            tx.objectStore(ACCOUNTS_STORE).put({ alias: await aliasFor(identity), blob: await seal(current) });
+            tx.objectStore(ACCOUNTS_STORE).put(record);
             await txDone(tx);
         };
         storage.updateAccountAuth = async function secureRegistryUpdate(id, params) {
             const current = await this.getRegistryAccount(id) || { id };
             Object.assign(current, params || {});
             const db = await openSecure();
+            const record={alias:await aliasFor(id),blob:await seal(current)};
             const tx = db.transaction(ACCOUNTS_STORE, "readwrite");
-            tx.objectStore(ACCOUNTS_STORE).put({ alias: await aliasFor(id), blob: await seal(current) });
+            tx.objectStore(ACCOUNTS_STORE).put(record);
             await txDone(tx);
         };
         storage.removeAccountFromRegistry = async function secureRegistryRemove(id) {
             await ensureMigrated();
             const db = await openSecure();
+            const alias = await aliasFor(id);
             const tx = db.transaction(ACCOUNTS_STORE, "readwrite");
-            tx.objectStore(ACCOUNTS_STORE).delete(await aliasFor(id));
+            tx.objectStore(ACCOUNTS_STORE).delete(alias);
             await txDone(tx);
         };
 
