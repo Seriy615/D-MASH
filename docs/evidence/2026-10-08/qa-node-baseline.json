@@ -1,0 +1,65 @@
+{
+  "source_sha": "2ee3be9fe05e7844480a194e92b11b18c5e2c04d",
+  "environment": {
+    "python": "Python 3.12.14",
+    "node": "24.19.0",
+    "playwright": "1.64.0",
+    "chromium": "156.0.8078.4"
+  },
+  "tests": [
+    {
+      "name": "test_node_inbox_browser.cjs",
+      "status": "PASS",
+      "exit_code": 0,
+      "scope": "BROWSER real IndexedDB, programmatic fixture, no UI click coverage"
+    },
+    {
+      "name": "test_node_worker_ownership_browser.cjs",
+      "status": "PASS",
+      "exit_code": 0,
+      "scope": "BROWSER real Worker/lock/identity, programmatic fixture, no UI click coverage"
+    },
+    {
+      "name": "test_node_transit_browser.cjs",
+      "env": "DMASH_TRANSIT_WORKER=1",
+      "status": "PASS",
+      "exit_code": 0,
+      "scope": "BROWSER real Python N1\u2192Worker B\u2192Python N2 over loopback network; only browser path, label rewriting, no Account keys/login, deferred Inbox, root lock and stable identity, disconnect unavailable",
+      "limits": "Programmatic fixture, not ordinary contact/UI/bootstrap integration or public deployed transit"
+    },
+    {
+      "name": "test_worker_v4_remote.cjs",
+      "status": "PASS",
+      "exit_code": 0,
+      "scope": "DEPLOYED real public WSS v4 pinned NodeID via independent SSH, mutual Node auth twice, persisted browser Node identity, root lock, no Account login",
+      "deployed_sha": "ed200730dab2e64fc8446e344ce54dbd37cfeec5",
+      "limits": "Programmatic Worker fixture, no ordinary UI bootstrap/contact claim, no page/SW comparison in this script"
+    }
+  ],
+  "deployed_source": {
+    "sha": "ed200730dab2e64fc8446e344ce54dbd37cfeec5",
+    "status": "PASS",
+    "checked": 205,
+    "missing": [],
+    "changed": [],
+    "limits": "Read-only source verification; not page/SW/behavior acceptance"
+  },
+  "infrastructure": {
+    "forge_source": "/home/jcode/D-MASH",
+    "branch": "transport-v3",
+    "ems_ssh": "available",
+    "ems_service_states": [
+      "dmash-node active",
+      "dmash-sturn active",
+      "coturn active"
+    ],
+    "ems_deploy_script": "executable, not executed",
+    "origin_push_dry_run": "FAIL SSH publickey denied",
+    "ems_push_dry_run": "Authenticated GitHub; fetch-first rejection because EMS runtime branch precedes remote handoff. No actual push, fetch or transfer performed."
+  },
+  "limits": [
+    "No production deploy or storage mutation",
+    "No full N0-N8 acceptance claim",
+    "No ordinary Account/contact Node cutover, N4 recovery or full N8 acceptance claim"
+  ]
+}

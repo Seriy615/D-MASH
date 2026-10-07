@@ -1,0 +1,59 @@
+{
+  "source_sha": "2ee3be9fe05e7844480a194e92b11b18c5e2c04d",
+  "runtime_sha": "ed200730dab2e64fc8446e344ce54dbd37cfeec5",
+  "page_sw": "transport-v3-recorded-fragments-20261008.24",
+  "environment": {
+    "python": "3.12.14",
+    "node": "24.19.0",
+    "playwright": "1.64.0",
+    "chromium": "156.0.8078.4"
+  },
+  "limits": [
+    "Initial UI inventory remains incomplete",
+    "No new runtime implementation or deployment",
+    "Synthetic profiles/media; no physical WebAuthn/mobile acceptance",
+    "Worker fixtures do not establish ordinary UI Node v4 cutover"
+  ],
+  "files": {
+    "qa-calculator.json": {
+      "bytes": 3117,
+      "sha256": "477ee29e4c0e85f5a6038b5be7678b00092430c248a35553de246074dd1e986c"
+    },
+    "qa-forge-full-tests.log": {
+      "bytes": 58705,
+      "sha256": "87eefd1c82f3e0c47bf669fe9ff19647546a7a24082aaa75b3806ff5dc62d005"
+    },
+    "qa-node-baseline.json": {
+      "bytes": 2504,
+      "sha256": "c66c69634c4384c67c159115d206921057a6b85b3e0da20baa89023ce3c095b8"
+    },
+    "qa-node-exact.log": {
+      "bytes": 47,
+      "sha256": "9492629fcb6a9e0b9be6a4ec58f92394a9198981d30cb2bb2c94c8cba3b6d6e9"
+    },
+    "qa-node-ownership.log": {
+      "bytes": 166,
+      "sha256": "c6e723e68352f92aea2f0910641ab2b60d7a775eeba1b44d2d38b8a8b93195b9"
+    },
+    "qa-node-remote-worker.log": {
+      "bytes": 345,
+      "sha256": "c5c3a8d2fc97c53185b5b388dd781e28554b7ff21138a8a2e49fc581e535bc66"
+    },
+    "qa-node-transit.log": {
+      "bytes": 543,
+      "sha256": "dcfa00d9a574650dca62b7794ef6ade0dff9611e543ce4e9b85b1d805b139da7"
+    },
+    "qa-account-media.json": {
+      "bytes": 16433,
+      "sha256": "672e83b77f0ea3b1085945451016413d1ebdbf8f8aeb4b6fd7ca2c18bace0fa5"
+    },
+    "qa-account-media-summary.md": {
+      "bytes": 2026,
+      "sha256": "6ce37f77ebe5a726070063e6740127d07c75c9dbd28250c2b5759bf362b530f0"
+    },
+    "qa-account-lead.json": {
+      "bytes": 16433,
+      "sha256": "7668ffba9fd9c634144937913baf70feefc8424974d0e402ee396aacfcf87ae8"
+    }
+  }
+}

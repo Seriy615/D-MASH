@@ -25,7 +25,9 @@ control plane, timing, resource access и границ browser/media fingerprint
 Дополнительные указания пользователя: NCRH привязан к маршруту; случайный hop
 TTL для Probe; route-carried DUMMY/cover с корректным terminal discard; Probe
 может прийти до импорта contribution/QR; самостоятельно проверять UI контактов.
-Последнее текущее действие пользователя — подготовить перенос и полный хендофф.
+Текущее поручение пользователя — автономно завершить N0–N8 и совместимые A–M/E6
+на Forge с делегированной реализацией и полной браузерной приёмкой. Постоянная
+цель активна в текущем Codex chat; полный DONE не достигнут.
 Пользователь назначил `forge-vps` для синхронизации source/context. Проверить
 существующий checkout и работать оттуда; итоговые path/branch/SHA фиксируются
 в FORGE_SYNC.md после операции. Перенос production runtime/доменов/секретов
@@ -39,7 +41,35 @@ protected off-checkout backup. Итог и GitHub SSH limitation —
 настройки; production runtime/данные не переносились. Последний documentation
 commit также доставляется на Forge, его полный SHA получить из Git.
 
-## 2. Точный checkpoint и что проверено сейчас
+## 2. Текущий Forge checkpoint и опубликованный baseline
+
+На 8 октября 2026 начат новый аудит на `forgeai.isgood.host`, user `codex`,
+`/home/jcode/D-MASH`, `transport-v3`; `HEAD == origin/transport-v3 ==
+2ee3be9fe05e7844480a194e92b11b18c5e2c04d`. Постоянная цель создана.
+Первоначальный browser-first gate открыт, runtime implementation ещё не начата.
+Три агента разделяют UI inventory, Account/media audit и Node/infrastructure;
+лид проводит UI01 и самостоятельную интеграционную приёмку. Текущая ведомость —
+[BROWSER_QA.md](BROWSER_QA.md); незавершённые QA JSON не считать release evidence.
+
+Среда Forge подготовлена: Python 3.12.14 `.venv`, Node24.19.0 (проверен официальный
+checksum), Playwright/Chromium156.0.8078.4 вне checkout. Первый real UI проход:
+24 calculator/setup/unlock/reload-lock/wipe checks PASS на fresh synthetic profile,
+page/SW `.24`. Независимый UI Account/history/media rerun 27/27 PASS, включая master rewrap
+и сохранность того же Account/history. Полный UI01 ещё открыт. Свежие Node Inbox/ownership browser fixtures
+PASS; real loopback Worker N1→B→N2 transit и deployed WSS Worker auth/reconnect
+с независимым pin PASS. Full regression: 264 backend + 11 Origin + 67 JS suites PASS
+(exit 0); это не ordinary UI v4 приёмка. Read-only EMS exact-source verifier
+повторно подтвердил 205 файлов baseline runtime без missing/changed.
+NODE-QR-01: QR directory Node показывает missing NodeID error; triage в BROWSER_QA.
+
+Git SSH push с Forge отклоняется (publickey); HTTPS fetch работает. Existing EMS
+Git publisher авторизуется на GitHub (dry-run только fetch-first); exact local
+commit можно публиковать через проверенный workflow после готовности diff. EMS SSH и
+существующий executable get_commit.sh доступны; runtime relocation не выполнялся.
+Новый push/deploy не выполнен. Следующий шаг: закончить actual control/flow inventory,
+назначить fixes агентам, затем N3 ordinary UI→Node cutover/migration и N4 recovery.
+
+### Опубликованный runtime baseline (историческая приёмка до текущего аудита)
 
 | Параметр | Значение |
 |---|---|
@@ -62,7 +92,7 @@ active/running, NRestarts=0. Последние PWA-изменения не тр
 Коммит документации хендоффа будет новее runtime SHA; его брать из `git rev-parse
 HEAD`. Это не отдельный новый runtime release и не доказательство нового deploy.
 
-Свежая регрессия: **264 backend-теста + 11 Origin-тестов + 67 JS-наборов PASS**.
+Сохранённая регрессия предыдущего сеанса: **264 backend-теста + 11 Origin-тестов + 67 JS-наборов PASS**.
 Реальный Chrome на опубликованной `.24`: page и active SW одной версии; новый
 публичный контакт Request/Accept/Confirm; намеренная потеря первого запроса и
 автономный retry; видимые waiting cards и реальные клики по чатам; initial
@@ -440,7 +470,6 @@ limits. Physical phone/WebAuthn и недоступные среды отмеч�
 расширять инвентарь и тесты для непокрытых кнопок. Общая регрессия/crypto tests
 сохраняются; browser-first аудит не сокращает архитектурный N0–N8 scope.
 
-На момент передачи нет незакоммиченного runtime-кода: изменения хендоффа —
-документация, архив, portable evidence и удаление ignored generated caches.
-Последний interrupted continuation читал источники; новых v4 правок не сделал.
-Полная цель не завершена; новый сеанс должен продолжить архитектурный переход.
+В текущем аудите добавляются QA harnesses и evidence; runtime-код пока не менялся.
+Полная цель не завершена; после browser-first gate продолжить архитектурный переход.
+Проверять живые handles текущего chat прежде повторного запуска test processes.

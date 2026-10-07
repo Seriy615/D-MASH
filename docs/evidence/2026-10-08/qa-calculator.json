@@ -1,0 +1,153 @@
+{
+  "version": {
+    "page": "transport-v3-recorded-fragments-20261008.24",
+    "sw": "transport-v3-recorded-fragments-20261008.24",
+    "browser": "156.0.8078.4"
+  },
+  "rows": [
+    {
+      "id": "CALC-MASTER-SHORT",
+      "action": "1 =",
+      "expected": "minimum 4 digits",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-WIPE-SHORT",
+      "action": "2 =",
+      "expected": "minimum 4 digits",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-0",
+      "action": "AC 0",
+      "expected": "display 0",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-1",
+      "action": "AC 1",
+      "expected": "display 1",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-2",
+      "action": "AC 2",
+      "expected": "display 2",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-3",
+      "action": "AC 3",
+      "expected": "display 3",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-4",
+      "action": "AC 4",
+      "expected": "display 4",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-5",
+      "action": "AC 5",
+      "expected": "display 5",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-6",
+      "action": "AC 6",
+      "expected": "display 6",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-7",
+      "action": "AC 7",
+      "expected": "display 7",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-8",
+      "action": "AC 8",
+      "expected": "display 8",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-9",
+      "action": "AC 9",
+      "expected": "display 9",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-+",
+      "action": "2 + 3 =",
+      "expected": "display 5",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC--",
+      "action": "9 - 4 =",
+      "expected": "display 5",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-*",
+      "action": "6 * 7 =",
+      "expected": "display 42",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-/",
+      "action": "8 / 2 =",
+      "expected": "display 4",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-SIGN",
+      "action": "AC 5 ±",
+      "expected": "-5",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-PERCENT",
+      "action": "AC 5 %",
+      "expected": "0.05",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-DECIMAL",
+      "action": "AC 1 . 2 .",
+      "expected": "1.2",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-ZERO-DIV",
+      "action": "8 / 0 =",
+      "expected": "visible calculation error",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-WRONG-PIN",
+      "action": "AC 1111 =",
+      "expected": "calculator remains visible",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-UNLOCK",
+      "action": "AC 3333 =",
+      "expected": "Account gate visible",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-RELOAD-LOCK",
+      "action": "reload after root unlock",
+      "expected": "calculator visible",
+      "status": "PASS"
+    },
+    {
+      "id": "CALC-WIPE",
+      "action": "fresh synthetic profile 9876 =",
+      "expected": "wipe then fresh setup on revisit",
+      "status": "PASS"
+    }
+  ]
+}

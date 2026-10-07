@@ -1,0 +1,635 @@
+{
+  "time": "2026-10-07T23:55:59.360Z",
+  "target": "https://messenger.d-mash.ru/not_messenger/",
+  "limitations": [
+    "Fresh synthetic Account only",
+    "No real user storage",
+    "Local Saved Messages audit; remote media matrix separately required"
+  ],
+  "steps": [
+    {
+      "id": "UI02-empty",
+      "action": "Click ВОЙТИ with empty fields",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-create",
+      "action": "Fill fresh Account credentials, check registry and click ВОЙТИ",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-open",
+      "action": "Click Избранное",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-empty",
+      "action": "Click SEND empty; no message row",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-send",
+      "action": "Fill local text and click SEND",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-rename-cancel",
+      "action": "Click rename then cancel",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-delete-cancel",
+      "action": "Click message delete then НЕТ",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-password-cancel",
+      "action": "Click chat password then cancel",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-password-set",
+      "action": "Set and confirm local history password",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-password-wrong",
+      "action": "Reopen Saved Messages with wrong password",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-password-unlock",
+      "action": "Reopen Saved Messages with correct password and verify history",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-password-remove",
+      "action": "Remove local history password preserving message",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-delete",
+      "action": "Delete synthetic local message and verify disappearance",
+      "status": "PASS"
+    },
+    {
+      "id": "UI10-voice-cancel",
+      "action": "Start microphone capture, cancel and verify timer hides",
+      "status": "PASS"
+    },
+    {
+      "id": "UI10-voice-send",
+      "action": "Start microphone capture and SEND local recording",
+      "status": "PASS"
+    },
+    {
+      "id": "UI10-voice-play",
+      "action": "Click decrypt local audio and play native media control",
+      "status": "PASS"
+    },
+    {
+      "id": "UI10-circle-cancel",
+      "action": "Start circle camera capture and cancel",
+      "status": "PASS"
+    },
+    {
+      "id": "UI12-local-file",
+      "action": "Select synthetic file in Saved Messages; truthful unsupported message",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-logout",
+      "action": "Click ВЫХОД and verify registry selector",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-select",
+      "action": "Select saved Account and verify prefilled identifier",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-return",
+      "action": "Click К СПИСКУ",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-login",
+      "action": "Select saved Account and enter key",
+      "status": "PASS"
+    },
+    {
+      "id": "UI01-master-history",
+      "action": "Create retained history before master rotation",
+      "status": "PASS"
+    },
+    {
+      "id": "UI01-master-wrong",
+      "action": "Open master reconfiguration and reject wrong old code",
+      "status": "PASS"
+    },
+    {
+      "id": "UI01-master-change",
+      "action": "Enter old code then new master and wipe codes",
+      "status": "PASS"
+    },
+    {
+      "id": "UI01-master-old-deny",
+      "action": "Reload and verify old master does not unlock",
+      "status": "PASS"
+    },
+    {
+      "id": "UI01-master-new-retain",
+      "action": "New master unlocks same registry Account and history",
+      "status": "PASS"
+    }
+  ],
+  "inventory": [
+    {
+      "state": "Account login",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "id": "global-settings-button",
+          "label": "⚙",
+          "type": "button",
+          "disabled": false,
+          "onclick": "ui.renderGlobalSettings()"
+        },
+        {
+          "tag": "INPUT",
+          "id": "p1",
+          "label": "ИДЕНТИФИКАТОР",
+          "type": "text",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "INPUT",
+          "id": "p2",
+          "label": "КЛЮЧ ДОСТУПА",
+          "type": "password",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "INPUT",
+          "id": "save-in-registry",
+          "label": "",
+          "type": "checkbox",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "ВОЙТИ",
+          "type": "submit",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "К СПИСКУ",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "ui.show_gate()"
+        }
+      ]
+    },
+    {
+      "state": "Workspace",
+      "controls": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "label": "МОЙ ID:\n                        5c15cbaeebdb2b085acbeb91...\n                    Connected 0 Nodes",
+          "onclick": "Core.showMyQR()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "СЕТЬ:\n                        ПОДКЛЮЧИТЕСЬ К MESH СЕТИ!",
+          "type": "button",
+          "disabled": false,
+          "onclick": "NodeManager.renderSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ QR ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.openScanner()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ + ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.addPeerPrompt()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "Настройки",
+          "type": "button",
+          "disabled": false,
+          "onclick": "Core.openSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.accountLogout()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "back-btn",
+          "label": "←",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.closeChat()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "✎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.renameCurrent()"
+        }
+      ]
+    },
+    {
+      "state": "Saved Messages",
+      "controls": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "label": "МОЙ ID:\n                        5c15cbaeebdb2b085acbeb91...\n                    Connected 0 Nodes",
+          "onclick": "Core.showMyQR()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "СЕТЬ:\n                        ПОДКЛЮЧИТЕСЬ К MESH СЕТИ!",
+          "type": "button",
+          "disabled": false,
+          "onclick": "NodeManager.renderSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ QR ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.openScanner()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ + ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.addPeerPrompt()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "Настройки",
+          "type": "button",
+          "disabled": false,
+          "onclick": "Core.openSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.accountLogout()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "←",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.closeChat()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "✎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.renameCurrent()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "🔒",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.configureChatPassword()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "📎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiAttach()"
+        },
+        {
+          "tag": "TEXTAREA",
+          "id": "msgInput",
+          "label": "Сообщение...",
+          "type": "textarea",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "BUTTON",
+          "id": "circle-btn",
+          "label": "⭕",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiCircle()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "voice-btn",
+          "label": "🎤",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiVoice()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "SEND",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.sendMessage()"
+        }
+      ]
+    },
+    {
+      "state": "Voice recording",
+      "controls": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "label": "МОЙ ID:\n                        5c15cbaeebdb2b085acbeb91...\n                    Connected 0 Nodes",
+          "onclick": "Core.showMyQR()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "СЕТЬ:\n                        ПОДКЛЮЧИТЕСЬ К MESH СЕТИ!",
+          "type": "button",
+          "disabled": false,
+          "onclick": "NodeManager.renderSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ QR ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.openScanner()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ + ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.addPeerPrompt()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "Настройки",
+          "type": "button",
+          "disabled": false,
+          "onclick": "Core.openSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.accountLogout()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "←",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.closeChat()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "✎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.renameCurrent()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "🔒",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.configureChatPassword()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "📎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiAttach()"
+        },
+        {
+          "tag": "TEXTAREA",
+          "id": "msgInput",
+          "label": "Сообщение...",
+          "type": "textarea",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "BUTTON",
+          "id": "voice-btn",
+          "label": "✕",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiVoice()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "SEND",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.sendMessage()"
+        }
+      ]
+    },
+    {
+      "state": "Circle recording",
+      "controls": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "label": "МОЙ ID:\n                        5c15cbaeebdb2b085acbeb91...\n                    Connected 0 Nodes",
+          "onclick": "Core.showMyQR()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "СЕТЬ:\n                        ПОДКЛЮЧИТЕСЬ К MESH СЕТИ!",
+          "type": "button",
+          "disabled": false,
+          "onclick": "NodeManager.renderSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ QR ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.openScanner()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ + ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.addPeerPrompt()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "Настройки",
+          "type": "button",
+          "disabled": false,
+          "onclick": "Core.openSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.accountLogout()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "←",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.closeChat()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "✎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.renameCurrent()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "🔒",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.configureChatPassword()"
+        },
+        {
+          "tag": "SPAN",
+          "id": "",
+          "label": "×",
+          "onclick": "Core.deleteMessageFlow('2')"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "📎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiAttach()"
+        },
+        {
+          "tag": "TEXTAREA",
+          "id": "msgInput",
+          "label": "Сообщение...",
+          "type": "textarea",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "BUTTON",
+          "id": "circle-btn",
+          "label": "✕",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiCircle()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "SEND",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.sendMessage()"
+        }
+      ]
+    },
+    {
+      "state": "Account selector",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "id": "global-settings-button",
+          "label": "⚙",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "ui.renderGlobalSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "qa-local-1791417367960",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "ui.renderLoginForm(decodeURIComponent('qa-local-1791417367960'))"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "+ НОВЫЙ ВХОД",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "ui.renderLoginForm()"
+        }
+      ]
+    }
+  ],
+  "page": "transport-v3-recorded-fragments-20261008.24",
+  "sw": "transport-v3-recorded-fragments-20261008.24",
+  "browser": "156.0.8078.4"
+}

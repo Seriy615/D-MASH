@@ -1,0 +1,7 @@
+DeviceRoot unlocked: attempt 1
+Node identity ready: attempt 1
+Mutual WSS authorization ready: attempt 1
+DeviceRoot unlocked: attempt 2
+Node identity ready: attempt 2
+Mutual WSS authorization ready: attempt 2
+PASS real public WSS v4: pinned NodeID, mutual Node authorization, Worker reconnect with persisted identity, root lock; no Account login
