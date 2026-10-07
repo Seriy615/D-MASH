@@ -621,7 +621,7 @@ const Core = {
         el.textContent = `${connected.length} УЗЛ. · PING ${pings.length ? `${Math.min(...pings)}–${Math.max(...pings)} ms` : '…'}`;
     },
     async queueOutbound(peerId, content, forceHandshake = false) {
-        const isControl = typeof content === 'object' && (content.type?.startsWith('voip_') || ['dmash_receipt','ratchet_update','ratchet_ack'].includes(content.type));
+        const isControl = typeof content === 'object' && (content.type?.startsWith('voip_') || ['dmash_receipt','ratchet_update','ratchet_ack','pqc_confirm'].includes(content.type));
         if (!peerId || content == null) return null;
         if (forceHandshake === true || forceHandshake === 'SOS') {
             // Route activation may still be doing resource work. Retain one
@@ -1218,6 +1218,7 @@ const Core = {
                 const isVoip = typeof p === 'object' && p.type?.startsWith('voip_');
                 const isReceipt = typeof p === 'object' && p.type === 'dmash_receipt';
                 const isRatchet = typeof p === 'object' && ['ratchet_update', 'ratchet_ack'].includes(p.type);
+                const isHandshakeConfirm = typeof p === 'object' && p.type === 'pqc_confirm';
                 // Assign an opaque per-message ID before E2EE encryption. It
                 // is referenced only by encrypted receipts; Entry Nodes never
                 // see it as routing or identity metadata.
@@ -1242,7 +1243,7 @@ const Core = {
                         p?.type === 'voip_call_request' ? 'CALL_REQUEST' :
                         p?.type === 'voip_file_request' ? 'FILE_SESSION_REQUEST' : 'MSG');
                     this.shmon("INFO", `D-MASH: ${result.state}`);
-                    if (!isVoip && !isReceipt && !isRatchet && !queuedAlias && pid === this.activePeerId) {
+                    if (!isVoip && !isReceipt && !isRatchet && !isHandshakeConfirm && !forceHandshake && !queuedAlias && pid === this.activePeerId) {
                         // A DMP-C submission result is an authenticated node
                         // acknowledgement, not a read receipt.  It is safe to
                         // show delivery only when the node explicitly reports
@@ -1286,6 +1287,7 @@ const Core = {
         const isVoip = typeof p === 'object' && p.type?.startsWith('voip_');
         const isReceipt = typeof p === 'object' && p.type === 'dmash_receipt';
                 const isRatchet = typeof p === 'object' && ['ratchet_update', 'ratchet_ack'].includes(p.type);
+        const isHandshakeConfirm = typeof p === 'object' && p.type === 'pqc_confirm';
         const wireId = (!isVoip && !isReceipt && !isRatchet && !forceHandshake) ? crypto.randomUUID() : null;
         const outbound = wireId ? { type: 'dmash_message', id: wireId, body: p } : p;
         const isSilent = isVoip && (p.type === 'voip_ice' || p.type === 'voip_answer' || p.type === 'voip_hangup');
@@ -1313,7 +1315,7 @@ const Core = {
             });
 
             // Сохраняем и обновляем UI только если это не системный сигнал и это текущий открытый чат
-            if (!isVoip && !isReceipt && !isRatchet && pid === this.activePeerId) {
+            if (!isVoip && !isReceipt && !isRatchet && !isHandshakeConfirm && !forceHandshake && pid === this.activePeerId) {
                 const seqId = await Storage.saveMessageGamma(pid, p, false, true, 'SENT', wireId);
                 const log = document.getElementById('log');
                 if (log) {

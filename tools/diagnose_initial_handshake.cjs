@@ -68,6 +68,9 @@ const scenarios = {
                     new TextEncoder().encode(pass+'|'+hex(salt)) ))};}};
         }
         const localRoute='d'.repeat(64);
+        a.core.activePeerId=b.core.keys.pub_hex;
+        let historyWrites=0;
+        a.storage.saveMessageGamma=async()=>{historyWrites++;return 1;};
         await a.storage.putBox('pairing_material',{alias:'node-route-v4:'+localRoute,data:{peerId:b.core.keys.pub_hex}});
         const finalEnvelope={version:1,ciphertext:retransmitted.ciphertext,
             sender_proof:hex(nacl.sign.detached(Buffer.from(retransmitted.ciphertext,'hex'),b.core.keys.sign.secretKey))};
@@ -79,6 +82,13 @@ const scenarios = {
         assert.equal(await a.core.receiveAccountNodeRecordV4({routeId:localRoute,accountSlot:'slot-A',payload:JSON.stringify(finalEnvelope)},'slot-A'),true);
         const confirmation=a.outgoing.at(-1);
         assert(confirmation&&confirmation.ciphertext!==retransmitted.ciphertext,'Account confirmation travels as a separately signed packet');
+        assert.equal(historyWrites,0,'handshake confirmations never enter chat history');
+        a.ctx.NodeManager.submitEnvelope=async()=>{throw Error('offline');};
+        assert.equal(await a.core.receiveAccountNodeRecordV4({routeId:localRoute,accountSlot:'slot-A',payload:JSON.stringify(finalEnvelope)},'slot-A'),false,
+            'failed confirmation send retains the final Inbox record for retry');
+        assert.equal(historyWrites,0,'failed confirmations never enter queued user history');
+        assert.equal([...a.rows.keys()].some(key=>key.startsWith('blind_outbox')),false,
+            'the retained Inbox final owns confirmation retries');
         assert.match(await deliver(b,a,confirmation.ciphertext),/pqc_confirm/,
             'remote confirmation is encrypted under the shared Account secret');
         assert.equal((await state(b,a)).pendingKyberFinal,undefined,

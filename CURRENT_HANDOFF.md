@@ -1,3 +1,29 @@
+# Execution checkpoint — initial handshake retention deployed; control history fix
+
+Release .17 `11ce1b4ac53ce15bd0d7605de4ef763c43cf3a1e` is pushed,
+synchronized through EMS get_commit.sh and deployed: exact 199-file match,
+service active/running, NRestarts=0. Public page and active SW .17 checked by
+the two-Account acceptance. Live late pairing, initial exchange, bidirectional
+messages, ratchet epochs 1/2, delayed old-epoch packet, offline reconnect delivery
+and control Inbox retirement PASS (`/tmp/dmash-v4-handshake-live-accounts.log`).
+Route unavailable retries occurred before successful initial exchange.
+Public v4 Worker reconnect/DeviceRoot lock also PASS
+(`/tmp/dmash-v4-handshake-remote-worker.log`).
+
+Prepared .18 `transport-v3-handshake-controls-20261008.18`: initial handshake
+controls and pqc_confirm are excluded from outbound user history. Failed
+confirmation sends retain the final Inbox record for retry and cannot add queued
+user history. Real NaCl/Kyber H3 now tests both successful and failed confirmation
+through the Account receiver with the corresponding chat selected.
+All 63 JS suites PASS (`/tmp/dmash-v4-handshake-controls-js.log`).
+Next: commit/push/deploy .18 and deployed acceptance.
+N4 remains partial: state-machine phases, confirmed-established separation,
+authenticated stale-state recovery, wire-version negotiation, per-peer bounded
+retry/backoff and full crash/loss/reorder matrix remain required. Continue full
+N0–N8/A–M/E6 scope after this checkpoint; no completion claim.
+
+---
+
 # Execution checkpoint — retained Kyber final across Node acceptance (partial N4)
 
 Release .16 `93d93a22dca149ec7eeae31ce49fe8308d3167e1` is deployed and exact

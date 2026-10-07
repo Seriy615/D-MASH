@@ -65,6 +65,11 @@ const base = process.argv[2] || 'https://messenger.d-mash.ru/not_messenger/';
   console.log('Alice requested key exchange');
   await Promise.all(pages.map((page,i)=>eventually(page,async peer=>Boolean((await Storage.getBox('blind_secrets',await Storage.getAlias(peer,'L1')))?.staticShared),packages[1-i].user_id,600000)));
   console.log('PASS initial Account key exchange');
+  await Promise.all(pages.map((page,i)=>page.evaluate(async peer=>{
+   const messages=await Storage.loadMessagesGamma(peer,50,0);
+   if(messages.some(m=>m.text?.type==='pqc_confirm'))throw Error('Handshake confirmation entered user history');
+  },packages[1-i].user_id)));
+  console.log('PASS handshake confirmations excluded from user history');
   const send=async(index,text,wait=true)=>{
    await pages[index].evaluate(async peer=>{Core.closeModal();await Core.selectPeer(peer);},packages[1-index].user_id);
    await pages[index].locator('#msgInput').fill(text);await pages[index].getByRole('button',{name:'SEND',exact:true}).click();
