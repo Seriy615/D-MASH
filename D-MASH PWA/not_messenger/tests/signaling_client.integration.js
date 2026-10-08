@@ -42,11 +42,26 @@ const wait = async predicate => {
 };
 function peer() {
     return {
+        signalingState: 'stable',
         addTrack() {}, close() {this.closed = true;},
         async createOffer() { return {type: 'offer', sdp: 'test-offer'}; },
         async createAnswer() { return {type: 'answer', sdp: 'test-answer'}; },
-        async setLocalDescription(value) { this.localDescription = value; },
-        async setRemoteDescription(value) { this.remoteDescription = value; },
+        async setLocalDescription(value) {
+            if (value.type === 'offer') {
+                assert.equal(this.signalingState, 'stable'); this.signalingState = 'have-local-offer';
+            } else if (value.type === 'answer') {
+                assert.equal(this.signalingState, 'have-remote-offer'); this.signalingState = 'stable';
+            } else if (value.type === 'rollback') this.signalingState = 'stable';
+            this.localDescription = value;
+        },
+        async setRemoteDescription(value) {
+            if (value.type === 'offer') {
+                assert.equal(this.signalingState, 'stable'); this.signalingState = 'have-remote-offer';
+            } else if (value.type === 'answer') {
+                assert.equal(this.signalingState, 'have-local-offer'); this.signalingState = 'stable';
+            }
+            this.remoteDescription = value;
+        },
         async addIceCandidate(value) { (this.candidates ||= []).push(value); }
     };
 }
