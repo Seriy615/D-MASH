@@ -1,0 +1,38 @@
+{
+  "base": "ceb90efbcdc741eba5f447185cbc841bf557c898",
+  "scope": "Isolated N4 Inbox progress and migration-safe local chat deletion; no ordinary UI or deployed acceptance",
+  "commits": {
+    "inboxProgressInactive": "c82c685a964c733397a0a6bc74a84858dd48419c",
+    "chatDeletionSafety": "4818680c4dc0226f365862be51a73fe3aa952c05"
+  },
+  "browser": {
+    "engine": "Chromium 156.0.8078.4",
+    "fixture": "Synthetic fresh origin and IndexedDB only",
+    "command": "DMASH_PLAYWRIGHT_MODULE=/tmp/dmash-browser-tools/node_modules/playwright DMASH_CHROME=/home/jcode/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome /tmp/dmash-browser-tools/node-v24.19.0-linux-x64/bin/node tools/test_account_deletion_migration_browser.cjs",
+    "baseline": {
+      "exit": 1,
+      "observed": "Corrupt known route-owner row was silently deleted with target peer and history"
+    },
+    "fixed": {
+      "exit": 0,
+      "storageSha256": "a22199ed407e54d3cf10fe03a6885d25b64d77a52867bcf4a508dbf8af67c4f8",
+      "checks": [
+        "Corrupt known owner row rejects deletion before peer or history mutation",
+        "Valid peer deletion removes its legacy peer, history, route and mapping rows",
+        "Other peer, JournalV2-style row and opaque versioned row survive"
+      ]
+    }
+  },
+  "unit": {
+    "account_node_inbox_v4.test.js": "PASS: durable cursor restart over 129 poison rows, checkpoint failure replay, persisted Account dedupe and cancellation",
+    "account_node_transport_v4.test.js": "PASS",
+    "account_route_journal_v2.test.js": "PASS",
+    "account_login_identity.test.js": "PASS",
+    "account_session_v4.test.js": "PASS"
+  },
+  "limits": [
+    "Inbox progress module is inactive until a managed Account bridge opens it; no ordinary Account UI recovery claim",
+    "Versioned rows with unknown ownership remain encrypted and retained; their owner modules must provide authenticated retirement",
+    "Synthetic IndexedDB test does not verify user-profile migration, production SW, real transport or deployed behavior"
+  ]
+}
