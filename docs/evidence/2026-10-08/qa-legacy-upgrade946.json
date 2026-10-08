@@ -1,0 +1,6 @@
+{
+  "status": "NOT_RUN",
+  "reason": "CDP9452 refused connection; retained synthetic .26 browser is unavailable",
+  "candidateSHA": "946bb527151408409012e8379aae5e902df64ca0",
+  "actions": "No profile reset, reconstruction or downgrade performed; user9449 untouched"
+}

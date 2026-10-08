@@ -1,0 +1,39 @@
+{
+  "scope": "Observed application metadata and sampled RTC candidate-pair counters, not server bandwidth/billing; distinct RTC sessions not summed",
+  "voiceMediaBytes": [
+    30532,
+    30532,
+    31813
+  ],
+  "voiceDurationsSeconds": [
+    2.301,
+    2.301,
+    2.361
+  ],
+  "stopToDurableMs": [
+    188,
+    349,
+    390
+  ],
+  "accountMetadataJSONBytes": [
+    777,
+    777,
+    777
+  ],
+  "peerSamples": [
+    {
+      "profile": 0,
+      "samples": 5,
+      "maxObservedBytesSent": 34194,
+      "maxObservedBytesReceived": 1909,
+      "allSelectedRelay": true
+    },
+    {
+      "profile": 1,
+      "samples": 10,
+      "maxObservedBytesSent": 2689,
+      "maxObservedBytesReceived": 34194,
+      "allSelectedRelay": true
+    }
+  ]
+}

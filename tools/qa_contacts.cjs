@@ -43,6 +43,7 @@ if(process.env.DMASH_QA_SENDER_VOICE_TURN==='1'){
  const finish=await require('./qa_note_observer.cjs')({pages,report,sourceRoot:overlay||path.resolve('D-MASH PWA/not_messenger')});
  try{await require('./qa_sender_voice_turn.cjs')({pages,report,step,click,snap,accounts,observeRelay:finish});}finally{await finish();}
 }
+if(process.env.DMASH_QA_NOTE_LIFECYCLE==='1')await require('./qa_note_lifecycle_ui.cjs')({pages,report,step,click,snap});
 if(process.env.DMASH_QA_SENDER_VOICE==='1')await require('./qa_sender_voice.cjs')({pages,report,step,click,snap});
 if(process.env.DMASH_QA_MEDIA==='1')await require('./qa_remote_media.cjs')({pages,report,step,click,snap});
 }catch(e){report.fatal=clean(e.message).slice(0,600);console.log('FAIL',report.fatal);process.exitCode=1;}finally{await Promise.allSettled(sourceTasks);for(const p of pages){try{report.states.push({state:'final',text:clean(await p.locator('body').innerText()).slice(-3000)});}catch(_){}}save();if(process.env.DMASH_QA_KEEP_ALIVE==='1'&&browser){report.retained={at:new Date().toISOString(),cdp:cdpPort?'http://127.0.0.1:'+cdpPort:null,note:'Original acceptance result preserved; same synthetic profiles alive for diagnosis. SIGUSR2 releases handle.'};save();console.log('RETAINED browser for same-profile diagnosis',report.retained.cdp||'(no external CDP port)');await new Promise(resolve=>process.once('SIGUSR2',resolve));}for(const observer of observers)await observer.close().catch(()=>{});await browser?.close();}})();
