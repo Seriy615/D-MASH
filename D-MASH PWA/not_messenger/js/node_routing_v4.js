@@ -14,7 +14,7 @@
    if(!(base instanceof Uint8Array)||base.length!==32)throw Error('Invalid BaseNCRH');
    this.base=base.slice();this.clock=clock;this.monotonic=monotonic;this.peers=new Map();this.owned=[];this.labels=new Map();this.seen=new Map();
    this.queues=new Map();this.timers=new Map();this.senders=new Map();this.tasks=new Set();this.pending=new Set();this.rates=new Map();this.probes=[];this.coverHistory=[];this.coverTimer=null;this.coverPolicy=null;
-   this.closed=false;this.stats={forwarded:0,received:0,probes:0,batches:0};
+   this.discoveryRates=new Map();this.closed=false;this.stats={forwarded:0,received:0,probes:0,batches:0};
   }
   prune(){
    const now=this.clock();this.probes=this.probes.filter(row=>row.packet.expires_at>now&&this.peers.has(row.peer));for(const table of [this.labels,this.seen])for(const [key,row] of table)if(row.expires<=now)table.delete(key);
@@ -64,7 +64,7 @@
    finally{if(this.peers.get(peer)===channel)this.removePeer(peer);channel.close();}
   }
   removePeer(peer){
-   this.peers.delete(peer);this.queues.delete(peer);clearTimeout(this.timers.get(peer));this.timers.delete(peer);this.rates.delete(peer);
+   this.peers.delete(peer);this.queues.delete(peer);clearTimeout(this.timers.get(peer));this.timers.delete(peer);this.rates.delete(peer);this.discoveryRates.delete(peer);
    for(const [key,row] of this.labels)if(row.peer===peer||(Array.isArray(row.target)&&row.target[0]===peer))this.labels.delete(key);
    if(!this.peers.size)for(const pending of this.pending)pending.reject(Error('Node path unavailable'));
   }
@@ -97,31 +97,28 @@
    }catch(_){const channel=this.peers.get(peer);this.removePeer(peer);channel?.close();}
    finally{clearTimeout(timer);this.senders.delete(peer);this.arm(peer);}
   }
-  async discover(certificate){
-   if(this.closed||!this.peers.size)throw Error('Node path unavailable');
-   const {blob,state}=global.DmashRouteDiscoveryV4.createQuery(certificate,{now:Math.floor(this.clock())}),expires=state.query.expires_at;
-   let resolve,reject,timer,done=false;
-   const result=new Promise((yes,no)=>{resolve=value=>{done=true;yes(value);};reject=error=>{done=true;no(error);};});
-   // An early disconnect may reject while asynchronous NCRH work is pending.
-   result.catch(()=>{});const pending={reject};this.pending.add(pending);
-   const accept=async(peer,packet)=>{
-    if(done)return;
-    let valid;try{valid=await global.DmashRouteDiscoveryV4.verifyReply(packet.payload,state,{clock:()=>Math.floor(this.clock())});}catch(_){return;}
-    if(valid&&!done&&!this.closed&&expires>this.clock()&&this.peers.has(peer))resolve({peer,label:packet.offer,expires_at:Math.min(expires,packet.expires_at),channel:this.peers.get(peer)});
+  async discover(certificate,{signal}={}){
+   if(this.closed||!this.peers.size||signal?.aborted)throw Error('Node path unavailable');
+   if(this.pending.size>=8)throw Error('Node discovery quota');
+   const pinned={...certificate};global.DmashRouteDiscoveryV4.verifyCertificate(pinned,Math.floor(this.clock()));
+   let resolve,reject,done=false,current=null;const timers=new Set();
+   const result=new Promise((yes,no)=>{resolve=v=>{if(!done){done=true;yes(v);}};reject=e=>{if(!done){done=true;no(e);}};});result.catch(()=>{});
+   const pending={reject};this.pending.add(pending);const cancel=()=>reject(Error('Node discovery cancelled'));signal?.addEventListener('abort',cancel,{once:true});
+   const retire=()=>{if(!current)return;current.state.replyPrivate.fill(0);for(const [key,row]of this.labels)if(row.target===current.accept)this.labels.delete(key);current=null;};
+   const attempt=async()=>{
+    if(done||this.closed||signal?.aborted)return;
+    retire();const {blob,state}=global.DmashRouteDiscoveryV4.createQuery(pinned,{now:Math.floor(this.clock())}),expires=state.query.expires_at;
+    const entry={state,accept:null};entry.accept=async(peer,packet)=>{if(done||current!==entry)return;let valid;try{valid=await global.DmashRouteDiscoveryV4.verifyReply(packet.payload,state,{clock:()=>Math.floor(this.clock())});}catch(_){return;}if(valid&&!done&&current===entry&&!this.closed&&expires>this.clock()&&this.peers.has(peer))resolve({peer,label:packet.offer,expires_at:Math.min(expires,packet.expires_at),channel:this.peers.get(peer)});};current=entry;
+    await this.dedupe('PROBE',blob,expires);const ncrh=await global.DmashProbePrimitivesV4.routeNcrh(this.base,Uint8Array.from(pinned.route_id.match(/../g),v=>parseInt(v,16)));if(done||current!==entry||this.closed)return;
+    const ttl=global.DmashProbePrimitivesV4.sampleHopTtl(),bucket=Math.floor(this.clock()/60);let sent=0;
+    for(const peer of this.peers.keys()){const previous=this.discoveryRates.get(peer),count=previous?.bucket===bucket?previous.count:0;if(count>=24)continue;this.discoveryRates.set(peer,{bucket,count:count+1});const label=this.label(peer,entry.accept,expires);this.enqueue(peer,{type:'PROBE',version:4,box:blob,return_label:label,ncrh,ttl,expires_at:expires});sent++;}
+    if(!sent)throw Error('Node discovery rate limit');
    };
    try{
-    await this.dedupe('PROBE',blob,expires);
-    const ncrh=await global.DmashProbePrimitivesV4.routeNcrh(this.base,Uint8Array.from(certificate.route_id.match(/../g),b=>parseInt(b,16)));
-    const ttl=global.DmashProbePrimitivesV4.sampleHopTtl();
-    for(const peer of this.peers.keys()){
-     const label=this.label(peer,accept,expires);this.enqueue(peer,{type:'PROBE',version:4,box:blob,return_label:label,ncrh,ttl,expires_at:expires});
-    }
-    timer=setTimeout(()=>reject(Error('Node discovery expired')),Math.max(1,(expires-this.clock())*1000));
-    return await result;
-   }finally{
-    done=true;clearTimeout(timer);this.pending.delete(pending);state.replyPrivate.fill(0);
-    for(const row of this.labels.values())if(row.target===accept)row.target=async()=>{};
-   }
+    for(const delay of [5000,15000])timers.add(setTimeout(()=>{void attempt().catch(reject);},delay));
+    timers.add(setTimeout(()=>reject(Error('Node discovery expired')),30000));
+    await attempt();return await result;
+   }finally{done=true;for(const timer of timers)clearTimeout(timer);signal?.removeEventListener('abort',cancel);this.pending.delete(pending);retire();}
   }
   send(route,payload,replyHandler){
    if(route.expires_at<=this.clock()||this.peers.get(route.peer)!==route.channel)throw Error('Node route expired or replaced');
