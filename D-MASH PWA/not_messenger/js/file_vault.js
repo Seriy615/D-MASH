@@ -4,6 +4,10 @@
     const ACCOUNT_QUOTA = 256 * 1024 * 1024, INBOUND_PEER_QUOTA = 128 * 1024 * 1024;
     const encoder = new TextEncoder(), decoder = new TextDecoder();
     const isId = value => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
+    const validMode = mode => mode === 'v3-private' || mode === 'node-v4';
+    // Existing authenticated v1 rows predate the authority tag and were
+    // created only by the private-v3 file path. Never infer Node authority.
+    const modeOf = value => value === undefined ? 'v3-private' : value;
     const hex = bytes => Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
     const currentError = () => Error('Account changed during file operation');
     const request = (db, storeName, alias) => new Promise((resolve, reject) => {
@@ -79,6 +83,7 @@
                 value.entries.some(entry => !isId(entry.peer) || !isId(entry.fileId) || !isId(entry.alias) ||
                     !Number.isSafeInteger(entry.size) || entry.size < 1 || entry.size > MAX ||
                     typeof entry.inbound !== 'boolean' ||
+                    (entry.controlMode !== undefined && !validMode(entry.controlMode)) ||
                     !['waiting', 'connecting', 'sending', 'delivered', 'failed', 'cancelled'].includes(entry.status) ||
                     (entry.inbound && entry.status !== 'delivered')) ||
                 new Set(value.entries.map(entry => entry.alias)).size !== value.entries.length)
@@ -93,6 +98,7 @@
                 typeof meta.name === 'string' && meta.name.length >= 1 && meta.name.length <= 255 &&
                 typeof meta.mime === 'string' && meta.mime.length <= 128 &&
                 typeof meta.inbound === 'boolean' &&
+                (meta.controlMode === undefined || validMode(meta.controlMode)) &&
                 ['waiting', 'connecting', 'sending', 'delivered', 'failed', 'cancelled'].includes(meta.status) &&
                 (!meta.inbound || meta.status === 'delivered') &&
                 Number.isSafeInteger(meta.attempts) && meta.attempts >= 0 &&
@@ -154,7 +160,9 @@
                 !isId(details?.sha256) || !Number.isSafeInteger(details.size) || details.size !== blob.size ||
                 typeof details.name !== 'string' || !details.name || details.name.length > 255 ||
                 typeof details.mime !== 'string' || details.mime.length > 128 ||
-                typeof details.inbound !== 'boolean') throw Error('Invalid local file');
+                typeof details.inbound !== 'boolean' || !validMode(details.controlMode))
+                throw Error('Invalid local file');
+            const controlMode = details.controlMode;
             const alias = await this.fileAlias(session, peer, fileId), ownerAlias = await this.ownerAlias(session);
             const initialOwner = await this.owner(session, ownerAlias);
             const prior = initialOwner.value.entries.find(entry => entry.alias === alias);
@@ -163,8 +171,9 @@
                     prior.inbound !== details.inbound) throw Error('File owner collision');
                 const existing = await this.meta(peer, fileId, session);
                 if (existing?.sha256 !== details.sha256 || existing.name !== details.name ||
-                    existing.mime !== details.mime) throw Error('File identity collision');
-                return existing;
+                    existing.mime !== details.mime || modeOf(existing.controlMode) !== controlMode ||
+                    modeOf(prior.controlMode) !== controlMode) throw Error('File identity collision');
+                return {...existing, controlMode};
             }
             this.ensureCapacity(initialOwner.value.entries, peer, blob.size, details.inbound);
             // The sender computes this digest before queueing; the receiver's
@@ -173,7 +182,8 @@
             const digest = details.sha256;
             const meta = {schema: 'dmash_file_v1', account: session.owner, peer, fileId, size: blob.size,
                 sha256: digest, name: details.name, mime: details.mime, inbound: details.inbound,
-                status: details.inbound ? 'delivered' : 'waiting', attempts: 0, nextAttempt: 0, createdAt: Date.now()};
+                controlMode, status: details.inbound ? 'delivered' : 'waiting', attempts: 0,
+                nextAttempt: 0, createdAt: Date.now()};
             const sealedMeta = await this.seal(session, alias, 'meta', meta);
             const encrypted = await this._encryptBody(session, alias, fileId, blob.size, digest, blob);
             for (let attempt = 0; attempt < 3; attempt++) {
@@ -184,12 +194,14 @@
                         known.inbound !== details.inbound) throw Error('File owner collision');
                     const existing = await this.meta(peer, fileId, session);
                     if (existing?.sha256 !== digest || existing.name !== details.name ||
-                        existing.mime !== details.mime) throw Error('File identity collision');
-                    return existing;
+                        existing.mime !== details.mime || modeOf(existing.controlMode) !== controlMode ||
+                        modeOf(known.controlMode) !== controlMode) throw Error('File identity collision');
+                    return {...existing, controlMode};
                 }
                 this.ensureCapacity(owner.value.entries, peer, blob.size, details.inbound);
                 const next = {...owner.value, entries: [...owner.value.entries,
-                    {alias, peer, fileId, size: blob.size, inbound: details.inbound, status: meta.status}]};
+                    {alias, peer, fileId, size: blob.size, inbound: details.inbound,
+                        controlMode, status: meta.status}]};
                 if (next.entries.length > 4096) throw Error('Локальное хранилище файлов заполнено. Удалите старые файлы.');
                 const sealedOwner = await this.seal(session, ownerAlias, 'owner', next);
                 try {
@@ -228,7 +240,7 @@
             if (!row) return null;
             const meta = await this.open(session, alias, 'meta', row);
             if (!this.validMeta(session, peer, fileId, meta)) throw Error('Corrupt file owner');
-            return meta;
+            return {...meta, controlMode: modeOf(meta.controlMode)};
         }
 
         async get(peer, fileId) {
@@ -237,7 +249,8 @@
             if (!row) return null;
             const meta = await this.open(session, alias, 'meta', row);
             if (!this.validMeta(session, peer, fileId, meta)) throw Error('Corrupt file owner');
-            return {meta, blob: await this._decryptBody(session, alias, meta, row)};
+            return {meta: {...meta, controlMode: modeOf(meta.controlMode)},
+                blob: await this._decryptBody(session, alias, meta, row)};
         }
 
         async update(peer, fileId, status, changes = {}) {
@@ -257,11 +270,13 @@
                 const previous = await this.open(session, alias, 'meta', row);
                 if (!this.validMeta(session, peer, fileId, previous) ||
                     previous.size !== owner.value.entries[index].size ||
-                    previous.status !== owner.value.entries[index].status)
+                    previous.status !== owner.value.entries[index].status ||
+                    modeOf(previous.controlMode) !== modeOf(owner.value.entries[index].controlMode))
                     throw Error('Corrupt file owner');
                 if (previous.inbound && status !== 'delivered') throw Error('Inbound file is committed');
                 if ((previous.status === 'delivered' && status !== 'delivered') ||
-                    (previous.status === 'cancelled' && status !== 'delivered')) return previous;
+                    (previous.status === 'cancelled' && status !== 'delivered'))
+                    return {...previous, controlMode: modeOf(previous.controlMode)};
                 const next = {...previous, status, ...changes};
                 const nextOwner = {...owner.value, entries: owner.value.entries.map((entry, i) =>
                     i === index ? {...entry, status} : entry)};
@@ -292,7 +307,7 @@
                         tx.onabort = () => reject(tx.error || Error('File state update failed'));
                         tx.onerror = () => {};
                     });
-                    return next;
+                    return {...next, controlMode: modeOf(next.controlMode)};
                 } catch (error) {
                     if (error.message === 'File inventory changed') continue;
                     throw error;
@@ -312,7 +327,8 @@
                     throw Error('Corrupt file owner inventory');
                 const meta = await this.meta(entry.peer, entry.fileId, session);
                 if (!meta || meta.size !== entry.size || meta.inbound !== entry.inbound ||
-                    meta.status !== entry.status) throw Error('Corrupt file inventory');
+                    meta.status !== entry.status || modeOf(meta.controlMode) !== modeOf(entry.controlMode))
+                    throw Error('Corrupt file inventory');
                 out.push(meta);
             }
             return out;
@@ -328,7 +344,7 @@
                     throw Error('Corrupt file owner; chat deletion refused');
                 const meta = await this.meta(peer, entry.fileId, session);
                 if (!meta || meta.size !== entry.size || meta.inbound !== entry.inbound ||
-                    meta.status !== entry.status)
+                    meta.status !== entry.status || modeOf(meta.controlMode) !== modeOf(entry.controlMode))
                     throw Error('Corrupt file owner; chat deletion refused');
             }
             const next = {...owner.value, entries: owner.value.entries.filter(entry => entry.peer !== peer)};
@@ -345,7 +361,7 @@
             if (!entry) throw Error('File owner missing; message deletion refused');
             const meta = await this.meta(peer, fileId, session);
             if (!meta || meta.size !== entry.size || meta.inbound !== entry.inbound ||
-                meta.status !== entry.status)
+                meta.status !== entry.status || modeOf(meta.controlMode) !== modeOf(entry.controlMode))
                 throw Error('Corrupt file owner; message deletion refused');
             const next = {...owner.value, entries: owner.value.entries.filter(item => item.alias !== alias)};
             const sealedOwner = await this.seal(session, ownerAlias, 'owner', next);

@@ -93,6 +93,7 @@
         if (!global.DmashFileVault || !global.DMashStorage) throw Error('FILE_VAULT_UNAVAILABLE: Обновите страницу.');
         return new global.DmashFileVault(core, global.DMashStorage);
     };
+    const managedNode = core => core.accountTransportMode?.() === 'node-v4';
     let active = null, retryTimer = null, flushing = null;
     const locallyCancelled = new Set();
     async function history(core, vault, meta, inbound) {
@@ -113,6 +114,13 @@
     }
     async function send(core, file) {
         if (!core.activePeerId) return false;
+        // A managed Node contact needs authenticated N4 CONTROL authority.
+        // Never re-use an old private-v3 staticShared secret as a fallback.
+        if (managedNode(core)) {
+            core.customAlert?.('ФАЙЛ НЕ ОТПРАВЛЕН',
+                'NODE_MEDIA_CONTROL_UNAVAILABLE: подтверждённый Node-контроль файлов пока недоступен. Файл не поставлен в очередь.');
+            return false;
+        }
         if (typeof global.DmashCallSession?.CallSignalingSession !== 'function' ||
             !global.DmashFileVault) {
             core.customAlert?.('ФАЙЛ НЕ ОТПРАВЛЕН', 'MEDIA_RUNTIME_UNAVAILABLE: Обновите страницу и повторите передачу.');
@@ -135,7 +143,7 @@
                 b => b.toString(16).padStart(2,'0')).join('');
             captured.check();
             const meta = await vault.put(peer, fileId, file, {name:file.name, mime:file.type || '',
-                size:file.size, sha256:digest, inbound:false});
+                size:file.size, sha256:digest, inbound:false, controlMode:'v3-private'});
             persisted = true;
             captured.check();
             await history(core, vault, meta, false);
@@ -166,9 +174,13 @@
             .filter(row => !row.inbound).sort((a,b) => a.createdAt - b.createdAt);
         captured.check();
         for (const row of pending) await history(core, vault, row, false);
-        const row = pending.find(item => item.nextAttempt <= Date.now());
+        // All existing untagged rows are private-v3.  Preserve them locally
+        // when this Account uses Node v4; no silent wire-role downgrade.
+        if (managedNode(core)) return;
+        const compatible = pending.filter(item => item.controlMode === 'v3-private');
+        const row = compatible.find(item => item.nextAttempt <= Date.now());
         if (!row) {
-            if (pending.length) wake(core, Math.min(...pending.map(item => item.nextAttempt)) - Date.now());
+            if (compatible.length) wake(core, Math.min(...compatible.map(item => item.nextAttempt)) - Date.now());
             return;
         }
         const task = {core, peer:row.peer, fileId:row.fileId, closed:false, settled:false};
@@ -265,6 +277,7 @@
             false, peer, null, true);
     }
     async function incoming(core, request, peer) {
+        if (managedNode(core)) return false;
         const vault = vaultFor(core), captured = vault.capture();
         if (!await trusted(core, peer)) {
             core.customAlert?.('ВХОДЯЩИЙ ФАЙЛ', 'Автоматический приём доступен только подтверждённому контакту.');
@@ -331,7 +344,7 @@
                 onCommit:async blob=>{
                     captured.check();
                     const meta = await vault.put(peer, fileId, blob, {name:manifest.name,mime:manifest.mime,
-                        size:manifest.size,sha256:manifest.sha256,inbound:true});
+                        size:manifest.size,sha256:manifest.sha256,inbound:true,controlMode:'v3-private'});
                     captured.check();
                     await history(core, vault, meta, true);
                 },
@@ -358,9 +371,11 @@
         }
     }
     async function outcome(core, message, peer) {
+        if (managedNode(core)) return false;
         if (!isId(message?.file_id) || !isId(message?.sha256)) return false;
         const vault = vaultFor(core), meta = await vault.meta(peer, message.file_id);
-        if (!meta || meta.inbound || meta.sha256 !== message.sha256) return false;
+        if (!meta || meta.inbound || meta.controlMode !== 'v3-private' ||
+            meta.sha256 !== message.sha256) return false;
         if (message.type === 'voip_file_reject') {
             if (message.reason === 'RECEIVER_BUSY') {
                 if (!isId(message.session_id)) return false;

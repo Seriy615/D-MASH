@@ -98,6 +98,21 @@ function storageFor(owner) {return {
 (async()=>{
     const sender=core(),receiver=core(),bytes=Buffer.from('synthetic authenticated inline file');
     const file=new File([bytes],'synthetic.txt',{type:'text/plain'});
+    const nodeManaged=core();
+    nodeManaged.accountTransportMode=()=> 'node-v4';
+    globalThis.DMashStorage=storageFor(nodeManaged);
+    assert.equal(await DmashFileRuntime.send(nodeManaged,file),false,
+        'managed Node file click cannot use a surviving v3 staticShared secret');
+    assert.match(nodeManaged.alerts.at(-1).text,/NODE_MEDIA_CONTROL_UNAVAILABLE/);
+    assert.equal(owned.get(nodeManaged),undefined,'fail-closed click creates no v3 intent');
+    const oldFileId='9'.repeat(64),oldDigest=crypto.createHash('sha256').update(bytes).digest('hex');
+    await new DmashFileVault(nodeManaged).put(nodeManaged.activePeerId,oldFileId,file,
+        {name:file.name,mime:file.type,size:file.size,sha256:oldDigest,inbound:false,
+            controlMode:'v3-private'});
+    await DmashFileRuntime.flush(nodeManaged);
+    assert.equal(owned.get(nodeManaged).get(oldFileId).meta.status,'waiting',
+        'pre-migration v3 pending file stays durable under managed Node');
+    assert.equal(nodeManaged.messages,undefined,'managed Node never sends legacy file invitation');
     globalThis.DMashStorage=storageFor(sender);
     assert.equal(await DmashFileRuntime.send(sender,file),true);
     await DmashFileRuntime.flush(sender);
@@ -105,6 +120,12 @@ function storageFor(owner) {return {
     assert.equal(sender.history[0].content.type,'file_ref');
     assert.equal(sender.history[0].status,'WAITING');
     const request=sender.messages.at(-1).request;
+    globalThis.DMashStorage=storageFor(nodeManaged);
+    assert.equal(await DmashFileRuntime.incoming(nodeManaged,request,nodeManaged.activePeerId),false,
+        'managed Node does not accept unauthenticated v3 file controls');
+    assert.equal(await DmashFileRuntime.outcome(nodeManaged,{type:'voip_file_complete',
+        file_id:oldFileId,sha256:oldDigest},nodeManaged.activePeerId),false);
+    globalThis.DMashStorage=storageFor(sender);
     assert.equal(request.version,2);
     assert.match(request.file_id,/^[0-9a-f]{64}$/);
     assert(!('data' in request),'control carries no file bytes');
