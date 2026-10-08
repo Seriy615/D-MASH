@@ -28,6 +28,10 @@ function database(){const rows=new Map();let queue=Promise.resolve();return {row
  const retired=await receiptOut.resumeApplications();assert.equal(retired.acknowledged,1);assert.equal(receiptSends.length,2,'successor durable delivery proof triggered a duplicate send');assert.equal((await receiptOut.resumeApplications()).attempted,0);
  assert.equal((await receiptOut.sendApplication({operationId:receiptId,plaintext:'already delivered before crash'})).recipientAck,true);
  await assert.rejects(()=>receiptOut.sendApplication({operationId:receiptId,plaintext:'different after delivery'}),/APP_OUTBOX_CONFLICT/,'successor tombstone accepted a different logical message');receiptOut.close();receiptApp.close();
+ const offlineId='cc'.repeat(32),beforeEnqueue=frames.length,offline=await third.out.enqueueApplication({operationId:offlineId,plaintext:'sender held while recipient offline'});
+ assert.deepEqual(offline,{operationId:offlineId,durable:true,queued:false,recipientAck:false});assert.equal(frames.length,beforeEnqueue,'local durable enqueue awaited an offline Node');assert.equal(history.get(offlineId),'sender held while recipient offline','history must be durable before enqueue returns');
+ assert.deepEqual(await third.out.enqueueApplication({operationId:offlineId,plaintext:'sender held while recipient offline'}),offline,'repeated local enqueue must be idempotent');
+ await assert.rejects(()=>third.out.enqueueApplication({operationId:offlineId,plaintext:'changed while pending'}),/APP_OUTBOX_CONFLICT/);
  controller.abort();await assert.rejects(()=>third.out.resumeApplications(),/APP_OUTBOX_CLOSED|SESSION_CHANGED/);third.close();other.close();
  console.log('Account app outbox V4 UNIT: encrypted intent/index before history, corrupt row fail-closed, failed history no Node send, crash resume, exact ciphertext retry, successor pending migration, durable delivery proof retirement, same-ID CAS conflict, abort PASS; synthetic IDB only');
 })().catch(e=>{console.error(e);process.exitCode=1;});

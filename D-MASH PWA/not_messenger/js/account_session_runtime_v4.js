@@ -8,6 +8,7 @@
  // chat, legacy Core.encrypt or automatic legacy fallback enters this module.
  class AccountSessionRuntimeV4 {
   #peers=new Map();#proofs=new WeakMap();#closed=false;#timer=null;
+  get durableApplicationEnqueue(){return !!(this.App&&this.Outbox?.prototype?.enqueueApplication&&typeof this.persistAuthenticated==='function'&&typeof this.persistOutgoing==='function');}
   constructor({core,transport,profile=global.DmashAccountHandshakeV4,Session=global.DmashAccountSessionV4,Store=global.DmashAccountSessionStoreV4,App=global.DmashAccountAppCipherV4,Outbox=global.DmashAccountAppOutboxV4,persistAuthenticated=null,persistOutgoing=null,persistOutgoingAck=null,migrateOutgoing=null,outgoingDeliveryStatus=null,verifyOutgoingDeliveryStatus=null,nacl=global.nacl,kem=global.DmashKyberWasm,discovery=global.DmashRouteDiscoveryV4,crypto=global.crypto,clock=()=>Math.floor(Date.now()/1000),onStatus=()=>{}}){
    if(!core?.captureAccountSessionV4||!transport?.readRouteSnapshot||!transport?.prepareAndSubmitIntent||!profile||!Session||!Store||!nacl||!kem||!discovery||typeof onStatus!=='function')fail('DEPENDENCY');
    this.capture=core.captureAccountSessionV4();this.capture.assertCurrent();if(!this.capture.signal||!this.capture.keys?.sign||!this.capture.blindSalt||!this.capture.masterKey||!this.capture.db)fail('SESSION_REQUIRED');
@@ -51,7 +52,7 @@
    return Object.freeze({persisted:true,phase:result.phase,outboundReady:queued});
   }
   async flush(peer){const e=await this._entry(peer);return this.wait(e.session.flush({submitIntent:async intent=>{await this._currentRoute(e);const result=await this.wait(this.transport.prepareAndSubmitIntent(intent));await this._currentRoute(e);if(result?.queued!==true)fail('LOCAL_NODE_REFUSED');return result;}}));}
-  async sendApplication(peer,{operationId,plaintext,contentType='text/plain;charset=utf-8'}={}){const e=await this._entry(peer);if(!e.outbox)fail('APP_OUTBOX_REQUIRED');return this.wait(e.outbox.sendApplication({operationId,plaintext,contentType}));}
+  async sendApplication(peer,{operationId,plaintext,contentType='text/plain;charset=utf-8'}={}){const e=await this._entry(peer);if(!e.outbox?.enqueueApplication)fail('APP_OUTBOX_REQUIRED');const result=await this.wait(e.outbox.enqueueApplication({operationId,plaintext,contentType}));this.startRetries();return result;}
   async resumeApplications(peer){const e=await this._entry(peer);if(!e.outbox)fail('APP_OUTBOX_REQUIRED');return this.wait(e.outbox.resumeApplications());}
   async status(peer){return this._notify(await this._entry(peer,true),true);}
   async resume(){this.check();const results=[];for(const peer of this.#peers.keys()){try{await this.flush(peer);const status=await this.status(peer),application=this.#peers.get(peer)?.outbox&&status.phase==='ESTABLISHED'?await this.resumeApplications(peer):null;results.push({peer,status,application});}catch(error){this.check();results.push({peer,error:error.code||'SESSION_RETRY_FAILED'});}}return results;}
