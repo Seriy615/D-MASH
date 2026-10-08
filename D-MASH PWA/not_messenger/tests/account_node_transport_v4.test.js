@@ -27,6 +27,7 @@ const recipient=require('../js/recipient_payload_v4.js'),Adapter=require('../js/
  assert.equal(calls.filter(x=>x.type==='discover').length,discoverCount,'young grant should be reused');
  try{Date.now=()=>realNow()+16000;await adapter.submit(route,intent);}finally{Date.now=realNow;}
  assert.equal(calls.filter(x=>x.type==='discover').length,discoverCount+1,'repeat submit must rediscover before a still-unexpired stale grant can trap recovery traffic');
+ assert.equal(calls.filter(x=>x.type==='send').at(-1).sealed.blob,sent[0].sealed.blob,'grant refresh changed the durable recipient ciphertext');
  host.ownerSubmitSealed=async()=>{throw Error('network failure');};await assert.rejects(adapter.submit(route,intent),/network failure/);host.ownerSubmitSealed=async()=>({queued:true});await adapter.submit(route,intent);assert.equal(calls.filter(x=>x.type==='discover').length,discoverCount+3);
  snapshot={...snapshot,digest:'09'.repeat(32)};await assert.rejects(adapter.prepare(route),/ACCOUNT_ROUTE_CHANGED/);snapshot={...snapshot,digest};
  host.verifyPreparation=async()=>({...proof,state:'NODE_PREPARED'});await assert.rejects(adapter.getRoute(peer),/NODE_ROUTE_NOT_ACTIVE/);host.verifyPreparation=async()=>({...proof,state:'ACTIVE'});
