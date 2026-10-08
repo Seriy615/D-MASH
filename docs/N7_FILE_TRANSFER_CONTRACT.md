@@ -26,6 +26,11 @@ Accept prompt. Rejection and limit errors remain visible, and the sender must
 - Authenticated completion/rejection controls carry file_id and sha256
   (rejection additionally has a bounded reason). FileSession carries bytes
   only through the selected EMS S-TURN service and verifies the manifest hash.
+- If a receiver is already handling a file, it sends an authenticated
+  RECEIVER_BUSY rejection bound to file_id, sha256 and that attempt's session_id.
+  The sender retains its encrypted file in WAITING and retries with a new
+  S-TURN session after bounded backoff. A late BUSY from an older session
+  cannot stop a newer attempt; permanent storage/decline errors remain distinct.
 
 ## Local durability and privacy
 

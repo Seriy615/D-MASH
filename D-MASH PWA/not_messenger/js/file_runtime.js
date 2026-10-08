@@ -209,6 +209,7 @@
             const file = new File([saved.blob], row.name, {type:row.mime});
             const manifest = await global.DmashFileChannel.describe(file, task.signal.invitation.call_id);
             if (!current()) return;
+            task.sessionId = manifest.id;
             task.session = global.DmashFileSession.create({signaling:task.signal, manifest, file,
                 onProgress:(done,total) => {
                     if (current() && !task.settled) {
@@ -257,9 +258,10 @@
         const secret = await storage.getBox('blind_secrets', secretAlias); captured.check();
         return typeof secret?.staticShared === 'string' && /^[0-9a-f]{64}$/.test(secret.staticShared);
     }
-    async function notify(core, peer, type, fileId, sha256, reason = undefined) {
-        if (!isId(fileId) || !isId(sha256)) return false;
-        return core.sendMessage({type, file_id:fileId, sha256, ...(reason ? {reason} : {})},
+    async function notify(core, peer, type, fileId, sha256, reason = undefined, sessionId = undefined) {
+        if (!isId(fileId) || !isId(sha256) || (sessionId !== undefined && !isId(sessionId))) return false;
+        return core.sendMessage({type, file_id:fileId, sha256, ...(reason ? {reason} : {}),
+            ...(sessionId ? {session_id:sessionId} : {})},
             false, peer, null, true);
     }
     async function incoming(core, request, peer) {
@@ -285,7 +287,24 @@
             await notify(core, peer, 'voip_file_complete', fileId, manifest.sha256);
             return true;
         }
-        if (core._fileTransfer) return false;
+        // The completed file already has an inline chat card. Release its
+        // short-lived panel immediately if another invitation arrives.
+        if (core._fileTransfer?.finished) core._fileTransfer.close();
+        if (core._fileTransfer) {
+            const busy = core._fileTransfer;
+            if (!busy.busyNotice) {
+                busy.busyNotice = document.createElement('div');
+                busy.busyNotice.setAttribute('role', 'status');
+                busy.busyNotice.textContent = 'Ещё один файл ожидает повторной попытки отправителя.';
+                busy.box.append(busy.busyNotice);
+            }
+            // A new S-TURN attempt is required after this active panel closes.
+            // Bind the transient answer to this attempt so a late BUSY cannot
+            // stop a newer session for the same durable file_id.
+            await notify(core, peer, 'voip_file_reject', fileId, manifest.sha256,
+                'RECEIVER_BUSY', manifest.id);
+            return true;
+        }
         const task = panel(core, manifest.name);
         task.peer = peer;
         task.decline = async () => {
@@ -343,6 +362,33 @@
         const vault = vaultFor(core), meta = await vault.meta(peer, message.file_id);
         if (!meta || meta.inbound || meta.sha256 !== message.sha256) return false;
         if (message.type === 'voip_file_reject') {
+            if (message.reason === 'RECEIVER_BUSY') {
+                if (!isId(message.session_id)) return false;
+                const task = active;
+                // An old attempt may answer after a new S-TURN invitation was
+                // sent. The durable file_id is stable, but the session is not.
+                if (!task || task.core !== core || task.peer !== peer ||
+                    task.fileId !== message.file_id || task.sessionId !== message.session_id ||
+                    task.settled || meta.status === 'delivered' || meta.status === 'cancelled') return true;
+                task.settled = true;
+                stopActive(task);
+                const delay = Math.min(30000, 5000 * 2 ** Math.min(Math.max(meta.attempts - 1, 0), 3));
+                try {
+                    const saved = await vault.update(peer, message.file_id, 'waiting',
+                        {nextAttempt:Date.now() + delay});
+                    if (saved.status === 'waiting') {
+                        core.refreshMessageTransportState?.(peer, message.file_id, 'WAITING');
+                        if (core.activePeerId === peer)
+                            for (const card of document.querySelectorAll?.('#log .msg.out .dmash-file-card') || [])
+                                if (card.dataset.fileId === message.file_id) {
+                                    const progress = card.querySelector('.dmash-file-progress');
+                                    if (progress) progress.textContent = 'ПОЛУЧАТЕЛЬ ЗАНЯТ · ПОВТОРИМ';
+                                }
+                    }
+                } catch (error) {core.shmon?.('WARN', 'File busy retry deferred: '+error.message);}
+                wake(core, delay);
+                return true;
+            }
             if (!['RECEIVER_STORAGE_FULL','RECEIVER_DECLINED'].includes(message.reason)) return false;
             const saved = await vault.update(peer, message.file_id, 'failed');
             if (saved.status === 'delivered') return true;

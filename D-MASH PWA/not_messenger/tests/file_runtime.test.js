@@ -17,7 +17,10 @@ globalThis.DmashCallSignaling={
     validEndpoint:value=>{assert.equal(value,'wss://example.test');return value;},
     WebSocketSignaling:class {
         constructor() {this.invitation=invitation;}
-        static async create() {return new this();}
+        static async create() {const transport=new this();
+            if(globalThis.nextSyntheticCallId)
+                transport.invitation={...invitation,call_id:globalThis.nextSyntheticCallId};
+            return transport;}
         close() {this.closed=true;}
     }
 };
@@ -189,6 +192,45 @@ function storageFor(owner) {return {
     await DmashFileRuntime.outcome(sender3,{type:'voip_file_complete',
         file_id:request3.file_id,sha256:sender3.history[0].content.sha256},sender3.activePeerId);
     assert.equal(sender3.history[0].status,'DELIVERED','authenticated durable receipt corrects a cancellation race');
+    // A second authenticated invitation during an active receive gets a
+    // transient, attempt-bound BUSY response. Its local file must remain
+    // encrypted and retryable; a delayed old BUSY cannot stop a new attempt.
+    globalThis.navigator.storage.estimate=async()=>({quota:100*1024*1024,usage:0});
+    const busySender=core(),busyReceiver=core();
+    globalThis.DMashStorage=storageFor(busySender);
+    assert.equal(await DmashFileRuntime.send(busySender,file),true);
+    await DmashFileRuntime.flush(busySender);
+    const busyRequest=busySender.messages.at(-1).request;
+    globalThis.DMashStorage=storageFor(busyReceiver);
+    assert.equal(await DmashFileRuntime.incoming(busyReceiver,request,busyReceiver.activePeerId),true);
+    const firstSession=sessions.at(-1),sessionCount=sessions.length;
+    assert.equal(await DmashFileRuntime.incoming(busyReceiver,busyRequest,busyReceiver.activePeerId),true);
+    assert.equal(sessions.length,sessionCount,'busy receiver does not start a second S-TURN session');
+    assert.equal(firstSession.closed,undefined,'first transfer remains active');
+    const busyAnswer=busyReceiver.messages.at(-1);
+    assert.equal(busyAnswer.reason,'RECEIVER_BUSY');
+    assert.equal(busyAnswer.file_id,busyRequest.file_id);
+    assert.equal(busyAnswer.session_id,busyRequest.session_id);
+    assert.equal(busyReceiver._fileTransfer.box.children.filter(node=>
+        /Ещё один файл ожидает/.test(node.textContent)).length,1,'receiver has visible busy status');
+    globalThis.DMashStorage=storageFor(busySender);
+    assert.equal(await DmashFileRuntime.outcome(busySender,busyAnswer,busySender.activePeerId),true);
+    const busyMeta=owned.get(busySender).get(busyRequest.file_id).meta;
+    assert.equal(busyMeta.status,'waiting');
+    assert(busyMeta.nextAttempt>Date.now(),'busy response rate-bounds retry');
+    assert.equal(busySender.history[0].status,'WAITING','busy is not permanent rejection');
+    assert(owned.get(busySender).get(busyRequest.file_id).blob,'busy preserves local file');
+    busyMeta.nextAttempt=0;
+    globalThis.nextSyntheticCallId='b'.repeat(64);
+    await DmashFileRuntime.flush(busySender);
+    const newerRequest=busySender.messages.at(-1).request,newerSession=sessions.at(-1);
+    assert.equal(newerRequest.file_id,busyRequest.file_id,'retry keeps durable file identity');
+    assert.notEqual(newerRequest.session_id,busyRequest.session_id,'retry gets a fresh transport session');
+    await DmashFileRuntime.outcome(busySender,busyAnswer,busySender.activePeerId);
+    assert.equal(newerSession.closed,undefined,'stale busy cannot close newer attempt');
+    assert.equal(owned.get(busySender).get(busyRequest.file_id).meta.status,'connecting');
+    globalThis.nextSyntheticCallId=null;
+    DmashFileRuntime.cancel(busySender);DmashFileRuntime.cancel(busyReceiver);
     DmashFileRuntime.cancel(sender3);
     DmashFileRuntime.cancel(sender);DmashFileRuntime.cancel(receiver);
     console.log('file_runtime.test.js: durable intent, trusted auto-receive, inline history and retry dedupe passed');
