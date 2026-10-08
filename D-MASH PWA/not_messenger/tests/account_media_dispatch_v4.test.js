@@ -11,5 +11,11 @@ const assert=require('node:assert/strict'),{indexedDB}=require(process.env.DMASH
  await assert.rejects(()=>reopened.persist({...record,generation:2}),/CONFLICT/);
  await reopened.applied(record.peer,record.operationId);assert.equal((await reopened.pending()).length,0);assert((await b.persist(record)).duplicate);
  const rows=await new Promise(resolve=>{const r=db.transaction('pairing_material').objectStore('pairing_material').getAll();r.onsuccess=()=>resolve(r.result);});assert.equal(rows.length,1);assert(!JSON.stringify(rows).includes(record.peer));assert(!JSON.stringify(rows).includes('ACCEPT'));
+ const put=row=>new Promise((resolve,reject)=>{const tx=db.transaction('pairing_material','readwrite');tx.objectStore('pairing_material').put(row);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+ const deps=['1','2','3'].map(x=>({alias:x.repeat(64),blob:'session-row-'+x}));for(const row of deps)await put(row);
+ const next={...record,sessionId:'f'.repeat(64)};await assert.rejects(()=>b.persist(next),/SUCCESSOR_REQUIRED/);
+ let race=true,calls=0;const migrated=await Dispatch.open({core,schema,clock:()=>100,verifySuccessor:async expected=>{assert.equal(expected.from.sessionId,record.sessionId);assert.equal(expected.to.sessionId,next.sessionId);calls++;if(race)await put({...deps[0],blob:'changed-'+calls});return {valid:true,dependencies:deps};}});
+ await assert.rejects(()=>migrated.persist(next),/BUSY/);assert.equal((await migrated.pending()).length,0,'failed rekey must never reapply APPLIED action');
+ race=false;for(const row of deps)await put(row);const done=await migrated.persist(next);assert.equal(done.migrated,true);assert.equal(done.duplicate,true);assert.equal((await migrated.pending()).length,0,'successor keeps APPLIED semantic state');assert.equal((await migrated.persist(next)).duplicate,true);await assert.rejects(()=>migrated.persist({...next,payload:{...next.payload,expiresAt:201}}),/CONFLICT/);migrated.close();
  abort.abort();await assert.rejects(()=>b.persist(record),/CLOSED|CHANGED/);reopened.close();b.close();db.close();console.log('PASS durable encrypted CONTROL pending/CAS duplicate/reopen/commit-before-ACK boundary and Account abort; inactive');
 })().catch(e=>{console.error(e);process.exitCode=1;});
