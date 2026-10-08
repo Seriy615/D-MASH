@@ -108,7 +108,8 @@
    for(let retry=0;retry<8;retry++){
     const prior=await this.#read({blind_peers:alias,pairing_material:marker}),contact=await this.#plain(prior.blind_peers),receipt=await this.#plain(prior.pairing_material,DOMAIN+marker);
     if(!contact||contact.id!==peer||contact.transportProfile!=='NODE_ACCOUNT_V4'||contact.chatLock)fail('HISTORY_CONTACT_MIGRATION_REQUIRED');
-    if(!receipt||receipt.type!=='ACCOUNT_HISTORY_RECEIPT_V4'||receipt.peer!==peer||receipt.operationId!==operationId||receipt.bindingDigest!==bindingDigest||receipt.generation!==generation||receipt.sessionId!==sessionId||!valid(receipt.digest)||!Number.isSafeInteger(receipt.seq)||receipt.seq<1)fail('HISTORY_ACK_CONTEXT');
+    if(!receipt)return false;
+    if(receipt.type!=='ACCOUNT_HISTORY_RECEIPT_V4'||receipt.peer!==peer||receipt.operationId!==operationId||receipt.bindingDigest!==bindingDigest||receipt.generation!==generation||receipt.sessionId!==sessionId||!valid(receipt.digest)||!Number.isSafeInteger(receipt.seq)||receipt.seq<1)fail('HISTORY_ACK_CONTEXT');
     const messageAlias=await this.#alias(alias+receipt.seq,'L3'),read=await this.#read({blind_messages:messageAlias}),message=await this.#plain(read.blind_messages);prior.blind_messages=read.blind_messages;
     if(!message||message.wireId!==operationId||message.inbound!==false||message.accountTransport!=='NODE_ACCOUNT_V4'||!['PENDING','DELIVERED'].includes(message.transportState))fail('HISTORY_ACK_MESSAGE');
     const digest=hex(new Uint8Array(await this.#wait(crypto.subtle.digest('SHA-256',utf(JSON.stringify({peer,operationId,plaintext:message.text,contentType:message.contentType,bindingDigest,generation,sessionId}))))));if(receipt.digest!==digest)fail('HISTORY_ACK_CONTEXT');

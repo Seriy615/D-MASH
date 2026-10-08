@@ -21,6 +21,7 @@ const Writer=require('../D-MASH PWA/not_messenger/js/account_authenticated_histo
  const migrationProof={peer:legacy,bindingDigest:'7'.repeat(64),generation:1,sessionId:'6'.repeat(64)},migrator=new Writer({core,verifyMigration:async()=>migrationProof}),retainedMessages=JSON.stringify(await all('blind_messages')),retainedSecrets=JSON.stringify(await all('blind_secrets'));
  assert.equal((await migrator.migrateContact(legacy)).migrated,true);assert.equal((await migrator.migrateContact(legacy)).duplicate,true);assert.equal(JSON.stringify(await all('blind_messages')),retainedMessages);assert.equal(JSON.stringify(await all('blind_secrets')),retainedSecrets);
  migrator.close();
+ assert.equal(await one.outgoingDeliveryStatus(message),null,'new operation has no delivery marker before first local history commit');
  const outgoing=await one.persistOutgoing(message);assert.equal(outgoing.duplicate,false);assert.equal((await one.persistOutgoing(message)).duplicate,true);
  const outgoingAlias=await alias((await alias(peer,'L1'))+outgoing.seq,'L3'),outRow=(await all('blind_messages')).find(r=>r.alias===outgoingAlias),outRaw=Buffer.from(outRow.blob,'base64'),outPlain=JSON.parse(Buffer.from(await crypto.subtle.decrypt({name:'AES-GCM',iv:outRaw.subarray(0,12)},masterKey,outRaw.subarray(12))).toString());assert.equal(outPlain.transportState,'PENDING');assert.equal(outPlain.inbound,false);
  await assert.rejects(()=>one.ackOutgoing({...message,sessionId:'8'.repeat(64)}),e=>e.code==='HISTORY_ACK_CONTEXT');
