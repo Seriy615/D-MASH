@@ -1,0 +1,37 @@
+{
+  "runtimeSHA": "bd380ab9379b714c204dd2f72ca3b166aa41752e",
+  "release": "transport-v3-browser-audit-20261008.25",
+  "limits": "Fresh PUBLIC request timed out without visible result/card, 130 loaded assets match runtime SHA; triage ongoing. SW upgrade identity/history PASS with wrong-key harness failure recorded separately. Ordinary Account path remains v3, N0-N8 incomplete.",
+  "files": [
+    {
+      "path": "qa-release25-exact-tests.log",
+      "sha256": "d4f7b6b82e7c1d26401a7729f6694894268a3e3d3d31c435dbf1e12145b670f5",
+      "bytes": 58810
+    },
+    {
+      "path": "qa-release25-deployed-source.json",
+      "sha256": "bb158d9fba3db3c96a3e763a278495f3d830f49c0fd6773bd706d0de4a2c6561",
+      "bytes": 47
+    },
+    {
+      "path": "qa-release25-deployed-controls.json",
+      "sha256": "7203f12a7ffbc5161327b0ad6349974290c0809ec89c57570cab382f57ca67fd",
+      "bytes": 2416
+    },
+    {
+      "path": "qa-release25-public-fresh.json",
+      "sha256": "0af5b5ec5bdf60a37b31a2c23616b6f494617c0de44f75d9928214fd5b1afc98",
+      "bytes": 48674
+    },
+    {
+      "path": "qa-release25-account.json",
+      "sha256": "7d428d6814a398671c00528b49fe1bacfab73bd001efb444d31e7f6350808f46",
+      "bytes": 1568
+    },
+    {
+      "path": "qa-sw-upgrade.json",
+      "sha256": "0be0edcd4e160dafe67b322983c105df7fb3c7f8f2c30d1575f3b46f1859edfb",
+      "bytes": 2341
+    }
+  ]
+}

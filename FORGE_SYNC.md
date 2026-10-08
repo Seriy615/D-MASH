@@ -15,7 +15,7 @@
 | Обновление | fetch + merge --ff-only, без force/reset всего checkout |
 | Проверка | HEAD/tree совпали с local pushed snapshot; 6 context/evidence file SHA256 совпали; clean working tree |
 | Fetch origin | https://github.com/Seriy615/D-MASH.git |
-| Push origin | git@github.com:Seriy615/D-MASH.git; SSH write access требует настройки |
+| Push origin | git@github.com:Seriy615/D-MASH.git; direct Forge SSH denied; verified EMS temporary publisher workflow available |
 
 До обновления на Forge было только локальное изменение CURRENT_HANDOFF.md:
 старый .24 checkpoint, 36 добавленных строк. Полный файл, binary diff и SHA256SUMS
@@ -41,7 +41,7 @@ GitHub write access на Forge либо использовать установ�
 
 Это **source/context sync**. Messenger PWA, EMS production backend, его
 identities/DB/TURN secrets и домены этим действием на Forge не переносились.
-Runtime release остаётся .24. Другие Forge apps не менялись. Checklist реальной
+На момент первоначального sync runtime был .24; актуальная публикация ниже. Другие Forge apps не менялись. Checklist реальной
 runtime migration есть в CURRENT_HANDOFF.md.
 
 Первое действие следующего сеанса: прочитать CURRENT_HANDOFF.md, AGENTS.md,
@@ -49,3 +49,22 @@ BROWSER_QA.md и полный план; организовать делегир�
 браузере каждую кнопку и сценарий, исправить FAIL и выполнить browser retest.
 Принятое требование единой Node-модели сохраняется: v3 gateway временный,
 ordinary Account/contact UI → Node v4 cutover остаётся главным этапом.
+
+## Текущая разработка и публикация
+
+8 октября 2026: Forge HEAD и origin/transport-v3 после push/fetch совпали:
+`bd380ab9379b714c204dd2f72ca3b166aa41752e`. Предыдущий QA-only checkpoint:
+`2c4523d533df34681fdb682ffeccded5d791b5eb`. Текущий runtime release `.25`
+опубликован через existing EMS get_commit.sh по полному SHA;207 source files
+совпадают, missing/changed отсутствуют. Backup static PWA:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T001857Z`.
+Текущая браузерная приёмка/FAIL/limits — CURRENT_HANDOFF.md и BROWSER_QA.md.
+
+Прямой Forge SSH push всё ещё denied(publickey). Авторизованный existing EMS
+GitHub key публикует exact Forge commits через отдельный temporary bare
+repository и проверенный incremental Git bundle. Push обычный fast-forward,
+без force. Production checkout EMS остался на `ed200730…`: deploy извлекает
+полный SHA через git archive, поэтому checkout HEAD не runtime evidence.
+Root deploy использует scoped safe.directory и SSH от codex, без копирования
+секретов или глобальной настройки. Backend source/state/DB не менялись.
+Разработка и интеграция остаются на Forge; production не переносился.

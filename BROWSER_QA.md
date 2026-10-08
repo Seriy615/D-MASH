@@ -6,6 +6,19 @@
 интегрированный результат. Этот файл — журнал и начальная матрица, не утверждение,
 что полный обход UI уже выполнен.
 
+## Актуальный release checkpoint
+
+Runtime **bd380ab9379b714c204dd2f72ca3b166aa41752e**, `.25`, опубликован на EMS.
+Exact source207/207; UNIT264 backend +11 Origin +69 JS PASS.
+[Deployed controls](docs/evidence/2026-10-08/qa-release25-deployed-controls.json):
+9/9 PASS, page/SW `.25`, errors=[]; actual WSS/scanner/cancel/navigation/Node QR.
+Контрольный harness не хэширует deployed responses; отдельный server-source
+verifier подтверждает207 файлов. Fresh PUBLIC harness хэширует loaded bytes и
+завершился FAIL public-request: через90s после ввода нет OK/карточки, оба workspace пусты кроме Избранного. Все130 loaded bytes совпадают. Агент UI воспроизводит с console/network timeline; причина ещё не установлена, не увеличивать timeout ради PASS. Обновление реального .24
+профиля до .25 сохранило identity/history; финальная wrong-key проверка в работе.
+Полный аудит и N3/N4 остаются открытыми. Нижние записи .24/source-only — история
+этого прохода, не статус текущего deploy.
+
 ## Правила регистрации результата
 
 Для каждого найденного control создать отдельную строку: ID, экран/state,
@@ -71,7 +84,7 @@ Browser audit и исправления не отменяют полного Nod
 
 Source HEAD/origin: `2ee3be9fe05e7844480a194e92b11b18c5e2c04d`, clean до
 начала QA harnesses. Host `forgeai.isgood.host`, owner `codex`, branch
-`transport-v3`. Runtime-код пока не менялся: первоначальная инвентаризация открыта.
+`transport-v3`. Это исходный SHA до fixes; текущий runtime checkpoint указан выше.
 Python 3.12.14 / Node 24.19.0 / Chromium **156.0.8078.4** / Playwright — новая
 изолированная test environment. Browser executable и module устанавливались
 вне checkout. Synthetic profiles не используют пользовательские vaults.
@@ -126,3 +139,33 @@ Preliminary issues под независимым воспроизведение�
 кнопки НАЗАД, одна не закрывает pending modal без Account); `UI-SHARE-CREATE`
 (Account QR→PUBLIC→create пишет в скрытую gate, маршрут не виден). Эти случаи
 ещё не исправлены; owner triage `ui_inventory`/`node_audit`, fix/retest NOT RUN.
+
+## Подтверждённые blockers первичного обхода
+
+| Bug ID | Control/flow | Actual / expected | Owner | Fix / retest |
+|---|---|---|---|---|
+| NODE-SCANNER-CANCEL-01 | Nodes → ДОБАВИТЬ ПО QR → camera denied → ОТМЕНА | `Cannot stop, scanner is not running or paused.`; modal остаётся. Expected закрытие без exception | ui_inventory | Assigned; independent lead reproduction on deployed .24; fix/retest NOT RUN |
+| UI-SHARE-CREATE | Account QR → PUBLIC → СОЗДАТЬ PUBLIC ROUTE | Modal закрывается, управление route записано в скрытую gate, остаётся workspace. Expected visible route management | ui_inventory | Assigned; node_audit actual replay; fix/retest NOT RUN |
+| PENDING-BACK-01 | Logged-out global pending requests → legacy НАЗАД | Две кнопки НАЗАД; legacy action оставляет modal. Expected один работающий back | ui_inventory | Assigned; exact final browser repro/retest pending |
+
+Точечные fixes этих blockers разрешены для продолжения первичного обхода.
+Это не начало N3 feature cutover и не отмена оставшихся controls/flows.
+NODE-QR-01 требует корректного проверенного Node descriptor; нельзя лечить
+ошибку генерацией NodeID или недоверенным TOFU pin.
+
+`ACCOUNT-WRONG-KEY-01` — **P1 confirmed**, owner `qa_account_media`.
+Независимый [lead baseline](docs/evidence/2026-10-08/qa-account-lead-lifecycle-baseline.json):
+выбрать сохранённый Account → неверный непустой key → ВОЙТИ; фактически виден
+workspace вместо отказа, затем правильный key возвращает старую историю.
+9 остальных lifecycle checks PASS, 1 expected product FAIL, exit 1. Actual UI
+проверил также два Account и изоляцию истории, remove cancel/confirm.
+Прежний removal-history-erased PASS отозван: assertion мог выполняться до
+асинхронного render; awaited retest выполняется отдельно. Удалялись только synthetic Accounts.
+Fix должен сверять сохранённую identity до session/vault/registry mutation;
+полный browser retest после интеграции обязателен.
+
+`UI-PUBLIC-ACCEPT-NAV` — **confirmed FAIL**, owner `ui_inventory`:
+реальный public Request получен, но global pending→Accept→Quick Name→saved Account
+возвращает «Откройте выбранный Account и повторите принятие запроса». После обычного
+входа в Account нет доступного перехода к pending. Private QR pairing позволяет
+продолжить остальной аудит, но не закрывает public acceptance.

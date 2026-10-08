@@ -1,0 +1,70 @@
+{
+  "base": "https://messenger.d-mash.ru/not_messenger/",
+  "mode": "DEPLOYED",
+  "baseSHA": "bd380ab9379b714c204dd2f72ca3b166aa41752e",
+  "startedAt": "2026-10-08T00:19:32.818Z",
+  "files": {
+    "js/node_manager.js": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+    "js/acceptance_fixes.js": "46a7c66f691bc6d3554013da7b2e6db37e9b08a06f871eabd6e9c2413221a0d8",
+    "js/acceptance_v50.js": "a36eb4f5a52cb73a80db78be714e27ddc43c7a838db8a5639760f40669fb0979",
+    "nodes.json": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a"
+  },
+  "servedFiles": {},
+  "checks": [
+    {
+      "id": "real-wss",
+      "status": "PASS",
+      "actual": "Requested real Node visibly connected; no DNSS readiness claim"
+    },
+    {
+      "id": "NODE-QR-01",
+      "status": "PASS",
+      "actual": "Requested directory node renders canonical QR and copies node link"
+    },
+    {
+      "id": "UI-SHARE-CREATE",
+      "status": "PASS",
+      "actual": "Device-owned route panel visible in modal; create current route; Back returns QR; Account workspace preserved"
+    },
+    {
+      "id": "scanner-denied-cancel",
+      "status": "PASS"
+    },
+    {
+      "id": "scanner-rapid-reopen-and-running-cancel",
+      "status": "PASS",
+      "actual": "Synthetic camera real MediaStream/Html5Qrcode; visible video before cancel"
+    },
+    {
+      "id": "scanner-delayed-real-camera-cancel-reopen",
+      "status": "PASS",
+      "actual": "Delayed real getUserMedia completion; old tracks ended; replacement scanner video remains visible"
+    },
+    {
+      "id": "UI-PUBLIC-ACCEPT-NAV",
+      "status": "PASS",
+      "actual": "Logged-in Account settings exposes root-owned pending; single Back returns Account settings; two-party handshake separate"
+    },
+    {
+      "id": "PENDING-BACK-01",
+      "status": "PASS",
+      "actual": "One Back button; closes modal and returns to global settings"
+    },
+    {
+      "id": "global-node-request-pin",
+      "status": "PASS",
+      "actual": "Global request preserves validated catalog pin and deduplicates existing endpoint"
+    }
+  ],
+  "errors": [],
+  "page": "transport-v3-browser-audit-20261008.25",
+  "sw": "transport-v3-browser-audit-20261008.25",
+  "status": "PASS",
+  "notLoaded": [
+    "js/node_manager.js",
+    "js/acceptance_fixes.js",
+    "js/acceptance_v50.js",
+    "nodes.json"
+  ],
+  "sourceConsistency": "DEPLOYED_NOT_SOURCE_VERIFIED"
+}

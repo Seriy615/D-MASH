@@ -1,0 +1,22 @@
+{
+  "kind": "UNIT proposed N3 contract; NOT IMPLEMENTED; expected RED against current adapter",
+  "node": "v24.19.0",
+  "moduleSha256": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+  "cases": [
+    {
+      "id": "N3-CERT-ACCOUNT-AUTH",
+      "status": "FAIL",
+      "reason": "configurePeer accepted an unrelated self-signed route certificate without any Account signature/bundle"
+    },
+    {
+      "id": "N3-MAPPING-ATOMIC",
+      "status": "FAIL",
+      "reason": "Failed outbound write left an inbound map published without its outbound/journal commit\n\n1 !== 0\n"
+    },
+    {
+      "id": "N3-GENERATION-ROLLBACK",
+      "status": "FAIL",
+      "reason": "Older self-consistent certificate overwrote newer peer mapping"
+    }
+  ]
+}

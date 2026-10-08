@@ -43,31 +43,47 @@ commit также доставляется на Forge, его полный SHA �
 
 ## 2. Текущий Forge checkpoint и опубликованный baseline
 
-На 8 октября 2026 начат новый аудит на `forgeai.isgood.host`, user `codex`,
-`/home/jcode/D-MASH`, `transport-v3`; `HEAD == origin/transport-v3 ==
-2ee3be9fe05e7844480a194e92b11b18c5e2c04d`. Постоянная цель создана.
-Первоначальный browser-first gate открыт, runtime implementation ещё не начата.
-Три агента разделяют UI inventory, Account/media audit и Node/infrastructure;
-лид проводит UI01 и самостоятельную интеграционную приёмку. Текущая ведомость —
-[BROWSER_QA.md](BROWSER_QA.md); незавершённые QA JSON не считать release evidence.
+На 8 октября 2026 работа идёт на `forgeai.isgood.host`, user `codex`,
+`/home/jcode/D-MASH`, `transport-v3`. Постоянная цель активна; N3/N4 и полный
+browser-first inventory ещё не завершены. Реализация делегирована трём агентам;
+лид независимо проверяет интеграцию и опубликованный UI.
 
-Среда Forge подготовлена: Python 3.12.14 `.venv`, Node24.19.0 (проверен официальный
-checksum), Playwright/Chromium156.0.8078.4 вне checkout. Первый real UI проход:
-24 calculator/setup/unlock/reload-lock/wipe checks PASS на fresh synthetic profile,
-page/SW `.24`. Независимый UI Account/history/media rerun 27/27 PASS, включая master rewrap
-и сохранность того же Account/history. Полный UI01 ещё открыт. Свежие Node Inbox/ownership browser fixtures
-PASS; real loopback Worker N1→B→N2 transit и deployed WSS Worker auth/reconnect
-с независимым pin PASS. Full regression: 264 backend + 11 Origin + 67 JS suites PASS
-(exit 0); это не ordinary UI v4 приёмка. Read-only EMS exact-source verifier
-повторно подтвердил 205 файлов baseline runtime без missing/changed.
-NODE-QR-01: QR directory Node показывает missing NodeID error; triage в BROWSER_QA.
+Текущий runtime commit **`bd380ab9379b714c204dd2f72ca3b166aa41752e`**, release
+**`transport-v3-browser-audit-20261008.25`**, pushed и PWA deployed на EMS.
+Exact-source проверка: **207 checked, missing=[], changed=[]**. Backend source
+не менялся, runtime/DB/identities не переносились. Static backup:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T001857Z`.
+Existing host-local get_commit.sh не распознаёт новое имя release своим regex
+(`unknown`); browser page/active SW проверяются отдельно. EMS Git checkout HEAD
+не служит доказательством deployed SHA: PWA публикуется через git archive.
 
-Git SSH push с Forge отклоняется (publickey); HTTPS fetch работает. Existing EMS
-Git publisher авторизуется на GitHub (dry-run только fetch-first); exact local
-commit можно публиковать через проверенный workflow после готовности diff. EMS SSH и
-существующий executable get_commit.sh доступны; runtime relocation не выполнялся.
-Новый push/deploy не выполнен. Следующий шаг: закончить actual control/flow inventory,
-назначить fixes агентам, затем N3 ordinary UI→Node cutover/migration и N4 recovery.
+Исправлены отказ неверного ключа сохранённого Account до смены vault/identity,
+scanner cancel/race cleanup, Account public-route navigation, pending requests
+из Account settings/единственный Back, сохранение independently provisioned
+NodeID из каталога и некорректных legacy записей без удаления соседних Nodes.
+Exact commit test_all: 264 backend +11 Origin +69 JS suites PASS, exit0; source-overlay браузерный smoke
+9/9 PASS, errors=[] (SW BLOCKED, это не deployed SW приёмка).
+Deployed .25 controls9/9 PASS, page/SW.25/errors[]. Реальный .24→.25 SW/profile
+upgrade сохранил Account identity/history; wrong-key отказ виден, final correct-retry
+в этом профиле NOT RUN из-за harness locator; независимый deployed wrong-key/
+correct-retry/multi-Account suite6/6 PASS, page/SW.25. Fresh PUBLIC-only FAIL на отправке
+запроса: нет результата/карточки через90s,130 loaded assets совпадают с SHA; UI агент
+проверяет live timeline. Этот flow не принят; private fallback не использован.
+
+Среда: Python3.12.14 `.venv`, Node24.19.0 (официальный checksum),
+Playwright1.64.0/Chromium156.0.8078.4 вне checkout. Свежий .24 baseline:
+24 calculator и27 Account/media/master-rewrap checks PASS; Node Inbox/ownership,
+real loopback Worker N1→B→N2 transit и deployed pinned WSS auth/reconnect PASS.
+Это не ordinary UI v4 приёмка. Ведомость и открытые баги: [BROWSER_QA.md](BROWSER_QA.md).
+Account deletion сохраняет записи общего vault; video call toggle и attachment
+policy/readiness остаются открыты. N3 contracts предложены; агенты реализуют изолированные pairing codec и root
+lifecycle coordinator без включения в ordinary UI. Cutover не реализован;
+сильная N4 диагностика выявила recovery gaps поверх зелёного старого H1/H2/H3.
+
+Forge SSH GitHub push недоступен; HTTPS fetch работает. Публикация exact commits
+через incremental bundle и отдельный temporary bare EMS publisher от codex,
+обычный fast-forward push, затем Forge origin fetch. Production checkout и
+секреты не включались в bundle. Подробности — [FORGE_SYNC.md](FORGE_SYNC.md).
 
 ### Опубликованный runtime baseline (историческая приёмка до текущего аудита)
 
@@ -470,6 +486,7 @@ limits. Physical phone/WebAuthn и недоступные среды отмеч�
 расширять инвентарь и тесты для непокрытых кнопок. Общая регрессия/crypto tests
 сохраняются; browser-first аудит не сокращает архитектурный N0–N8 scope.
 
-В текущем аудите добавляются QA harnesses и evidence; runtime-код пока не менялся.
+В текущем аудите добавляются QA harnesses/evidence; ui_inventory получил
+изолированное владение node_manager.js/acceptance_fixes.js для UI blockers.
 Полная цель не завершена; после browser-first gate продолжить архитектурный переход.
 Проверять живые handles текущего chat прежде повторного запуска test processes.

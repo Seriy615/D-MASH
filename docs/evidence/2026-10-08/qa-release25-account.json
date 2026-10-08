@@ -1,0 +1,61 @@
+{
+  "time": "2026-10-08T00:21:39.605Z",
+  "steps": [
+    {
+      "id": "UI02-empty-error",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-create-0",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-create-1",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-switch-isolation",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-wrong-nonempty",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-wrong-retry-correct",
+      "status": "PASS"
+    }
+  ],
+  "inventory": [
+    {
+      "state": "wrong Account key",
+      "text": "DEVICE UNLOCKED\n⚙\nОШИБКА ВХОДА: Неверный ключ доступа для сохранённого аккаунта.\n \nСОХРАНИТЬ В РЕЕСТРЕ\nВОЙТИ\nК СПИСКУ\nD-MASH build transport-v3-browser-audit-20261008.25",
+      "controls": [
+        {
+          "id": "global-settings-button",
+          "label": "⚙",
+          "onclick": "ui.renderGlobalSettings()"
+        },
+        {
+          "id": "",
+          "label": "ВОЙТИ",
+          "onclick": null
+        },
+        {
+          "id": "",
+          "label": "К СПИСКУ",
+          "onclick": "ui.show_gate()"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Fresh synthetic Accounts only",
+    "Physical WebAuthn NOT RUN",
+    "No Account credentials or root keys recorded",
+    "Account deletion tracked separately as ACCOUNT-DELETE-01; not exercised in this run"
+  ],
+  "page": "transport-v3-browser-audit-20261008.25",
+  "sw": "transport-v3-browser-audit-20261008.25",
+  "browser": "156.0.8078.4"
+}

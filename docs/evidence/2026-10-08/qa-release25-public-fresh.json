@@ -1,0 +1,1323 @@
+{
+  "target": "https://messenger.d-mash.ru/not_messenger/",
+  "scope": "FRESH PUBLIC-ONLY actual two-profile UI; no preexisting peers, private fallback or console setup; v3 migration path, not N3 cutover",
+  "steps": [
+    {
+      "id": "profile-0",
+      "status": "PASS"
+    },
+    {
+      "id": "request-node-0",
+      "status": "PASS"
+    },
+    {
+      "id": "profile-1",
+      "status": "PASS"
+    },
+    {
+      "id": "request-node-1",
+      "status": "PASS"
+    },
+    {
+      "id": "public-route-copy",
+      "status": "PASS"
+    },
+    {
+      "id": "public-request",
+      "status": "FAIL",
+      "error": "locator.waitFor: Timeout 90000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'OK', exact: true }) to be visible\u001b[22m\n"
+    }
+  ],
+  "states": [
+    {
+      "state": "connected-node-0",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 68–68 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nПОДКЛЮЧЕНИЕ К УЗЛУ\nПодключено\n\nОсновной узел для одиночных запросов: D-MASH EMS staging\n\n● D-MASH EMS staging: connected · 68 ms · регистрация устройства…\nwss://stage-api-ems.d-mash.ru/dmash-client/v3\nOFF\nQR\n⚙\nДОБАВИТЬ УЗЕЛДОБАВИТЬ ПО QRНАЗАД\nD-MASH build transport-v3-browser-audit-20261008.25",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 68–68 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "OFF",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "QR",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ДОБАВИТЬ УЗЕЛ",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ДОБАВИТЬ ПО QR",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "НАЗАД",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "connected-node-1",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 50–50 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nПОДКЛЮЧЕНИЕ К УЗЛУ\nПодключено\n\nОсновной узел для одиночных запросов: D-MASH EMS staging\n\n● D-MASH EMS staging: connected · 50 ms · регистрация устройства…\nwss://stage-api-ems.d-mash.ru/dmash-client/v3\nOFF\nQR\n⚙\nДОБАВИТЬ УЗЕЛДОБАВИТЬ ПО QRНАЗАД\nD-MASH build transport-v3-browser-audit-20261008.25",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 50–50 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "OFF",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "QR",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ДОБАВИТЬ УЗЕЛ",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ДОБАВИТЬ ПО QR",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "НАЗАД",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "visible-account-public-route-panel",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 50–50 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nPUBLIC ROUTES\nPUBLIC ROUTES\nМаршрут принадлежит Device. Просмотр списка не требует входа в Account. Создание/активация требуют разблокированный DeviceRoot.\nPublic Routes ещё не созданы.\nСОЗДАТЬ PUBLIC ROUTE НАЗАД\nD-MASH build transport-v3-browser-audit-20261008.25",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 50–50 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "СОЗДАТЬ PUBLIC ROUTE",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "НАЗАД",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "FAIL public-request",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 40–40 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nD-MASH build transport-v3-browser-audit-20261008.25",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 40–40 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "final",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 40–40 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nD-MASH build transport-v3-browser-audit-20261008.25"
+    },
+    {
+      "state": "final",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 39–39 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nD-MASH build transport-v3-browser-audit-20261008.25"
+    }
+  ],
+  "loadedSources": [
+    {
+      "profile": 0,
+      "path": "index.html",
+      "actualSha256": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "expectedSha256": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/release.js",
+      "actualSha256": "44a71cb9998548488bd2a6a1d502fe21f4f260d276a3ca72aac93196aa41f33e",
+      "expectedSha256": "44a71cb9998548488bd2a6a1d502fe21f4f260d276a3ca72aac93196aa41f33e",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/device_routes.js",
+      "actualSha256": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "expectedSha256": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/dmash_links.js",
+      "actualSha256": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "expectedSha256": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/quick_name_registry.js",
+      "actualSha256": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "expectedSha256": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/ui_logic.js",
+      "actualSha256": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "expectedSha256": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/secure_session.js",
+      "actualSha256": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "expectedSha256": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/device_client_v3.js",
+      "actualSha256": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "expectedSha256": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/device_authority_v3.js",
+      "actualSha256": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "expectedSha256": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/device_envelope.js",
+      "actualSha256": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "expectedSha256": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/device_inbox.js",
+      "actualSha256": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "expectedSha256": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/account_node_inbox_v4.js",
+      "actualSha256": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "expectedSha256": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/route_discovery_v4.js",
+      "actualSha256": "3b00e57330b98282916b09d2e220f8e966713a1c3e88b0a01bfe61fffb9ad897",
+      "expectedSha256": "3b00e57330b98282916b09d2e220f8e966713a1c3e88b0a01bfe61fffb9ad897",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/account_node_transport_v4.js",
+      "actualSha256": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "expectedSha256": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/private_routes_v3.js",
+      "actualSha256": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "expectedSha256": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/contact_bootstrap_v3.js",
+      "actualSha256": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "expectedSha256": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/contact_flow_v3.js",
+      "actualSha256": "317d38cd09037f795f205de0a4413ee2ed1d3aae654e38ebc537b66137e6edb7",
+      "expectedSha256": "317d38cd09037f795f205de0a4413ee2ed1d3aae654e38ebc537b66137e6edb7",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/contact_payloads.js",
+      "actualSha256": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "expectedSha256": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/contact_transport.js",
+      "actualSha256": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "expectedSha256": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/pending_contact_requests.js",
+      "actualSha256": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "expectedSha256": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/ui_global_bridge.js",
+      "actualSha256": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "expectedSha256": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/runtime_fixes.js",
+      "actualSha256": "eaf8a52ef22c7712cd79761f86ebb5919bcda679e64ffea2e9ac7e09428d0658",
+      "expectedSha256": "eaf8a52ef22c7712cd79761f86ebb5919bcda679e64ffea2e9ac7e09428d0658",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/public_contact_runtime.js",
+      "actualSha256": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "expectedSha256": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_fixes.js",
+      "actualSha256": "46a7c66f691bc6d3554013da7b2e6db37e9b08a06f871eabd6e9c2413221a0d8",
+      "expectedSha256": "46a7c66f691bc6d3554013da7b2e6db37e9b08a06f871eabd6e9c2413221a0d8",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_v50.js",
+      "actualSha256": "a36eb4f5a52cb73a80db78be714e27ddc43c7a838db8a5639760f40669fb0979",
+      "expectedSha256": "a36eb4f5a52cb73a80db78be714e27ddc43c7a838db8a5639760f40669fb0979",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_v51.js",
+      "actualSha256": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "expectedSha256": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/call_signaling.js",
+      "actualSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "expectedSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/call_runtime.js",
+      "actualSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expectedSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/account_ratchet.js",
+      "actualSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expectedSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/saved_messages.js",
+      "actualSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expectedSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/chat_cipher.js",
+      "actualSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expectedSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/chat_password.js",
+      "actualSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expectedSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/account_ratchet_runtime.js",
+      "actualSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expectedSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/account_recorded_media.js",
+      "actualSha256": "1b2e661a8fd3c773f1a25eec0a0076086f0040c1ec7f75f5f1e6df2defb6328e",
+      "expectedSha256": "1b2e661a8fd3c773f1a25eec0a0076086f0040c1ec7f75f5f1e6df2defb6328e",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/file_channel.js",
+      "actualSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "expectedSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/file_session.js",
+      "actualSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "expectedSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/file_runtime.js",
+      "actualSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expectedSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_v52.js",
+      "actualSha256": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "expectedSha256": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_v54.js",
+      "actualSha256": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "expectedSha256": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_v55.js",
+      "actualSha256": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "expectedSha256": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/kyber768.js",
+      "actualSha256": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "expectedSha256": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/qrcode.min.js",
+      "actualSha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "expectedSha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/nacl-util.min.js",
+      "actualSha256": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "expectedSha256": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/argon2-bundled.min.js",
+      "actualSha256": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "expectedSha256": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/device_root.js",
+      "actualSha256": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "expectedSha256": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/storage.js",
+      "actualSha256": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+      "expectedSha256": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/call_signaling.js",
+      "actualSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "expectedSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/call_runtime.js",
+      "actualSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expectedSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/account_ratchet.js",
+      "actualSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expectedSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/saved_messages.js",
+      "actualSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expectedSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/chat_cipher.js",
+      "actualSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expectedSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/chat_password.js",
+      "actualSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expectedSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/account_ratchet_runtime.js",
+      "actualSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expectedSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/file_channel.js",
+      "actualSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "expectedSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/file_session.js",
+      "actualSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "expectedSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/file_runtime.js",
+      "actualSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expectedSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/call_session.js",
+      "actualSha256": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "expectedSha256": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/node_manager.js",
+      "actualSha256": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+      "expectedSha256": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/nacl-fast.min.js",
+      "actualSha256": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "expectedSha256": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/core_engine.js",
+      "actualSha256": "b362303f8d65407d7077c216f11a84666c0f480a0681098f273b406e2152b440",
+      "expectedSha256": "b362303f8d65407d7077c216f11a84666c0f480a0681098f273b406e2152b440",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "nodes.json",
+      "actualSha256": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "expectedSha256": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/html5-qrcode.min.js",
+      "actualSha256": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "expectedSha256": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "index.html",
+      "actualSha256": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "expectedSha256": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/release.js",
+      "actualSha256": "44a71cb9998548488bd2a6a1d502fe21f4f260d276a3ca72aac93196aa41f33e",
+      "expectedSha256": "44a71cb9998548488bd2a6a1d502fe21f4f260d276a3ca72aac93196aa41f33e",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/device_routes.js",
+      "actualSha256": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "expectedSha256": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/dmash_links.js",
+      "actualSha256": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "expectedSha256": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/quick_name_registry.js",
+      "actualSha256": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "expectedSha256": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/secure_session.js",
+      "actualSha256": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "expectedSha256": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/ui_logic.js",
+      "actualSha256": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "expectedSha256": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/device_client_v3.js",
+      "actualSha256": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "expectedSha256": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/device_authority_v3.js",
+      "actualSha256": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "expectedSha256": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/device_envelope.js",
+      "actualSha256": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "expectedSha256": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/device_inbox.js",
+      "actualSha256": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "expectedSha256": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/account_node_inbox_v4.js",
+      "actualSha256": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "expectedSha256": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/route_discovery_v4.js",
+      "actualSha256": "3b00e57330b98282916b09d2e220f8e966713a1c3e88b0a01bfe61fffb9ad897",
+      "expectedSha256": "3b00e57330b98282916b09d2e220f8e966713a1c3e88b0a01bfe61fffb9ad897",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/account_node_transport_v4.js",
+      "actualSha256": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "expectedSha256": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/private_routes_v3.js",
+      "actualSha256": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "expectedSha256": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/contact_bootstrap_v3.js",
+      "actualSha256": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "expectedSha256": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/contact_flow_v3.js",
+      "actualSha256": "317d38cd09037f795f205de0a4413ee2ed1d3aae654e38ebc537b66137e6edb7",
+      "expectedSha256": "317d38cd09037f795f205de0a4413ee2ed1d3aae654e38ebc537b66137e6edb7",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/contact_payloads.js",
+      "actualSha256": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "expectedSha256": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/contact_transport.js",
+      "actualSha256": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "expectedSha256": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/pending_contact_requests.js",
+      "actualSha256": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "expectedSha256": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/ui_global_bridge.js",
+      "actualSha256": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "expectedSha256": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/runtime_fixes.js",
+      "actualSha256": "eaf8a52ef22c7712cd79761f86ebb5919bcda679e64ffea2e9ac7e09428d0658",
+      "expectedSha256": "eaf8a52ef22c7712cd79761f86ebb5919bcda679e64ffea2e9ac7e09428d0658",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/public_contact_runtime.js",
+      "actualSha256": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "expectedSha256": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_fixes.js",
+      "actualSha256": "46a7c66f691bc6d3554013da7b2e6db37e9b08a06f871eabd6e9c2413221a0d8",
+      "expectedSha256": "46a7c66f691bc6d3554013da7b2e6db37e9b08a06f871eabd6e9c2413221a0d8",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_v50.js",
+      "actualSha256": "a36eb4f5a52cb73a80db78be714e27ddc43c7a838db8a5639760f40669fb0979",
+      "expectedSha256": "a36eb4f5a52cb73a80db78be714e27ddc43c7a838db8a5639760f40669fb0979",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_v51.js",
+      "actualSha256": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "expectedSha256": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/call_signaling.js",
+      "actualSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "expectedSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/call_runtime.js",
+      "actualSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expectedSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/account_ratchet.js",
+      "actualSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expectedSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/saved_messages.js",
+      "actualSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expectedSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/chat_cipher.js",
+      "actualSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expectedSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/chat_password.js",
+      "actualSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expectedSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/account_ratchet_runtime.js",
+      "actualSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expectedSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/account_recorded_media.js",
+      "actualSha256": "1b2e661a8fd3c773f1a25eec0a0076086f0040c1ec7f75f5f1e6df2defb6328e",
+      "expectedSha256": "1b2e661a8fd3c773f1a25eec0a0076086f0040c1ec7f75f5f1e6df2defb6328e",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/file_channel.js",
+      "actualSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "expectedSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/file_session.js",
+      "actualSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "expectedSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/file_runtime.js",
+      "actualSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expectedSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_v52.js",
+      "actualSha256": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "expectedSha256": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_v54.js",
+      "actualSha256": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "expectedSha256": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_v55.js",
+      "actualSha256": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "expectedSha256": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/kyber768.js",
+      "actualSha256": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "expectedSha256": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/qrcode.min.js",
+      "actualSha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "expectedSha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/nacl-util.min.js",
+      "actualSha256": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "expectedSha256": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/argon2-bundled.min.js",
+      "actualSha256": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "expectedSha256": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/device_root.js",
+      "actualSha256": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "expectedSha256": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/call_runtime.js",
+      "actualSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expectedSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/storage.js",
+      "actualSha256": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+      "expectedSha256": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/call_signaling.js",
+      "actualSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "expectedSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/saved_messages.js",
+      "actualSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expectedSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/chat_cipher.js",
+      "actualSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expectedSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/chat_password.js",
+      "actualSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expectedSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/account_ratchet.js",
+      "actualSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expectedSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/file_channel.js",
+      "actualSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "expectedSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/file_session.js",
+      "actualSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "expectedSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/account_ratchet_runtime.js",
+      "actualSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expectedSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/call_session.js",
+      "actualSha256": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "expectedSha256": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/file_runtime.js",
+      "actualSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expectedSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/node_manager.js",
+      "actualSha256": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+      "expectedSha256": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/html5-qrcode.min.js",
+      "actualSha256": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "expectedSha256": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/nacl-fast.min.js",
+      "actualSha256": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "expectedSha256": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/core_engine.js",
+      "actualSha256": "b362303f8d65407d7077c216f11a84666c0f480a0681098f273b406e2152b440",
+      "expectedSha256": "b362303f8d65407d7077c216f11a84666c0f480a0681098f273b406e2152b440",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "nodes.json",
+      "actualSha256": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "expectedSha256": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    }
+  ],
+  "browser": "156.0.8078.4",
+  "page0": "transport-v3-browser-audit-20261008.25",
+  "sw0": "transport-v3-browser-audit-20261008.25",
+  "page1": "transport-v3-browser-audit-20261008.25",
+  "sw1": "transport-v3-browser-audit-20261008.25",
+  "fatal": "locator.waitFor: Timeout 90000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'OK', exact: true }) to be visible\u001b[22m\n"
+}

@@ -1,0 +1,23 @@
+{
+  "kind": "UNIT N4 proposed contract; expected RED; no runtime activation",
+  "node": "v24.19.0",
+  "crypto": "Real NaCl + bundled Kyber WASM + bundled Argon2",
+  "coreSha256": "b362303f8d65407d7077c216f11a84666c0f480a0681098f273b406e2152b440",
+  "cases": [
+    {
+      "id": "H2-ESTABLISHED-ONE-SIDED-LOSS",
+      "status": "FAIL",
+      "reason": "Fully confirmed responder swallowed fresh authenticated init without a fresh recovery challenge/response"
+    },
+    {
+      "id": "H2-PENDING-OLD-FINAL-NO-RECOVERY",
+      "status": "FAIL",
+      "reason": "Returned old final cannot complete the new recovery attempt; response alone is not recovery"
+    },
+    {
+      "id": "FINAL-EXACT-DURABLE-RETRY",
+      "status": "FAIL",
+      "reason": "Final retransmission rebuilds ciphertext instead of replaying exact durable frame"
+    }
+  ]
+}

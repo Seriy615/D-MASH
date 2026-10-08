@@ -1,0 +1,47 @@
+{
+  "scope": "DEPLOYED real Service Worker update, same fresh synthetic profile/Account/root/history; no storage reset",
+  "before": "transport-v3-recorded-fragments-20261008.24",
+  "after": "transport-v3-browser-audit-20261008.25",
+  "steps": [
+    {
+      "id": "before-setup-login-history",
+      "status": "PASS"
+    },
+    {
+      "id": "published-update-page-sw",
+      "status": "PASS"
+    },
+    {
+      "id": "same-account-history-after-update",
+      "status": "PASS"
+    },
+    {
+      "id": "wrong-key-denied",
+      "status": "FAIL",
+      "error": "locator.waitFor: Timeout 90000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'OK', exact: true }) to be visible\u001b[22m\n",
+      "visible": "DEVICE UNLOCKED\n⚙\nОШИБКА ВХОДА: Неверный ключ доступа для сохранённого аккаунта.\n \nСОХРАНИТЬ В РЕЕСТРЕ\nВОЙТИ\nК СПИСКУ\nD-MASH build transport-v3-browser-audit-20261008.25"
+    }
+  ],
+  "browser": "156.0.8078.4",
+  "baseline": {
+    "page": "transport-v3-recorded-fragments-20261008.24",
+    "sw": "transport-v3-recorded-fragments-20261008.24"
+  },
+  "baselineReady": true,
+  "updated": {
+    "page": "transport-v3-browser-audit-20261008.25",
+    "sw": "transport-v3-browser-audit-20261008.25"
+  },
+  "identityUnchanged": true,
+  "historyRetained": true,
+  "fatal": "locator.waitFor: Timeout 90000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'OK', exact: true }) to be visible\u001b[22m\n",
+  "assessment": {
+    "runtimeBeforeSHA": "ed200730dab2e64fc8446e344ce54dbd37cfeec5",
+    "runtimeAfterSHA": "bd380ab9379b714c204dd2f72ca3b166aa41752e",
+    "upgradeAndStorage": "PASS: real published page/active SW .24→.25, same Account identity and retained visible history",
+    "wrongKeyVisibleDenial": "PASS visible inline error: ОШИБКА ВХОДА: Неверный ключ доступа для сохранённого аккаунта.",
+    "suiteExitCode": 1,
+    "harnessLimitation": "Wrong-key step expected an OK modal; app correctly uses inline login error. Captured visible UI proves refusal, but the subsequent correct-key retry was NOT RUN after harness timeout. No full suite PASS claim.",
+    "correctKeyRetryAfterDenial": "NOT RUN in this upgrade profile"
+  }
+}
