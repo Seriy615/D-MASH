@@ -12,7 +12,7 @@ router = APIRouter()
 async def serve_signaling(websocket, service, *, admission_difficulty=18):
     if type(admission_difficulty) is not int or not 1 <= admission_difficulty <= 20:
         raise ValueError('invalid admission difficulty')
-    if (service is None or not service.healthy()
+    if (service is None or not service.available()
             or service.active_signaling_connections >= service.max_signaling_connections):
         await websocket.close(code=1013)
         return
@@ -57,7 +57,7 @@ async def serve_signaling(websocket, service, *, admission_difficulty=18):
             raise PermissionError('creation scope mismatch')
         handle = service.join(sid, request['ticket'], request['role'])
         await websocket.send_json({'type': 'JOINED', 'ice_servers': [{
-            'urls': service.turn_urls,
+            'urls': service.ready_turn_urls(),
             **{k: v for k, v in service.issue_turn_credentials(sid).items() if k in {'username', 'credential'}}}]})
 
         async def read():

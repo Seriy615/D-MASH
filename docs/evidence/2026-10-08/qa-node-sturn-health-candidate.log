@@ -1,0 +1,3 @@
+{"stage": "authenticated-allocation-and-two-way-relay", "transport": "udp", "result": "PASS"}
+{"stage": "authenticated-allocation-and-two-way-relay", "transport": "tcp", "result": "PASS"}
+{"stage": "normal-public-WSS-scoped-tickets-and-two-way-signal", "result": "PASS"}

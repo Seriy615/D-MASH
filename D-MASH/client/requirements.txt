@@ -8,3 +8,4 @@ python-multipart==0.0.18
 blake3==0.4.1
 numpy==1.26.0
 scipy==1.11.4
+aioice==0.10.2

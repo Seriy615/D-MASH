@@ -217,6 +217,7 @@ async def lifespan(app: FastAPI):
             # The signaling endpoint remains fail-closed until the configured
             # service is present and its bounded health probe succeeds.
             app.state.s_turn_service = s_turn_service
+            if s_turn_service:s_turn_service.start_health_monitor()
         print(f"🌐 [CORE] Node ID: {state.node_crypto.node_id}")
         state.process_pool = create_crypto_executor()
         # 2. Запускаем Системную БД
@@ -274,8 +275,13 @@ async def lifespan(app: FastAPI):
         if state.db: await state.db.close()
         state.fallback_store = None
         if state.system_db: await state.system_db.close()
-        if s_turn_service: s_turn_service.close()
+        if s_turn_service:
+            s_turn_service.close()
+            await s_turn_service.wait_closed()
     finally:
+        if s_turn_service:
+            s_turn_service.close()
+            await s_turn_service.wait_closed()
         app.state.node_v4 = None
         if node_v4: await node_v4.close()
         client_gateway.registration_registry_factory = None

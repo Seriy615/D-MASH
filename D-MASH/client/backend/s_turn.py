@@ -13,10 +13,8 @@ import asyncio
 import hashlib
 import hmac
 import secrets
-import socket
 import time
 import os
-from urllib.parse import urlparse
 from dataclasses import dataclass, field
 
 
@@ -68,14 +66,15 @@ class STurnService:
         self.clock = clock
         self.health_probe = health_probe or (lambda: False)
         self._sessions: dict[str, _Session] = {}
+        self.health_monitor = None
 
     @classmethod
     def from_env(cls) -> "STurnService | None":
         """Build the service only from an explicit, deployment-owned config.
 
-        A configured URL is not treated as health. The probe makes a bounded
-        TCP reachability check to the TURN listener; deployments can replace
-        it with an authenticated allocation probe at the integration edge.
+        Configured URLs are not health. The async monitor checks authenticated
+        allocations, relay-only traffic and the normal public signaling path.
+        Until its first success, public S-TURN capability is false.
         """
         signaling = os.getenv("DMASH_SIGNALING_WSS", "").strip()
         turn_urls = tuple(item.strip() for item in os.getenv("DMASH_TURN_URLS", "").split(",") if item.strip())
@@ -89,24 +88,30 @@ class STurnService:
         if not 32 <= len(secret) <= 128:
             raise ValueError("DMASH_TURN_SHARED_SECRET_B64 must decode to 32 to 128 bytes")
 
-        def probe() -> bool:
-            for value in turn_urls:
-                parsed = urlparse(value.replace("turn:", "turn://", 1))
-                if parsed.scheme != "turn" or not parsed.hostname:
-                    return False
-                try:
-                    with socket.create_connection((parsed.hostname, parsed.port or 3478), timeout=0.4):
-                        return True
-                except OSError:
-                    continue
-            return False
+        if __package__:
+            from .s_turn_health import STurnHealthMonitor
+        else:
+            from s_turn_health import STurnHealthMonitor
+        service=cls(signaling_wss=signaling,turn_urls=turn_urls,shared_secret=secret)
+        service.health_monitor=STurnHealthMonitor(service)
+        return service
 
-        return cls(signaling_wss=signaling, turn_urls=turn_urls,
-                   shared_secret=secret, health_probe=probe)
+    def start_health_monitor(self):
+        if self.health_monitor:self.health_monitor.start()
+
+    def available(self) -> bool:
+        if self._closed:return False
+        if self.health_monitor:return bool(self.health_monitor.available_urls())
+        return self.healthy()
+
+    def ready_turn_urls(self) -> tuple[str, ...]:
+        return self.health_monitor.available_urls() if self.health_monitor else self.turn_urls
+
 
     def healthy(self) -> bool:
         if self._closed or not self.signaling_wss or not self.turn_urls:
             return False
+        if self.health_monitor:return self.health_monitor.healthy()
         try:
             return bool(self.health_probe())
         except Exception:
@@ -117,7 +122,7 @@ class STurnService:
         if not self.healthy():
             return {"can_s_turn": False}
         return {"can_s_turn": True, "signaling_wss": self.signaling_wss,
-                "turn_urls": list(self.turn_urls)}
+                "turn_urls": list(self.ready_turn_urls())}
 
     def _prune(self) -> None:
         now = self.clock()
@@ -130,8 +135,12 @@ class STurnService:
         _token(call_id, "call_id")
         if type(ttl) is not int or not 1 <= ttl <= 900:
             raise ValueError("invalid TURN credential lifetime")
-        if not self.healthy():
+        if not self.available():
             raise RuntimeError("S-TURN service is not healthy")
+        return self._turn_credentials(ttl=ttl)
+
+    def _turn_credentials(self, *, ttl: int) -> dict:
+        if self._closed or type(ttl) is not int or not 1<=ttl<=900:raise RuntimeError("TURN credentials unavailable")
         expires = int(self.clock()) + ttl
         username = f"{expires}:{_b64(secrets.token_bytes(18))}"
         # coturn TURN REST uses padded standard Base64 of HMAC-SHA1.
@@ -146,7 +155,7 @@ class STurnService:
             raise ValueError("call_secret must be 32 bytes")
         if type(ttl) is not int or not 1 <= ttl <= 3600:
             raise ValueError("invalid signaling lifetime")
-        if not self.healthy():
+        if not self.available():
             raise RuntimeError("S-TURN service is not healthy")
         self._prune()
         if len(self._sessions) >= self.capacity:
@@ -229,5 +238,9 @@ class STurnService:
 
     def close(self) -> None:
         self._closed = True
+        if self.health_monitor:self.health_monitor.close()
         for sid in list(self._sessions): self.close_session(sid)
         self._secret = b""
+
+    async def wait_closed(self):
+        if self.health_monitor:await self.health_monitor.wait_closed()
