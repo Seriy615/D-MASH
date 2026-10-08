@@ -19,7 +19,7 @@ async function fixture(local,peer,db=database(),history=new Map(),sent=[]){const
  const changed2=JSON.parse(one.frame);changed2.ciphertext=changed2.ciphertext.replace(/^./,changed2.ciphertext[0]==='A'?'B':'A');await assert.rejects(()=>recipient.receiveApplication(JSON.stringify(changed2)),/APP_AUTH_FAILED/);
  const changed3=JSON.parse(one.frame);changed3.content_type='application/vnd.dmash.media-intent+json';await assert.rejects(()=>recipient.receiveApplication(JSON.stringify(changed3)),/APP_FRAME_FORMAT/);
  sender.close();const reopened=await App.open(from.opts),again=await reopened.sendApplication({operationId:OP,plaintext:'Привет'});assert.equal(again.frame,one.frame,'reload exact bytes');
- const oldAck=to.sent.find(item=>JSON.parse(item.frame).type==='ACCOUNT_APP_ACK_V4').frame;
+ await recipient.flushReceipts();const oldAck=to.sent.find(item=>JSON.parse(item.frame).type==='ACCOUNT_APP_ACK_V4').frame;
  const successor={sessionId:'aa'.repeat(32),generation:2,root:'bb'.repeat(32),retired:[SESSION]};from.setActive(successor);to.setActive(successor);
  await assert.rejects(()=>reopened.receiveReceipt(oldAck),/APP_ACK_CONTEXT/,'old-session ACK was accepted after confirmed successor');
  const moved=await reopened.sendApplication({operationId:OP,plaintext:'Привет'});assert.notEqual(moved.frame,one.frame,'confirmed successor must reseal under new root');
