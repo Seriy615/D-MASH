@@ -2096,8 +2096,24 @@ const Core = {
     // Core.deleteChatFlow     - Полное удаление переписки и ключей кента
     deleteChatFlow: function(id, name) {
         Core.customConfirm("СНОС ЧАТА", `Ликвидировать всю переписку с ${name}?`, async () => {
-            Core.recordedNoteTurn?.forgetPeer(id);
-            await Core.recordedMedia?.forgetPeer(id);
+            try {
+                // The vault performs owner preflight and one IndexedDB delete
+                // transaction. Do not stop media tasks or revoke the route if
+                // that preflight refuses to erase a corrupt owner record.
+                await Storage.deleteChatGamma(id);
+            } catch (error) {
+                this.shmon("WARN", `Local chat deletion stopped: ${error.code || error.message}`);
+                Core.customAlert("УДАЛЕНИЕ НЕ ВЫПОЛНЕНО", "Данные и ключи контакта сохранены. Проверьте локальное хранилище и повторите удаление после восстановления доступа.");
+                return;
+            }
+            let mediaCleanupFailed = false;
+            try {
+                Core.recordedNoteTurn?.forgetPeer(id);
+                await Core.recordedMedia?.forgetPeer(id);
+            } catch (error) {
+                mediaCleanupFailed = true;
+                this.shmon("WARN", `Media cleanup after chat deletion failed: ${error.code || error.message}`);
+            }
             let nodeCleanup = null;
             try {
                 nodeCleanup = await window.NodeManager?.removeMeshRoute?.(id);
@@ -2106,10 +2122,11 @@ const Core = {
                 // material locally merely because its Entry Node is offline.
                 this.shmon("WARN", `Node locator cleanup failed: ${error.message}`);
             }
-            await Storage.deleteChatGamma(id);
             if (Core.activePeerId === id) Core.closeChat();
             await Core.renderPeers();
-            if (nodeCleanup?.state === 'NODE_NOT_CONNECTED') {
+            if (mediaCleanupFailed) {
+                Core.customAlert("ЧАТ УДАЛЁН", "Основная переписка удалена, но очистка локальных записей не завершилась. Повторите очистку после восстановления хранилища.");
+            } else if (nodeCleanup?.state === 'NODE_NOT_CONNECTED') {
                 Core.customAlert("ЗАЧИСТКА", "Данные контакта удалены с устройства. Entry Node была недоступна, её blind locator истечёт по TTL.");
             } else if (!nodeCleanup?.nodeRemoved && window.NodeManager?.transportMode === 'mesh') {
                 Core.customAlert("ЗАЧИСТКА", "Контакт, ключи и локальный маршрут удалены. Один из Entry Node не подтвердил отзыв: оставшийся locator истечёт по TTL.");
