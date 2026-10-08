@@ -6,6 +6,7 @@
 const RELEASE_ID = 'transport-v3-node-preparation-20261008.34';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
+    './js/account_pairing_v2.js', './js/account_route_binding_v2.js', './js/account_static_kem_v1.js', './js/account_route_journal_v2.js', './js/node_runtime_coordinator_v4.js', './js/node_public_bootstrap_control_v4.js', './js/account_sealed_operation_v4.js', './js/account_inbox_progress_v4.js', './js/account_managed_inbox_v4.js', './js/account_handshake_v4.js', './js/account_session_store_v4.js', './js/account_session_v4.js', './js/account_app_cipher_v4.js', './js/account_app_outbox_v4.js', './js/account_session_runtime_v4.js', './js/account_authenticated_history_v4.js', './js/public_account_orchestrator_v4.js', './js/managed_node_catalog_v4.js', './js/node_account_ui_v4.js',
     './index.html', './manifest.json', './nodes.json',
     './css/foundation.css', './css/app_shell.css', './css/runtime_fixes.css',
     './js/release.js', './js/locales/en.js', './js/locales/ru.js', './js/i18n.js',

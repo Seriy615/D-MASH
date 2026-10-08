@@ -56,7 +56,30 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-202610
         "js/recorded_note_turn.js",
         "js/acceptance_v52.js",
         "js/acceptance_v54.js",
-        "js/acceptance_v55.js"
+        "js/acceptance_v55.js",
+        "js/account_pairing_v2.js",
+        "js/account_route_binding_v2.js",
+        "js/account_static_kem_v1.js",
+        "js/account_route_journal_v2.js",
+        "js/recipient_payload_v4.js",
+        "js/vendor/blake3.min.js",
+        "js/node_identity.js",
+        "js/node_runtime_host_v4.js",
+        "js/node_runtime_coordinator_v4.js",
+        "js/node_public_bootstrap_control_v4.js",
+        "js/account_sealed_operation_v4.js",
+        "js/account_inbox_progress_v4.js",
+        "js/account_managed_inbox_v4.js",
+        "js/account_handshake_v4.js",
+        "js/account_session_store_v4.js",
+        "js/account_session_v4.js",
+        "js/account_app_cipher_v4.js",
+        "js/account_app_outbox_v4.js",
+        "js/account_session_runtime_v4.js",
+        "js/account_authenticated_history_v4.js",
+        "js/public_account_orchestrator_v4.js",
+        "js/managed_node_catalog_v4.js",
+        "js/node_account_ui_v4.js"
     ];
 
     const load = src => new Promise((resolve, reject) => {

@@ -18,7 +18,7 @@
    const urls=new Set(),ids=new Set();
    for(const item of trustedDescriptors){const value=descriptor(item);if(urls.has(value.url)||ids.has(value.nodeId))throw failure('NODE_DESCRIPTOR_INVALID','Duplicate Node catalog entry');urls.add(value.url);ids.add(value.nodeId);this.#peers.set(Object.freeze({}),value);}
    if(!['legacy-migration','managed'].includes(localOwnership))throw failure('NODE_OWNERSHIP_PROFILE','Explicit local ownership profile required');
-   if(bootstrapProfile!==null&&(bootstrapProfile!=='private-v1'||localOwnership!=='managed'))throw failure('NODE_BOOTSTRAP_PROFILE','Unsupported bootstrap profile');this.#bootstrapProfile=bootstrapProfile;this.#localOwnership=localOwnership;this.#journalClass=global.DmashAccountRouteJournalV2;
+   if(bootstrapProfile!==null&&(!['private-v1','public-v1'].includes(bootstrapProfile)||localOwnership!=='managed'))throw failure('NODE_BOOTSTRAP_PROFILE','Unsupported bootstrap profile');this.#bootstrapProfile=bootstrapProfile;this.#localOwnership=localOwnership;this.#journalClass=global.DmashAccountRouteJournalV2;
    this.#root=deviceRoot;this.#factory=hostFactory;
    this.#unsubscribe=deviceRoot.onLock(()=>this.stop());
   }

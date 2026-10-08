@@ -59,9 +59,19 @@ async function initialize(data){
  finally{wipe(data.seed);wipe(data.storageKey);wipe(data.baseNcrh);wipe(data.credential?.key);}
 }
 async function connect(data){
- if(!ready||closed||connecting.size>=2||connecting.has(data.nodeId)||runtime.peers.has(data.nodeId))throw Error();
+ if(!ready||closed)throw Error();
  if(typeof data.url!=='string'||data.url.length>2048)throw Error();
  if(data.password!==undefined&&(typeof data.password!=='string'||!data.password||new TextEncoder().encode(data.password).length>1024))throw Error();
+ const existing=runtime.peers.get(data.nodeId);
+ if(existing){
+  // UI reconnection may reuse this exact authenticated socket. It is not a
+  // fresh password admission or permission to switch an endpoint silently.
+  if(data.password!==undefined||new URL(data.url).href!==existing.secure.socket.url)throw Error();
+  await existing.requireAuthorized();existing.secure.check();
+  if(closed||!ready||runtime.peers.get(data.nodeId)!==existing)throw Error();
+  return {connected:true,reused:true};
+ }
+ if(connecting.size>=2||connecting.has(data.nodeId))throw Error();
  connecting.add(data.nodeId);let secure,channel;const derived=[];
  try{
   secure=await DmashNodeSocketV4.connect(data.url,signing,data.nodeId,{signal:abort.signal});
