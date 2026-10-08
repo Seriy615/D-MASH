@@ -1,0 +1,79 @@
+{
+  "scope": "Same fresh synthetic profiles resumed; original SEND role lookup failure preserved",
+  "sourceSHA": "a524bc0520013e6311158faac980774c5dc86efb",
+  "sourceEvidence": "qa-media-candidate29.json",
+  "page": "transport-v3-node-preparation-20261008.29",
+  "sw": "BLOCKED",
+  "steps": [
+    {
+      "id": "note-offline-peer",
+      "status": "PASS",
+      "at": "2026-10-08T03:04:01.832Z"
+    },
+    {
+      "id": "note-offline-durable",
+      "status": "PASS",
+      "at": "2026-10-08T03:04:04.591Z"
+    },
+    {
+      "id": "note-reload-preserves",
+      "status": "FAIL",
+      "error": "locator.waitFor: Timeout 60000ms ex[id].\nCall log:\n\u001b[2m  - waiting for locator('#p1') to be visible\u001b[22m\n\u001b[2m    3 × locator resolved to hidden <input id=\"p1\" type=\"text\" class=\"gate-input\" spellcheck=\"false\" autocomplete=\"off\" placeholder=\"ИДЕНТИФИКАТОР\"/>\u001b[22m\n"
+    }
+  ],
+  "states": [
+    {
+      "state": "offline-waiting",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 36–36 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [id]... (КОПИРОВАТЬ)\n📞\n✎\n🔒\nUI contact message 0\n×\n02:59 AM ✓✓\nUI contact message 1\n×\n02:59 AM\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:00 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:03 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:03 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:03 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:04 AM ОЖИДАЕТ\nПодключение защищённой передачи…Отменить отправку\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-[id].29\nD-MASH update check failed. Network features may be unavailable."
+    },
+    {
+      "state": "note-reload-preserves",
+      "text": "КТО ЗАХОДИТ?\n⚙\nqa-contacts-0-[id]\nConnected 1 Nodes\nIncoming Contacts: 0\n+ НОВЫЙ ВХОД\nD-MASH build transport-v3-node-preparation-[id].29\nD-MASH update check failed. Network features may be unavailable."
+    }
+  ],
+  "noteLifecycle": {
+    "scope": "Same synthetic pair; actual offline Node controls, reload/login, Account switch, durable cancel/retry and circle",
+    "states": [
+      {
+        "label": "offline-saved",
+        "at": "2026-10-08T03:04:04.576Z",
+        "notes": [
+          {
+            "status": "delivered",
+            "size": 31813,
+            "retained": false
+          },
+          {
+            "status": "delivered",
+            "size": 31499,
+            "retained": false
+          },
+          {
+            "status": "delivered",
+            "size": 115628,
+            "retained": false
+          },
+          {
+            "status": "delivered",
+            "size": 33433,
+            "retained": false
+          },
+          {
+            "status": "connecting",
+            "size": 31499,
+            "retained": true
+          }
+        ]
+      }
+    ]
+  },
+  "fatal": "locator.waitFor: Timeout 60000ms ex[id].\nCall log:\n\u001b[2m  - waiting for locator('#p1') to be visible\u001b[22m\n\u001b[2m    3 × locator resolved to hidden <input id=\"p1\" type=\"text\" class=\"gate-input\" spellcheck=\"false\" autocomplete=\"off\" placeholder=\"ИДЕНТИФИКАТОР\"/>\u001b[22m\n",
+  "status": "FAIL",
+  "candidateProvenance": {
+    "sha": "a524bc0520013e6311158faac980774c5dc86efb",
+    "page": "transport-v3-node-preparation-20261008.29",
+    "sw": "BLOCKED",
+    "source": "Immutable local PWA overlay, real EMS transport; not deployed PWA acceptance",
+    "sameSyntheticProfiles": true
+  }
+}

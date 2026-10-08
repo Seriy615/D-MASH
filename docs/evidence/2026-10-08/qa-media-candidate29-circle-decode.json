@@ -1,0 +1,26 @@
+{
+  "scope": "Same receiver; correct distinct circle decrypt control; earlier generic decrypt selected preceding voice, harness assumption retained",
+  "steps": [
+    {
+      "id": "circle-distinct-decrypt-ready-no-autoplay",
+      "status": "PASS"
+    },
+    {
+      "id": "circle-actual-playback",
+      "status": "PASS"
+    }
+  ],
+  "video": {
+    "readyState": 4,
+    "duration": 2.3489,
+    "paused": true,
+    "autoplay": false
+  },
+  "candidateProvenance": {
+    "sha": "a524bc0520013e6311158faac980774c5dc86efb",
+    "page": "transport-v3-node-preparation-20261008.29",
+    "sw": "BLOCKED",
+    "source": "Immutable local PWA overlay, real EMS transport; not deployed PWA acceptance",
+    "sameSyntheticProfiles": true
+  }
+}

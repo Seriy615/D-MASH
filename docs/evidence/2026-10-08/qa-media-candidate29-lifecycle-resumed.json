@@ -1,0 +1,18 @@
+{
+  "scope": "Same fresh synthetic profiles resumed; original SEND role lookup failure preserved",
+  "sourceSHA": "a524bc0520013e6311158faac980774c5dc86efb",
+  "sourceEvidence": "qa-media-candidate29.json",
+  "page": "transport-v3-node-preparation-20261008.29",
+  "sw": "BLOCKED",
+  "steps": [],
+  "states": [],
+  "fatal": "locator.inputValue: Timeout 30000ms ex[id].\nCall log:\n\u001b[2m  - waiting for locator('#p1')\u001b[22m\n",
+  "status": "FAIL",
+  "candidateProvenance": {
+    "sha": "a524bc0520013e6311158faac980774c5dc86efb",
+    "page": "transport-v3-node-preparation-20261008.29",
+    "sw": "BLOCKED",
+    "source": "Immutable local PWA overlay, real EMS transport; not deployed PWA acceptance",
+    "sameSyntheticProfiles": true
+  }
+}

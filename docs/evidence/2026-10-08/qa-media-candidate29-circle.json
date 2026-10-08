@@ -1,0 +1,66 @@
+{
+  "scope": "Same fresh synthetic profiles resumed; original SEND role lookup failure preserved",
+  "sourceSHA": "a524bc0520013e6311158faac980774c5dc86efb",
+  "sourceEvidence": "qa-media-candidate29.json",
+  "page": "transport-v3-node-preparation-20261008.29",
+  "sw": "BLOCKED",
+  "steps": [
+    {
+      "id": "circle-cancel",
+      "status": "PASS",
+      "at": "2026-10-08T03:11:13.750Z"
+    },
+    {
+      "id": "circle-send",
+      "status": "PASS",
+      "at": "2026-10-08T03:11:16.423Z"
+    },
+    {
+      "id": "circle-decode-ready-no-autoplay",
+      "status": "FAIL",
+      "error": "page.waitForFunction: Timeout 30000ms ex[id]."
+    }
+  ],
+  "states": [
+    {
+      "state": "circle-decode-ready-no-autoplay",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 38–38 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Alice\n×\n[ ВЫХОД ]\n←\nQA ALICE\nID: [id]... (КОПИРОВАТЬ)\n📞\n✎\n🔒\nUI contact message 0\n×\n02:59 AM\nUI contact message 1\n×\n02:59 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:00 AM\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:03 AM\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:03 AM\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:03 AM\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:11 AM\nРАСШИФРОВАТЬ КРУЖОК\n×\n03:11 AM\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-[id].29\nD-MASH update check failed. Network features may be unavailable."
+    }
+  ],
+  "switchCircle": {
+    "before": [
+      {
+        "status": "delivered",
+        "retained": false
+      },
+      {
+        "status": "delivered",
+        "retained": false
+      },
+      {
+        "status": "delivered",
+        "retained": false
+      },
+      {
+        "status": "delivered",
+        "retained": false
+      },
+      {
+        "status": "delivered",
+        "retained": false
+      }
+    ],
+    "notRun": [
+      "Cancel/retry blocked by missing post-reload controls in original candidate"
+    ]
+  },
+  "fatal": "page.waitForFunction: Timeout 30000ms ex[id].",
+  "status": "FAIL",
+  "candidateProvenance": {
+    "sha": "a524bc0520013e6311158faac980774c5dc86efb",
+    "page": "transport-v3-node-preparation-20261008.29",
+    "sw": "BLOCKED",
+    "source": "Immutable local PWA overlay, real EMS transport; not deployed PWA acceptance",
+    "sameSyntheticProfiles": true
+  }
+}

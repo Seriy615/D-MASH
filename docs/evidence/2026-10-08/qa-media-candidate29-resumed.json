@@ -1,0 +1,1043 @@
+{
+  "scope": "Same fresh synthetic profiles resumed; original SEND role lookup failure preserved",
+  "sourceSHA": "a524bc0520013e6311158faac980774c5dc86efb",
+  "sourceEvidence": "qa-media-candidate29.json",
+  "page": "transport-v3-node-preparation-20261008.29",
+  "sw": "BLOCKED",
+  "steps": [
+    {
+      "id": "resume-cancel-long-capture",
+      "status": "PASS",
+      "at": "2026-10-08T03:02:58.078Z"
+    },
+    {
+      "id": "first-note-receiver-decode-playback",
+      "status": "PASS",
+      "at": "2026-10-08T03:02:59.111Z"
+    },
+    {
+      "id": "turn-voice-capture-cancel",
+      "status": "PASS",
+      "at": "2026-10-08T03:02:59.949Z"
+    },
+    {
+      "id": "turn-voice-durable-0",
+      "status": "PASS",
+      "at": "2026-10-08T03:03:02.830Z"
+    },
+    {
+      "id": "turn-voice-durable-1",
+      "status": "PASS",
+      "at": "2026-10-08T03:03:12.071Z"
+    },
+    {
+      "id": "turn-voice-durable-2",
+      "status": "PASS",
+      "at": "2026-10-08T03:03:15.108Z"
+    },
+    {
+      "id": "turn-voice-delivery-visible",
+      "status": "PASS",
+      "at": "2026-10-08T03:03:31.927Z"
+    },
+    {
+      "id": "turn-voice-receiver-ready-no-autoplay",
+      "status": "PASS",
+      "at": "2026-10-08T03:03:32.688Z"
+    },
+    {
+      "id": "turn-voice-content-hash",
+      "status": "PASS",
+      "at": "2026-10-08T03:03:32.741Z"
+    },
+    {
+      "id": "turn-voice-relay-metadata",
+      "status": "PASS",
+      "at": "2026-10-08T03:03:32.867Z"
+    }
+  ],
+  "states": [
+    {
+      "state": "first-note-playback",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 41–41 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Alice\n×\n[ ВЫХОД ]\n←\nQA ALICE\nID: [id]... (КОПИРОВАТЬ)\n📞\n✎\n🔒\nUI contact message 0\n×\n02:59 AM\nUI contact message 1\n×\n02:59 AM ✓✓\n×\n03:00 AM\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-[id].29\nD-MASH update check failed. Network features may be unavailable."
+    }
+  ],
+  "firstNote": {
+    "duration": 2.361,
+    "readyState": 4,
+    "paused": true
+  },
+  "noteTransportObservation": {
+    "limits": "Metadata-only CDP logpoint + readonly RTC stats polling; instrumentation may affect timings; no secrets or payload bodies recorded",
+    "messages": [
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:10.662Z",
+        "type": "voip_note_request",
+        "bytes": 777,
+        "containsMedia": false
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:17.300Z",
+        "type": "voip_note_request",
+        "bytes": 778,
+        "containsMedia": false
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:27.855Z",
+        "type": "voip_note_request",
+        "bytes": 777,
+        "containsMedia": false
+      }
+    ],
+    "relay": [
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:13.887Z",
+        "samples": [
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1718,
+            "received": 0
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:14.189Z",
+        "samples": [
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 0,
+            "received": 1463
+          },
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 20542,
+            "received": 967
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "at": "2026-10-08T03:03:14.202Z",
+        "samples": [
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1267,
+            "received": 20542
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:14.479Z",
+        "samples": [
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 0,
+            "received": 1463
+          },
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 35354,
+            "received": 1707
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "at": "2026-10-08T03:03:14.496Z",
+        "samples": [
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1797,
+            "received": 35354
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "at": "2026-10-08T03:03:19.630Z",
+        "samples": [
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 522,
+            "received": 1716
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:19.886Z",
+        "samples": [
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 36580,
+            "received": 1268
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "at": "2026-10-08T03:03:19.892Z",
+        "samples": [
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1268,
+            "received": 20540
+          },
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1463,
+            "received": 0
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:20.152Z",
+        "samples": [
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 70460,
+            "received": 2042
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "at": "2026-10-08T03:03:20.160Z",
+        "samples": [
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 2442,
+            "received": 70460
+          },
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1463,
+            "received": 0
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:20.420Z",
+        "samples": [
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 104714,
+            "received": 2832
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "at": "2026-10-08T03:03:20.429Z",
+        "samples": [
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 3232,
+            "received": 104714
+          },
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1463,
+            "received": 0
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:20.698Z",
+        "samples": [
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 123198,
+            "received": 3622
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "at": "2026-10-08T03:03:20.712Z",
+        "samples": [
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 3762,
+            "received": 123198
+          },
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1463,
+            "received": 0
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:31.169Z",
+        "samples": [
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 0,
+            "received": 0
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "at": "2026-10-08T03:03:31.177Z",
+        "samples": [
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1463,
+            "received": 0
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:31.439Z",
+        "samples": [
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 20539,
+            "received": 967
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "at": "2026-10-08T03:03:31.446Z",
+        "samples": [
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1463,
+            "received": 0
+          },
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1267,
+            "received": 20539
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "at": "2026-10-08T03:03:31.710Z",
+        "samples": [
+          {
+            "outbound": true,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 37423,
+            "received": 1831
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "at": "2026-10-08T03:03:31.769Z",
+        "samples": [
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1463,
+            "received": 0
+          },
+          {
+            "outbound": false,
+            "policy": "relay",
+            "local": "relay",
+            "remote": "relay",
+            "sent": 1831,
+            "received": 37423
+          }
+        ]
+      }
+    ]
+  },
+  "senderVoiceTurn": {
+    "scope": "Synthetic microphone; actual UI; real peer/S-TURN required",
+    "timeline": [
+      {
+        "label": "before",
+        "at": "2026-10-08T03:02:59.682Z",
+        "notes": [
+          {
+            "status": "delivered",
+            "size": 31813,
+            "attempts": 1,
+            "retained": false
+          }
+        ],
+        "visible": [
+          "Доставлено"
+        ],
+        "receipt": [
+          "Delivered to device",
+          "Delivered to device"
+        ]
+      },
+      {
+        "label": "capture-cancel",
+        "at": "2026-10-08T03:02:59.949Z",
+        "notes": [
+          {
+            "status": "delivered",
+            "size": 31813,
+            "attempts": 1,
+            "retained": false
+          }
+        ],
+        "visible": [
+          "Доставлено"
+        ],
+        "receipt": [
+          "Delivered to device",
+          "Delivered to device"
+        ]
+      },
+      {
+        "label": "durable-0",
+        "at": "2026-10-08T03:03:02.796Z",
+        "notes": [
+          {
+            "status": "delivered",
+            "size": 31813,
+            "attempts": 1,
+            "retained": false
+          },
+          {
+            "status": "waiting",
+            "size": 31499,
+            "attempts": 0,
+            "retained": true
+          }
+        ],
+        "visible": [
+          "Доставлено",
+          "Ожидает получателя · запись хранится на этом устройствеОтменить отправку"
+        ],
+        "receipt": [
+          "Delivered to device",
+          "Delivered to device",
+          "Ожидает получателя · хранится на этом устройстве"
+        ],
+        "stopToDurableMs": 438
+      },
+      {
+        "label": "durable-1",
+        "at": "2026-10-08T03:03:12.048Z",
+        "notes": [
+          {
+            "status": "delivered",
+            "size": 31813,
+            "attempts": 1,
+            "retained": false
+          },
+          {
+            "status": "connecting",
+            "size": 31499,
+            "attempts": 1,
+            "retained": true
+          },
+          {
+            "status": "waiting",
+            "size": 115628,
+            "attempts": 0,
+            "retained": true
+          }
+        ],
+        "visible": [
+          "Доставлено",
+          "Подключение защищённой передачи…Отменить отправку",
+          "Ожидает получателя · запись хранится на этом устройствеОтменить отправку"
+        ],
+        "receipt": [
+          "Delivered to device",
+          "Delivered to device",
+          "Ожидает получателя · хранится на этом устройстве",
+          "Ожидает получателя · хранится на этом устройстве"
+        ],
+        "stopToDurableMs": 6764
+      },
+      {
+        "label": "durable-2",
+        "at": "2026-10-08T03:03:15.097Z",
+        "notes": [
+          {
+            "status": "delivered",
+            "size": 31813,
+            "attempts": 1,
+            "retained": false
+          },
+          {
+            "status": "delivered",
+            "size": 31499,
+            "attempts": 1,
+            "retained": false
+          },
+          {
+            "status": "waiting",
+            "size": 115628,
+            "attempts": 0,
+            "retained": true
+          },
+          {
+            "status": "waiting",
+            "size": 33433,
+            "attempts": 0,
+            "retained": true
+          }
+        ],
+        "visible": [
+          "Доставлено",
+          "Доставлено",
+          "Ожидает получателя · запись хранится на этом устройствеОтменить отправку",
+          "Ожидает получателя · запись хранится на этом устройствеОтменить отправку"
+        ],
+        "receipt": [
+          "Delivered to device",
+          "Delivered to device",
+          "Delivered to device",
+          "Ожидает получателя · хранится на этом устройстве",
+          "Ожидает получателя · хранится на этом устройстве"
+        ],
+        "stopToDurableMs": 548
+      },
+      {
+        "label": "delivered",
+        "at": "2026-10-08T03:03:31.927Z",
+        "notes": [
+          {
+            "status": "delivered",
+            "size": 31813,
+            "attempts": 1,
+            "retained": false
+          },
+          {
+            "status": "delivered",
+            "size": 31499,
+            "attempts": 1,
+            "retained": false
+          },
+          {
+            "status": "delivered",
+            "size": 115628,
+            "attempts": 1,
+            "retained": false
+          },
+          {
+            "status": "delivered",
+            "size": 33433,
+            "attempts": 1,
+            "retained": false
+          }
+        ],
+        "visible": [
+          "Доставлено",
+          "Доставлено",
+          "Доставлено",
+          "Доставлено"
+        ],
+        "receipt": [
+          "Delivered to device",
+          "Delivered to device",
+          "Delivered to device",
+          "Delivered to device",
+          "Delivered to device"
+        ]
+      }
+    ],
+    "notRun": [
+      "Circle, offline/reload/recovery and durable cancel/retry need dedicated phases; this module only proves online voice slice."
+    ],
+    "receiver": [
+      {
+        "readyState": 4,
+        "duration": 2.361,
+        "paused": true,
+        "autoplay": false
+      },
+      {
+        "readyState": 4,
+        "duration": 7.591,
+        "paused": true,
+        "autoplay": false
+      },
+      {
+        "readyState": 4,
+        "duration": 2.481,
+        "paused": true,
+        "autoplay": false
+      }
+    ],
+    "receiverHashEquality": {
+      "count": 3,
+      "equal": true
+    },
+    "relay": {
+      "limits": "Metadata-only CDP logpoint + readonly RTC stats polling; instrumentation may affect timings; no secrets or payload bodies recorded",
+      "messages": [
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:10.662Z",
+          "type": "voip_note_request",
+          "bytes": 777,
+          "containsMedia": false
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:17.300Z",
+          "type": "voip_note_request",
+          "bytes": 778,
+          "containsMedia": false
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:27.855Z",
+          "type": "voip_note_request",
+          "bytes": 777,
+          "containsMedia": false
+        }
+      ],
+      "relay": [
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:13.887Z",
+          "samples": [
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1718,
+              "received": 0
+            }
+          ]
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:14.189Z",
+          "samples": [
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 0,
+              "received": 1463
+            },
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 20542,
+              "received": 967
+            }
+          ]
+        },
+        {
+          "profile": 1,
+          "at": "2026-10-08T03:03:14.202Z",
+          "samples": [
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1267,
+              "received": 20542
+            }
+          ]
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:14.479Z",
+          "samples": [
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 0,
+              "received": 1463
+            },
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 35354,
+              "received": 1707
+            }
+          ]
+        },
+        {
+          "profile": 1,
+          "at": "2026-10-08T03:03:14.496Z",
+          "samples": [
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1797,
+              "received": 35354
+            }
+          ]
+        },
+        {
+          "profile": 1,
+          "at": "2026-10-08T03:03:19.630Z",
+          "samples": [
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 522,
+              "received": 1716
+            }
+          ]
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:19.886Z",
+          "samples": [
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 36580,
+              "received": 1268
+            }
+          ]
+        },
+        {
+          "profile": 1,
+          "at": "2026-10-08T03:03:19.892Z",
+          "samples": [
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1268,
+              "received": 20540
+            },
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1463,
+              "received": 0
+            }
+          ]
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:20.152Z",
+          "samples": [
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 70460,
+              "received": 2042
+            }
+          ]
+        },
+        {
+          "profile": 1,
+          "at": "2026-10-08T03:03:20.160Z",
+          "samples": [
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 2442,
+              "received": 70460
+            },
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1463,
+              "received": 0
+            }
+          ]
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:20.420Z",
+          "samples": [
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 104714,
+              "received": 2832
+            }
+          ]
+        },
+        {
+          "profile": 1,
+          "at": "2026-10-08T03:03:20.429Z",
+          "samples": [
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 3232,
+              "received": 104714
+            },
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1463,
+              "received": 0
+            }
+          ]
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:20.698Z",
+          "samples": [
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 123198,
+              "received": 3622
+            }
+          ]
+        },
+        {
+          "profile": 1,
+          "at": "2026-10-08T03:03:20.712Z",
+          "samples": [
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 3762,
+              "received": 123198
+            },
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1463,
+              "received": 0
+            }
+          ]
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:31.169Z",
+          "samples": [
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 0,
+              "received": 0
+            }
+          ]
+        },
+        {
+          "profile": 1,
+          "at": "2026-10-08T03:03:31.177Z",
+          "samples": [
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1463,
+              "received": 0
+            }
+          ]
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:31.439Z",
+          "samples": [
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 20539,
+              "received": 967
+            }
+          ]
+        },
+        {
+          "profile": 1,
+          "at": "2026-10-08T03:03:31.446Z",
+          "samples": [
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1463,
+              "received": 0
+            },
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1267,
+              "received": 20539
+            }
+          ]
+        },
+        {
+          "profile": 0,
+          "at": "2026-10-08T03:03:31.710Z",
+          "samples": [
+            {
+              "outbound": true,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 37423,
+              "received": 1831
+            }
+          ]
+        },
+        {
+          "profile": 1,
+          "at": "2026-10-08T03:03:31.769Z",
+          "samples": [
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1463,
+              "received": 0
+            },
+            {
+              "outbound": false,
+              "policy": "relay",
+              "local": "relay",
+              "remote": "relay",
+              "sent": 1831,
+              "received": 37423
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "status": "PASS_ONLINE_SLICE",
+  "candidateProvenance": {
+    "sha": "a524bc0520013e6311158faac980774c5dc86efb",
+    "page": "transport-v3-node-preparation-20261008.29",
+    "sw": "BLOCKED",
+    "source": "Immutable local PWA overlay, real EMS transport; not deployed PWA acceptance",
+    "sameSyntheticProfiles": true
+  }
+}
