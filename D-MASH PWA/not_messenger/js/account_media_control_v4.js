@@ -11,9 +11,11 @@
   const v=JSON.parse(raw),keys=['version','transferId','kind','expiresAt'];
   if(type==='INVITE')keys.push('transportId','service','signaling','media');
   if(type==='DECLINE'||type==='CANCEL')keys.push('reason');if(type==='DECLINE'&&v.kind==='file')keys.push('sha256');
+  if(type==='DECLINE'&&v.kind==='file'&&v.reason==='RECEIVER_BUSY')keys.push('transportId');
   if(type==='COMMIT_ACK')keys.push('sha256','size');exact(v,keys);
   if(v.version!==1||!hex.test(v.transferId)||!['voice','circle','file','call'].includes(v.kind))fail();integer(v.expiresAt,now+1,now+86400);
-  if(type==='DECLINE'||type==='CANCEL'){if(!['USER','EXPIRED','UNAVAILABLE','INTEGRITY','RECEIVER_DECLINED','RECEIVER_STORAGE_FULL'].includes(v.reason))fail();}
+  if(type==='DECLINE'||type==='CANCEL'){if(!['USER','EXPIRED','UNAVAILABLE','INTEGRITY','RECEIVER_DECLINED','RECEIVER_STORAGE_FULL','RECEIVER_BUSY'].includes(v.reason))fail();}
+  if(v.reason==='RECEIVER_BUSY'&&(type!=='DECLINE'||v.kind!=='file'||!hex.test(v.transportId)))fail();
   if(type==='DECLINE'&&v.kind==='file'&&!hex.test(v.sha256))fail();
   if(type==='COMMIT_ACK'){if(v.kind==='call'||!hex.test(v.sha256))fail();integer(v.size,1,67108864);}
   if(type==='INVITE'){
