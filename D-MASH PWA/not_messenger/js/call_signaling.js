@@ -1,5 +1,6 @@
 "use strict";
 (function (global) {
+    const workerURL = global.document?.currentScript?.src ? new URL("call_admission_worker.js", global.document.currentScript.src).href : null;
     const hex = bytes => Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
     const digest = async text => new Uint8Array(await global.crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
     const validEndpoint = value => {
@@ -68,16 +69,11 @@
                 transport.socket.send(JSON.stringify({type: "CREATE", call_id: callId, secret_verifier: verifier}));
                 const challenge = await transport.next();
                 if (challenge.type !== "CHALLENGE" || !/^[0-9a-f]{64}$/.test(challenge.nonce) || !Number.isInteger(challenge.difficulty) || challenge.difficulty < 1 || challenge.difficulty > 20) throw new Error("Invalid admission challenge");
-                let counter = 0;
-                const deadline = Date.now() + 25000;
-                for (; ; counter++) {
-                    const hash = await digest(`${challenge.nonce}:${callId}:${verifier}:${counter}`);
-                    if (transport.closed) throw new Error("Signaling closed");
-                    let bits = challenge.difficulty, valid = true;
-                    for (const byte of hash) { const take = Math.min(bits, 8); if ((byte >>> (8 - take)) !== 0) {valid = false; break;} bits -= take; if (!bits) break; }
-                    if (valid) break;
-                    if (Date.now() > deadline || transport.closed) throw new Error("Admission work timeout");
-                }
+                const counter = await transport.solveAdmission({nonce: challenge.nonce, callId, verifier, difficulty: challenge.difficulty});
+                const hash = await digest(`${challenge.nonce}:${callId}:${verifier}:${counter}`);
+                if (transport.closed) throw new Error("Signaling closed");
+                let bits = challenge.difficulty;
+                for (const byte of hash) { const take = Math.min(bits, 8); if ((byte >>> (8 - take)) !== 0) throw new Error("Invalid admission proof"); bits -= take; if (!bits) break; }
                 transport.socket.send(JSON.stringify({type: "PROOF", counter}));
                 const created = await transport.next();
                 if (transport.closed) throw new Error("Signaling closed");
@@ -89,6 +85,30 @@
                     signaling: {wss_endpoint: transport.endpoint, session_id: created.session_id, one_time_key: created.callee_ticket}};
                 return transport;
             } catch (error) { transport.close(); throw error; }
+        }
+        async solveAdmission(transcript) {
+            if (this.closed) throw new Error("Signaling closed");
+            if (!workerURL || typeof global.Worker !== "function") throw new Error("Защищённая передача недоступна: браузер не поддерживает фоновое вычисление допуска.");
+            return new Promise((resolve, reject) => {
+                let worker, timer;
+                const finish = (error, counter) => {
+                    if (this.rejectWork !== cancel) return;
+                    this.rejectWork = null; clearTimeout(timer); worker?.terminate();
+                    if (error) reject(error); else resolve(counter);
+                };
+                const cancel = () => finish(new Error("Signaling closed")); this.rejectWork = cancel;
+                try {
+                    worker = new global.Worker(workerURL);
+                    timer = setTimeout(() => finish(new Error("Admission work timeout")), 25000);
+                    worker.onerror = () => finish(new Error("Admission worker failed"));
+                    worker.onmessage = ({data}) => {
+                        if (this.closed) return cancel();
+                        if (!Number.isSafeInteger(data?.counter) || data.counter < 0) return finish(new Error("Admission work failed"));
+                        finish(null, data.counter);
+                    };
+                    worker.postMessage(transcript);
+                } catch (error) { finish(error); }
+            });
         }
         async open(callId, role) {
             await this.connect(); if (this.closed) throw new Error("Signaling closed"); this.callId = callId;
@@ -115,6 +135,7 @@
         close() {
             if (this.closed) return;
             this.closed = true;
+            this.rejectWork?.();
             this.abortSignal?.removeEventListener("abort", this.abortListener);
             const rejectConnect = this.rejectConnect; this.rejectConnect = null;
             if (rejectConnect) rejectConnect(new Error("Signaling closed"));

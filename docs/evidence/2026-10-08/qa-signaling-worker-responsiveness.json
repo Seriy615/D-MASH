@@ -1,0 +1,52 @@
+{
+  "scope": "BROWSER real EMS WSS admission + simultaneous fake-mic MediaRecorder timer, three sequential samples; no Account/UI or media relay claim",
+  "browser": "156.0.8078.4",
+  "baselineCommit": "58aba5249bfb23c25038013690e5c57c156704e1",
+  "baselineSignalingHash": "72d267b6fcb97578f1a5e63b5685ec5e6e20aec3074ef9f5978118d2f1941fe9",
+  "sourceHashes": {
+    "js/call_signaling.js": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+    "js/call_admission_worker.js": "649d639527a47f1a420137fe508fe4516f03edfc993b85ad016cb59620fb4a81"
+  },
+  "before": [
+    {
+      "admissionMs": 3364.2000002861023,
+      "recordStopMs": 3318,
+      "maxRafGapMs": 3116.6000000000004,
+      "error": null
+    },
+    {
+      "admissionMs": 4889,
+      "recordStopMs": 4840.400000095367,
+      "maxRafGapMs": 4666.4,
+      "error": null
+    },
+    {
+      "admissionMs": 5327.5,
+      "recordStopMs": 5289.300000190735,
+      "maxRafGapMs": 5116.4,
+      "error": null
+    }
+  ],
+  "after": [
+    {
+      "admissionMs": 2415.9000000953674,
+      "recordStopMs": 2302.2000002861023,
+      "maxRafGapMs": 16.800000000000182,
+      "error": null
+    },
+    {
+      "admissionMs": 692,
+      "recordStopMs": 2300.2999997138977,
+      "maxRafGapMs": 16.800000000000182,
+      "error": null
+    },
+    {
+      "admissionMs": 8759.5,
+      "recordStopMs": 2300.699999809265,
+      "maxRafGapMs": 16.80000000000109,
+      "error": null
+    }
+  ],
+  "sameChallengeProtocolAndDifficulty": true,
+  "note": "Different fresh random challenges; admission durations are not a speed comparison. Timer/RAF responsiveness is the measured outcome."
+}

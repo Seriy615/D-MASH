@@ -23,6 +23,7 @@ const CORE_ASSETS = [
     './js/vendor/blake3.min.js',
     './js/call_session.js',
     './js/call_signaling.js',
+    './js/call_admission_worker.js',
     './js/call_runtime.js',
     './js/account_ratchet.js',
     './js/saved_messages.js',

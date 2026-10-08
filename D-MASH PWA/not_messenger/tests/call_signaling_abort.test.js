@@ -1,4 +1,6 @@
 const assert=require('node:assert/strict');
+globalThis.document={currentScript:{src:'http://localhost/js/call_signaling.js'}};
+globalThis.Worker=class{postMessage(){queueMicrotask(()=>this.onmessage({data:{counter:0}}));}terminate(){this.terminated=true;}};
 require('../js/call_signaling.js');
 const T=globalThis.DmashCallSignaling.WebSocketSignaling;
 (async()=>{
@@ -13,6 +15,10 @@ const T=globalThis.DmashCallSignaling.WebSocketSignaling;
  Object.defineProperty(globalThis,'crypto',{configurable:true,value:{getRandomValues:a=>a.fill(3),subtle:{digest:async()=>{if(++hashes===2)controller.abort();return new Uint8Array(32).buffer;}}}});
  class ChallengeSocket extends Socket{constructor(){super();queueMicrotask(()=>this.onopen());}send(v){super.send(v);if(JSON.parse(v).type==='CREATE')queueMicrotask(()=>this.onmessage({data:JSON.stringify({type:'CHALLENGE',nonce:'a'.repeat(64),difficulty:1})}));}}
  try{await assert.rejects(T.create('wss://example.test/signal',{signal:controller.signal,WebSocket:ChallengeSocket}),/closed/);assert.deepEqual(sockets.at(-1).sent.map(x=>x.type),['CREATE']);assert.equal(sockets.at(-1).readyState,3);}finally{Object.defineProperty(globalThis,'crypto',{configurable:true,value:original});}
+ const previousWorker=globalThis.Worker;let terminated=false;
+ globalThis.Worker=class{postMessage(){}terminate(){terminated=true;}};
+ const workTransport=new T({endpoint:'wss://example.test/signal',WebSocket:Socket});pending=workTransport.solveAdmission({});workTransport.close();await assert.rejects(pending,/closed/);assert(terminated,'Cancellation must terminate pending Worker');
+ globalThis.Worker=undefined;const unavailable=new T({endpoint:'wss://example.test/signal',WebSocket:Socket});await assert.rejects(unavailable.solveAdmission({}),/не поддерживает/);globalThis.Worker=previousWorker;
  console.log('PASS signaling abort before connection, connecting, awaiting response, winning proof');
 })().catch(e=>{console.error(e);process.exitCode=1;});
 require('../js/recorded_note_turn.js');

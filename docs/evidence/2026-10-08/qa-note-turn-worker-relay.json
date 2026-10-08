@@ -1,0 +1,98 @@
+{
+  "mimeRetryRefused": false,
+  "faultInjection": null,
+  "scope": "BROWSER actual EMS WSS+forcedTURN AES-GCM media; metadata IPC injected; no ordinary UI/deployedcapability claim",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "storage.js": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+    "call_signaling.js": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+    "call_session.js": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+    "file_channel.js": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+    "file_session.js": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+    "recorded_note_turn.js": "5022188531bc9b2aeeda5959af3fb2e1b289cd137ecd139d6709c3186af0433e",
+    "call_admission_worker.js": "649d639527a47f1a420137fe508fe4516f03edfc993b85ad016cb59620fb4a81"
+  },
+  "wallMs": 10334,
+  "sender": {
+    "bytes": 29074,
+    "elapsedMs": 7902.400000095367,
+    "states": [
+      {
+        "state": "waiting",
+        "at": 3138.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 3146.800000190735
+      },
+      {
+        "state": "connecting",
+        "at": 3159.0999999046326
+      },
+      {
+        "state": "waiting",
+        "at": 10011.099999904633
+      },
+      {
+        "state": "sending",
+        "progress": 100,
+        "at": 10815.599999904633
+      },
+      {
+        "state": "delivered",
+        "at": 10923.700000286102
+      },
+      {
+        "state": "delivered",
+        "at": 10931.400000095367
+      }
+    ],
+    "relay": [
+      {
+        "local": "relay",
+        "remote": "relay"
+      }
+    ],
+    "rows": [
+      {
+        "sha256": "b6962e9400963b3eefca1893d834fbed987629dd6584efefb3ee7e7180ba1fd4",
+        "status": "delivered",
+        "contentRetired": true
+      }
+    ]
+  },
+  "receiver": {
+    "count": 1,
+    "relay": [
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      }
+    ]
+  },
+  "metadata": [
+    {
+      "from": 0,
+      "type": "voip_note_request",
+      "bytes": 778,
+      "at": 1791429360624
+    }
+  ]
+}

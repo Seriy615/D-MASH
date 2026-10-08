@@ -1,0 +1,15 @@
+{
+  "kind": "BROWSER mechanism; genuine WSS challenge, cancellation after real Worker admission dispatch; not ordinary UI",
+  "browser": "156.0.8078.4",
+  "sha256": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+  "result": {
+    "rejected": true,
+    "workerTerminated": true,
+    "challengeObserved": true,
+    "abortLatencyMs": 38.69999980926514,
+    "closed": true,
+    "types": [
+      "CREATE"
+    ]
+  }
+}
