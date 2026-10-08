@@ -5,7 +5,7 @@
  const key=value=>{if(!(value instanceof Uint8Array)||value.length!==32)throw Error('Invalid local key');return value.slice();};
  const wipe=entry=>{entry?.sign?.secretKey.fill(0);entry?.box?.secretKey.fill(0);for(const k of entry?.recipientKeys||[])k.fill(0);};
  class LocalDeliveryV4{
-  constructor(runtime,inbox){this.runtime=runtime;this.inbox=inbox;this.bindings=new Map();this.busy=new Set();this.routes=new Map();this.pending=0;this.closed=false;}
+  constructor(runtime,inbox){this.runtime=runtime;this.inbox=inbox;this.bindings=new Map();this.busy=new Set();this.routes=new Map();this.pending=0;this.discoveries=new Map();this.closed=false;}
   check(){if(this.closed)throw Error('Local Node closed');this.inbox.check();}
   async bind(data,{persist=true}={}){
    this.check();const certificate={...data.certificate},id=certificate.route_id;
@@ -64,15 +64,15 @@
   async discover(certificate,{ownerToken=null}={}){
    this.check();this.prune();if(this.pending>=4||this.routes.size+this.pending>=128)throw Error('Local discovery quota');
    if(ownerToken!==null&&(typeof ownerToken!=='string'||!/^[0-9a-f]{64}$/.test(ownerToken)))throw Error('Invalid discovery owner');
-   certificate={...certificate};this.pending++;
+   certificate={...certificate};const controller=new AbortController();this.discoveries.set(controller,ownerToken);this.pending++;
    try{
-    const route=await this.runtime.discover(certificate);this.check();
+    const route=await this.runtime.discover(certificate,{signal:controller.signal});this.check();if(controller.signal.aborted)throw Error('Node discovery cancelled');
     const handle=hex(crypto.getRandomValues(new Uint8Array(32)));this.routes.set(handle,{route,certificate,ownerToken});
     return {handle,expiresAt:route.expires_at};
-   }finally{this.pending--;}
+   }finally{this.discoveries.delete(controller);this.pending--;}
   }
   releaseGrant(handle,ownerToken){this.check();const row=this.routes.get(handle);if(!row)return false;if(!ownerToken||row.ownerToken!==ownerToken)throw Error('Discovery owner mismatch');this.routes.delete(handle);return true;}
-  releaseOwnerGrants(ownerToken){this.check();if(typeof ownerToken!=='string'||!/^[0-9a-f]{64}$/.test(ownerToken))throw Error('Invalid discovery owner');let released=0;for(const [handle,row] of this.routes)if(row.ownerToken===ownerToken){this.routes.delete(handle);released++;}return released;}
+  releaseOwnerGrants(ownerToken){this.check();if(typeof ownerToken!=='string'||!/^[0-9a-f]{64}$/.test(ownerToken))throw Error('Invalid discovery owner');for(const [controller,owner] of this.discoveries)if(owner===ownerToken)controller.abort();let released=0;for(const [handle,row] of this.routes)if(row.ownerToken===ownerToken){this.routes.delete(handle);released++;}return released;}
   async sendSealed(handle,blob,replyRouteId,certificateDigest,{guard=()=>true,ownerToken=null}={}){
    this.check();this.prune();const destination=this.routes.get(handle),reply=this.bindings.get(replyRouteId);
    if(!destination||!reply||typeof blob!=='string'||blob.length>21848||typeof certificateDigest!=='string'||!/^[0-9a-f]{64}$/.test(certificateDigest))throw Error('Invalid prepared recipient envelope');
@@ -92,7 +92,7 @@
    this.runtime.send(destination.route,global.DmashRecipientPayloadV4.sealPayload(unhex(destination.certificate.recipient_box),payload),reply.handler);
    return {queued:true};
   }
-  close(){this.closed=true;for(const entry of this.bindings.values())wipe(entry);this.bindings.clear();this.routes.clear();}
+  close(){this.closed=true;for(const controller of this.discoveries.keys())controller.abort();this.discoveries.clear();for(const entry of this.bindings.values())wipe(entry);this.bindings.clear();this.routes.clear();}
  }
  global.DmashNodeLocalDeliveryV4=LocalDeliveryV4;
  if(typeof module!=='undefined')module.exports=LocalDeliveryV4;

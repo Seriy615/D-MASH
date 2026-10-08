@@ -12,9 +12,11 @@ PROBEs per neighbor per minute. Existing forwarding admission remains independen
 A successful verified reply alone creates the returned route. Timeout, cancellation
 and close clear local pending state without closing an otherwise healthy channel.
 JavaScript additionally accepts an AbortSignal; Python accepts task cancellation.
-Worker owner-release propagation of the AbortSignal requires a separate integration
-on the current managed-grant implementation. Until then root/runtime close cancels
-pending discovery, while Account release is guarded after completion.
+Managed LocalDelivery propagates an AbortSignal and aborts pending discoveries
+when the Worker releases their owner or closes local delivery. Other owners remain
+active. A late result after cancellation cannot mint a prepared grant. This wiring
+builds on the existing owner-scoped grant release implementation; no new wire
+operation or public owner authorization bypass is introduced.
 
 The remote query TTL remains protocol-compatible. This change does not revoke
 already allocated remote labels; those remain bounded by existing hop quotas and
