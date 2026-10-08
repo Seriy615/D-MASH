@@ -90,6 +90,12 @@
                 if (state.localCertificate.routeId !== localCertificate.routeId ||
                     global.DmashSecureSession.canonical(state.request) !== global.DmashSecureSession.canonical(request)) throw Error('Contact request context changed');
                 if (state.status === 'established') return state.status;
+                // A saved signature cannot be extended on retry. Keep the
+                // original owner and ciphertext; a new request needs a new ID.
+                if (!Number.isSafeInteger(state.accept?.body?.expires_at) ||
+                    state.accept.body.expires_at <= Math.floor(this.clock() / 1000)) {
+                    throw Error('Срок подписанного принятия истёк. Попросите собеседника отправить новый запрос. Сохранённые данные не изменены.');
+                }
                 if(await this.send(state.peerCertificate, state.accept)===false)throw Error('Contact acceptance was not queued');
                 state.status = 'accept_sent'; state.lastSentAt = Date.now(); await this.write(request.request_id, state);
                 await this.onChange();

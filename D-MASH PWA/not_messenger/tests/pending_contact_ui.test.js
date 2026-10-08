@@ -98,7 +98,7 @@ context.Storage = { async getAllRegistryAccounts() { return [{ id: "Account One"
   Core.pendingContactRequestPayload = () => ({request_id: 'validated-test-request'});
   Core.keys = {sign: {publicKey: Uint8Array.from(accountIdentifier.match(/../g), value => parseInt(value, 16))}};
   let failSend = true, sends = 0;
-  Core.getContactFlowV3 = () => ({accept: async () => {sends++; if (failSend) throw Error('reply route unavailable');}});
+  Core.getContactFlowV3 = () => ({read: async () => null, accept: async () => {sends++; if (failSend) throw Error('reply route unavailable');}});
   await Core.acceptPendingContactRequest(request.id, 'Alice local', 'c'.repeat(64));
   assert.equal(sends, 0, 'a closed or different selected Account cannot authorize a bootstrap');
   await Core.acceptPendingContactRequest(request.id, 'Alice local', accountIdentifier);

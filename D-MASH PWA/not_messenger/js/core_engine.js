@@ -3057,6 +3057,23 @@ const Core = {
             this.openModal("ЗАПРОСЫ В КОНТАКТЫ", h);
         } catch (error) { this.pendingContactError(error); }
     },
+    pendingContactAcceptanceInfo: async function(request) {
+        const payload = this.pendingContactRequestPayload(request);
+        if (!window.ContactFlowV3 || !payload) return {kind: 'fresh'};
+        const root = window.DeviceRoot?.state;
+        if (!root) throw Error('Разблокируйте устройство, чтобы прочитать сохранённое принятие.');
+        const state = await this.getContactFlowV3().read(payload.request_id);
+        if (window.DeviceRoot.state !== root) throw Error('Состояние устройства изменилось. Откройте запрос заново.');
+        if (!state) return {kind: 'fresh'};
+        if (state.role === 'caller') return {kind: 'outgoing', message: 'На этом устройстве уже есть исходящий запрос с этим номером. Его нельзя принять как входящий. Попросите собеседника отправить новый запрос.'};
+        if (state.role !== 'acceptor' || typeof state.slot !== 'string' || !state.slot) return {kind: 'unavailable', message: 'Не удалось определить исходный аккаунт этого принятия. Сохранённые данные не изменены. Попросите собеседника отправить новый запрос.'};
+        if (state.slot !== this.activeIdentity) return {kind: 'owner', owner: state.slot, message: `Принятие уже сохранено для аккаунта «${state.slot}». Войдите в этот аккаунт, затем откройте Настройки → Запросы в контакты. Другой аккаунт не может продолжить это принятие.`};
+        if (state.status === 'established') return {kind: 'established', owner: state.slot, message: 'Контакт уже подтверждён в этом аккаунте. Можно завершить обработку этого запроса.'};
+        const body = state.accept?.body;
+        if (!body || !Number.isSafeInteger(body.expires_at) || typeof body.display_name !== 'string') return {kind: 'unavailable', message: 'Сохранённое принятие недоступно для повторной отправки. Данные не изменены. Попросите собеседника отправить новый запрос.'};
+        if (body.expires_at <= Math.floor(Date.now() / 1000)) return {kind: 'expired', owner: state.slot, message: 'Срок подписанного принятия истёк. Продлить или переподписать этот запрос нельзя. Попросите собеседника отправить новый запрос; сохранённые данные останутся на устройстве.'};
+        return {kind: 'retry', owner: state.slot, displayName: body.display_name, message: 'Принятие уже подготовлено для этого аккаунта. Повторная отправка использует сохранённое подтверждение без смены владельца и ключей.'};
+    },
     readPendingContactRequest: async function(id) {
         try {
             const request = await this.getPendingContactRequestStore().read(id);
@@ -3065,10 +3082,14 @@ const Core = {
             const requestId = payload ? `<div style="font-size:.6rem;color:#777;overflow-wrap:anywhere;margin-top:8px;">REQUEST: ${Core.escapeHtml(payload.request_id)}</div>` : "";
             const intro = request.intro ? `<div style="margin:12px 0;color:#ccc;white-space:pre-wrap;">${Core.escapeHtml(request.intro)}</div>` : "";
             const encodedId = encodeURIComponent(request.id);
+            const acceptance = await this.pendingContactAcceptanceInfo(request);
+            const canAccept = ['fresh', 'retry', 'established'].includes(acceptance.kind);
+            const acceptLabel = acceptance.kind === 'retry' ? 'ПОВТОРИТЬ ПРИНЯТИЕ' : acceptance.kind === 'established' ? 'ЗАВЕРШИТЬ' : 'ПРИНЯТЬ';
             const networkAccept = !!window.ContactFlowV3 && window.NodeManager?.connectedConnections().some(node => node.client);
             const h = `<div style="color:#49b9ff;font-weight:bold;">${Core.escapeHtml(request.displayName)}</div>${intro}${requestId}
-                <div style="font-size:.7rem;color:#777;margin:12px 0;">${networkAccept ? 'Для принятия откройте выбранный Account. Контакт получит защищённое подтверждение.' : 'Локальный просмотр запроса. Для сетевого принятия подключите Node v3.'}</div>
-                <button class="sys-modal-btn primary" onclick="Core.startAcceptPendingContactRequest(decodeURIComponent('${encodedId}'))">ПРИНЯТЬ</button>
+                <div style="font-size:.8rem;color:#aaa;margin:12px 0;" role="status">${acceptance.message ? Core.escapeHtml(acceptance.message) : networkAccept ? 'Для принятия откройте выбранный Account. Контакт получит защищённое подтверждение.' : 'Локальный просмотр запроса. Для сетевого принятия подключите Node v3.'}</div>
+                ${canAccept ? `<button class="sys-modal-btn primary" onclick="Core.startAcceptPendingContactRequest(decodeURIComponent('${encodedId}'))">${acceptLabel}</button>` : ''}
+                ${acceptance.kind === 'owner' && this.activeIdentity ? '<button class="sys-modal-btn primary" onclick="Core.accountLogout()">ВЫЙТИ И ВЫБРАТЬ АККАУНТ</button>' : ''}
                 <button class="sys-modal-btn danger" onclick="Core.rejectPendingContactRequest(decodeURIComponent('${encodedId}'))">ОТКЛОНИТЬ</button>
                 <button class="sys-modal-btn" onclick="Core.openPendingContacts()">ЗАКРЫТЬ</button>`;
             this.openModal("ЗАПРОС В КОНТАКТЫ", h);
@@ -3082,10 +3103,24 @@ const Core = {
             } catch (error) { this.pendingContactError(error); }
         });
     },
-    startAcceptPendingContactRequest: function(id) {
+    startAcceptPendingContactRequest: async function(id) {
+        try {
+            const request = await this.getPendingContactRequestStore().read(id);
+            if (!request || request.status !== 'pending') throw Error('ЗАПРОС НЕ НАЙДЕН ИЛИ УЖЕ РЕШЁН');
+            const acceptance = await this.pendingContactAcceptanceInfo(request);
+            if (!['fresh', 'retry', 'established'].includes(acceptance.kind)) return this.readPendingContactRequest(id);
+            if (acceptance.kind !== 'fresh') {
+                const name = acceptance.displayName || request.displayName;
+                return this.acceptPendingContactRequest(id, name, this.bytesToHex(this.keys?.sign?.publicKey || new Uint8Array()));
+            }
+        } catch (error) { this.pendingContactError(error); return; }
         this.customPrompt("БЫСТРОЕ ИМЯ", "Введите Quick Name для этого контакта:", async quickName => {
             try {
                 const normalizedQuickName = window.PendingContactRequestStore.normalizeDisplayName(quickName);
+                const request = await this.getPendingContactRequestStore().read(id);
+                if (!request || request.status !== 'pending') throw Error('ЗАПРОС НЕ НАЙДЕН ИЛИ УЖЕ РЕШЁН');
+                const acceptance = await this.pendingContactAcceptanceInfo(request);
+                if (acceptance.kind !== 'fresh') return this.readPendingContactRequest(id);
                 const accounts = await Storage.getAllRegistryAccounts();
                 this.openPendingContactAccountPicker(id, normalizedQuickName, accounts);
             } catch (error) { this.pendingContactError(error); }
@@ -3119,12 +3154,15 @@ const Core = {
             if (!request || request.status !== "pending") throw new Error("ЗАПРОС НЕ НАЙДЕН ИЛИ УЖЕ РЕШЁН");
             const payload = this.pendingContactRequestPayload(request);
             if (window.ContactFlowV3) {
+                const acceptance = await this.pendingContactAcceptanceInfo(request);
+                if (!['fresh', 'retry', 'established'].includes(acceptance.kind)) return this.readPendingContactRequest(id);
                 if (this.bytesToHex(this.keys?.sign?.publicKey || new Uint8Array()) !== selectedAccountIdentifier) throw Error('Войдите в выбранный Account, затем откройте Настройки → Запросы в контакты и повторите принятие.');
                 const local = window.DeviceRoutes.resolve(request.receivedRoute);
                 if (!payload || !local) throw Error('Contact bootstrap metadata unavailable');
-                await this.getContactFlowV3().accept(payload, local.certificate, quickName, this.activeIdentity);
+                const result = await this.getContactFlowV3().accept(payload, local.certificate, quickName, this.activeIdentity);
                 await this.getPendingContactRequestStore().accept(id);
-                this.customAlert('ПРИНЯТИЕ ОТПРАВЛЕНО', 'Ожидаем подтверждения Account собеседника.');
+                if (result === 'established') this.customAlert('КОНТАКТ ПОДТВЕРЖДЁН', 'Контакт уже подтверждён в этом аккаунте.');
+                else this.customAlert('ПРИНЯТИЕ ОТПРАВЛЕНО', 'Ожидаем подтверждения Account собеседника.');
                 return;
             }
             await this.getPendingContactRequestStore().accept(id);
