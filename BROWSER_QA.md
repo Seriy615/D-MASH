@@ -23,7 +23,7 @@ Root на ТОЙ ЖЕ retained pair: voice запись→доставка→dec
 за5.052s, circle аналогично PASS за6.480s.16MiB WAV sender/receiver encrypted
 FileVault DELIVERED, но inline preview/hash **НЕ ACCEPTED**: initial Open
 intercepted completion panel; после normal Close continuation потерял card
-locator. Raw failures и synthetic IDB snapshots сохранены без reset; причину
+locator. Raw failures и pre-media owned synthetic IDB snapshots сохранены без reset; причину
 UI/rerender исследовать после resume.
 [Root media checkpoint](docs/evidence/2026-10-08/qa-mobile35-root-retained-media-checkpoint.json).
 [Original failure](docs/evidence/2026-10-08/qa-mobile35-root-deployed-file-after-call-fail.json),

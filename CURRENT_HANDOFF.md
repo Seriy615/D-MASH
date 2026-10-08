@@ -58,7 +58,7 @@ Root на ТОЙ ЖЕ retained pair: voice запись→доставка→dec
 за5.052s, circle аналогично PASS за6.480s.16MiB WAV sender/receiver encrypted
 FileVault DELIVERED, но inline preview/hash **НЕ ACCEPTED**: initial Open
 intercepted completion panel; после normal Close continuation потерял card
-locator. Raw failures и synthetic IDB snapshots сохранены без reset; причину
+locator. Raw failures и pre-media owned synthetic IDB snapshots сохранены без reset; причину
 UI/rerender исследовать после resume.
 [Root media checkpoint](docs/evidence/2026-10-08/qa-mobile35-root-retained-media-checkpoint.json).
 [Original failure](docs/evidence/2026-10-08/qa-mobile35-root-deployed-file-after-call-fail.json),
@@ -529,7 +529,10 @@ Raw evidence и encrypted synthetic snapshots вне Git,0600:
 `/tmp/dmash-qa-mobile35-inline-repeat.json`,
 `/tmp/dmash-mobile35-inline-profile{0..5}-{0,1}.json`,
 `/tmp/dmash-root35-retained-media.json`,
-`/tmp/dmash-root35-retained-profile-{0,1}.json`.
+`/tmp/dmash-root35-retained-profile-{0,1}.json` — **НЕ backup**: secondary
+CDP storageState вернул пустые origins (36B). Использовать только реальные
+owned-context snapshots выше; post-media raw IDB export/checkpoint уточняется
+при shutdown. Не импортировать пустую secondaryCDP запись как restore.
 Browser helper `/tmp/dmash-root35-retained-media.cjs`: настоящие клики,
 synthetic ONLY; snapshots нельзя применять к реальным Accounts.
 После сегодняшнего checkpoint live browser/test processes закрываются;
