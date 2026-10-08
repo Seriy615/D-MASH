@@ -47,7 +47,7 @@
    const rows=[await this.#encode(indexAlias,{...index,ids:index.ids.filter(id=>id!==operationId)}),await this.#encode(intentAlias,tombstone)];try{await this.#wait(this.#tx([['index',indexAlias],['intent',intentAlias]],{expected:raw,rows}));return {operationId,durable:true,queued:false,recipientAck:true};}catch(error){if(error.code!=='APP_OUTBOX_CAS')throw error;}
   }fail('APP_OUTBOX_BUSY');}
   async retireAcknowledged(operationId){if(!h64(operationId))fail('APP_OUTBOX_INPUT');return this.#single(operationId,()=>this.#retire(operationId));}
-  async #deliver(record,a){if(record.recipientAck===true)return Object.freeze({operationId:record.operationId,durable:true,queued:false,recipientAck:true});const c=this.#store.context,digest=await this.#digest(record.plaintext);this.#match(record,a,record.operationId,digest,record.contentType);
+  async #deliver(record,a){if(record.recipientAck===true)return this.#retire(record.operationId);const c=this.#store.context,digest=await this.#digest(record.plaintext);this.#match(record,a,record.operationId,digest,record.contentType);
    if(await this.#app.receiptStatus(record.operationId))return this.#retire(record.operationId);
    const committed=await this.#wait(this.#persist(Object.freeze({peer:c.peer,operationId:record.operationId,plaintext:record.plaintext,contentType:record.contentType,bindingDigest:a.bindingDigest,generation:a.bindingGeneration,sessionId:a.sessionId})));if(committed?.persisted!==true)fail('APP_OUTGOING_HISTORY_NOT_DURABLE');
    const deliveryAttempt=await this.#reserve(record.operationId,record);if(!deliveryAttempt)return {operationId:record.operationId,durable:true,queued:false,recipientAck:false,deferred:true};
