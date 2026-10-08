@@ -1,0 +1,139 @@
+{
+  "scope": "DEPLOYED exact .34 genuine PUBLIC UI normal + one-lost-CONFIRM test fault; synthetic Accounts only",
+  "sha": "afab8ed187c6312a81b7dda46c29ff9e45da6d9e",
+  "normal": {
+    "checks": [
+      {
+        "id": "profile-0",
+        "status": "PASS"
+      },
+      {
+        "id": "request-node-0",
+        "status": "PASS"
+      },
+      {
+        "id": "profile-1",
+        "status": "PASS"
+      },
+      {
+        "id": "request-node-1",
+        "status": "PASS"
+      },
+      {
+        "id": "public-route-copy",
+        "status": "PASS"
+      },
+      {
+        "id": "public-request",
+        "status": "PASS"
+      },
+      {
+        "id": "public-accept-account",
+        "status": "PASS"
+      },
+      {
+        "id": "public-confirm",
+        "status": "PASS"
+      },
+      {
+        "id": "chat-open-0",
+        "status": "PASS"
+      },
+      {
+        "id": "chat-open-1",
+        "status": "PASS"
+      },
+      {
+        "id": "key-exchange",
+        "status": "PASS"
+      },
+      {
+        "id": "send-receive-0",
+        "status": "PASS"
+      },
+      {
+        "id": "send-receive-1",
+        "status": "PASS"
+      }
+    ],
+    "loadedSources": 140,
+    "allExact": true,
+    "pages": [
+      "transport-v3-node-preparation-20261008.34",
+      "transport-v3-node-preparation-20261008.34"
+    ],
+    "sw": [
+      "transport-v3-node-preparation-20261008.34",
+      "transport-v3-node-preparation-20261008.34"
+    ],
+    "pageErrors": 0
+  },
+  "lostConfirm": {
+    "checks": [
+      {
+        "id": "actual-accept-after-notification",
+        "status": "PASS"
+      },
+      {
+        "id": "one-lost-confirm-recovered",
+        "status": "PASS",
+        "elapsedMs": 36668
+      },
+      {
+        "id": "actual-chat-open-0",
+        "status": "PASS"
+      },
+      {
+        "id": "actual-chat-open-1",
+        "status": "PASS"
+      },
+      {
+        "id": "key-exchange",
+        "status": "PASS"
+      },
+      {
+        "id": "two-way-message-0",
+        "status": "PASS"
+      },
+      {
+        "id": "two-way-message-1",
+        "status": "PASS"
+      }
+    ],
+    "result": "PASS",
+    "finalState": {
+      "elapsedMs": 36667,
+      "profiles": [
+        {
+          "states": [
+            {
+              "role": "caller",
+              "status": "established",
+              "accept": true,
+              "confirm": true
+            }
+          ],
+          "dropCount": 1
+        },
+        {
+          "states": [
+            {
+              "role": "acceptor",
+              "status": "established",
+              "accept": true,
+              "confirm": true
+            }
+          ],
+          "dropCount": 0
+        }
+      ]
+    },
+    "fault": "One signed CONFIRM dropped on caller flow.send callback while returning queued=true; rest crypto/transport genuine",
+    "harnessLimitation": "Initial pre-Accept pending-close click raced incoming notification; original exit1 preserved, actual continuation on same profiles 7/7PASS, no reset"
+  },
+  "limits": [
+    "Single-loss transient recovered after36.668s through peer ACCEPT retry, not explanation of user permanent waiting",
+    "Scheduler pull-failure/signed expiry still under investigation",
+    "Not ordinary Node v4 public contact acceptance"
+  ]
+}

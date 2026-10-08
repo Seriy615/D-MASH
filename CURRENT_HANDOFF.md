@@ -43,20 +43,45 @@ commit также доставляется на Forge, его полный SHA �
 
 ## 2. Текущий Forge и EMS checkpoint
 
-**Source и production PWA:** Forge `/home/jcode/D-MASH`, ветка `transport-v3`,
-проверенный product commit `afab8ed187c6312a81b7dda46c29ff9e45da6d9e`.
-Последующие documentation-only checkpoints не меняют PWA subtree; текущий
-`origin/transport-v3` сверять через `git rev-parse` после push. В EMS штатный
-`get_commit.sh` развернул только PWA из exact
-commit. Страница и active controlling SW на новом synthetic Chromium profile —
-`transport-v3-node-preparation-20261008.34`; read-only verifier **212/212**
-tracked PWA files, `missing=[]`, `changed=[]`, extras 0, HTTPS index/SW byte-exact.
-Backup текущего deploy:
-`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T123524Z`.
-Ни Node backend, ни DB/keys/identities этот PWA deploy не менял. Интеграция
-выполнена в `/tmp/dmash-node-public-integration`; shared Forge checkout с WIP
-агентов не использован как release tree. Последующий documentation commit может
-сдвинуть branch HEAD, поэтому production exact SHA указать отдельно.
+**Source и production PWA:** exact product commit
+`6a01feb252c1b94772a2b19503c9e1576a8c6356`, release
+`transport-v3-node-preparation-20261008.35`, pushed fast-forward и deployed
+штатным EMS `get_commit.sh`. Read-only verifier **214/214** tracked PWA files,
+missing/changed/extras 0; HTTPS index/SW/release byte-exact. Backup PWA:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T133221Z`.
+Production Node backend, identities, DB/keys не менялись. Shared Forge checkout
+`/home/jcode/D-MASH` сохраняет WIP агентов; release интегрирован отдельно в
+`/tmp/dmash-n7-integration`. Последующий docs-only commit может сдвинуть branch
+HEAD; production SHA всегда сверять отдельно.
+
+`.35` добавляет automatic receive для подтверждённых контактов, Account-owned
+зашифрованные inline file cards, previews/save, durable WAITING/cancel/failed,
+8 bounded fragments in flight и authenticated BUSY/retry для двух отправителей.
+Ordinary Node v4 media CONTROL ещё не включён; этот release не закрывает N3/N7.
+Exact source full UNIT Python286/Origin11/все JS PASS; root real EMS/S-TURN
+source-overlay mobile **19/19** и video **21/21**, 134/134 loaded source responses
+в каждом, page errors0; expanded file **21/21**, Saved **6/6** и concurrent
+receiver **23/23** scoped agent gates PASS.
+[Root source evidence](docs/evidence/2026-10-08/qa-media35-root-source.json).
+
+Root retained synthetic `.34` → `.35` active controlling SW/page upgrade:
+**6/6 actual UI PASS**, identities обоих Accounts, DeviceRoot row и ciphertext
+истории/peer/secrets/outbox/pairing сохранены; новые file stores добавлены,
+registry Accounts штатно перешифрованы при login. Первый harness reload пересёк
+автоматический controllerchange navigation и дал ERR_ABORTED; тот же профиль
+без reset повторно проверен PASS. Deployed media/file gates `.35` ещё идут;
+Android latency и full Node cutover не объявлены завершёнными.
+
+**PUBLIC-WAIT-35 OPEN:** пользователь снова сообщил бесконечное
+«Ожидаем подтверждения». Root на exact deployed `.34` обычный PUBLIC
+Request/Accept/Confirm/key/two-way chat **13/13 PASS**, page/SW34,140/140 source
+exact. Отдельный labelled drop-one-CONFIRM seam дал временный accept_sent;
+автоматический повтор ACCEPT восстановил обе стороны за **36,668 с**, затем
+actual key/two-way messages PASS. Это не доказанная причина постоянного
+зависания. Один navigation harness race до Accept сохранён отдельно; на тех же
+retained profiles continuation **7/7 PASS**. Owner n4_recovery проверяет coupling
+pull/drain/resume и signed expiry; отсутствие ответа о версии/стороне не
+заменяется предположением и не закрывает bug.
 
 `.33` грузит `call_session.js` детерминированно и закрывает Android
 `CallSignalingSession` при звонке/файле; video-toggle запрашивает камеру по клику
@@ -278,8 +303,11 @@ Window8. Root independently cherry-picked Window8 into `.34` base as
 actual UI **17/17 PASS**, 268/268 loaded source responses exact, page errors 0,
 1 MiB+13 B за 3,684 с и 16 MiB WAV за 19,518 с в этом прогоне;
 [metadata](docs/evidence/2026-10-08/qa-n7-integrated34-root-source.json).
-После него `b8f285f...` добавил authenticated bounded `RECEIVER_BUSY` для
-одновременных входящих; его expanded browser retest ещё идёт. На
+После него `b8f285f...` добавил authenticated bounded `RECEIVER_BUSY`: three-profile
+source gate23/23 PASS, второй sender WAITING→auto retry→one delivered card.
+На exact6a `.35` expanded generic/audio/image/video previews/saveSHA, receiver
+low-free estimate seam, offlinecancel и reload21/21 PASS, Saved6/6 PASS;
+[metadata](docs/evidence/2026-10-08/N7_EXPANDED_SOURCE35_QA.md). На
 Android и deployed Node это пока не проверено. Пользователь просит
 рассмотреть передачу файлов без WebRTC. Текущий браузер не имеет raw TURN
 socket API; `/signal/v1` ограничен signaling JSON, не bulk bytes. Отдельный

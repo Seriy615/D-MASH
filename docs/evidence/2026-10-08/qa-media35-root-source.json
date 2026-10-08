@@ -1,0 +1,237 @@
+{
+  "scope": "SOURCE OVERLAY exact .35; real UI and EMS/S-TURN, synthetic Accounts/media",
+  "sha": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+  "gates": [
+    {
+      "gate": "mobile",
+      "result": "PASS",
+      "checks": [
+        {
+          "id": "account-setup-0",
+          "status": "PASS"
+        },
+        {
+          "id": "node-request-0",
+          "status": "PASS"
+        },
+        {
+          "id": "account-setup-1",
+          "status": "PASS"
+        },
+        {
+          "id": "node-request-1",
+          "status": "PASS"
+        },
+        {
+          "id": "both-transport-ready",
+          "status": "PASS"
+        },
+        {
+          "id": "qr-copy-0",
+          "status": "PASS"
+        },
+        {
+          "id": "qr-copy-1",
+          "status": "PASS"
+        },
+        {
+          "id": "private-contact-import-0",
+          "status": "PASS"
+        },
+        {
+          "id": "private-contact-import-1",
+          "status": "PASS"
+        },
+        {
+          "id": "private-route-ready",
+          "status": "PASS"
+        },
+        {
+          "id": "chat-click-0",
+          "status": "PASS"
+        },
+        {
+          "id": "chat-click-1",
+          "status": "PASS"
+        },
+        {
+          "id": "key-exchange-button",
+          "status": "PASS"
+        },
+        {
+          "id": "text-send-and-receive",
+          "status": "PASS"
+        },
+        {
+          "id": "mobile-module-state-before-actions",
+          "status": "PASS"
+        },
+        {
+          "id": "mobile-call-button-outcome",
+          "status": "PASS"
+        },
+        {
+          "id": "mobile-file-button-outcome",
+          "status": "PASS"
+        },
+        {
+          "id": "voice-record-and-deliver",
+          "status": "PASS"
+        },
+        {
+          "id": "circle-record-and-deliver",
+          "status": "PASS"
+        }
+      ],
+      "loadedSourceResponses": 134,
+      "allLoadedBytesExact": true,
+      "pageErrors": 0,
+      "pages": [
+        {
+          "pageRelease": "transport-v3-node-preparation-20261008.35",
+          "swRelease": "BLOCKED"
+        },
+        {
+          "pageRelease": "transport-v3-node-preparation-20261008.35",
+          "swRelease": "BLOCKED"
+        }
+      ]
+    },
+    {
+      "gate": "video",
+      "result": "PASS",
+      "checks": [
+        {
+          "id": "account-setup-0",
+          "status": "PASS"
+        },
+        {
+          "id": "node-request-0",
+          "status": "PASS"
+        },
+        {
+          "id": "account-setup-1",
+          "status": "PASS"
+        },
+        {
+          "id": "node-request-1",
+          "status": "PASS"
+        },
+        {
+          "id": "both-transport-ready",
+          "status": "PASS"
+        },
+        {
+          "id": "qr-copy-0",
+          "status": "PASS"
+        },
+        {
+          "id": "qr-copy-1",
+          "status": "PASS"
+        },
+        {
+          "id": "private-contact-import-0",
+          "status": "PASS"
+        },
+        {
+          "id": "private-contact-import-1",
+          "status": "PASS"
+        },
+        {
+          "id": "private-route-ready",
+          "status": "PASS"
+        },
+        {
+          "id": "chat-click-0",
+          "status": "PASS"
+        },
+        {
+          "id": "chat-click-1",
+          "status": "PASS"
+        },
+        {
+          "id": "key-exchange-button",
+          "status": "PASS"
+        },
+        {
+          "id": "text-send-and-receive",
+          "status": "PASS"
+        },
+        {
+          "id": "call-audio-only-connected-relay",
+          "status": "PASS"
+        },
+        {
+          "id": "video-toggle-adds-local-and-remote-frames",
+          "status": "PASS"
+        },
+        {
+          "id": "video-off-stops-camera-audio-stays",
+          "status": "PASS"
+        },
+        {
+          "id": "video-reenable-same-fingerprint",
+          "status": "PASS"
+        },
+        {
+          "id": "video-switch-camera-keeps-call",
+          "status": "PASS"
+        },
+        {
+          "id": "video-permission-denied-visible-audio-stays",
+          "status": "PASS"
+        },
+        {
+          "id": "video-hangup-clean",
+          "status": "PASS"
+        }
+      ],
+      "loadedSourceResponses": 134,
+      "allLoadedBytesExact": true,
+      "pageErrors": 0,
+      "pages": [
+        {
+          "pageRelease": "transport-v3-node-preparation-20261008.35",
+          "swRelease": "BLOCKED"
+        },
+        {
+          "pageRelease": "transport-v3-node-preparation-20261008.35",
+          "swRelease": "BLOCKED"
+        }
+      ]
+    }
+  ],
+  "retainedSchemaUpgrade": {
+    "checksPassed": 6,
+    "loadedLocalHashes": 58,
+    "identitiesUnchanged": true,
+    "encryptedStoresByteUnchanged": [
+      "dm_gamma_vault/blind_messages",
+      "dm_gamma_vault/blind_outbox",
+      "dm_gamma_vault/blind_peers",
+      "dm_gamma_vault/blind_secrets",
+      "dm_gamma_vault/pairing_material",
+      "dm_registry_secure_v1/meta",
+      "dmash_device_root_v1/device_root"
+    ],
+    "newStores": [
+      "blind_files",
+      "blind_file_owners"
+    ],
+    "registryAccountsReencryptedByLogin": true
+  },
+  "fullUnit": {
+    "sha": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+    "exitCode": 0,
+    "python": 286,
+    "origin": 11,
+    "js": "all suites passed",
+    "logSha256": "065981cd447b32a9af1187113282892e2fd1813355f4658e50a1bef1cbbbe55e"
+  },
+  "limits": [
+    "Source schema gate disabled only service worker on a CLOSED copy of synthetic .34 profile; root/Accounts/IndexedDB were preserved",
+    "SW race first overlay attempts served .34, failed version assertion before UI; corrected synthetic-only SW bypass, no product change",
+    "Synthetic media and mobile viewport/UA do not prove physical Android",
+    "Ordinary Node v4 media CONTROL and full N0-N8 remain OPEN"
+  ]
+}

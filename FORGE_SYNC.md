@@ -52,33 +52,23 @@ ordinary Account/contact UI → Node v4 cutover остаётся главным 
 
 ## Текущая разработка и публикация
 
-На 8 октября 2026 последний `.34` product commit —
-`afab8ed187c6312a81b7dda46c29ff9e45da6d9e`. Последующие
-documentation-only checkpoints, начиная с `a75fb848...`, не меняют PWA
-subtree; текущий `origin/transport-v3` проверять через `git rev-parse`.
-Публикация идёт обычным fast-forward.
-Forge integration worktree `/tmp/dmash-node-public-integration` тогда был
-сверен с `origin`; общий checkout `/home/jcode/D-MASH` содержит work-in-progress
-агентов и не является release tree. Следующие commits могут сдвинуть tip —
-проверять `git rev-parse HEAD origin/transport-v3` и состав PWA diff.
+На 8 октября 2026 product commit `6a01feb252c1b94772a2b19503c9e1576a8c6356`
+в `/tmp/dmash-n7-integration` и `origin/transport-v3` совпали после обычного
+fast-forward push. Shared `/home/jcode/D-MASH` содержит WIP агентов и не
+используется как release tree; он не reset/clean. Последующие docs-only commits
+проверять через Git отдельно от deployed product SHA.
 
-Production PWA извлечена штатным EMS `get_commit.sh` из exact product commit
-`afab8ed187c6312a81b7dda46c29ff9e45da6d9e`, release `.34`. Этот commit
-добавил узкий fail-closed Account deletion guard поверх `.33` media release.
-Read-only deployed verifier сравнил **212/212** tracked PWA files с Git,
-missing/changed/extras 0, HTTPS index/SW byte-exact; page и active controlling
-SW `.34`. Fresh synthetic deployed Account A/B deletion safety **8/8 actual UI
-PASS**. Предыдущая `.33` synthetic Chromium media acceptance: video **21/21** и
-mobile call/file/voice/circle **19/19**
-реальных UI actions PASS через EMS S-TURN; каждый browser gate сверил 130
-loaded source bodies с exact Git SHA. Публичные отчёты и ограничения —
-[CURRENT_HANDOFF.md](CURRENT_HANDOFF.md) и [BROWSER_QA.md](BROWSER_QA.md).
-Backup PWA `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T123524Z`.
+Production PWA `.35` штатный EMS `get_commit.sh` извлёк из exact6a:
+214/214files exact,missing/changed/extras0,HTTPS index/SW/release exact.
+Backup `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T133221Z`.
+Root existing synthetic `.34` profile обновился до active controllingSW/page35,
+6/6UI PASS, сохранены DeviceRoot/Account identities и encrypted history rows.
+Source mobile19/video21/expandedfile21/BUSY23 scopes PASS; deployed media/file
+следующие gates. Детали/limits в CURRENT_HANDOFF.md и BROWSER_QA.md.
 
-Прямой Forge SSH push всё ещё denied(publickey). Авторизованный existing EMS
-GitHub key публикует incremental Git bundle через отдельный temporary bare
-repository; push — обычный fast-forward без force. Root deploy использовал
-scoped `safe.directory`, не глобальные настройки. Production Node backend,
-identities, DB/keys/TURN secrets не переносились и `.34` PWA deploy их не менял.
-Node-v4 ordinary UI, N4 recovery, N7 durable files и полный N0–N8 остаются
-активной разработкой, не объявлены DONE.
+Прямой Forge SSH push denied(publickey); existing EMS GitHub key публикует
+incremental Git bundle через temporary bare publisher, обычный fast-forward
+без force. Scoped safe.directory только для штатного deploy; никаких secret
+копий/глобальных настроек. Production Node backend, identities, DB/keys/TURN
+secrets не переносились и `.35` PWA deploy их не менял. Ordinary Node UI/N4/N7
+CONTROL/full N0–N8 продолжаются; пользовательский PUBLIC waiting bug OPEN.

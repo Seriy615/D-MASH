@@ -1,0 +1,68 @@
+{
+  "scope": "DEPLOYED .35 static exact-source + retained synthetic .34 profile actual UI upgrade; no real user profile",
+  "sha": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+  "deploy": {
+    "sha": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+    "checked": 214,
+    "missing": [],
+    "changed": [],
+    "extras": [],
+    "httpsExact": {
+      "index.html": true,
+      "sw.js": true,
+      "js/release.js": true
+    }
+  },
+  "page": "transport-v3-node-preparation-20261008.35",
+  "sw": {
+    "release": "transport-v3-node-preparation-20261008.35",
+    "controlled": true
+  },
+  "checks": [
+    {
+      "id": "account-manager-two-accounts",
+      "status": "PASS"
+    },
+    {
+      "id": "delete-refused-truthfully-no-mutation",
+      "status": "PASS"
+    },
+    {
+      "id": "registry-pin-remains",
+      "status": "PASS"
+    },
+    {
+      "id": "same-name-wrong-key-refused",
+      "status": "PASS"
+    },
+    {
+      "id": "same-name-correct-key-history-preserved",
+      "status": "PASS"
+    },
+    {
+      "id": "other-account-history-preserved",
+      "status": "PASS"
+    }
+  ],
+  "identitiesUnchanged": true,
+  "encryptedStoresUnchanged": [
+    "dm_gamma_vault/blind_messages",
+    "dm_gamma_vault/blind_outbox",
+    "dm_gamma_vault/blind_peers",
+    "dm_gamma_vault/blind_secrets",
+    "dm_gamma_vault/pairing_material",
+    "dm_registry_secure_v1/meta",
+    "dmash_device_root_v1/device_root"
+  ],
+  "newGammaStores": [
+    "blind_files",
+    "blind_file_owners"
+  ],
+  "notes": [
+    "Registry accounts are reencrypted during login; actual two-Account identities/history verified",
+    "First own page.reload raced app controllerchange reload; ERR_ABORTED before UI checks, same retained profile retest passed",
+    "Only synthetic source-copy SW disabled for separate source-overlay gate; original profile actual controlling SW upgraded",
+    "Media/file deployed checks pending; ordinary Node v4 CONTROL and physical Android NOT RUN"
+  ],
+  "backup": "/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T133221Z"
+}

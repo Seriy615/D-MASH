@@ -8,7 +8,27 @@
 
 ## Актуальный release checkpoint
 
-Актуальная опубликованная PWA: **`afab8ed187c6312a81b7dda46c29ff9e45da6d9e`**,
+Актуальная опубликованная PWA: **`6a01feb252c1b94772a2b19503c9e1576a8c6356`**,
+release `.35`; **214/214** files exact Git, HTTPS index/SW/release exact, extras0.
+Root preserved `.34` synthetic profile→active controlling SW/page `.35` **6/6
+actual UI PASS**, Account identity hashes и DeviceRoot/history ciphertext
+unchanged; registry штатно reencrypted by login. First harness own reload raced
+app controllerchange reload; same profile retest PASS без data reset.
+Root source-overlay real transport mobile19/19/video21/21 PASS,134/134 bytes
+каждый; expanded inline media/quota estimate seam/offline cancel/reload21/21,
+Saved6/6, concurrent BUSY/retry23/23 agent scope PASS.
+[Source evidence](docs/evidence/2026-10-08/qa-media35-root-source.json).
+Deployed `.35` media/file gates пока на очереди; физический Android и ordinary
+Node v4 media CONTROL NOT RUN. Full button inventory остаётся PARTIAL.
+
+PUBLIC-WAIT-35 — **OPEN, user-reported**, owner n4_recovery. Exact deployed
+`.34` normal PUBLIC13/13PASS; labelled one lost CONFIRM same-profile continuation
+7/7PASS, both established after36,668s via automatic ACCEPT retry, then key/chat
+both directions. Это transient reproduction, не причина perpetual waiting.
+Pre-Accept harness navigation race preserved отдельно. Next gate: persistent
+pull failure can skip all retries; signed expiry must show truthful state.
+
+Предыдущая опубликованная PWA:  **`afab8ed187c6312a81b7dda46c29ff9e45da6d9e`**,
 page и active controlling SW `.34` в fresh synthetic Chromium profile;
 HTTPS index/SW и 212/212 deployed PWA files byte-exact с Git, extras 0.
 Независимый [deployed `.34` Account deletion safety gate](docs/evidence/2026-10-08/qa-account-delete34-deployed.json):
@@ -20,7 +40,7 @@ off/re-enable/switch и permission denial modal), mobile **19/19 PASS**
 (реальные звонок, файл с download SHA, голосовое и кружок), 130/130
 загруженных source responses в каждом прогоне exact SHA, page errors 0.
 Android пользователя и intermittent voice latency остаются OPEN, равно как
-автоматический приём файла и долговечный inline chat file. Production backend,
+ordinary Node v4 автоматический приём файла. Source `.35` inline file приёмка выше. Production backend,
 identity и базы `.34` не менял.
 
 Предыдущая опубликованная PWA: **`042d5803d5d622da72848c67d96bd5c8243c4819`**,
@@ -228,7 +248,7 @@ mobile/WebAuthn/real camera остаются NOT RUN до проверки по�
 | UI09 | Saved Messages/local history | Local send/read/delete/password unlock/lock/change/error; без transport fallback | NOT RUN |
 | UI10 | Voice/circle | Start/permission/camera select/SEND/cancel, switch chat/Account, playback/retry/download | NOT RUN |
 | UI11 | Calls | Start/incoming/accept/decline/hangup/mute/audio/video switching, timeout/permission, RTC stats | NOT RUN |
-| UI12 | Files | Request/consent/reject/progress/cancel/complete/download, integrity/offline/bounds | NOT RUN |
+| UI12 | Files | Confirmed-peer auto-receive/inline preview/save; reject/progress/cancel/complete, integrity/offline/bounds | NOT RUN |
 | UI13 | Notification/wake | Settings/consent/click/reconnect/locked neutral display, no Account leaks | NOT RUN |
 | UI14 | Remaining dynamic UI | Все controls, найденные после modal/context menu/ошибок и новых feature states | NOT RUN |
 
