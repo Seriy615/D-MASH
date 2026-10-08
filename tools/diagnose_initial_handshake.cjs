@@ -8,6 +8,30 @@ const hex = bytes => Buffer.from(bytes).toString('hex');
 async function pair() {
     const [a, b] = await Promise.all([createCore({kyber: true}), createCore({kyber: true})]);
     for (const [local, peer] of [[a, b], [b, a]]) {
+        // The Core VM fixture uses an in-memory Account vault. Model the
+        // production Storage handshake CAS explicitly: rekey may replace
+        // crypto state, but cannot reset Gamma history or retain stale
+        // opposite-direction handshake receipts.
+        let storageTail = Promise.resolve();
+        local.storage.commitHandshakeSecretsGamma = (peerId, fields, {phase, expectedPendingAttempt = null} = {}) => {
+            const work = storageTail.then(async () => {
+                assert(['init', 'final'].includes(phase) && !Object.hasOwn(fields, 'msgCount'));
+                const old = await local.storage.getBox('blind_secrets', peerId) || {};
+                const count = old.msgCount ?? 0;
+                assert(Number.isSafeInteger(count) && count >= 0 && count <= 1000000);
+                if (phase === 'init' && (old.staticShared || old.pendingKyberInit)) throw Error('Handshake state changed; retry');
+                if (phase === 'final' && (old.staticShared && !old.pendingKyberInit ||
+                    old.pendingKyberInit && old.pendingKyberInit.attempt_id !== expectedPendingAttempt))
+                    throw Error('Handshake state changed; retry');
+                const next = {...old, ...fields, msgCount: count};
+                if (phase === 'init') delete next.kyberFinalReceipt;
+                if (phase === 'final') {delete next.pendingKyberInit; delete next.pendingKyberFinal;}
+                await local.storage.putBox('blind_secrets', {alias: peerId, data: next});
+                return next;
+            });
+            storageTail = work.catch(() => {});
+            return work;
+        };
         local.outgoing = [];
         await local.storage.putBox('blind_peers', {alias: peer.core.keys.pub_hex, data: {
             id: peer.core.keys.pub_hex, curvePub: hex(peer.core.keys.box.publicKey),
