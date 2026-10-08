@@ -70,6 +70,16 @@
     return {handle,expiresAt:route.expires_at};
    }finally{this.pending--;}
   }
+  async sendSealed(handle,blob,replyRouteId,certificateDigest,{guard=()=>true}={}){
+   this.check();this.prune();const destination=this.routes.get(handle),reply=this.bindings.get(replyRouteId);
+   if(!destination||!reply||typeof blob!=='string'||blob.length>21848||typeof certificateDigest!=='string'||!/^[0-9a-f]{64}$/.test(certificateDigest))throw Error('Invalid prepared recipient envelope');
+   const raw=Uint8Array.from(atob(blob),c=>c.charCodeAt(0));if(raw.length<72||raw.length>16384||btoa(String.fromCharCode(...raw))!==blob)throw Error('Invalid prepared recipient encoding');
+   global.DmashRouteDiscoveryV4.validateX25519PublicKey(hex(raw.subarray(0,32)));
+   global.DmashRouteDiscoveryV4.verifyCertificate(destination.certificate);
+   const expected=hex(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(global.DmashSecureSession.canonical(destination.certificate)))));
+   this.check();if(expected!==certificateDigest||!guard()||reply.retired)throw Error('Prepared recipient target changed');
+   this.runtime.send(destination.route,blob,reply.handler);return {queued:true,certificateDigest};
+  }
   send(handle,payload,replyRouteId){
    this.check();this.prune();const destination=this.routes.get(handle),reply=this.bindings.get(replyRouteId);
    if(!destination||!reply)throw Error('Local route unavailable');

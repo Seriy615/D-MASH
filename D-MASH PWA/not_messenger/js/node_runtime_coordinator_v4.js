@@ -8,17 +8,17 @@
   return Object.freeze({version:4,nodeId:value.nodeId,url:url.href});
  }
  class NodeRuntimeCoordinatorV4{
-  #root;#factory;#unsubscribe;#job=null;#generation=0;#closed=false;#peers=new Map();#localOwnership;#journalClass;
+  #root;#factory;#unsubscribe;#job=null;#generation=0;#closed=false;#peers=new Map();#localOwnership;#journalClass;#bootstrapProfile;
   // trustedDescriptors is an application-owned, independently provisioned catalog
   // snapshot. This constructor does not authenticate a directory or learn pins
   // from sockets. The caller must establish its publisher/OOB trust beforehand.
-  constructor(deviceRoot,{trustedDescriptors=[],hostFactory=global.DmashNodeRuntimeHostV4,localOwnership='legacy-migration'}={}){
+  constructor(deviceRoot,{trustedDescriptors=[],hostFactory=global.DmashNodeRuntimeHostV4,localOwnership='legacy-migration',bootstrapProfile=null}={}){
    if(typeof deviceRoot?.onLock!=='function'||typeof hostFactory?.startForDevice!=='function')throw failure('NODE_RUNTIME_UNAVAILABLE','Node root lifecycle/host unavailable');
    if(!Array.isArray(trustedDescriptors)||trustedDescriptors.length>32)throw failure('NODE_DESCRIPTOR_INVALID','Node catalog quota exceeded');
    const urls=new Set(),ids=new Set();
    for(const item of trustedDescriptors){const value=descriptor(item);if(urls.has(value.url)||ids.has(value.nodeId))throw failure('NODE_DESCRIPTOR_INVALID','Duplicate Node catalog entry');urls.add(value.url);ids.add(value.nodeId);this.#peers.set(Object.freeze({}),value);}
    if(!['legacy-migration','managed'].includes(localOwnership))throw failure('NODE_OWNERSHIP_PROFILE','Explicit local ownership profile required');
-   this.#localOwnership=localOwnership;this.#journalClass=global.DmashAccountRouteJournalV2;
+   if(bootstrapProfile!==null&&(bootstrapProfile!=='private-v1'||localOwnership!=='managed'))throw failure('NODE_BOOTSTRAP_PROFILE','Unsupported bootstrap profile');this.#bootstrapProfile=bootstrapProfile;this.#localOwnership=localOwnership;this.#journalClass=global.DmashAccountRouteJournalV2;
    this.#root=deviceRoot;this.#factory=hostFactory;
    this.#unsubscribe=deviceRoot.onLock(()=>this.stop());
   }
@@ -37,7 +37,7 @@
    const started=Promise.resolve().then(()=>{
     if(!this.#current(job))throw failure('NODE_SESSION_CHANGED','Node root session changed');
     if(this.#localOwnership==='managed'){if(typeof this.#journalClass?.createReceiptRouter!=='function')throw failure('NODE_RECEIPT_ROUTER_UNAVAILABLE','Trusted journal receipt router required');job.receipts=this.#journalClass.createReceiptRouter(this.#root);}
-    return this.#factory.startForDevice(this.#root,{signal:job.abort.signal,localOwnership:this.#localOwnership});
+    return this.#factory.startForDevice(this.#root,{signal:job.abort.signal,localOwnership:this.#localOwnership,bootstrapProfile:this.#bootstrapProfile});
    }).then(host=>{
     if(!this.#current(job)){host?.close();throw failure('NODE_SESSION_CHANGED','Node root session changed');}
     if(!host||host.closed||typeof host.close!=='function'||typeof host.connect!=='function'){host?.close?.();throw failure('NODE_RUNTIME_UNAVAILABLE','Invalid Node host');}

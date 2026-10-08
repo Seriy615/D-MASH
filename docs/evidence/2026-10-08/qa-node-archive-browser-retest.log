@@ -1,0 +1,1 @@
+PASS real Worker archive: native signed pending request, expiry+root reload, fresh historical owner proof, retained selected intent, normal expired proof/foreign proof rejected, all network/mutation APIs refused; user-message drain is separate unit coverage

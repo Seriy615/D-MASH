@@ -4,7 +4,7 @@
  class NodeRuntimeHostV4{
   #localOwners=new Map();#preparations=new Map();#commitVerifier=null;#worker=null;#ownerPermit=Object.freeze({});
 
-  static async startForDevice(deviceRoot,{signal,credential=null,localOwnership='legacy-migration'}={}){
+  static async startForDevice(deviceRoot,{signal,credential=null,localOwnership='legacy-migration',bootstrapProfile=null}={}){
    const session=deviceRoot?.state;
    if(!session?.root||typeof deviceRoot.onLock!=='function')throw Error('Unlocked DeviceRoot required');
    if(owners.has(session))throw Error('Node worker already owns this root session');
@@ -23,7 +23,7 @@
     if(!current())throw Error('Device session changed');
     baseNcrh=await deviceRoot.deviceMaterial('node-base-ncrh-v4',()=>crypto.getRandomValues(new Uint8Array(32)));
     if(!current())throw Error('Device session changed');
-    host=await this.startMaterials({seed,storageKey,baseNcrh,credential},{signal:abort.signal,localOwnership});
+    host=await this.startMaterials({seed,storageKey,baseNcrh,credential},{signal:abort.signal,localOwnership,bootstrapProfile});
     const cleanup=host.cleanup;
     host.cleanup=()=>{cleanup?.();unsubscribe();release();signal?.removeEventListener('abort',cancel);};
     host.rootGuard=current;
@@ -31,11 +31,12 @@
    }catch(error){cancel();unsubscribe();release();signal?.removeEventListener('abort',cancel);throw error;}
    finally{for(const key of [identity?.signing.secretKey,seed,storageKey,baseNcrh])if(key?.byteLength)key.fill(0);}
   }
-  static async startMaterials({seed,storageKey,baseNcrh,credential=null},{signal,localOwnership='legacy-migration'}={}){
+  static async startMaterials({seed,storageKey,baseNcrh,credential=null},{signal,localOwnership='legacy-migration',bootstrapProfile=null}={}){
    const material=[seed,storageKey,baseNcrh,...(credential?[credential.key]:[])];
    if(!source||!global.Worker||material.some(key=>!(key instanceof Uint8Array)||key.length!==32))throw Error('Invalid Node worker materials');
    if(signal?.aborted)throw Error('Node worker cancelled');
    const copies=material.map(key=>key.slice());
+   if(bootstrapProfile!==null&&(bootstrapProfile!=='private-v1'||localOwnership!=='managed'))throw Error('Unsupported bootstrap profile');
    if(!['legacy-migration','managed'].includes(localOwnership))throw Error('Invalid local ownership policy');
    const host=new NodeRuntimeHostV4();host.localOwnership=localOwnership;host.closed=false;host.pending=new Map();host.sequence=0;
    try{
@@ -48,8 +49,9 @@
    host.#worker.onerror=()=>host.close();
    const cancel=()=>host.close();signal?.addEventListener('abort',cancel,{once:true});
    host.cleanup=()=>signal?.removeEventListener('abort',cancel);
-    host.identity=await host.call('INIT',{apiVersion:3,localOwnership,seed:copies[0],storageKey:copies[1],baseNcrh:copies[2],
+    host.identity=await host.call('INIT',{apiVersion:3,localOwnership,bootstrapProfile,seed:copies[0],storageKey:copies[1],baseNcrh:copies[2],
      credential:credential?{profile:credential.profile,salt:credential.salt,epoch:credential.epoch,key:copies[3]}:null},copies.map(key=>key.buffer));
+    if((host.identity?.bootstrapProfile??null)!==bootstrapProfile)throw Error('Incompatible bootstrap profile');
     if(host.identity?.apiVersion!==3)throw Error('Incompatible Node worker API');
     if(signal?.aborted||host.closed)throw Error('Node worker cancelled');return host;
    }catch(error){host.close();throw error;}
@@ -58,14 +60,14 @@
   #ownerCall(type,fields={},transfer=[]){return this.call(type,fields,transfer,this.#ownerPermit);}
   call(type,fields={},transfer=[],permit=null){
    if(typeof type!=='string'||!fields||Object.getPrototypeOf(fields)!==Object.prototype||Reflect.ownKeys(fields).some(key=>typeof key!=='string'||key==='id'||key==='type'||!Object.hasOwn(Object.getOwnPropertyDescriptor(fields,key),'value')))return Promise.reject(Error('Invalid worker RPC fields'));
-   if(this.localOwnership==='managed'&&['BIND_LOCAL','INSTALL_RECIPIENT_KEYS','INBOX_LIST','INBOX_ACK','SUBMIT'].includes(type))return Promise.reject(Error('Managed owner capability required'));
+   if(this.localOwnership==='managed'&&['BIND_LOCAL','INSTALL_RECIPIENT_KEYS','INBOX_LIST','INBOX_ACK','SUBMIT','DISCOVER'].includes(type))return Promise.reject(Error('Managed owner capability required'));
    if(type.startsWith('OWNER_')&&permit!==this.#ownerPermit)return Promise.reject(Error('Private ownership endpoint'));
    if(this.rootGuard&&!this.rootGuard())this.close();
    if(this.closed)return Promise.reject(Error('Node worker closed'));
    if(this.pending.size>=16)return Promise.reject(Error('Node worker request quota'));
    const id=++this.sequence;
    return new Promise((resolve,reject)=>{
-    const timer=setTimeout(()=>{this.pending.delete(id);reject(Error('Node worker operation expired'));this.close();},type==='CONNECT'?310000:type==='DISCOVER'?190000:30000);
+    const timer=setTimeout(()=>{this.pending.delete(id);reject(Error('Node worker operation expired'));this.close();},type==='CONNECT'?310000:(type==='DISCOVER'||type==='OWNER_DISCOVER')?190000:30000);
     this.pending.set(id,{resolve,reject,timer});
     try{this.#worker.postMessage({...fields,id,type},transfer);}catch(error){clearTimeout(timer);this.pending.delete(id);reject(error);}
    });
@@ -74,6 +76,7 @@
    if(this.#commitVerifier||typeof verifier!=='function')throw Error('Commit verifier already configured');
    this.#commitVerifier=verifier;
   }
+  challengeArchivedOwner(accountPublic,certificate){if(this.localOwnership!=='managed'||!this.rootGuard?.())throw Error('Managed root required');return this.#ownerCall('OWNER_ARCHIVE_CHALLENGE',{accountPublic,certificate});}
   challengeLocalOwner(accountPublic,certificate){if(this.localOwnership!=='managed')throw Error('Managed ownership profile required');if(!this.rootGuard||!this.rootGuard())throw Error('Root-owned host required');return this.#ownerCall('OWNER_CHALLENGE',{accountPublic,certificate});}
   async registerLocalOwner(challenge,signature,{accountPublic,isAccountCurrent,signal}){
    if(!this.rootGuard?.()||typeof isAccountCurrent!=='function'||!isAccountCurrent()||!signal||signal.aborted)throw Error('Current Account guard required');
@@ -89,7 +92,7 @@
    }
    const cap=Object.freeze({});this.#localOwners.set(cap,{...result,isAccountCurrent,signal});signal.addEventListener('abort',()=>{this.#localOwners.delete(cap);for(const [handle,row]of this.#preparations)if(row.cap===cap)this.#preparations.delete(handle);this.#ownerCall('OWNER_RELEASE',{ownerToken:result.token}).catch(()=>{});},{once:true});return cap;
   }
-  #owner(cap){const row=this.#localOwners.get(cap);if(!row||this.closed||!this.rootGuard?.()||row.signal.aborted||!row.isAccountCurrent())throw Error('Owner capability expired');return row;}
+  #owner(cap,{archiveAllowed=false}={}){const row=this.#localOwners.get(cap);if(!row||this.closed||!this.rootGuard?.()||row.signal.aborted||!row.isAccountCurrent())throw Error('Owner capability expired');if(row.archive&&!archiveAllowed)throw Error('Archive capability is read/drain only');return row;}
   async prepareLocalBinding(cap,data){
    const material=[data.discoverySeed,data.discoveryBox,...(Array.isArray(data.recipientKeys)?data.recipientKeys:[])];
    let copies=[];try{
@@ -112,9 +115,18 @@
    if(!await this.#commitVerifier(receipt,tuple))throw Error('Durable Account receipt rejected');
    this.#owner(cap);const {state,...stored}=entry.tuple;const result=await this.#ownerCall('OWNER_ACTIVATE',{ownerToken:owner.token,tuple:stored});this.#owner(cap);entry.tuple=result;return Object.freeze({...result});
   }
-  async queryLocalBinding(cap,migrationId){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_QUERY',{ownerToken:owner.token,migrationId});this.#owner(cap);if(!result)return null;if(this.#preparations.size>=128)throw Error('Preparation handle quota');const handle=Object.freeze({});this.#preparations.set(handle,{cap,tuple:result,accountPublic:owner.accountPublic});return {handle,...result};}
-  async ownerInboxList(cap,limit=32,after=null){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_INBOX_LIST',{ownerToken:owner.token,limit,after});this.#owner(cap);return result;}
-  async ownerAcknowledgeInbox(cap,handle){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_INBOX_ACK',{ownerToken:owner.token,handle});this.#owner(cap);return result;}
+  async queryLocalBinding(cap,migrationId){const owner=this.#owner(cap,{archiveAllowed:true}),result=await this.#ownerCall('OWNER_QUERY',{ownerToken:owner.token,migrationId});this.#owner(cap,{archiveAllowed:true});if(!result)return null;if(this.#preparations.size>=128)throw Error('Preparation handle quota');const handle=Object.freeze({});this.#preparations.set(handle,{cap,tuple:result,accountPublic:owner.accountPublic});return {handle,...result};}
+  async provisionBootstrap(cap,data){
+   const material=[data.discoverySeed,data.discoveryBox,...(Array.isArray(data.recipientKeys)?data.recipientKeys:[])];let copies=[];
+   try{const owner=this.#owner(cap);if(this.identity.bootstrapProfile!=='private-v1'||!Array.isArray(data.recipientKeys)||data.recipientKeys.length!==1)throw Error('Private bootstrap profile/material required');copies=material.map(v=>{if(!(v instanceof Uint8Array)||v.length!==32)throw Error('Bootstrap key required');return v.slice();});const result=await this.#ownerCall('OWNER_BOOTSTRAP_PROVISION',{ownerToken:owner.token,localBundle:data.localBundle,discoverySeed:copies[0],discoveryBox:copies[1],recipientKeys:copies.slice(2)},copies.map(v=>v.buffer));this.#owner(cap);return result;}finally{for(const v of [...material,...copies])if(v?.byteLength)v.fill(0);}
+  }
+  async bootstrapList(cap){const owner=this.#owner(cap,{archiveAllowed:true}),result=await this.#ownerCall('OWNER_BOOTSTRAP_LIST',{ownerToken:owner.token});this.#owner(cap,{archiveAllowed:true});return result;}
+  async selectBootstrap(cap,exchangeId,requestDigest,{deny=false}={}){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_BOOTSTRAP_SELECT',{ownerToken:owner.token,exchangeId,requestDigest,deny});this.#owner(cap);return result;}
+  async bootstrapSubmit(cap,handle,control){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_BOOTSTRAP_SUBMIT',{ownerToken:owner.token,handle,control});this.#owner(cap);return result;}
+  async ownerDiscover(cap,certificate){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_DISCOVER',{ownerToken:owner.token,certificate});this.#owner(cap);return result;}
+  async ownerInboxList(cap,limit=32,after=null){const owner=this.#owner(cap,{archiveAllowed:true}),result=await this.#ownerCall('OWNER_INBOX_LIST',{ownerToken:owner.token,limit,after});this.#owner(cap,{archiveAllowed:true});return result;}
+  async ownerAcknowledgeInbox(cap,handle){const owner=this.#owner(cap,{archiveAllowed:true}),result=await this.#ownerCall('OWNER_INBOX_ACK',{ownerToken:owner.token,handle});this.#owner(cap,{archiveAllowed:true});return result;}
+  async ownerSubmitSealed(cap,handle,{certificateDigest,blob}){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_SUBMIT_SEALED',{ownerToken:owner.token,handle,certificateDigest,blob});this.#owner(cap);return result;}
   async ownerSubmit(cap,handle,payload){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_SUBMIT',{ownerToken:owner.token,handle,payload});this.#owner(cap);return result;}
   async retireLocalBinding(cap,handle,expectedGeneration,replacementDigest){const owner=this.#owner(cap),entry=this.#preparations.get(handle);if(!entry||entry.cap!==cap||entry.tuple.generation!==expectedGeneration||entry.tuple.bindingDigest!==replacementDigest)throw Error('Retirement tuple mismatch');const {state,...tuple}=entry.tuple;return this.#ownerCall('OWNER_RETIRE',{ownerToken:owner.token,tuple});}
   connect({url,nodeId,password}){return this.call('CONNECT',{url,nodeId,password});}

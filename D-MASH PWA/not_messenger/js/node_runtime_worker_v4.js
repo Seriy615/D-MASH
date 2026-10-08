@@ -10,12 +10,12 @@ importScripts('vendor/nacl-fast.min.js','vendor/blake3.min.js','secure_session.j
  'resource_pow.js','node_socket_v4.js','node_channel_v4.js','probe_primitives_v4.js',
  'route_discovery_v4.js','recipient_payload_v4.js','node_routing_v4.js','node_inbox_v4.js','node_local_delivery_v4.js','node_local_ownership_v4.js');
 let localOwnership='legacy-migration';
-let closed=false,ready=false,initializing=false,signing=null,store=null,runtime=null,gate=null,inbox=null,local=null,ownership=null;
+let closed=false,ready=false,initializing=false,signing=null,store=null,runtime=null,gate=null,inbox=null,local=null,ownership=null,bootstrap=null;
 const abort=new AbortController(),connecting=new Set(),requests=new Set();
 const hex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
 const wipe=value=>{if(value instanceof Uint8Array&&value.byteLength)value.fill(0);};
 async function stop(){
- if(closed)return;closed=true;ready=false;abort.abort();ownership?.close();inbox?.close();local?.close();store?.close();gate?.close();
+ if(closed)return;closed=true;ready=false;abort.abort();bootstrap?.close();ownership?.close();inbox?.close();local?.close();store?.close();gate?.close();
  try{await runtime?.close();}finally{wipe(signing?.secretKey);self.close();}
 }
 async function claimActor(){
@@ -34,6 +34,8 @@ async function initialize(data){
  if(initializing||runtime||closed)throw Error();initializing=true;
  try{
   if(data.apiVersion!==3)throw Error('Incompatible Node worker API');
+  const bootstrapProfile=data.bootstrapProfile??null;
+  if(bootstrapProfile!==null&&(bootstrapProfile!=='private-v1'||data.localOwnership!=='managed'))throw Error('Unsupported bootstrap profile');
   if(!['legacy-migration','managed'].includes(data.localOwnership))throw Error('Ownership profile required');localOwnership=data.localOwnership;
   for(const value of [data.seed,data.storageKey,data.baseNcrh])if(!(value instanceof Uint8Array)||value.length!==32)throw Error();
   signing=nacl.sign.keyPair.fromSeed(data.seed);const nodeId=hex(signing.publicKey);
@@ -45,8 +47,13 @@ async function initialize(data){
   inbox=await DmashNodeInboxV4.open(data.storageKey,nodeId,{isCurrent:()=>!closed});
   local=new DmashNodeLocalDeliveryV4(runtime,inbox);await inbox.pruneSeen();
   const restored=await local.restore({managedOnly:localOwnership==='managed'});ownership=new DmashNodeLocalOwnershipV4(local,inbox);
+  if(bootstrapProfile==='private-v1'){
+   importScripts('account_pairing_v2.js','account_route_binding_v2.js','node_bootstrap_control_v4.js','node_bootstrap_dispatcher_v4.js','node_bootstrap_runtime_v4.js');
+   bootstrap=await DmashNodeBootstrapRuntimeV4.open(data.storageKey,nodeId,{runtime,ownership,local,isCurrent:()=>!closed});
+   ownership.detachBootstrap=routeId=>bootstrap.detach(routeId);ownership.archiveRowProvider=owner=>bootstrap.archiveRow(owner);
+  }
   if(data.credential)gate=new DmashNodeAdmissionV4.PasswordGate(data.credential);
-  ready=true;return {apiVersion:3,localOwnership,nodeId,worker:true,...restored};
+  ready=true;return {apiVersion:3,localOwnership,bootstrapProfile,nodeId,worker:true,...restored};
  }catch(error){self.postMessage({id:data.id,ok:false});await stop();throw error;}
  finally{wipe(data.seed);wipe(data.storageKey);wipe(data.baseNcrh);wipe(data.credential?.key);}
 }
@@ -75,13 +82,24 @@ self.onmessage=async({data})=>{
   else if(data.type==='CONNECT')result=await connect(data);
   else{
    if(!ready||closed)throw Error();
-   if(localOwnership==='managed'&&['BIND_LOCAL','INSTALL_RECIPIENT_KEYS','INBOX_LIST','INBOX_ACK','SUBMIT'].includes(data.type))throw Error('Managed owner capability required');
-   if(data.type==='OWNER_CHALLENGE')result=await ownership.challenge(data.accountPublic,data.certificate);
+   if(localOwnership==='managed'&&['BIND_LOCAL','INSTALL_RECIPIENT_KEYS','INBOX_LIST','INBOX_ACK','SUBMIT','DISCOVER'].includes(data.type))throw Error('Managed owner capability required');
+   if(data.type==='OWNER_ARCHIVE_CHALLENGE')result=await ownership.challenge(data.accountPublic,data.certificate,{archive:true});
+   else if(data.type==='OWNER_CHALLENGE')result=await ownership.challenge(data.accountPublic,data.certificate);
    else if(data.type==='OWNER_REGISTER')result=await ownership.register(data.challenge,data.signature);
    else if(data.type==='OWNER_PREPARE')result=await ownership.prepare(data.ownerToken,data);
-   else if(data.type==='OWNER_INBOX_LIST'){const owner=ownership.owner(data.ownerToken);result=await inbox.list(owner.ownerSlot,data.limit,data.after);ownership.owner(data.ownerToken);}
-   else if(data.type==='OWNER_INBOX_ACK'){const owner=ownership.owner(data.ownerToken);result=await inbox.acknowledge(data.handle,owner.ownerSlot,{guard:()=>{ownership.owner(data.ownerToken);return true;}});ownership.owner(data.ownerToken);}
+   else if(data.type==='OWNER_DISCOVER'){ownership.owner(data.ownerToken);const found=await local.discover(data.certificate);try{ownership.owner(data.ownerToken);}catch(error){local.routes.delete(found.handle);throw error;}result=found;}
+   else if(data.type==='OWNER_INBOX_LIST'){const owner=ownership.owner(data.ownerToken,{archiveAllowed:true});result=await inbox.list(owner.ownerSlot,data.limit,data.after);ownership.owner(data.ownerToken,{archiveAllowed:true});}
+   else if(data.type==='OWNER_INBOX_ACK'){const owner=ownership.owner(data.ownerToken,{archiveAllowed:true});result=await inbox.acknowledge(data.handle,owner.ownerSlot,{guard:()=>{ownership.owner(data.ownerToken,{archiveAllowed:true});return true;}});ownership.owner(data.ownerToken,{archiveAllowed:true});}
+   else if(data.type==='OWNER_SUBMIT_SEALED'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=await local.sendSealed(data.handle,data.blob,owner.routeId,data.certificateDigest,{guard:()=>{ownership.owner(data.ownerToken);return true;}});}
    else if(data.type==='OWNER_SUBMIT'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=local.send(data.handle,data.payload,owner.routeId);}
+   else if(data.type.startsWith('OWNER_BOOTSTRAP_')){
+    if(!bootstrap)throw Error('Private bootstrap profile required');
+    if(data.type==='OWNER_BOOTSTRAP_PROVISION')result=await bootstrap.provision(data.ownerToken,data);
+    else if(data.type==='OWNER_BOOTSTRAP_LIST')result=await bootstrap.dispatcher.list(data.ownerToken);
+    else if(data.type==='OWNER_BOOTSTRAP_SELECT')result=await bootstrap.dispatcher.select(data.ownerToken,data.exchangeId,data.requestDigest,{deny:data.deny});
+    else if(data.type==='OWNER_BOOTSTRAP_SUBMIT')result=await bootstrap.submit(data.ownerToken,data.handle,data.control);
+    else throw Error('Unknown bootstrap operation');
+   }
    else if(data.type==='OWNER_RELEASE'){ownership.owners.delete(data.ownerToken);result=true;}
    else if(data.type==='OWNER_QUERY')result=await ownership.query(data.ownerToken,data.migrationId);
    else if(data.type==='OWNER_ACTIVATE')result=await ownership.change(data.ownerToken,data.tuple,'ACTIVE');
