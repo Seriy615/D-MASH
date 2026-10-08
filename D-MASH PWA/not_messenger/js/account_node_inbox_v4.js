@@ -3,9 +3,10 @@
  const sessions=new WeakMap();
  const sessionToken=value=>{if(!sessions.has(value))sessions.set(value,{});return sessions.get(value);};
  class AccountNodeInboxV4{
-  constructor(host,core){
+  constructor(host,core,progress=null){
    if(!host?.inboxList||!host?.acknowledgeInbox||!core?.receiveAccountNodeRecordV4)throw Error('Local Account delivery unavailable');
-   this.host=host;this.core=core;this.task=null;this.cursor=null;this.session=null;this.closed=false;
+   if(progress&&(!progress.load||!progress.save))throw Error('Inbox progress store unavailable');
+   this.host=host;this.core=core;this.progress=progress;this.task=null;this.cursor=null;this.session=null;this.closed=false;
   }
   drain(){
    if(this.task)return this.task;
@@ -20,15 +21,26 @@
   }
   async run(slot,current){
    const result={processed:0,deferred:0,failed:0};
+   let revision=null;
+   if(this.progress){
+    const saved=await this.progress.load();
+    if(!current())return result;
+    this.cursor=saved.cursor;revision=saved.revision;
+   }
+   const checkpoint=async cursor=>{
+    if(!current())return false;
+    if(this.progress){revision=await this.progress.save(revision,cursor);if(!current())return false;}
+    this.cursor=cursor;return true;
+   };
    // Bound each sync pass. The cursor survives between passes so a full page
    // of rejected/incomplete packets cannot starve a later valid packet.
    for(let batch=0;batch<4&&current();batch++){
     const page=await this.host.inboxList(slot,32,this.cursor);
     if(!current())break;
-    if(!page.records.length){this.cursor=null;break;}
+    if(!page.records.length){await checkpoint(null);break;}
     for(const record of page.records){
      if(!current())return result;
-     this.cursor={receivedAt:record.receivedAt,handle:record.handle};
+     const next={receivedAt:record.receivedAt,handle:record.handle};
      try{
       const persisted=await this.core.receiveAccountNodeRecordV4(record,slot);
       if(!current())return result;
@@ -36,8 +48,12 @@
        if(await this.host.acknowledgeInbox(record.handle,slot))result.processed++;else result.deferred++;
       }else result.deferred++;
      }catch(error){if(!current())return result;result.failed++;}
+     // Advance only after Account persistence and local Inbox ACK were attempted.
+     // A crash before this checkpoint replays the record; the Account wire ID
+     // and Node Inbox tombstone make that replay idempotent.
+     if(!await checkpoint(next))return result;
     }
-    if(page.records.length<32){this.cursor=null;break;}
+    if(page.records.length<32){await checkpoint(null);break;}
    }
    return result;
   }
