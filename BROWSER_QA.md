@@ -6,41 +6,37 @@
 интегрированный результат. Этот файл — журнал и начальная матрица, не утверждение,
 что полный обход UI уже выполнен.
 
-**Свежий дополняющий проход `.29`:** [санитизированные результаты](docs/evidence/2026-10-08/qa-remaining-deployed29.json)
-и [план оставшейся приёмки](docs/evidence/2026-10-08/qa-remaining-deployed29-plan.md)
-относятся к опубликованной PWA `5a2439834a2fc22db8f6ecd0b9674d533397ea8a`.
-Они не меняют статусы N3/N4 и полного UI01–UI14; старые release checkpoint
-и FAIL ниже — исторические записи с явными версиями.
-
 ## Актуальный release checkpoint
 
-PWA **fd2a7505ba7325ee0d47e38cb2cfc8271cbfc0c1**, `.28`, опубликована на EMS;
-backend `.26` foundation плюс scoped S-TURN health из **b944d26**. Exact combined
-source **218/218**, missing/changed []; published source merge `31c37f2` exact
-UNIT286 backend +11 Origin +85 JS PASS. Independent deployed Chromium fresh two-profile
-PUBLIC Request/Accept/Confirm, key exchange, messages and FlipLock: **16/16 PASS**,
-page+SW обоих profiles `.28`, 136 loaded sources exact SHA, errors [], exit0.
-Immediate key feedback 157 ms. Перед deploy первый immutable `.28` public run
-завис на key completion с DNSS pending после успешных Request/Accept/Confirm;
-второй fresh source-overlay run 16/16 PASS, deployed fresh run 16/16 PASS.
-`ROUTE-READY-01` остаётся OPEN, single success не доказывает отсутствие гонки.
-Supplemental deployed owner-conflict synthetic
-incoming/send-failure UI **7/7 PASS**, page `.28`, SW BLOCKED; no remote delivery
-claim. Physical mobile orientation NOT RUN. `.27` baseline 16/16 и `.26` baseline
-13/13 PASS и [manifest](docs/evidence/2026-10-08/qa-release26-manifest.json)
-остаются historical evidence, не текущим release. [Deployed `.28` browser report](docs/evidence/2026-10-08/qa-ui-hotfix-deployed28.json),
-[owner fixture](docs/evidence/2026-10-08/qa-contact-owner-deployed28-summary.json),
-[deployed `.27` browser report](docs/evidence/2026-10-08/qa-ui-hotfix-deployed27.json)
-и [sanitized live pairing note](docs/evidence/2026-10-08/qa-live-pair-deployed26-sanitized.md).
-Deployed readiness CDP logpoints may affect timing; difficulty22 observed, duplicate
-proof work remains a hypothesis until exactresource equality is observed. Previous
-intermittent timeout evidence is retained, not overwritten by this successful run.
-Node runtime consistent backup6SQLite checksPASS,4keyfiles identical before/after;
-no schema/dependency change. N3 ordinary UI cutover and full audit remain open.
+Актуальная опубликованная PWA: **`22c699d6575fe2ba977db44264d8df0062b14799`**,
+page и active controlling SW `.30` в двух новых synthetic Chromium profiles.
+Независимый [deployed `.30` browser gate](docs/evidence/2026-10-08/qa-history-counter-deployed30.json):
+PUBLIC Request/Accept/Confirm, реальная кнопка обмена ключами, двусторонний
+текст и FlipLock **19/19 PASS**; 138/138 загруженных response bodies совпали
+с exact SHA, page errors 0. Контролируемая synthetic предпосылка добавила
+одну ранее сохранённую строку в чат через Storage; перед нажатием кнопки её
+счётчик был 1. После обмена эта история видима в UI, счётчик остался 1; после
+отправки/получения сообщений история осталась и счётчик стал 3. Это реальная
+UI приёмка сохранности поверх fixture, не проверка recovery N4 или миграции
+existing user vault. Первый прогон этого сценария ошибочно ожидал видимый log
+до initial key exchange; это harness assumption, не продуктовый FAIL.
+Ведущий сообщил exact EMS verifier 256/256 после deploy; независимый browser
+hash gate приведён выше. [Оставшаяся матрица](docs/evidence/2026-10-08/qa-remaining-deployed29-plan.md)
+активна: ordinary Account→NodeRuntimeHostV4, full N4 recovery/migration,
+N0–N8/A–M/E6 и полный UI01–UI14 не DONE.
 
-Previous .25 controls9PASS and Account6PASS; real .24→.25 SW/profile update
-identity/history preserved, wrong-key inline denial visible; correct retry was NOT
-RUN in that specific upgradeprofile due harness locator, independently PASS on.25.
+На предыдущем exact `5a2439834a2fc22db8f6ecd0b9674d533397ea8a`, page/SW
+`.29`, [дополнительный browser-first проход](docs/evidence/2026-10-08/qa-remaining-deployed29.json)
+дал calculator 24/24, local Saved Messages/media/master 27/27, Node/QR/navigation
+9/9 и node removed retry 6/6 PASS; Account lifecycle 9 PASS / 1 FAIL
+(`ACCOUNT-DELETE-01`). Fresh two-profile [calls/files gate](docs/evidence/2026-10-08/qa-call-file-deployed29.json)
+с 142/142 exact loaded responses: PUBLIC/key/text/FlipLock и relay call
+decline/accept/mute/speaker/hangup PASS; video toggle и 1 МиБ+13 байт file
+complete FAIL. Последний показал отправителю «Передано и проверено»,
+получателю `File channel failed`; причины ещё исследуются. На `.30` эти два
+медиа FAIL и Account deletion ещё **NOT RUN**, поэтому не переносить старые
+результаты как текущий PASS или FAIL. Исторические `.28`/`.27`/`.26` evidence
+остаются ниже; `ROUTE-READY-01` OPEN, physical mobile/WebAuthn NOT RUN.
 
 Текущие результаты исправлений (предыдущие строки initial FAIL ниже исторические):
 
@@ -52,14 +48,14 @@ RUN in that specific upgradeprofile due harness locator, independently PASS on.2
 | UI-SHARE-CREATE | PASS navigation .25 | bd380ab; visible modal/create/back; new contact handshake separate |
 | PENDING-BACK-01 / UI-PUBLIC-ACCEPT-NAV | PASS navigation .25 | bd380ab; single Back, logged-in pending entry |
 | PUBLIC-REQUEST-LOADING-01 | PASS .26 visibility/queue | 3c51360; durable request before PoW, truthful saved card; cancel/lifecycle guards and real fresh pair pass |
-| ACCOUNT-DELETE-01 | FAIL | Registry removal does not erase selected history from shared vault; previous early PASS withdrawn |
+| ACCOUNT-DELETE-01 | FAIL deployed `.29`; `.30` NOT RUN | Real synthetic UI removal promises complete erasure, but recreating same Account reveals previous local history; P1, owner TBD, preserve profile for fix/retest |
 | ROUTE-READY-01 | OPEN | Eventual v3 message success does not prove immediate readiness |
-| KEY-EXCHANGE-NO-FEEDBACK-01 | PASS .27 | Initial open button + visible pending/error state; real deployed key exchange and bidirectional messages 16/16 |
-| FLIPLOCK-MISSING-01 | PASS .27 | Both Account and global settings OFF→ON→OFF via real deployed UI; physical mobile orientation NOT RUN |
+| KEY-EXCHANGE-NO-FEEDBACK-01 | PASS `.30` | Initial open button + visible pending state; exact22c public pair completes and sends text both ways |
+| FLIPLOCK-MISSING-01 | PASS `.30` | Account/global settings OFF→ON→OFF via real deployed UI; physical mobile orientation NOT RUN |
 | CONTACT-OWNER-MISMATCH-01 | PASS .28 for saved-owner guidance/retry | User screenshot .26; dd357e1 exact encrypted-flow diagnosis; 7/7 deployed supplemental UI PASS. Real remote owner-conflict delivery NOT RUN |
-| RECORDED-NOTE-QUEUE-01 | FAIL .26; .27 NOT RUN | User `Recorded-note queue full`; deployed .26 synthetic 2.3 s voice took ~54 s, delivered but open sender still ⌛ until chat reopen; third immediate recording hit queue-full and was discarded. S-TURN media redesign pending. No storage reset |
-| NODE-REMOVED-RETRY-01 | FAIL deployed `.27`; source-overlay PASS | d34b1b6 direct-connect-compatible fix, actual browser 6/6 PASS and zero sockets after removal. `.28` PWA still lacks fix; deployed retest NOT RUN |
-| S-TURN-HEALTH-01 | PASS backend mechanism on EMS | b944d26, protected snapshot; authenticated allocation/return UDP+TCP, normal WSS, Chromium relay/relay 32 KiB/hash PASS, exact218/218. `can_relay_blob=1`; voice/circle/file UI acceptance NOT RUN |
+| RECORDED-NOTE-QUEUE-01 | PASS deployed `.29`; `.30` NOT RUN | Real sender voice burst durable/relay/decrypt/playback and visible receipt; historical `.26` queue-full retained above, no universal latency claim |
+| NODE-REMOVED-RETRY-01 | PASS deployed `.29`; `.30` NOT RUN | Fresh browser 6/6, exact5a JS62/62, zero new loopback sockets for 3.5 s after removal |
+| S-TURN-HEALTH-01 | PASS scoped EMS; file flow FAIL `.29` | Real authenticated TURN UDP/TCP/WSS and voice/circle relay PASS; 1 МиБ+13 байт file receiver `File channel failed`, sender misleading success; `.30` retest pending |
 
 ## Текущая интеграция (не deployed UI)
 

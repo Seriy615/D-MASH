@@ -1,0 +1,122 @@
+{
+  "targetSHA": "5a2439834a2fc22db8f6ecd0b9674d533397ea8a",
+  "target": "https://messenger.d-mash.ru/not_messenger/",
+  "scope": "Fresh two-profile real PUBLIC pairing, call and file UI controls, synthetic media devices; no real user data",
+  "page0": "transport-v3-node-preparation-20261008.29",
+  "sw0": "transport-v3-node-preparation-20261008.29",
+  "page1": "transport-v3-node-preparation-20261008.29",
+  "sw1": "transport-v3-node-preparation-20261008.29",
+  "checks": [
+    {
+      "id": "profile-0",
+      "status": "PASS"
+    },
+    {
+      "id": "request-node-0",
+      "status": "PASS"
+    },
+    {
+      "id": "profile-1",
+      "status": "PASS"
+    },
+    {
+      "id": "request-node-1",
+      "status": "PASS"
+    },
+    {
+      "id": "public-route-copy",
+      "status": "PASS"
+    },
+    {
+      "id": "public-request",
+      "status": "PASS"
+    },
+    {
+      "id": "public-accept-account",
+      "status": "PASS"
+    },
+    {
+      "id": "public-confirm",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-open-0",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-open-1",
+      "status": "PASS"
+    },
+    {
+      "id": "key-exchange-immediate-feedback",
+      "status": "PASS"
+    },
+    {
+      "id": "key-exchange-real-completion",
+      "status": "PASS"
+    },
+    {
+      "id": "send-receive-0",
+      "status": "PASS"
+    },
+    {
+      "id": "send-receive-1",
+      "status": "PASS"
+    },
+    {
+      "id": "fliplock-account-settings",
+      "status": "PASS"
+    },
+    {
+      "id": "fliplock-final-global-menu",
+      "status": "PASS"
+    },
+    {
+      "id": "UI11-call-decline",
+      "status": "PASS"
+    },
+    {
+      "id": "UI11-call-accept-relay",
+      "status": "PASS"
+    },
+    {
+      "id": "UI11-mute-unmute",
+      "status": "PASS"
+    },
+    {
+      "id": "UI11-speaker-toggle",
+      "status": "PASS"
+    },
+    {
+      "id": "UI11-video-toggle",
+      "status": "FAIL"
+    },
+    {
+      "id": "UI11-hangup",
+      "status": "PASS"
+    },
+    {
+      "id": "UI12-empty-file-bound",
+      "status": "PASS"
+    },
+    {
+      "id": "UI12-file-reject",
+      "status": "PASS"
+    },
+    {
+      "id": "UI12-file-accept-download-integrity",
+      "status": "FAIL"
+    }
+  ],
+  "loadedResponses": 142,
+  "loadedResponsesExact": 142,
+  "pageErrors": [],
+  "videoFailure": "Actual video toggle click; no enabled local video track within five seconds. Further focused diagnosis required before assigning owner.",
+  "fileFailure": "1 MiB + 13 B synthetic file: receiver accepted; sender displayed Передано и проверено; receiver displayed File channel failed after 120 s without both-side success. Receiver showed Save file link, so partial transfer/integrity requires examination; no successful download/hash claim.",
+  "limits": [
+    "No physical camera or mobile device",
+    "Screen-share OS chooser and physical speaker path NOT RUN",
+    "Direct ICE path NOT RUN in this forced relay slice",
+    "Current .30 retest NOT RUN"
+  ]
+}

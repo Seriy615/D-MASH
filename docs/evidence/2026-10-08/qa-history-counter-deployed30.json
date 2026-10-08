@@ -1,0 +1,98 @@
+{
+  "targetSHA": "22c699d6575fe2ba977db44264d8df0062b14799",
+  "target": "https://messenger.d-mash.ru/not_messenger/",
+  "scope": "Fresh two-profile real PUBLIC pairing, actual key button and messages; synthetic prior peer-history setup via Storage only; not N4 recovery or migration",
+  "page0": "transport-v3-node-preparation-20261008.30",
+  "sw0": "transport-v3-node-preparation-20261008.30",
+  "page1": "transport-v3-node-preparation-20261008.30",
+  "sw1": "transport-v3-node-preparation-20261008.30",
+  "checks": [
+    {
+      "id": "profile-0",
+      "status": "PASS"
+    },
+    {
+      "id": "request-node-0",
+      "status": "PASS"
+    },
+    {
+      "id": "profile-1",
+      "status": "PASS"
+    },
+    {
+      "id": "request-node-1",
+      "status": "PASS"
+    },
+    {
+      "id": "public-route-copy",
+      "status": "PASS"
+    },
+    {
+      "id": "public-request",
+      "status": "PASS"
+    },
+    {
+      "id": "public-accept-account",
+      "status": "PASS"
+    },
+    {
+      "id": "public-confirm",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-open-0",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-open-1",
+      "status": "PASS"
+    },
+    {
+      "id": "seed-preexisting-peer-history-fixture",
+      "status": "PASS"
+    },
+    {
+      "id": "key-exchange-immediate-feedback",
+      "status": "PASS"
+    },
+    {
+      "id": "key-exchange-real-completion",
+      "status": "PASS"
+    },
+    {
+      "id": "[token]",
+      "status": "PASS"
+    },
+    {
+      "id": "send-receive-0",
+      "status": "PASS"
+    },
+    {
+      "id": "send-receive-1",
+      "status": "PASS"
+    },
+    {
+      "id": "[token]",
+      "status": "PASS"
+    },
+    {
+      "id": "fliplock-account-settings",
+      "status": "PASS"
+    },
+    {
+      "id": "fliplock-final-global-menu",
+      "status": "PASS"
+    }
+  ],
+  "loadedResponses": 138,
+  "loadedResponsesExact": 138,
+  "pageErrors": [],
+  "historyFixture": {
+    "preKeyCount": 1,
+    "storedBeforeKey": true,
+    "postKeyCount": 1,
+    "postSendReceiveCount": 3,
+    "visibleAfterKeyAndSend": true
+  },
+  "harnessLimit": "Initial separate attempt incorrectly expected #log to be visible before the first key exchange; rerun removed only that assumption. Prehistory setup is a controlled synthetic storage fixture; after setup all key exchange and sends are actual visible UI actions."
+}
