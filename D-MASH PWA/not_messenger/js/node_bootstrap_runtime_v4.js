@@ -31,7 +31,7 @@
   async attach(config){
    this.check();if(this.#routes.has(config.owner.routeId))return;
    if(config.suspended||JSON.parse(config.localBundle).expires_at<=Math.floor(Date.now()/1000))return;
-   const final=await this.ownership.read(config.owner.routeId);if(final&&['ACTIVE','RETIRED'].includes(final.state))return;
+   const final=await this.ownership.read(config.owner.routeId);if(final?.state==='ACTIVE'){await this.suspendFinal(config.owner,final);return;}if(final?.state==='RETIRED')return;
    await this.codec.localOffer(config.localBundle,config.owner);
    if(await this.ownership.inbox.alias('local-account-owner-v4|'+config.owner.accountPublic)!==config.owner.ownerSlot)throw Error('Bootstrap blind owner mismatch');
    const rootToken=Object.freeze({}),seed=decode(config.discoverySeed),boxSeed=decode(config.discoveryBox),keys=config.recipientKeys.map(decode),sign=nacl.sign.keyPair.fromSeed(seed),box=nacl.box.keyPair.fromSecretKey(boxSeed);seed.fill(0);boxSeed.fill(0);
@@ -47,9 +47,18 @@
   }
   async archiveRow(owner){this.check();const key=await this.dispatcher.key('config',owner),row=await this.dispatcher.load(key);if(!row?.value.owner||!row.value.certificate)return null;return {ownership:row.value.owner,certificate:row.value.certificate};}
   async restore(){let unavailable=0;for(const row of await this.inbox.store.all()){try{const value=await this.inbox.decrypt(row);if(value.kind==='bootstrap-config'&&value.owner&&value.discoverySeed)await this.attach(value);}catch(_){this.check();unavailable++;}}return {restored:this.#routes.size,unavailable};}
+  async suspendFinal(owner,final){
+   this.check();this.ownership.matches(final,owner);if(final.state!=='ACTIVE')throw Error('Bootstrap final state required');
+   const key=await this.dispatcher.key('config',owner);
+   for(let attempt=0;attempt<8;attempt++){const old=await this.dispatcher.load(key);if(!old||old.value.suspended)return;
+    const epoch=Number.isSafeInteger(final.activatedAt)&&final.activatedAt>0&&final.activatedAt<=Math.floor(Date.now()/1000)?final.activatedAt:null;
+    const value={...old.value,suspended:true,continuationUntil:epoch===null?0:Math.min(JSON.parse(old.value.localBundle).expires_at,epoch+300),continuationSent:0,continuationReceived:0};
+    const encrypted=await this.inbox.encrypt(key,value);this.check();const current=await this.ownership.read(owner.routeId);this.ownership.matches(current,owner);if(current.state!=='ACTIVE'||current.activatedAt!==final.activatedAt)throw Error('Bootstrap final state changed');
+    if(await this.inbox.store.cas(key,old.row.revision,encrypted))return;
+   }throw Error('Bootstrap retirement conflict');
+  }
   async detach(routeId){
-   const entry=this.#routes.get(routeId);if(!entry)return;
-   const key=await this.dispatcher.key('config',entry.owner),old=await this.dispatcher.load(key);if(old){const encrypted=await this.inbox.encrypt(key,{...old.value,suspended:true,continuationUntil:Math.min(JSON.parse(old.value.localBundle).expires_at,Math.floor(Date.now()/1000)+300),continuationSent:0,continuationReceived:0});this.check();if(!await this.inbox.store.cas(key,old.row.revision,encrypted))throw Error('Bootstrap retirement conflict');}
+   const entry=this.#routes.get(routeId),final=await this.ownership.read(routeId);if(final?.state==='ACTIVE')await this.suspendFinal(entry?.owner||final.ownership,final);if(!entry)return;
    this.runtime.owned=this.runtime.owned.filter(row=>row.handler!==entry.handler);for(const [key,row]of this.runtime.labels)if(row.target===entry.handler)this.runtime.labels.delete(key);
    this.#roots.delete(entry.rootToken);this.#routes.delete(routeId);entry.sign.secretKey.fill(0);entry.box.secretKey.fill(0);for(const key of entry.keys)key.fill(0);
   }

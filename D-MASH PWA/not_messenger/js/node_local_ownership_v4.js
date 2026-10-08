@@ -58,9 +58,9 @@
     if(canonical(row.ownership)!==canonical(tuple))throw Error('Prepared tuple mismatch');
     if(row.state===state){if(state==='ACTIVE'&&!this.local.bindings.has(owner.routeId))await this.activateSaved(row);return {...tuple,state};}
     if(state==='ACTIVE'&&row.state!=='NODE_PREPARED'||state==='RETIRED'&&row.state!=='ACTIVE')throw Error('Invalid binding transition');
-    this.owner(token);if(!await this.inbox.saveBinding(owner.routeId,{...row,state},{replace:true}))throw Error('Binding CAS conflict');
+    const changed={...row,state,...(state==='ACTIVE'?{activatedAt:Math.floor(Date.now()/1000)}:{})};this.owner(token);if(!await this.inbox.saveBinding(owner.routeId,changed,{replace:true}))throw Error('Binding CAS conflict');
     if(state==='ACTIVE'){
-     await this.activateSaved({...row,state});
+     await this.activateSaved(changed);
     }else this.local.retireOwned(owner.routeId);
     return {...tuple,state};
    }finally{this.busy.delete(owner.routeId);}
