@@ -690,9 +690,10 @@
         core.openSettings = function accountSettingsV50() {
             if (!this.activeIdentity) return global.ui?.renderGlobalSettings?.();
             const accountId = this.keys?.server_id || this.keys?.pub_hex || this.activeIdentity;
+            const panic = localStorage.getItem("cfg_panic_gesture") === "true";
             this.openModal("АККАУНТ", `
                 <div class="dmash-settings-title">НАСТРОЙКИ АККАУНТА</div>
-                <div class="dmash-settings-note">Только текущий Account. DeviceRoot, Nodes и Public Routes находятся в общих настройках.</div>
+                <div class="dmash-settings-note">Настройки текущего аккаунта. Флип-лок действует на всё устройство.</div>
                 <div class="dmash-settings-list">
                     <div class="dmash-account-identity">${esc(accountId)}</div>
                     <button class="dmash-settings-action" onclick="Core.copyMyId()">КОПИРОВАТЬ ID АККАУНТА</button>
@@ -700,6 +701,7 @@
                     <button class="dmash-settings-action" onclick="Core.showMyQR()">PUBLIC / PRIVATE QR</button>
                     <button class="dmash-settings-action" onclick="Core.openPendingContacts()">ЗАПРОСЫ В КОНТАКТЫ</button>
                     <button class="dmash-settings-action" onclick="NodeManager.renderSettings()">УЗЛЫ И ПОДКЛЮЧЕНИЕ</button>
+                    <button class="dmash-settings-action" onclick="Core.toggleFlipper()">ЭКСТРЕННЫЙ ФЛИП-ЛОК УСТРОЙСТВА: ${panic ? "ВКЛ" : "ВЫКЛ"}</button>
                     <button class="dmash-settings-action primary" onclick="Core.closeModal()">ЗАКРЫТЬ</button>
                 </div>`);
         };

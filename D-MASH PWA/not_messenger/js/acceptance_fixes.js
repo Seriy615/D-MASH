@@ -241,6 +241,7 @@
             const gateBox = document.querySelector(".gate-container");
             if (!gateBox) return;
             const unlocked = !!syncCoreDeviceState();
+            const panic = localStorage.getItem("cfg_panic_gesture") === "true";
             gateBox.innerHTML = `
                 <div class="dmash-settings-title">ОБЩИЕ НАСТРОЙКИ</div>
                 <div class="dmash-settings-note">${unlocked ? "DeviceRoot разблокирован. Эти настройки относятся к установке, а не к выбранному аккаунту." : "DeviceRoot заблокирован."}</div>
@@ -252,6 +253,7 @@
                     <button class="dmash-settings-card" onclick="Core.openPendingContacts()"><b>ЗАПРОСЫ В КОНТАКТЫ</b><small>Входящие запросы через Public Routes</small></button>
                     <button class="dmash-settings-card" onclick="ui.beginBiometricTriggerSetup()"><b>БИОМЕТРИЯ УСТРОЙСТВА</b><small>Привязка нескольких platform credentials к DeviceRoot</small></button>
                     <button class="dmash-settings-card" onclick="Core.setupTelegram()"><b>ТЕЛЕГРАМ-МАЯК</b><small>Уведомления устройства</small></button>
+                    <button class="dmash-settings-card" onclick="Core.toggleFlipper('global')"><b>ЭКСТРЕННЫЙ ФЛИП-ЛОК: ${panic ? "ВКЛ" : "ВЫКЛ"}</b><small>Блокировка устройства при перевороте; во время звонка или записи не срабатывает</small></button>
                     <button class="dmash-settings-card" onclick="ui.startMasterReconfiguration()"><b>СМЕНИТЬ MASTER-КОД</b><small>Перешифровать тот же DeviceRoot</small></button>
                 </div>
                 <button class="gate-btn dmash-settings-back" onclick="ui.show_gate()">НАЗАД К АККАУНТАМ</button>`;
