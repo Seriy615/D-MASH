@@ -44,31 +44,32 @@ commit также доставляется на Forge, его полный SHA �
 ## 2. Текущий Forge и EMS checkpoint
 
 **Source:** Forge `/home/jcode/D-MASH`, ветка `transport-v3`; exact deployed
-product source `22c699d6575fe2ba977db44264d8df0062b14799` сверен с Forge
-`origin/transport-v3` до docs-only checkpoint. Новейший tip ветки после
+product source `be6a1d9a58ba9fffeb0daad234a6506e5b269667` сверен с Forge
+`origin/transport-v3`. Новейший tip ветки после
 обновления документации проверять через `git rev-parse origin/transport-v3`.
 Интеграция выполнена в отдельном worktree; shared checkout содержит WIP агентов
 и не является release tree. Отправка Git — обычный fast-forward через временный
 EMS publisher, Forge origin SHA сверен. Исторические состояния до `.30`
 [архивированы](docs/archive/2026-10-08/CURRENT_HANDOFF_PRE30_SECTIONS_2_3.md).
 
-**Production PWA:** EMS `get_commit.sh` развернул exact `22c699d...` с
-page и active controlling SW `transport-v3-node-preparation-20261008.30`.
-Backup PWA: `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T042445Z`.
+**Production PWA:** EMS `get_commit.sh` развернул exact `be6a1d9...` с
+page и active controlling SW `transport-v3-node-preparation-20261008.31`.
+Backup PWA: `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T050352Z`.
 На текущем EMS каталог `/home/jcode/D-MASH` существует, но системного пользователя
 `jcode` нет: `su - jcode` отказал. Проверен и запущен тот же штатный
 `get_commit.sh` от root с scoped Git `safe.directory`, как требует его
 `sudo` usage; script сам создал backup, проверил nginx и публичные assets.
-Read-only exact verifier: **256/256 source files**, `missing=[]`, `changed=[]`.
-Node backend не менялся при `.30`; предыдущие согласованные S-TURN/Node
-конфигурация, identities и базы сохранены. После PWA deploy реальные
-authenticated TURN UDP/TCP relay и WSS scoped tickets/signaling снова PASS.
+Read-only exact verifier: **258/258 source files**, `missing=[]`, `changed=[]`.
+Node backend не менялся при `.31`; предыдущие согласованные S-TURN/Node
+конфигурация, identities и базы сохранены. После `.30` PWA deploy реальные
+authenticated TURN UDP/TCP relay и WSS scoped tickets/signaling были PASS;
+на `.31` независимый browser снова передал voice/circle через EMS S-TURN.
 Новый backend/runtime migration из Forge source автоматически не следует.
 
-**Тесты `.30` source:** Python **286**, Origin **11** и все JS suites
-`tools/test_all.py` PASS с Python3.12/Node24.19.0. Первый прогон выявил
-устаревший H1–H3 diagnostic harness; он исправлен без ослабления реального
-криптографического сценария, повторный полный прогон PASS. В synthetic
+**Тесты `.31` source:** Python **286**, Origin **11** и все JS suites
+`tools/test_all.py` PASS с Python3.12/Node24.19.0, включая MIME и captured
+recorder/chat alias suites. Первый запуск не имел `node` в `PATH` и не смог
+запустить часть тестов; полный повтор с Node24 завершился exit0. В synthetic
 Chromium/IndexedDB history-counter fixture PASS: сохранение счётчика при 0x01/0x03,
 запрет перезаписи занятого alias, atomic CAS, fail-closed на чужих/неполных
 строках. Initial 0x01 раньше обнулял `msgCount` при оставшихся ciphertext —
@@ -83,8 +84,28 @@ reset. ID, pairing contribution и контакт неизменны. Перед
 входящее audio расшифровывается по реальной кнопке. Одна отправка реальной
 кнопкой SEND добавила seq4, старые строки сохранены. Статус **SENT**, не
 аутентифицированное DELIVERED/READ; ответа собеседника пока нет. Не повторять
-отправку автоматически на основании одного этого статуса. Independent fresh
-synthetic deployed `.30` retest ещё выполняется.
+отправку автоматически на основании одного этого статуса.
+
+**Баг пользователя `readAlias`/«Запись не отправлена»:** реальный fresh
+source-overlay `.31` browser до исправления воспроизвёл задержанный modal
+`Cannot read properties of undefined (reading 'getAlias')` после записи и
+перехода в «Избранное». Запись уже сохранялась в encrypted pending intent;
+ошибка возникала при добавлении истории через captured vault, которого нет
+в WeakMap `DmashChatPassword`. Исправлен `location` для собственного guarded
+alias snapshot и сохранён парольный L3 alias. Простой `install(vault)` вызвал бы
+вложенный shared history lock. Предыдущий `.30` MIME parser также отвергал
+допустимые параметры MediaRecorder; `.31` исправил его без изменения байтов
+записи. Никакой reset реальных Account/keys не выполнялся.
+
+**Независимая deployed `.31` browser acceptance:** два новых synthetic PRIVATE
+Account, реальные QR/[+]/key exchange/text/voice/circle/Saved/reload UI actions
+**22/22 PASS**. Page и active controlling SW `.31` до/после reload,
+**268/268** загруженных файлов exact `be6a1d9...`, ошибок страницы/консоли 0.
+Audio/mp4 29,565 B и circle 162,353 B прошли durable intent → EMS S-TURN →
+receiver decrypt/playback; sender увидел два authenticated DELIVERED, сохранил
+по одному voice/circle в истории обеих сторон после Master+Account reload,
+освободил retained media bytes. Задержанный FileReader завершился при открытом
+«Избранном» без modal. Это media/alias приёмка, не полный Node/N4 DONE.
 
 **Предыдущая `.29` independent deployed acceptance:** 27/27 continued actual
 controls PASS для public Request/Accept/Confirm, текста, трёх voice notes,
@@ -104,7 +125,7 @@ receiver `File channel failed`: P1 N7 bug открыт. Account remove UI обе
 backend snapshots `/root/dmash-runtime-backups/sturn-gateway-gate-20261008T034751Z`
 и `/root/dmash-runtime-backups/backend-exact-20261008T035123Z` вне Git;
 три SQLite quick_check и identity hashes были проверены при обновлении.
-`.30` не изменил Node backend/DB/keys. Production exact Node profile —
+`.31` не изменил Node backend/DB/keys. Production exact Node profile —
 `wss://stage-api-ems.d-mash.ru/mesh/v4` с отдельно проверенным NodeID pin;
 старый `/dmp-c/v3` остаётся временным migration path, не скрытым fallback.
 
@@ -121,6 +142,16 @@ locked Account, receipt-backed durable outbox и запрет v3 fallback ост
 обязательными для N3. Агент продолжает isolated UI/loader cutover; интеграцию
 и browser/deployed acceptance проверяет лид отдельно.
 
+Изолированный full-shell UI candidate `46c67477...` проверен настоящими
+кнопками на сохранённых synthetic профилях: managed Node пережила Account logout,
+публичный запрос появился в глобальной панели до Account login, существующий
+Account принял и подтвердил его; 10 этапов продолжения PASS. Ранее обнаруженный
+повторный `CONNECT` к уже authenticated Node устранён с idempotent reuse только
+того же URL/peer и fail-closed password repeat. Проверка остановилась на busy
+deadline кнопки «Завершить обмен ключами»; N4/text/history в full-shell ещё
+**NOT RUN/PASS**. Browser process уже не жив после остановки агента; повтор
+должен использовать сохранённые данные и отдельный QA checkpoint, не reset.
+
 Полный N4 recovery **не завершён**. Новый genuine two-Worker/Python loss fixture
 прошёл lost FINAL/ACK-only и restart, но при one-sided state loss застрял:
 requester `INIT_PREPARED`, responder `RESPONDER_PENDING`, финального
@@ -129,6 +160,12 @@ requester `INIT_PREPARED`, responder `RESPONDER_PENDING`, финального
 tombstone не позволяет выдавать повтор старого application envelope за новый
 доставленный ACK; нужен аутентифицированный bounded ACK request/replay либо
 эквивалентное durable решение, без удаления tombstone или повторного seal.
+Изолированный ACK/outbox candidate `387e9e71...` имеет synthetic UNIT для
+authenticated receipt, lost ACK replay и fault/crash ordering, но не прошёл
+same-grant real browser. Pending intent пока требует уже `ESTABLISHED` N4:
+первое сообщение новому offline peer ещё не может быть поставлено в durable
+ожидание. При rekey pending outbox fail-closed, authenticated migration не
+реализована. Этот candidate не интегрирован и не опубликован.
 
 N0 endpoint/privacy и threat model, N2 no-bypass failover на текущем SHA,
 N5 verifier/legacy exposure/PCS/PQ/security, N6 password/installer, N7 file/call
