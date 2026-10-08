@@ -27,10 +27,10 @@
             key: b64(global.crypto.getRandomValues(new Uint8Array(32))), nonce: b64(global.crypto.getRandomValues(new Uint8Array(8)))});
     }
     class FileChannel {
-        constructor({channel, manifest, file, onProgress = () => {}, onComplete = () => {}, onError = () => {}}) {
+        constructor({channel, manifest, file, onProgress = () => {}, onComplete = () => {}, onError = () => {}, onCommit = async () => {}}) {
             this.manifest = structuredClone(validate(manifest)); this.channel = channel; this.file = file;
             if (file && file.size !== manifest.size) throw Error('File size mismatch');
-            this.onProgress = onProgress; this.onComplete = onComplete; this.onError = onError;
+            this.onProgress = onProgress; this.onComplete = onComplete; this.onError = onError; this.onCommit = onCommit;
             this.closed = false; this.complete = false; this.index = 0; this.parts = []; this.pending = null;
             this.queued = 0; this.chain = Promise.resolve(); this.count = Math.ceil(manifest.size / CHUNK);
             const raw = unb64(manifest.key, 32);
@@ -98,6 +98,8 @@
                 if (new TextDecoder().decode(bytes) !== 'END') throw Error('Invalid file completion');
                 const blob = new Blob(this.parts, {type: 'application/octet-stream'});
                 if (blob.size !== this.manifest.size || await hash(await blob.arrayBuffer()) !== this.manifest.sha256) throw Error('File integrity mismatch');
+                if (this.closed) return;
+                await this.onCommit(blob);
                 if (this.closed) return;
                 this.send(await this.seal(index, encode('ACK'), 1));
                 this.complete = true; this.parts = []; this.onComplete(blob); return;

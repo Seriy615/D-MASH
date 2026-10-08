@@ -60,7 +60,8 @@
    const task=this.runFlush(session);this.flushing=task;return task.finally(()=>{if(this.flushing===task)this.flushing=null;});
   }
   async fail(session,operation,reason){operation.status='failed';operation.failure=reason;operation.content=null;await this.write(session,'blind_outbox','media-out:'+operation.peerID+':'+operation.meta.id,operation);
-   await this.storage.markMessageSendFailure?.(operation.peerID,operation.meta.id,reason);this.check(session);}
+   await this.storage.markMessageSendFailure?.(operation.peerID,operation.meta.id,reason);this.check(session);
+   this.core.refreshMessageTransportState?.(operation.peerID,operation.meta.id,'FAILED');}
   async runFlush(session){
    await this.exclusive(session,()=>this.purge(session));
    const rows=await this.operations(session);
@@ -137,7 +138,8 @@
     if(message.type==='voip_media_complete'){
      if(operation.status!=='sending'||message.sha256!==operation.meta.sha256)throw Error('Invalid recorded-note completion');
      await this.storage.updateMessageTransportState(peer,message.id,'DELIVERED');this.check(session);
-     await this.remove(session,'blind_outbox','media-out:'+peer+':'+message.id);return true;
+     await this.remove(session,'blind_outbox','media-out:'+peer+':'+message.id);
+     this.core.refreshMessageTransportState?.(peer,message.id,'DELIVERED');return true;
     }
     if(message.type!=='voip_media_profile_response'||message.nonce!==operation.nonce||message.expiresAt!==operation.profileDeadline||message.maxBytes!==MAX||typeof message.supported!=='boolean')throw Error('Recorded-note profile response context mismatch');
     if(['sending','failed'].includes(operation.status))return true;

@@ -1,7 +1,7 @@
 "use strict";
 (function (global) {
     function create({signaling, manifest, file, rtcFactory = config => new global.RTCPeerConnection(config), useRemoteIceServers = true,
-        onProgress, onComplete, onError}) {
+        onProgress, onComplete, onError, onCommit}) {
         global.DmashFileChannel.validate(manifest);
         class FileSession extends global.DmashCallSession.CallSignalingSession {
             async _setupMedia() {
@@ -17,7 +17,7 @@
                     channel.close(); void this.close(); return;
                 }
                 this.pipe = new global.DmashFileChannel.FileChannel({channel, manifest, file: this.file,
-                    onProgress, onComplete: blob => {
+                    onProgress, onCommit, onComplete: blob => {
                         this.finished = true; onComplete?.(blob);
                         if (this.role === 'caller') void this.close();
                     }, onError: error => {onError?.(error); void this.close();}});

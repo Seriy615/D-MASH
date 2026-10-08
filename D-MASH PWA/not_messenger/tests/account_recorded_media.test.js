@@ -5,6 +5,7 @@ global.nacl=nacl;require('../js/route_discovery_v4.js');const recipient=require(
 require('../js/secure_session.js');const device=require('../js/device_envelope.js');
 const hex=value=>Buffer.from(value).toString('hex');
 (async()=>{
+ // Legacy fragment rows remain readable/drainable; new UI notes use S-TURN.
  const [a,b]=await Promise.all([createCore(),createCore()]);let now=Date.now(),packets=[];
  const shared=hex(nacl.randomBytes(32));
  for(const [local,peer,slot,route] of [[a,b,'slot-A','a'.repeat(64)],[b,a,'slot-B','b'.repeat(64)]]){
@@ -34,7 +35,7 @@ const hex=value=>Buffer.from(value).toString('hex');
  async function deliver(packet){return packet.to.core.receiveAccountNodeRecordV4({routeId:packet.to.route,accountSlot:packet.to.slot,payload:JSON.stringify(open(packet))},packet.to.slot);}
  async function drain(drop=()=>false){let rounds=0;while(packets.length){assert(++rounds<200,'bounded fixture progress');const packet=packets.shift();if(await drop(packet))continue;assert.equal(await deliver(packet),true);}}
  const data='data:video/webm;codecs=vp8,opus;base64,'+Buffer.alloc(33700,7).toString('base64');
- assert.equal(await a.core.sendMessage({type:'video_note',name:'recorded',data},false,b.core.keys.pub_hex),true);
+ assert.equal(await a.core.recordedMedia.queue(b.core.keys.pub_hex,{type:'video_note',name:'recorded',data}),true);
  await a.core.recordedMedia.flush();assert.equal(a.history.length,1);assert.equal(b.history.length,0);
  await drain();
  const operation=(await a.core.recordedMedia.operations(a.core.recordedMedia.capture()))[0];
@@ -80,7 +81,7 @@ const hex=value=>Buffer.from(value).toString('hex');
  const expiredSession=b.core.recordedMedia.capture();await b.core.recordedMedia.purge(expiredSession);
  assert.equal((await b.core.recordedMedia.index(expiredSession)).entries.length,3,'bounded purge removes one expired transfer per pass');
  await b.core.recordedMedia.profile(challenge(),a.core.keys.pub_hex,()=>true);assert.equal((await peek(packets.shift())).supported,true,'expired allocations do not consume active quota');
- assert.equal(await a.core.sendMessage({type:'voice',name:'unsupported',data:'data:audio/webm;base64,'+Buffer.alloc(20000,3).toString('base64')},false,b.core.keys.pub_hex),true);
+ assert.equal(await a.core.recordedMedia.queue(b.core.keys.pub_hex,{type:'voice',name:'unsupported',data:'data:audio/webm;base64,'+Buffer.alloc(20000,3).toString('base64')}),true);
  await a.core.recordedMedia.flush();packets=[];now+=120001;await a.core.recordedMedia.flush();
  assert.equal(a.history[2].transportState,'FAILED','unsupported old peer does not receive fragments or infinite loading');
  assert.equal((await a.core.recordedMedia.operations(a.core.recordedMedia.capture()))[0].content,null,'terminal failure retires duplicate source from outbox');

@@ -1,0 +1,23 @@
+{
+  "scope": "BROWSER real AES/IndexedDB offline store; stubbed service unavailable; no real TURN or UI claim",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "js/vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "js/storage.js": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+    "js/file_channel.js": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+    "js/call_signaling.js": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+    "js/recorded_note_turn.js": "7eb29624c26e2e41fefc380156a6b088bf352480ae4721ee445e1128585015a6"
+  },
+  "checks": {
+    "threeDurable": true,
+    "reload": true,
+    "cancelRetains": true,
+    "retry": true,
+    "noMediaNetworkOffline": true,
+    "encryptedAtRest": true,
+    "rootLock": true,
+    "pendingAccountSwitchNoWrite": true,
+    "foreignRelayRefused": true,
+    "peerDeleteRevokesOldGeneration": true
+  }
+}

@@ -474,6 +474,7 @@
         core.accountLogout = async function repairedAccountLogout() {
             this._invalidateAccountSessionV4?.('ACCOUNT_LOGOUT');
             this._accountBootAttempt = null;
+            this.recordedNoteTurn?.close();
             global.DmashFileRuntime?.cancel(this);
             const zero = value => {
                 if (value instanceof Uint8Array) value.fill(0);

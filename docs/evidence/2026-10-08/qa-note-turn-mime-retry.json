@@ -1,0 +1,833 @@
+{
+  "mimeRetryRefused": true,
+  "faultInjection": "one final encrypted ACK dropped after durable receiver commit",
+  "scope": "BROWSER actual EMS WSS+forcedTURN AES-GCM media; metadata IPC injected; no ordinary UI/deployedcapability claim",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "storage.js": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+    "call_signaling.js": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+    "call_session.js": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+    "file_channel.js": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+    "file_session.js": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+    "recorded_note_turn.js": "4577c8e3860e85a75e57cf0d3f1f8919ddebc18d0cd129ad4ce2c2be944b5b23"
+  },
+  "wallMs": 56844,
+  "sender": {
+    "bytes": 29074,
+    "elapsedMs": 54355.699999809265,
+    "states": [
+      {
+        "state": "waiting",
+        "at": 3271.0999999046326
+      },
+      {
+        "state": "waiting",
+        "at": 3277.7000002861023
+      },
+      {
+        "state": "connecting",
+        "at": 3302.0999999046326
+      },
+      {
+        "state": "waiting",
+        "at": 19006.200000286102
+      },
+      {
+        "state": "sending",
+        "progress": 100,
+        "at": 19818.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 22007.200000286102
+      },
+      {
+        "state": "waiting",
+        "at": 22062.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 22244.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 22444
+      },
+      {
+        "state": "waiting",
+        "at": 22653.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 22854.700000286102
+      },
+      {
+        "state": "waiting",
+        "at": 23061.700000286102
+      },
+      {
+        "state": "waiting",
+        "at": 23244.099999904633
+      },
+      {
+        "state": "waiting",
+        "at": 23448.700000286102
+      },
+      {
+        "state": "waiting",
+        "at": 23637.5
+      },
+      {
+        "state": "waiting",
+        "at": 23837
+      },
+      {
+        "state": "waiting",
+        "at": 24036.599999904633
+      },
+      {
+        "state": "waiting",
+        "at": 24234.599999904633
+      },
+      {
+        "state": "waiting",
+        "at": 24435.200000286102
+      },
+      {
+        "state": "waiting",
+        "at": 24635.200000286102
+      },
+      {
+        "state": "waiting",
+        "at": 24837.5
+      },
+      {
+        "state": "waiting",
+        "at": 25036.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 25234.700000286102
+      },
+      {
+        "state": "waiting",
+        "at": 25459.700000286102
+      },
+      {
+        "state": "waiting",
+        "at": 25681.099999904633
+      },
+      {
+        "state": "waiting",
+        "at": 25855.300000190735
+      },
+      {
+        "state": "waiting",
+        "at": 26050.599999904633
+      },
+      {
+        "state": "waiting",
+        "at": 26240.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 26434.099999904633
+      },
+      {
+        "state": "waiting",
+        "at": 26636.5
+      },
+      {
+        "state": "waiting",
+        "at": 26838.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 27038.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 27234.099999904633
+      },
+      {
+        "state": "waiting",
+        "at": 27433
+      },
+      {
+        "state": "waiting",
+        "at": 27633
+      },
+      {
+        "state": "waiting",
+        "at": 27833.200000286102
+      },
+      {
+        "state": "waiting",
+        "at": 28035
+      },
+      {
+        "state": "waiting",
+        "at": 28238.5
+      },
+      {
+        "state": "waiting",
+        "at": 28436.5
+      },
+      {
+        "state": "waiting",
+        "at": 28646.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 28841
+      },
+      {
+        "state": "waiting",
+        "at": 29040.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 29233.599999904633
+      },
+      {
+        "state": "waiting",
+        "at": 29442.400000095367
+      },
+      {
+        "state": "waiting",
+        "at": 29629.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 29830.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 30039.200000286102
+      },
+      {
+        "state": "waiting",
+        "at": 30236.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 30448.5
+      },
+      {
+        "state": "waiting",
+        "at": 30649
+      },
+      {
+        "state": "waiting",
+        "at": 30835.700000286102
+      },
+      {
+        "state": "waiting",
+        "at": 31032.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 31231.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 31429.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 31633.200000286102
+      },
+      {
+        "state": "waiting",
+        "at": 31829.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 32031.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 32231.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 32431.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 32629.900000095367
+      },
+      {
+        "state": "waiting",
+        "at": 32830.300000190735
+      },
+      {
+        "state": "waiting",
+        "at": 33033.5
+      },
+      {
+        "state": "waiting",
+        "at": 33231.40000009537
+      },
+      {
+        "state": "waiting",
+        "at": 33431.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 33631
+      },
+      {
+        "state": "waiting",
+        "at": 33830.40000009537
+      },
+      {
+        "state": "waiting",
+        "at": 34036.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 34230.09999990463
+      },
+      {
+        "state": "waiting",
+        "at": 34438.5
+      },
+      {
+        "state": "waiting",
+        "at": 34630
+      },
+      {
+        "state": "waiting",
+        "at": 34835.5
+      },
+      {
+        "state": "waiting",
+        "at": 35032.300000190735
+      },
+      {
+        "state": "waiting",
+        "at": 35230.09999990463
+      },
+      {
+        "state": "waiting",
+        "at": 35429.90000009537
+      },
+      {
+        "state": "waiting",
+        "at": 35631
+      },
+      {
+        "state": "waiting",
+        "at": 35830
+      },
+      {
+        "state": "waiting",
+        "at": 36032.09999990463
+      },
+      {
+        "state": "waiting",
+        "at": 36229.90000009537
+      },
+      {
+        "state": "waiting",
+        "at": 36429.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 36631
+      },
+      {
+        "state": "waiting",
+        "at": 36830.59999990463
+      },
+      {
+        "state": "waiting",
+        "at": 37032
+      },
+      {
+        "state": "waiting",
+        "at": 37232.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 37439.09999990463
+      },
+      {
+        "state": "waiting",
+        "at": 37639.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 37832
+      },
+      {
+        "state": "waiting",
+        "at": 38035.5
+      },
+      {
+        "state": "waiting",
+        "at": 38236
+      },
+      {
+        "state": "waiting",
+        "at": 38435.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 38636.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 38839.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 39037.59999990463
+      },
+      {
+        "state": "waiting",
+        "at": 39246.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 39436.40000009537
+      },
+      {
+        "state": "waiting",
+        "at": 39635.09999990463
+      },
+      {
+        "state": "waiting",
+        "at": 39837
+      },
+      {
+        "state": "waiting",
+        "at": 40037.5
+      },
+      {
+        "state": "waiting",
+        "at": 40241.90000009537
+      },
+      {
+        "state": "waiting",
+        "at": 40443.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 40637
+      },
+      {
+        "state": "waiting",
+        "at": 40839.40000009537
+      },
+      {
+        "state": "waiting",
+        "at": 41042
+      },
+      {
+        "state": "waiting",
+        "at": 41294.09999990463
+      },
+      {
+        "state": "waiting",
+        "at": 41466.300000190735
+      },
+      {
+        "state": "waiting",
+        "at": 41683.300000190735
+      },
+      {
+        "state": "waiting",
+        "at": 41877.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 42053.40000009537
+      },
+      {
+        "state": "waiting",
+        "at": 42251.59999990463
+      },
+      {
+        "state": "waiting",
+        "at": 42447
+      },
+      {
+        "state": "waiting",
+        "at": 42665.5
+      },
+      {
+        "state": "waiting",
+        "at": 42854.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 43033.90000009537
+      },
+      {
+        "state": "waiting",
+        "at": 43252.90000009537
+      },
+      {
+        "state": "waiting",
+        "at": 43430.40000009537
+      },
+      {
+        "state": "waiting",
+        "at": 43630.59999990463
+      },
+      {
+        "state": "waiting",
+        "at": 43846.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 44036.5
+      },
+      {
+        "state": "waiting",
+        "at": 44257
+      },
+      {
+        "state": "waiting",
+        "at": 44442.5
+      },
+      {
+        "state": "waiting",
+        "at": 44654.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 44885.40000009537
+      },
+      {
+        "state": "waiting",
+        "at": 45047.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 45255.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 45462.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 45696.300000190735
+      },
+      {
+        "state": "waiting",
+        "at": 45884.09999990463
+      },
+      {
+        "state": "waiting",
+        "at": 46136.90000009537
+      },
+      {
+        "state": "waiting",
+        "at": 46248.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 46459.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 46643.59999990463
+      },
+      {
+        "state": "waiting",
+        "at": 46840.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 47039.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 47231.59999990463
+      },
+      {
+        "state": "waiting",
+        "at": 47429.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 47629.90000009537
+      },
+      {
+        "state": "waiting",
+        "at": 47829.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 48033.59999990463
+      },
+      {
+        "state": "waiting",
+        "at": 48239.90000009537
+      },
+      {
+        "state": "waiting",
+        "at": 48434
+      },
+      {
+        "state": "waiting",
+        "at": 48629.90000009537
+      },
+      {
+        "state": "waiting",
+        "at": 48829.300000190735
+      },
+      {
+        "state": "waiting",
+        "at": 49030.09999990463
+      },
+      {
+        "state": "waiting",
+        "at": 49230
+      },
+      {
+        "state": "waiting",
+        "at": 49430.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 49629.800000190735
+      },
+      {
+        "state": "waiting",
+        "at": 49830.5
+      },
+      {
+        "state": "waiting",
+        "at": 50031.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 50230.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 50430.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 50637.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 50830.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 51031.59999990463
+      },
+      {
+        "state": "waiting",
+        "at": 51234.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 51436.300000190735
+      },
+      {
+        "state": "waiting",
+        "at": 51634.7000002861
+      },
+      {
+        "state": "waiting",
+        "at": 51830.2000002861
+      },
+      {
+        "state": "waiting",
+        "at": 52040.5
+      },
+      {
+        "state": "connecting",
+        "at": 52052.5
+      },
+      {
+        "state": "delivered",
+        "at": 57351.7000002861
+      },
+      {
+        "state": "delivered",
+        "at": 57425
+      }
+    ],
+    "relay": [
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      }
+    ],
+    "rows": [
+      {
+        "sha256": "280f6cb48393438fa67b6c785f8b6f029dc27e778c8a919b958d917b4ae4f3ed",
+        "status": "delivered",
+        "contentRetired": true
+      }
+    ]
+  },
+  "receiver": {
+    "count": 1,
+    "relay": [
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      },
+      {
+        "local": "relay",
+        "remote": "relay"
+      }
+    ]
+  },
+  "metadata": [
+    {
+      "from": 0,
+      "type": "voip_note_request",
+      "bytes": 778,
+      "at": 1791428123864
+    },
+    {
+      "from": 0,
+      "type": "voip_note_request",
+      "bytes": 778,
+      "at": 1791428162194
+    },
+    {
+      "from": 1,
+      "type": "voip_note_complete",
+      "bytes": 182,
+      "at": 1791428162250
+    }
+  ]
+}
