@@ -48,14 +48,16 @@ commit также доставляется на Forge, его полный SHA �
 browser-first inventory ещё не завершены. Реализация делегирована агентам;
 лид независимо проверяет интеграцию и опубликованный UI.
 
-Текущий source checkpoint **`382db71caacd783805ca034eb651cebdeb2d212f`**
-добавил root-owned private bootstrap REQUEST/receipt dispatcher и отдельный
-локальный archive-capability для истёкших сертификатов. На exact checkout
-**280 backend+11 Origin+79 JS PASS**; независимый local Chromium/IDB dispatcher
-PASS. Агентский real Python→Worker private bootstrap/archive PASS; лидерский
-exact-SHA Worker retest ещё требуется. Public root-neutral first contact,
-ordinary Account UI и renewal/active migration всё ещё открыты. Evidence:
-`docs/evidence/2026-10-08/qa-node-bootstrap-382db71.json`.
+Текущий опубликованный source checkpoint ветки `transport-v3` —
+**`1a75299adf24423126d598dedc9db903e574d3ea`**, merge узкого UI release
+`637c9bb02c2c57a05e8edc815678b6fb204f632c` и Node routing checkpoint
+`62f97d7cf5562943d545681fa788c31378523d87`. На exact merge:
+**281 backend + 11 Origin + 82 JS PASS**. Routing DATA dedupe теперь учитывает
+аутентифицированного peer и проверенный hop grant; отдельные Python/JS
+двух-hop retry regression PASS. Это не закрывает потерянный ACK после consume
+Node Inbox и не завершает N4. В source остаются inactive foundation и private
+bootstrap; обычный Account/contacts/UI всё ещё использует v3. WIP агентов
+в shared checkout не входит в этот SHA и не должен попадать в deploy случайно.
 
 Предыдущий source checkpoint **`3474eeed916d07f44df693391e594e0bec140508`**
 включает N4 foundation (inactive) поверх проверенного Account UI checkpoint
@@ -87,17 +89,54 @@ Account adapter, private/public bootstrap, mailbox migration, N4 recovery
 не входят в эти exact-SHA проверки. Последний published source SHA и Forge
 origin сверить после следующего docs/checkpoint push; production ниже отдельно.
 
-Текущий runtime commit **`3c513601ef3990b6514e247d879324b7b72da494`**, release
-**`transport-v3-node-preparation-20261008.26`**, pushed и deployed на EMS.
-Exact-source проверка: **214 checked, missing=[], changed=[]**. Обновлены PWA
-и только backend `route_discovery_v4.py`, зависимости/config не менялись.
-До замены backend Node остановлен, согласованный protected runtime snapshot:
+Текущая production PWA на EMS — узкий commit
+**`637c9bb02c2c57a05e8edc815678b6fb204f632c`**, release
+**`transport-v3-node-preparation-20261008.27`**. Он достижим из текущей ветки,
+но намеренно развёрнут отдельно от незавершённой Node-миграции. Exact-source
+PWA+backend проверка: **215 checked, missing=[], changed=[]**. Два свежих
+Chromium profiles на опубликованной странице: **16/16 real UI actions PASS**,
+page/SW обе `.27`, 135 loaded sources exact SHA, page errors 0; immediate
+key-exchange feedback 473 ms, реальные Request/Accept/Confirm и сообщения в
+обе стороны, FlipLock на Account и global screens. Physical mobile orientation
+NOT RUN. PWA-only deploy через EMS `get_commit.sh`; static backup:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T021346Z`.
+Ни Node backend, ни runtime keys/DB/services этот deploy не менял.
+
+Backend EMS остаётся от **`3c513601ef3990b6514e247d879324b7b72da494`**
+(`.26`), включая `route_discovery_v4.py`; перед его предыдущим обновлением Node
+был остановлен и создан согласованный protected runtime snapshot:
 `/root/dmash-runtime-backups/release26-20261008T004030Z` (6 SQLite quick_check PASS).
 После restart все4 identity/key files побайтно равны backup. Static PWA backup:
 `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T004036Z`.
-Секреты/snapshot вне Git; production на Forge не переносился. Scoped deploy
-wrapper сохранён `/root/deploy-release26.sh`; existing get_commit.sh использован
-для PWA (его regex release сообщает unknown, browser/SW проверяются отдельно).
+Секреты/snapshot вне Git; production на Forge не переносился.
+
+Совместный live test с пользователем на его `.26` и отдельном synthetic
+Account подтвердил двусторонний E2EE чат: текст получен, authenticated READ
+receipt виден, ответ пользователя сохранён; входящее голосовое 2.3 s получено
+и audio metadata decoded. Пользовательские pairing/data/audio не включены в Git.
+Однако у отправителя записанное медиа показывало ожидание; independent synthetic
+browser baseline: 2.3 s voice → 13 Mesh fragments → ~54 s до receiver audio,
+затем outbox empty/history DELIVERED, но открытый sender DOM оставался с ⌛ до
+переоткрытия чата. Повторный synthetic burst из трёх записей дал
+`Recorded-note queue full` на третьем SEND: третья запись не была сохранена,
+две предыдущие оставались в durable outbox. Stage timings: profile handshake
+~3.5 s, fragment dispatch/ACK ~1–2 s каждый; задержка не равна одному долгому
+вызову шифрования.
+Новый контракт от пользователя: voice/circle media bytes только через EMS
+S-TURN; Account-encrypted ordinary messages несут лишь invitation/receipt
+metadata. Offline запись зашифрована на устройстве отправителя до подтверждения
+online peer; bounded retry invitation без отдельного presence oracle. Старые
+pending rows сохранить. S-TURN EMS уже включён и real WSS ticket + forced
+relay datachannel 32 KiB/hash PASS, но Node health сейчас ошибочно проверяет
+лишь TCP connect. Ни live call/file UI, ни новый recorded-note path ещё не PASS.
+Owner agents: qa_account_media (media), node_audit (S-TURN health), ui_inventory
+(браузерная приёмка). Полная N7/N3 цель остаётся открытой.
+
+`Contact acceptance owner mismatch` воспроизведён без изменения существующего
+ciphertext: сохранённый Accept принадлежит первому Account slot, повтор под
+другим Account должен направлять к исходному владельцу, а не переподписывать.
+Изолированный fix `dd357e1132c98a73d07f86bccbe193281d69caac` имеет 6 targeted
+UNIT + 7 synthetic UI PASS, но **ещё не интегрирован и не deployed**.
 
 .26 сохраняет PUBLIC request до сетевого PoW, сразу показывает честную очередь,
 имеет подготовку/cancel и guards root/Account/same-slot relogin. Shared JS/Python
@@ -140,14 +179,14 @@ Forge SSH GitHub push недоступен; HTTPS fetch работает. Пуб
 обычный fast-forward push, затем Forge origin fetch. Production checkout и
 секреты не включались в bundle. Подробности — [FORGE_SYNC.md](FORGE_SYNC.md).
 
-### Опубликованный runtime baseline (историческая приёмка до текущего аудита)
+### Исторический `.24` runtime baseline (не текущий deploy)
 
 | Параметр | Значение |
 |---|---|
 | Репозиторий | https://github.com/Seriy615/D-MASH |
 | Ветка разработки | `transport-v3` — имя историческое, здесь также лежит v4 |
-| Последний runtime commit | `ed200730dab2e64fc8446e344ce54dbd37cfeec5` |
-| Опубликованный release | `transport-v3-recorded-fragments-20261008.24` |
+| `.24` runtime commit | `ed200730dab2e64fc8446e344ce54dbd37cfeec5` |
+| `.24` release | `transport-v3-recorded-fragments-20261008.24` |
 | PWA | https://messenger.d-mash.ru/not_messenger/ |
 | v3 gateway, временный migration path | `wss://stage-api-ems.d-mash.ru/dmp-c/v3` |
 | Native unified Node endpoint | `wss://stage-api-ems.d-mash.ru/mesh/v4` |
@@ -156,9 +195,9 @@ Forge SSH GitHub push недоступен; HTTPS fetch работает. Пуб
 | EMS backend / frontend | `/opt/dmash-node/backend` / `/opt/dmash-node/frontend` |
 | EMS PWA root | `/srv/messenger.d-mash.ru/public_html/not_messenger` |
 
-Runtime SHA выше committed, pushed и deployed; EMS checkout синхронизирован через
-его существующий `tools/get_commit.sh FULL_SHA`. Exact verifier дважды проверил
-**205 файлов: missing=[], changed=[]**. `dmash-node`, `dmash-sturn`, `coturn`:
+Этот `.24` SHA ранее был deployed; он не описывает текущую `.27` PWA/`.26`
+backend. Исторический exact verifier проверил **205 файлов**.
+`dmash-node`, `dmash-sturn`, `coturn`:
 active/running, NRestarts=0. Последние PWA-изменения не требовали restart backend.
 Коммит документации хендоффа будет новее runtime SHA; его брать из `git rev-parse
 HEAD`. Это не отдельный новый runtime release и не доказательство нового deploy.
@@ -457,17 +496,17 @@ owner/proxy/ports, сохранить identities и state, проверить ro
 
 ## 6. Как воспроизвести и что делать первым
 
-Текущую опубликованную PWA можно проверить следующим скриптом; новый хост может
-потребовать другие executable/module paths. Эта команда создаёт fresh synthetic
-browser Accounts, не читает пользовательские существующие vaults.
+Текущую `.27` PWA проверять на exact commit следующими командами. Browser
+harness создаёт fresh synthetic Accounts, не читает пользовательские vaults;
+Node/Playwright/Chromium paths должны соответствовать текущему окружению.
 
 ```bash
-DMASH_TEST_MEDIA=1 DMASH_TEST_CALL=1 DMASH_CONTACT_MODE=public \
-DMASH_TEST_CONTACT_UI=1 DMASH_DROP_INITIAL_CONTACT=1 \
-DMASH_EXPECT_RELEASE=transport-v3-recorded-fragments-20261008.24 \
+python3 tools/verify_ems_revision.py 637c9bb02c2c57a05e8edc815678b6fb204f632c
+DMASH_EXPECT_SHA=637c9bb02c2c57a05e8edc815678b6fb204f632c \
+DMASH_EXPECT_RELEASE=transport-v3-node-preparation-20261008.27 \
 DMASH_CHROME=/absolute/path/to/chromium \
 DMASH_PLAYWRIGHT_MODULE=/absolute/path/to/playwright \
-node tools/test_pwa_two_accounts.cjs
+node tools/qa_ui_hotfix.cjs
 ```
 
 Основные scripts: `tools/test_node_transit_browser.cjs` +

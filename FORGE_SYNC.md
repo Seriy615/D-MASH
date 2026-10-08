@@ -52,15 +52,23 @@ ordinary Account/contact UI → Node v4 cutover остаётся главным 
 
 ## Текущая разработка и публикация
 
-8 октября 2026: Forge HEAD и origin/transport-v3 после push/fetch совпали:
-`a4fd2aa24f31f07c372da5573f638f8d331df8af` (Account committed-session
-lifecycle + QA helper; exact UNIT280+11+76, browser UI29/29 source-overlay,
-ordinary v4 UI not wired).
-Production runtime остаётся `3c513601ef3990b6514e247d879324b7b72da494`. Предыдущий QA-only checkpoint:
-`2c4523d533df34681fdb682ffeccded5d791b5eb`. Текущий runtime release `.26`
-опубликован через existing EMS get_commit.sh по полному SHA;214 source files
-совпадают, missing/changed отсутствуют. Backup static PWA:
-`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T004036Z`.
+8 октября 2026: verified source integration base ветки `transport-v3`:
+`1a75299adf24423126d598dedc9db903e574d3ea` (release merge + Node
+retry dedupe); exact UNIT **281 backend +11 Origin +82 JS PASS**. Отдельный
+integration worktree `/tmp/dmash-release27-integration` от этого SHA; shared
+checkout `/home/jcode/D-MASH` временно остаётся на `62f97d7` с сохранённым
+uncommitted WIP агентов. Его нельзя reset/checkout через WIP ради косметического
+совпадения HEAD. Documentation-only commit может сделать branch HEAD новее
+source base; точный текущий HEAD проверять `git rev-parse origin/transport-v3`.
+Следующая интеграция должна учесть merge и WIP по файлам.
+
+Production PWA exact commit `637c9bb02c2c57a05e8edc815678b6fb204f632c`,
+release `.27`; backend остаётся `3c513601ef3990b6514e247d879324b7b72da494`.
+EMS `get_commit.sh` развернул только PWA по достижимому из ветки side commit,
+без Node service/keys/DB. Exact source **215/215**; deployed fresh browser
+**16/16 actual UI PASS**, page/SW `.27`, 135 loaded resources exact SHA.
+Backup static PWA:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T021346Z`.
 Текущая браузерная приёмка/FAIL/limits — CURRENT_HANDOFF.md и BROWSER_QA.md.
 
 Прямой Forge SSH push всё ещё denied(publickey). Авторизованный existing EMS
@@ -68,7 +76,10 @@ GitHub key публикует exact Forge commits через отдельный 
 repository и проверенный incremental Git bundle. Push обычный fast-forward,
 без force. Production checkout EMS остался на `ed200730…`: deploy извлекает
 полный SHA через git archive, поэтому checkout HEAD не runtime evidence.
-Root deploy использует scoped safe.directory и SSH от codex, без копирования
-секретов или глобальной настройки. Backend обновлён только route_discovery_v4.py после consistent protected snapshot
-6 DB,4 key files unchanged; dependencies/config/storage schema не менялись.
+Root deploy использует scoped safe.directory, без копирования секретов или
+глобальной настройки. После fetch в EMS checkout исправлена Git metadata
+ownership root→codex для objects и origin ref; contents, runtime state и
+deployment files не затронуты. Backend .26 ранее обновлён только
+`route_discovery_v4.py` после consistent protected snapshot6 DB;
+4 key files unchanged, dependencies/config/storage schema не менялись.
 Разработка и интеграция остаются на Forge; production не переносился.

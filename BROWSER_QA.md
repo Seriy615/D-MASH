@@ -8,12 +8,16 @@
 
 ## Актуальный release checkpoint
 
-Runtime **3c513601ef3990b6514e247d879324b7b72da494**, `.26`, опубликован на EMS.
-Exact source214/214; UNIT266 backend +11 Origin +72 JS PASS. Independent exact
-source-overlay fresh PUBLIC Request/Accept/Confirm/key exchange/messages PASS
-(SW BLOCKED); separate deployed actual UI **13/13 PASS**, page+SW.26,
-135 loaded resources exactSHA, errors=[], exit0. Real Worker transit/Inbox/lock
-PASS in separate browser+Python transport. [Manifest](docs/evidence/2026-10-08/qa-release26-manifest.json).
+PWA **637c9bb02c2c57a05e8edc815678b6fb204f632c**, `.27`, опубликована на EMS;
+backend остаётся **3c513601ef3990b6514e247d879324b7b72da494**. Exact source
+**215/215**, missing/changed []; source branch merge `1a75299` exact UNIT281
+backend +11 Origin +82 JS PASS. Independent deployed Chromium fresh two-profile
+PUBLIC Request/Accept/Confirm, key exchange, messages and FlipLock: **16/16 PASS**,
+page+SW обоих profiles `.27`, 135 loaded sources exact SHA, errors [], exit0.
+Immediate key feedback 473 ms. Physical mobile orientation NOT RUN. `.26` baseline
+13/13 PASS и [manifest](docs/evidence/2026-10-08/qa-release26-manifest.json)
+остаются historical evidence, не текущим release. [Deployed `.27` browser report](docs/evidence/2026-10-08/qa-ui-hotfix-deployed27.json)
+и [sanitized live pairing note](docs/evidence/2026-10-08/qa-live-pair-deployed26-sanitized.md).
 Deployed readiness CDP logpoints may affect timing; difficulty22 observed, duplicate
 proof work remains a hypothesis until exactresource equality is observed. Previous
 intermittent timeout evidence is retained, not overwritten by this successful run.
@@ -36,6 +40,11 @@ RUN in that specific upgradeprofile due harness locator, independently PASS on.2
 | PUBLIC-REQUEST-LOADING-01 | PASS .26 visibility/queue | 3c51360; durable request before PoW, truthful saved card; cancel/lifecycle guards and real fresh pair pass |
 | ACCOUNT-DELETE-01 | FAIL | Registry removal does not erase selected history from shared vault; previous early PASS withdrawn |
 | ROUTE-READY-01 | OPEN | Eventual v3 message success does not prove immediate readiness |
+| KEY-EXCHANGE-NO-FEEDBACK-01 | PASS .27 | Initial open button + visible pending/error state; real deployed key exchange and bidirectional messages 16/16 |
+| FLIPLOCK-MISSING-01 | PASS .27 | Both Account and global settings OFF→ON→OFF via real deployed UI; physical mobile orientation NOT RUN |
+| CONTACT-OWNER-MISMATCH-01 | FAIL .26; .27 NOT RUN | User screenshot .26; exact encrypted-flow diagnosis; isolated fix dd357e1 7/7 synthetic UI PASS, integration/deploy pending |
+| RECORDED-NOTE-QUEUE-01 | FAIL .26; .27 NOT RUN | User `Recorded-note queue full`; deployed .26 synthetic 2.3 s voice took ~54 s, delivered but open sender still ⌛ until chat reopen; third immediate recording hit queue-full and was discarded. S-TURN media redesign pending. No storage reset |
+| S-TURN-HEALTH-01 | OPEN | EMS real WSS ticket + forced relay 32 KiB/hash PASS; advertised health still TCP-only; call/file/recorded-note UI acceptance NOT RUN |
 
 ## Текущая интеграция (не deployed UI)
 
