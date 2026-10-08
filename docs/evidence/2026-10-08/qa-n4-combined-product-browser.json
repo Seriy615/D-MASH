@@ -42,12 +42,25 @@
       "opaquePacketCount": 28,
       "repeatedOpaquePacketCount": 10,
       "privateRawEvidenceSha256": "1b6cb50f063c82c61703b410882a9d18979e11f35f0986e4d3d5ee226126be23"
+    },
+    {
+      "fixture": "tools/test_account_app_restart_pending_node_browser.cjs",
+      "exitCode": 0,
+      "checks": [
+        "first authenticated ACK deliberately withheld after recipient history commit",
+        "sender reload preserves Node identity, confirmed Account session, and PENDING history",
+        "resumed sender keeps exact inner ciphertext and uses a fresh outer transport operation",
+        "recipient duplicate reaches Account history once and returns authenticated ACK",
+        "sender advances existing history to DELIVERED and retires outbox only after ACK"
+      ],
+      "opaquePacketCount": 16,
+      "privateRawEvidenceSha256": "c1988ab46f9bca05b857b1bdf83df10fd227b2ca4692be43e94dd4bc9593de6d"
     }
   ],
   "limits": [
     "Synthetic Account setup invokes Core/runtime functions; it does not click ordinary contact/chat controls.",
     "No deployed page, service worker, actual user Account, or production EMS is part of these gates.",
-    "Pending migration across confirmed-session rekey, never-online first send, and full N4 loss/reorder/crash matrix remain unverified.",
+    "Pending migration across confirmed-session rekey, recipient offline at first send, and full N4 loss/reorder/crash matrix remain unverified.",
     "The combined candidate is inactive in ordinary Core UI; Worker CONNECT reuse fix requires separate Node integration."
   ]
 }
