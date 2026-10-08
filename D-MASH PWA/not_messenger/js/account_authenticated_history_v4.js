@@ -28,16 +28,17 @@
   });}
   async migrateContact(peer){
    this.#check();if(!valid(peer)||typeof this.#verifyMigration!=='function')fail('HISTORY_MIGRATION_PROOF_REQUIRED');
-   const proof=await this.#wait(this.#verifyMigration(peer));if(!proof||proof.peer!==peer||!valid(proof.bindingDigest)||!valid(proof.sessionId)||!Number.isSafeInteger(proof.generation)||proof.generation<1)fail('HISTORY_MIGRATION_PROOF_REQUIRED');
    const alias=await this.#alias(peer,'L1'),marker=await this.#alias(DOMAIN+'MIGRATION|'+peer,'APP_V4');
+   const verify=async()=>{const raw=await this.#wait(this.#verifyMigration(peer));if(!raw||raw.peer!==peer||!valid(raw.bindingDigest)||!valid(raw.sessionId)||!Number.isSafeInteger(raw.generation)||raw.generation<1||!Array.isArray(raw.dependencies)||raw.dependencies.length!==3||new Set(raw.dependencies.map(x=>x?.alias)).size!==3||raw.dependencies.some(x=>!valid(x?.alias)||[alias,marker].includes(x.alias)||typeof x.blob!=='string'||!x.blob.length||x.blob.length>1000000))fail('HISTORY_MIGRATION_PROOF_REQUIRED');return {proof:{peer,bindingDigest:raw.bindingDigest,generation:raw.generation,sessionId:raw.sessionId},dependencies:raw.dependencies.map(x=>({alias:x.alias,blob:x.blob}))};};
+   const initial=await verify(),proof=initial.proof;
    for(let retry=0;retry<8;retry++){
     const prior=await this.#read({blind_peers:alias,pairing_material:marker}),contact=await this.#plain(prior.blind_peers),receipt=await this.#plain(prior.pairing_material,DOMAIN+marker);
     if(!contact||contact.id!==peer)fail('HISTORY_EXISTING_CONTACT_REQUIRED');
-    if(receipt){if(receipt.type!=='ACCOUNT_CONTACT_MIGRATION_V4'||receipt.peer!==peer||receipt.bindingDigest!==proof.bindingDigest||receipt.generation!==proof.generation||contact.transportProfile!=='NODE_ACCOUNT_V4')fail('HISTORY_MIGRATION_CHANGED');return {migrated:true,duplicate:true};}
-    if(contact.transportProfile==='NODE_ACCOUNT_V4')fail('HISTORY_MIGRATION_RECORD_MISSING');
-    const fresh=await this.#wait(this.#verifyMigration(peer));if(JSON.stringify(fresh)!==JSON.stringify(proof))fail('HISTORY_MIGRATION_CHANGED');
-    const rows={blind_peers:{alias,blob:await this.#crypt({...contact,transportProfile:'NODE_ACCOUNT_V4',nodeBindingDigest:proof.bindingDigest,nodeBindingGeneration:proof.generation})},pairing_material:{alias:marker,blob:await this.#crypt({type:'ACCOUNT_CONTACT_MIGRATION_V4',...proof,previousContact:prior.blind_peers,at:Date.now()},DOMAIN+marker)}};
-    try{await this.#commit(prior,rows);return {migrated:true,duplicate:false};}catch(e){this.#check();if(e.code!=='HISTORY_CONFLICT')throw e;}
+    if(receipt){if(receipt.type!=='ACCOUNT_CONTACT_MIGRATION_V4'||receipt.peer!==peer||receipt.bindingDigest!==proof.bindingDigest||receipt.generation!==proof.generation||contact.transportProfile!=='NODE_ACCOUNT_V4')fail('HISTORY_MIGRATION_CHANGED');}
+    else if(contact.transportProfile==='NODE_ACCOUNT_V4')fail('HISTORY_MIGRATION_RECORD_MISSING');
+    const fresh=await verify();if(JSON.stringify(fresh.proof)!==JSON.stringify(proof))fail('HISTORY_MIGRATION_CHANGED');
+    const rows=receipt?{blind_peers:prior.blind_peers,pairing_material:prior.pairing_material}:{blind_peers:{alias,blob:await this.#crypt({...contact,transportProfile:'NODE_ACCOUNT_V4',nodeBindingDigest:proof.bindingDigest,nodeBindingGeneration:proof.generation})},pairing_material:{alias:marker,blob:await this.#crypt({type:'ACCOUNT_CONTACT_MIGRATION_V4',...proof,previousContact:prior.blind_peers,at:Date.now()},DOMAIN+marker)}};
+    try{await this.#commit(prior,rows,fresh.dependencies);return {migrated:true,duplicate:!!receipt};}catch(e){this.#check();if(e.code!=='HISTORY_CONFLICT')throw e;}
    }
    fail('HISTORY_CONTENTION');
   }
