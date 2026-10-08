@@ -1,0 +1,42 @@
+{
+  "scope": "Independent deployed .33 browser acceptance with live EMS S-TURN; fresh synthetic PRIVATE Accounts; no user profile touched",
+  "exact_sha": "d9faf9b93d0aa6f3440560ffc31227b5f9c089e2",
+  "release": "transport-v3-node-preparation-20261008.33",
+  "deployed_static_files": {
+    "tracked": 212,
+    "missing": 0,
+    "changed": 0,
+    "extras": 0
+  },
+  "video": {
+    "checks_pass": 21,
+    "checks_fail": 0,
+    "loaded_responses": 130,
+    "source_match": true,
+    "page_errors": 0,
+    "page_and_active_sw_release": true,
+    "relay_both": true,
+    "sender_frames_encoded": 39,
+    "receiver_frames_decoded": 38,
+    "sender_video_bytes": 46821,
+    "receiver_video_bytes": 45609,
+    "fingerprint_stable": true
+  },
+  "mobile": {
+    "checks_pass": 19,
+    "checks_fail": 0,
+    "loaded_responses": 130,
+    "source_match": true,
+    "page_errors": 0,
+    "page_and_active_sw_release": true,
+    "call_connected": true,
+    "file_sha_match": true,
+    "voice_and_circle": "receiver decrypt/play UI and sender delivered retained-byte release passed"
+  },
+  "limits": [
+    "Physical Android retest pending",
+    "Intermittent voice latency remains open",
+    "File auto-receive and inline durable chat file still not implemented",
+    "Ordinary Node N0-N8 not accepted"
+  ]
+}

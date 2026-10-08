@@ -43,46 +43,37 @@ commit также доставляется на Forge, его полный SHA �
 
 ## 2. Текущий Forge и EMS checkpoint
 
-**Source:** Forge `/home/jcode/D-MASH`, ветка `transport-v3`; exact deployed
-product source `042d5803d5d622da72848c67d96bd5c8243c4819` сверен с Forge
-`origin/transport-v3`. Новейший tip ветки после
-обновления документации проверять через `git rev-parse origin/transport-v3`.
-Интеграция выполнена в отдельном worktree; shared checkout содержит WIP агентов
-и не является release tree. Отправка Git — обычный fast-forward через временный
-EMS publisher, Forge origin SHA сверен. Исторические состояния до `.30`
-[архивированы](docs/archive/2026-10-08/CURRENT_HANDOFF_PRE30_SECTIONS_2_3.md).
+**Source и production PWA:** Forge `/home/jcode/D-MASH`, ветка `transport-v3`,
+проверенный release commit `d9faf9b93d0aa6f3440560ffc31227b5f9c089e2`.
+GitHub `origin/transport-v3` сверен с ним после fast-forward через временный
+EMS publisher. В EMS штатный `get_commit.sh` развернул только PWA из этого exact
+commit. Страница и active controlling SW на двух новых browser profiles —
+`transport-v3-node-preparation-20261008.33`; read-only verifier **212/212**
+tracked PWA files, `missing=[]`, `changed=[]`, extras 0. Backup текущего deploy:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T120310Z`.
+Ни Node backend, ни DB/keys/identities этот PWA deploy не менял. Интеграция
+выполнена в `/tmp/dmash-node-public-integration`; shared Forge checkout с WIP
+агентов не использован как release tree. Последующий documentation commit может
+сдвинуть branch HEAD, поэтому production exact SHA указать отдельно.
 
-**Production PWA:** EMS `get_commit.sh` развернул exact `042d580...` с
-page и active controlling SW `transport-v3-node-preparation-20261008.32`.
-**Следующий кандидат `.33` ещё не опубликован:** integration product
-`cc673fdd80f263c7a355dcbb6f37455140dcc59d`, тестовый fix
-`71cbfe52693ac9e833a5869df1cd268b89abe300`. Детерминированная загрузка
-`call_session.js` закрывает Android `CallSignalingSession` при звонке/файле;
-video-toggle запрашивает камеру по клику и согласует видео в текущем S-TURN
-звонке. Независимый source-overlay Chromium на exact candidate: video **21/21**,
-130/130 loaded source bytes, RTP 40 encoded/39 decoded frames через relay,
-fingerprint не изменился, page errors 0. Первый independent mobile seam:
-звонок и файл/SHA PASS, но voice decrypt button не появился за 180 с после
-них (17 prior checks PASS). Повторный instrumented seam на новых Accounts:
-**19/19 PASS** включая voice/circle, 108 source bodies (2 intentional injection),
-page errors 0; оба media intent DELIVERED за одну попытку. Intermittent
-voice delay остаётся OPEN, причину первого таймаута не доказали.
-Normal mobile startup **19/19 PASS**, 130/130 source responses; общий
-[публичный metadata отчёт](docs/evidence/2026-10-08/qa-media33-root-source.json).
-Full `tools/test_all.py`: Python 286 + Origin 11 + все JS suites PASS.
-Затем push/deploy и
-exact deployed page/SW/transport. Не сбрасывать пользовательские профили.
-Backup PWA: `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T104727Z`.
-На текущем EMS каталог `/home/jcode/D-MASH` существует, но системного пользователя
-`jcode` нет: `su - jcode` отказал. Проверен и запущен тот же штатный
-`get_commit.sh` от root с scoped Git `safe.directory`, как требует его
-`sudo` usage; script сам создал backup, проверил nginx и публичные assets.
-Read-only exact verifier: **258/258 source files**, `missing=[]`, `changed=[]`.
-Node backend не менялся при `.32`; предыдущие согласованные S-TURN/Node
-конфигурация, identities и базы сохранены. После `.30` PWA deploy реальные
-authenticated TURN UDP/TCP relay и WSS scoped tickets/signaling были PASS;
-на `.32` независимый browser снова передал voice/file через EMS S-TURN.
-Новый backend/runtime migration из Forge source автоматически не следует.
+`.33` грузит `call_session.js` детерминированно и закрывает Android
+`CallSignalingSession` при звонке/файле; video-toggle запрашивает камеру по клику
+и согласует видео в текущем S-TURN звонке. Независимая deployed Chromium
+приёмка на двух fresh synthetic PRIVATE Accounts: **21/21 video UI** и **19/19
+mobile media UI** PASS; page/active SW `.33`, каждая проверка сверила 130
+загруженных source responses с exact SHA, page errors 0. Receiver декодировал
+38 RTP video frames через relay, fingerprint сохранился; call подключился,
+file download hash совпал, voice/circle расшифрованы и доставлены.
+[Публичный deployed отчёт](docs/evidence/2026-10-08/qa-media33-root-deployed.json).
+До публикации source-overlay mobile seam выявил один intermittent voice timeout
+после звонка/файла: decrypt button не появился за 180 с; повторные seam/normal
+source и deployed mobile прошли. Причина не доказана, latency bug **OPEN**;
+Android пользователя `.33` отдельно не проверен. Профиль и данные пользователя
+не сбрасывались. Full `tools/test_all.py` на release source: Python 286,
+Origin 11 и все JS suites PASS с Python3.12/Node24.19.0.
+
+Исторические состояния до `.30`
+[архивированы](docs/archive/2026-10-08/CURRENT_HANDOFF_PRE30_SECTIONS_2_3.md).
 
 **Тесты `.32` source:** Python **286**, Origin **11** и все JS suites
 `tools/test_all.py` PASS с Python3.12/Node24.19.0, включая MIME, captured
@@ -235,9 +226,9 @@ N7 video-toggle на deployed `.32` воспроизведён реальным�
 через relay работает, но после 📷 `getUserMedia` не вызывается повторно,
 локальных и удалённых video tracks нет и ошибки в UI нет. Причина в audio-only
 `_setupMedia` плюс `toggleVideo`, который только переключает уже существующий
-track; mid-call renegotiation не было. Candidate `.33` прошёл независимый
-source-overlay browser RTP gate, но production video call остаётся FAIL до
-exact deployed retest.
+track; mid-call renegotiation не было. `.33` уже прошёл independent deployed
+video RTP/browser gate выше; физический Android и Node-integrated N7 остаются
+непроверенными.
 Новое явное требование пользователя для N7: подтверждённый контакт получает
 файлы автоматически, без согласия на каждый файл; файл остаётся в переписке
 как долговечный зашифрованный элемент с доступным preview/open, а отправитель
