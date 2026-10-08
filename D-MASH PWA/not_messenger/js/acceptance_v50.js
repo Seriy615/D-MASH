@@ -494,9 +494,54 @@
             if (recipientCertificate.routeId !== String(descriptor.r)) throw new Error("RouteCertificate does not match RouteID");
             if (!global.DeviceRoutes.verifyCertificate(recipientCertificate)) throw new Error("RouteCertificate signature is invalid");
 
+            // Proof workers are shared with DNSS/route restoration. Their API
+            // exposes only cancelAll(), so cancellation invalidates this owner
+            // without aborting unrelated work or deleting a durable request.
+            if (this._publicRequestPreparation) throw new Error('Запрос уже готовится.');
+            const rootState = global.DeviceRoot?.state;
+            const accountKeys = this.keys, accountSalt = this.blindSalt, bootAttempt = this._accountBootAttempt;
+            const operation = { cancelled: false, durable: false };
+            let unlisten, watch, timeout;
+            const cleanup = () => { clearInterval(watch); clearTimeout(timeout); unlisten?.(); };
+            this._publicRequestPreparation = operation;
+            const ownsAccount = () => this.activeIdentity === requestAccountSlot && global.DeviceRoot?.state === rootState && this.keys === accountKeys && this.blindSalt === accountSalt && this._accountBootAttempt === bootAttempt && !this._accountTransitioning;
+            const ownsModal = () => this._publicRequestPreparation === operation && !!document.querySelector('[data-public-request-preparation]');
+            const closePreparation = () => { if (ownsModal()) this.closeModal(); };
+            const invalidate = () => { operation.cancelled = true; closePreparation(); cleanup(); if (this._publicRequestPreparation === operation) this._publicRequestPreparation = null; };
+            const cancel = () => { if (!operation.durable) invalidate(); };
+            const check = () => {
+                if (operation.cancelled || !ownsAccount() || this._publicRequestPreparation !== operation) {
+                    const error = new Error('Public request preparation cancelled');
+                    error.publicRequestCancelled = true;
+                    throw error;
+                }
+            };
+            const markDurable = () => {
+                check(); operation.durable = true;
+                const note = document.querySelector('[data-public-request-preparation]');
+                if (note) note.textContent = 'Сохраняем запрос. Его состояние появится в списке контактов.';
+                const button = document.querySelector('[data-public-request-cancel]');
+                if (button) { button.disabled = true; button.textContent = 'СОХРАНЯЕМ ЗАПРОС…'; }
+            };
+            this.openModal('ГОТОВИМ ЗАПРОС', `<div data-public-request-preparation class="dmash-settings-note">Готовим защищённый маршрут. Это может занять до 90 секунд. Запрос ещё не отправлен.</div><button class="dmash-settings-action primary" data-public-request-cancel>ОТМЕНА</button>`);
+            document.querySelector('[data-public-request-cancel]')?.addEventListener('click', cancel);
+            unlisten = global.DeviceRoot?.onLock?.(invalidate);
+            watch = setInterval(() => { if (!ownsAccount()) invalidate(); }, 250);
+            timeout = setTimeout(() => {
+                if (!operation.durable && !operation.cancelled) {
+                    cancel();
+                    if (ownsAccount()) this.customAlert('ЗАПРОС НЕ ОТПРАВЛЕН', 'Подготовка маршрута заняла слишком долго. Попробуйте ещё раз.');
+                }
+            }, 90000);
+            try {
             let reply = global.DeviceRoutes.currentActivePublicRoute ? global.DeviceRoutes.currentActivePublicRoute() : global.DeviceRoutes.current();
             if (!reply) reply = await global.DeviceRoutes.issue({ type: "public-contact", allowedAccounts: [] });
-            await global.NodeManager?.probeActivePublicDeviceRoutes?.();
+            check();
+            const durableFlow = global.ContactFlowV3 && global.NodeManager.transportMode !== 'legacy';
+            // The durable dispatcher activates the reply route itself. Persist
+            // first so slow proof work has a visible, restart-safe waiting card.
+            if (!durableFlow) await global.NodeManager?.probeActivePublicDeviceRoutes?.();
+            check();
             const replyCertificate = plainCertificate(reply.certificate);
             const requestId = b64url(crypto.getRandomValues(new Uint8Array(32)));
             const request = global.ContactPayloads.validateRequest({
@@ -515,20 +560,30 @@
                 validator: global.ContactPayloads,
                 encrypt: ({ plaintext, recipientCertificate: certificate }) => sealForCertificate(certificate, plaintext),
                 submit: async ({ routeLocator, envelope }) => {
-                    if(global.ContactFlowV3&&global.NodeManager.transportMode!=='legacy'){
+                    check();
+                    if(durableFlow){
                         const flow=core.getContactFlowV3();
+                        markDurable();
                         await flow.recordOutgoing(request,recipientCertificate,requestAccountSlot,envelope);
-                        deferred=!await flow.dispatchInitial(request.request_id,requestAccountSlot);
-                        return {state:deferred?'REQUEST_DEFERRED':'NODE_ACCEPTED'};
+                        check();
+                        deferred = true;
+                        // Existing flow owns retries and records delivery errors.
+                        // Keep this UI result truthful: locally saved, not SENT.
+                        void flow.dispatchInitial(request.request_id,requestAccountSlot).catch(() => {});
+                        return {state:'REQUEST_DEFERRED'};
                     }
                     const ready = global.NodeManager.ensurePublicRouteV3
                         ? await global.NodeManager.ensurePublicRouteV3(routeLocator, reply.routeId)
                         : await global.NodeManager.routeStatus(routeLocator);
+                    check();
                     if (!ready) throw new Error("RouteID пока не найден в mesh. Получатель должен быть online хотя бы на одной Node.");
                     if (ready.connection.client) {
+                        markDurable();
                         await core.getContactFlowV3().recordOutgoing(request, recipientCertificate, requestAccountSlot);
+                        check();
                         return global.NodeManager.submitDeviceEnvelopeV3(routeLocator, 'CONN_REQUEST', envelope, recipientCertificate, ready.connection);
                     }
+                    markDurable();
                     return global.NodeManager.requestOn(ready.connection, "SUBMIT_CONTACT", {
                         route_locator: routeLocator,
                         envelope,
@@ -545,7 +600,15 @@
                 recipientCertificate,
                 payload: request
             });
+            check();
             this.customAlert(deferred?'ЗАПРОС СОХРАНЁН':'ОТПРАВЛЕНО',deferred?'Запрос появится у собеседника после восстановления маршрута. Повторы выполняются автоматически.':'Запрос в контакты отправлен через Public Route.');
+            } catch (error) {
+                if (!error.publicRequestCancelled && ownsAccount() && !operation.cancelled) this.customAlert('CONTACT ROUTE', error.message);
+            } finally {
+                cleanup();
+                closePreparation();
+                if (this._publicRequestPreparation === operation) this._publicRequestPreparation = null;
+            }
         };
 
         // Quick Names are a chooser, not a prefilled text field.

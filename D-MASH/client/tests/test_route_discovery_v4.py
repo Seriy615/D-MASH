@@ -8,7 +8,7 @@ from nacl.exceptions import BadSignatureError, CryptoError
 from nacl.public import PrivateKey
 from nacl.signing import SigningKey
 from backend.route_discovery_v4 import (issue_certificate,verify_certificate,create_query,
-    answer_query,verify_reply,seal,open_box)
+    answer_query,verify_reply,seal,open_box,certificate_transcript)
 
 class RouteDiscoveryV4Tests(unittest.TestCase):
     def setUp(self):
@@ -72,3 +72,43 @@ class RouteDiscoveryV4Tests(unittest.TestCase):
         for invalid in ('?',query+'\n',base64.b64encode(bytes(71)).decode(),'A'*22000):
             with self.assertRaises(ValueError):open_box(self.box,invalid)
         with self.assertRaises(ValueError):seal(bytes(self.box.public_key),{'data':'x'*16384})
+
+    def test_cross_language_strict_certificate_vectors(self):
+        fixture=json.loads((Path(__file__).resolve().parents[3]/'D-MASH PWA/not_messenger/tests/fixtures/route_discovery_strict_v4.json').read_text())
+        cases=[self.cert]
+        def signed(**patch):
+            cert=dict(self.cert,**patch)
+            cert['signature']=self.owner.sign(certificate_transcript(cert)).signature.hex()
+            return cert
+        for key in fixture['ed_reject']:
+            cases.append(signed(discovery_sign=key))
+            cases.append(dict(self.cert,route_id=key,signature='01'+'00'*63))
+            cases.append(dict(self.cert,signature=key+self.cert['signature'][64:]))
+        for field in ('discovery_box','recipient_box'):
+            for key in fixture['x_reject']:
+                cases.append(signed(**{field:key}))
+            alias=bytearray.fromhex(self.cert[field]);alias[31]|=128
+            cases.append(signed(**{field:alias.hex()}))
+        sig=bytes.fromhex(self.cert['signature'])
+        malleated=sig[:32]+(int.from_bytes(sig[32:],'little')+int.from_bytes(bytes.fromhex(fixture['scalar_order_le']),'little')).to_bytes(32,'little')
+        cases.append(dict(self.cert,signature=malleated.hex()))
+        accepted=[]
+        for cert in cases:
+            try:verify_certificate(cert,self.now)
+            except (ValueError,CryptoError):accepted.append(False)
+            else:accepted.append(True)
+        self.assertEqual(accepted,[True]+[False]*(len(cases)-1))
+        self.assertEqual(self.peer(dict(mode='verifyBatch',certificates=cases))['accepted'],accepted)
+
+    def test_reply_scalar_malleability_both_languages(self):
+        query,state=create_query(self.cert,now=self.now)
+        reply=answer_query(query,self.cert,self.sign,self.box,now=self.now)
+        response=open_box(state['reply_private'],reply)
+        signature=bytes.fromhex(response['signature'])
+        order=2**252+27742317777372353535851937790883648493
+        response['signature']=(signature[:32]+(int.from_bytes(signature[32:],'little')+order).to_bytes(32,'little')).hex()
+        boxed=seal(bytes(state['reply_private'].public_key),response)
+        with self.assertRaises(BadSignatureError):verify_reply(boxed,state,now=self.now)
+        self.assertFalse(self.peer(dict(mode='verifyAccepted',reply=boxed,state={
+            'query':state['query'],'certificate':state['certificate'],
+            'reply_private':bytes(state['reply_private']).hex()}))['accepted'])

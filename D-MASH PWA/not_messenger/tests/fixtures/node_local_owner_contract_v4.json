@@ -1,0 +1,39 @@
+{
+  "contract": "D-MASH local Node owner API v4",
+  "status": "PROPOSED_NOT_IMPLEMENTED",
+  "wire": false,
+  "rootSessionToken": {
+    "representation": "opaque object reference registered by coordinator",
+    "comparison": "strict object identity, never caller string/boolean",
+    "invalidatedBy": ["root lock", "coordinator stop", "root session replacement", "host closure"],
+    "authority": "root session identification only; not Account/route ownership"
+  },
+  "ownerCapability": {
+    "representation": "separate opaque object reference registered by local owner authority",
+    "binding": ["root session token", "stable blind local slot", "immutable route authority digest"],
+    "accountMutationGuard": "independent Account generation; invalidated by logout/switch",
+    "wireDisclosure": "none"
+  },
+  "bootstrap": {
+    "state": "BOOTSTRAP_ONLY",
+    "bounds": ["quota", "expiry", "authenticated pairing-control type allowlist"],
+    "accountDelivery": false,
+    "established": false,
+    "purpose": "exchange authenticated binding receipts before active Account route mapping"
+  },
+  "reservedLocalAPIs": [
+    "prepareLocalBinding(ownerCapability, migrationId, bindingDigest, expectedGeneration, certificate, privateMaterial)",
+    "activateLocalBinding(ownerCapability, preparationHandle, accountCommitDigest)",
+    "queryLocalBinding(ownerCapability, migrationId)",
+    "retireLocalBinding(ownerCapability, preparationHandle, expectedGeneration, replacementDigest)"
+  ],
+  "invariants": [
+    "migration IDs and digests alone confer no authority",
+    "matching immutable tuple is required for idempotent retry",
+    "private arrays consumed and zeroed on all terminal outcomes",
+    "pending final binding is not advertised or Account-dispatchable",
+    "separate bounded bootstrap handler never delivers user payload",
+    "cross-database commit is journaled and resumable, not globally atomic",
+    "no implicit v3 fallback"
+  ]
+}

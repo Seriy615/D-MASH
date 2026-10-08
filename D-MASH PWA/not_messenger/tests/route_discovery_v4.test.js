@@ -7,9 +7,26 @@ const api=require('../js/route_discovery_v4.js');
  const now=1800000000;
  const cert=api.issueCertificate(owner,sign.publicKey,box.publicKey,recipient.publicKey,{generation:1,issuedAt:now,expiresAt:now+3600});
  assert(api.verifyCertificate(cert,now));
+ const strict=require('./fixtures/route_discovery_strict_v4.json');
+ const h=bytes=>Buffer.from(bytes).toString('hex');
+ const signed=patch=>{const candidate={...cert,...patch};candidate.signature=h(nacl.sign.detached(api.certificateTranscript(candidate),owner.secretKey));return candidate;};
+ for(const key of strict.ed_reject){
+  assert.throws(()=>api.verifyCertificate(signed({discovery_sign:key}),now));
+  assert.throws(()=>api.verifyCertificate({...cert,route_id:key,signature:'01'+'00'.repeat(63)},now));
+  assert.throws(()=>api.verifyCertificate({...cert,signature:key+cert.signature.slice(64)},now));
+ }
+ for(const field of ['discovery_box','recipient_box']){
+  for(const key of strict.x_reject)assert.throws(()=>api.verifyCertificate(signed({[field]:key}),now));
+  const alias=Buffer.from(cert[field],'hex');alias[31]|=128;
+  assert.throws(()=>api.verifyCertificate(signed({[field]:h(alias)}),now));
+ }
+ const addL=signature=>{const bytes=Buffer.from(signature,'hex'),order=Buffer.from(strict.scalar_order_le,'hex');let carry=0;for(let i=0;i<32;i++){const n=bytes[i+32]+order[i]+carry;bytes[i+32]=n&255;carry=n>>>8;}return h(bytes);};
+ assert.throws(()=>api.verifyCertificate({...cert,signature:addL(cert.signature)},now));
  const {blob,state}=api.createQuery(cert,{now});
  const reply=await api.answerQuery(blob,cert,sign,box,{now});
  assert(await api.verifyReply(reply,state,{now}));
+ const noncanonicalReply=api.openBox(state.replyPrivate,reply);noncanonicalReply.signature=addL(noncanonicalReply.signature);
+ await assert.rejects(api.verifyReply(api.seal(nacl.box.keyPair.fromSecretKey(state.replyPrivate).publicKey,noncanonicalReply),state,{now}),e=>e.code==='NON_CANONICAL_SIGNATURE');
  let clockCalls=0;await assert.rejects(api.verifyReply(reply,state,{clock:()=>clockCalls++?now+181:now}));
  clockCalls=0;await assert.rejects(api.answerQuery(blob,cert,sign,box,{clock:()=>clockCalls++?now+181:now}));
  const payload=api.seal(recipient.publicKey,{opaque:'test payload'});

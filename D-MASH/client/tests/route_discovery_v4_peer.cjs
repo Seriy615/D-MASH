@@ -6,15 +6,18 @@ const api=require(path.join(js,'route_discovery_v4.js'));
 const bytes=hex=>new Uint8Array(Buffer.from(hex,'hex'));
 (async()=>{
  const input=JSON.parse(fs.readFileSync(0,'utf8')),options={now:input.now};
- if(input.mode==='answer'){
+ if(input.mode==='verifyBatch'){
+  process.stdout.write(JSON.stringify({accepted:input.certificates.map(cert=>{try{api.verifyCertificate(cert,input.now);return true;}catch{return false;}})}));
+ }else if(input.mode==='answer'){
   const sign=nacl.sign.keyPair.fromSeed(bytes(input.sign)),box=nacl.box.keyPair.fromSecretKey(bytes(input.box));
   const reply=await api.answerQuery(input.query,input.certificate,sign,box,options);
   process.stdout.write(JSON.stringify({reply}));
  }else if(input.mode==='query'){
   const {blob,state}=api.createQuery(input.certificate,options);
   process.stdout.write(JSON.stringify({blob,state:{query:state.query,certificate:state.certificate,reply_private:Buffer.from(state.replyPrivate).toString('hex')}}));
- }else if(input.mode==='verify'){
+ }else if(input.mode==='verify'||input.mode==='verifyAccepted'){
   const state={query:input.state.query,certificate:input.state.certificate,replyPrivate:bytes(input.state.reply_private)};
-  process.stdout.write(JSON.stringify({accepted:await api.verifyReply(input.reply,state,options)}));
+  let accepted;try{accepted=await api.verifyReply(input.reply,state,options);}catch(error){if(input.mode!=='verifyAccepted')throw error;accepted=false;}
+  process.stdout.write(JSON.stringify({accepted}));
  }else throw Error('Unknown test mode');
 })().catch(()=>{process.stderr.write('Discovery interop failed');process.exitCode=1;});

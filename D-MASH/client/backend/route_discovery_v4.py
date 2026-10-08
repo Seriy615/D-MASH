@@ -11,6 +11,8 @@ import secrets
 import struct
 import time
 
+from nacl.bindings import crypto_scalarmult
+from nacl.exceptions import BadSignatureError, RuntimeError as NaClRuntimeError
 from nacl.public import Box, PrivateKey, PublicKey
 from nacl.signing import VerifyKey
 
@@ -31,6 +33,64 @@ def _integer(value):
     return struct.pack('>Q',value)
 
 
+# Encoding guards matching route_discovery_v4.js, not a prime-subgroup proof.
+# libsodium 1.0.18 ge25519_has_small_order, lines 1022–1075:
+# https://github.com/jedisct1/libsodium/blob/1.0.18/src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c#L1022
+# Source SHA256 40291bba865beab9817381460cda1d977a106c11cf4c393f854e25979d84bfc7
+# /*
+#  * ISC License
+#  *
+#  * Copyright (c) 2013-2019
+#  * Frank Denis <j at pureftpd dot org>
+#  *
+#  * Permission to use, copy, modify, and/or distribute this software for any
+#  * purpose with or without fee is hereby granted, provided that the above
+#  * copyright notice and this permission notice appear in all copies.
+#  *
+#  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+#  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+#  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+#  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+#  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+#  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+#  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#  */
+_ED_SMALL = {bytes.fromhex(value) for value in (
+    '00'*32, '01'+'00'*31,
+    '26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05',
+    'c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a',
+    'ec'+'ff'*30+'7f', 'ed'+'ff'*30+'7f', 'ee'+'ff'*30+'7f')}
+_P = 2**255-19
+_L = 2**252+27742317777372353535851937790883648493
+
+
+def _ed_encoding(value):
+    y = bytearray(_hex(value)); y[31] &= 127
+    if int.from_bytes(y, 'little') >= _P or bytes(y) in _ED_SMALL:
+        raise ValueError('Invalid Ed25519 public encoding')
+
+
+def _signature_encoding(value):
+    signature = _hex(value, 64)
+    try:
+        _ed_encoding(signature[:32].hex())
+        if int.from_bytes(signature[32:], 'little') >= _L:
+            raise ValueError('Noncanonical scalar')
+    except ValueError as error:
+        raise BadSignatureError('Invalid Ed25519 signature encoding') from error
+
+
+def _x_encoding(value):
+    point = _hex(value)
+    if int.from_bytes(point, 'little') >= _P:
+        raise ValueError('Invalid X25519 public encoding')
+    # libsodium rejects all-zero shared results, matching the JS public probe.
+    try:
+        crypto_scalarmult(bytes([8])+bytes(31), point)
+    except NaClRuntimeError as error:
+        raise ValueError('Invalid low-order X25519 public key') from error
+
+
 def certificate_transcript(cert):
     if not isinstance(cert,dict) or set(cert)!=CERT_FIELDS or type(cert['version']) is not int or cert['version']!=4:
         raise ValueError('Invalid discovery certificate')
@@ -46,6 +106,9 @@ def verify_certificate(cert,now=None):
     transcript=certificate_transcript(cert)
     if not cert['issued_at']<=now+60 or cert['expires_at']<=now:
         raise ValueError('Discovery certificate expired')
+    _ed_encoding(cert['route_id']); _ed_encoding(cert['discovery_sign'])
+    _x_encoding(cert['discovery_box']); _x_encoding(cert['recipient_box'])
+    _signature_encoding(cert['signature'])
     VerifyKey(_hex(cert['route_id'])).verify(transcript,_hex(cert['signature'],64))
     return transcript
 
@@ -120,5 +183,6 @@ def verify_reply(blob,state,*,now=None):
             or type(response['expires_at']) is not int or response['expires_at']!=query['expires_at']):
         raise ValueError('Discovery reply context mismatch')
     verify_certificate(response['certificate'],now)
+    _signature_encoding(response['signature'])
     VerifyKey(_hex(cert['discovery_sign'])).verify(_reply_transcript(query,cert),_hex(response['signature'],64))
     return True
