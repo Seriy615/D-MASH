@@ -39,6 +39,11 @@ const output=path.resolve(process.env.DMASH_QA_OUTPUT||'docs/evidence/2026-10-08
  await inventory('Saved Messages');
  await step('UI09-empty','Click SEND empty; no message row',async()=>{const n=await page.locator('.msg-del-btn').count();await click('SEND');assert.equal(await page.locator('.msg-del-btn').count(),n);});
  await step('UI09-send','Fill local text and click SEND',async()=>{await page.locator('#msgInput').fill('Synthetic QA local message');await click('SEND');await page.locator('#log .m-txt').filter({hasText:'Synthetic QA local message'}).waitFor();});
+ if(process.env.DMASH_QA_SESSION_RACE==='1')await step('BROWSER-runtime-session-race','Supplemental instrumented pending write/wrong password and authenticated replacement; not a UI login flow',async()=>{
+  report.sessionRace=await require('./qa_account_session_race.cjs')(page,{account,password});
+  await page.locator('#contact-list').getByText('Избранное',{exact:true}).click();
+  await page.locator('#log .m-txt').filter({hasText:'Synthetic QA local message'}).waitFor();
+ });
  await step('UI09-rename-cancel','Click rename then cancel',async()=>{await page.locator('#chat-header button[onclick*="renameCurrent"]').click();await click('ОТМЕНА');await page.locator('#msgInput').waitFor({state:'visible'});});
  await step('UI09-delete-cancel','Click message delete then НЕТ',async()=>{await page.locator('.msg-del-btn').first().click();await click('НЕТ');await page.locator('#log .m-txt').filter({hasText:'Synthetic QA local message'}).waitFor();});
  await step('UI09-password-cancel','Click chat password then cancel',async()=>{await page.getByTitle('Пароль чата',{exact:true}).click();await click('ОТМЕНА');});
@@ -52,8 +57,13 @@ const output=path.resolve(process.env.DMASH_QA_OUTPUT||'docs/evidence/2026-10-08
  await step('UI10-voice-play','Click decrypt local audio and play native media control',async()=>{await click('РАСШИФРОВАТЬ');const audio=page.locator('#log audio');await audio.waitFor({state:'visible'});await audio.click({position:{x:20,y:20}});await page.waitForFunction(()=>document.querySelector('#log audio')?.currentTime>0);});
  await step('UI10-circle-cancel','Start circle camera capture and cancel',async()=>{await page.locator('#circle-btn').click();await page.locator('#circle-preview').waitFor({state:'visible'});await inventory('Circle recording');await page.locator('#circle-btn').click();await page.locator('#circle-preview').waitFor({state:'hidden'});});
  await step('UI12-local-file','Select synthetic file in Saved Messages; truthful unsupported message',async()=>{const chooser=page.waitForEvent('filechooser');await page.locator('button[onclick="Core.uiAttach()"]').click();await(await chooser).setFiles({name:'synthetic.txt',mimeType:'text/plain',buffer:Buffer.from('synthetic')});await page.getByText('Локальное сохранение файлов пока недоступно. Текст и записи сохраняются без транспорта.',{exact:true}).waitFor();await click('OK');});
+ if(process.env.DMASH_QA_SESSION_RACE==='1')await page.evaluate(()=>{
+  const cap=Core.captureAccountSessionV4();window.qaLogoutObservation={aborted:false,beforeZero:false};
+  cap.signal.addEventListener('abort',()=>{window.qaLogoutObservation={aborted:true,beforeZero:cap.keys.sign.secretKey.some(v=>v!==0),reason:cap.signal.reason};},{once:true});
+ });
  await step('UI02-logout','Click ВЫХОД and verify registry selector',async()=>{await click('[ ВЫХОД ]');await page.getByText('КТО ЗАХОДИТ?',{exact:true}).waitFor();});
  await inventory('Account selector');
+ if(process.env.DMASH_QA_SESSION_RACE==='1')await step('BROWSER-UI-logout-revocation','Click logout must synchronously abort captured Account before key zeroing',async()=>{const result=await page.evaluate(()=>window.qaLogoutObservation);assert(result.aborted&&result.beforeZero);report.logoutRevocation=result;});
  await step('UI02-select','Select saved Account and verify prefilled identifier',async()=>{await click(account);assert.equal(await page.locator('#p1').inputValue(),account);});
  await step('UI02-return','Click К СПИСКУ',async()=>{await click('К СПИСКУ');await page.getByText('КТО ЗАХОДИТ?',{exact:true}).waitFor();});
  await step('UI02-login','Select saved Account and enter key',async()=>{await click(account);await page.locator('#p2').fill(password);await click('ВОЙТИ');await page.locator('#contact-list').getByText('Избранное',{exact:true}).waitFor({timeout:60000});});

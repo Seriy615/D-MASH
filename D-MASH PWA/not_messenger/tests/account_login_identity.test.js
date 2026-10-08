@@ -5,10 +5,10 @@ const material=pass=>new Uint8Array(128).fill(pass==='correct'?7:9);
 const pk=pass=>Buffer.from(nacl.sign.keyPair.fromSeed(material(pass).slice(64,96)).publicKey).toString('hex');
 function fixture(){
  const calls={vault:0,register:0,migration:0,material:0,launch:0};const root={root:new Uint8Array(32),identity:{deviceId:'root',fingerprints:{},signing:{},agreement:{}}};
- const storage={masterKey:{old:true},getRegistryAccount:async()=>({pk:pk('correct')+'a'.repeat(128)}),initGamma:async(_,{isCurrent})=>{assert(isCurrent());calls.vault++;},registerAccount:async()=>calls.register++};
- const win={location:{},addEventListener(){},nacl,argon2:{argon2id:2,hash:async({pass})=>({hash:material(pass)})},DeviceRoot:{state:root,deviceMaterial:async()=>{calls.material++;return new Uint8Array(3584);},migrateLegacy:async()=>{calls.migration++;return root;}},ui:{show_gate:async()=>{},update(){}}};
+ const storage={db:{},masterKey:{old:true},getRegistryAccount:async()=>({pk:pk('correct')+'a'.repeat(128)}),initGamma:async(_,{isCurrent})=>{assert(isCurrent());calls.vault++;},registerAccount:async()=>calls.register++};
+ const win={location:{},addEventListener(){},nacl,argon2:{argon2id:2,hash:async({pass})=>({hash:material(pass)})},DeviceRoot:{state:root,onLock(){return ()=>{};},deviceMaterial:async()=>{calls.material++;return new Uint8Array(3584);},migrateLegacy:async()=>{calls.migration++;return root;}},ui:{show_gate:async()=>{},update(){}}};
  const local={getItem:()=>null,setItem(){},removeItem(){},clear(){}};
- const c={console,Promise,Array,Map,Set,Object,Uint8Array,TextEncoder,window:win,ui:win.ui,document:{getElementById:()=>null},localStorage:local,sessionStorage:local,crypto,URL,Storage:storage,KyberWasm:{init(){}}};vm.createContext(c);vm.runInContext(fs.readFileSync(require.resolve('../js/core_engine.js'),'utf8'),c);
+ const c={AbortController,console,Promise,Array,Map,Set,Object,Uint8Array,TextEncoder,window:win,ui:win.ui,document:{getElementById:()=>null},localStorage:local,sessionStorage:local,crypto,URL,Storage:storage,KyberWasm:{init(){}}};vm.createContext(c);vm.runInContext(fs.readFileSync(require.resolve('../js/core_engine.js'),'utf8'),c);
  const core=win.Core;core.deviceState=root;core.launchWorkspace=async()=>calls.launch++;core.advertiseActiveAccountPrivateRoutes=async()=>{};core.killAllMedia=()=>{};core.closeModal=()=>{};core.callState='idle';return{core,win,storage,calls,root};
 }
 (async()=>{
@@ -17,6 +17,16 @@ function fixture(){
  assert.equal(f.core.keys,original);assert.equal(f.storage.masterKey,master);assert.deepEqual(f.calls,{vault:0,register:0,migration:0,material:0,launch:0});assert.equal(f.core.activeIdentity,null);
  f.root.legacy=true;await assert.rejects(f.core.boot('saved','wrong'),/Неверный ключ/);assert.equal(f.calls.migration,0);delete f.root.legacy;
  await f.core.boot('saved','correct',{register:true});assert.equal(f.core.keys.server_id,pk('correct'));assert.equal(f.calls.vault,1);assert.equal(f.calls.register,1);assert(f.core.gammaKeys.master.some(x=>x!==0));
+ const session=f.core.captureAccountSessionV4(),sessionKeys=f.core.keys;
+ let finishWrong,wrongEntered;const wrongReady=new Promise(r=>wrongEntered=r);
+ f.win.argon2.hash=()=>new Promise(r=>{finishWrong=r;wrongEntered();});
+ const wrongActive=assert.rejects(f.core.boot('saved','wrong'),/Неверный ключ/);await wrongReady;
+ assert(session.isCurrent());session.assertCurrent();assert.equal(f.core.captureAccountSessionV4(),session);
+ finishWrong({hash:material('wrong')});await wrongActive;assert(session.isCurrent());assert.equal(f.core.keys,sessionKeys);assert.equal(f.calls.vault,1);
+ let observedAbort=false;session.signal.addEventListener('abort',()=>{observedAbort=true;assert.equal(f.core.keys,sessionKeys);});
+ f.win.argon2.hash=async()=>({hash:material('correct')});await f.core.boot('saved','correct');
+ assert(observedAbort);assert(!session.isCurrent());assert(f.core.captureAccountSessionV4().generation>session.generation);
+ await assert.rejects(f.core.recoverDeviceAfterConfirmedMaster('x'),error=>error.code==='RECOVERY_REQUIRED');assert.equal(f.win.DeviceRoot.state,f.root);
  const broken=fixture();broken.storage.getRegistryAccount=async()=>({pk:'corrupt'});await assert.rejects(broken.core.boot('saved','correct'),/Неверный ключ/);assert.equal(broken.calls.vault,0);
  const unavailable=fixture();unavailable.storage.getRegistryAccount=async()=>{throw Error('registry decrypt failed');};await assert.rejects(unavailable.core.boot('saved','correct'),/registry decrypt/);assert.equal(unavailable.calls.vault,0);
  const cancel=fixture();let release,started;const ready=new Promise(r=>started=r);cancel.win.argon2.hash=()=>new Promise(r=>{release=r;started();});const boot=assert.rejects(cancel.core.boot('saved','correct'),/ОТМЕНЁН/);await ready;await cancel.core.accountLogout();release({hash:material('correct')});await boot;assert.equal(cancel.calls.vault,0);assert.equal(cancel.core.activeIdentity,null);

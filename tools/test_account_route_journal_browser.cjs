@@ -11,20 +11,20 @@ const sources=new Map(names.map(name=>['/js/'+name,fs.readFileSync(path.join(__d
   const setup=async()=>page.evaluate(async()=>{
    const hex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join(''),seed=n=>new Uint8Array(32).fill(n);
    const person=n=>({n,sign:nacl.sign.keyPair.fromSeed(seed(n)),box:nacl.box.keyPair.fromSecretKey(seed(n+1)),route:nacl.sign.keyPair.fromSeed(seed(n+2)),ds:nacl.sign.keyPair.fromSeed(seed(n+3)),db:nacl.box.keyPair.fromSecretKey(seed(n+4)),recipient:nacl.box.keyPair.fromSecretKey(seed(n+5))});
-   const people=[person(1),person(11)].sort((a,b)=>hex(a.sign.publicKey)<hex(b.sign.publicKey)?-1:1),local=people[0],remote=people[1],third=person(21),now=1800000000;
+   const people=[person(1),person(11)].sort((a,b)=>hex(a.sign.publicKey)<hex(b.sign.publicKey)?-1:1),local=people[0],remote=people[1],third=person(21);let now=1800000000;
    await Storage.initGamma(seed(100));
    const pairing=DmashAccountPairingV2.createCodec({nacl,discovery:DmashRouteDiscoveryV4}),binding=DmashAccountRouteBindingV2.createBindingCodec({nacl,discovery:DmashRouteDiscoveryV4,pairing,clock:()=>now});
    const bundle=(p,{generation=1,previous=null,id=p.n+30,contribution=p.n+60,target=null}={})=>pairing.sign({type:'DMASH_PAIRING_V2',version:2,transport_version:4,pairing_id:hex(seed(id)),generation,issued_at:now,expires_at:now+600,previous_binding:previous,intended_peer:target,contribution:hex(seed(contribution)),account_keys:{signing:hex(p.sign.publicKey),box:hex(p.box.publicKey),kem_profile:'LEGACY_KYBER768_BUNDLE_V1',kem_public:btoa(String.fromCharCode(...new Uint8Array(1184).fill(p.n))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')},inbound_certificate:DmashRouteDiscoveryV4.issueCertificate(p.route,p.ds.publicKey,p.db.publicKey,p.recipient.publicKey,{generation,issuedAt:now,expiresAt:now+900})},p.sign.secretKey,{now,localAccount:target??undefined}).serialized;
    const make=async(p=local,keyByte=100)=>{
     const controller=new AbortController(),observers=new Set(),root={state:{},onLock(fn){observers.add(fn);return()=>observers.delete(fn);},lock(){this.state=null;for(const fn of observers)fn();}};
     const key=await crypto.subtle.importKey('raw',seed(keyByte),'AES-GCM',false,['encrypt','decrypt']),storage={db:Storage.db,masterKey:key},core={keys:{sign:p.sign},blindSalt:seed(p.n+120),activeIdentity:'synthetic-'+p.n,_accountBootAttempt:{},_accountTransitioning:false};
-    const options={storage,core,deviceRoot:root,accountSignal:controller.signal,bindingCodec:binding},journal=await DmashAccountRouteJournalV2.open(options);return {journal,storage,core,root,controller,options};
+    const options={storage,core,deviceRoot:root,accountSignal:controller.signal,bindingCodec:binding,clock:()=>now},journal=await DmashAccountRouteJournalV2.open(options);return {journal,storage,core,root,controller,options};
    };
    const raw=()=>new Promise((resolve,reject)=>{const tx=Storage.db.transaction('pairing_material','readonly'),r=tx.objectStore('pairing_material').getAll();r.onsuccess=()=>resolve(r.result);tx.onerror=()=>reject(tx.error);});
    const rawPut=row=>new Promise((resolve,reject)=>{const tx=Storage.db.transaction('pairing_material','readwrite');tx.objectStore('pairing_material').put(row);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
    const rejects=async(fn,code)=>{try{await fn();return false;}catch(error){if(code&&error.code!==code)throw error;return true;}};
    const complete=async(bundles,receipt,committed=null)=>{const c=await binding.prepare(bundles,{expectedParticipants:[hex(local.sign.publicKey),hex(remote.sign.publicKey)],committed});return [receipt,binding.signReceipt(c,'CONFIRM',remote.sign.secretKey,receipt)];};
-   window.qa={hex,seed,local,remote,third,binding,bundle,make,raw,rawPut,rejects,complete,peer:hex(remote.sign.publicKey),localId:hex(local.sign.publicKey)};
+   window.qa={setTime:value=>now=value,hex,seed,local,remote,third,binding,bundle,make,raw,rawPut,rejects,complete,peer:hex(remote.sign.publicKey),localId:hex(local.sign.publicKey)};
   });
   await setup();
   const first=await page.evaluate(async()=>{
@@ -47,6 +47,17 @@ const sources=new Map(names.map(name=>['/js/'+name,fs.readFileSync(path.join(__d
    if(await j.readCommitted(q.peer)!==null)throw Error('Reservation activated mapping');
    const result=await j.commit(h,first.full),view=await j.readCommitted(q.peer);if(result.ready||view.ready||view.digest!==h.digest)throw Error('Invalid blocked commit');
    const repeated=await j.commit(h,first.full);if(!repeated.replayed)throw Error('Non-idempotent commit');
+   q.setTime(1800000700);const historical=await j.readRouteSnapshot(q.peer);if(historical.digest!==h.digest||historical.readiness!=='NODE_PROOF_REQUIRED')throw Error('Offer expiry invalidated durable mapping');
+   q.setTime(1800000901);if((await j.readRouteSnapshot(q.peer)).readiness!=='ROUTE_EXPIRED')throw Error('Certificate expiry ignored');
+   const baseline=await q.raw(),records=await j.readCoherent(q.peer);
+   const locations=[await j.location('active',q.peer),{kind:'inbound',alias:records.pointer.inbound},{kind:'outbound',alias:records.pointer.outbound},{kind:'journal',alias:records.pointer.journal}];
+   const saved=await j.read(locations);
+   const strip=value=>{if(value&&typeof value==='object'){delete value.commit_version;delete value.verified_at;for(const child of Object.values(value))strip(child);}};
+   for(const location of locations){const value=saved.get(location);strip(value);await q.rawPut(await j.encrypt(location,value));}
+   const legacyBefore=JSON.stringify(await q.raw());if((await j.readRouteSnapshot(q.peer)).readiness!=='COMMIT_EPOCH_UPGRADE_REQUIRED')throw Error('Historical b9 rows implicitly upgraded');
+   if(JSON.stringify(await q.raw())!==legacyBefore||(await Storage.getBox('blind_messages','synthetic-history-sentinel')).text!=='retained history')throw Error('Old map or history mutated');
+   for(const row of baseline)await q.rawPut(row);q.setTime(1800000000);
+
    const all=JSON.stringify(await q.raw()),encrypted=![q.localId,q.peer,'DMASH_ACCOUNT_ROUTE_RECEIPT',first.receipt].some(value=>all.includes(value));
    const inactive=await q.rejects(()=>j.activate({state:'NODE_ACTIVE'}),'NODE_ACTIVATION_UNIMPLEMENTED');j.close();return {sameReceipt,encrypted,inactive,digest:view.digest};
   },first);

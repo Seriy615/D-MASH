@@ -1,0 +1,719 @@
+{
+  "time": "2026-10-08T01:16:26.217Z",
+  "target": "https://messenger.d-mash.ru/not_messenger/",
+  "limitations": [
+    "Fresh synthetic Account only",
+    "No real user storage",
+    "Local Saved Messages audit; remote media matrix separately required"
+  ],
+  "steps": [
+    {
+      "id": "UI02-empty",
+      "action": "Click ВОЙТИ with empty fields",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-create",
+      "action": "Fill fresh Account credentials, check registry and click ВОЙТИ",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-open",
+      "action": "Click Избранное",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-empty",
+      "action": "Click SEND empty; no message row",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-send",
+      "action": "Fill local text and click SEND",
+      "status": "PASS"
+    },
+    {
+      "id": "BROWSER-runtime-session-race",
+      "action": "Supplemental instrumented pending write/wrong password and authenticated replacement; not a UI login flow",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-rename-cancel",
+      "action": "Click rename then cancel",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-delete-cancel",
+      "action": "Click message delete then НЕТ",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-password-cancel",
+      "action": "Click chat password then cancel",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-password-set",
+      "action": "Set and confirm local history password",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-password-wrong",
+      "action": "Reopen Saved Messages with wrong password",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-password-unlock",
+      "action": "Reopen Saved Messages with correct password and verify history",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-password-remove",
+      "action": "Remove local history password preserving message",
+      "status": "PASS"
+    },
+    {
+      "id": "UI09-delete",
+      "action": "Delete synthetic local message and verify disappearance",
+      "status": "PASS"
+    },
+    {
+      "id": "UI10-voice-cancel",
+      "action": "Start microphone capture, cancel and verify timer hides",
+      "status": "PASS"
+    },
+    {
+      "id": "UI10-voice-send",
+      "action": "Start microphone capture and SEND local recording",
+      "status": "PASS"
+    },
+    {
+      "id": "UI10-voice-play",
+      "action": "Click decrypt local audio and play native media control",
+      "status": "PASS"
+    },
+    {
+      "id": "UI10-circle-cancel",
+      "action": "Start circle camera capture and cancel",
+      "status": "PASS"
+    },
+    {
+      "id": "UI12-local-file",
+      "action": "Select synthetic file in Saved Messages; truthful unsupported message",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-logout",
+      "action": "Click ВЫХОД and verify registry selector",
+      "status": "PASS"
+    },
+    {
+      "id": "BROWSER-UI-logout-revocation",
+      "action": "Click logout must synchronously abort captured Account before key zeroing",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-select",
+      "action": "Select saved Account and verify prefilled identifier",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-return",
+      "action": "Click К СПИСКУ",
+      "status": "PASS"
+    },
+    {
+      "id": "UI02-login",
+      "action": "Select saved Account and enter key",
+      "status": "PASS"
+    },
+    {
+      "id": "UI01-master-history",
+      "action": "Create retained history before master rotation",
+      "status": "PASS"
+    },
+    {
+      "id": "UI01-master-wrong",
+      "action": "Open master reconfiguration and reject wrong old code",
+      "status": "PASS"
+    },
+    {
+      "id": "UI01-master-change",
+      "action": "Enter old code then new master and wipe codes",
+      "status": "PASS"
+    },
+    {
+      "id": "UI01-master-old-deny",
+      "action": "Reload and verify old master does not unlock",
+      "status": "PASS"
+    },
+    {
+      "id": "UI01-master-new-retain",
+      "action": "New master unlocks same registry Account and history",
+      "status": "PASS"
+    }
+  ],
+  "inventory": [
+    {
+      "state": "Account login",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "id": "global-settings-button",
+          "label": "⚙",
+          "type": "button",
+          "disabled": false,
+          "onclick": "ui.renderGlobalSettings()"
+        },
+        {
+          "tag": "INPUT",
+          "id": "p1",
+          "label": "ИДЕНТИФИКАТОР",
+          "type": "text",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "INPUT",
+          "id": "p2",
+          "label": "КЛЮЧ ДОСТУПА",
+          "type": "password",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "INPUT",
+          "id": "save-in-registry",
+          "label": "",
+          "type": "checkbox",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "ВОЙТИ",
+          "type": "submit",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "К СПИСКУ",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "ui.show_gate()"
+        }
+      ]
+    },
+    {
+      "state": "Workspace",
+      "controls": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "label": "МОЙ ID:\n                        7bd1f16595ede00c77379b34...\n                    Connected 0 Nodes",
+          "onclick": "Core.showMyQR()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "СЕТЬ:\n                        ПОДКЛЮЧИТЕСЬ К MESH СЕТИ!",
+          "type": "button",
+          "disabled": false,
+          "onclick": "NodeManager.renderSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ QR ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.openScanner()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ + ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.addPeerPrompt()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "Настройки",
+          "type": "button",
+          "disabled": false,
+          "onclick": "Core.openSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.accountLogout()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "back-btn",
+          "label": "←",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.closeChat()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "✎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.renameCurrent()"
+        }
+      ]
+    },
+    {
+      "state": "Saved Messages",
+      "controls": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "label": "МОЙ ID:\n                        7bd1f16595ede00c77379b34...\n                    Connected 0 Nodes",
+          "onclick": "Core.showMyQR()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "СЕТЬ:\n                        ПОДКЛЮЧИТЕСЬ К MESH СЕТИ!",
+          "type": "button",
+          "disabled": false,
+          "onclick": "NodeManager.renderSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ QR ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.openScanner()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ + ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.addPeerPrompt()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "Настройки",
+          "type": "button",
+          "disabled": false,
+          "onclick": "Core.openSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.accountLogout()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "←",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.closeChat()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "✎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.renameCurrent()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "🔒",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.configureChatPassword()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "📎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiAttach()"
+        },
+        {
+          "tag": "TEXTAREA",
+          "id": "msgInput",
+          "label": "Сообщение...",
+          "type": "textarea",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "BUTTON",
+          "id": "circle-btn",
+          "label": "⭕",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiCircle()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "voice-btn",
+          "label": "🎤",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiVoice()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "SEND",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.sendMessage()"
+        }
+      ]
+    },
+    {
+      "state": "Voice recording",
+      "controls": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "label": "МОЙ ID:\n                        7bd1f16595ede00c77379b34...\n                    Connected 0 Nodes",
+          "onclick": "Core.showMyQR()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "СЕТЬ:\n                        ПОДКЛЮЧИТЕСЬ К MESH СЕТИ!",
+          "type": "button",
+          "disabled": false,
+          "onclick": "NodeManager.renderSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ QR ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.openScanner()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ + ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.addPeerPrompt()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "Настройки",
+          "type": "button",
+          "disabled": false,
+          "onclick": "Core.openSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.accountLogout()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "←",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.closeChat()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "✎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.renameCurrent()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "🔒",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.configureChatPassword()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "📎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiAttach()"
+        },
+        {
+          "tag": "TEXTAREA",
+          "id": "msgInput",
+          "label": "Сообщение...",
+          "type": "textarea",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "BUTTON",
+          "id": "voice-btn",
+          "label": "✕",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiVoice()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "SEND",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.sendMessage()"
+        }
+      ]
+    },
+    {
+      "state": "Circle recording",
+      "controls": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "label": "МОЙ ID:\n                        7bd1f16595ede00c77379b34...\n                    Connected 0 Nodes",
+          "onclick": "Core.showMyQR()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "СЕТЬ:\n                        ПОДКЛЮЧИТЕСЬ К MESH СЕТИ!",
+          "type": "button",
+          "disabled": false,
+          "onclick": "NodeManager.renderSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ QR ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.openScanner()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ + ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.addPeerPrompt()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "Настройки",
+          "type": "button",
+          "disabled": false,
+          "onclick": "Core.openSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.accountLogout()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "←",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.closeChat()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "✎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.renameCurrent()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "🔒",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.configureChatPassword()"
+        },
+        {
+          "tag": "SPAN",
+          "id": "",
+          "label": "×",
+          "onclick": "Core.deleteMessageFlow('2')"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "📎",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiAttach()"
+        },
+        {
+          "tag": "TEXTAREA",
+          "id": "msgInput",
+          "label": "Сообщение...",
+          "type": "textarea",
+          "disabled": false,
+          "onclick": null
+        },
+        {
+          "tag": "BUTTON",
+          "id": "circle-btn",
+          "label": "✕",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.uiCircle()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "SEND",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "Core.sendMessage()"
+        }
+      ]
+    },
+    {
+      "state": "Account selector",
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "id": "global-settings-button",
+          "label": "⚙",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "ui.renderGlobalSettings()"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "qa-local-1791422190295",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "ui.renderLoginForm(decodeURIComponent('qa-local-1791422190295'))"
+        },
+        {
+          "tag": "BUTTON",
+          "id": "",
+          "label": "+ НОВЫЙ ВХОД",
+          "type": "submit",
+          "disabled": false,
+          "onclick": "ui.renderLoginForm()"
+        }
+      ]
+    }
+  ],
+  "source": {
+    "kind": "uncommitted full PWA source overlay",
+    "baseSHA": "35f5c49847b3c0f7ea901a1b77818025e1f0442e",
+    "files": {
+      "index.html": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "js/release.js": "4e9d9a442c428ab22694ae31b3487688e8f700b30f4a3e016b9b9ddb0c7a02a9",
+      "js/device_routes.js": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "js/dmash_links.js": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "js/quick_name_registry.js": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "css/runtime_fixes.css": "8890a358595136854d2491cb5ab689f2bce0baeaf10605332133086084ad84cd",
+      "js/ui_logic.js": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "js/secure_session.js": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "js/device_client_v3.js": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "js/device_authority_v3.js": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "js/device_envelope.js": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "js/device_inbox.js": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "js/account_node_inbox_v4.js": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "js/route_discovery_v4.js": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "js/account_node_transport_v4.js": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "js/private_routes_v3.js": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "js/contact_bootstrap_v3.js": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "js/contact_flow_v3.js": "317d38cd09037f795f205de0a4413ee2ed1d3aae654e38ebc537b66137e6edb7",
+      "js/contact_payloads.js": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "js/contact_transport.js": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "js/pending_contact_requests.js": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "js/resource_pow.js": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "js/ui_global_bridge.js": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "js/runtime_fixes.js": "ced43aefd8949d18eec52ead1aec221ef712457c47b55d0ecf3cd6670f2e6246",
+      "js/public_contact_runtime.js": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "js/acceptance_fixes.js": "46a7c66f691bc6d3554013da7b2e6db37e9b08a06f871eabd6e9c2413221a0d8",
+      "js/acceptance_v50.js": "c7c9c3f24b7d778812f6ef7d0e1d78b4cb4a8786b96fedf1100a5ebf28bc899b",
+      "js/acceptance_v51.js": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "js/call_signaling.js": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "js/call_runtime.js": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "js/account_ratchet.js": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "js/saved_messages.js": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "js/chat_cipher.js": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "js/chat_password.js": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "js/account_ratchet_runtime.js": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "js/account_recorded_media.js": "1b2e661a8fd3c773f1a25eec0a0076086f0040c1ec7f75f5f1e6df2defb6328e",
+      "js/file_channel.js": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "js/file_session.js": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "js/file_runtime.js": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "js/acceptance_v52.js": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "js/acceptance_v54.js": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "js/acceptance_v55.js": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "calc_icon.png": "e2edfaf28b60df71725c0a96fab4c6c80b135415c2913614ac497064b023f4da",
+      "js/vendor/kyber768.js": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "js/vendor/html5-qrcode.min.js": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "js/vendor/qrcode.min.js": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "js/vendor/nacl-util.min.js": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "js/vendor/argon2-bundled.min.js": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "js/device_root.js": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "js/storage.js": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+      "js/call_session.js": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "js/node_manager.js": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+      "js/core_engine.js": "4a8eeed4a8a3ecdbe4f6830829dda79e605a6574c0c9ea9f2ec54aa473560a7a",
+      "js/vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "js/vendor/kyber768.wasm": "e9b316e56f5d1eef1f44f28bca99bec16ec9cff69af4b17d318143512255b009",
+      "nodes.json": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a"
+    }
+  },
+  "page": "transport-v3-node-preparation-20261008.26",
+  "sw": "BLOCKED: uncommitted source overlay",
+  "browser": "156.0.8078.4",
+  "sessionRace": {
+    "pendingWrongKeyCapturedWrite": true,
+    "wrongKeyPreviousSessionUsable": true,
+    "revokeBeforeVaultReplacement": true,
+    "rootRecoveryFailclosed": true,
+    "nodeHost": "NOT_RUN: ordinary Node v4 not wired"
+  },
+  "logoutRevocation": {
+    "aborted": true,
+    "beforeZero": true,
+    "reason": "ACCOUNT_LOGOUT"
+  }
+}

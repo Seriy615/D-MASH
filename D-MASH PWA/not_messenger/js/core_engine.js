@@ -190,13 +190,47 @@ const Core = {
         void window.NodeManager?.onDeviceUnlocked?.().catch(error => this.shmon('WARN', `Node restore deferred: ${error.message}`));
         return deviceState;
     },
-    async recoverDeviceAfterConfirmedMaster(masterPin) {
-        // This method is reached only after the calculator has verified sys_m
-        // and DeviceRoot reported UNLOCK_FAILED. The old encrypted local root
-        // is therefore unusable under the confirmed device secret. Erase that
-        // installation boundary explicitly, then create one new device root.
-        await window.DeviceRoot.eraseForExplicitWipe();
-        return this.unlockDevice(masterPin);
+    async recoverDeviceAfterConfirmedMaster() {
+        // A failed unwrap is not authorization to replace an existing identity.
+        throw Object.assign(new Error('Не удалось открыть сохранённые данные устройства. Данные и ключи не удалены; требуется восстановление доступа.'), {code: 'RECOVERY_REQUIRED'});
+    },
+    _invalidateAccountSessionV4(reason = 'ACCOUNT_CHANGED') {
+        const session = this._accountSessionV4;
+        this._accountSessionV4 = null;
+        session?.controller.abort(reason);
+        session?.offRoot?.();
+    },
+    _publishAccountSessionV4() {
+        if (this._accountSessionV4) throw new Error('ACCOUNT_SESSION_ALREADY_PUBLISHED');
+        const root = window.DeviceRoot;
+        if (!root?.state || !this.keys?.sign || !this.blindSalt || !Storage.db || !Storage.masterKey) {
+            throw new Error('ACCOUNT_SESSION_UNAVAILABLE');
+        }
+        const generation = (this._accountSessionGenerationV4 || 0) + 1;
+        if (!Number.isSafeInteger(generation)) throw new Error('ACCOUNT_SESSION_GENERATION_EXHAUSTED');
+        const controller = new AbortController();
+        const captured = {accountId: this.activeIdentity, generation, signal: controller.signal,
+            keys: this.keys, blindSalt: this.blindSalt, db: Storage.db, masterKey: Storage.masterKey,
+            rootState: root.state};
+        const session = {controller, capability: null, offRoot: null};
+        const isCurrent = () => this._accountSessionV4 === session && !controller.signal.aborted &&
+            root.state === captured.rootState && !!root.state && this.keys === captured.keys &&
+            this.blindSalt === captured.blindSalt && this.activeIdentity === captured.accountId &&
+            Storage.db === captured.db && Storage.masterKey === captured.masterKey;
+        captured.isCurrent = isCurrent;
+        captured.assertCurrent = () => { if (!isCurrent()) throw new Error('ACCOUNT_SESSION_CHANGED'); };
+        session.capability = Object.freeze(captured);
+        this._accountSessionGenerationV4 = generation;
+        this._accountSessionV4 = session;
+        session.offRoot = root.onLock(() => this._invalidateAccountSessionV4('ROOT_LOCKED'));
+        captured.assertCurrent();
+        return session.capability;
+    },
+    captureAccountSessionV4() {
+        const capability = this._accountSessionV4?.capability;
+        if (!capability) throw new Error('ACCOUNT_SESSION_UNAVAILABLE');
+        capability.assertCurrent();
+        return capability;
     },
     async changeDeviceMasterSecret(currentMasterPin, nextMasterPin) {
         // This is deliberately device-scoped.  Account passwords never unwrap
@@ -278,6 +312,7 @@ const Core = {
             stagedKeys.kyber = {publicKey: quantum.pk, secretKey: quantum.sk};
             stagedKeys.pub_hex = signingId + this.bytesToHex(stagedKeys.box.publicKey) + this.bytesToHex(quantum.pk);
             stagedKeys.server_id = signingId;
+            this._invalidateAccountSessionV4('ACCOUNT_VAULT_REPLACEMENT');
             await Storage.initGamma(fullHash.slice(0, 32), {isCurrent: current});
             guard();
             window.DmashChatPassword?.clear();
@@ -295,6 +330,7 @@ const Core = {
             if (options.register === true) await Storage.registerAccount(identity, stagedKeys.pub_hex);
             guard();
             this._accountTransitioning = false;
+            this._publishAccountSessionV4();
             void this.advertiseActiveAccountPrivateRoutes();
             await this.launchWorkspace();
             return true;
@@ -566,6 +602,7 @@ const Core = {
     // NodeManager deliberately survive so another local account can be chosen
     // without a device lock or transport reconnect.
     async accountLogout() {
+        this._invalidateAccountSessionV4('ACCOUNT_LOGOUT');
         this._accountBootAttempt = null;
         window.DmashChatPassword?.clear();
         window.DmashFileRuntime?.cancel(this);
@@ -651,6 +688,7 @@ const Core = {
     },
     // Core.terminateSession   - Экстренное затирание ключей в RAM и выход в "калькулятор"
     terminateSession: function() {
+        this._invalidateAccountSessionV4('ROOT_LOCKED');
         this._accountBootAttempt = null;
         window.DmashResourcePow?.cancelAll();
         window.DmashChatPassword?.clear();

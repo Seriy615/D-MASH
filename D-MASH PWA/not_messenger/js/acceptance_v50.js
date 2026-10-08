@@ -307,7 +307,7 @@
 
         // Never replace DeviceRoot automatically after a verified master code.
         core.recoverDeviceAfterConfirmedMaster = async function noAutomaticRootReplacement() {
-            throw new global.DeviceRootError("RECOVERY_REQUIRED", "DeviceRoot не будет автоматически заменён. Используйте привязанную биометрию или явный wipe/recovery.");
+            throw new global.DeviceRootError("RECOVERY_REQUIRED", "Не удалось открыть сохранённые данные устройства. Данные и ключи не удалены; требуется восстановление доступа.");
         };
 
         // Completed security workflows return to a clean fresh page.

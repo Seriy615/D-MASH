@@ -110,15 +110,24 @@
    if(!Array.isArray(receipts)||receipts.length!==2)fail('BOTH_RECEIPTS_REQUIRED');
    const checked=receipts.map(receipt=>verifyReceipt(candidate,receipt));
    if(new Set(checked.map(r=>r.phase)).size!==2)fail('BOTH_RECEIPTS_REQUIRED');
-   const status=checkGeneration(data,committedSnapshot(context.committed));
-   return Object.freeze({status,binding:data.binding,digest:data.digest,receipts:Object.freeze(['ACCEPT','CONFIRM'].map(phase=>receipts[checked.findIndex(r=>r.phase===phase)]))});
+   const status=checkGeneration(data,committedSnapshot(context.committed)),verifiedAt=now();
+   if(data.binding.expires_at<=verifiedAt)fail('EXPIRED');
+   return Object.freeze({status,binding:data.binding,digest:data.digest,verifiedAt,receipts:Object.freeze(['ACCEPT','CONFIRM'].map(phase=>receipts[checked.findIndex(r=>r.phase===phase)]))});
+  }
+  async function verifyCommitted(serializedBundles,receipts,context){
+   // The caller must obtain this epoch from its authenticated durable journal.
+   // This validates history only and never creates a currently signable candidate.
+   integer(context?.verifiedAt);if(context.verifiedAt>now())fail('COMMIT_EPOCH_FUTURE');
+   const historical=createBindingCodec({nacl,discovery,pairing,subtle,clock:()=>context.verifiedAt});
+   const candidate=await historical.prepare(serializedBundles,context);
+   return historical.verifyReceipts(candidate,receipts,context);
   }
   function compareCandidates(left,right){
    const a=current(left),b=current(right);
    if(a.binding.generation!==b.binding.generation||a.binding.previous_binding!==b.binding.previous_binding||a.binding.participants.some((p,i)=>p.account!==b.binding.participants[i].account))fail('INCOMPARABLE_CANDIDATES');
    for(let i=0;i<2;i++){const x=a.binding.participants[i].bundle_digest,y=b.binding.participants[i].bundle_digest;if(x!==y)return x<y?-1:1;}return 0;
   }
-  return Object.freeze({prepare,signReceipt,verifyReceipt,verifyReceipts,compareCandidates});
+  return Object.freeze({prepare,signReceipt,verifyReceipt,verifyReceipts,verifyCommitted,compareCandidates});
  }
  const api=Object.freeze({createBindingCodec,MAX_BINDING,MAX_RECEIPT});global.DmashAccountRouteBindingV2=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

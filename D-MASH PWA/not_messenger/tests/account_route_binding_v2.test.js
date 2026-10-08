@@ -102,6 +102,9 @@ print('Python canonical binding reconstruction + libsodium receipt signatures PA
  const expiring=createBindingCodec({nacl,discovery,pairing,clock:()=>now,subtle:{digest:async(...args)=>{const value=await crypto.subtle.digest(...args);now=1800000601;return value;}}});
  await rejects(()=>expiring.prepare([a,b],context()),'EXPIRED');
  throws(()=>api.verifyReceipts(candidate,signed,{committed:null}),'EXPIRED');
+ const history=await api.verifyCommitted([a,b],signed,{...context(),verifiedAt:1800000000});assert.equal(history.digest,candidate.digest);
+ await rejects(()=>api.verifyCommitted([a,b],signed,{...context(),verifiedAt:now+1}),'COMMIT_EPOCH_FUTURE');
+ await rejects(()=>api.verifyCommitted([a,b],signed,{...context(),verifiedAt:now}),'EXPIRED');
  console.log('PASS Account route bilateral binding: canonical real signatures, two phases, identity/certificate pinning, crossed-offer advisory order, replay/generation/predecessor and expiry guards');
  assert.equal(candidate.digest,'df17d9ee42e9a66913242e4f5499393913dbf5802750a63cfde036d95ffec3d7');
  assert.equal(require('node:crypto').createHash('sha256').update(signed.join('\n')).digest('hex'),'656d4f58c7cf0dcf24a282ec76657a2d9cf3aa5eeb0a0e3baff61a18825cda9a');

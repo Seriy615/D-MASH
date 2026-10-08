@@ -224,7 +224,7 @@
         // failed to decrypt DeviceRoot. A storage/authentication fault must fail
         // closed and preserve the existing identity.
         core.recoverDeviceAfterConfirmedMaster = async function noAutomaticDeviceReplacement() {
-            throw new global.DeviceRootError("RECOVERY_REQUIRED", "DeviceRoot не будет автоматически заменён. Используйте привязанную биометрию или явный wipe/recovery.");
+            throw new global.DeviceRootError("RECOVERY_REQUIRED", "Не удалось открыть сохранённые данные устройства. Данные и ключи не удалены; требуется восстановление доступа.");
         };
 
         // The retired passwordless Account path stays disabled and is removed
