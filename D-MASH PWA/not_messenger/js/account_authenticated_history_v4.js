@@ -5,7 +5,7 @@
  const fail=code=>{throw Object.assign(Error(code),{code});};
  const valid=x=>typeof x==='string'&&/^[0-9a-f]{64}$/.test(x);
  class AccountAuthenticatedHistoryV4{
-  #verifySuccessor;#verifyMigration;#session;#hash;#salt;#closed=false;#txs=new Set();#abort;
+  #deliveryProofs=new WeakMap();#verifySuccessor;#verifyMigration;#session;#hash;#salt;#closed=false;#txs=new Set();#abort;
   constructor({core,verifyMigration=null,verifySuccessor=null}){
    if(typeof core?.captureAccountSessionV4!=='function'||typeof core.fastHash!=='function')fail('HISTORY_ACCOUNT_REQUIRED');
    this.#verifySuccessor=verifySuccessor;this.#verifyMigration=verifyMigration;this.#session=core.captureAccountSessionV4();this.#session.assertCurrent();this.#hash=core.fastHash.bind(core);this.#salt=this.#session.blindSalt.slice();
@@ -102,6 +102,21 @@
     const dependencies=await verify();if(dependencies.some(x=>x.alias===marker||x.alias===alias||x.alias===messageAlias))fail('HISTORY_SUCCESSOR_REQUIRED');try{await this.#commit(prior,{blind_peers:prior.blind_peers,pairing_material:updated,blind_messages:read.blind_messages},dependencies);return {persisted:true,duplicate,seq:receipt.seq};}catch(e){this.#check();if(e.code!=='HISTORY_CONFLICT')throw e;}
    }fail('HISTORY_CONTENTION');
   }
+  async #deliveryStatus({peer,operationId,bindingDigest,generation,sessionId}){
+   this.#check();if(!valid(peer)||!valid(operationId)||!valid(bindingDigest)||!valid(sessionId)||!Number.isSafeInteger(generation)||generation<1)fail('HISTORY_ACK_SCHEMA');
+   const alias=await this.#alias(peer,'L1'),marker=await this.#alias(DOMAIN+'OUTGOING|'+peer+'|'+operationId,'APP_V4');
+   for(let retry=0;retry<8;retry++){
+    const prior=await this.#read({blind_peers:alias,pairing_material:marker}),contact=await this.#plain(prior.blind_peers),receipt=await this.#plain(prior.pairing_material,DOMAIN+marker);
+    if(!contact||contact.id!==peer||contact.transportProfile!=='NODE_ACCOUNT_V4'||contact.chatLock)fail('HISTORY_CONTACT_MIGRATION_REQUIRED');
+    if(!receipt||receipt.type!=='ACCOUNT_HISTORY_RECEIPT_V4'||receipt.peer!==peer||receipt.operationId!==operationId||receipt.bindingDigest!==bindingDigest||receipt.generation!==generation||receipt.sessionId!==sessionId||!valid(receipt.digest)||!Number.isSafeInteger(receipt.seq)||receipt.seq<1)fail('HISTORY_ACK_CONTEXT');
+    const messageAlias=await this.#alias(alias+receipt.seq,'L3'),read=await this.#read({blind_messages:messageAlias}),message=await this.#plain(read.blind_messages);prior.blind_messages=read.blind_messages;
+    if(!message||message.wireId!==operationId||message.inbound!==false||message.accountTransport!=='NODE_ACCOUNT_V4'||!['PENDING','DELIVERED'].includes(message.transportState))fail('HISTORY_ACK_MESSAGE');
+    const digest=hex(new Uint8Array(await this.#wait(crypto.subtle.digest('SHA-256',utf(JSON.stringify({peer,operationId,plaintext:message.text,contentType:message.contentType,bindingDigest,generation,sessionId}))))));if(receipt.digest!==digest)fail('HISTORY_ACK_CONTEXT');
+    try{await this.#commit(prior,{blind_peers:prior.blind_peers,pairing_material:prior.pairing_material,blind_messages:read.blind_messages});return message.transportState==='DELIVERED';}catch(e){this.#check();if(e.code!=='HISTORY_CONFLICT')throw e;}
+   }fail('HISTORY_CONTENTION');
+  }
+  async outgoingDeliveryStatus(value){const expected=Object.freeze({peer:value.peer,operationId:value.operationId,bindingDigest:value.bindingDigest,generation:value.generation,sessionId:value.sessionId});if(!await this.#deliveryStatus(expected))return null;const handle=Object.freeze({});this.#deliveryProofs.set(handle,expected);return handle;}
+  async verifyOutgoingDeliveryStatus(handle,expected){try{this.#check();const recorded=this.#deliveryProofs.get(handle);if(!recorded||Object.keys(recorded).some(k=>recorded[k]!==expected?.[k]))return false;return await this.#deliveryStatus(recorded);}catch(_){return false;}}
   // Trusted AppCipher callback only, after authenticated recipient ACK verification.
   // A caller-provided delivery boolean is deliberately not part of this API.
   async ackOutgoing({peer,operationId,bindingDigest,generation,sessionId}){
@@ -121,7 +136,7 @@
    }
    fail('HISTORY_CONTENTION');
   }
-  close(){if(this.#closed)return;this.#closed=true;this.#salt.fill(0);for(const tx of this.#txs)try{tx.abort();}catch(_){}this.#txs.clear();this.#session.signal.removeEventListener('abort',this.#abort);}
+  close(){if(this.#closed)return;this.#closed=true;this.#deliveryProofs=new WeakMap();this.#salt.fill(0);for(const tx of this.#txs)try{tx.abort();}catch(_){}this.#txs.clear();this.#session.signal.removeEventListener('abort',this.#abort);}
  }
  g.DmashAccountAuthenticatedHistoryV4=AccountAuthenticatedHistoryV4;if(typeof module!=='undefined')module.exports=AccountAuthenticatedHistoryV4;
 })(globalThis);
