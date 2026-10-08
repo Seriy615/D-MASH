@@ -28,6 +28,15 @@ const Writer=require('../D-MASH PWA/not_messenger/js/account_authenticated_histo
  const delivered=(await all('blind_messages')).find(r=>r.alias===outgoingAlias),deliveredRaw=Buffer.from(delivered.blob,'base64');assert.equal(JSON.parse(Buffer.from(await crypto.subtle.decrypt({name:'AES-GCM',iv:deliveredRaw.subarray(0,12)},masterKey,deliveredRaw.subarray(12))).toString()).transportState,'DELIVERED');
  await new Promise((resolve,reject)=>{const tx=db.transaction('blind_messages','readwrite');tx.objectStore('blind_messages').delete(outgoingAlias);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
  await assert.rejects(()=>one.ackOutgoing(message),e=>e.code==='HISTORY_ACK_MESSAGE');await assert.rejects(()=>one.persistOutgoing(message),e=>e.code==='HISTORY_OUTGOING_REMOVED');assert(!(await all('blind_messages')).some(r=>r.alias===outgoingAlias),'late ACK must not resurrect deleted history');
+ const pendingRekey={...message,operationId:'8'.repeat(64)},staged=await one.persistOutgoing(pendingRekey),from={bindingDigest:message.bindingDigest,generation:1,sessionId:message.sessionId},to={...from,sessionId:'9'.repeat(64)},proof=Object.freeze({}),move={peer,operationId:pendingRekey.operationId,from,to,proof};
+ const dependencies=[1,2,3].map(n=>({alias:String(n).repeat(64),blob:'opaque-session-row-'+n}));for(const row of dependencies)await put('pairing_material',row);
+ const successor=new Writer({core,verifySuccessor:async(token,expected)=>token===proof&&expected.operationId===pendingRekey.operationId&&expected.to.sessionId===to.sessionId?{valid:true,dependencies}:null});
+ await assert.rejects(()=>successor.migrateOutgoingContext({...move,proof:{}}),/SUCCESSOR_REQUIRED/);
+ await put('pairing_material',{...dependencies[0],blob:'concurrent-rekey'});await assert.rejects(()=>successor.migrateOutgoingContext(move),/HISTORY_CONTENTION/);await put('pairing_material',dependencies[0]);
+ const preserved=JSON.stringify(await all('blind_messages')),preservedCounters=JSON.stringify(await all('blind_secrets'));
+ const moved=await Promise.all([successor.migrateOutgoingContext(move),successor.migrateOutgoingContext(move)]);assert(moved.every(x=>x.persisted&&x.seq===staged.seq));assert.equal(moved.filter(x=>x.duplicate).length,1);
+ assert.equal(JSON.stringify(await all('blind_messages')),preserved);assert.equal(JSON.stringify(await all('blind_secrets')),preservedCounters);
+ assert((await successor.persistOutgoing({...pendingRekey,...to})).duplicate);await assert.rejects(()=>successor.ackOutgoing(pendingRekey),/HISTORY_ACK_CONTEXT/);assert((await successor.ackOutgoing({...pendingRekey,...to})).persisted);successor.close();
  one.close();const reopened=new Writer({core});assert.equal((await reopened.persistAuthenticated(message)).duplicate,true);abort.abort();await assert.rejects(()=>reopened.persistAuthenticated(message),/HISTORY_CLOSED/);db.close();
  console.log('PASS history UNIT emulator: AES-GCM records, concurrent exact replay once, CAS sequences, substitution rejection, legacy refusal, reopen idempotence, Account abort; real browser not run');
 })().catch(error=>{console.error(error);process.exitCode=1;});
