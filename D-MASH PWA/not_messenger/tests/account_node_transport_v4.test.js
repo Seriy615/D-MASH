@@ -23,7 +23,11 @@ const recipient=require('../js/recipient_payload_v4.js'),Adapter=require('../js/
  const opened=recipient.openPayload([receiver.secretKey],sent[0].sealed.blob);assert.equal(opened.payload,frame);assert(nacl.sign.detached.verify(new TextEncoder().encode(payload),Buffer.from(signature,'hex'),keys.publicKey));
  assert(!JSON.stringify(calls.filter(x=>x.type==='discover')).includes(peer));
  const discoverCount=calls.filter(x=>x.type==='discover').length;
- host.ownerSubmitSealed=async()=>{throw Error('network failure');};await assert.rejects(adapter.submit(route,intent),/network failure/);host.ownerSubmitSealed=async()=>({queued:true});await adapter.submit(route,intent);assert.equal(calls.filter(x=>x.type==='discover').length,discoverCount+1);
+ const realNow=Date.now;try{Date.now=()=>realNow()+14000;await adapter.submit(route,intent);}finally{Date.now=realNow;}
+ assert.equal(calls.filter(x=>x.type==='discover').length,discoverCount,'young grant should be reused');
+ try{Date.now=()=>realNow()+16000;await adapter.submit(route,intent);}finally{Date.now=realNow;}
+ assert.equal(calls.filter(x=>x.type==='discover').length,discoverCount+1,'repeat submit must rediscover before a still-unexpired stale grant can trap recovery traffic');
+ host.ownerSubmitSealed=async()=>{throw Error('network failure');};await assert.rejects(adapter.submit(route,intent),/network failure/);host.ownerSubmitSealed=async()=>({queued:true});await adapter.submit(route,intent);assert.equal(calls.filter(x=>x.type==='discover').length,discoverCount+3);
  snapshot={...snapshot,digest:'09'.repeat(32)};await assert.rejects(adapter.prepare(route),/ACCOUNT_ROUTE_CHANGED/);snapshot={...snapshot,digest};
  host.verifyPreparation=async()=>({...proof,state:'NODE_PREPARED'});await assert.rejects(adapter.getRoute(peer),/NODE_ROUTE_NOT_ACTIVE/);host.verifyPreparation=async()=>({...proof,state:'ACTIVE'});
  host.ownerSubmitSealed=async()=>{throw Error('invalidate grant');};await assert.rejects(adapter.submit(route,intent),/invalidate grant/);

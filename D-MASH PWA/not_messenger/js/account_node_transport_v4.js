@@ -3,6 +3,7 @@
  const fail=code=>{throw Object.assign(new Error(code),{code});};
  const key=value=>typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);
  const FIELDS=['ownerSlot','routeAuthorityDigest','routeId','migrationId','bindingDigest','generation','preparationDigest','accountPublic'];
+ const GRANT_REUSE_MS=15000;
  class AccountNodeTransportV4{
   #session;#journal;#sealed;#resolveOwner;#routes=new WeakMap();#peerRoutes=new Map();#routeTasks=new Map();#abort;
   constructor(host,core,storage=global.DMashStorage||global.Storage,options={}){
@@ -47,9 +48,13 @@
   }
   async prepare(route){
    const data=this.#route(route);await this.#validate(data);
-   if(!data.grant||data.grant.expiresAt<=Math.floor(Date.now()/1000)){
+   const now=Date.now();
+   // A peer may restart its Node before this grant expires. Rediscover on a
+   // later submit so a durable retry cannot remain pinned to the old label.
+   if(!data.grant||data.grant.expiresAt<=Math.floor(now/1000)||now-data.grant.observedAt>=GRANT_REUSE_MS||now<data.grant.observedAt){
     if(!data.task){const task=this.#wait(this.host.ownerDiscover(data.owner.capability,data.snapshot.remoteCertificate)).then(grant=>{
-     if(!key(grant?.handle)||!Number.isSafeInteger(grant.expiresAt)||grant.expiresAt<=Math.floor(Date.now()/1000))fail('LOCAL_GRANT_INVALID');data.grant=Object.freeze({handle:grant.handle,expiresAt:grant.expiresAt});
+     const discoveredAt=Date.now();
+     if(!key(grant?.handle)||!Number.isSafeInteger(grant.expiresAt)||grant.expiresAt<=Math.floor(discoveredAt/1000))fail('LOCAL_GRANT_INVALID');data.grant=Object.freeze({handle:grant.handle,expiresAt:grant.expiresAt,observedAt:discoveredAt});
     });data.task=task;task.finally(()=>{if(data.task===task)data.task=null;}).catch(()=>{});}
     await this.#wait(data.task);
    }
