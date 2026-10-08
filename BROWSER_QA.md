@@ -8,9 +8,30 @@
 
 ## Актуальный release checkpoint
 
-Актуальная опубликованная PWA: **`22c699d6575fe2ba977db44264d8df0062b14799`**,
-page и active controlling SW `.30` в двух новых synthetic Chromium profiles.
-Независимый [deployed `.30` browser gate](docs/evidence/2026-10-08/qa-history-counter-deployed30.json):
+Актуальная опубликованная PWA: **`be6a1d9a58ba9fffeb0daad234a6506e5b269667`**,
+page и active controlling SW `.31` в двух новых synthetic Chromium profiles.
+Независимый [deployed `.31` media gate](docs/evidence/2026-10-08/qa-private-media31-deployed.json):
+**22/22 PASS**, 268/268 загруженных response bodies совпали с exact SHA,
+page errors и console warnings/errors 0. Реальными UI actions созданы два
+Account, подключены Node, скопированы PRIVATE QR, импортированы pairing packages
+через `[ + ]`, открыты чаты, выполнены обмен ключами и отправка текста.
+Голосовая запись и кружок нажаты/записаны/отправлены и расшифрованы получателем;
+оба локальных sender intent получили `DELIVERED`, содержимое после квитанции
+освобождено. Для voice тест намеренно добавил к Data URL параметр codec в кавычках
+и задержал FileReader на 1,8 с: callback отработал при открытом «Избранном»,
+показанного пользователю modal не возникло, запись доставлена исходному peer.
+После реальной перезагрузки, Master и Account login на обоих профилях page/SW
+остались `.31`, в каждой истории ровно одна voice и один circle, обе квитанции
+сохранились. Это synthetic mic/camera и synthetic MIME header; фактический MIME
+Android пользователя и физические устройства ещё не проверены. Перед исправлением
+alias source-overlay [воспроизвёл](docs/evidence/2026-10-08/qa-private-media31-red.json)
+modal `ЗАПИСЬ НЕ ОТПРАВЛЕНА / Cannot read properties of undefined (reading 'getAlias')`
+после durable intent; [повторный source-overlay](docs/evidence/2026-10-08/qa-private-media31-green.json)
+прошёл 20/20. Исправления: MIME `1199fbd`, captured history alias `fef56a3`,
+интегрированы в опубликованный exact SHA выше.
+
+Предыдущий опубликованный checkpoint **`22c699d6575fe2ba977db44264d8df0062b14799`**
+(page/active SW `.30`): независимый [browser history gate](docs/evidence/2026-10-08/qa-history-counter-deployed30.json):
 PUBLIC Request/Accept/Confirm, реальная кнопка обмена ключами, двусторонний
 текст и FlipLock **19/19 PASS**; 138/138 загруженных response bodies совпали
 с exact SHA, page errors 0. Контролируемая synthetic предпосылка добавила
@@ -33,8 +54,8 @@ N0–N8/A–M/E6 и полный UI01–UI14 не DONE.
 с 142/142 exact loaded responses: PUBLIC/key/text/FlipLock и relay call
 decline/accept/mute/speaker/hangup PASS; video toggle и 1 МиБ+13 байт file
 complete FAIL. Последний показал отправителю «Передано и проверено»,
-получателю `File channel failed`; причины ещё исследуются. На `.30` эти два
-медиа FAIL и Account deletion ещё **NOT RUN**, поэтому не переносить старые
+получателю `File channel failed`; причины ещё исследуются. На `.31` эти два
+сценария file/video call и Account deletion ещё **NOT RUN**, поэтому не переносить старые
 результаты как текущий PASS или FAIL. Исторические `.28`/`.27`/`.26` evidence
 остаются ниже; `ROUTE-READY-01` OPEN, physical mobile/WebAuthn NOT RUN.
 
@@ -48,14 +69,15 @@ complete FAIL. Последний показал отправителю «Пер
 | UI-SHARE-CREATE | PASS navigation .25 | bd380ab; visible modal/create/back; new contact handshake separate |
 | PENDING-BACK-01 / UI-PUBLIC-ACCEPT-NAV | PASS navigation .25 | bd380ab; single Back, logged-in pending entry |
 | PUBLIC-REQUEST-LOADING-01 | PASS .26 visibility/queue | 3c51360; durable request before PoW, truthful saved card; cancel/lifecycle guards and real fresh pair pass |
-| ACCOUNT-DELETE-01 | FAIL deployed `.29`; `.30` NOT RUN | Real synthetic UI removal promises complete erasure, but recreating same Account reveals previous local history; P1, owner TBD, preserve profile for fix/retest |
+| ACCOUNT-DELETE-01 | FAIL deployed `.29`; `.31` NOT RUN | Real synthetic UI removal promises complete erasure, but recreating same Account reveals previous local history; P1, owner TBD, preserve profile for fix/retest |
 | ROUTE-READY-01 | OPEN | Eventual v3 message success does not prove immediate readiness |
 | KEY-EXCHANGE-NO-FEEDBACK-01 | PASS `.30` | Initial open button + visible pending state; exact22c public pair completes and sends text both ways |
 | FLIPLOCK-MISSING-01 | PASS `.30` | Account/global settings OFF→ON→OFF via real deployed UI; physical mobile orientation NOT RUN |
 | CONTACT-OWNER-MISMATCH-01 | PASS .28 for saved-owner guidance/retry | User screenshot .26; dd357e1 exact encrypted-flow diagnosis; 7/7 deployed supplemental UI PASS. Real remote owner-conflict delivery NOT RUN |
-| RECORDED-NOTE-QUEUE-01 | PASS deployed `.29`; `.30` NOT RUN | Real sender voice burst durable/relay/decrypt/playback and visible receipt; historical `.26` queue-full retained above, no universal latency claim |
-| NODE-REMOVED-RETRY-01 | PASS deployed `.29`; `.30` NOT RUN | Fresh browser 6/6, exact5a JS62/62, zero new loopback sockets for 3.5 s after removal |
-| S-TURN-HEALTH-01 | PASS scoped EMS; file flow FAIL `.29` | Real authenticated TURN UDP/TCP/WSS and voice/circle relay PASS; 1 МиБ+13 байт file receiver `File channel failed`, sender misleading success; `.30` retest pending |
+| RECORDED-NOTE-QUEUE-01 | PASS deployed `.31` voice/circle | Fresh PRIVATE pair actual SEND, durable sender intent, receiver decrypt and final `DELIVERED`; older `.26` queue-full was historical, no universal latency claim |
+| RECORDER-MIME-31 / RECORDER-ALIAS-31 | PASS deployed `.31` scoped | Valid quoted codec parameter accepted without changing recorded bytes; delayed callback over Saved Messages no modal, original peer received; normal and locked-chat alias UNIT PASS, physical Android MIME/locked-chat browser NOT RUN |
+| NODE-REMOVED-RETRY-01 | PASS deployed `.29`; `.31` NOT RUN | Fresh browser 6/6, exact5a JS62/62, zero new loopback sockets for 3.5 s after removal |
+| S-TURN-HEALTH-01 | PASS scoped EMS/voice/circle; file flow FAIL `.29` | Deployed `.31` real voice/circle sender/receiver delivery PASS; previous 1 МиБ+13 байт file receiver `File channel failed`, sender misleading success; `.31` file retest NOT RUN |
 
 ## Текущая интеграция (не deployed UI)
 
