@@ -1,0 +1,17 @@
+{
+  "scope": "BROWSER synthetic Account ACK/outbox on real Chromium IndexedDB/WebCrypto; no Worker/grant/ordinary UI/deployed claim",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "/js/account_app_cipher_v4.js": "b9365d7e352cba95ad26174ddf0e36dd514bebcbe354e3384e91cff43a7fc4cc",
+    "/js/account_app_outbox_v4.js": "9ef66b96452527234e8d03dda0a6eb2c980203f03d63e62e8b6abb2cc7eac71f"
+  },
+  "checks": {
+    "tamperedAckRejected": true,
+    "lostAckFreshOuterExactInner": true,
+    "recipientDuplicateAck": true,
+    "historyBeforeRetirement": true,
+    "restartNoResend": true,
+    "encryptedTombstoneNoPlaintext": true,
+    "rawRows": 3
+  }
+}

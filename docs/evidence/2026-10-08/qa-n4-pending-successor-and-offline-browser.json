@@ -1,0 +1,42 @@
+{
+  "candidateSourceCommit": "ca1d220f7f6145c9321068e14c329eed8cd1a49a",
+  "browser": "Chromium 156.0.8078.4",
+  "transport": "two managed Chromium Workers through a separate Python Node; synthetic Accounts",
+  "gates": [
+    {
+      "name": "pending application across one-sided confirmed successor",
+      "status": "PASS",
+      "checks": [
+        "lost initial FINAL recovered",
+        "recipient history durable before faulted first ACK",
+        "one-sided active state loss recovered as generation 2",
+        "same logical operation stored once at recipient",
+        "successor uses new-root ciphertext and fresh outer transport operation",
+        "authenticated ACK changed existing sender history to DELIVERED and retired outbox"
+      ],
+      "opaqueNodePackets": 32,
+      "rawEvidenceSha256": "87c2cdc26378e61f018017d29860a219bee25e26fb05c9645bbaba98ed776ccb"
+    },
+    {
+      "name": "recipient Worker offline during first application send",
+      "status": "PASS for eventual delivery; FAIL for prompt sender response",
+      "checks": [
+        "recipient Worker disconnected during first send",
+        "sender history stayed PENDING until authenticated receipt",
+        "recipient Node identity survived return",
+        "exact inner ciphertext retried and recipient history stored once",
+        "authenticated ACK changed sender history to DELIVERED and retired outbox"
+      ],
+      "firstSendWaitSecondsApprox": 180,
+      "opaqueNodePackets": 13,
+      "rawEvidenceSha256": "5258e1d80a280f6121b5edacd91f1ddc1dea4968c04b21e82f0d6e0d3fa28714"
+    }
+  ],
+  "redTrace": "Initial pending-successor run failed HISTORY_ACK_CONTEXT before first history marker; fixed in ca1d220 and rerun PASS",
+  "rawEvidenceLocalOnly": true,
+  "limits": [
+    "candidate 608abcbaa4228d56c599198083339761feb7bf8e changes sender API to durable local enqueue; its browser gates are not yet run",
+    "ordinary UI, active service worker and deployed acceptance not covered",
+    "typed Account media CONTROL and full N4 loss matrix remain open"
+  ]
+}
