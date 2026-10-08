@@ -1,6 +1,7 @@
 "use strict";
 
 // One visible release identifier for the page and Service Worker generation.
+window.DMASH_NODE_PROFILE = "managed-v4";
 window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-20261008.34" });
 
 /*
@@ -79,7 +80,8 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-202610
         "js/account_authenticated_history_v4.js",
         "js/public_account_orchestrator_v4.js",
         "js/managed_node_catalog_v4.js",
-        "js/node_account_ui_v4.js"
+        "js/node_account_ui_v4.js",
+        "js/node_root_lifecycle_v4.js"
     ];
 
     const load = src => new Promise((resolve, reject) => {

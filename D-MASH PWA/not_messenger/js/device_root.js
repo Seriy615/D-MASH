@@ -111,6 +111,7 @@
         store: null,
         state: null,
         _lockObservers: new Set(),
+        _unlockObservers: new Set(),
         _crypto: global.crypto,
 
         setStoreForTests(store) { this.store = store; },
@@ -578,6 +579,11 @@
             });
             this.store = null;
         },
+        onUnlock(listener) {
+            if (typeof listener !== "function") throw new TypeError("Unlock listener must be a function");
+            this._unlockObservers.add(listener);
+            return () => this._unlockObservers.delete(listener);
+        },
         onLock(listener) {
             if (typeof listener !== "function") throw new TypeError("Lock listener must be a function");
             this._lockObservers.add(listener);
@@ -586,6 +592,9 @@
         _replaceState(state) {
             if (this.state) this.lock();
             this.state = state;
+            for (const listener of [...this._unlockObservers]) {
+                try { listener(); } catch (_) { /* Runtime failure cannot replace persisted root material. */ }
+            }
         },
         lock() {
             const wasUnlocked = Boolean(this.state);
