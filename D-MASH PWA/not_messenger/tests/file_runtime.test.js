@@ -33,9 +33,25 @@ function core() {return {activePeerId:'fixed-peer',customAlert() {},async sendMe
     assert.equal(sender.message.type,'voip_file_request');
     assert(!sender.message.data);
     const task=sender._fileTransfer;
+    task.complete();
+    task.session.onerror?.(Error('File channel failed'));
+    task.error(Error('File channel failed'));
+    assert.equal(task.finished,true);
+    assert.equal(task.failed,undefined,'A late transport error must not overwrite a verified result');
+    assert.equal(task.status.textContent,'Передано и проверено');
     DmashFileRuntime.cancel(sender);
     assert(task.closed); assert(task.session.closed); assert(transport.closed); assert(task.box.removed);
     assert.equal(sender._fileTransfer,null);
+
+    const interrupted=core();
+    assert(await DmashFileRuntime.send(interrupted,{size:1024,name:'interrupted.bin'}));
+    const failedTask=interrupted._fileTransfer;
+    failedTask.error(Error('File channel disconnected'));
+    failedTask.complete();
+    assert.equal(failedTask.failed,true,'A real pre-completion transport failure must remain visible');
+    assert.equal(failedTask.finished,undefined);
+    assert.equal(failedTask.status.textContent,'File channel disconnected');
+    DmashFileRuntime.cancel(interrupted);
 
     const receiver=core();
     const metadata = btoa(JSON.stringify({id:'a'.repeat(64),version:1,size:1024,name:'incoming',mime:'',

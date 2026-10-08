@@ -12,13 +12,14 @@ function pair(transform = value => value) {
     return [a,b];
 }
 const deferred = () => {let resolve; const promise = new Promise(r => {resolve=r;}); return {promise, resolve};};
-async function transfer(file, manifest, transform) {
+async function transfer(file, manifest, transform, afterComplete) {
     const [a,b] = pair(transform), sent = deferred(), received = deferred(), errors = [];
     const receiver = new FileChannel({channel: b, manifest, onComplete: blob => received.resolve(blob),
         onError: e => {errors.push(e); received.resolve(null);}});
     const sender = new FileChannel({channel: a, manifest, file, onComplete: () => sent.resolve(true),
         onError: e => {errors.push(e); sent.resolve(false);}});
     const result = await Promise.all([sent.promise, received.promise]);
+    afterComplete?.({a,b,sender,receiver,errors});
     sender.close(); receiver.close(); return {result, errors, sender, receiver};
 }
 (async () => {
@@ -30,6 +31,13 @@ async function transfer(file, manifest, transform) {
     assert.deepEqual(new Uint8Array(await normal.result[1].arrayBuffer()), content);
     assert.equal(normal.receiver.parts.length, 0);
     assert.equal(normal.sender.manifest.key, null);
+    const terminal = await transfer(file, manifest, undefined, ({b,receiver,errors}) => {
+        assert(receiver.complete, 'Whole-file SHA-256 must be verified before terminal event');
+        b.onerror?.(new Event('error'));
+        assert.equal(errors.length, 0, 'A late DataChannel error must not revoke verified completion');
+        assert.equal(receiver.closed, false, 'Verified receiver remains available until normal channel close');
+    });
+    assert(terminal.result[0]);
     let damaged = false;
     const tampered = await transfer(file, manifest, frame => {
         if (!damaged) {new Uint8Array(frame)[20] ^= 1; damaged = true;} return frame;

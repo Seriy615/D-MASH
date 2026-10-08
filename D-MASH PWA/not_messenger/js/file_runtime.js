@@ -49,9 +49,10 @@
         box.append(title, status, progress, cancel); document.body.append(box);
         const task = {box, status, cancel, closed: false,
             current: () => core._fileTransfer === task && !task.closed,
-            progress(done, size) {if (!task.current()) return; progress.value = done / size; status.textContent = `${Math.floor(done / size * 100)}%`;},
+            progress(done, size) {if (!task.current() || task.finished || task.failed) return; progress.value = done / size; status.textContent = `${Math.floor(done / size * 100)}%`;},
             complete(blob) {
-                if (!task.current()) return;
+                if (!task.current() || task.finished || task.failed) return;
+                clearTimeout(task.timer);
                 task.finished = true; status.textContent = 'Передано и проверено'; progress.value = 1; cancel.textContent = 'Закрыть';
                 if (blob) {
                     task.url = URL.createObjectURL(blob);
@@ -59,7 +60,7 @@
                     box.append(link);
                 }
             },
-            error(error) {if (!task.current()) return; task.failed = true; status.textContent = error.message; cancel.textContent = 'Закрыть';},
+            error(error) {if (!task.current() || task.finished || task.failed) return; task.failed = true; status.textContent = error.message; cancel.textContent = 'Закрыть';},
             close() {
                 if (task.closed) return; task.closed = true;
                 clearTimeout(task.timer); task.signaling?.close(); void task.session?.close();

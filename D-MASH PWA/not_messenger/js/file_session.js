@@ -20,7 +20,7 @@
                     onProgress, onCommit, onComplete: blob => {
                         this.finished = true; onComplete?.(blob);
                         if (this.role === 'caller') void this.close();
-                    }, onError: error => {onError?.(error); void this.close();}});
+                    }, onError: error => {if (!this.finished) onError?.(error); void this.close();}});
             }
             async close() {
                 this.file = null;

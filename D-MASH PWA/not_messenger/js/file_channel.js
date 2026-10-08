@@ -37,7 +37,7 @@
             this.key = global.crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt']); raw.fill(0);
             channel.binaryType = 'arraybuffer';
             channel.onmessage = event => {
-                if (this.closed) return;
+                if (this.closed || this.complete) return;
                 if (++this.queued > 4) {this.fail(Error('File receive window exceeded')); return;}
                 this.chain = this.chain.then(() => this.receive(event.data)).catch(error => this.fail(error))
                     .finally(() => {this.queued--;});
@@ -83,7 +83,7 @@
             this.complete = true; this.file = null; this.onComplete();
         }
         async receive(frame) {
-            if (this.closed) return;
+            if (this.closed || this.complete) return;
             if (!(frame instanceof ArrayBuffer) || frame.byteLength < 20 || frame.byteLength > CHUNK + 20) throw Error('Invalid file frame');
             const index = new DataView(frame).getUint32(0), direction = this.file ? 1 : 0;
             const expected = this.file ? this.pending?.index : this.index;
@@ -110,7 +110,7 @@
             this.onProgress(Math.min(this.index * CHUNK, this.manifest.size), this.manifest.size);
             this.send(await this.seal(index, encode('ACK'), 1));
         }
-        fail(error) {if (this.closed) return; this.close(); this.onError(error);}
+        fail(error) {if (this.closed || this.complete) return; this.close(); this.onError(error);}
         close() {
             if (this.closed) return; this.closed = true;
             this.pending?.reject(Error('File transfer cancelled')); this.parts = []; this.file = null; this.key = null;
