@@ -49,13 +49,28 @@
   async restore(){let unavailable=0;for(const row of await this.inbox.store.all()){try{const value=await this.inbox.decrypt(row);if(value.kind==='bootstrap-config'&&value.owner&&value.discoverySeed)await this.attach(value);}catch(_){this.check();unavailable++;}}return {restored:this.#routes.size,unavailable};}
   async detach(routeId){
    const entry=this.#routes.get(routeId);if(!entry)return;
-   const key=await this.dispatcher.key('config',entry.owner),old=await this.dispatcher.load(key);if(old){const encrypted=await this.inbox.encrypt(key,{...old.value,suspended:true});this.check();if(!await this.inbox.store.cas(key,old.row.revision,encrypted))throw Error('Bootstrap retirement conflict');}
+   const key=await this.dispatcher.key('config',entry.owner),old=await this.dispatcher.load(key);if(old){const encrypted=await this.inbox.encrypt(key,{...old.value,suspended:true,continuationUntil:Math.min(JSON.parse(old.value.localBundle).expires_at,Math.floor(Date.now()/1000)+300),continuationSent:0,continuationReceived:0});this.check();if(!await this.inbox.store.cas(key,old.row.revision,encrypted))throw Error('Bootstrap retirement conflict');}
    this.runtime.owned=this.runtime.owned.filter(row=>row.handler!==entry.handler);for(const [key,row]of this.runtime.labels)if(row.target===entry.handler)this.runtime.labels.delete(key);
    this.#roots.delete(entry.rootToken);this.#routes.delete(routeId);entry.sign.secretKey.fill(0);entry.box.secretKey.fill(0);for(const key of entry.keys)key.fill(0);
   }
+  async spendContinuation(token,owner,field){
+   this.check();const final=await this.ownership.read(owner.routeId);if(!final||final.state!=='ACTIVE')throw Error('Final receipt owner unavailable');this.ownership.matches(final,owner);
+   const key=await this.dispatcher.key('config',owner),old=await this.dispatcher.load(key);if(!old||!old.value.suspended||!Number.isSafeInteger(old.value.continuationUntil)||old.value.continuationUntil<=Math.floor(Date.now()/1000)||!Number.isSafeInteger(old.value[field])||old.value[field]>=16)throw Error('Final receipt continuation expired or exhausted');
+   await this.dispatcher.save(token,key,old,{...old.value,[field]:old.value[field]+1});this.check();const fresh=await this.ownership.read(owner.routeId);if(!fresh||fresh.state!=='ACTIVE')throw Error('Final receipt owner retired');this.ownership.matches(fresh,owner);
+  }
+  async receiveFinal(routeId,packet,keys){
+   this.check();const opened=g.DmashRecipientPayloadV4.openPayload(keys,packet.payload);if(opened.status!=='accepted')return false;let value;try{value=JSON.parse(opened.payload);}catch(_){return false;}
+   if(!['NODE_BOOTSTRAP_REQUEST_V4','NODE_BOOTSTRAP_RECEIPT_V4'].includes(value?.type))return false;
+   // This namespace never becomes an application message on a final route.
+   if(value.type!=='NODE_BOOTSTRAP_RECEIPT_V4'||Object.keys(value).sort().join(',')!=='exchange_id,receipt,type')return true;
+   const final=await this.ownership.read(routeId);if(!final||final.state!=='ACTIVE')return true;const owner=final.ownership,token=Object.freeze({});this.#roots.set(token,owner);
+   try{const records=await this.dispatcher.list(token),record=records.find(r=>r.exchangeId===value.exchange_id&&r.state==='SELECTED');if(!record||!Object.values(record.receipts).includes(value.receipt))return true;await this.dispatcher.receipt(token,value.exchange_id,value.receipt);await this.spendContinuation(token,owner,'continuationReceived');return true;}
+   catch(_){this.check();return true;}finally{this.#roots.delete(token);}
+  }
   async submit(token,handle,data){
-   const owner=this.ownership.owner(token),entry=this.#routes.get(owner.routeId),destination=this.local.routes.get(handle);if(!entry||!destination)throw Error('Bootstrap route unavailable');if(destination.ownerToken!==token)throw Error('Bootstrap destination owner mismatch');let wire;
+   const owner=this.ownership.owner(token),provisional=this.#routes.get(owner.routeId),entry=provisional||this.local.bindings.get(owner.routeId),destination=this.local.routes.get(handle);if(!entry||!destination)throw Error('Bootstrap route unavailable');if(destination.ownerToken!==token)throw Error('Bootstrap destination owner mismatch');let wire;
    if(data.kind==='REQUEST'){
+    if(!provisional)throw Error('Final route permits exact receipt continuation only');
     const checked=await this.codec.inspect(data.targetBundle,data.serialized);if(checked.remoteAccount!==owner.accountPublic)throw Error('Outbound bootstrap signer mismatch');
     const target=JSON.parse(data.targetBundle).inbound_certificate;if(g.DmashSecureSession.canonical(target)!==g.DmashSecureSession.canonical(destination.certificate))throw Error('Bootstrap destination mismatch');
     await this.dispatcher.request(token,data.serialized,{targetBundle:data.targetBundle,outbound:true});wire=data.serialized;
@@ -63,6 +78,7 @@
     const records=await this.dispatcher.list(token),record=records.find(v=>v.exchangeId===data.exchangeId);if(!record||record.state!=='SELECTED')throw Error('Bootstrap selection required');
     const peerBundle=record.direction==='OUTBOUND'?record.targetBundle:JSON.parse(record.serialized).bundle;
     if(g.DmashSecureSession.canonical(JSON.parse(peerBundle).inbound_certificate)!==g.DmashSecureSession.canonical(destination.certificate))throw Error('Bootstrap receipt destination mismatch');
+    if(!provisional){if(!Object.values(record.receipts).includes(data.serialized))throw Error('Final receipt substitution');await this.spendContinuation(token,owner,'continuationSent');}
     await this.dispatcher.receipt(token,data.exchangeId,data.serialized);wire=g.DmashSecureSession.canonical({type:'NODE_BOOTSTRAP_RECEIPT_V4',exchange_id:data.exchangeId,receipt:data.serialized});this.codec.fits(wire);
    }else throw Error('Bootstrap user payload forbidden');
    this.ownership.owner(token);this.check();if(this.local.routes.get(handle)!==destination||destination.ownerToken!==token)throw Error('Bootstrap destination released');this.runtime.send(destination.route,g.DmashRecipientPayloadV4.sealPayload(decode(destination.certificate.recipient_box),wire),entry.handler);return {queued:true};

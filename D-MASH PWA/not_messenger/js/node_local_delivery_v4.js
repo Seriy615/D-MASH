@@ -24,7 +24,7 @@
     if(persist&&!await this.inbox.saveBinding(id,saved))throw Error('Local route already persisted');
     this.check();
     const binding=entry;
-    entry.handler=async(_,packet)=>{this.check();if(binding.retired)throw Error('Binding retired');return this.inbox.receive(id,binding.accountSlot,packet.payload,binding.recipientKeys);};
+    entry.handler=async(_,packet)=>{this.check();if(binding.retired)throw Error('Binding retired');if(this.finalControl&&await this.finalControl(id,packet,binding.recipientKeys)){this.check();if(binding.retired)throw Error('Binding retired');return {control:true};}this.check();if(binding.retired)throw Error('Binding retired');return this.inbox.receive(id,binding.accountSlot,packet.payload,binding.recipientKeys);};
     this.runtime.bindLocal(certificate,entry.sign,entry.box,entry.handler);
     this.bindings.set(id,entry);entry=null;
     return {bound:true};

@@ -50,6 +50,7 @@ async function initialize(data){
   if(['private-v1','public-v1'].includes(bootstrapProfile)){
    importScripts('account_pairing_v2.js','account_route_binding_v2.js','node_bootstrap_control_v4.js','node_bootstrap_dispatcher_v4.js','node_bootstrap_runtime_v4.js');
    bootstrap=await DmashNodeBootstrapRuntimeV4.open(data.storageKey,nodeId,{runtime,ownership,local,isCurrent:()=>!closed});
+   local.finalControl=(routeId,packet,keys)=>bootstrap.receiveFinal(routeId,packet,keys);
    ownership.detachBootstrap=routeId=>bootstrap.detach(routeId);ownership.archiveRowProvider=owner=>bootstrap.archiveRow(owner);
   }
   if(bootstrapProfile==='public-v1'){importScripts('node_public_bootstrap_control_v4.js','node_public_bootstrap_runtime_v4.js');publicBootstrap=await DmashNodePublicBootstrapRuntimeV4.open(data.storageKey,nodeId,{runtime,ownership,local,isCurrent:()=>!closed});}
