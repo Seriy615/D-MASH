@@ -8,15 +8,23 @@
 
 ## Актуальный release checkpoint
 
-PWA **637c9bb02c2c57a05e8edc815678b6fb204f632c**, `.27`, опубликована на EMS;
+PWA **fd2a7505ba7325ee0d47e38cb2cfc8271cbfc0c1**, `.28`, опубликована на EMS;
 backend остаётся **3c513601ef3990b6514e247d879324b7b72da494**. Exact source
-**215/215**, missing/changed []; source branch merge `1a75299` exact UNIT281
-backend +11 Origin +82 JS PASS. Independent deployed Chromium fresh two-profile
+**217/217**, missing/changed []; source branch merge `f0af5b1` exact UNIT281
+backend +11 Origin +84 JS PASS. Independent deployed Chromium fresh two-profile
 PUBLIC Request/Accept/Confirm, key exchange, messages and FlipLock: **16/16 PASS**,
-page+SW обоих profiles `.27`, 135 loaded sources exact SHA, errors [], exit0.
-Immediate key feedback 473 ms. Physical mobile orientation NOT RUN. `.26` baseline
+page+SW обоих profiles `.28`, 136 loaded sources exact SHA, errors [], exit0.
+Immediate key feedback 157 ms. Перед deploy первый immutable `.28` public run
+завис на key completion с DNSS pending после успешных Request/Accept/Confirm;
+второй fresh source-overlay run 16/16 PASS, deployed fresh run 16/16 PASS.
+`ROUTE-READY-01` остаётся OPEN, single success не доказывает отсутствие гонки.
+Supplemental deployed owner-conflict synthetic
+incoming/send-failure UI **7/7 PASS**, page `.28`, SW BLOCKED; no remote delivery
+claim. Physical mobile orientation NOT RUN. `.27` baseline 16/16 и `.26` baseline
 13/13 PASS и [manifest](docs/evidence/2026-10-08/qa-release26-manifest.json)
-остаются historical evidence, не текущим release. [Deployed `.27` browser report](docs/evidence/2026-10-08/qa-ui-hotfix-deployed27.json)
+остаются historical evidence, не текущим release. [Deployed `.28` browser report](docs/evidence/2026-10-08/qa-ui-hotfix-deployed28.json),
+[owner fixture](docs/evidence/2026-10-08/qa-contact-owner-deployed28-summary.json),
+[deployed `.27` browser report](docs/evidence/2026-10-08/qa-ui-hotfix-deployed27.json)
 и [sanitized live pairing note](docs/evidence/2026-10-08/qa-live-pair-deployed26-sanitized.md).
 Deployed readiness CDP logpoints may affect timing; difficulty22 observed, duplicate
 proof work remains a hypothesis until exactresource equality is observed. Previous
@@ -42,7 +50,7 @@ RUN in that specific upgradeprofile due harness locator, independently PASS on.2
 | ROUTE-READY-01 | OPEN | Eventual v3 message success does not prove immediate readiness |
 | KEY-EXCHANGE-NO-FEEDBACK-01 | PASS .27 | Initial open button + visible pending/error state; real deployed key exchange and bidirectional messages 16/16 |
 | FLIPLOCK-MISSING-01 | PASS .27 | Both Account and global settings OFF→ON→OFF via real deployed UI; physical mobile orientation NOT RUN |
-| CONTACT-OWNER-MISMATCH-01 | FAIL .26; .27 NOT RUN | User screenshot .26; exact encrypted-flow diagnosis; isolated fix dd357e1 7/7 synthetic UI PASS, integration/deploy pending |
+| CONTACT-OWNER-MISMATCH-01 | PASS .28 for saved-owner guidance/retry | User screenshot .26; dd357e1 exact encrypted-flow diagnosis; 7/7 deployed supplemental UI PASS. Real remote owner-conflict delivery NOT RUN |
 | RECORDED-NOTE-QUEUE-01 | FAIL .26; .27 NOT RUN | User `Recorded-note queue full`; deployed .26 synthetic 2.3 s voice took ~54 s, delivered but open sender still ⌛ until chat reopen; third immediate recording hit queue-full and was discarded. S-TURN media redesign pending. No storage reset |
 | S-TURN-HEALTH-01 | OPEN | EMS real WSS ticket + forced relay 32 KiB/hash PASS; advertised health still TCP-only; call/file/recorded-note UI acceptance NOT RUN |
 
