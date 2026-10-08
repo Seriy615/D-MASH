@@ -35,7 +35,7 @@ class NodeRoutingV4:
         if not isinstance(base_ncrh,bytes) or len(base_ncrh)!=32:raise ValueError('Invalid BaseNCRH')
         self.base=base_ncrh;self.clock=clock;self.monotonic=monotonic;self.peers={};self.owned=[];self.labels={};self.seen={}
         self.queues={};self.timers={};self.senders={};self.tasks=set();self.pending=set();self.rates={};self.probes=[];self.cover_history=[];self.cover_timer=None;self.cover_policy=None
-        self.service_provider=None;self.service_rates={};self.closed=False;self.stats=dict(forwarded=0,received=0,probes=0,batches=0)
+        self.service_provider=None;self.service_rates={};self.discovery_rates={};self.closed=False;self.stats=dict(forwarded=0,received=0,probes=0,batches=0)
 
     def _prune(self):
         now=self.clock()
@@ -108,7 +108,7 @@ class NodeRoutingV4:
     def _remove_peer(self,peer):
         self.peers.pop(peer,None);self.queues.pop(peer,None);timer=self.timers.pop(peer,None)
         if timer:timer.cancel()
-        self.rates.pop(peer,None);self.service_rates.pop(peer,None)
+        self.rates.pop(peer,None);self.service_rates.pop(peer,None);self.discovery_rates.pop(peer,None)
         if not self.peers:
             for future in self.pending:
                 if not future.done():future.set_exception(ConnectionError('Node path unavailable'))
@@ -157,28 +157,42 @@ class NodeRoutingV4:
 
     async def discover(self,certificate):
         if self.closed or not self.peers:raise ConnectionError('Node path unavailable')
-        blob,state=create_query(certificate,now=int(self.clock()));expires=state['query']['expires_at']
-        future=asyncio.get_running_loop().create_future();self.pending.add(future)
-        async def accept(peer,packet):
-            if future.done():return
-            try:valid=verify_reply(packet['payload'],state,now=int(self.clock()))
-            except Exception:return
-            if valid:
-                future.set_result(dict(peer=peer,label=packet['offer'],expires_at=min(expires,packet['expires_at']),channel=self.peers.get(peer)))
-        try:
-            self._dedupe('PROBE',blob,expires)
-            ncrh=route_ncrh(self.base,bytes.fromhex(certificate['route_id']));ttl=sample_hop_ttl()
+        if len(self.pending)>=8:raise BufferError('Node discovery quota')
+        certificate=dict(certificate);verify_certificate(certificate,int(self.clock()))
+        future=asyncio.get_running_loop().create_future();self.pending.add(future);current=None
+        def retire():
+            nonlocal current
+            if current is None:return
+            for key,row in list(self.labels.items()):
+                if row['target'] is current['accept']:del self.labels[key]
+            current.clear();current=None
+        def attempt():
+            nonlocal current
+            retire();blob,state=create_query(certificate,now=int(self.clock()));expires=state['query']['expires_at'];entry={'state':state}
+            async def accept(peer,packet):
+                if future.done() or current is not entry:return
+                try:valid=verify_reply(packet['payload'],state,now=int(self.clock()))
+                except Exception:return
+                if valid and not future.done() and not self.closed and current is entry and peer in self.peers and expires>self.clock():
+                    future.set_result(dict(peer=peer,label=packet['offer'],expires_at=min(expires,packet['expires_at']),channel=self.peers[peer]))
+            entry['accept']=accept;current=entry
+            self._dedupe('PROBE',blob,expires);ncrh=route_ncrh(self.base,bytes.fromhex(certificate['route_id']));ttl=sample_hop_ttl();bucket=int(self.clock()//60);sent=0
             for peer in list(self.peers):
-                label=self._label(peer,accept,expires)
-                self._enqueue(peer,dict(type='PROBE',version=4,box=blob,return_label=label,ncrh=ncrh,ttl=ttl,expires_at=expires))
-            return await asyncio.wait_for(future,max(0.001,expires-self.clock()))
+                prior=self.discovery_rates.get(peer,(bucket,0));count=prior[1] if prior[0]==bucket else 0
+                if count>=24:continue
+                self.discovery_rates[peer]=(bucket,count+1);label=self._label(peer,accept,expires)
+                self._enqueue(peer,dict(type='PROBE',version=4,box=blob,return_label=label,ncrh=ncrh,ttl=ttl,expires_at=expires));sent+=1
+            if not sent:raise BufferError('Node discovery rate limit')
+        try:
+            for delay in (5,10,15):
+                attempt()
+                try:return await asyncio.wait_for(asyncio.shield(future),delay)
+                except asyncio.TimeoutError:pass
+            raise TimeoutError('Node discovery expired')
         finally:
-            self.pending.discard(future)
-            # Late alternate replies may still arrive on issued capabilities.
-            # Retain a no-op target until expiry, without retaining query secrets.
-            async def retired(peer,packet):pass
-            for row in self.labels.values():
-                if row['target'] is accept:row['target']=retired
+            if not future.done():future.cancel()
+            elif not future.cancelled():future.exception()
+            self.pending.discard(future);retire()
 
     def send(self,route,payload,reply_handler):
         expires=route['expires_at']
