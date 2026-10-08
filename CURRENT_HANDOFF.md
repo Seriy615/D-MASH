@@ -335,6 +335,26 @@ init после one-sided loss, не доказательство полной �
 
 ### Вход, recorded media, звонки
 
+**Текущая независимая S-TURN UI-приёмка кандидата (не production):** exact
+`a524bc0520013e6311158faac980774c5dc86efb`, page `.29`, SW BLOCKED, immutable PWA
+overlay и реальный EMS; обе возможности S-TURN/blob подтверждены через Node STATUS.
+Fresh synthetic PUBLIC pair: voice burst, durable intent, visible delivered,
+receiver decode/hash/no-autoplay, relay/relay, circle cancel/SEND/decode/playback
+PASS. Offline intent пережил reload и Account switch без утечки в другой Account.
+После reconnect 90-секундное окно истекло; на попытке4 запись доставилась позднее.
+`NOTE-RELOAD-CONTROLS-01` FAIL: pending запись после reload видна без cancel/retry;
+новый hydration fix требует отдельного exact-candidate retest. Fast-send gate
+остаётся открыт: один stop-to-durable6.764s и удлинённая запись; причинность
+admission/UI contention ещё проверяется. Legacy fragment pending migration и
+post-reload cancel/retry NOT RUN/blocked, полный N0–N8 не закрыт.
+[Матрица и ограничения](docs/evidence/2026-10-08/qa-media-candidate29-summary.md)
+сохраняют исходные locator failures: hidden #p1 после reload — saved Account UI;
+circle требует отдельной кнопки РАСШИФРОВАТЬ КРУЖОК. Исправленные проверки
+выполнены на тех же профилях без reset. Source evidence138 loaded responses +
+100 post-reload scripts exact-match; user CDP9449 и baseline CDP9452 не затронуты.
+Тестовая пара CDP9460 сохранена для интегратора; сетевой miner освобождён.
+
+
 `.21` registry: IDB transaction создаётся после async alias/encryption; legacy
 migration шифрует до transaction, атомарно пишет accounts/marker, удаляет old
 rows только после успеха; ошибка сохраняет старое и допускает retry. Есть real
