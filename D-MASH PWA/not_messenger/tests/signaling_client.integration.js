@@ -1,5 +1,31 @@
 // Invoked by the backend suite against a real local signaling WebSocket.
 const assert = require('node:assert/strict');
+// Browser Worker semantics backed by a separate thread running shipped source.
+// No synchronous proof implementation or production fallback is introduced.
+const {Worker: NodeWorker} = require('node:worker_threads');
+const {pathToFileURL, fileURLToPath} = require('node:url');
+const path = require('node:path');
+const workerExits = [];
+let workerCount = 0, terminatedCount = 0;
+globalThis.document = {currentScript: {src: pathToFileURL(path.join(__dirname, '../js/call_signaling.js')).href}};
+globalThis.Worker = class BrowserWorker {
+    constructor(url) {
+        const workerPath = fileURLToPath(url);
+        assert.equal(workerPath, path.resolve(__dirname, '../js/call_admission_worker.js'));
+        this.thread = new NodeWorker(`
+            const {parentPort, workerData} = require('node:worker_threads');
+            globalThis.self = {postMessage: value => parentPort.postMessage(value)};
+            require(workerData);
+            parentPort.on('message', data => { Promise.resolve(self.onmessage({data})).catch(error => { throw error; }); });
+        `, {eval: true, workerData: workerPath});
+        workerCount++;
+        this.thread.on('message', data => this.onmessage?.({data}));
+        this.thread.on('error', error => this.onerror?.(error));
+        workerExits.push(new Promise(resolve => this.thread.once('exit', resolve)));
+    }
+    postMessage(value) { this.thread.postMessage(value); }
+    terminate() { terminatedCount++; return this.thread.terminate(); }
+};
 require('../js/call_signaling.js');
 require('../js/call_session.js');
 const {WebSocketSignaling} = globalThis.DmashCallSignaling;
@@ -49,5 +75,8 @@ function peer() {
         await wait(() => caller.closed);
         assert(tracks.every(track => track.stopped));
     } finally { await caller.close(); await callee.close(); }
-    console.log('real WebSocket client exchange passed (RTC is a test double)');
+    await Promise.all(workerExits);
+    assert.equal(workerCount, 1, 'Admission must execute in a real worker thread');
+    assert.equal(terminatedCount, 1, 'Completed admission must terminate its worker');
+    console.log('real WebSocket client + admission worker exchange passed (RTC is a test double)');
 })().catch(error => {console.error(error); process.exitCode = 1;});
