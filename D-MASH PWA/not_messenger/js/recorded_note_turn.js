@@ -40,23 +40,23 @@
   view(row,status,progress){this.core.refreshRecordedNoteState?.(row.peerID,row.id,status,progress);}
   async send(s,peer,payload){return this.wait(s,this.core.sendMessage(payload,false,peer,'turn-note-control',true,null,null,s.current));}
   async state(s,row,status){row.status=status;await this.write(s,row);this.view(row,status);}
-  stop(task){if(!task||task.closed)return;task.closed=true;clearTimeout(task.timer);task.signal?.close();void task.session?.close();task.panel?.remove();this.tasks.delete(task.key);}
+  stop(task){if(!task||task.closed)return;task.closed=true;task.controller?.abort();clearTimeout(task.timer);task.signal?.close();void task.session?.close();task.panel?.remove();this.tasks.delete(task.key);}
   close(){for(const task of this.tasks.values())this.stop(task);}
   forgetPeer(peer){const keys=this.core.keys;if(!keys)return;let epochs=this.peerEpochs.get(keys);if(!epochs){epochs=new Map();this.peerEpochs.set(keys,epochs);}epochs.set(peer,{generation:(epochs.get(peer)?.generation||0)+1,blocked:true});for(const task of this.tasks.values())if(task.peer===peer)this.stop(task);}
   allowPeer(peer){const entry=this.peerEpochs.get(this.core.keys)?.get(peer);if(entry)entry.blocked=false;}
-  async cancel(noteId){const s=this.capture();await this.exclusive(s,async()=>{const row=await this.row(s,noteId);if(!row||row.status==='delivered')return;this.stop(this.tasks.get(noteId));await this.state(s,row,'cancelled');});}
+  async cancel(noteId){const s=this.capture();this.stop(this.tasks.get(noteId));await this.exclusive(s,async()=>{const row=await this.row(s,noteId);if(!row||row.status==='delivered')return;this.stop(this.tasks.get(noteId));await this.state(s,row,'cancelled');});}
   async retry(noteId){const s=this.capture();await this.exclusive(s,async()=>{const row=await this.row(s,noteId);if(!row||row.status==='delivered')return;row.nextAttempt=0;await this.state(s,row,'waiting');});void this.flush();}
   flush(){if(this.flushing)return this.flushing;let s;try{s=this.capture();}catch(_){this.close();return Promise.resolve();}const job=this.run(s).catch(()=>{});this.flushing=job;return job.finally(()=>{if(this.flushing===job)this.flushing=null;});}
   async run(s){for(const task of this.tasks.values())if(task.current&&!task.current())this.stop(task);if([...this.tasks.values()].some(t=>t.outbound))return;const rows=await this.rows(s);for(const saved of rows)this.view(saved,saved.status);const row=rows.filter(r=>!this.peerEpochs.get(s.keys)?.get(r.peerID)?.blocked&&!['delivered','cancelled'].includes(r.status)&&r.nextAttempt<=Date.now()).sort((a,b)=>a.createdAt-b.createdAt)[0];if(!row)return;s=this.capture(row.peerID);
    // A reload repairs history from the encrypted sender intent before any network use.
    const note=global.DmashChatPassword?await this.wait(s,global.DmashChatPassword.reveal(s.vault,row.peerID,row.content)):row.content;
    await this.history(s,row.peerID,note,false,row.id);
-   const task={key:row.id,peer:row.peerID,outbound:true,closed:false};this.tasks.set(task.key,task);const current=()=>s.current()&&!task.closed&&this.tasks.get(task.key)===task;task.current=current;
+   const task={key:row.id,peer:row.peerID,outbound:true,controller:new AbortController(),closed:false};this.tasks.set(task.key,task);const current=()=>s.current()&&!task.closed&&this.tasks.get(task.key)===task;task.current=current;
    const deferred=async()=>{if(!current())return;this.stop(task);await this.exclusive(s,async()=>{const latest=await this.row(s,row.id);if(!latest||['delivered','cancelled'].includes(latest.status))return;latest.nextAttempt=Date.now()+Math.min(300000,15000*2**Math.min(latest.attempts,4));await this.state(s,latest,'waiting');});};
    try{
     row.attempts++;row.nextAttempt=Date.now()+30000;await this.state(s,row,'connecting');
     const endpoint=await this.wait(s,global.NodeManager.selectCallService({file:true}));if(!current())return;
-    task.signal=await global.DmashCallSignaling.WebSocketSignaling.create(endpoint);if(!current()){task.signal.close();this.stop(task);return;}
+    task.signal=await global.DmashCallSignaling.WebSocketSignaling.create(endpoint,{signal:task.controller.signal});if(!current()){task.signal.close();this.stop(task);return;}
     const file=new File([raw(note.data.split(';base64,')[1])],note.name,{type:note.mime});
     const manifest=await this.wait(s,global.DmashFileChannel.describe(file,task.signal.invitation.call_id));if(!current())return;
     task.session=global.DmashFileSession.create({signaling:task.signal,manifest,file,onProgress:(done,total)=>{if(current()){clearTimeout(task.timer);task.timer=setTimeout(()=>{void deferred();},60000);this.view(row,'sending',Math.floor(100*done/total));}},onComplete:()=>{if(current())void this.delivered(s,row).then(()=>{this.stop(task);void this.flush();}).catch(()=>this.stop(task));},onError:()=>{void deferred();}});
@@ -88,9 +88,9 @@
     const reservation=await this.crypt(s,{record:'turn_note_received_v1',status:'receiving',sha256:manifest.sha256,size:manifest.size,mediaType:message.media_type,mime:manifest.mime});
     await this.wait(s,new Promise((resolve,reject)=>{const tx=s.db.transaction('pairing_material','readwrite');tx.objectStore('pairing_material').put({alias:receiveAlias,blob:reservation});tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);}));
    }
-   const task={key,peer,closed:false};this.tasks.set(key,task);const valid=()=>s.current()&&current()&&!task.closed;task.current=valid;
+   const task={key,peer,controller:new AbortController(),closed:false};this.tasks.set(key,task);const valid=()=>s.current()&&current()&&!task.closed;task.current=valid;
    const accept=async()=>{if(!valid())return;task.panel?.remove();task.panel=null;try{
-    task.signal=new global.DmashCallSignaling.WebSocketSignaling({endpoint:invitation.signaling.wss_endpoint,sessionId:invitation.signaling.session_id,ticket:invitation.signaling.one_time_key});
+    task.signal=new global.DmashCallSignaling.WebSocketSignaling({endpoint:invitation.signaling.wss_endpoint,sessionId:invitation.signaling.session_id,ticket:invitation.signaling.one_time_key,signal:task.controller.signal});
     task.session=global.DmashFileSession.create({signaling:task.signal,manifest,onCommit:async blob=>{
      if(!valid())throw Error('Приём отменён');const bytes=new Uint8Array(await this.wait(s,blob.arrayBuffer()));if(!valid())throw Error('Приём отменён');
      const note={type:message.media_type,name:message.media_type==='voice'?'voice_msg':'circle',mime:manifest.mime,data:'data:'+manifest.mime+';base64,'+b64(bytes)};
