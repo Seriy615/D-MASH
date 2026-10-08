@@ -44,7 +44,7 @@ commit также доставляется на Forge, его полный SHA �
 ## 2. Текущий Forge и EMS checkpoint
 
 **Source:** Forge `/home/jcode/D-MASH`, ветка `transport-v3`; exact deployed
-product source `be6a1d9a58ba9fffeb0daad234a6506e5b269667` сверен с Forge
+product source `042d5803d5d622da72848c67d96bd5c8243c4819` сверен с Forge
 `origin/transport-v3`. Новейший tip ветки после
 обновления документации проверять через `git rev-parse origin/transport-v3`.
 Интеграция выполнена в отдельном worktree; shared checkout содержит WIP агентов
@@ -52,24 +52,23 @@ product source `be6a1d9a58ba9fffeb0daad234a6506e5b269667` сверен с Forge
 EMS publisher, Forge origin SHA сверен. Исторические состояния до `.30`
 [архивированы](docs/archive/2026-10-08/CURRENT_HANDOFF_PRE30_SECTIONS_2_3.md).
 
-**Production PWA:** EMS `get_commit.sh` развернул exact `be6a1d9...` с
-page и active controlling SW `transport-v3-node-preparation-20261008.31`.
-Backup PWA: `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T050352Z`.
+**Production PWA:** EMS `get_commit.sh` развернул exact `042d580...` с
+page и active controlling SW `transport-v3-node-preparation-20261008.32`.
+Backup PWA: `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T104727Z`.
 На текущем EMS каталог `/home/jcode/D-MASH` существует, но системного пользователя
 `jcode` нет: `su - jcode` отказал. Проверен и запущен тот же штатный
 `get_commit.sh` от root с scoped Git `safe.directory`, как требует его
 `sudo` usage; script сам создал backup, проверил nginx и публичные assets.
 Read-only exact verifier: **258/258 source files**, `missing=[]`, `changed=[]`.
-Node backend не менялся при `.31`; предыдущие согласованные S-TURN/Node
+Node backend не менялся при `.32`; предыдущие согласованные S-TURN/Node
 конфигурация, identities и базы сохранены. После `.30` PWA deploy реальные
 authenticated TURN UDP/TCP relay и WSS scoped tickets/signaling были PASS;
-на `.31` независимый browser снова передал voice/circle через EMS S-TURN.
+на `.32` независимый browser снова передал voice/file через EMS S-TURN.
 Новый backend/runtime migration из Forge source автоматически не следует.
 
-**Тесты `.31` source:** Python **286**, Origin **11** и все JS suites
-`tools/test_all.py` PASS с Python3.12/Node24.19.0, включая MIME и captured
-recorder/chat alias suites. Первый запуск не имел `node` в `PATH` и не смог
-запустить часть тестов; полный повтор с Node24 завершился exit0. В synthetic
+**Тесты `.32` source:** Python **286**, Origin **11** и все JS suites
+`tools/test_all.py` PASS с Python3.12/Node24.19.0, включая MIME, captured
+recorder/chat alias, late file terminal state и exact PoW proof suites. В synthetic
 Chromium/IndexedDB history-counter fixture PASS: сохранение счётчика при 0x01/0x03,
 запрет перезаписи занятого alias, atomic CAS, fail-closed на чужих/неполных
 строках. Initial 0x01 раньше обнулял `msgCount` при оставшихся ciphertext —
@@ -106,6 +105,26 @@ receiver decrypt/playback; sender увидел два authenticated DELIVERED, �
 по одному voice/circle в истории обеих сторон после Master+Account reload,
 освободил retained media bytes. Задержанный FileReader завершился при открытом
 «Избранном» без modal. Это media/alias приёмка, не полный Node/N4 DONE.
+Пользователь подтвердил: на Android `.31` голосовое отправляется без прежней
+ошибки, но доставляется **более минуты**. В отдельном exact `.31` desktop
+браузерном замере 29–31 KiB voice дошло за 11,625 с, из них 9,489 с заняло
+S-TURN admission/PoW, а локальная запись/история — около 0,1 с. Причина именно
+минутной задержки на Android пока не доказана; performance bug открыт.
+
+**Независимая deployed `.32` browser acceptance:** exact `042d580...`, два
+новых synthetic PRIVATE Account, реальные QR/[+]/key/text/voice/file UI actions
+**24/24 PASS**, 128/128 обычных загруженных файлов exact SHA, page и active
+controlling SW `.32`, ошибок страницы/консоли 0. Для `call_admission_worker.js`
+и импортируемого `resource_pow.js` отдельно сверены served bytes и active SW
+CacheStorage с exact SHA; browser Worker выполнил WebCrypto-проверенный proof.
+Voice 30,532 B дошло и воспроизведено у получателя с sender receipt за 4,127 с
+от завершения записи; ticket/admission занял 2,052 с. File 1 MiB+13 B был
+проверен на обеих сторонах, receiver download SHA совпал с исходным. Поздний
+нативный DataChannel error через 90 мс после verified completion больше не
+стирает успешный статус. Первый deployed QA запуск завершился ошибкой только
+из-за чтения response body уже закрытого Worker; исправленный independent
+collector прошёл exit0 на новых профилях. Физический Android `.32` ещё ждёт
+ответа пользователя; N3/N4/N7 целиком и весь план не DONE.
 
 **Предыдущая `.29` independent deployed acceptance:** 27/27 continued actual
 controls PASS для public Request/Accept/Confirm, текста, трёх voice notes,
@@ -114,8 +133,9 @@ controls PASS для public Request/Accept/Confirm, текста, трёх voice
 Это v3 migration path и N4 safety-only, не ordinary Node DONE. Дополнительный
 fresh `.29` browser-first проход: calculator 24/24, Account lifecycle 9 PASS/1
 FAIL, Saved Messages/media/master 27/27, Node remove-retry 6/6 PASS. Отдельный
-1 MiB+13 B реальный file transfer — sender показывает «Передано и проверено»,
-receiver `File channel failed`: P1 N7 bug открыт. Account remove UI обещает
+1 MiB+13 B реальный file transfer — sender показывал «Передано и проверено»,
+receiver `File channel failed`: этот terminal-state баг закрыт узкой deployed
+`.32` browser приёмкой выше, но общий N7 остаётся PARTIAL. Account remove UI обещает
 стереть всю историю, но повторное создание того же synthetic Account показывает
 старое сообщение: `ACCOUNT-DELETE-01` открыт; production данные не удалялись.
 Полная матрица и ограничения — [BROWSER_QA.md](BROWSER_QA.md).
@@ -125,7 +145,7 @@ receiver `File channel failed`: P1 N7 bug открыт. Account remove UI обе
 backend snapshots `/root/dmash-runtime-backups/sturn-gateway-gate-20261008T034751Z`
 и `/root/dmash-runtime-backups/backend-exact-20261008T035123Z` вне Git;
 три SQLite quick_check и identity hashes были проверены при обновлении.
-`.31` не изменил Node backend/DB/keys. Production exact Node profile —
+`.32` не изменил Node backend/DB/keys. Production exact Node profile —
 `wss://stage-api-ems.d-mash.ru/mesh/v4` с отдельно проверенным NodeID pin;
 старый `/dmp-c/v3` остаётся временным migration path, не скрытым fallback.
 
@@ -142,27 +162,44 @@ locked Account, receipt-backed durable outbox и запрет v3 fallback ост
 обязательными для N3. Агент продолжает isolated UI/loader cutover; интеграцию
 и browser/deployed acceptance проверяет лид отдельно.
 
-Изолированный full-shell UI candidate `46c67477...` проверен настоящими
-кнопками на сохранённых synthetic профилях: managed Node пережила Account logout,
+Изолированный full-shell UI candidate `4b7f407...` проверен настоящими
+кнопками на synthetic профилях: managed Node пережила Account logout,
 публичный запрос появился в глобальной панели до Account login, существующий
-Account принял и подтвердил его; 10 этапов продолжения PASS. Ранее обнаруженный
-повторный `CONNECT` к уже authenticated Node устранён с idempotent reuse только
-того же URL/peer и fail-closed password repeat. Проверка остановилась на busy
-deadline кнопки «Завершить обмен ключами»; N4/text/history в full-shell ещё
-**NOT RUN/PASS**. Browser process уже не жив после остановки агента; повтор
-должен использовать сохранённые данные и отдельный QA checkpoint, не reset.
+Account принял и подтвердил его. Ранее обнаруженный повторный `CONNECT` к уже
+authenticated Node устранён с idempotent reuse только того же URL/peer и
+fail-closed password repeat. Продолжение подтвердило genuine N4 `ESTABLISHED`
+и активный route proof у обеих сторон. Оба направления текста фактически
+расшифрованы и durable committed, но B→A не появился за 45 с в UI; один текст
+дублировался в DOM. Protected snapshot доказал две разные operation ID и по
+две корректные history rows, без DB-дублей. Причина UI: Node callback вызывал
+`Core.loadChat(true)` (загрузку старой страницы), а не обновление текущей;
+узкий fix `4b7f407...` имеет UNIT, same-state реальный browser retest ещё
+**NOT RUN**. Browser profiles сохранены в protected off-Git snapshots; reset
+реальных identities не выполнялся. Текущий Node App contract пропускает только
+text: typed media/call S-TURN control через N4 ещё не проведён; полный cutover
+контактов в production не готов, скрытый v3 fallback запрещён.
 
 Полный N4 recovery **не завершён**. Новый genuine two-Worker/Python loss fixture
 прошёл lost FINAL/ACK-only и restart, но при one-sided state loss застрял:
 requester `INIT_PREPARED`, responder `RESPONDER_PENDING`, финального
-подтверждения нет. Агент собирает read-only wire/Inbox forensic trace того же
-точного сценария, затем исправит доказанную причину. Node Inbox `seen`
+подтверждения нет. Timestamp trace показал: после reload challenge был queued
+немедленно, но requester получил его лишь через ~169 с; после доставки
+INIT/PROOF/FINAL прошли примерно за 12 с. Старая grant/route cache — гипотеза,
+не доказанная причина. Изолированный bounded grant refresh candidate
+`d678d9a...` сохраняет pinned cert/binding, ограничивает reuse 15 с и освобождает
+owner-scoped старые handles после in-flight send; UNIT/quota PASS, real browser
+recovery proof ещё **NOT RUN**. Node Inbox `seen`
 tombstone не позволяет выдавать повтор старого application envelope за новый
 доставленный ACK; нужен аутентифицированный bounded ACK request/replay либо
 эквивалентное durable решение, без удаления tombstone или повторного seal.
-Изолированный ACK/outbox candidate `387e9e71...` имеет synthetic UNIT для
-authenticated receipt, lost ACK replay и fault/crash ordering, но не прошёл
-same-grant real browser. Pending intent пока требует уже `ESTABLISHED` N4:
+Изолированный ACK/outbox candidate имеет synthetic Chromium/IndexedDB и Node
+UNIT для authenticated receipt, lost ACK replay и fault/crash ordering. Отдельный
+real browser с двумя managed Worker, Python Node и synthetic Account проверил
+потерю первого ACK после recipient history: свежий outer op с тем же inner
+ciphertext и grant прошёл через Inbox tombstone, аутентифицированный ACK
+перевёл sender PENDING→DELIVERED и освободил outbox; page errors 0. Это isolated
+browser PASS, ещё не merged/deployed ordinary UI acceptance. Pending intent пока
+требует уже `ESTABLISHED` N4:
 первое сообщение новому offline peer ещё не может быть поставлено в durable
 ожидание. При rekey pending outbox fail-closed, authenticated migration не
 реализована. Этот candidate не интегрирован и не опубликован.
