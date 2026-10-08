@@ -1,0 +1,4879 @@
+{
+  "target": "https://messenger.d-mash.ru/not_messenger/",
+  "scope": "FRESH PUBLIC-ONLY actual two-profile UI; no preexisting peers, private fallback or console setup; v3 migration path, not N3 cutover",
+  "mode": "DEPLOYED / REAL SW / REAL TRANSPORT",
+  "snapshot": null,
+  "steps": [
+    {
+      "id": "profile-0",
+      "status": "PASS"
+    },
+    {
+      "id": "request-node-0",
+      "status": "PASS"
+    },
+    {
+      "id": "profile-1",
+      "status": "PASS"
+    },
+    {
+      "id": "request-node-1",
+      "status": "PASS"
+    },
+    {
+      "id": "public-route-copy",
+      "status": "PASS"
+    },
+    {
+      "id": "public-request",
+      "status": "PASS"
+    },
+    {
+      "id": "public-accept-account",
+      "status": "PASS"
+    },
+    {
+      "id": "public-confirm",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-open-0",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-open-1",
+      "status": "PASS"
+    },
+    {
+      "id": "key-exchange",
+      "status": "PASS"
+    },
+    {
+      "id": "send-receive-0",
+      "status": "PASS"
+    },
+    {
+      "id": "send-receive-1",
+      "status": "PASS"
+    }
+  ],
+  "states": [
+    {
+      "state": "connected-node-0",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING …\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nПОДКЛЮЧЕНИЕ К УЗЛУ\nПодключено\n\nОсновной узел для одиночных запросов: D-MASH EMS staging\n\n● D-MASH EMS staging: connected · регистрация устройства…\nwss://stage-api-ems.d-mash.ru/dmash-client/v3\nOFF\nQR\n⚙\nДОБАВИТЬ УЗЕЛДОБАВИТЬ ПО QRНАЗАД\nD-MASH build transport-v3-node-preparation-20261008.26",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 40–40 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "OFF",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "QR",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ДОБАВИТЬ УЗЕЛ",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ДОБАВИТЬ ПО QR",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "НАЗАД",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "connected-node-1",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 37–37 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nПОДКЛЮЧЕНИЕ К УЗЛУ\nПодключено\n\nОсновной узел для одиночных запросов: D-MASH EMS staging\n\n● D-MASH EMS staging: connected · 37 ms · регистрация устройства…\nwss://stage-api-ems.d-mash.ru/dmash-client/v3\nOFF\nQR\n⚙\nДОБАВИТЬ УЗЕЛДОБАВИТЬ ПО QRНАЗАД\nD-MASH build transport-v3-node-preparation-20261008.26",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 37–37 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "OFF",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "QR",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ДОБАВИТЬ УЗЕЛ",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ДОБАВИТЬ ПО QR",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "НАЗАД",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "visible-account-public-route-panel",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 37–37 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nPUBLIC ROUTES\nPUBLIC ROUTES\nМаршрут принадлежит Device. Просмотр списка не требует входа в Account. Создание/активация требуют разблокированный DeviceRoot.\nPublic Routes ещё не созданы.\nСОЗДАТЬ PUBLIC ROUTE НАЗАД\nD-MASH build transport-v3-node-preparation-20261008.26",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 37–37 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "СОЗДАТЬ PUBLIC ROUTE",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "НАЗАД",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "request-result",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 50–50 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nНОВЫЙ КОНТАКТ\nОТПРАВКА ПРИ ВОССТАНОВЛЕНИИ СВЯЗИ\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nЗАПРОС СОХРАНЁН\nЗапрос появится у собеседника после восстановления маршрута. Повторы выполняются автоматически.\nOK\nD-MASH build transport-v3-node-preparation-20261008.26",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 50–50 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "Новый контактОТПРАВКА ПРИ ВОССТАНОВЛЕНИИ СВЯЗИ",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "OK",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "incoming-request",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 47–47 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nЗАПРОС В КОНТАКТЫ\nQA Alice\nSynthetic browser contact audit\nREQUEST: [token]\nДля принятия откройте выбранный Account. Контакт получит защищённое подтверждение.\nПРИНЯТЬ ОТКЛОНИТЬ ЗАКРЫТЬ\nD-MASH build transport-v3-node-preparation-20261008.26",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 47–47 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ПРИНЯТЬ",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ОТКЛОНИТЬ",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "ЗАКРЫТЬ",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "accepted",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 47–47 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA ALICE\nОЖИДАЕМ ПОДТВЕРЖДЕНИЯ\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nПРИНЯТИЕ ОТПРАВЛЕНО\nОжидаем подтверждения Account собеседника.\nOK\nD-MASH build transport-v3-node-preparation-20261008.26",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 47–47 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "QA AliceОЖИДАЕМ ПОДТВЕРЖДЕНИЯ",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "OK",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "confirmed",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 37–37 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nD-MASH build transport-v3-node-preparation-20261008.26",
+      "controls": [
+        {
+          "id": "",
+          "label": "СЕТЬ:\n                        1 УЗЛ. · PING 37–37 ms",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ QR ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ + ]",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "⚙",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "×",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "[ ВЫХОД ]",
+          "disabled": false
+        },
+        {
+          "id": "back-btn",
+          "label": "←",
+          "disabled": false
+        },
+        {
+          "id": "",
+          "label": "✎",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "state": "final",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 37–37 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: 805efcd1... (КОПИРОВАТЬ)\n📞\n✎\n🔒\nUI contact message 1\n×\n12:45 AM\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "state": "final",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 37–37 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Alice\n×\n[ ВЫХОД ]\n←\nQA ALICE\nID: a02eb6af... (КОПИРОВАТЬ)\n📞\n✎\n🔒\nUI contact message 0\n×\n12:45 AM\nUI contact message 1\n×\n12:45 AM\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    }
+  ],
+  "transportObservations": [
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:08.808Z",
+      "workers": 1,
+      "nodes": [
+        {
+          "state": "connected",
+          "dnss": "pending",
+          "difficulty": 22,
+          "pending": 0,
+          "error": null
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:08.813Z",
+      "workers": 1,
+      "nodes": [
+        {
+          "state": "connected",
+          "dnss": "pending",
+          "difficulty": 22,
+          "pending": 0,
+          "error": null
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:19.478Z",
+      "workers": 1,
+      "nodes": [
+        {
+          "state": "connected",
+          "dnss": "pending",
+          "difficulty": 22,
+          "pending": 0,
+          "error": null
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:19.488Z",
+      "workers": 1,
+      "nodes": [
+        {
+          "state": "connected",
+          "dnss": "pending",
+          "difficulty": 22,
+          "pending": 0,
+          "error": null
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:30.306Z",
+      "workers": 1,
+      "nodes": [
+        {
+          "state": "connected",
+          "dnss": "pending",
+          "difficulty": 22,
+          "pending": 0,
+          "error": null
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:30.312Z",
+      "workers": 2,
+      "nodes": [
+        {
+          "state": "connected",
+          "dnss": "ready",
+          "difficulty": 22,
+          "pending": 0,
+          "error": null
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.881Z",
+      "workers": 0,
+      "nodes": [
+        {
+          "state": "connected",
+          "dnss": "ready",
+          "difficulty": 22,
+          "pending": 0,
+          "error": null
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:40.884Z",
+      "workers": 0,
+      "nodes": [
+        {
+          "state": "connected",
+          "dnss": "ready",
+          "difficulty": 22,
+          "pending": 0,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "console": [],
+  "loadedSources": [
+    {
+      "profile": 0,
+      "path": "index.html",
+      "actualSha256": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "expectedSha256": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/release.js",
+      "actualSha256": "4e9d9a442c428ab22694ae31b3487688e8f700b30f4a3e016b9b9ddb0c7a02a9",
+      "expectedSha256": "4e9d9a442c428ab22694ae31b3487688e8f700b30f4a3e016b9b9ddb0c7a02a9",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/device_routes.js",
+      "actualSha256": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "expectedSha256": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/dmash_links.js",
+      "actualSha256": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "expectedSha256": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/quick_name_registry.js",
+      "actualSha256": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "expectedSha256": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/ui_logic.js",
+      "actualSha256": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "expectedSha256": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/secure_session.js",
+      "actualSha256": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "expectedSha256": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/device_client_v3.js",
+      "actualSha256": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "expectedSha256": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/device_authority_v3.js",
+      "actualSha256": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "expectedSha256": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/device_envelope.js",
+      "actualSha256": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "expectedSha256": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/device_inbox.js",
+      "actualSha256": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "expectedSha256": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/account_node_inbox_v4.js",
+      "actualSha256": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "expectedSha256": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/route_discovery_v4.js",
+      "actualSha256": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "expectedSha256": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/account_node_transport_v4.js",
+      "actualSha256": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "expectedSha256": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/private_routes_v3.js",
+      "actualSha256": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "expectedSha256": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/contact_bootstrap_v3.js",
+      "actualSha256": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "expectedSha256": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/contact_flow_v3.js",
+      "actualSha256": "317d38cd09037f795f205de0a4413ee2ed1d3aae654e38ebc537b66137e6edb7",
+      "expectedSha256": "317d38cd09037f795f205de0a4413ee2ed1d3aae654e38ebc537b66137e6edb7",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/contact_payloads.js",
+      "actualSha256": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "expectedSha256": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/contact_transport.js",
+      "actualSha256": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "expectedSha256": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/pending_contact_requests.js",
+      "actualSha256": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "expectedSha256": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/ui_global_bridge.js",
+      "actualSha256": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "expectedSha256": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/runtime_fixes.js",
+      "actualSha256": "eaf8a52ef22c7712cd79761f86ebb5919bcda679e64ffea2e9ac7e09428d0658",
+      "expectedSha256": "eaf8a52ef22c7712cd79761f86ebb5919bcda679e64ffea2e9ac7e09428d0658",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/public_contact_runtime.js",
+      "actualSha256": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "expectedSha256": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_fixes.js",
+      "actualSha256": "46a7c66f691bc6d3554013da7b2e6db37e9b08a06f871eabd6e9c2413221a0d8",
+      "expectedSha256": "46a7c66f691bc6d3554013da7b2e6db37e9b08a06f871eabd6e9c2413221a0d8",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_v50.js",
+      "actualSha256": "4e757c4a45ee5f7f505cac2bffda4308663506cd1e0edecb116b95be84487b72",
+      "expectedSha256": "4e757c4a45ee5f7f505cac2bffda4308663506cd1e0edecb116b95be84487b72",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_v51.js",
+      "actualSha256": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "expectedSha256": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/call_signaling.js",
+      "actualSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "expectedSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/call_runtime.js",
+      "actualSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expectedSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/account_ratchet.js",
+      "actualSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expectedSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/saved_messages.js",
+      "actualSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expectedSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/chat_cipher.js",
+      "actualSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expectedSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/chat_password.js",
+      "actualSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expectedSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/account_ratchet_runtime.js",
+      "actualSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expectedSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/account_recorded_media.js",
+      "actualSha256": "1b2e661a8fd3c773f1a25eec0a0076086f0040c1ec7f75f5f1e6df2defb6328e",
+      "expectedSha256": "1b2e661a8fd3c773f1a25eec0a0076086f0040c1ec7f75f5f1e6df2defb6328e",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/file_channel.js",
+      "actualSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "expectedSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/file_session.js",
+      "actualSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "expectedSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/file_runtime.js",
+      "actualSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expectedSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_v52.js",
+      "actualSha256": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "expectedSha256": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_v54.js",
+      "actualSha256": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "expectedSha256": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/acceptance_v55.js",
+      "actualSha256": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "expectedSha256": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/kyber768.js",
+      "actualSha256": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "expectedSha256": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/qrcode.min.js",
+      "actualSha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "expectedSha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/nacl-util.min.js",
+      "actualSha256": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "expectedSha256": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/argon2-bundled.min.js",
+      "actualSha256": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "expectedSha256": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/storage.js",
+      "actualSha256": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+      "expectedSha256": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/call_signaling.js",
+      "actualSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "expectedSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/device_root.js",
+      "actualSha256": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "expectedSha256": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/call_runtime.js",
+      "actualSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expectedSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/account_ratchet.js",
+      "actualSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expectedSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/saved_messages.js",
+      "actualSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expectedSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/chat_password.js",
+      "actualSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expectedSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/chat_cipher.js",
+      "actualSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expectedSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/account_ratchet_runtime.js",
+      "actualSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expectedSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/file_channel.js",
+      "actualSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "expectedSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/file_session.js",
+      "actualSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "expectedSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/file_runtime.js",
+      "actualSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expectedSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/call_session.js",
+      "actualSha256": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "expectedSha256": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/html5-qrcode.min.js",
+      "actualSha256": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "expectedSha256": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/node_manager.js",
+      "actualSha256": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+      "expectedSha256": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/vendor/nacl-fast.min.js",
+      "actualSha256": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "expectedSha256": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/core_engine.js",
+      "actualSha256": "b362303f8d65407d7077c216f11a84666c0f480a0681098f273b406e2152b440",
+      "expectedSha256": "b362303f8d65407d7077c216f11a84666c0f480a0681098f273b406e2152b440",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "nodes.json",
+      "actualSha256": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "expectedSha256": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "index.html",
+      "actualSha256": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "expectedSha256": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/release.js",
+      "actualSha256": "4e9d9a442c428ab22694ae31b3487688e8f700b30f4a3e016b9b9ddb0c7a02a9",
+      "expectedSha256": "4e9d9a442c428ab22694ae31b3487688e8f700b30f4a3e016b9b9ddb0c7a02a9",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/device_routes.js",
+      "actualSha256": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "expectedSha256": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/dmash_links.js",
+      "actualSha256": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "expectedSha256": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/quick_name_registry.js",
+      "actualSha256": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "expectedSha256": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/ui_logic.js",
+      "actualSha256": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "expectedSha256": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/secure_session.js",
+      "actualSha256": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "expectedSha256": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/device_client_v3.js",
+      "actualSha256": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "expectedSha256": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/device_authority_v3.js",
+      "actualSha256": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "expectedSha256": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/device_envelope.js",
+      "actualSha256": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "expectedSha256": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/device_inbox.js",
+      "actualSha256": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "expectedSha256": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/account_node_inbox_v4.js",
+      "actualSha256": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "expectedSha256": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/route_discovery_v4.js",
+      "actualSha256": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "expectedSha256": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/account_node_transport_v4.js",
+      "actualSha256": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "expectedSha256": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/private_routes_v3.js",
+      "actualSha256": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "expectedSha256": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/contact_bootstrap_v3.js",
+      "actualSha256": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "expectedSha256": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/contact_flow_v3.js",
+      "actualSha256": "317d38cd09037f795f205de0a4413ee2ed1d3aae654e38ebc537b66137e6edb7",
+      "expectedSha256": "317d38cd09037f795f205de0a4413ee2ed1d3aae654e38ebc537b66137e6edb7",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/contact_payloads.js",
+      "actualSha256": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "expectedSha256": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/contact_transport.js",
+      "actualSha256": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "expectedSha256": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/pending_contact_requests.js",
+      "actualSha256": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "expectedSha256": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/ui_global_bridge.js",
+      "actualSha256": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "expectedSha256": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/runtime_fixes.js",
+      "actualSha256": "eaf8a52ef22c7712cd79761f86ebb5919bcda679e64ffea2e9ac7e09428d0658",
+      "expectedSha256": "eaf8a52ef22c7712cd79761f86ebb5919bcda679e64ffea2e9ac7e09428d0658",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/public_contact_runtime.js",
+      "actualSha256": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "expectedSha256": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_fixes.js",
+      "actualSha256": "46a7c66f691bc6d3554013da7b2e6db37e9b08a06f871eabd6e9c2413221a0d8",
+      "expectedSha256": "46a7c66f691bc6d3554013da7b2e6db37e9b08a06f871eabd6e9c2413221a0d8",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_v50.js",
+      "actualSha256": "4e757c4a45ee5f7f505cac2bffda4308663506cd1e0edecb116b95be84487b72",
+      "expectedSha256": "4e757c4a45ee5f7f505cac2bffda4308663506cd1e0edecb116b95be84487b72",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_v51.js",
+      "actualSha256": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "expectedSha256": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/call_signaling.js",
+      "actualSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "expectedSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/call_runtime.js",
+      "actualSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expectedSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/account_ratchet.js",
+      "actualSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expectedSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/saved_messages.js",
+      "actualSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expectedSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/chat_cipher.js",
+      "actualSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expectedSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/chat_password.js",
+      "actualSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expectedSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/account_ratchet_runtime.js",
+      "actualSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expectedSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/account_recorded_media.js",
+      "actualSha256": "1b2e661a8fd3c773f1a25eec0a0076086f0040c1ec7f75f5f1e6df2defb6328e",
+      "expectedSha256": "1b2e661a8fd3c773f1a25eec0a0076086f0040c1ec7f75f5f1e6df2defb6328e",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/file_channel.js",
+      "actualSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "expectedSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/file_session.js",
+      "actualSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "expectedSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/file_runtime.js",
+      "actualSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expectedSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_v52.js",
+      "actualSha256": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "expectedSha256": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_v54.js",
+      "actualSha256": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "expectedSha256": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/acceptance_v55.js",
+      "actualSha256": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "expectedSha256": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "match": true,
+      "fromServiceWorker": false
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/kyber768.js",
+      "actualSha256": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "expectedSha256": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/qrcode.min.js",
+      "actualSha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "expectedSha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/nacl-util.min.js",
+      "actualSha256": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "expectedSha256": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/argon2-bundled.min.js",
+      "actualSha256": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "expectedSha256": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/storage.js",
+      "actualSha256": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+      "expectedSha256": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/device_root.js",
+      "actualSha256": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "expectedSha256": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/call_runtime.js",
+      "actualSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expectedSha256": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/call_signaling.js",
+      "actualSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "expectedSha256": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/account_ratchet.js",
+      "actualSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expectedSha256": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/saved_messages.js",
+      "actualSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expectedSha256": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/chat_password.js",
+      "actualSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expectedSha256": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/chat_cipher.js",
+      "actualSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expectedSha256": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/account_ratchet_runtime.js",
+      "actualSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expectedSha256": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/html5-qrcode.min.js",
+      "actualSha256": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "expectedSha256": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/file_channel.js",
+      "actualSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "expectedSha256": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/file_session.js",
+      "actualSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "expectedSha256": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/file_runtime.js",
+      "actualSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expectedSha256": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/call_session.js",
+      "actualSha256": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "expectedSha256": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/node_manager.js",
+      "actualSha256": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+      "expectedSha256": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/vendor/nacl-fast.min.js",
+      "actualSha256": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "expectedSha256": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/core_engine.js",
+      "actualSha256": "b362303f8d65407d7077c216f11a84666c0f480a0681098f273b406e2152b440",
+      "expectedSha256": "b362303f8d65407d7077c216f11a84666c0f480a0681098f273b406e2152b440",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "nodes.json",
+      "actualSha256": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "expectedSha256": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 1,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    },
+    {
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actualSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expectedSha256": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true,
+      "fromServiceWorker": true
+    }
+  ],
+  "browser": "156.0.8078.4",
+  "readinessStages": [
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:41:53.193Z",
+      "stage": "node-policy",
+      "data": {
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:41:53.203Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_DNSS",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:41:53.244Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ERROR",
+        "code": "DNSS_NOT_REGISTERED",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:41:53.245Z",
+      "stage": "dnss-response-error",
+      "data": {
+        "code": "DNSS_NOT_REGISTERED"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:41:53.247Z",
+      "stage": "pow-request",
+      "data": {
+        "kind": "DNSS",
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:01.101Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "DNSS",
+        "difficulty": 22,
+        "attempts": 1048576,
+        "elapsedMs": 7783.700000286102
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:06.562Z",
+      "stage": "node-policy",
+      "data": {
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:06.573Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_DNSS",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:06.613Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ERROR",
+        "code": "DNSS_NOT_REGISTERED",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:06.618Z",
+      "stage": "dnss-response-error",
+      "data": {
+        "code": "DNSS_NOT_REGISTERED"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:06.619Z",
+      "stage": "pow-request",
+      "data": {
+        "kind": "DNSS",
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:06.872Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "DNSS",
+        "difficulty": 22,
+        "attempts": 2097152,
+        "elapsedMs": 13553.200000286102
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:08.391Z",
+      "stage": "initial-retry-state",
+      "data": {
+        "attempts": 0,
+        "status": "request_pending",
+        "retryInMs": 0,
+        "expiresInMs": 86399979
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:08.472Z",
+      "stage": "initial-activation-start",
+      "data": {
+        "nodes": 1
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:15.227Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "DNSS",
+        "difficulty": 22,
+        "attempts": 1048576,
+        "elapsedMs": 8526.599999904633
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:15.629Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "DNSS",
+        "difficulty": 22,
+        "attempts": 3145728,
+        "elapsedMs": 22312.800000190735
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.305Z",
+      "stage": "pow-finished",
+      "data": {
+        "kind": "DNSS",
+        "difficulty": 22,
+        "elapsedMs": 13604,
+        "error": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.308Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_DNSS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.345Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_DNSS_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.353Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.380Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.390Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ERROR",
+        "code": "INVALID_RESOURCE_POW",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.395Z",
+      "stage": "route-response-error",
+      "data": {
+        "operation": "REGISTER_ROUTE",
+        "kind": "PUBLIC",
+        "code": "INVALID_RESOURCE_POW"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.397Z",
+      "stage": "pow-request",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.417Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ERROR",
+        "code": "INVALID_RESOURCE_POW",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.420Z",
+      "stage": "route-response-error",
+      "data": {
+        "operation": "REGISTER_ROUTE",
+        "kind": "PUBLIC",
+        "code": "INVALID_RESOURCE_POW"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:20.421Z",
+      "stage": "pow-request",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:23.131Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "DNSS",
+        "difficulty": 22,
+        "attempts": 4194304,
+        "elapsedMs": 29808.800000190735
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:26.078Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22,
+        "attempts": 1048576,
+        "elapsedMs": 5620.400000095367
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:26.102Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22,
+        "attempts": 1048576,
+        "elapsedMs": 5614.900000095367
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:27.037Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:31.818Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22,
+        "attempts": 2097152,
+        "elapsedMs": 11362.400000095367
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:32.093Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22,
+        "attempts": 2097152,
+        "elapsedMs": 11603.300000190735
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:33.419Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "DNSS",
+        "difficulty": 22,
+        "attempts": 5242880,
+        "elapsedMs": 40103.60000038147
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:34.027Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:36.925Z",
+      "stage": "pow-finished",
+      "data": {
+        "kind": "DNSS",
+        "difficulty": 22,
+        "elapsedMs": 43608,
+        "error": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:36.932Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_DNSS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:36.939Z",
+      "stage": "pow-finished",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22,
+        "elapsedMs": 16479,
+        "error": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:36.945Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:36.969Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_DNSS_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:36.977Z",
+      "stage": "pow-finished",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22,
+        "elapsedMs": 16483,
+        "error": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:36.978Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:36.986Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:36.987Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:37.023Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:37.028Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ERROR",
+        "code": "INVALID_RESOURCE_POW",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:37.035Z",
+      "stage": "route-response-error",
+      "data": {
+        "operation": "REGISTER_ROUTE",
+        "kind": "PUBLIC",
+        "code": "INVALID_RESOURCE_POW"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:37.038Z",
+      "stage": "pow-request",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:37.043Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:37.045Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:37.065Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ERROR",
+        "code": "INVALID_RESOURCE_POW",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:37.068Z",
+      "stage": "route-response-error",
+      "data": {
+        "operation": "REGISTER_ROUTE",
+        "kind": "PUBLIC",
+        "code": "INVALID_RESOURCE_POW"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:37.073Z",
+      "stage": "pow-request",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:37.080Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:37.083Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:37.129Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:37.150Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:37.198Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.781Z",
+      "stage": "pow-finished",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22,
+        "elapsedMs": 2629,
+        "error": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.786Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.812Z",
+      "stage": "pow-finished",
+      "data": {
+        "kind": "ENTRY_GRANT",
+        "difficulty": 22,
+        "elapsedMs": 2717,
+        "error": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.814Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.820Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.846Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.854Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.890Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.894Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.899Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.927Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.929Z",
+      "stage": "initial-activation-result",
+      "data": {
+        "results": [
+          {
+            "status": "fulfilled",
+            "state": "ACTIVATED",
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.931Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.944Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.966Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.968Z",
+      "stage": "initial-target-readiness",
+      "data": {
+        "ready": true,
+        "connected": true
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:39.985Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.022Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.024Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.062Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.064Z",
+      "stage": "initial-submitted",
+      "data": {
+        "attempts": 1
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:40.071Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:40.077Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.081Z",
+      "stage": "initial-retry-state",
+      "data": {
+        "attempts": 1,
+        "status": "requested",
+        "retryInMs": 0,
+        "expiresInMs": 86368290
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.093Z",
+      "stage": "initial-activation-start",
+      "data": {
+        "nodes": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.105Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.150Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.181Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.219Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.221Z",
+      "stage": "initial-activation-result",
+      "data": {
+        "results": [
+          {
+            "status": "fulfilled",
+            "state": "ACTIVATED",
+            "error": null
+          }
+        ]
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.223Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.257Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.259Z",
+      "stage": "initial-target-readiness",
+      "data": {
+        "ready": true,
+        "connected": true
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.275Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.314Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.316Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.362Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.365Z",
+      "stage": "initial-submitted",
+      "data": {
+        "attempts": 2
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:40.374Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:40.376Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.383Z",
+      "stage": "initial-retry-state",
+      "data": {
+        "attempts": 2,
+        "status": "requested",
+        "retryInMs": 9700,
+        "expiresInMs": 86367990
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.395Z",
+      "stage": "initial-retry-state",
+      "data": {
+        "attempts": 2,
+        "status": "requested",
+        "retryInMs": 9687,
+        "expiresInMs": 86367977
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.404Z",
+      "stage": "initial-retry-state",
+      "data": {
+        "attempts": 2,
+        "status": "requested",
+        "retryInMs": 9676,
+        "expiresInMs": 86367966
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:40.413Z",
+      "stage": "initial-retry-state",
+      "data": {
+        "attempts": 2,
+        "status": "requested",
+        "retryInMs": 9661,
+        "expiresInMs": 86367951
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:41.036Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:41.759Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:41.810Z",
+      "stage": "initial-retry-state",
+      "data": {
+        "attempts": 2,
+        "status": "requested",
+        "retryInMs": 8267,
+        "expiresInMs": 86366557
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:42.402Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:42.441Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:42.464Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:42.503Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:42.506Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.546Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:42.550Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.553Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.837Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.848Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.870Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.892Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.906Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ERROR",
+        "code": "INVALID_RESOURCE_POW",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.919Z",
+      "stage": "route-response-error",
+      "data": {
+        "operation": "REGISTER_ROUTE",
+        "kind": "PRIVATE",
+        "code": "INVALID_RESOURCE_POW"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.922Z",
+      "stage": "pow-request",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.931Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.936Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:42.981Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:42.998Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:43.009Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:43.554Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:43.606Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ERROR",
+        "code": "INVALID_RESOURCE_POW",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:43.610Z",
+      "stage": "route-response-error",
+      "data": {
+        "operation": "REGISTER_ROUTE",
+        "kind": "PRIVATE",
+        "code": "INVALID_RESOURCE_POW"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:43.618Z",
+      "stage": "pow-request",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:44.915Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:44.975Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ERROR",
+        "code": "INVALID_RESOURCE_POW",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:44.988Z",
+      "stage": "route-response-error",
+      "data": {
+        "operation": "REGISTER_ROUTE",
+        "kind": "PRIVATE",
+        "code": "INVALID_RESOURCE_POW"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:44.993Z",
+      "stage": "pow-request",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:48.027Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:48.759Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:54.139Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 1048576,
+        "elapsedMs": 11129.400000095367
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:54.363Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 1048576,
+        "elapsedMs": 10669.900000095367
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:54.785Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 1048576,
+        "elapsedMs": 9739
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:42:55.030Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:42:55.757Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:02.030Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:02.763Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:04.833Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 2097152,
+        "elapsedMs": 21824.099999904633
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:05.228Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 2097152,
+        "elapsedMs": 20181.900000095367
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:05.418Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 2097152,
+        "elapsedMs": 21720.299999713898
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:09.027Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:09.763Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:15.044Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 3145728,
+        "elapsedMs": 32032.800000190735
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:15.721Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 3145728,
+        "elapsedMs": 30679.099999904633
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:16.031Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:16.767Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:17.390Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 3145728,
+        "elapsedMs": 33696.09999990463
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:23.029Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:23.762Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:26.973Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 4194304,
+        "elapsedMs": 43964.800000190735
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:27.031Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 4194304,
+        "elapsedMs": 41988.7000002861
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:27.901Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 4194304,
+        "elapsedMs": 44202.90000009537
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:30.030Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:30.765Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:37.028Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:37.764Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:39.865Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 5242880,
+        "elapsedMs": 54821.59999990463
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:40.050Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 5242880,
+        "elapsedMs": 57035.2000002861
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:41.700Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 5242880,
+        "elapsedMs": 58007.199999809265
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:44.038Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:44.764Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:51.035Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:51.762Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:52.747Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 6291456,
+        "elapsedMs": 69735.80000019073
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:53.093Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 6291456,
+        "elapsedMs": 68048.2000002861
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:54.145Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 6291456,
+        "elapsedMs": 70448.59999990463
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:43:58.030Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:43:58.762Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:44:05.054Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:05.772Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:44:12.035Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:12.765Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:16.597Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 7340032,
+        "elapsedMs": 93580.2000002861
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:18.274Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 7340032,
+        "elapsedMs": 93225.80000019073
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:18.798Z",
+      "stage": "pow-finished",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "elapsedMs": 95781,
+        "error": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:18.824Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:18.858Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:18.899Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:18.943Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:44:19.042Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:19.767Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:44:21.002Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 7340032,
+        "elapsedMs": 97293.40000009537
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:44:26.040Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:26.762Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:44:33.036Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:33.759Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:44:40.028Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:40.761Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:42.629Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 8388608,
+        "elapsedMs": 117584.7000002861
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:44:45.423Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 8388608,
+        "elapsedMs": 121725.2999997139
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:44:47.028Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:47.763Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:44:54.044Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:54.764Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:56.659Z",
+      "stage": "pow-finished",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "elapsedMs": 131612,
+        "error": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:56.669Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:56.715Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:56.749Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:56.794Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:56.839Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:44:56.913Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_UNKNOWN"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:01.030Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:01.219Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 9437184,
+        "elapsedMs": 137523.09999990463
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:01.760Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:08.033Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:08.270Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:08.315Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:08.340Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:08.379Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:08.420Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:08.460Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_UNKNOWN"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:08.765Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:15.029Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:15.762Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:15.887Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 10485760,
+        "elapsedMs": 152194.90000009537
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:22.034Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:22.763Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:23.271Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:23.310Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:23.331Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:23.366Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:23.410Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:23.443Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_UNKNOWN"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:27.930Z",
+      "stage": "pow-progress",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "attempts": 11534336,
+        "elapsedMs": 164232.59999990463
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:29.038Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:29.764Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:35.663Z",
+      "stage": "pow-finished",
+      "data": {
+        "kind": "PRIVATE_ROUTE",
+        "difficulty": 22,
+        "elapsedMs": 171966,
+        "error": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:35.678Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:35.713Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:35.749Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:35.790Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:36.028Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:36.765Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:38.257Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:38.300Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:38.315Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:38.356Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:38.377Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:38.425Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:38.432Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:38.471Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:38.477Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:38.480Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:38.608Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:38.648Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:38.661Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:38.702Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:38.764Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:38.804Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:38.824Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:38.876Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:38.898Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:38.912Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:39.287Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:39.320Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:39.350Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:39.393Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:39.421Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:39.458Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:39.477Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:39.532Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:39.549Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:39.568Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:39.730Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:39.803Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:39.832Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:39.862Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:40.173Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:40.222Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:40.246Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:40.285Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:41.304Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:41.351Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:41.384Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:41.440Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:41.873Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:41.943Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:41.963Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 1
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:41.996Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:42.034Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:42.083Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:42.119Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:42.157Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:43.457Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:43.502Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:43.526Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:43.567Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:43.757Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:44.564Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:44.615Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:44.648Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:44.695Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:44.723Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:44.764Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:45.324Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:45.367Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:45.386Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:45.448Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:46.130Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:46.164Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:46.178Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:46.222Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:46.232Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:46.244Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:46.969Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "REGISTER_ROUTE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:47.015Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "REGISTER_ROUTE_RESULT",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:47.027Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "START_PROBE",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:47.066Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "START_PROBE_RESULT",
+        "code": "other_error",
+        "state": "SUBMITTED_TO_ENTRY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:47.428Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "ROUTE_STATUS",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:47.466Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "ROUTE_STATUS_RESULT",
+        "code": "other_error",
+        "state": "ROUTE_READY"
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:47.474Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "SUBMIT",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:47.514Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "SUBMIT_RESULT",
+        "code": "other_error",
+        "state": "NODE_ACCEPTED"
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:47.525Z",
+      "stage": "rpc-response",
+      "data": {
+        "type": "DELIVERY_AVAILABLE",
+        "code": "other_error",
+        "state": null
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:47.546Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:50.026Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:50.783Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:45:57.041Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:45:57.763Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:46:04.028Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:46:04.759Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:46:11.025Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:46:11.759Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:46:18.028Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:46:18.759Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:46:25.030Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:46:25.762Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 1,
+      "at": "2026-10-08T00:46:32.045Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    },
+    {
+      "profile": 0,
+      "at": "2026-10-08T00:46:32.765Z",
+      "stage": "rpc-request",
+      "data": {
+        "type": "PULL",
+        "pending": 0
+      }
+    }
+  ],
+  "instrumentation": "CDP observational logpoints; may affect timing",
+  "page0": "transport-v3-node-preparation-20261008.26",
+  "sw0": "transport-v3-node-preparation-20261008.26",
+  "page1": "transport-v3-node-preparation-20261008.26",
+  "sw1": "transport-v3-node-preparation-20261008.26",
+  "expectedSource": "3c513601ef3990b6514e247d879324b7b72da494",
+  "retained": {
+    "at": "2026-10-08T00:45:48.071Z",
+    "cdp": "http://127.0.0.1:9447",
+    "note": "Original acceptance result preserved; same synthetic profiles alive for diagnosis. SIGUSR2 releases handle."
+  }
+}

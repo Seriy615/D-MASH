@@ -117,6 +117,72 @@ single two-signed binding is selected; deterministic minimum tuple of ordered bu
 digests is the proposed winner, but both parties must confirm that winner. Late receipts
 for a losing candidate cannot replace an active map. N4 collision handling remains separate.
 
+## N3.2 canonical binding and receipt bytes (frozen implementation boundary)
+
+The inactive `account_route_binding_v2.js` module accepts two serialized canonical
+Pairing V2 bundles and an explicit trusted local snapshot: two already selected
+Account signing identities, plus `committed:null` for first pairing or
+`{generation,binding_digest,participants}` for the last committed binding. The
+snapshot is local authority supplied by the later Account journal, never data read
+from a received offer. First pairing requires generation 1 and null predecessor;
+updates require equal generation/predecessor in both offers. Equal-generation retry
+must have the identical committed binding digest. Neither new signed offers nor a
+pure helper can determine whether the caller supplied the latest persisted snapshot.
+
+Exact canonical binding object order:
+`type,version,transport_version,kem_profile,generation,previous_binding,participants,expires_at`.
+Constants are `DMASH_ACCOUNT_ROUTE_BINDING_V2`, 2, 4 and
+`LEGACY_KYBER768_BUNDLE_V1`. `participants` contains exactly two records ordered by
+lowercase Account signing public key. Each record has exact field order
+`account,bundle_digest,contribution,certificate_digest`. Bundle digest is SHA256 of
+the complete canonical UTF-8 Pairing V2 serialization, including Account signature.
+Certificate digest is SHA256 of that bundle's canonical certificate JSON including
+signature, using the already specified certificate field order. No unknown fields,
+noncanonical JSON, alternate encodings or received replacement certificate are accepted.
+Binding expiry is the smaller bundle expiry. Binding serialization ceiling is 4096
+UTF-8 bytes. The pure API reconstructs binding bytes from both verified bundles;
+it never accepts an arbitrary caller-supplied binding object as verified. Binding digest is SHA256 of
+`UTF8("D-MASH|ACCOUNT-ROUTE-BINDING|V2<NUL>") || canonical_binding_bytes`.
+The full bundle digests cover all Account public keys, intended peers, pairing IDs,
+route certificates and validity, even where the binding body projects fewer fields.
+
+Receipt exact field order is `type,version,phase,binding_digest,signer,signature`:
+`type=DMASH_ACCOUNT_ROUTE_RECEIPT_V2`, `version=2`, phase `ACCEPT` or `CONFIRM`.
+All digests/public keys are 32-byte lowercase hex; signature is 64-byte lowercase hex.
+Receipt signing body is the canonical object without `signature`. Signature input is
+`UTF8("D-MASH|ACCOUNT-ROUTE-RECEIPT|V2|" + phase + "<NUL>") || U32BE(body_length) || body`.
+The domain and body both bind the phase; the digest binds the complete binding.
+Receipt serialization ceiling is 2048 UTF-8 bytes. Parsing reserializes and compares
+exact bytes before cryptographic verification. Shared Ed25519 encoding/R/S guards
+from Discovery V4 apply before the existing NaCl signature verifier.
+
+**Deterministic receipt roles refine the provisional offer-owner wording above:**
+the lexically smaller Account is always ACCEPT signer and the larger always CONFIRM
+signer, regardless of which UI initiated the exchange. Creating CONFIRM requires a
+validated ACCEPT for this exact binding. Verification requires both distinct valid
+receipts; input list order does not matter. Retrying signing uses deterministic
+Ed25519 over unchanged bytes. Signatures are never transferred between phases,
+Accounts, bundle pairs, certificates, predecessors or binding generations.
+
+Both targeted bundles must name the opposite trusted Account; null-target first
+OOB offers remain candidates; generation >1 requires both offers targeted. Equal Accounts, duplicate pairing IDs/contributions,
+or reuse of any signing/box/route/discovery/recipient public-key bytes across the
+two participants, or identical KEM public bytes, reject. A null-target offer's one-time consumption across different
+peers is a journal responsibility; this pure module cannot implement global replay
+storage. Every receipt operation rechecks expiry. `verifyReceipts` must receive the
+current committed snapshot again and returns `BILATERAL_CANDIDATE` or
+`IDEMPOTENT_REPLAY`, never Node/map activation, human identity verification or N4
+ESTABLISHED. It does not mutate storage or any key array.
+
+Crossed offers are ranked only within identical ordered participants, generation and
+predecessor. Compare the tuple `(participant[0].bundle_digest,
+participant[1].bundle_digest)` lexically. The comparator returns an ordering, not an
+active mapping; both participants must sign the same winning binding. No minimum
+computed from locally observed offers proves global agreement. A later conflict with
+an already committed equal generation rejects, even if its tuple ranks lower. The
+later journal must atomically pin the selected digest and guard concurrent signing/
+commit; the pure codec cannot prevent two signatures authorized by concurrent callers.
+
 ## Limited bootstrap route: avoid activation circularity
 
 Pairing receipts cannot depend on the not-yet-ACTIVE Account mapping. Introduce a

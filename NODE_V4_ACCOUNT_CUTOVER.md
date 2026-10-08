@@ -156,3 +156,70 @@ Required evidence before N3 acceptance:
 Fresh baseline evidence in `docs/evidence/2026-10-08/qa-node-*` proves only its
 listed Worker transit/ownership/Inbox/deployed pinned-auth slices. It does not
 implement this design, close N4, or establish anonymity/PFS/PCS/PQ/full DONE.
+
+
+## First inactive coordinator slice and deployment boundary
+
+`node_runtime_coordinator_v4.js` is implemented as an **inactive module** with
+unit and real Worker/DeviceRoot browser fixture coverage. It is not loaded by
+ordinary PWA bootstrap and does not attach Account transport. Existing Host,
+Core and DeviceRoot ownership implementations are unchanged by this slice.
+It coalesces root-session start, cancels stale jobs, closes on root lock, exposes
+opaque session tokens (not route-owner grants), and accepts only locally registered
+peer capabilities from a constructor-provisioned trusted catalog snapshot.
+The caller must establish that snapshot's independent publisher/out-of-band pin
+trust; the constructor validates schema but does not authenticate a directory.
+Configuration is deliberately limited to exact `wss://…/mesh/v4` paths without
+URL credentials, query or fragment. Other adapter paths require an explicit future
+contract, not silent URL conversion. No v3 fallback or automatic activation exists.
+
+Next catalog adapter: parse a separately versioned public-v4 catalog, verify the
+operator-provisioned EMS NodeID against independently obtained deployment identity,
+and turn it into the coordinator's immutable snapshot. Do not reinterpret the
+current v3 `nodes.json` URL as v4 or trust a socket-learned identity. Keep user
+connection preference separate from catalog refresh. Browser bootstrap eventually
+invokes `start()` only after root unlock and supplies Account adapters through
+captured current root-session guards; Account logout must not call `stop()`.
+Activation remains gated on authenticated pairing/mapping and mailbox migration.
+
+## Universal mailbox implementation ownership and reuse plan
+
+The next backend slice should own new `node_mailbox_v4.py` and dedicated tests,
+then coordinate explicit integration changes in `node_service_v4.py`,
+`node_channel_v4.py` and `node_routing_v4.py`. The JS counterpart must follow the
+same wire fixtures; no fake host methods or endpoint-only compatibility service.
+
+Existing reusable components:
+
+- `RelationshipStore` already persists keyed blind aliases, encrypted directional
+  relationships and a local Node identity binding; changed peer DNSS is rejected
+  rather than silently replacing a durable owner. Reuse the verified relationship
+  result only after fresh `NodeChannelV4` admission/registration has completed.
+  Mere DB lookup is not session authorization.
+- `NodeServiceV4` protects storage material and fails closed for an existing DB
+  without its key. New mailbox existence must participate in this fail-closed
+  check too, including backup/restore ordering. Derive distinct mailbox alias and
+  storage domains from protected Node storage material; do not use the process's
+  ephemeral v3 blind-index salt or Account keys.
+- `DnssMailbox` provides real SQLite WAL/FULL transactions, bounded quotas,
+  snapshot leases, awaited send/delete and failure release. Reuse this algorithm
+  and fault cases, not its unauthenticated `blind_dnss` caller API, v3 response
+  frame or table as an implicit v4 owner migration. A separate v4 store must bind
+  an encrypted grant record to verified recipient Node/direction/generation.
+
+Critical routing prerequisite: `_remove_peer` currently deletes peer label rows
+and RAM queues. Persisting only DATA bytes is insufficient: after reconnect or
+restart the old hop label may have no valid mapping. Define a durable,
+peer-owned grant/label binding with expiry and fresh session authorization, or an
+explicit authenticated rebind before a queued record can drain. Never replay an
+expired/transferred socket-era label into a different route. Queue records need
+stable logical IDs and immutable grant references independent of transient socket
+objects. This wire/lifecycle decision precedes runtime integration.
+
+Implement storage tests first for alias separation, wrong key/Node binding,
+wrong/revoked/expired owner grant, quotas, simultaneous drain/arrival, crash after
+lease/send/delete, failed send retention, and reconnect/restart grant recovery.
+Then real Python↔JS transport tests must demonstrate the same authorized queue
+semantics for an offline transit neighbor and an offline local-delivery neighbor.
+Old-v3 mailbox ownership transfer remains a separately authenticated two-owner
+migration; do not delete or adopt old ciphertext through an alias rename.

@@ -48,27 +48,43 @@ commit также доставляется на Forge, его полный SHA �
 browser-first inventory ещё не завершены. Реализация делегирована трём агентам;
 лид независимо проверяет интеграцию и опубликованный UI.
 
-Текущий runtime commit **`bd380ab9379b714c204dd2f72ca3b166aa41752e`**, release
-**`transport-v3-browser-audit-20261008.25`**, pushed и PWA deployed на EMS.
-Exact-source проверка: **207 checked, missing=[], changed=[]**. Backend source
-не менялся, runtime/DB/identities не переносились. Static backup:
-`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T001857Z`.
-Existing host-local get_commit.sh не распознаёт новое имя release своим regex
-(`unknown`); browser page/active SW проверяются отдельно. EMS Git checkout HEAD
-не служит доказательством deployed SHA: PWA публикуется через git archive.
+Текущий runtime commit **`3c513601ef3990b6514e247d879324b7b72da494`**, release
+**`transport-v3-node-preparation-20261008.26`**, pushed и deployed на EMS.
+Exact-source проверка: **214 checked, missing=[], changed=[]**. Обновлены PWA
+и только backend `route_discovery_v4.py`, зависимости/config не менялись.
+До замены backend Node остановлен, согласованный protected runtime snapshot:
+`/root/dmash-runtime-backups/release26-20261008T004030Z` (6 SQLite quick_check PASS).
+После restart все4 identity/key files побайтно равны backup. Static PWA backup:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T004036Z`.
+Секреты/snapshot вне Git; production на Forge не переносился. Scoped deploy
+wrapper сохранён `/root/deploy-release26.sh`; existing get_commit.sh использован
+для PWA (его regex release сообщает unknown, browser/SW проверяются отдельно).
 
-Исправлены отказ неверного ключа сохранённого Account до смены vault/identity,
-scanner cancel/race cleanup, Account public-route navigation, pending requests
-из Account settings/единственный Back, сохранение independently provisioned
-NodeID из каталога и некорректных legacy записей без удаления соседних Nodes.
-Exact commit test_all: 264 backend +11 Origin +69 JS suites PASS, exit0; source-overlay браузерный smoke
-9/9 PASS, errors=[] (SW BLOCKED, это не deployed SW приёмка).
-Deployed .25 controls9/9 PASS, page/SW.25/errors[]. Реальный .24→.25 SW/profile
-upgrade сохранил Account identity/history; wrong-key отказ виден, final correct-retry
-в этом профиле NOT RUN из-за harness locator; независимый deployed wrong-key/
-correct-retry/multi-Account suite6/6 PASS, page/SW.25. Fresh PUBLIC-only FAIL на отправке
-запроса: нет результата/карточки через90s,130 loaded assets совпадают с SHA; UI агент
-проверяет live timeline. Этот flow не принят; private fallback не использован.
+.26 сохраняет PUBLIC request до сетевого PoW, сразу показывает честную очередь,
+имеет подготовку/cancel и guards root/Account/same-slot relogin. Shared JS/Python
+DiscoveryCertificate/reply теперь отвергает small-order/noncanonical Ed/X keys
+и R/S malleability; прежняя identity-point owner forgery воспроизведена лидом.
+Это не full prime-subgroup/PQ/security DONE. Inactive pairing codec и root Node
+coordinator добавлены, но **ordinary Account path всё ещё v3**. .25 wrong-key,
+scanner/navigation/catalog fixes сохранены. Полный N3 cutover не реализован.
+
+Exact .26 isolated worktree `/tmp/dmash-release26-3c51360`:
+**266 backend +11 Origin +72 JS suites PASS**, real Python N1→Chrome Worker B→N2
+transit/discovery/Inbox/root-lock PASS; независимый fresh PUBLIC Request/Accept/
+Confirm/key exchange/messages both directions PASS, все loaded assets exactSHA,
+source-overlay SW BLOCKED. Это не deployed SW acceptance.
+Deployed .26 independent PUBLIC run завершён **13/13 PASS**, page/SW обеих
+profiles.26, **135 loaded assets match exactSHA**, errors=[], exit0. Readiness
+CDP observation может влиять на timing, это не latency acceptance. После PASS
+тот же retained browser (handle11809/CDP9447) штатно закрыт SIGUSR2; больше ждать
+его не нужно. Evidence/limits — `docs/evidence/2026-10-08/qa-release26-manifest.json`.
+
+.25 baseline wrong-key/correctretry/isolation6PASS, controls9PASS, реальный
+.24→.25 upgrade сохранил identity/history. Предыдущие PUBLIC runs бывали timeout
+до delivery; отдельная readiness diagnosis открыта, source .26 полный PASS не
+закрывает intermittent сценарий. Account deletion/video toggle/filepolicy/N4
+остаются открыты. Next inactive modules (binding receipts/journal/mailbox/profile)
+в рабочем дереве не входят в deployed3c51360; проверять отдельным checkpoint.
 
 Среда: Python3.12.14 `.venv`, Node24.19.0 (официальный checksum),
 Playwright1.64.0/Chromium156.0.8078.4 вне checkout. Свежий .24 baseline:

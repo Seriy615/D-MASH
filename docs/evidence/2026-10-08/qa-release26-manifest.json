@@ -1,0 +1,64 @@
+{
+  "runtimeSHA": "3c513601ef3990b6514e247d879324b7b72da494",
+  "release": "transport-v3-node-preparation-20261008.26",
+  "unit": {
+    "backend": 266,
+    "origin": 11,
+    "javascriptSuites": 72,
+    "exitCode": 0
+  },
+  "deployed": {
+    "sourceFiles": 214,
+    "missing": [],
+    "changed": [],
+    "page": "transport-v3-node-preparation-20261008.26",
+    "sw": "transport-v3-node-preparation-20261008.26",
+    "uiSteps": 13,
+    "loadedSources": 135,
+    "sourceMismatches": 0,
+    "errors": [],
+    "exitCode": 0
+  },
+  "preservation": {
+    "consistentSQLiteBackupsChecked": 6,
+    "identityAndKeyFilesByteEqual": 4,
+    "runtimeBackup": "/root/dmash-runtime-backups/release26-20261008T004030Z",
+    "pwaBackup": "/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T004036Z"
+  },
+  "limits": [
+    "Ordinary Account/contact transport remains v3; no N3 cutover/full DONE",
+    "Source browser uses SW BLOCKED; deployed page+SW separately verified",
+    "Deployed CDP logpoints are observational but may affect timing; not latency acceptance",
+    "Previous intermittent readiness timeouts remain open; difficulty22 observed",
+    "N4 recovery and authenticated mailbox migration incomplete",
+    "No anonymity/PCS/PFS/PQ certification",
+    "Readiness observer emitted other_error for absent response code; this placeholder is not a server error. Later observer fixes null handling; original report preserved."
+  ],
+  "files": [
+    {
+      "path": "qa-release26-exact-tests.log",
+      "sha256": "d8af3454c410134629e8378ffcbd458ee9051ab13cc3686e1fa2081c9b24c4cf",
+      "bytes": 60885
+    },
+    {
+      "path": "qa-release26-worker-transit.log",
+      "sha256": "dcfa00d9a574650dca62b7794ef6ade0dff9611e543ce4e9b85b1d805b139da7",
+      "bytes": 543
+    },
+    {
+      "path": "qa-release26-public-source.json",
+      "sha256": "b66f7565928f22beea062be05110948cc245807c5fd81bfd76c9baa07885244f",
+      "bytes": 56608
+    },
+    {
+      "path": "qa-release26-public-deployed.json",
+      "sha256": "187ae1ea46811c9c43056ff0d8868bf086a6112e7db2c5fc958c387916bb484c",
+      "bytes": 125670
+    },
+    {
+      "path": "qa-release26-deployed-source.json",
+      "sha256": "311c6c75bdc1be8ce865a435125a76d808bee9db261a64e5183190f0ea8a2640",
+      "bytes": 47
+    }
+  ]
+}

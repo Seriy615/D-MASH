@@ -53,11 +53,11 @@ ordinary Account/contact UI → Node v4 cutover остаётся главным 
 ## Текущая разработка и публикация
 
 8 октября 2026: Forge HEAD и origin/transport-v3 после push/fetch совпали:
-`bd380ab9379b714c204dd2f72ca3b166aa41752e`. Предыдущий QA-only checkpoint:
-`2c4523d533df34681fdb682ffeccded5d791b5eb`. Текущий runtime release `.25`
-опубликован через existing EMS get_commit.sh по полному SHA;207 source files
+`3c513601ef3990b6514e247d879324b7b72da494`. Предыдущий QA-only checkpoint:
+`2c4523d533df34681fdb682ffeccded5d791b5eb`. Текущий runtime release `.26`
+опубликован через existing EMS get_commit.sh по полному SHA;214 source files
 совпадают, missing/changed отсутствуют. Backup static PWA:
-`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T001857Z`.
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T004036Z`.
 Текущая браузерная приёмка/FAIL/limits — CURRENT_HANDOFF.md и BROWSER_QA.md.
 
 Прямой Forge SSH push всё ещё denied(publickey). Авторизованный existing EMS
@@ -66,5 +66,6 @@ repository и проверенный incremental Git bundle. Push обычный
 без force. Production checkout EMS остался на `ed200730…`: deploy извлекает
 полный SHA через git archive, поэтому checkout HEAD не runtime evidence.
 Root deploy использует scoped safe.directory и SSH от codex, без копирования
-секретов или глобальной настройки. Backend source/state/DB не менялись.
+секретов или глобальной настройки. Backend обновлён только route_discovery_v4.py после consistent protected snapshot
+6 DB,4 key files unchanged; dependencies/config/storage schema не менялись.
 Разработка и интеграция остаются на Forge; production не переносился.

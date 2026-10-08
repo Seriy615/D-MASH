@@ -8,16 +8,34 @@
 
 ## Актуальный release checkpoint
 
-Runtime **bd380ab9379b714c204dd2f72ca3b166aa41752e**, `.25`, опубликован на EMS.
-Exact source207/207; UNIT264 backend +11 Origin +69 JS PASS.
-[Deployed controls](docs/evidence/2026-10-08/qa-release25-deployed-controls.json):
-9/9 PASS, page/SW `.25`, errors=[]; actual WSS/scanner/cancel/navigation/Node QR.
-Контрольный harness не хэширует deployed responses; отдельный server-source
-verifier подтверждает207 файлов. Fresh PUBLIC harness хэширует loaded bytes и
-завершился FAIL public-request: через90s после ввода нет OK/карточки, оба workspace пусты кроме Избранного. Все130 loaded bytes совпадают. Агент UI воспроизводит с console/network timeline; причина ещё не установлена, не увеличивать timeout ради PASS. Обновление реального .24
-профиля до .25 сохранило identity/history; финальная wrong-key проверка в работе.
-Полный аудит и N3/N4 остаются открытыми. Нижние записи .24/source-only — история
-этого прохода, не статус текущего deploy.
+Runtime **3c513601ef3990b6514e247d879324b7b72da494**, `.26`, опубликован на EMS.
+Exact source214/214; UNIT266 backend +11 Origin +72 JS PASS. Independent exact
+source-overlay fresh PUBLIC Request/Accept/Confirm/key exchange/messages PASS
+(SW BLOCKED); separate deployed actual UI **13/13 PASS**, page+SW.26,
+135 loaded resources exactSHA, errors=[], exit0. Real Worker transit/Inbox/lock
+PASS in separate browser+Python transport. [Manifest](docs/evidence/2026-10-08/qa-release26-manifest.json).
+Deployed readiness CDP logpoints may affect timing; difficulty22 observed, duplicate
+proof work remains a hypothesis until exactresource equality is observed. Previous
+intermittent timeout evidence is retained, not overwritten by this successful run.
+Node runtime consistent backup6SQLite checksPASS,4keyfiles identical before/after;
+no schema/dependency change. N3 ordinary UI cutover and full audit remain open.
+
+Previous .25 controls9PASS and Account6PASS; real .24→.25 SW/profile update
+identity/history preserved, wrong-key inline denial visible; correct retry was NOT
+RUN in that specific upgradeprofile due harness locator, independently PASS on.25.
+
+Текущие результаты исправлений (предыдущие строки initial FAIL ниже исторические):
+
+| Bug | Current status | Fix / independent evidence |
+|---|---|---|
+| ACCOUNT-WRONG-KEY-01 | PASS .25 | bd380ab; deployed Account6checks incl wrong→correct retry/history isolation |
+| NODE-SCANNER-CANCEL-01 | PASS .25 | bd380ab; denied/real running/delayed camera cancel+reopen |
+| NODE-QR-01 | PASS .25 | bd380ab; requested catalog NodeQR+copy, pin retained |
+| UI-SHARE-CREATE | PASS navigation .25 | bd380ab; visible modal/create/back; new contact handshake separate |
+| PENDING-BACK-01 / UI-PUBLIC-ACCEPT-NAV | PASS navigation .25 | bd380ab; single Back, logged-in pending entry |
+| PUBLIC-REQUEST-LOADING-01 | PASS .26 visibility/queue | 3c51360; durable request before PoW, truthful saved card; cancel/lifecycle guards and real fresh pair pass |
+| ACCOUNT-DELETE-01 | FAIL | Registry removal does not erase selected history from shared vault; previous early PASS withdrawn |
+| ROUTE-READY-01 | OPEN | Eventual v3 message success does not prove immediate readiness |
 
 ## Правила регистрации результата
 
@@ -169,3 +187,15 @@ Fix должен сверять сохранённую identity до session/vau
 возвращает «Откройте выбранный Account и повторите принятие запроса». После обычного
 входа в Account нет доступного перехода к pending. Private QR pairing позволяет
 продолжить остальной аудит, но не закрывает public acceptance.
+
+## N5 finding during N3 codec review
+
+`CRYPTO-DISCOVERY-01` (P1, Account agent): existing JS DiscoveryCertificate
+accepts route signing key identity-point and forged signature R=identity,S=0.
+Lead reproduced against actual bundled NaCl and route_discovery_v4; PyNaCl
+reference rejects. This is malformed route-authority acceptance, not evidence
+of forgery under an existing honest pinned Account key. New pairing codec
+blocks it, but that inactive module alone does not repair active discovery.
+Shared JS/Python certificate/response guards and adversarial parity tests in
+progress; browser real transport retest required before closing. No live
+production attack attempted.
