@@ -26,6 +26,7 @@
    for(const dependency of dependencies)guard(tx.objectStore('pairing_material').get(dependency.alias),dependency);
    tx.oncomplete=()=>{this.#txs.delete(tx);try{this.#check();resolve();}catch(e){reject(e);}};tx.onerror=()=>{};tx.onabort=()=>{this.#txs.delete(tx);reject(error||tx.error||Error('HISTORY_WRITE_ABORTED'));};
   });}
+  async canQueueMedia(peer){this.#check();if(!valid(peer))return false;const alias=await this.#alias(peer,'L1'),rows=await this.#read({blind_peers:alias}),contact=await this.#plain(rows.blind_peers);this.#check();return !!contact&&contact.id===peer&&contact.transportProfile==='NODE_ACCOUNT_V4'&&!contact.chatLock&&!contact.securityAlert;}
   async migrateContact(peer){
    this.#check();if(!valid(peer)||typeof this.#verifyMigration!=='function')fail('HISTORY_MIGRATION_PROOF_REQUIRED');
    const alias=await this.#alias(peer,'L1'),marker=await this.#alias(DOMAIN+'MIGRATION|'+peer,'APP_V4');

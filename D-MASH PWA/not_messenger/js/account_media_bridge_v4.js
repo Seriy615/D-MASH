@@ -5,7 +5,7 @@
  const fail=()=>{throw Error('NODE_MEDIA_CONTROL_INVALID');};
  function create({schema=g.DmashAccountMediaControlV4,verifyService,clock=()=>Math.floor(Date.now()/1000)}){
   if(typeof verifyService!=='function'||!schema?.validate)fail();
-  async function pin(service){if(await verifyService(Object.freeze({...service}))!==true)throw Error('NODE_MEDIA_SERVICE_UNTRUSTED');}
+  async function pin(service,options){if(await verifyService(Object.freeze({...service}),options)!==true)throw Error('NODE_MEDIA_SERVICE_UNTRUSTED');}
   const blob=m=>({mime:m.mime,name:m.name,size:m.size,sha256:m.sha256,chunkBytes:m.chunk_bytes,key:m.key,nonce:m.nonce});
   async function invite(message,service){
    let kind,transferId,transportId,media,invitation;
@@ -18,9 +18,9 @@
     if(r.version!==2)throw Error('NODE_FILE_V2_REQUIRED');transferId=r.file_id;transportId=r.session_id;if(m.id!==transportId||m.size!==r.size_bytes||m.chunk_bytes!==r.chunk_bytes||m.sha256!==r.sha256||r.resumable!==false)fail();media=blob(m);invitation={call_id:transportId,expires_at:r.expires_at,signaling:r.signaling};
    }else fail();
    if(invitation?.call_id!==transportId||invitation.expires_at>clock()+3600||invitation.signaling?.wss_endpoint!==service?.wssEndpoint)fail();
-   const payload=schema.validate('INVITE',{version:1,transferId,transportId,kind,expiresAt:invitation.expires_at,service,signaling:{sessionId:invitation.signaling.session_id,ticket:invitation.signaling.one_time_key},media},{now:clock()});await pin(payload.service);return payload;
+   const payload=schema.validate('INVITE',{version:1,transferId,transportId,kind,expiresAt:invitation.expires_at,service,signaling:{sessionId:invitation.signaling.session_id,ticket:invitation.signaling.one_time_key},media},{now:clock()});await pin(payload.service,{file:kind!=='call'});return payload;
   }
-  async function incoming(type,payload){const p=schema.validate(type,payload,{now:clock()});if(type==='COMMIT_ACK')return p.kind==='file'?{type:'voip_file_complete',file_id:p.transferId,sha256:p.sha256}:{type:'voip_note_complete',note_id:p.transferId,sha256:p.sha256};if(type==='DECLINE'&&p.kind==='file')return {type:'voip_file_reject',file_id:p.transferId,sha256:p.sha256,reason:p.reason,...(p.reason==='RECEIVER_BUSY'?{session_id:p.transportId}:{})};if(type!=='INVITE')return p;await pin(p.service);
+  async function incoming(type,payload,{validationTime=clock()}={}){const p=schema.validate(type,payload,{now:validationTime});if(type==='COMMIT_ACK')return p.kind==='file'?{type:'voip_file_complete',file_id:p.transferId,sha256:p.sha256}:{type:'voip_note_complete',note_id:p.transferId,sha256:p.sha256};if(type==='DECLINE'&&p.kind==='file')return {type:'voip_file_reject',file_id:p.transferId,sha256:p.sha256,reason:p.reason,...(p.reason==='RECEIVER_BUSY'?{session_id:p.transportId}:{})};if(type!=='INVITE')return p;await pin(p.service,{file:p.kind!=='call'});
    const invitation={version:2,call_id:p.transportId,expires_at:p.expiresAt,signaling:{wss_endpoint:p.service.wssEndpoint,session_id:p.signaling.sessionId,one_time_key:p.signaling.ticket}};
    if(p.kind==='call')return {type:'voip_call_request',request:{...invitation,caller_display_name:'D-MASH',ringtone:null,media_capabilities:p.media}};
    const m=p.media,manifest={version:1,id:p.transportId,name:m.name,mime:m.mime,size:m.size,chunk_bytes:m.chunkBytes,sha256:m.sha256,key:m.key,nonce:m.nonce};

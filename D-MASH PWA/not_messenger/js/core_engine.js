@@ -256,6 +256,19 @@ const Core = {
         });
         return entry.promise;
     },
+    async _nodeMediaAdapterV4() {
+        const entry=this._publicAccountNodeV4;
+        if(!entry) throw new Error('NODE_MEDIA_ACCOUNT_REQUIRED');
+        entry.session.assertCurrent();const adapter=await entry.promise;entry.session.assertCurrent();
+        if(this._publicAccountNodeV4!==entry)throw new Error('ACCOUNT_SESSION_CHANGED');return adapter;
+    },
+    async canQueueNodeMediaV4(peer) { return (await this._nodeMediaAdapterV4()).canQueueMedia(peer); },
+    async confirmedNodeMediaPeerV4(peer) { return (await this._nodeMediaAdapterV4()).confirmMediaPeer(peer); },
+    async selectNodeMediaServiceV4(value) { return (await this._nodeMediaAdapterV4()).selectMediaService(value); },
+    async sendNodeMediaControlV4(value) { return (await this._nodeMediaAdapterV4()).sendMediaControl(value); },
+    async verifyNodeMediaControlV4(authority,expected) { return (await this._nodeMediaAdapterV4()).verifyMediaControl(authority,expected); },
+    async beginNodeFileTransferV4(authority,value) { return (await this._nodeMediaAdapterV4()).beginFileTransfer(authority,value); },
+    async drainNodeMediaControlsV4() { return (await this._nodeMediaAdapterV4()).drainMediaControls(); },
     async acceptNodePublicContact(coordinator, registration, requestId, requestDigest) {
         const adapter = await this.openPublicAccountNodeV4(coordinator);
         return adapter.accept(registration, requestId, requestDigest);

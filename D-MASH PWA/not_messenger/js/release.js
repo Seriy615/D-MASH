@@ -82,7 +82,7 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-202610
         "js/account_app_outbox_v4.js",
         "js/account_session_runtime_v4.js",
         "js/account_authenticated_history_v4.js",
-        "js/public_account_orchestrator_v4.js",
+        "js/account_media_control_v4.js", "js/account_media_bridge_v4.js", "js/account_media_dispatch_v4.js", "js/account_media_authority_v4.js", "js/public_account_orchestrator_v4.js",
         "js/managed_node_catalog_v4.js",
         "js/node_account_ui_v4.js",
         "js/node_root_lifecycle_v4.js"
