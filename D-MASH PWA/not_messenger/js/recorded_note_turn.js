@@ -40,7 +40,15 @@
    const current=()=> (!peer||((this.peerEpochs.get(keys)?.get(peer)?.generation||0)===epoch&&!this.peerEpochs.get(keys)?.get(peer)?.blocked))&&!c._accountTransitioning&&c.keys===keys&&c.blindSalt===salt&&c.activeIdentity===slot&&s.db===db&&s.masterKey===key&&global.DeviceRoot?.state===root&&!!keys?.sign&&!!salt&&!!root;
    const check=()=>{if(!current())throw Error('Аккаунт заблокирован или изменён');};check();
    const session={keys,salt,slot,db,key,current,check},blind=salt.slice(),vault=Object.create(s);vault.db=db;vault.masterKey=key;
-   vault.getAlias=async(base,level='L1')=>{check();const label=encode(base+level),input=new Uint8Array(label.length+blind.length);input.set(label);input.set(blind,label.length);return this.wait(session,c.fastHash(input));};
+   const rawAlias=async(base,level)=>{check();const label=encode(base+level),input=new Uint8Array(label.length+blind.length);input.set(label);input.set(blind,label.length);return this.wait(session,c.fastHash(input));};
+   vault.getAlias=async(base,level='L1')=>{
+    check();const match=level==='L3'&&/^([0-9a-f]{64})([0-9]+)$/.exec(base);
+    if(match){const peer=await vault.getBox('blind_peers',match[1]);if(peer?.chatLock){
+     const entropy=peer.chatLock.aliasEntropy;if(!/^[0-9a-f]{64}$/.test(entropy||''))throw Error('Повреждена соль чата');
+     return rawAlias(base+':chat:'+entropy,level);
+    }}
+    return rawAlias(base,level);
+   };
    vault.getBox=async(table,alias)=>{check();const row=await this.wait(session,new Promise((resolve,reject)=>{const q=db.transaction(table).objectStore(table).get(alias);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);}));return row?this.open(session,row.blob):null;};
    vault.putBox=async(table,{alias,data})=>{const blob=await this.crypt(session,data);check();return this.wait(session,new Promise((resolve,reject)=>{const tx=db.transaction(table,'readwrite');tx.objectStore(table).put({alias,blob});tx.oncomplete=resolve;tx.onabort=tx.onerror=()=>reject(tx.error);}));};
    session.vault=vault;return session;}

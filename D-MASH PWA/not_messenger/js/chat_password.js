@@ -11,7 +11,11 @@
     }
     const originals = new WeakMap();
     async function location(storage, alias, level, policy) {
-        const raw=originals.get(storage).getAlias;
+        // A captured Account vault owns a guarded raw getAlias but inherits the
+        // already-installed Storage methods. Installing it again would nest the
+        // shared history lock, so use its own alias function for this snapshot.
+        const raw=originals.get(storage)?.getAlias || (Object.prototype.hasOwnProperty.call(storage,'getAlias') && storage.getAlias);
+        if(typeof raw!=='function') throw Error('Chat alias source unavailable');
         if (!policy) return level==='L2' ? alias : raw.call(storage,alias,level);
         if (!/^[0-9a-f]{64}$/.test(policy.aliasEntropy||'')) throw Error('Повреждена соль чата');
         return raw.call(storage,alias+':chat:'+policy.aliasEntropy,level);
