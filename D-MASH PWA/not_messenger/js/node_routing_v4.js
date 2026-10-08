@@ -164,6 +164,11 @@
   async receive(peer,packet){
    if(!packet||packet.version!==4||!Number.isSafeInteger(packet.expires_at)||packet.expires_at>this.clock()+180)throw Error('Invalid Node packet');
    const expires=packet.expires_at;if(expires<=this.clock())return;
+   if(packet.type==='SERVICE_UNAVAILABLE'){
+    if(!exact(packet,'challenge,code,expires_at,type,version')||!token(packet.challenge)||packet.code!=='SERVICE_UNAVAILABLE')throw Error('SERVICE_REPLY_INVALID');
+    const q=this.serviceQueries.get(packet.challenge);if(!q)return;if(q.peer!==peer||this.peers.get(peer)!==q.channel)throw Error('SERVICE_CONTEXT');
+    this.serviceQueries.delete(packet.challenge);clearTimeout(q.timer);q.reject(Error('SERVICE_UNAVAILABLE'));return;
+   }
    if(packet.type==='SERVICE_REPLY'){
     if(!exact(packet,'challenge,descriptor,expires_at,type,version')||!token(packet.challenge))throw Error('SERVICE_REPLY_INVALID');
     const q=this.serviceQueries.get(packet.challenge);if(!q)return;if(q.peer!==peer||this.peers.get(peer)!==q.channel)throw Error('SERVICE_CONTEXT');

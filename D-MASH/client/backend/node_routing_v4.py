@@ -235,12 +235,14 @@ class NodeRoutingV4:
         if expires<=self.clock():return
         if packet.get('type')=='SERVICE_QUERY':
             if set(packet)!={'type','version','challenge','expires_at'} or not isinstance(packet['challenge'],str) or not TOKEN.fullmatch(packet['challenge']):raise ValueError('Invalid service query')
-            if self.service_provider is None:raise ValueError('SERVICE_PROFILE_UPGRADE_REQUIRED')
             channel=self.peers.get(peer)
             if channel is None:raise ConnectionError('Service peer closed')
             bucket=int(self.clock()//60);prior=self.service_rates.get(peer,(bucket,0));count=prior[1] if prior[0]==bucket else 0
             if count>=4:raise BufferError('Service query rate')
             self.service_rates[peer]=(bucket,count+1);channel.require_authorized()
+            if self.service_provider is None:
+                self._enqueue(peer,dict(type='SERVICE_UNAVAILABLE',version=4,challenge=packet['challenge'],code='SERVICE_UNAVAILABLE',expires_at=int(self.clock())+10))
+                return
             descriptor=await self.service_provider(peer,channel,packet['challenge'])
             channel.require_authorized()
             if self.closed or self.peers.get(peer) is not channel:return

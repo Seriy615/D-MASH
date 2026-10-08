@@ -31,3 +31,11 @@ class ServiceChannel(unittest.IsolatedAsyncioTestCase):
   await runtime._receive('peer',dict(type='SERVICE_QUERY',version=4,challenge='22'*32,expires_at=110))
   self.assertEqual(sent[0]['type'],'SERVICE_REPLY')
   self.assertEqual(sent[0]['challenge'],'22'*32)
+ async def test_unconfigured_preserves_peer(self):
+  from backend.node_routing_v4 import NodeRoutingV4
+  runtime=NodeRoutingV4(bytes(32),clock=lambda:100)
+  class Channel:
+   def require_authorized(self):pass
+  channel=Channel();runtime.peers['peer']=channel;sent=[];runtime._enqueue=lambda peer,packet:sent.append(packet)
+  await runtime._receive('peer',dict(type='SERVICE_QUERY',version=4,challenge='11'*32,expires_at=110))
+  self.assertEqual(sent[0]['type'],'SERVICE_UNAVAILABLE');self.assertIs(runtime.peers['peer'],channel)
