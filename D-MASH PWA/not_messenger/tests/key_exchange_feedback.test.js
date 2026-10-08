@@ -1,0 +1,33 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const {createCore}=require('./fixtures/core_vm.cjs');
+(async()=>{
+ const {core,ctx,storage}=await createCore();const originalSend=core.sendMessage.bind(core);let status=null;
+ const button={disabled:false,textContent:'ОБМЕНЯТЬСЯ КЛЮЧАМИ',isConnected:true};
+ const zone={querySelector:s=>s==='button'?button:status,appendChild:node=>{status=node;node.isConnected=true;}};
+ ctx.document={readyState:'complete',getElementById:id=>id==='init-zone'?zone:null,createElement:()=>({style:{},setAttribute(){},textContent:''}),querySelector:()=>null};
+ ctx.setInterval=()=>0;ctx.clearInterval=()=>{};ctx.queueMicrotask=fn=>fn();
+ ctx.DMashStorage=storage;ctx.Storage=function NativeDOMStorage(){};
+ ctx.DeviceRoot={state:{}};storage.db={};storage.masterKey={};core.blindSalt=new Uint8Array(32);core.activeIdentity='synthetic';core.activePeerId='a'.repeat(64);core._accountTransitioning=false;
+ vm.runInContext(fs.readFileSync(require.resolve('../js/runtime_fixes.js'),'utf8'),ctx);
+ let release,routeCalls=0,sendCalls=0,target,guard;
+ storage.getAlias=async id=>id;storage.getBox=async()=>({pairingContribution:'synthetic'});
+ core.ensureAutomaticMeshRoute=async()=>{routeCalls++;await new Promise(r=>release=r);};
+ core.sendMessage=async(...args)=>{sendCalls++;target=args[2];guard=args[7];return false;};
+ const pending=core.beginKeyExchange();assert(button.disabled);assert.match(button.textContent,/ГОТОВИМ/);assert.match(status.textContent,/Подготавливаем/);
+ assert.equal(await core.beginKeyExchange(),false);await new Promise(r=>setImmediate(r));assert.equal(routeCalls,1);
+ release();assert.equal(await pending,false);assert.equal(sendCalls,1);assert.equal(target,'a'.repeat(64));assert.equal(guard(),true);assert.match(status.textContent,/не подтверждён/);assert(!button.disabled);
+ core.ensureAutomaticMeshRoute=async()=>{throw Error('synthetic route unavailable');};await core.beginKeyExchange();assert.match(status.textContent,/synthetic route unavailable/);assert(!button.disabled);
+ core.ensureAutomaticMeshRoute=async()=>new Promise(r=>release=r);const stale=core.beginKeyExchange();await new Promise(r=>setImmediate(r));core.activePeerId='b'.repeat(64);release();await stale;assert.equal(sendCalls,1,'chat switch cannot send to a different peer');
+ let ownerCurrent=true,rejectProbe,queued=0;core.accountTransportMode=()=>"mesh";core.getAccountTransportRoute=async()=>({});core.prepareAccountTransportRoute=()=>new Promise((_,reject)=>rejectProbe=reject);core.queueOutbound=async()=>queued++;
+ const cancelledSend=originalSend('init','SOS','a'.repeat(64),null,false,null,null,()=>ownerCurrent);await new Promise(r=>setImmediate(r));ownerCurrent=false;rejectProbe(Error('late network failure'));assert.equal(await cancelledSend,false);assert.equal(queued,0,'late failed exchange cannot enqueue into another Account');
+ const prefs=new Map();ctx.localStorage={getItem:k=>prefs.get(k),setItem:(k,v)=>prefs.set(k,v)};let globalRenders=0,accountRenders=0;ctx.ui={renderGlobalSettings:()=>globalRenders++};core.openSettings=()=>accountRenders++;
+ core.toggleFlipper('global');assert.equal(prefs.get('cfg_panic_gesture'),'true');assert.equal(globalRenders,1);assert.equal(accountRenders,0);
+ core.toggleFlipper('global');assert.equal(prefs.get('cfg_panic_gesture'),'false');assert.equal(globalRenders,2);
+ let orientation,locked=0;ctx.addEventListener=(name,fn)=>{if(name==='deviceorientation')orientation=fn;};core.terminateSession=()=>locked++;await core.initProximity();
+ prefs.set('cfg_panic_gesture','false');core.callState='idle';orientation({beta:180});assert.equal(locked,0);
+ prefs.set('cfg_panic_gesture','true');core.callState='connected';orientation({beta:180});assert.equal(locked,0);
+ core.callState='idle';for(const flag of ['isRecording','isRecordingCircle','flipLockSuppressed']){core[flag]=true;orientation({beta:180});assert.equal(locked,0);core[flag]=false;}
+ orientation({beta:180});assert.equal(locked,1);
+ console.log('PASS key exchange immediate feedback, duplicate click guard, visible false/error, captured peer cancellation; Flip-Lock global toggle rerenders correct surface');
+})().catch(error=>{console.error(error);process.exitCode=1;});

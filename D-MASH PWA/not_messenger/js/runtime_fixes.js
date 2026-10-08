@@ -519,31 +519,45 @@
             }
         };
 
-        // Re-arm the pairing-derived route immediately before the legacy SOS
-        // key exchange. This makes the button recover from a route that was not
-        // ready when the two QR codes were scanned.
+        // The initial chat render calls this handler directly. Pagination is not
+        // a reliable place to attach the key-exchange control.
         core.beginKeyExchange = async function beginKeyExchange() {
-            if (!this.activePeerId) return this.customAlert("КЛЮЧИ", "Сначала выберите контакт.");
+            const peerId = this.activePeerId;
+            if (!peerId) return this.customAlert("КЛЮЧИ", "Сначала выберите контакт.");
+            if (this._keyExchangeUiAttempt?.current()) return false;
+            const storage = global.DMashStorage;
+            const keys = this.keys, salt = this.blindSalt, identity = this.activeIdentity;
+            const db = storage.db, masterKey = storage.masterKey, root = global.DeviceRoot?.state;
+            const current = () => this.activePeerId === peerId && this.keys === keys && this.blindSalt === salt &&
+                this.activeIdentity === identity && storage.db === db && storage.masterKey === masterKey &&
+                (!global.DeviceRoot || (root && global.DeviceRoot.state === root)) && !this._accountTransitioning;
+            const zone = document.getElementById("init-zone"), button = zone?.querySelector("button");
+            let status = zone?.querySelector('[role="status"]');
+            if (zone && !status) { status = document.createElement("div"); status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite"); status.style.marginTop = "12px"; zone.appendChild(status); }
+            const show = text => { if (current() && status?.isConnected) status.textContent = text; };
+            const attempt = { current }; this._keyExchangeUiAttempt = attempt;
+            if (button) { button.disabled = true; button.textContent = "ГОТОВИМ ОБМЕН…"; }
+            show("Подготавливаем соединение с контактом…");
             try {
-                const alias = await global.Storage.getAlias(this.activePeerId, "L1");
-                const peer = await global.Storage.getBox("blind_peers", alias);
-                if (!peer?.pairingContribution) {
-                    return this.customAlert("КЛЮЧИ", "Сначала отсканируйте Pairing QR этого контакта.");
-                }
-                await this.ensureAutomaticMeshRoute(this.activePeerId, peer.pairingContribution);
-                await this.sendMessage({ type: "sys", content: "key-exchange" }, "SOS");
-                setTimeout(() => this.syncNetwork?.(), 300);
-            } catch (error) { this.customAlert("ОБМЕН КЛЮЧАМИ", error.message); }
+                const alias = await storage.getAlias(peerId, "L1");
+                if (!current()) return false;
+                const peer = await storage.getBox("blind_peers", alias);
+                if (!current()) return false;
+                if (!peer?.pairingContribution) { show("Сначала отсканируйте Pairing QR этого контакта."); return false; }
+                await this.ensureAutomaticMeshRoute(peerId, peer.pairingContribution);
+                if (!current()) return false;
+                show("Отправляем запрос обмена ключами…");
+                const sent = await this.sendMessage({ type: "sys", content: "key-exchange" }, "SOS", peerId, null, false, null, null, current);
+                if (!current()) return false;
+                show(sent === true ? "Запрос отправлен. Ожидаем ответ контакта…" : "Обмен пока не подтверждён. Проверьте подключение и повторите попытку; запрос может ожидать отправки.");
+                if (sent === true) setTimeout(() => { if (current()) void this.syncNetwork?.(); }, 300);
+                return sent === true;
+            } catch (error) { show("Не удалось начать обмен: " + error.message); return false; }
+            finally {
+                if (this._keyExchangeUiAttempt === attempt) this._keyExchangeUiAttempt = null;
+                if (button?.isConnected && current()) { button.disabled = false; button.textContent = "ОБМЕНЯТЬСЯ КЛЮЧАМИ"; }
+            }
         };
-        const originalLoadChat = core.loadChat?.bind(core);
-        if (originalLoadChat) {
-            core.loadChat = async function repairedLoadChat(...args) {
-                const result = await originalLoadChat(...args);
-                const button = document.querySelector("#init-zone button");
-                if (button) { button.onclick = () => this.beginKeyExchange(); button.textContent = "ОБМЕНЯТЬСЯ КЛЮЧАМИ"; }
-                return result;
-            };
-        }
 
         core.copyPublicContactLink = async function copyPublicContactLink(routeId) {
             const route = global.DeviceRoutes.list().find(item => item.routeId === routeId);

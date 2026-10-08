@@ -1267,7 +1267,7 @@ const Core = {
                     this.shmon("INFO", `D-MASH: ${probe.state}`);
                 } catch (error) {
                     this.shmon("ERR", `D-MASH probe failed: ${error.message}`);
-                    if (!suppressQueue) await this.queueOutbound(pid, p, forceHandshake);
+                    if (current() && !suppressQueue) await this.queueOutbound(pid, p, forceHandshake);
                     return false;
                 }
             }
@@ -1318,14 +1318,14 @@ const Core = {
                         if (inp && !c) { inp.value = ""; inp.style.height = '45px'; }
                     }
                     return true;
-                } catch (error) { this.shmon("ERR", `D-MASH send failed: ${error.message}`); if (!suppressQueue) await this.queueOutbound(pid, p, forceHandshake); }
+                } catch (error) { this.shmon("ERR", `D-MASH send failed: ${error.message}`); if (current() && !suppressQueue) await this.queueOutbound(pid, p, forceHandshake); }
                 return false;
             }
             const message = forceHandshake
                 ? "Mesh route для контакта ещё восстанавливается из pairing. Дождитесь подключения к Entry Node. Legacy Relay не использовался."
                 : "Mesh route для контакта ещё восстанавливается из pairing. Legacy Relay не использовался.";
             this.shmon("WARN", message);
-            if (!suppressQueue) await this.queueOutbound(pid, p, forceHandshake);
+            if (current() && !suppressQueue) await this.queueOutbound(pid, p, forceHandshake);
             if (forceHandshake && this.customConfirm && !this.nodeTransportV4) {
                 this.customConfirm(
                     "D-MASH MESH",
@@ -1869,7 +1869,7 @@ const Core = {
                     <div id="init-zone" style="text-align:center; margin-top:100px; padding:20px;">
                         <div style="color:var(--main); font-size:2rem; margin-bottom:10px;">⚛️</div>
                         <div style="color:#555; margin-bottom:20px; font-size:0.8rem;">КВАНТОВЫЙ КАНАЛ НЕ НАСТРОЕН</div>
-                        <button class="sys-modal-btn primary" style="width:220px; padding:15px;" onclick="Core.sendMessage('🤝 Запрос на квантовый мост', 'SOS')">
+                        <button class="sys-modal-btn primary" style="width:220px; padding:15px;" onclick="Core.beginKeyExchange()">
                             ОБМЕНЯТЬСЯ КЛЮЧАМИ
                         </button>
                     </div>`;
@@ -2830,10 +2830,11 @@ const Core = {
         return expected.length === actual.length && expected.every((value, index) => value === actual[index]);
     },
     // Core.toggleFlipper         - Переключатель Flip-Lock (блокировка при перевороте экрана)
-    toggleFlipper: function() {
+    toggleFlipper: function(scope = null) {
         const cur = localStorage.getItem('cfg_panic_gesture') === 'true';
         localStorage.setItem('cfg_panic_gesture', String(!cur));
-        Core.openSettings();
+        if (scope === 'global' && window.ui?.renderGlobalSettings) ui.renderGlobalSettings();
+        else Core.openSettings();
     },
     // Core.toggleAccountList     - Скрытие/показ списка аккаунтов на стартовом экране
     toggleAccountList: function() {
