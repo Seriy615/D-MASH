@@ -305,6 +305,7 @@
                     loadScript(`js/chat_password.js?v=${ver}`),
                     loadScript(`js/account_ratchet_runtime.js?v=${ver}`),
                     loadScript(`js/file_channel.js?v=${ver}`),
+                    loadScript(`js/file_vault.js?v=${ver}`),
                     loadScript(`js/file_session.js?v=${ver}`),
                     loadScript(`js/file_runtime.js?v=${ver}`),
                     loadScript(`js/call_session.js?v=${ver}`),

@@ -1540,6 +1540,7 @@ const Core = {
     // Core.syncNetwork        - Опрос сервера (PULL), получение и сортировка новых маляв
     async syncNetwork() {
         if(window.DmashRecordedNoteTurn)void this.getRecordedNoteTurn().flush();
+        if(window.DmashFileRuntime)void window.DmashFileRuntime.flush(this);
         if(window.DmashAccountRecordedMedia)void this.getRecordedMedia().flush().catch(error=>this.shmon('WARN','Recorded-note retry deferred: '+error.message));
         if (this.nodeInboxV4 && !this.nodeInboxV4.closed) {
             try { await this.nodeInboxV4.drain(); }
@@ -1924,6 +1925,7 @@ const Core = {
             }
 
             await this.hydrateRecordedNotes(id);
+            window.DmashFileRuntime?.hydrateVisible?.(this, id);
 
             // Only after the complete initial page is painted may concurrent
             // inbound traffic append at the bottom.  Older history is added
@@ -2002,6 +2004,7 @@ const Core = {
         }
 
         await Core.hydrateRecordedNotes(historyPeer);
+        window.DmashFileRuntime?.hydrateVisible?.(Core, historyPeer);
         if (Core.activePeerId !== historyPeer) { Core.isLoadingHistory = false; Core.isDrawing = false; return; }
         Core.chatOffset += rawBatch.length;
         if (rawBatch.length === Core.chatLimit) Core.prefetchOlderHistory(Core.activePeerId, Core.chatOffset);
@@ -2108,6 +2111,7 @@ const Core = {
             }
             let mediaCleanupFailed = false;
             try {
+                window.DmashFileRuntime?.forgetPeer?.(Core, id);
                 Core.recordedNoteTurn?.forgetPeer(id);
                 await Core.recordedMedia?.forgetPeer(id);
             } catch (error) {
@@ -2138,7 +2142,12 @@ const Core = {
     // Core.deleteMessageFlow  - Удаление конкретной малявы (локально)
     deleteMessageFlow(msgId, peerId = this.activePeerId) {
         this.customConfirm("ЗАЧИСТКА", "Стереть маляву?", async () => {
-            await Storage.deleteMessageGamma(peerId, msgId);
+            try { await Storage.deleteMessageGamma(peerId, msgId); }
+            catch (error) {
+                this.shmon('WARN', `Message deletion refused: ${error.message}`);
+                this.customAlert('УДАЛЕНИЕ НЕ ВЫПОЛНЕНО', 'Файл и сообщение сохранены. Проверьте доступ к чату и хранилищу.');
+                return;
+            }
 
             // ФИКС: Удаляем элемент из лога по ID
             const msgEl = document.getElementById(`msg-box-${msgId}`);
@@ -2153,6 +2162,7 @@ const Core = {
     // Core.closeChat          - Закрытие окна чата
     closeChat: function(manual = true) {
         window.DmashChatPassword?.clear();
+        Core._filePreviewObserver?.disconnect?.(); Core._filePreviewObserver = null;
         for (const url of Core.blobURLs || []) URL.revokeObjectURL(url);
         Core.blobURLs = [];
         if(Core.activeAudio) Core.activeAudio.pause();
@@ -2464,6 +2474,52 @@ const Core = {
             if (stub) stub.innerHTML = '<span style="color:var(--accent)">ОШИБКА ДАННЫХ МЕДИА</span>';
         }
     },
+    renderFileStub(data, id, transportState = null, inbound = false) {
+        if (!data || data.type !== 'file_ref' || !/^[0-9a-f]{64}$/.test(data.fileId || '') ||
+            !/^[0-9a-f]{64}$/.test(data.sha256 || '') || !Number.isSafeInteger(data.size) ||
+            data.size < 1 || data.size > 64 * 1024 * 1024 || typeof data.name !== 'string' ||
+            !data.name || data.name.length > 255 || typeof data.mime !== 'string' || data.mime.length > 128)
+            return '<span>ПОВРЕЖДЕНА КАРТОЧКА ФАЙЛА</span>';
+        const encoded = this.encodeMediaPayload(data);
+        const name = this.escapeHtml(data.name), size = (data.size / 1024).toFixed(1);
+        const progress = transportState === 'WAITING' ? 'ОЖИДАЕТ ПОЛУЧАТЕЛЯ' :
+            transportState === 'FAILED' ? 'НЕ ДОСТАВЛЕНО' : '';
+        const cancel = !inbound && transportState === 'WAITING' ?
+            `<button class="sys-modal-btn dmash-file-cancel" type="button" onclick="Core.cancelStoredFile('${data.fileId}')">ОТМЕНИТЬ ОТПРАВКУ</button>` : '';
+        return `<div class="dmash-file-card" data-file-ref="${encoded}" data-file-id="${data.fileId}">
+            <div class="dmash-file-name">📎 ${name}</div><small>${size} КиБ</small>
+            <div class="dmash-file-preview" role="status">ЗАШИФРОВАННЫЙ ФАЙЛ</div>
+            <div class="dmash-file-progress" role="status">${progress}</div>
+            <button class="sys-modal-btn primary" type="button" onclick="Core.openStoredFileEncoded('${id}','${encoded}')">ОТКРЫТЬ ФАЙЛ</button>
+            ${cancel}
+        </div>`;
+    },
+    async cancelStoredFile(fileId) {
+        if (!this.activePeerId || !window.DmashFileRuntime?.cancelFile) return false;
+        try {return await window.DmashFileRuntime.cancelFile(this,this.activePeerId,fileId);}
+        catch (error) {this.shmon('WARN','File cancellation deferred: '+error.message);return false;}
+    },
+    refreshFileProgress(peer, fileId, done, total) {
+        if (this.activePeerId !== peer || !/^[0-9a-f]{64}$/.test(fileId || '') ||
+            !Number.isFinite(done) || !Number.isFinite(total) || total <= 0) return;
+        const pct = Math.max(0, Math.min(100, Math.floor(done / total * 100)));
+        for (const card of document.querySelectorAll('#log .msg.out .dmash-file-card')) {
+            if (card.dataset.fileId === fileId) {
+                const status = card.querySelector('.dmash-file-progress');
+                if (status) status.textContent = `ОТПРАВКА: ${pct}%`;
+            }
+        }
+    },
+    async openStoredFileEncoded(id, encoded) {
+        let ref;
+        try { ref = JSON.parse(decodeURIComponent(escape(atob(encoded)))); }
+        catch (_) { this.customAlert('ФАЙЛ', 'Повреждена карточка файла.'); return false; }
+        if (!this.activePeerId || !window.DmashFileRuntime?.openInline) {
+            this.customAlert('ФАЙЛ', 'Хранилище файлов недоступно. Обновите страницу.'); return false;
+        }
+        try { return await window.DmashFileRuntime.openInline(this, this.activePeerId, ref, id); }
+        catch (error) { this.customAlert('ФАЙЛ', error.message || 'Не удалось открыть файл.'); return false; }
+    },
     // Core.renderStub         - Отрисовка заглушки для еще не расшифрованного файла
     renderStub(data, id) {
         const label = {
@@ -2513,6 +2569,8 @@ const Core = {
     // Core.handleVoipSignal   - Роутер сигналов (Offer/Answer/ICE/Hangup)
     async handleVoipSignal(data, fromId) {
         if (data?.type === 'voip_file_request') return window.DmashFileRuntime.incoming(this, data.request, fromId);
+        if (data?.type === 'voip_file_complete' || data?.type === 'voip_file_reject')
+            return window.DmashFileRuntime.outcome(this, data, fromId);
         if (data?.type === 'voip_call_request') return window.DmashCallRuntime.incoming(this, data.request, fromId);
         // SDP/ICE are accepted exclusively from the joined signaling socket.
         return false;
@@ -3503,6 +3561,14 @@ const Core = {
 
             // 3. ПРОВЕРЯЕМ, НЕ МЕДИА ЛИ ЭТО (Кружок, Фото, Голос)
             // Наши медиа всегда имеют поле 'type' (image, video, video_note, voice) и 'data'
+            if (parsed.type === 'file_ref') {
+                const side = msg.inbound ? 'in' : 'out';
+                const time = new Date(ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const content = this.renderFileStub(parsed, id || ts, msg.transportState, msg.inbound);
+                return `<div class="msg ${side}" id="msg-box-${id || ts}" data-wire-id="${encodeURIComponent(String(msg.wireId || ''))}">
+                    <div class="m-txt">${content}<span class="msg-del-btn" onclick="Core.deleteMessageFlow('${id || ts}')">×</span></div>
+                    <small class="m-ts">${time}${this.messageStatusHtml(msg)}</small></div>`;
+            }
             if (parsed.type && parsed.data) {
                 const side = msg.inbound ? 'in' : 'out';
                 const time = new Date(ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
@@ -3542,6 +3608,11 @@ const Core = {
             if (box.dataset.wireId !== encoded) continue;
             const status = box.querySelector('.m-state');
             if (status) status.outerHTML = this.messageStatusHtml({inbound: false, transportState: state});
+            const fileProgress = box.querySelector('.dmash-file-progress');
+            if (fileProgress) fileProgress.textContent = state === 'DELIVERED' ? '' :
+                state === 'FAILED' ? 'НЕ ДОСТАВЛЕНО' : state === 'CANCELLED' ? 'ОТМЕНЕНО' :
+                    state === 'WAITING' ? 'ОЖИДАЕТ ПОЛУЧАТЕЛЯ' : '';
+            if (state !== 'WAITING') box.querySelector('.dmash-file-cancel')?.remove();
         }
     },
     // Render delivered/read only after authenticated durable receipts.
@@ -3551,7 +3622,8 @@ const Core = {
             WAITING: ' <span class="m-state" title="Ожидает получателя · хранится на этом устройстве">ОЖИДАЕТ</span>',
             QUEUED: " <span class=\"m-state\" title=\"Улетит при первой возможности\">⌛</span>",
             SENT: " <span class=\"m-state\" title=\"Sent to transport\">✓</span>",
-            FAILED: " <span class=\"m-state\" title=\"Запись не отправлена: формат недоступен или срок передачи истёк\">НЕ ОТПРАВЛЕНО</span>",
+            FAILED: " <span class=\"m-state\" title=\"Не удалось доставить; содержимое остаётся на этом устройстве\">НЕ ОТПРАВЛЕНО</span>",
+            CANCELLED: " <span class=\"m-state\" title=\"Отправка отменена; файл сохранён на этом устройстве\">ОТМЕНЕНО</span>",
             DELIVERED: " <span class=\"m-state\" title=\"Delivered to device\">✓✓</span>",
             READ: " <span class=\"m-state m-state--read\" title=\"Read by account\">✓✓</span>"
         };

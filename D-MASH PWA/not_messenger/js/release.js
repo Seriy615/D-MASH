@@ -51,6 +51,7 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-202610
         "js/account_ratchet_runtime.js",
         "js/account_recorded_media.js",
         "js/file_channel.js",
+        "js/file_vault.js",
         "js/file_session.js",
         "js/file_runtime.js",
         "js/recorded_note_turn.js",

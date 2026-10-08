@@ -6,7 +6,7 @@ const Storage = {
     registry_instance: null,
     masterKey: null, // AES-GCM ключ (32 байта из Argon2)
     REGISTRY_DB: 'dm_registry_v1',
-    REG_VER: 23,
+    REG_VER: 24,
 
     /**
      * ИНИЦИАЛИЗАЦИЯ СЛЕПОГО СЕЙФА (Gamma-1)
@@ -45,6 +45,15 @@ const Storage = {
                     // route becomes usable; it never goes into localStorage.
                     if (!db.objectStoreNames.contains('blind_outbox')) {
                         db.createObjectStore('blind_outbox', { keyPath: 'alias' });
+                    }
+                    // Account-owned encrypted file bytes and a separately
+                    // authenticated owner inventory. Both stores remain in
+                    // this shared vault so chat removal can be transactional.
+                    if (!db.objectStoreNames.contains('blind_files')) {
+                        db.createObjectStore('blind_files', { keyPath: 'alias' });
+                    }
+                    if (!db.objectStoreNames.contains('blind_file_owners')) {
+                        db.createObjectStore('blind_file_owners', { keyPath: 'alias' });
                     }
                 };
 
@@ -328,7 +337,8 @@ const Storage = {
             const alias=await this.getAlias(aliasL1+seq,'L3'),message=await this.getBox('blind_messages',alias);
             if(!message||message.inbound||message.wireId!==wireId)continue;
             if(['DELIVERED','READ'].includes(message.transportState))return false;
-            message.transportState='FAILED';message.failureReason=String(reason).slice(0,64);
+            message.transportState=reason==='FILE_CANCELLED'?'CANCELLED':'FAILED';
+            message.failureReason=String(reason).slice(0,64);
             await this.putBox('blind_messages',{alias,data:message});return true;
         }
         return false;
@@ -402,15 +412,60 @@ savePeerGamma: async function(id, name) {
         });
     },
 deleteMessageGamma: async function(peerID, msgId) {
+        const db = this.db, key = this.masterKey, salt = Core.blindSalt, slot = Core.activeIdentity;
+        const check = () => {
+            if (this.db !== db || this.masterKey !== key || Core.blindSalt !== salt ||
+                Core.activeIdentity !== slot || Core._accountTransitioning) throw Error('Account changed during message deletion');
+        };
+        check();
         const aliasL1 = await this.getAlias(peerID, "L1");
         const aliasL3 = await this.getAlias(aliasL1 + msgId, "L3");
-        return new Promise((res) => {
-            const tx = this.db.transaction('blind_messages', 'readwrite');
-            tx.objectStore('blind_messages').delete(aliasL3);
-            tx.oncomplete = () => {
-                console.log(`[Storage] Малява ${msgId} для ${peerID.substring(0,8)} зачищена.`);
-                res();
+        check();
+        const raw = await new Promise((resolve,reject) => {
+            const tx = db.transaction('blind_messages', 'readonly'), q = tx.objectStore('blind_messages').get(aliasL3);
+            q.onsuccess = () => resolve(q.result || null);
+            q.onerror = () => reject(q.error || Error('Message deletion read failed'));
+        });
+        check();
+        if (!raw) return false;
+        const message = await this.decryptBox(raw.blob); check();
+        if (!message || !Object.hasOwn(message, 'text')) throw Error('Corrupt message; deletion refused');
+        const content = window.DmashChatPassword ? await window.DmashChatPassword.reveal(this,peerID,message.text) : message.text;
+        check();
+        let fileProof = null;
+        if (content?.type === 'file_ref') {
+            if (!window.DmashFileVault) throw Error('File owner verifier unavailable; message deletion refused');
+            fileProof = await new window.DmashFileVault(Core, this).prepareDeleteOne(peerID,content.fileId);
+        }
+        return new Promise((resolve,reject) => {
+            const stores = fileProof ? ['blind_messages','blind_files','blind_file_owners'] : ['blind_messages'];
+            const tx = db.transaction(stores, 'readwrite');
+            const q = tx.objectStore('blind_messages').get(aliasL3);
+            q.onsuccess = () => {
+                try {
+                    check(); fileProof?.check();
+                    if (q.result?.blob !== raw.blob) throw Error('Message changed during deletion');
+                    if (fileProof) {
+                        const owner = tx.objectStore('blind_file_owners').get(fileProof.ownerAlias);
+                        owner.onsuccess = () => {
+                            try {
+                                check(); fileProof.check();
+                                if ((owner.result?.revision || 0) !== fileProof.revision)
+                                    throw Error('File owner inventory changed during deletion');
+                                tx.objectStore('blind_files').delete(fileProof.alias);
+                                tx.objectStore('blind_file_owners').put({alias:fileProof.ownerAlias,
+                                    ...fileProof.sealedOwner,revision:fileProof.revision + 1});
+                                tx.objectStore('blind_messages').delete(aliasL3);
+                            } catch (error) {try {tx.abort();} catch (_) {} reject(error);}
+                        };
+                        owner.onerror = () => {try {tx.abort();} catch (_) {} reject(owner.error || Error('File owner read failed'));};
+                    } else tx.objectStore('blind_messages').delete(aliasL3);
+                } catch (error) {try {tx.abort();} catch (_) {} reject(error);}
             };
+            q.onerror = () => reject(q.error || Error('Message deletion check failed'));
+            tx.oncomplete = () => {try {check(); resolve(true);} catch (error) {reject(error);}};
+            tx.onabort = () => reject(tx.error || Error('Message deletion aborted'));
+            tx.onerror = () => {};
         });
     },
     /**
@@ -464,11 +519,32 @@ deleteMessageGamma: async function(peerID, msgId) {
         const outboxAliases = queued.filter(item => item?.peerID === peerID).map(item => item.alias);
         const mappingAliases = mappings.filter(item => item?.peerId === peerID && !item.schema && !item.kind).map(item => item.alias);
         if (knownRow) mappingAliases.push(knownAlias);
+        let fileProof = null;
+        if (db.objectStoreNames.contains('blind_files')) {
+            if (!window.DmashFileVault) throw Error('File owner verifier unavailable; chat deletion refused');
+            fileProof = await new window.DmashFileVault(Core, this).prepareDeletePeer(peerID);
+        }
         check();
         await new Promise((resolve, reject) => {
-            const tx = db.transaction(['blind_messages', 'blind_peers', 'blind_secrets', 'blind_outbox', 'pairing_material'], 'readwrite');
+            const stores = ['blind_messages', 'blind_peers', 'blind_secrets', 'blind_outbox', 'pairing_material'];
+            if (fileProof) stores.push('blind_files', 'blind_file_owners');
+            const tx = db.transaction(stores, 'readwrite');
             try {
                 check();
+                if (fileProof?.aliases.length) {
+                    const ownerRequest = tx.objectStore('blind_file_owners').get(fileProof.ownerAlias);
+                    ownerRequest.onsuccess = () => {
+                        try {
+                            check(); fileProof.check();
+                            if ((ownerRequest.result?.revision || 0) !== fileProof.revision)
+                                throw Error('File owner inventory changed; chat deletion refused');
+                            for (const alias of fileProof.aliases) tx.objectStore('blind_files').delete(alias);
+                            tx.objectStore('blind_file_owners').put({alias:fileProof.ownerAlias,
+                                ...fileProof.sealedOwner, revision:fileProof.revision + 1});
+                        } catch (error) {try {tx.abort();} catch (_) {} reject(error);}
+                    };
+                    ownerRequest.onerror = () => {try {tx.abort();} catch (_) {} reject(ownerRequest.error || Error('File owner check failed'));};
+                }
                 for (const alias of messageAliases) tx.objectStore('blind_messages').delete(alias);
                 tx.objectStore('blind_peers').delete(aliasL1);
                 tx.objectStore('blind_secrets').delete(secretsAlias);

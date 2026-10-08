@@ -1,10 +1,10 @@
 const assert = require('node:assert/strict');
 require('../js/file_channel.js');
 const {FileChannel, describe, MAX_SIZE} = DmashFileChannel;
-function pair(transform = value => value) {
+function pair(transform = value => value, ackTransform = value => value) {
     const a = {readyState: 'open', bufferedAmount: 0}, b = {...a};
     a.send = frame => {const data = transform(structuredClone(frame)); if (data) queueMicrotask(() => b.onmessage?.({data}));};
-    b.send = frame => {queueMicrotask(() => a.onmessage?.({data: structuredClone(frame)}));};
+    b.send = frame => {const data=ackTransform(structuredClone(frame));if(data)queueMicrotask(() => a.onmessage?.({data}));};
     for (const [self, other] of [[a,b],[b,a]]) self.close = () => {
         if (self.readyState === 'closed') return;
         self.readyState = other.readyState = 'closed'; queueMicrotask(() => {self.onclose?.(); other.onclose?.();});
@@ -62,6 +62,75 @@ async function transfer(file, manifest, transform, afterComplete) {
     while (!sender.pending) await new Promise(r => setTimeout(r, 1));
     a.close(); await cancelled.promise;
     assert(sender.closed); assert.equal(sender.pending, null);
+
+    // Ordered data may receive authenticated ACKs out of order. The bounded
+    // window must count each byte exactly once and wait for the final ACK.
+    const wider=new File([new Uint8Array(16*32768+13)],'window.bin');
+    const wideManifest=await describe(wider,'c'.repeat(64));
+    const [wa,wb]=pair(),wideSent=deferred(),wideReceived=deferred(),wideErrors=[];
+    let wideSender,maxPending=0,firstAck=null;const progress=[];
+    const originalSend=wa.send;
+    wa.send=frame=>{maxPending=Math.max(maxPending,wideSender?.pending?.size||0);originalSend(frame);};
+    wb.send=frame=>{
+        const index=new DataView(frame).getUint32(0);
+        if(index===0){firstAck=structuredClone(frame);return;}
+        if(index===1&&firstAck){
+            const held=firstAck;firstAck=null;
+            queueMicrotask(()=>wa.onmessage?.({data:structuredClone(frame)}));
+            queueMicrotask(()=>wa.onmessage?.({data:held}));return;
+        }
+        queueMicrotask(()=>wa.onmessage?.({data:structuredClone(frame)}));
+    };
+    const wideReceiver=new FileChannel({channel:wb,manifest:wideManifest,onComplete:blob=>wideReceived.resolve(blob),
+        onError:error=>{wideErrors.push(error);wideReceived.resolve(null);}});
+    wideSender=new FileChannel({channel:wa,manifest:wideManifest,file:wider,
+        onProgress:done=>progress.push(done),
+        onComplete:()=>wideSent.resolve(true),onError:error=>{wideErrors.push(error);wideSent.resolve(false);}});
+    const [wideDone,wideBlob]=await Promise.all([wideSent.promise,wideReceived.promise]);
+    assert.equal(wideDone,true);assert.equal(wideBlob.size,wider.size);
+    assert.equal(wideErrors.length,0);
+    assert(maxPending>=2&&maxPending<=8,'window remains bounded and pipelines at least two chunks');
+    assert.equal(progress.at(-1),wider.size);
+    assert(progress.every((bytes,index)=>index===0||bytes>progress[index-1]),
+        'out-of-order ACKs cannot double-count progress');
+    wideSender.close();wideReceiver.close();
+
+    const [lostA,lostB]=pair(value=>value,frame=>new DataView(frame).getUint32(0)===0?null:frame);
+    const lostSent=deferred(),lostReceived=deferred();
+    const lostReceiver=new FileChannel({channel:lostB,manifest,onComplete:()=>lostReceived.resolve(true),
+        onError:()=>lostReceived.resolve(false)});
+    const lostSender=new FileChannel({channel:lostA,manifest,file,ackTimeoutMs:25,
+        onComplete:()=>lostSent.resolve(true),onError:()=>lostSent.resolve(false)});
+    assert.deepEqual(await Promise.all([lostSent.promise,lostReceived.promise]),[false,false],
+        'missing authenticated ACK cannot produce VERIFIED');
+    lostSender.close();lostReceiver.close();
+
+    const [dupA,dupB]=pair(),dupSent=deferred(),dupReceived=deferred();
+    dupB.send=frame=>{
+        const index=new DataView(frame).getUint32(0);
+        queueMicrotask(()=>dupA.onmessage?.({data:structuredClone(frame)}));
+        if(index===0)queueMicrotask(()=>dupA.onmessage?.({data:structuredClone(frame)}));
+    };
+    const dupReceiver=new FileChannel({channel:dupB,manifest,onComplete:()=>dupReceived.resolve(true),
+        onError:()=>dupReceived.resolve(false)});
+    const dupSender=new FileChannel({channel:dupA,manifest,file,onComplete:()=>dupSent.resolve(true),
+        onError:()=>dupSent.resolve(false)});
+    assert.deepEqual(await Promise.all([dupSent.promise,dupReceived.promise]),[false,false],
+        'duplicate ACK is rejected and cannot complete a file');
+    dupSender.close();dupReceiver.close();
+
+    const [pressureA,pressureB]=pair(),pressureSent=deferred(),pressureReceived=deferred();
+    pressureA.bufferedAmount=200000;
+    let firstSendAt=0;const pressureStart=Date.now(),originalPressureSend=pressureA.send;
+    pressureA.send=frame=>{firstSendAt=Date.now();originalPressureSend(frame);};
+    setTimeout(()=>{pressureA.bufferedAmount=0;},15);
+    const pressureReceiver=new FileChannel({channel:pressureB,manifest,
+        onComplete:()=>pressureReceived.resolve(true),onError:()=>pressureReceived.resolve(false)});
+    const pressureSender=new FileChannel({channel:pressureA,manifest,file,ackTimeoutMs:100,
+        onComplete:()=>pressureSent.resolve(true),onError:()=>pressureSent.resolve(false)});
+    assert.deepEqual(await Promise.all([pressureSent.promise,pressureReceived.promise]),[true,true]);
+    assert(firstSendAt-pressureStart>=10,'bufferedAmount backpressure waits instead of overflowing');
+    pressureSender.close();pressureReceiver.close();
     await assert.rejects(describe({size:MAX_SIZE + 1}, 'a'.repeat(64)));
-    console.log('file_channel.test.js: integrity, ordering, bounds and cancellation passed');
+    console.log('file_channel.test.js: integrity, bounded pipeline, out-of-order/lost/duplicate ACK and cancellation passed');
 })().catch(error => {console.error(error); process.exitCode = 1;});
