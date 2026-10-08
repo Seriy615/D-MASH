@@ -133,6 +133,7 @@
   async selectBootstrap(cap,exchangeId,requestDigest,{deny=false}={}){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_BOOTSTRAP_SELECT',{ownerToken:owner.token,exchangeId,requestDigest,deny});this.#owner(cap);return result;}
   async bootstrapSubmit(cap,handle,control){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_BOOTSTRAP_SUBMIT',{ownerToken:owner.token,handle,control});this.#owner(cap);return result;}
   async ownerDiscover(cap,certificate){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_DISCOVER',{ownerToken:owner.token,certificate});this.#owner(cap);return result;}
+  async ownerReleaseGrant(cap,handle){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_RELEASE_GRANT',{ownerToken:owner.token,handle});this.#owner(cap);return result;}
   async ownerInboxList(cap,limit=32,after=null){const owner=this.#owner(cap,{archiveAllowed:true}),result=await this.#ownerCall('OWNER_INBOX_LIST',{ownerToken:owner.token,limit,after});this.#owner(cap,{archiveAllowed:true});return result;}
   async ownerAcknowledgeInbox(cap,handle){const owner=this.#owner(cap,{archiveAllowed:true}),result=await this.#ownerCall('OWNER_INBOX_ACK',{ownerToken:owner.token,handle});this.#owner(cap,{archiveAllowed:true});return result;}
   async ownerSubmitSealed(cap,handle,{certificateDigest,blob}){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_SUBMIT_SEALED',{ownerToken:owner.token,handle,certificateDigest,blob});this.#owner(cap);return result;}

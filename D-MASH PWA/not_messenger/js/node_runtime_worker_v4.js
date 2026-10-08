@@ -100,11 +100,12 @@ self.onmessage=async({data})=>{
    else if(data.type==='OWNER_CHALLENGE')result=await ownership.challenge(data.accountPublic,data.certificate);
    else if(data.type==='OWNER_REGISTER')result=await ownership.register(data.challenge,data.signature);
    else if(data.type==='OWNER_PREPARE')result=await ownership.prepare(data.ownerToken,data);
-   else if(data.type==='OWNER_DISCOVER'){ownership.owner(data.ownerToken);const found=await local.discover(data.certificate);try{ownership.owner(data.ownerToken);}catch(error){local.routes.delete(found.handle);throw error;}result=found;}
+   else if(data.type==='OWNER_DISCOVER'){ownership.owner(data.ownerToken);const found=await local.discover(data.certificate,{ownerToken:data.ownerToken});try{ownership.owner(data.ownerToken);}catch(error){local.releaseGrant(found.handle,data.ownerToken);throw error;}result=found;}
+   else if(data.type==='OWNER_RELEASE_GRANT'){ownership.owner(data.ownerToken);result=local.releaseGrant(data.handle,data.ownerToken);ownership.owner(data.ownerToken);}
    else if(data.type==='OWNER_INBOX_LIST'){const owner=ownership.owner(data.ownerToken,{archiveAllowed:true});result=await inbox.list(owner.ownerSlot,data.limit,data.after);ownership.owner(data.ownerToken,{archiveAllowed:true});}
    else if(data.type==='OWNER_INBOX_ACK'){const owner=ownership.owner(data.ownerToken,{archiveAllowed:true});result=await inbox.acknowledge(data.handle,owner.ownerSlot,{guard:()=>{ownership.owner(data.ownerToken,{archiveAllowed:true});return true;}});ownership.owner(data.ownerToken,{archiveAllowed:true});}
-   else if(data.type==='OWNER_SUBMIT_SEALED'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=await local.sendSealed(data.handle,data.blob,owner.routeId,data.certificateDigest,{guard:()=>{ownership.owner(data.ownerToken);return true;}});}
-   else if(data.type==='OWNER_SUBMIT'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=local.send(data.handle,data.payload,owner.routeId);}
+   else if(data.type==='OWNER_SUBMIT_SEALED'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=await local.sendSealed(data.handle,data.blob,owner.routeId,data.certificateDigest,{ownerToken:data.ownerToken,guard:()=>{ownership.owner(data.ownerToken);return true;}});}
+   else if(data.type==='OWNER_SUBMIT'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=local.send(data.handle,data.payload,owner.routeId,data.ownerToken);}
    else if(data.type.startsWith('OWNER_BOOTSTRAP_')){
     if(!bootstrap)throw Error('Private bootstrap profile required');
     if(data.type==='OWNER_BOOTSTRAP_PROVISION')result=await bootstrap.provision(data.ownerToken,data);
@@ -113,7 +114,7 @@ self.onmessage=async({data})=>{
     else if(data.type==='OWNER_BOOTSTRAP_SUBMIT')result=await bootstrap.submit(data.ownerToken,data.handle,data.control);
     else throw Error('Unknown bootstrap operation');
    }
-   else if(data.type==='OWNER_RELEASE'){ownership.owners.delete(data.ownerToken);result=true;}
+   else if(data.type==='OWNER_RELEASE'){local.releaseOwnerGrants(data.ownerToken);ownership.owners.delete(data.ownerToken);result=true;}
    else if(data.type==='OWNER_QUERY')result=await ownership.query(data.ownerToken,data.migrationId);
    else if(data.type==='OWNER_ACTIVATE')result=await ownership.change(data.ownerToken,data.tuple,'ACTIVE');
    else if(data.type==='OWNER_RETIRE')result=await ownership.change(data.ownerToken,data.tuple,'RETIRED');

@@ -10,7 +10,7 @@ const recipient=require('../js/recipient_payload_v4.js'),Adapter=require('../js/
  const owner={capability:Object.freeze({}),preparation:Object.freeze({})},calls=[],controller=new AbortController(),db={},masterKey={};
  const session={db,masterKey,signal:controller.signal,assertCurrent(){if(controller.signal.aborted)throw Error('session changed');}};
  const core={captureAccountSessionV4:()=>session},storage={db,masterKey};
- const host={closed:false,verifyPreparation:async handle=>{assert.equal(handle,owner.preparation);return {...proof,state:'ACTIVE'};},ownerDiscover:async(cap,cert)=>{calls.push({type:'discover',cert});return{handle:'06'.repeat(32),expiresAt:now+600};},ownerSubmitSealed:async(cap,handle,sealed)=>{assert.equal(cap,owner.capability);calls.push({type:'send',handle,sealed});return{queued:true};}};
+ const host={closed:false,verifyPreparation:async handle=>{assert.equal(handle,owner.preparation);return {...proof,state:'ACTIVE'};},ownerDiscover:async(cap,cert)=>{calls.push({type:'discover',cert});return{handle:(5+calls.filter(x=>x.type==='discover').length).toString(16).padStart(2,'0').repeat(32),expiresAt:now+600};},ownerReleaseGrant:async(cap,handle)=>{assert.equal(cap,owner.capability);calls.push({type:'release',handle});return true;},ownerSubmitSealed:async(cap,handle,sealed)=>{assert.equal(cap,owner.capability);calls.push({type:'send',handle,sealed});return{queued:true};}};
  const payload='authenticated synthetic frame',signature=Buffer.from(nacl.sign.detached(new TextEncoder().encode(payload),keys.secretKey)).toString('hex');
  const frame=JSON.stringify({payload,signature}),intent={operationId:'07'.repeat(32),peer,bindingDigest:digest,generation:1,frame};
  let blob;const sealedStore={materialize:async input=>({operationId:input.operationId,peer,bindingDigest:digest,generation:1,state:'DURABLE_SEALED_OPERATION',certificateDigest:'08'.repeat(32),blob:blob??=recipient.sealPayload(receiver.publicKey,input.frame)})};
@@ -28,7 +28,17 @@ const recipient=require('../js/recipient_payload_v4.js'),Adapter=require('../js/
  try{Date.now=()=>realNow()+16000;await adapter.submit(route,intent);}finally{Date.now=realNow;}
  assert.equal(calls.filter(x=>x.type==='discover').length,discoverCount+1,'repeat submit must rediscover before a still-unexpired stale grant can trap recovery traffic');
  assert.equal(calls.filter(x=>x.type==='send').at(-1).sealed.blob,sent[0].sealed.blob,'grant refresh changed the durable recipient ciphertext');
- host.ownerSubmitSealed=async()=>{throw Error('network failure');};await assert.rejects(adapter.submit(route,intent),/network failure/);host.ownerSubmitSealed=async()=>({queued:true});await adapter.submit(route,intent);assert.equal(calls.filter(x=>x.type==='discover').length,discoverCount+3);
+ assert.equal(calls.filter(x=>x.type==='release').length,1,'old grant handle was not retired after rediscovery');
+ assert.notEqual(calls.filter(x=>x.type==='release')[0].handle,calls.filter(x=>x.type==='send').at(-1).handle,'rediscovery released its own live handle');
+ let finishHeldSend,notifyHeldSend;const heldSendEntered=new Promise(resolve=>notifyHeldSend=resolve);
+ host.ownerSubmitSealed=async()=>{notifyHeldSend();return new Promise(resolve=>finishHeldSend=resolve);};const held=adapter.submit(route,intent);await heldSendEntered;
+ const releaseBeforeConcurrentRefresh=calls.filter(x=>x.type==='release').length;
+ try{Date.now=()=>realNow()+32000;host.ownerSubmitSealed=async(cap,handle,sealed)=>{calls.push({type:'send',handle,sealed});return{queued:true};};await adapter.submit(route,intent);}finally{Date.now=realNow;}
+ assert.equal(calls.filter(x=>x.type==='release').length,releaseBeforeConcurrentRefresh,'grant was retired while an older send was still in flight');
+ finishHeldSend({queued:true});await held;
+ assert.equal(calls.filter(x=>x.type==='release').length,releaseBeforeConcurrentRefresh+1,'completed in-flight send did not retire its superseded grant');
+ const discoverBeforeFailure=calls.filter(x=>x.type==='discover').length;
+ host.ownerSubmitSealed=async()=>{throw Error('network failure');};await assert.rejects(adapter.submit(route,intent),/network failure/);host.ownerSubmitSealed=async()=>({queued:true});await adapter.submit(route,intent);assert.equal(calls.filter(x=>x.type==='discover').length,discoverBeforeFailure+2);
  snapshot={...snapshot,digest:'09'.repeat(32)};await assert.rejects(adapter.prepare(route),/ACCOUNT_ROUTE_CHANGED/);snapshot={...snapshot,digest};
  host.verifyPreparation=async()=>({...proof,state:'NODE_PREPARED'});await assert.rejects(adapter.getRoute(peer),/NODE_ROUTE_NOT_ACTIVE/);host.verifyPreparation=async()=>({...proof,state:'ACTIVE'});
  host.ownerSubmitSealed=async()=>{throw Error('invalidate grant');};await assert.rejects(adapter.submit(route,intent),/invalidate grant/);
