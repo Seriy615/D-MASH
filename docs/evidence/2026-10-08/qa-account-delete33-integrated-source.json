@@ -1,0 +1,30 @@
+{
+  "scope": "Independent integrated source-overlay actual UI, fresh synthetic two Accounts on .33 product plus Account-delete guard; no user profile/Node connection",
+  "source_sha": "e67860ab3c3bcac463c6074d7f961f73174ab4d7",
+  "page_release": "transport-v3-node-preparation-20261008.33",
+  "service_worker": "BLOCKED for source overlay",
+  "browser": "156.0.8078.4",
+  "steps_pass": 8,
+  "steps_fail": 0,
+  "loaded_local_source_files": 58,
+  "local_source_hashes_match_exact_git_sha": true,
+  "page_errors": 0,
+  "actual_checks": [
+    "create-save-history-0",
+    "create-save-history-1",
+    "account-manager-two-accounts",
+    "delete-refused-truthfully-no-mutation",
+    "registry-pin-remains",
+    "same-name-wrong-key-refused",
+    "same-name-correct-key-history-preserved",
+    "other-account-history-preserved"
+  ],
+  "visible_refusal_and_storage_unchanged": true,
+  "identity_pin_and_both_account_histories_preserved": true,
+  "limits": [
+    "Source overlay, not deployed retest",
+    "Full authenticated Account erasure remains unimplemented",
+    "Existing Account records removed by older builds not restored",
+    "Only synthetic Accounts touched"
+  ]
+}

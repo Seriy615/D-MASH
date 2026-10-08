@@ -1,0 +1,37 @@
+{
+  "scope": "Independent DEPLOYED actual UI; two fresh synthetic Accounts, no user profile/Node connection",
+  "product_sha": "afab8ed187c6312a81b7dda46c29ff9e45da6d9e",
+  "page_release": "transport-v3-node-preparation-20261008.34",
+  "active_service_worker_release": "transport-v3-node-preparation-20261008.34",
+  "service_worker_controls_page": true,
+  "browser": "156.0.8078.4",
+  "steps_pass": 8,
+  "steps_fail": 0,
+  "actual_checks": [
+    "create-save-history-0",
+    "create-save-history-1",
+    "account-manager-two-accounts",
+    "delete-refused-truthfully-no-mutation",
+    "registry-pin-remains",
+    "same-name-wrong-key-refused",
+    "same-name-correct-key-history-preserved",
+    "other-account-history-preserved"
+  ],
+  "page_errors": 0,
+  "server_file_verification": {
+    "files": 212,
+    "missing": 0,
+    "changed": 0,
+    "extras": 0,
+    "https_index_exact": true,
+    "https_sw_exact": true
+  },
+  "visible_refusal_and_storage_unchanged": true,
+  "identity_pin_and_both_account_histories_preserved": true,
+  "limits": [
+    "Full authenticated Account erasure remains unimplemented",
+    "Existing Account records removed by older builds not restored",
+    "Only synthetic Accounts touched",
+    "Media flows last independently accepted on deployed .33; .34 changes Account deletion guard only"
+  ]
+}

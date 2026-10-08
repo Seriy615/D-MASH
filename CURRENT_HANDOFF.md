@@ -44,13 +44,14 @@ commit также доставляется на Forge, его полный SHA �
 ## 2. Текущий Forge и EMS checkpoint
 
 **Source и production PWA:** Forge `/home/jcode/D-MASH`, ветка `transport-v3`,
-проверенный release commit `d9faf9b93d0aa6f3440560ffc31227b5f9c089e2`.
+проверенный product commit `afab8ed187c6312a81b7dda46c29ff9e45da6d9e`.
 GitHub `origin/transport-v3` сверен с ним после fast-forward через временный
 EMS publisher. В EMS штатный `get_commit.sh` развернул только PWA из этого exact
-commit. Страница и active controlling SW на двух новых browser profiles —
-`transport-v3-node-preparation-20261008.33`; read-only verifier **212/212**
-tracked PWA files, `missing=[]`, `changed=[]`, extras 0. Backup текущего deploy:
-`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T120310Z`.
+commit. Страница и active controlling SW на новом synthetic Chromium profile —
+`transport-v3-node-preparation-20261008.34`; read-only verifier **212/212**
+tracked PWA files, `missing=[]`, `changed=[]`, extras 0, HTTPS index/SW byte-exact.
+Backup текущего deploy:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T123524Z`.
 Ни Node backend, ни DB/keys/identities этот PWA deploy не менял. Интеграция
 выполнена в `/tmp/dmash-node-public-integration`; shared Forge checkout с WIP
 агентов не использован как release tree. Последующий documentation commit может
@@ -74,6 +75,21 @@ Origin 11 и все JS suites PASS с Python3.12/Node24.19.0.
 
 Исторические состояния до `.30`
 [архивированы](docs/archive/2026-10-08/CURRENT_HANDOFF_PRE30_SECTIONS_2_3.md).
+
+**ACCOUNT-DELETE-01 после `.34` deploy:** прежняя кнопка обещала полное
+удаление, но удаляла только registry pin. Изолированный узкий
+fail-closed fix `4f65473...` интегрирован как `e67860a...` и вместе с release
+`.34` опубликован в source и production exact `afab8ed187c6312a81b7dda46c29ff9e45da6d9e`:
+видимый отказ без изменения DB, keys, registry. Root independent source-overlay
+на двух fresh synthetic Accounts **8/8 UI PASS**, 58 local source hashes exact
+Git, page errors 0; [evidence](docs/evidence/2026-10-08/qa-account-delete33-integrated-source.json).
+Deployed fresh synthetic Account A/B **8/8 actual UI PASS**, wrong key denied,
+оба history и identity pin сохранены, page errors 0, page/active SW `.34`;
+[deployed evidence](docs/evidence/2026-10-08/qa-account-delete34-deployed.json).
+Full `tools/test_all.py` на release source PASS (Python286/Origin11/все JS).
+Полное authenticated Account erasure
+остаётся OPEN. Нельзя стирать общий `dm_gamma_vault` или терять signing identity
+pin другого/того же Account ради косметического PASS.
 
 **Тесты `.32` source:** Python **286**, Origin **11** и все JS suites
 `tools/test_all.py` PASS с Python3.12/Node24.19.0, включая MIME, captured
@@ -213,11 +229,17 @@ real browser с двумя managed Worker, Python Node и synthetic Account пр
 потерю первого ACK после recipient history: свежий outer op с тем же inner
 ciphertext и grant прошёл через Inbox tombstone, аутентифицированный ACK
 перевёл sender PENDING→DELIVERED и освободил outbox; page errors 0. Это isolated
-browser PASS, ещё не merged/deployed ordinary UI acceptance. Pending intent пока
-требует уже `ESTABLISHED` N4:
-первое сообщение новому offline peer ещё не может быть поставлено в durable
-ожидание. При rekey pending outbox fail-closed, authenticated migration не
-реализована. Этот candidate не интегрирован и не опубликован.
+browser PASS, ещё не merged/deployed ordinary UI acceptance. Pending intent
+для нового offline peer теперь изолированным candidate `608abcb...` записывается
+вместе с atomic PENDING history до сети и отдаёт UI результат за ~0,23 с на
+genuine browser fixture. Но расширенный real rekey gate выявил старый `APP_ACK`
+во время восстановления: Inbox повторил кадр, а ещё не ESTABLISHED App session
+вернул `APP_SESSION_NOT_ESTABLISHED`. Узкий `a5541e3...` сохраняет такой
+authenticated frame до retry; UNIT PASS, browser retest ещё не проведён.
+Bounded route re-probe 0/5/15 с, deadline30 с и owner cancellation из
+`15202ea...`/`ed96a1a...` пока отдельные UNIT-green commits; genuine recipient
+rejoin browser gate NOT RUN. Весь N4 candidate не интегрирован/не опубликован,
+authenticated state/mailbox migration остаётся OPEN.
 
 N0 endpoint/privacy и threat model, N2 no-bypass failover на текущем SHA,
 N5 verifier/legacy exposure/PCS/PQ/security, N6 password/installer, N7 file/call
@@ -235,7 +257,23 @@ video RTP/browser gate выше; физический Android и Node-integrated
 видит durable статус/повтор после offline/reload. Никакой тихой загрузки в ОС.
 Агент готовит отдельный Account-owned encrypted file store/intent и quota,
 receiver commit должен предшествовать authenticated ACK; текущая ephemeral
-панель «Принять/Сохранить файл» это требование не выполняет. N7 остаётся OPEN.
+панель «Принять/Сохранить файл» это требование не выполняет. Изолированный
+first real UI gate auto-receive/inline generic 1 MiB+13 B и WAV 16 MiB прошёл,
+но 16 MiB заняли **163,6 с**: ~154,6 с из них 512 stop-and-wait ACK по 32 KiB,
+а AES/vault/hash — доли секунды. Candidate `79974e7...` допускает до 8
+bounded фрагментов в полёте; targeted UNIT и повторный genuine browser gate
+**17/17 PASS**, 16 MiB за **27,330 с** (~6× быстрее), внутри file-chunk ACK
+13,222 с (~1,27 MB/s), source overlay `.32`/SW blocked, page errors 0. На
+Android и integrated/deployed Node это пока не проверено. Пользователь просит
+рассмотреть передачу файлов без WebRTC. Текущий браузер не имеет raw TURN
+socket API; `/signal/v1` ограничен signaling JSON, не bulk bytes. Отдельный
+bounded binary WSS `/relay/v1` в EMS backend технически возможен, но требует
+нового протокола/деплоя и может не ускорить передачу из-за TCP. Сравнить
+ещё один bounded window/chunk gate и физический Android до транспортного
+выбора; сохранить authenticated Account CONTROL, E2EE, локальное хранение и
+sender-held offline bytes.
+[Публичные metadata](docs/evidence/2026-10-08/N7_PIPELINED_FILE_SOURCE_QA.md).
+N7 OPEN.
 `CURRENT_HANDOFF.md` и [BROWSER_QA.md](BROWSER_QA.md) обновлять на следующем
 checkpoint по фактам, не подменяя deployed результат UNIT или synthetic PASS.
 

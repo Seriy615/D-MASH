@@ -8,17 +8,20 @@
 
 ## Актуальный release checkpoint
 
-Актуальная опубликованная PWA: **`d9faf9b93d0aa6f3440560ffc31227b5f9c089e2`**,
-page и active controlling SW `.33` в двух новых synthetic Chromium profiles.
-Независимый [deployed `.33` video/mobile gate](docs/evidence/2026-10-08/qa-media33-root-deployed.json):
+Актуальная опубликованная PWA: **`afab8ed187c6312a81b7dda46c29ff9e45da6d9e`**,
+page и active controlling SW `.34` в fresh synthetic Chromium profile;
+HTTPS index/SW и 212/212 deployed PWA files byte-exact с Git, extras 0.
+Независимый [deployed `.34` Account deletion safety gate](docs/evidence/2026-10-08/qa-account-delete34-deployed.json):
+**8/8 actual UI PASS** на двух synthetic Accounts, видимый отказ удаления,
+wrong key отклонён, обе истории и registry pins сохранены, page errors 0.
+Предыдущий [deployed `.33` video/mobile gate](docs/evidence/2026-10-08/qa-media33-root-deployed.json):
 video **21/21 PASS** (39 encoded/38 decoded RTP frames через TURN, камера
 off/re-enable/switch и permission denial modal), mobile **19/19 PASS**
 (реальные звонок, файл с download SHA, голосовое и кружок), 130/130
 загруженных source responses в каждом прогоне exact SHA, page errors 0.
-Read-only production verifier: 212/212 PWA files, missing/changed/extras 0.
 Android пользователя и intermittent voice latency остаются OPEN, равно как
 автоматический приём файла и долговечный inline chat file. Production backend,
-identity и базы `.33` не менял.
+identity и базы `.34` не менял.
 
 Предыдущая опубликованная PWA: **`042d5803d5d622da72848c67d96bd5c8243c4819`**,
 page и active controlling SW `.32` в двух новых synthetic Chromium profiles.
@@ -118,7 +121,7 @@ deletion остались **NOT RUN**. Исторические `.28`/`.27`/`.26
 | UI-SHARE-CREATE | PASS navigation .25 | bd380ab; visible modal/create/back; new contact handshake separate |
 | PENDING-BACK-01 / UI-PUBLIC-ACCEPT-NAV | PASS navigation .25 | bd380ab; single Back, logged-in pending entry |
 | PUBLIC-REQUEST-LOADING-01 | PASS .26 visibility/queue | 3c51360; durable request before PoW, truthful saved card; cancel/lifecycle guards and real fresh pair pass |
-| ACCOUNT-DELETE-01 | FAIL deployed `.29`; `.31` NOT RUN | Real synthetic UI removal promises complete erasure, but recreating same Account reveals previous local history; P1, owner TBD, preserve profile for fix/retest |
+| ACCOUNT-DELETE-01 | PASS deployed `.34` fail-closed; full erasure OPEN | Earlier real UI removed only registry and falsely claimed complete deletion; same-name/credential recreation exposed old history and lost signing-identity pin. `e67860a` refuses destructive action with truthful notice, preserves registry/key/history and both Accounts. Root independent integrated `.33` source overlay 8/8; deployed `.34` fresh synthetic A/B 8/8 actual UI PASS, page/active SW `.34`, page errors 0. [Contract](ACCOUNT_DELETION_CONTRACT.md), [integrated source metadata](docs/evidence/2026-10-08/qa-account-delete33-integrated-source.json), [deployed metadata](docs/evidence/2026-10-08/qa-account-delete34-deployed.json). Full authenticated erasure remains pending. |
 | ROUTE-READY-01 | OPEN | Eventual v3 message success does not prove immediate readiness |
 | KEY-EXCHANGE-NO-FEEDBACK-01 | PASS `.30` | Initial open button + visible pending state; exact22c public pair completes and sends text both ways |
 | FLIPLOCK-MISSING-01 | PASS `.30` | Account/global settings OFF→ON→OFF via real deployed UI; physical mobile orientation NOT RUN |
@@ -128,7 +131,7 @@ deletion остались **NOT RUN**. Исторические `.28`/`.27`/`.26
 | MEDIA-LOADER-ANDROID-33 | PASS deployed `.33` scoped; physical Android NOT RUN | User `.32` screenshots showed call/file `CallSignalingSession` TypeError and pending circle. Synthetic mobile startup seam reproduced red and candidate 19/19 green; independent `.33` source seam 19/19 green on repeat after one intermittent voice timeout. Exact deployed normal mobile fresh PRIVATE UI 19/19 PASS: call connected, file download SHA, voice/circle delivered/decrypted; 130 loaded source responses exact SHA, page/active SW `.33`, page errors 0. [Red/green seam](docs/evidence/2026-10-08/qa-media-loader32-mobile.json), [deployed evidence](docs/evidence/2026-10-08/qa-media33-root-deployed.json). Android phone retest still needed. |
 | VIDEO-TOGGLE-32 | PASS deployed `.33` scoped; physical Android NOT RUN | `.32` audio call camera button was inert. `.33` actual UI 21/21 PASS on fresh PRIVATE pair: camera requested on click, 39 encoded/38 decoded RTP frames via TURN relay, off/re-enable/switch and permission-denied modal/OK, audio maintained, fingerprint stable, clean hangup; 130 loaded source bodies exact SHA, page/active SW `.33`, page errors 0. [Candidate evidence](docs/evidence/2026-10-08/qa-video32-candidate.json), [deployed evidence](docs/evidence/2026-10-08/qa-media33-root-deployed.json). |
 | MEDIA-ROOT-33 | PASS deployed scoped; intermittent voice latency OPEN | Independent exact `.33` source video 21/21 and deployed video 21/21 PASS with real TURN RTP; deployed mobile 19/19 PASS with call/file hash/voice/circle, page and active SW `.33`, 130/130 loaded source bytes each, page errors 0. One source seam run stalled voice for 180 s after 17 prior passes; fresh instrumented source seam 19/19 PASS. Cause unknown, physical Android NOT RUN. [Source metadata](docs/evidence/2026-10-08/qa-media33-root-source.json), [deployed metadata](docs/evidence/2026-10-08/qa-media33-root-deployed.json). |
-| N7-FILE-INLINE-AUTO-01 | FAIL existing `.32`; owner qa_remaining | Confirmed peer still sees per-file «Принять», file exists only in ephemeral transfer panel, and closing it revokes the only Blob URL. User requires automatic encrypted receipt and durable inline chat file/preview/open with retained sender intent/status; no silent OS download. Separate Account-owned storage, quota and authenticated ACK-after-commit candidate in progress. Retest UI auto receive/reload/offline/cancel/limits, two Accounts, no data loss. |
+| N7-FILE-INLINE-AUTO-01 | FAIL deployed `.32` baseline; `.34` file UI unchanged; isolated source UI 17/17 PASS, performance improved; owner qa_remaining | Current peer sees per-file «Принять», file exists only in ephemeral transfer panel, and closing it revokes the only Blob URL. User requires automatic encrypted receipt and durable inline chat file/preview/open with retained sender intent/status; no silent OS download. Isolated Account-owned encrypted vault candidate sent/auto-received generic 1 MiB+13 B and WAV 16 MiB in real two-peer UI; stop-and-wait 16 MiB took 163.6 s (512 ACKs ~154.6 s). Bounded 8-in-flight candidate `79974e7` real two-peer UI 17/17 PASS, 16 MiB 27.330 s (~6× faster), chunk ACK span 13.222 s (~1.27 MB/s), exact source overlay `.32`/SW blocked, page errors 0. [Candidate evidence](docs/evidence/2026-10-08/N7_PIPELINED_FILE_SOURCE_QA.md). Android, integrated `.34` and deployed retest remain NOT RUN; direct S-TURN byte path under evaluation. |
 | NODE-REMOVED-RETRY-01 | PASS deployed `.29`; `.31` NOT RUN | Fresh browser 6/6, exact5a JS62/62, zero new loopback sockets for 3.5 s after removal |
 | S-TURN-HEALTH-01 / N7-FILE-TERMINAL-32 | PASS deployed `.32` scoped | 1 МиБ+13 байт file receiver/download SHA PASS after late DataChannel error; sender/receiver visible verified final, 24/24 deployed gate. Video toggle FAIL deployed `.32` (UI click no camera request/track); fix pending |
 | ADMISSION-LATENCY-32 | PASS desktop Chromium; Android NOT RUN | Same fixed difficulty-18 transcript Worker proof: 979→264 мс, identical counter and independent digest. Deployed `.32` voice stop→DELIVERED 4,127 с, WSS ticket 2,052 с; physical Android >1 min is user-reported on `.31`, not a browser measurement |
@@ -424,7 +427,8 @@ synthetic CDP9490 не открывались. Page и active controlling SW в�
 | UI09/local UI10/UI12/master | 27/27 PASS: Saved Messages text/password wrong/correct/remove/delete, voice capture/cancel/decrypt/play, circle cancel, unsupported local file notice, master rewrap + retained Account/history | Remote calls/files and physical devices NOT RUN |
 | `NODE-REMOVED-RETRY-01` | 6/6 PASS: unavailable WSS add/dedupe, Connect/retry remain RECONNECTING, Delete dismiss/accept; after removal no new socket for 3.5s | Loopback negative flow only; 62 loaded JS responses match exact source SHA; page errors 0 |
 
-`ACCOUNT-DELETE-01` — **FAIL deployed `.29`, P1 privacy/UX, owner TBD**.
+`ACCOUNT-DELETE-01` — **historical FAIL `.29`/`.33`; `.34` fail-closed PASS;
+full authenticated erase OPEN**.
 На fresh test profile создать Account A и B, в B через «Избранное» отправить
 синтетическое локальное сообщение; выйти, открыть global Account manager,
 нажать «УДАЛИТЬ АККАУНТ» для B. Cancel сохраняет B. Повторить, ввести
@@ -433,8 +437,11 @@ synthetic CDP9490 не открывались. Page и active controlling SW в�
 сообщение видно. Проверка ждала конкретный текст в chat DOM, это не гонка
 локатора. Prompt обещает «Вся история будет стерта!», success — «аккаунт и его
 ключи полностью ликвидированы», поэтому фактическая сохранность противоречит
-действующему UI-контракту. Исправление требует owner-aware preflight и проверки
-соседнего Account; не удалять production vault ради QA. Fix/retest **NOT RUN**.
+прежнему UI-контракту. `.34` теперь отказывает в удалении до изменения
+registry, keys или history; два synthetic Account, неверный и верный ключ,
+соседняя история проверены deployed браузером **8/8 PASS**. Полная процедура
+authenticated erase всё ещё требует owner-aware preflight и проверки соседнего
+Account; production vault ради QA не удалять.
 
 `NODE-REMOVED-RETRY-01` — **PASS deployed `.29` для прежнего reproducer**;
 исходный `.27` FAIL сохранён выше как история. Это не проверка password/admission

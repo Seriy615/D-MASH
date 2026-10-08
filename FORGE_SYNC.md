@@ -52,34 +52,31 @@ ordinary Account/contact UI → Node v4 cutover остаётся главным 
 
 ## Текущая разработка и публикация
 
-8 октября 2026: verified source integration base ветки `transport-v3`:
-`1a75299adf24423126d598dedc9db903e574d3ea` (release merge + Node
-retry dedupe); exact UNIT **281 backend +11 Origin +82 JS PASS**. Отдельный
-integration worktree `/tmp/dmash-release27-integration` от этого SHA; shared
-checkout `/home/jcode/D-MASH` временно остаётся на `62f97d7` с сохранённым
-uncommitted WIP агентов. Его нельзя reset/checkout через WIP ради косметического
-совпадения HEAD. Documentation-only commit может сделать branch HEAD новее
-source base; точный текущий HEAD проверять `git rev-parse origin/transport-v3`.
-Следующая интеграция должна учесть merge и WIP по файлам.
+На 8 октября 2026 опубликованная source/context ветка `transport-v3` в
+`origin` указывает на `.34` product commit
+`afab8ed187c6312a81b7dda46c29ff9e45da6d9e` после успешного fast-forward.
+Forge integration worktree `/tmp/dmash-node-public-integration` тогда был
+сверен с `origin`; общий checkout `/home/jcode/D-MASH` содержит work-in-progress
+агентов и не является release tree. Следующие commits могут сдвинуть tip —
+проверять `git rev-parse HEAD origin/transport-v3` и состав PWA diff.
 
-Production PWA exact commit `637c9bb02c2c57a05e8edc815678b6fb204f632c`,
-release `.27`; backend остаётся `3c513601ef3990b6514e247d879324b7b72da494`.
-EMS `get_commit.sh` развернул только PWA по достижимому из ветки side commit,
-без Node service/keys/DB. Exact source **215/215**; deployed fresh browser
-**16/16 actual UI PASS**, page/SW `.27`, 135 loaded resources exact SHA.
-Backup static PWA:
-`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T021346Z`.
-Текущая браузерная приёмка/FAIL/limits — CURRENT_HANDOFF.md и BROWSER_QA.md.
+Production PWA извлечена штатным EMS `get_commit.sh` из exact product commit
+`afab8ed187c6312a81b7dda46c29ff9e45da6d9e`, release `.34`. Этот commit
+добавил узкий fail-closed Account deletion guard поверх `.33` media release.
+Read-only deployed verifier сравнил **212/212** tracked PWA files с Git,
+missing/changed/extras 0, HTTPS index/SW byte-exact; page и active controlling
+SW `.34`. Fresh synthetic deployed Account A/B deletion safety **8/8 actual UI
+PASS**. Предыдущая `.33` synthetic Chromium media acceptance: video **21/21** и
+mobile call/file/voice/circle **19/19**
+реальных UI actions PASS через EMS S-TURN; каждый browser gate сверил 130
+loaded source bodies с exact Git SHA. Публичные отчёты и ограничения —
+[CURRENT_HANDOFF.md](CURRENT_HANDOFF.md) и [BROWSER_QA.md](BROWSER_QA.md).
+Backup PWA `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T123524Z`.
 
 Прямой Forge SSH push всё ещё denied(publickey). Авторизованный existing EMS
-GitHub key публикует exact Forge commits через отдельный temporary bare
-repository и проверенный incremental Git bundle. Push обычный fast-forward,
-без force. Production checkout EMS остался на `ed200730…`: deploy извлекает
-полный SHA через git archive, поэтому checkout HEAD не runtime evidence.
-Root deploy использует scoped safe.directory, без копирования секретов или
-глобальной настройки. После fetch в EMS checkout исправлена Git metadata
-ownership root→codex для objects и origin ref; contents, runtime state и
-deployment files не затронуты. Backend .26 ранее обновлён только
-`route_discovery_v4.py` после consistent protected snapshot6 DB;
-4 key files unchanged, dependencies/config/storage schema не менялись.
-Разработка и интеграция остаются на Forge; production не переносился.
+GitHub key публикует incremental Git bundle через отдельный temporary bare
+repository; push — обычный fast-forward без force. Root deploy использовал
+scoped `safe.directory`, не глобальные настройки. Production Node backend,
+identities, DB/keys/TURN secrets не переносились и `.34` PWA deploy их не менял.
+Node-v4 ordinary UI, N4 recovery, N7 durable files и полный N0–N8 остаются
+активной разработкой, не объявлены DONE.
