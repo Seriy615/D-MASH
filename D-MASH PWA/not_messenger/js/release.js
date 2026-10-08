@@ -68,6 +68,8 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-202610
         "js/node_runtime_host_v4.js",
         "js/node_runtime_coordinator_v4.js",
         "js/node_public_bootstrap_control_v4.js",
+        "js/node_bootstrap_control_v4.js",
+        "js/account_private_pairing_link_v4.js",
         "js/account_sealed_operation_v4.js",
         "js/account_inbox_progress_v4.js",
         "js/account_managed_inbox_v4.js",

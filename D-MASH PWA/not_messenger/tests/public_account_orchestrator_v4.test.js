@@ -1,5 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict');global.nacl=require('../js/vendor/nacl-fast.min.js');global.DmashRouteDiscoveryV4=require('../js/route_discovery_v4.js');global.DmashAccountPairingV2=require('../js/account_pairing_v2.js');global.DmashAccountRouteBindingV2=require('../js/account_route_binding_v2.js');global.DmashNodePublicBootstrapControlV4=require('../js/node_public_bootstrap_control_v4.js');
+global.DmashNodeBootstrapControlV4=require('../js/node_bootstrap_control_v4.js');
 const Orchestrator=require('../js/public_account_orchestrator_v4.js');
 (async()=>{
  await assert.rejects(()=>Orchestrator.open({core:{}}),e=>e.code==='ACCOUNT_SESSION_REQUIRED');
