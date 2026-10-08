@@ -41,8 +41,11 @@ Accept prompt. Rejection and limit errors remain visible, and the sender must
   private `phase:'commit'` verification finds the same task within its original
   one-hour deadline. A cancelled or completed accepted task leaves a bounded
   encrypted terminal outcome marker for replay suppression; pending semantic
-  COMMIT_ACK/DECLINE controls keep the same operation ID until N4 Outbox durably
-  enqueues them. The marker never authorizes a new transfer start.
+  COMMIT_ACK/DECLINE controls keep the same persisted operation ID and
+  five-minute `expiresAt` across uncertain enqueue retries. Only after that
+  deadline does one Account-encrypted journal CAS rotate both fields under the
+  same logical file/hash/reason; an expired control is never reported durable.
+  The marker never authorizes a new transfer start.
 - voip_file_request is an Account end-to-end encrypted typed control payload.
   Version 2 adds a stable random file_id distinct from the per-attempt
   S-TURN session_id. The request retains expires_at, signaling,
