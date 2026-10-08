@@ -25,6 +25,7 @@ const CORE_ASSETS = [
     './js/call_session.js',
     './js/call_signaling.js',
     './js/call_admission_worker.js',
+    './js/node_service_descriptor_v4.js', './js/node_sturn_service_v4.js',
     './js/call_runtime.js',
     './js/account_ratchet.js',
     './js/saved_messages.js',

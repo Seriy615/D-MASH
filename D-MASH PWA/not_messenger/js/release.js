@@ -44,6 +44,8 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-202610
         "js/acceptance_v50.js",
         "js/acceptance_v51.js",
         "js/call_signaling.js",
+        "js/node_service_descriptor_v4.js",
+        "js/node_sturn_service_v4.js",
         "js/call_runtime.js",
         "js/account_ratchet.js",
         "js/saved_messages.js",
