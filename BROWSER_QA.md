@@ -37,6 +37,23 @@ RUN in that specific upgradeprofile due harness locator, independently PASS on.2
 | ACCOUNT-DELETE-01 | FAIL | Registry removal does not erase selected history from shared vault; previous early PASS withdrawn |
 | ROUTE-READY-01 | OPEN | Eventual v3 message success does not prove immediate readiness |
 
+## Текущая интеграция (не deployed UI)
+
+Source a70ebb9: exact UNIT280 backend+11 Origin+JS suites PASS. Real local
+Worker/Account IndexedDB fixture проверяет proof-gated activation, но обычные UI
+contacts ещё v3. Lead review выявил same-Host Account-switch: one-time verifier
+пока привязан к одному journal; owner qa_account_media/node_audit, fix/retest pending.
+Managed inbox/key-rotation owner gating и post-await owner-token cleanup также
+переданы node_audit; не считать ownership полностью завершённым.
+
+.26 immutable source-overlay pending cancel rerun: harness FAIL (15s locator),
+видимый результат уже REQUEST_SAVED+одна waiting card, pageerrors[]. Preparation
+успела закончиться до клика; это не подтверждённый product cancellation bug и не
+PASS cancel. Evidence пока `/tmp/dmash-browser-tools/qa-remaining26.json`, SW blocked.
+Отдельный pending-controls run exit0:4 actual UI PASS (read-close, Accept cancel,
+decline cancel, decline confirm), pageerrors[], source hashes сверены с3c51360.
+Evidence `docs/evidence/2026-10-08/qa-pending26-controls.json`; SW BLOCKED, real EMS.
+
 ## Правила регистрации результата
 
 Для каждого найденного control создать отдельную строку: ID, экран/state,

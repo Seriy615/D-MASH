@@ -1,0 +1,17 @@
+{
+  "sourceSHA": "a70ebb9f06e86e9bb88bb66e07fa2d9597b89308",
+  "checkout": "/tmp/dmash-foundation-a70ebb9",
+  "command": "PATH=/tmp/dmash-browser-tools/node-v24.19.0-linux-x64/bin:$PATH .venv/bin/python tools/test_all.py",
+  "exitCode": 0,
+  "backendTests": 280,
+  "originTests": 11,
+  "javascriptSuites": 74,
+  "rawLogLocal": "/tmp/dmash-browser-tools/exact-a70ebb9-tests.log",
+  "rawLogSHA256": "4c27b303f921f647adaf4b1472474adf4c19e3db401db8c641ccfe22f3f58061",
+  "limits": [
+    "Inactive foundations; no runtime wiring or ordinary v4 UI claim",
+    "Runtime remains3c513601ef3990b6514e247d879324b7b72da494 release26",
+    "Ongoing Host/Account journal edits excluded by detached checkout",
+    "No new browser acceptance attributable to this foundation SHA"
+  ]
+}

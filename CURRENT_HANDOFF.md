@@ -45,8 +45,15 @@ commit также доставляется на Forge, его полный SHA �
 
 На 8 октября 2026 работа идёт на `forgeai.isgood.host`, user `codex`,
 `/home/jcode/D-MASH`, `transport-v3`. Постоянная цель активна; N3/N4 и полный
-browser-first inventory ещё не завершены. Реализация делегирована трём агентам;
+browser-first inventory ещё не завершены. Реализация делегирована агентам;
 лид независимо проверяет интеграцию и опубликованный UI.
+
+Текущий source checkpoint **`a70ebb9f06e86e9bb88bb66e07fa2d9597b89308`**
+pushed, HEAD=origin проверены. Inactive bilateral binding, durable mailbox и
+STORE_FORWARD codec; runtime wiring ещё отсутствует. Exact detached checkout
+`/tmp/dmash-foundation-a70ebb9`: test_all exit0,280 backend+11 Origin, JS suites PASS.
+Новые Host ownership/Account journal изменения остаются отдельной незавершённой
+работой; промежуточные browser fixtures не означают ordinary UI cutover.
 
 Текущий runtime commit **`3c513601ef3990b6514e247d879324b7b72da494`**, release
 **`transport-v3-node-preparation-20261008.26`**, pushed и deployed на EMS.
@@ -92,8 +99,8 @@ Playwright1.64.0/Chromium156.0.8078.4 вне checkout. Свежий .24 baseline
 real loopback Worker N1→B→N2 transit и deployed pinned WSS auth/reconnect PASS.
 Это не ordinary UI v4 приёмка. Ведомость и открытые баги: [BROWSER_QA.md](BROWSER_QA.md).
 Account deletion сохраняет записи общего vault; video call toggle и attachment
-policy/readiness остаются открыты. N3 contracts предложены; агенты реализуют изолированные pairing codec и root
-lifecycle coordinator без включения в ordinary UI. Cutover не реализован;
+policy/readiness остаются открыты. N3 pairing/binding/store codecs и root coordinator уже зафиксированы; агенты
+интегрируют managed ownership/Account journal и same-Host Account switching. Cutover не реализован;
 сильная N4 диагностика выявила recovery gaps поверх зелёного старого H1/H2/H3.
 
 Forge SSH GitHub push недоступен; HTTPS fetch работает. Публикация exact commits
