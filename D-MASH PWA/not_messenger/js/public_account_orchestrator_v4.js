@@ -5,7 +5,7 @@
  const fail=code=>{throw Object.assign(Error(code),{code});};
  const unhex=s=>{if(typeof s!=='string'||!/^[0-9a-f]{64}$/.test(s))fail('PUBLIC_ACCOUNT_ENCODING');return Uint8Array.from(s.match(/../g),v=>parseInt(v,16));};
  class PublicAccountOrchestratorV4{
-  #history;#core;#storage;#active=new Map();#opened=new Set();#sealed;#transport;#runtime;#progress;#inbox;#session;#coordinator;#capture;#host;#journal;#router;#kem;#aliasKey;#owners=new Map();#closed=false;#tail=Promise.resolve();#transactions=new Set();#ownerAbort=new AbortController();#onAbort;#account;#pairing;#binding;#control;
+  #poll=null;#history;#core;#storage;#active=new Map();#opened=new Set();#sealed;#transport;#runtime;#progress;#inbox;#session;#coordinator;#capture;#host;#journal;#router;#kem;#aliasKey;#owners=new Map();#closed=false;#tail=Promise.resolve();#transactions=new Set();#ownerAbort=new AbortController();#onAbort;#account;#pairing;#binding;#control;
   static async open({core,storage,deviceRoot,coordinator}){
    if(typeof core?.captureAccountSessionV4!=='function')fail('ACCOUNT_SESSION_REQUIRED');
    const s=core.captureAccountSessionV4();s.assertCurrent();
@@ -79,7 +79,7 @@
      const runtime=await this.#openRuntime();await this.#wait(runtime.openPeer(row.peer,{requiredSuite:g.DmashAccountHandshakeV4.SUITE}));this.#opened.add(row.peer);result.restored++;
     }catch(error){this.#check();result.pending.push({peer:row.peer,code:error.code||error.message});}
    }
-   if(this.#runtime)await this.#wait(this.#runtime.resume());return result;
+   if(this.#runtime)this.#runtime.startRetries();return result;
   });}
   async #openRuntime(){
    if(this.#runtime)return this.#runtime;
@@ -102,10 +102,10 @@
    unhex(peer);if(!this.#active.has(peer))fail('PUBLIC_ACTIVE_OWNER_REQUIRED');await this.#openRuntime();
    await this.#wait(this.#transport.getRoute(peer));return this.#wait(this.#history.registerContact(peer,name));
   });}
-  sendApplication(peer,message){return this.#run(async()=>{
+  async sendApplication(peer,message){this.#check();
    unhex(peer);if(!this.#opened.has(peer))fail('PUBLIC_SESSION_REQUIRED');const status=await this.#sessionStatus(peer);if(!status.sessionEstablished)fail('PUBLIC_KEYS_PENDING');
    if(this.#runtime.durableApplicationEnqueue!==true||typeof this.#runtime.resumeApplications!=='function')fail('PUBLIC_OUTBOX_UPGRADE_REQUIRED');return this.#wait(this.#runtime.sendApplication(peer,message));
-  });}
+  }
   establish(peer){return this.#run(async()=>{
    unhex(peer);if(!this.#active.has(peer))fail('PUBLIC_ACTIVE_OWNER_REQUIRED');const runtime=await this.#openRuntime();
    await this.#wait(runtime.openPeer(peer,{requiredSuite:g.DmashAccountHandshakeV4.SUITE}));this.#opened.add(peer);
@@ -118,12 +118,11 @@
    return Object.freeze({...status,sessionEstablished:status.phase==='ESTABLISHED'&&!!route});
   }
   sessionStatus(peer){return this.#run(async()=>{unhex(peer);if(!this.#opened.has(peer))fail('PUBLIC_SESSION_REQUIRED');return this.#sessionStatus(peer);});}
-  pollSessions(){return this.#run(async()=>{
-   if(!this.#runtime)return {processed:0,statuses:[]};
-   const result=await this.#wait(this.#inbox.drain());await this.#wait(this.#runtime.resume());
-   const statuses=[];for(const peer of this.#opened)statuses.push({peer,...await this.#sessionStatus(peer)});
-   return {...result,statuses};
-  });}
+  pollSessions(){
+   this.#check();if(this.#poll)return this.#poll;
+   const task=(async()=>{if(!this.#runtime)return {processed:0,statuses:[]};this.#runtime.startRetries();const result=await this.#wait(this.#inbox.drain());const statuses=[];for(const peer of [...this.#opened])statuses.push({peer,...await this.#sessionStatus(peer)});return {...result,statuses};})();
+   this.#poll=task;return task.finally(()=>{if(this.#poll===task)this.#poll=null;});
+  }
   accept(registration,requestId,requestDigest){return this.#run(async()=>{const row=await this.#selected(registration,requestId,requestDigest);if(row.direction!=='INBOUND')fail('PUBLIC_ACCEPT_DIRECTION');let intent=await this.#intent(row,registration,null);const owner=await this.#owner(intent);if(row.claim&&(row.claim.accountPublic!==this.#account||row.claim.localBundle!==intent.value.bundle))fail('PUBLIC_CLAIM_CHANGED');const claim=row.claim||await this.#wait(this.#host.claimPublicRequest(registration.capability,owner,requestId,requestDigest,intent.value.bundle)),request=await this.#wait(this.#control.inspectRequest(registration.certificate,row.request));if(!intent.value.controls.ACCEPT)intent=await this.#saveControl(intent,'ACCEPT',await this.#wait(this.#control.accept(request,{bundle:intent.value.bundle,bootstrapBox:claim.bootstrapBox},this.#session.keys.sign.secretKey)));await this.#wait(this.#host.submitPublicControl(registration.capability,owner,requestId,'ACCEPT',intent.value.controls.ACCEPT));return {state:'ACCEPT_SENT',ready:false};});}
   confirm(registration,requestId,requestDigest,expectedPeer){return this.#run(async()=>{unhex(expectedPeer);const row=await this.#selected(registration,requestId,requestDigest);if(row.direction!=='OUTBOUND'||!row.accept)fail('PUBLIC_CONFIRM_DIRECTION');const request=await this.#wait(this.#control.inspectRequest(row.targetCertificate,row.request)),accepted=await this.#wait(this.#control.inspectAccept(request,row.accept));if(accepted.accountPublic!==expectedPeer)fail('PUBLIC_PEER_SELECTION');let intent=await this.#intent(row,registration,expectedPeer);const owner=await this.#owner(intent),stage=await this.#wait(this.#journal.stage([JSON.parse(row.accept).bundle,intent.value.bundle],expectedPeer)),receipt=stage.phase==='ACCEPT'?await this.#wait(this.#journal.reserveAndSign(stage)):null;if(!intent.value.controls.CONFIRM)intent=await this.#saveControl(intent,'CONFIRM',await this.#wait(this.#control.confirm(accepted,{bundle:intent.value.bundle,acceptReceipt:receipt},this.#session.keys.sign.secretKey)));await this.#wait(this.#host.submitPublicControl(registration.capability,owner,requestId,'CONFIRM',intent.value.controls.CONFIRM));return {state:'CONFIRM_SENT',ready:false};});}
   advance(registration,requestId,requestDigest){return this.#run(async()=>{
