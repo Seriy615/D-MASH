@@ -66,6 +66,18 @@ Core.killAllMedia = () => { Core.mediaWasKilled = true; };
 Core.closeModal = () => { Core.modalWasClosed = true; };
 
 (async () => {
+  // Until complete ownership-aware erasure exists, the UI must not remove
+  // the registry pin or ask for a confirmation that promises erased history.
+  const alerts = [], oldAlert = Core.customAlert, oldPrompt = Core.customPrompt;
+  Core.customAlert = (title, message) => alerts.push({title, message});
+  Core.customPrompt = () => assert.fail("Unsupported erasure must not offer destructive confirmation");
+  context.Storage = new Proxy({}, {get() {assert.fail("Unsupported erasure accessed storage");}});
+  context.indexedDB = new Proxy({}, {get() {assert.fail("Unsupported erasure accessed IndexedDB");}});
+  Core.removeAccountFlow("synthetic-account");
+  assert.equal(alerts[0].title, "УДАЛЕНИЕ НЕДОСТУПНО");
+  assert.match(alerts[0].message, /ключи и история сохранены/);
+  delete context.Storage; delete context.indexedDB;
+  Core.customAlert = oldAlert; Core.customPrompt = oldPrompt;
   // Ordinary account logout: clear Account material and return to the gate,
   // while preserving the unlocked device root and active node connections.
   const master = Uint8Array.from([1, 2, 3, 4]);

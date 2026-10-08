@@ -2906,20 +2906,12 @@ const Core = {
             if (v && /^\d+$/.test(v)) { localStorage.setItem('sys_w', await sys.fastHash(v)); Core.customAlert("УСПЕХ", "Код изменен"); }
         }, { inputType: 'password' });
     },
-    // Core.removeAccountFlow     - Полная очистка: удаление акка из реестра + физический снос БД сообщений
+    // Account erasure requires a complete authenticated ownership inventory.
+    // Registry removal alone discards the saved identity pin, not shared-vault data.
     removeAccountFlow: function(id) {
-        Core.customPrompt("УДАЛЕНИЕ", `Введите "УДАЛИТЬ" для аккаунта ${id}. Вся история будет стерта!`, async (val) => {
-            if (val === "УДАЛИТЬ") {
-                // 1. Удаляем из реестра (уведомления и биометрия)
-                await Storage.removeAccountFromRegistry(id);
-                // 2. Удаляем саму базу сообщений этого пацана
-                const dbName = `dm_v6_${await Core.fastHash(id + "SALT_V11")}`.substring(0, 24); // Пример генерации имени
-                indexedDB.deleteDatabase(dbName);
-
-                Core.customAlert("ГОТОВО", `Аккаунт ${id} и его ключи полностью ликвидированы.`);
-                Core.openAccountManager();
-            }
-        });
+        Core.customAlert("УДАЛЕНИЕ НЕДОСТУПНО",
+            "Чтобы не повредить другие Accounts, удаление сейчас недоступно. " +
+            "Этот Account, его ключи и история сохранены.");
     },
     /*
     ================================================================
