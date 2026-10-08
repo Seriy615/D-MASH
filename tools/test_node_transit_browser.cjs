@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {chromium}=require(process.env.DMASH_PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve(__dirname,'..');
 const scripts=['vendor/nacl-fast.min.js','vendor/blake3.min.js','secure_session.js','node_identity.js','node_relationships_v4.js','node_admission_v4.js','node_registration_v4.js','resource_pow.js','node_socket_v4.js','node_channel_v4.js','probe_primitives_v4.js','route_discovery_v4.js','recipient_payload_v4.js','node_routing_v4.js','node_runtime_host_v4.js','vendor/argon2-bundled.min.js','device_root.js'];
-const allowed=new Set([...scripts,'node_runtime_worker_v4.js','node_inbox_v4.js','node_local_delivery_v4.js','vendor/argon2.wasm'].map(name=>'/js/'+name));
+const allowed=new Set([...scripts,'node_runtime_worker_v4.js','node_inbox_v4.js','node_local_delivery_v4.js','node_local_ownership_v4.js','vendor/argon2.wasm'].map(name=>'/js/'+name));
 const sources=new Map([...allowed].map(name=>[name,fs.readFileSync(path.join(root,'D-MASH PWA/not_messenger',name))]));
 (async()=>{
  const helper=spawn(path.join(root,'.venv/bin/python'),[path.join(__dirname,'node_transit_v4_browser_server.py')],{stdio:['pipe','pipe','pipe']});

@@ -31,14 +31,17 @@ const sources=new Map(names.map(name=>['/js/'+name,fs.readFileSync(path.join(__d
   assert.equal(await one.evaluate(async()=>(await owner.stats()).worker),true,'locking an inactive tab must not close another tab');
   // Closing the owner page kills its Worker, without relying on host cleanup.
   await one.close();await vacant(two);await unlock(two);assert.equal(await start(two),id);
-  // Hard Worker termination also releases the browser lock automatically.
+  // CDP Worker self-close also releases the browser lock automatically.
   const cdp=await browser.newBrowserCDPSession();
   const {targetInfos}=await cdp.send('Target.getTargets');
   const targets=targetInfos.filter(target=>target.type==='worker'&&target.url===url+'js/node_runtime_worker_v4.js');
   assert.equal(targets.length,1,'one owned Worker target');
-  const stopped=await cdp.send('Target.closeTarget',{targetId:targets[0].targetId});
-  assert.equal(stopped.success,true,'CDP hard Worker termination');
-  await cdp.detach();await two.evaluate(()=>DeviceRoot.lock());
+  // Dedicated Worker targets reject Target.closeTarget in Chromium156.
+  // Execute self.close through its debugger session, without exposing a Worker
+  // object or calling Host cleanup. Verify browser lock release first.
+  const attached=await cdp.send('Target.attachToTarget',{targetId:targets[0].targetId,flatten:false});
+  await cdp.send('Target.sendMessageToTarget',{sessionId:attached.sessionId,message:JSON.stringify({id:1,method:'Runtime.evaluate',params:{expression:'self.close()'}})});
+  await vacant(two);await cdp.detach();await two.evaluate(()=>DeviceRoot.lock());
   await vacant(two);await unlock(two);assert.equal(await start(two),id);
   await two.evaluate(()=>DeviceRoot.lock());await vacant(two);
   await unlock(two);assert.equal(await start(two),id);
@@ -62,6 +65,6 @@ const sources=new Map(names.map(name=>['/js/'+name,fs.readFileSync(path.join(__d
   },apiVersion),true,'Worker must reject missing/unknown local API version');
   await vacant(two);assert.equal(await start(two),id);
   await two.evaluate(()=>DeviceRoot.lock());await vacant(two);
-  console.log('PASS real Worker ownership: cross-tab rejection, unaffected winner, tab close, hard termination, root lock and reload; mixed API refusal and persistent Node identity');
+  console.log('PASS real Worker ownership: cross-tab rejection, unaffected winner, tab close, CDP self-close, root lock and reload; mixed API refusal and persistent Node identity');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});
