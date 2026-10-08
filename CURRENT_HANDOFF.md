@@ -90,16 +90,23 @@ Account adapter, private/public bootstrap, mailbox migration, N4 recovery
 origin сверить после следующего docs/checkpoint push; production ниже отдельно.
 
 Текущая production PWA на EMS — узкий commit
-**`637c9bb02c2c57a05e8edc815678b6fb204f632c`**, release
-**`transport-v3-node-preparation-20261008.27`**. Он достижим из текущей ветки,
-но намеренно развёрнут отдельно от незавершённой Node-миграции. Exact-source
-PWA+backend проверка: **215 checked, missing=[], changed=[]**. Два свежих
-Chromium profiles на опубликованной странице: **16/16 real UI actions PASS**,
-page/SW обе `.27`, 135 loaded sources exact SHA, page errors 0; immediate
-key-exchange feedback 473 ms, реальные Request/Accept/Confirm и сообщения в
-обе стороны, FlipLock на Account и global screens. Physical mobile orientation
-NOT RUN. PWA-only deploy через EMS `get_commit.sh`; static backup:
-`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T021346Z`.
+**`fd2a7505ba7325ee0d47e38cb2cfc8271cbfc0c1`**, release
+**`transport-v3-node-preparation-20261008.28`**. Он достижим из published
+source branch `f0af5b10aa31b7ee875071b78edffae813d2bf00`, но развёрнут
+отдельно от незавершённой Node-миграции. Exact-source PWA+backend проверка:
+**217 checked, missing=[], changed=[]**. Два свежих Chromium profiles на
+опубликованной странице: **16/16 real UI actions PASS**, page/SW обе `.28`,
+136 loaded sources exact SHA, errors 0, immediate key feedback 157 ms;
+Request/Accept/Confirm, двусторонние сообщения и оба FlipLock controls проверены.
+Supplemental deployed owner-conflict UI fixture: **7/7 actual UI actions PASS**,
+synthetic incoming metadata/send failure, без claim реальной remote delivery;
+history и signed owner state сохранены. Перед публикацией immutable source-overlay `.28`: первый public
+run прошёл Request/Accept/Confirm и immediate feedback, но завершение обмена
+зависло при DNSS pending; второй fresh run **16/16 PASS** с DNSS ready, 135
+loaded sources exact SHA, errors 0. Intermittent `ROUTE-READY-01` остаётся OPEN.
+Предыдущая `.27` deployed 16/16 — historical evidence. Physical mobile
+orientation NOT RUN. PWA-only deploy через EMS `get_commit.sh`; static backup:
+`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T024105Z`.
 Ни Node backend, ни runtime keys/DB/services этот deploy не менял.
 
 Backend EMS остаётся от **`3c513601ef3990b6514e247d879324b7b72da494`**
@@ -135,8 +142,12 @@ Owner agents: qa_account_media (media), node_audit (S-TURN health), ui_inventory
 `Contact acceptance owner mismatch` воспроизведён без изменения существующего
 ciphertext: сохранённый Accept принадлежит первому Account slot, повтор под
 другим Account должен направлять к исходному владельцу, а не переподписывать.
-Изолированный fix `dd357e1132c98a73d07f86bccbe193281d69caac` имеет 6 targeted
-UNIT + 7 synthetic UI PASS, но **ещё не интегрирован и не deployed**.
+Fix `dd357e1132c98a73d07f86bccbe193281d69caac` имеет 6 targeted UNIT,
+7 synthetic source-overlay UI PASS и 7/7 deployed `.28` UI PASS. Он направляет
+к сохранённому Account-владельцу, повторяет точное подписанное принятие и
+отказывает истёкшей подписи без смены ключей/истории. Реальная remote delivery
+в owner-conflict fixture не проверялась; обычный двухсторонний public flow
+прошёл отдельный deployed browser run 16/16.
 
 .26 сохраняет PUBLIC request до сетевого PoW, сразу показывает честную очередь,
 имеет подготовку/cancel и guards root/Account/same-slot relogin. Shared JS/Python

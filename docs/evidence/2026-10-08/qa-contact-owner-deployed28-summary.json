@@ -1,0 +1,47 @@
+{
+  "scope": "Fresh synthetic Account A/B, actual deployed PWA UI; incoming request and send fault injected, no remote delivery claim",
+  "target": "https://messenger.d-mash.ru/not_messenger/",
+  "source_sha": "fd2a7505ba7325ee0d47e38cb2cfc8271cbfc0c1",
+  "page": "transport-v3-node-preparation-20261008.28",
+  "sw": "BLOCKED",
+  "exact_source_checked": 217,
+  "exact_source_missing": [],
+  "exact_source_changed": [],
+  "browser": "156.0.8078.4",
+  "steps": [
+    {
+      "id": "actual-ui-create-A-and-history",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-A-sign-then-send-fails",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-create-B-and-owner-guidance",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-owner-switch-and-exact-retry",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-expired-signed-accept-refused",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-caller-self-not-accepted",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-history-retained",
+      "status": "PASS"
+    }
+  ],
+  "page_errors": [],
+  "limits": [
+    "Service Worker blocked in this supplemental fixture",
+    "Signed incoming metadata synthetic; remote delivery NOT RUN",
+    "Separate deployed two-profile real transport acceptance required"
+  ]
+}
