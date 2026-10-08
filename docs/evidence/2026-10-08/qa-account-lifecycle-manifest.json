@@ -1,0 +1,27 @@
+{
+  "runtimeSourceSHA": "efbc9c42ddff903af1d2db17399c92d6a00e7709",
+  "qaOnlySourceSHA": "a4fd2aa24f31f07c372da5573f638f8d331df8af",
+  "unit": {
+    "backend": 280,
+    "origin": 11,
+    "javascriptSuites": 76,
+    "exitCode": 0,
+    "logSHA256": "aa29dfa2f8b93abf3b96406d57d5404aec08d7c8a9a48200110bb36fcecca92d"
+  },
+  "browser": {
+    "localJournalExitCode": 0,
+    "actualUIChecks": 29,
+    "actualUIExitCode": 0,
+    "loadedAssets": 56,
+    "hashMismatches": [],
+    "page": "transport-v3-node-preparation-20261008.26",
+    "serviceWorker": "BLOCKED: uncommitted source overlay",
+    "browserVersion": "156.0.8078.4"
+  },
+  "limits": [
+    "Source overlay blocks SW: not deployed acceptance for this checkpoint",
+    "Runtime production still 3c513601ef3990b6514e247d879324b7b72da494 release26",
+    "Session race is an instrumented browser supplement; not a visible wrong-password control while another Account is active",
+    "No ordinary Account v4 messaging/contacts integration claim"
+  ]
+}

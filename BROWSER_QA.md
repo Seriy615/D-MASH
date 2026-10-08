@@ -62,6 +62,23 @@ N5 source finding: Core legacy `DeviceRoot.deviceMaterial('ml-kem-768-v1')`
 migration with preserved legacy decrypt material required, no regeneration/reset
 of existing key. Same-root UI upgrade acceptance ещё NOT RUN.
 
+Deployed .26 повторный полный доступный UI03–UI06/UI14 harness88086:26
+functional controls PASS, page/SW.26, errors[], exit0. Биометрия проверена только
+empty/wrongkey без authenticator, camera только denied/cancel; physicalWebAuthn,
+password/replay и full inventory остаются NOT RUN. Static inventory localWIP
+отделён от deployed actions. Evidence `qa-controls-deployed26.json`; отдельная
+read-only sourceverification214 files соответствует runtime3c51360.
+
+Source `a4fd2aa` Account lifecycle: независимый browser UI29/29 PASS,
+page.26 и SW BLOCKED, 56 loaded assets exactSHA; saved text/audio/history/password,
+master rewrap и logout реально нажаты. Дополнительная browser-инструментация
+проверила wrong-key in-flight write и root preservation, но не заменяет отдельный
+видимый wrong-key flow. Исторический Account journal Browser PASS; ordinary v4
+Account UI/Node Host пока NOT RUN. Evidence: `qa-account-lifecycle-exact-a4fd2aa.json`
+и `qa-account-lifecycle-manifest.json`. Баг session logout hook в позднем
+`runtime_fixes.js` исправлен в `efbc9c4` и повторно проверен click/abort-before-key-zero;
+это source-overlay retest, deployed `.26` не менялся.
+
 ## Правила регистрации результата
 
 Для каждого найденного control создать отдельную строку: ID, экран/state,

@@ -48,17 +48,25 @@ commit также доставляется на Forge, его полный SHA �
 browser-first inventory ещё не завершены. Реализация делегирована агентам;
 лид независимо проверяет интеграцию и опубликованный UI.
 
-Текущий source checkpoint **`b9e405f70a8d6fed6578907d51992f4419e7ee76`**:
-managed Node owner proof+PREPARED/ACTIVE/RETIRED, Account four-row journal,
-private commit receipts и fixed receipt router. Лид independently проверил реальный
-Worker+IndexedDB same-Host A→B→A:25checks PASS, loaded source hashes совпали.
-Exact detached suite280backend+11Origin+76JS PASS. Harnessfix7ce0b87
-добавляет missing Worker import и CDP self-close: exact real Worker transit PASS
-после initial fixtureFAIL; CDP ownership retest69261 PASS (self.close, не OS kill). Pushed7ce0b87, Forge HEAD=origin проверены. Ordinary adapter/UI ещё не подключён; authenticated replacement/renewal,
-bootstrap/public neutral exchange и mailbox migration ещё не готовы.
-Предыдущий pushed checkpoint0ad1767 включает source a70ebb9 exact280backend+
-11Origin+74JS PASS и .26 pending controls4PASS. Новая разработка bootstrap/adapter
-остаётся вне текущего checkpoint; N4 агент работает в отдельном worktree.
+Текущий проверенный source/QA checkpoint **`a4fd2aa24f31f07c372da5573f638f8d331df8af`**
+(`efbc9c42ddff903af1d2db17399c92d6a00e7709` + только QA helper):
+managed Node owner proof, Account four-row journal и same-Host A→B→A
+зафиксированы в предыдущем `b9e405f`; Core теперь публикует отдельную
+подтверждённую Account-сессию и отзывает её до замены vault/logout, не отзывает
+при ошибке пароля. Исторический signed route snapshot различает истёкшее offer,
+истёкший certificate и старые rows без verification epoch, сохраняя их.
+На exact checkout `efbc9c4`: **280 backend+11 Origin+76 JS PASS**, реальный
+IndexedDB journal PASS. На exact `a4fd2aa`: свежий browser UI 29/29 PASS,
+56/56 loaded assets совпали по SHA, SW BLOCKED source overlay; это не DEPLOYED
+приёмка нового source. Тест инструментирует гонку wrong-key и подтверждает,
+что реальный click logout отзывает сессию до зануления ключей. Evidence:
+`docs/evidence/2026-10-08/qa-account-lifecycle-manifest.json`.
+Отдельно exact `7ce0b87` real Python→Chrome Node→Python transit и Worker
+ownership/Inbox PASS. Публичный PWA всё ещё работает через v3; ordinary
+Account adapter, private/public bootstrap, mailbox migration, N4 recovery
+и полный browser inventory не завершены. Новые незакоммиченные файлы агентов
+не входят в эти exact-SHA проверки. Последний published source SHA и Forge
+origin сверить после следующего docs/checkpoint push; production ниже отдельно.
 
 Текущий runtime commit **`3c513601ef3990b6514e247d879324b7b72da494`**, release
 **`transport-v3-node-preparation-20261008.26`**, pushed и deployed на EMS.
