@@ -531,8 +531,9 @@ Raw evidence и encrypted synthetic snapshots вне Git,0600:
 `/tmp/dmash-root35-retained-media.json`,
 `/tmp/dmash-root35-retained-profile-{0,1}.json` — **НЕ backup**: secondary
 CDP storageState вернул пустые origins (36B). Использовать только реальные
-owned-context snapshots выше; post-media raw IDB export/checkpoint уточняется
-при shutdown. Не импортировать пустую secondaryCDP запись как restore.
+owned-context snapshots выше. Post-media read-only raw IDB export:
+`/tmp/dmash-root35-manual-profile-{0,1}.json`,22.6MB каждый,0600, четыреDB
+на профиль; Blob/typed bytes закодированы, restore fixture НЕ проверен. Не импортировать пустую secondaryCDP запись как restore.
 Browser helper `/tmp/dmash-root35-retained-media.cjs`: настоящие клики,
 synthetic ONLY; snapshots нельзя применять к реальным Accounts.
 После сегодняшнего checkpoint live browser/test processes закрываются;
