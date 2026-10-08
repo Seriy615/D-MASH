@@ -1,0 +1,437 @@
+{
+  "scope": "Same syntheticCDP9452 pair actual threevoice burst; no userprofile",
+  "events": [
+    {
+      "label": "record-0",
+      "at": "2026-10-08T02:17:56.758Z",
+      "outbox": [],
+      "recording": true,
+      "rows": [
+        "Delivered to device"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 45–45 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n📎\n✕\n00:00\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "sent-0",
+      "at": "2026-10-08T02:18:00.573Z",
+      "outbox": [
+        {
+          "status": "profile",
+          "acked": 0,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 38–38 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "record-1",
+      "at": "2026-10-08T02:18:00.834Z",
+      "outbox": [
+        {
+          "status": "profile",
+          "acked": 0,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": true,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 38–38 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n📎\n✕\n00:00\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "sent-1",
+      "at": "2026-10-08T02:18:05.157Z",
+      "outbox": [
+        {
+          "status": "profile",
+          "acked": 0,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 0,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 38–38 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "record-2",
+      "at": "2026-10-08T02:18:05.355Z",
+      "outbox": [
+        {
+          "status": "profile",
+          "acked": 0,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 0,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": true,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 38–38 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n✕\n00:00\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "sent-2",
+      "at": "2026-10-08T02:18:10.655Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 0,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 0,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 38–38 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nЗАПИСЬ НЕ ОТПРАВЛЕНА\nRecorded-note queue full\nOK\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:18:12.082Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 0,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 1,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 38–38 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:18:17.674Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 0,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 2,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 40–40 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:18:22.975Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 0,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 5,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 40–40 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:18:28.619Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 1,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 6,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 78–78 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:18:34.658Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 1,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 8,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 78–78 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:18:39.714Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 5,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 8,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 78–78 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:18:44.779Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 7,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 9,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 43–43 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:18:50.205Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 8,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 10,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 43–43 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:18:55.665Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 8,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 11,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 43–43 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:19:00.826Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 8,
+          "fragments": 11,
+          "profileAttempts": 1
+        },
+        {
+          "status": "sending",
+          "acked": 12,
+          "fragments": 12,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 51–51 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:19:06.121Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 9,
+          "fragments": 11,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 51–51 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:19:13.060Z",
+      "outbox": [
+        {
+          "status": "sending",
+          "acked": 10,
+          "fragments": 11,
+          "profileAttempts": 1
+        }
+      ],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 56–56 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    },
+    {
+      "label": "drain",
+      "at": "2026-10-08T02:19:18.159Z",
+      "outbox": [],
+      "recording": false,
+      "rows": [
+        "Delivered to device",
+        "Улетит при первой возможности",
+        "Улетит при первой возможности"
+      ],
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 56–56 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id] (КОПИРОВАТЬ)\n📞\n✎\n🔒\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:14 AM ✓✓\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:17 AM ⌛\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n02:18 AM ⌛\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.26"
+    }
+  ],
+  "errors": [],
+  "queueAlert": "ЗАПИСЬ НЕ ОТПРАВЛЕНА\nRecorded-note queue full\nOK",
+  "drained": true,
+  "status": "FAIL_QUEUE_REJECTION",
+  "provenance": {
+    "expectedSHA": "3c513601ef3990b6514e247d879324b7b72da494",
+    "pageSW": "transport-v3-node-preparation-20261008.26",
+    "sameRetainedSyntheticPair": true,
+    "sourceEvidence": "qa-sender-voice-deployed26-resumed.json",
+    "limits": "Fake microphone; real deployed transport; no physical audio quality or latency guarantee; observer CDP logpoints may affect timing. No user profiles."
+  }
+}

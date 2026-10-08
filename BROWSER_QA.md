@@ -269,3 +269,13 @@ blocks it, but that inactive module alone does not repair active discovery.
 Shared JS/Python certificate/response guards and adversarial parity tests in
 progress; browser real transport retest required before closing. No live
 production attack attempted.
+
+## Recorded voice baseline — deployed .26
+
+| Bug ID | Control/flow | Actual / expected | Owner | Fix / retest |
+|---|---|---|---|---|
+| VOICE-QUEUE-LOSS-01 | Real peer → record 2.3s → SEND three times | Third SEND shows `Recorded-note queue full`; recording not retained. Expected durable pending note or recoverable retry/cancel | qa_account_media | Confirmed FAIL; S-TURN fix pending |
+| VOICE-STALE-STATUS-01 | SEND → authenticated completion → sender open chat | History DELIVERED and outbox removed; visible ⌛ persists until chat reopen. Expected visible final receipt without navigation | qa_account_media | Confirmed FAIL three times; fix/retest pending |
+| VOICE-SLOW-TRANSFER-01 | Fresh paired voice 2.721s | ~54s queued-to-ready; burst first profile-to-complete ~64s. Expected fast voice delivery with truthful progress | qa_account_media | Confirmed performance baseline, not isolated encryption timing; S-TURN retest pending |
+
+Evidence and exact-source limits: [voice baseline](docs/evidence/2026-10-08/qa-sender-voice-summary.md).
