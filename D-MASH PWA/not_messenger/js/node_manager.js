@@ -458,7 +458,6 @@ const NodeManager = {
     },
     connectEndpoint(endpoint) {
         this.assertNodeIdentity(endpoint);
-        if (!this.endpoints.includes(endpoint)) return null;
         const existing = this.connections.get(endpoint.url);
         if (existing?.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(existing.socket.readyState)) return existing;
         const connection = { endpoint, socket: null, capabilities: new Set(), state: 'connecting', error: null, pendingPings: new Map(), pendingRequests: new Map(), reconnectAttempt: existing?.reconnectAttempt || 0, reconnectTimer: null, pingTimer: null, lastLatencyMs: null, lastConnectedAt: null, dnssReadyState: 'pending' };
