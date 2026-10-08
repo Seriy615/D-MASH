@@ -48,7 +48,26 @@ commit также доставляется на Forge, его полный SHA �
 browser-first inventory ещё не завершены. Реализация делегирована агентам;
 лид независимо проверяет интеграцию и опубликованный UI.
 
-Текущий проверенный source/QA checkpoint **`a4fd2aa24f31f07c372da5573f638f8d331df8af`**
+Текущий source checkpoint **`382db71caacd783805ca034eb651cebdeb2d212f`**
+добавил root-owned private bootstrap REQUEST/receipt dispatcher и отдельный
+локальный archive-capability для истёкших сертификатов. На exact checkout
+**280 backend+11 Origin+79 JS PASS**; независимый local Chromium/IDB dispatcher
+PASS. Агентский real Python→Worker private bootstrap/archive PASS; лидерский
+exact-SHA Worker retest ещё требуется. Public root-neutral first contact,
+ordinary Account UI и renewal/active migration всё ещё открыты. Evidence:
+`docs/evidence/2026-10-08/qa-node-bootstrap-382db71.json`.
+
+Предыдущий source checkpoint **`3474eeed916d07f44df693391e594e0bec140508`**
+включает N4 foundation (inactive) поверх проверенного Account UI checkpoint
+`a4fd2aa24f31f07c372da5573f638f8d331df8af`:
+на exact checkout **280 backend+11 Origin+78 JS PASS** и отдельный Chromium/IDB
+mechanism PASS. N4 использует явно именованный legacy Kyber suite, signed
+fresh-key handshake, encrypted 3-row CAS ledger/state/binding и fail-closed
+binding migration. Это **не** ordinary UI recovery, не transport end-to-end и
+не доказательство PCS/PFS/PQ. Evidence:
+`docs/evidence/2026-10-08/qa-n4-foundation-3474eee.json`.
+
+Предыдущий проверенный source/QA checkpoint **`a4fd2aa24f31f07c372da5573f638f8d331df8af`**
 (`efbc9c42ddff903af1d2db17399c92d6a00e7709` + только QA helper):
 managed Node owner proof, Account four-row journal и same-Host A→B→A
 зафиксированы в предыдущем `b9e405f`; Core теперь публикует отдельную

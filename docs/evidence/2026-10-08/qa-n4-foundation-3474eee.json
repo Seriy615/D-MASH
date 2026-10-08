@@ -1,0 +1,24 @@
+{
+  "sourceSHA": "3474eeed916d07f44df693391e594e0bec140508",
+  "branch": "transport-v3",
+  "target": "Forge exact detached checkout /tmp/dmash-n4-merged-exact",
+  "unit": {
+    "backend": 280,
+    "origin": 11,
+    "javascriptSuites": 78,
+    "exitCode": 0,
+    "logSHA256": "5f65efa5b3f002ae5dd033cea4ffc8c3811069fd14f7017358667148dfeaf450"
+  },
+  "browser": {
+    "browserVersion": "156.0.8078.4",
+    "exitCode": 0,
+    "scope": "N4 mechanism and real IndexedDB only",
+    "passed": ["reopen", "faults", "conflict", "targetedLoss", "corrupt", "isolation", "encrypted", "migration", "aborted", "late"]
+  },
+  "limits": [
+    "No ordinary Account UI or two-party Node transport recovery acceptance",
+    "No production deployment or service-worker acceptance for this source",
+    "Only X25519_LEGACY_KYBER768_HKDF_SHA256_V1; no ML-KEM/PQ/PCS/PFS claim",
+    "Complete local encrypted-record rollback remains outside current protection"
+  ]
+}

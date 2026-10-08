@@ -69,6 +69,13 @@ password/replay и full inventory остаются NOT RUN. Static inventory loc
 отделён от deployed actions. Evidence `qa-controls-deployed26.json`; отдельная
 read-only sourceverification214 files соответствует runtime3c51360.
 
+Deployed `.26` UI01 calculator: fresh synthetic profile, 24/24 actual button
+flows PASS, page/SW обе `.26`, включая 0–9, арифметику, ошибки, master/wipe,
+неверный PIN, unlock, reload lock и wipe только созданного тестового профиля.
+Evidence `docs/evidence/2026-10-08/qa-calculator-deployed26.json`; остальные
+UI01 settings/biometric controls учитываются отдельными проверками, поэтому
+полный UI01 остаётся NOT RUN.
+
 Source `a4fd2aa` Account lifecycle: независимый browser UI29/29 PASS,
 page.26 и SW BLOCKED, 56 loaded assets exactSHA; saved text/audio/history/password,
 master rewrap и logout реально нажаты. Дополнительная browser-инструментация
@@ -78,6 +85,18 @@ Account UI/Node Host пока NOT RUN. Evidence: `qa-account-lifecycle-exact-a4f
 и `qa-account-lifecycle-manifest.json`. Баг session logout hook в позднем
 `runtime_fixes.js` исправлен в `efbc9c4` и повторно проверен click/abort-before-key-zero;
 это source-overlay retest, deployed `.26` не менялся.
+
+Inactive N4 foundation `3474eee` на exact checkout: UNIT280 backend+11 Origin+
+78 JS PASS; Chromium/IDB mechanism PASS (reopen, fault/abort, conflicting writes,
+corruption, Account isolation, encrypted rows, binding migration denial). Это не
+ordinary chat UI и не двухсторонний Node recovery. Evidence:
+`docs/evidence/2026-10-08/qa-n4-foundation-3474eee.json`.
+
+Inactive private Node bootstrap/archive `382db71`: exact UNIT280 backend+11 Origin+
+79 JS PASS, независимый local Chromium/IDB PASS; отдельный агентский real
+Python→Worker REQUEST/receipts и expired owner archive PASS. Leader exact Worker
+retest ожидается; ordinary UI/public neutral path NOT RUN. Evidence:
+`docs/evidence/2026-10-08/qa-node-bootstrap-382db71.json`.
 
 ## Правила регистрации результата
 

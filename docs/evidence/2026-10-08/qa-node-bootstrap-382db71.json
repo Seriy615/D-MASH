@@ -1,0 +1,28 @@
+{
+  "sourceSHA": "382db71caacd783805ca034eb651cebdeb2d212f",
+  "branch": "transport-v3",
+  "target": "Forge exact detached checkout /tmp/dmash-node382-exact",
+  "unit": {
+    "backend": 280,
+    "origin": 11,
+    "javascriptSuites": 79,
+    "exitCode": 0,
+    "logSHA256": "8c1a4965e8c4285b096cd5dd3656fbd98c976d72ed0cbfe3c5d1b5fe55907353"
+  },
+  "localBrowser": {
+    "exitCode": 0,
+    "scope": "Signed private second-bundle request, explicit selection, receipts, exact retry and encrypted IndexedDB reopen",
+    "limitation": "No Worker/network/ordinary UI activation in this local fixture"
+  },
+  "agentRealWorkerBrowser": {
+    "privateBootstrap": "PASS real Python Node to Chrome Worker; signed request/receipts, root restore, stable Node identity",
+    "archive": "PASS expired local owner proof, selected intent retained, network mutation denied",
+    "evidence": ["qa-node-bootstrap-worker-current.log", "qa-node-archive-browser-retest.log"],
+    "limitation": "Leader exact-SHA real Worker independent retest pending; archive user-message drain is unit-only"
+  },
+  "limits": [
+    "Private imported-offer mechanism only; public root-neutral first contact not implemented",
+    "No ordinary Account UI, N4 recovery or production deployment",
+    "No expired certificate renewal or authenticated binding migration"
+  ]
+}
