@@ -1,6 +1,6 @@
 'use strict';
 (function(global){
- const TABLE='pairing_material',DOMAIN='D-MASH|ACCOUNT-APP-LEDGER|V4\0',TYPE='ACCOUNT_APP_V4',MAX_FRAME=16000;
+ const TABLE='pairing_material',DOMAIN='D-MASH|ACCOUNT-APP-LEDGER|V4\0',TYPE='ACCOUNT_APP_V4',ACK_TYPE='ACCOUNT_APP_ACK_V4',MAX_FRAME=16000;
  const fail=code=>{throw Object.assign(Error(code),{code});};
  const utf=s=>new TextEncoder().encode(s),hex=a=>Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');
  const unhex=s=>Uint8Array.from(s.match(/../g),v=>parseInt(v,16));
@@ -10,11 +10,12 @@
  const keys=(o,names)=>!!o&&Object.keys(o).sort().join(',')===names.slice().sort().join(',');
  const contentType=s=>s==='text/plain;charset=utf-8';
  class AccountAppCipherV4 {
-  #store;#session;#crypto;#submit;#persist;#blindKey;#closed=false;#transactions=new Set();#abort;#pending=new Map();
+  #store;#session;#crypto;#submit;#persist;#ack;#blindKey;#closed=false;#transactions=new Set();#abort;#pending=new Map();
   static async open(options){const c=new AccountAppCipherV4(options),salt=options.blindSalt.slice();try{c.#blindKey=await c.#wait(c.#crypto.subtle.importKey('raw',salt,{name:'HMAC',hash:'SHA-256'},false,['sign']));return c;}catch(e){c.close();throw e;}finally{salt.fill(0);}}
-  constructor({store,session,blindSalt,submit,persistAuthenticated,crypto=global.crypto}){
+  constructor({store,session,blindSalt,submit,persistAuthenticated,persistOutgoingAck=null,crypto=global.crypto}){
    if(!store?.load||!store?.check||!store?.db?.objectStoreNames.contains(TABLE)||store.dataKey?.algorithm?.name!=='AES-GCM'||!store.context||!store.signal||!session?.status||!(blindSalt instanceof Uint8Array)||blindSalt.length!==32||typeof submit!=='function'||typeof persistAuthenticated!=='function'||!crypto?.subtle)fail('APP_DEPENDENCY');
-   this.#store=store;this.#session=session;this.#crypto=crypto;this.#submit=submit;this.#persist=persistAuthenticated;
+   if(persistOutgoingAck!==null&&typeof persistOutgoingAck!=='function')fail('APP_DEPENDENCY');
+   this.#store=store;this.#session=session;this.#crypto=crypto;this.#submit=submit;this.#persist=persistAuthenticated;this.#ack=persistOutgoingAck;
    this.#abort=()=>this.close();store.signal.addEventListener('abort',this.#abort,{once:true});this.#check();
   }
   #check(){if(this.#closed)fail('APP_CLOSED');this.#store.check();}
@@ -27,7 +28,7 @@
   }
   async #still(a){const b=await this.#active();if(a.root!==b.root||a.sessionId!==b.sessionId||a.generation!==b.generation)fail('APP_SESSION_CHANGED');}
   #meta(a,sender,recipient,operationId,type){const c=this.#store.context;return {type:TYPE,version:4,suite:c.requiredSuite,binding_digest:c.bindingDigest,binding_generation:c.bindingGeneration,session_id:a.sessionId,session_generation:a.generation,sender,recipient,operation_id:operationId,content_type:type};}
-  async #key(a,sender,recipient){const c=this.#store.context,root=unhex(a.root);try{const key=await this.#wait(this.#crypto.subtle.importKey('raw',root,'HKDF',false,['deriveKey']));return this.#wait(this.#crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:unhex(a.sessionId),info:utf('D-MASH|ACCOUNT-APP-KEY|V4\0'+c.bindingDigest+'\0'+c.bindingGeneration+'\0'+sender+'\0'+recipient)},key,{name:'AES-GCM',length:256},false,['encrypt','decrypt']));}finally{root.fill(0);}}
+  async #key(a,sender,recipient,purpose='APP'){const c=this.#store.context,root=unhex(a.root);try{const key=await this.#wait(this.#crypto.subtle.importKey('raw',root,'HKDF',false,['deriveKey']));return this.#wait(this.#crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:unhex(a.sessionId),info:utf('D-MASH|ACCOUNT-'+purpose+'-KEY|V4\0'+c.bindingDigest+'\0'+c.bindingGeneration+'\0'+sender+'\0'+recipient)},key,{name:'AES-GCM',length:256},false,['encrypt','decrypt']));}finally{root.fill(0);}}
   #tx(alias,expected,write){this.#check();return new Promise((resolve,reject)=>{let tx,problem,row=null;try{tx=this.#store.db.transaction(TABLE,write?'readwrite':'readonly');this.#transactions.add(tx);}catch(e){reject(e);return;}
    const abort=e=>{problem=e;try{tx.abort();}catch(_){reject(e);}};tx.onabort=()=>{this.#transactions.delete(tx);reject(problem||tx.error||Error('APP_TX_ABORTED'));};tx.onerror=()=>{};tx.oncomplete=()=>{this.#transactions.delete(tx);try{this.#check();resolve(row);}catch(e){reject(e);}};
    const table=tx.objectStore(TABLE),get=table.get(alias);get.onsuccess=()=>{try{this.#check();row=get.result??null;if(write){if((row?.blob??null)!==(expected?.blob??null))fail('APP_CAS');table.put(write);}}catch(e){abort(e);}};
@@ -36,12 +37,30 @@
   async #encode(alias,r){const iv=this.#crypto.getRandomValues(new Uint8Array(12)),plain=utf(JSON.stringify(r));if(plain.length>30000)fail('APP_LEDGER_SIZE');try{const enc=new Uint8Array(await this.#wait(this.#crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:utf(DOMAIN+alias)},this.#store.dataKey,plain))),packed=new Uint8Array(12+enc.length);packed.set(iv);packed.set(enc,12);return {alias,blob:b64(packed)};}finally{plain.fill(0);}}
   async #save(alias,record){const prior=await this.#wait(this.#tx(alias));if(prior)return this.#decode(alias,prior);const encoded=await this.#encode(alias,record);try{await this.#wait(this.#tx(alias,null,encoded));return record;}catch(e){if(e.code!=='APP_CAS')throw e;const winner=await this.#decode(alias,await this.#wait(this.#tx(alias)));if(!winner)fail('APP_LEDGER_CORRUPT');return winner;}}
   async #single(id,task){const old=this.#pending.get(id);const run=(old?old.catch(()=>{}):Promise.resolve()).then(task);this.#pending.set(id,run);try{return await run;}finally{if(this.#pending.get(id)===run)this.#pending.delete(id);}}
-  async sendApplication({operationId,plaintext,contentType:kind='text/plain;charset=utf-8'}){
-   if(!h64(operationId)||typeof plaintext!=='string'||utf(plaintext).length>8192||!contentType(kind))fail('APP_INPUT');return this.#single('out:'+operationId,async()=>{
+  async sendApplication({operationId,plaintext,contentType:kind='text/plain;charset=utf-8',deliveryAttempt=1}){
+   if(!h64(operationId)||typeof plaintext!=='string'||utf(plaintext).length>8192||!contentType(kind)||!Number.isSafeInteger(deliveryAttempt)||deliveryAttempt<1)fail('APP_INPUT');return this.#single('out:'+operationId,async()=>{
     const a=await this.#active(),c=this.#store.context,alias=await this.#alias('out',operationId),digest=await this.#sha(plaintext),prior=await this.#decode(alias,await this.#wait(this.#tx(alias)));let record=prior;
     if(!record){const meta=this.#meta(a,c.local,c.peer,operationId,kind),iv=this.#crypto.getRandomValues(new Uint8Array(12)),key=await this.#key(a,c.local,c.peer),ct=new Uint8Array(await this.#wait(this.#crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:utf(JSON.stringify(meta))},key,utf(plaintext))));const frame=JSON.stringify({...meta,nonce:hex(iv),ciphertext:b64(ct)});if(utf(frame).length>MAX_FRAME)fail('APP_FRAME_SIZE');record=await this.#save(alias,{schema:1,type:'ACCOUNT_APP_LEDGER_V4',alias,direction:'out',operationId,peer:c.peer,bindingDigest:c.bindingDigest,bindingGeneration:c.bindingGeneration,sessionId:a.sessionId,sessionGeneration:a.generation,contentType:kind,plaintextDigest:digest,frame});}
     if(record.direction!=='out'||record.operationId!==operationId||record.peer!==c.peer||record.bindingDigest!==c.bindingDigest||record.bindingGeneration!==c.bindingGeneration||record.sessionId!==a.sessionId||record.sessionGeneration!==a.generation||record.contentType!==kind||record.plaintextDigest!==digest||typeof record.frame!=='string')fail('APP_OPERATION_CONFLICT');
-    await this.#still(a);const result=await this.#wait(this.#submit(Object.freeze({operationId,frame:record.frame,peer:c.peer,bindingDigest:c.bindingDigest,generation:c.bindingGeneration})));await this.#still(a);if(result?.queued!==true)fail('APP_LOCAL_QUEUE_REFUSED');return Object.freeze({operationId,durable:true,queued:true,recipientAck:false,frame:record.frame});
+    if(record.recipientAck===true)return Object.freeze({operationId,durable:true,queued:false,recipientAck:true,frame:record.frame});
+    const transportOperationId=deliveryAttempt===1?operationId:await this.#alias('transport-retry',operationId+'\0'+deliveryAttempt);
+    await this.#still(a);const result=await this.#wait(this.#submit(Object.freeze({operationId:transportOperationId,frame:record.frame,peer:c.peer,bindingDigest:c.bindingDigest,generation:c.bindingGeneration})));await this.#still(a);if(result?.queued!==true)fail('APP_LOCAL_QUEUE_REFUSED');return Object.freeze({operationId,transportOperationId,durable:true,queued:true,recipientAck:false,frame:record.frame});
+   });
+  }
+  #ackMeta(a,sender,recipient,operationId){const c=this.#store.context;return {type:ACK_TYPE,version:4,suite:c.requiredSuite,binding_digest:c.bindingDigest,binding_generation:c.bindingGeneration,session_id:a.sessionId,session_generation:a.generation,sender,recipient,operation_id:operationId};}
+  async #sendReceipt(a,operationId,frameDigest){const c=this.#store.context,meta=this.#ackMeta(a,c.local,c.peer,operationId),iv=this.#crypto.getRandomValues(new Uint8Array(12)),key=await this.#key(a,c.local,c.peer,'APP-ACK'),ct=new Uint8Array(await this.#wait(this.#crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:utf(JSON.stringify(meta))},key,utf(frameDigest)))),frame=JSON.stringify({...meta,nonce:hex(iv),ciphertext:b64(ct)}),transportOperationId=await this.#sha(frame);
+   await this.#still(a);const result=await this.#wait(this.#submit(Object.freeze({operationId:transportOperationId,frame,peer:c.peer,bindingDigest:c.bindingDigest,generation:c.bindingGeneration})));await this.#still(a);if(result?.queued!==true)fail('APP_ACK_LOCAL_QUEUE_REFUSED');return true;
+  }
+  async receiptStatus(operationId){if(!h64(operationId))fail('APP_INPUT');const a=await this.#active(),alias=await this.#alias('out',operationId),record=await this.#decode(alias,await this.#wait(this.#tx(alias))),c=this.#store.context;if(!record)return false;if(record.direction!=='out'||record.operationId!==operationId||record.peer!==c.peer||record.bindingDigest!==c.bindingDigest||record.bindingGeneration!==c.bindingGeneration||record.sessionId!==a.sessionId||record.sessionGeneration!==a.generation)fail('APP_OPERATION_CONFLICT');return record.recipientAck===true;}
+  async receiveReceipt(frame){if(typeof frame!=='string'||utf(frame).length>MAX_FRAME)fail('APP_ACK_FRAME_FORMAT');let f;try{f=JSON.parse(frame);}catch(_){fail('APP_ACK_FRAME_FORMAT');}const c=this.#store.context;
+   if(!keys(f,['type','version','suite','binding_digest','binding_generation','session_id','session_generation','sender','recipient','operation_id','nonce','ciphertext'])||f.type!==ACK_TYPE||f.version!==4||f.suite!==c.requiredSuite||!h64(f.sender)||!h64(f.recipient)||!h64(f.operation_id)||!h64(f.session_id)||!h64(f.binding_digest)||!(/^[0-9a-f]{24}$/.test(f.nonce))||typeof f.ciphertext!=='string'||f.ciphertext.length>256)fail('APP_ACK_FRAME_FORMAT');
+   return this.#single('out:'+f.operation_id,async()=>{const a=await this.#active();if(f.sender!==c.peer||f.recipient!==c.local||f.binding_digest!==c.bindingDigest||f.binding_generation!==c.bindingGeneration||f.session_id!==a.sessionId||f.session_generation!==a.generation)fail('APP_ACK_CONTEXT');
+    const meta=this.#ackMeta(a,c.peer,c.local,f.operation_id);let ct;try{ct=from64(f.ciphertext);if(b64(ct)!==f.ciphertext||ct.length<16)fail('APP_ACK_FRAME_FORMAT');}catch(_){fail('APP_ACK_FRAME_FORMAT');}
+    const key=await this.#key(a,c.peer,c.local,'APP-ACK');let digest;try{const plain=new Uint8Array(await this.#wait(this.#crypto.subtle.decrypt({name:'AES-GCM',iv:unhex(f.nonce),additionalData:utf(JSON.stringify(meta))},key,ct)));try{digest=new TextDecoder('utf-8',{fatal:true}).decode(plain);}finally{plain.fill(0);}}catch(_){this.#check();fail('APP_ACK_AUTH_FAILED');}if(!h64(digest))fail('APP_ACK_FRAME_FORMAT');
+    const alias=await this.#alias('out',f.operation_id),raw=await this.#wait(this.#tx(alias)),record=await this.#decode(alias,raw);if(!record||record.direction!=='out'||record.operationId!==f.operation_id||record.peer!==c.peer||record.bindingDigest!==c.bindingDigest||record.bindingGeneration!==c.bindingGeneration||record.sessionId!==a.sessionId||record.sessionGeneration!==a.generation||typeof record.frame!=='string'||await this.#sha(record.frame)!==digest)fail('APP_ACK_OPERATION_MISMATCH');
+    if(!this.#ack)fail('APP_ACK_PERSISTENCE_REQUIRED');await this.#still(a);const persisted=await this.#wait(this.#ack(Object.freeze({peer:c.peer,operationId:f.operation_id,bindingDigest:c.bindingDigest,generation:c.bindingGeneration,sessionId:a.sessionId,frameDigest:digest})));if(persisted?.persisted!==true)fail('APP_ACK_NOT_DURABLE');await this.#still(a);
+    if(!record.recipientAck){const encoded=await this.#encode(alias,{...record,recipientAck:true});try{await this.#wait(this.#tx(alias,raw,encoded));}catch(error){if(error.code!=='APP_CAS')throw error;const winner=await this.#decode(alias,await this.#wait(this.#tx(alias)));if(!winner?.recipientAck||winner.frame!==record.frame)fail('APP_ACK_OPERATION_MISMATCH');}}
+    return Object.freeze({persisted:true,kind:'receipt',operationId:f.operation_id,recipientAck:true});
    });
   }
   async receiveApplication(frame){if(typeof frame!=='string'||utf(frame).length>MAX_FRAME)fail('APP_FRAME_SIZE');let f;try{f=JSON.parse(frame);}catch(_){fail('APP_FRAME_FORMAT');}const c=this.#store.context;
@@ -56,9 +75,9 @@
     // every Node replay, including when our local marker says committed: a
     // user may have explicitly deleted the chat after that marker was written.
     await this.#still(a);const committed=await this.#wait(this.#persist(Object.freeze({peer:c.peer,operationId:f.operation_id,plaintext,contentType:f.content_type,bindingDigest:c.bindingDigest,generation:c.bindingGeneration,sessionId:a.sessionId})));if(committed?.persisted!==true)fail('APP_HISTORY_NOT_DURABLE');await this.#still(a);
-    if(record.historyCommitted)return Object.freeze({persisted:true,duplicate:true,operationId:f.operation_id,kind:'application'});
-    const raw=await this.#wait(this.#tx(alias)),latest=await this.#decode(alias,raw);if(latest.frameDigest!==frameDigest)fail('APP_REPLAY_CONFLICT');if(!latest.historyCommitted){const encoded=await this.#encode(alias,{...latest,historyCommitted:true});try{await this.#wait(this.#tx(alias,raw,encoded));}catch(e){if(e.code!=='APP_CAS')throw e;const winner=await this.#decode(alias,await this.#wait(this.#tx(alias)));if(!winner?.historyCommitted||winner.frameDigest!==frameDigest)fail('APP_REPLAY_CONFLICT');}}
-    return Object.freeze({persisted:true,duplicate:false,operationId:f.operation_id,kind:'application'});
+    if(!record.historyCommitted){const raw=await this.#wait(this.#tx(alias)),latest=await this.#decode(alias,raw);if(latest.frameDigest!==frameDigest)fail('APP_REPLAY_CONFLICT');if(!latest.historyCommitted){const encoded=await this.#encode(alias,{...latest,historyCommitted:true});try{await this.#wait(this.#tx(alias,raw,encoded));}catch(e){if(e.code!=='APP_CAS')throw e;const winner=await this.#decode(alias,await this.#wait(this.#tx(alias)));if(!winner?.historyCommitted||winner.frameDigest!==frameDigest)fail('APP_REPLAY_CONFLICT');}}}
+    let ackQueued=false;try{ackQueued=await this.#sendReceipt(a,f.operation_id,frameDigest);}catch(error){this.#check();}
+    return Object.freeze({persisted:true,duplicate:record.historyCommitted,operationId:f.operation_id,kind:'application',ackQueued});
    });
   }
  }

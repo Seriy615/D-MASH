@@ -8,10 +8,10 @@
  // chat, legacy Core.encrypt or automatic legacy fallback enters this module.
  class AccountSessionRuntimeV4 {
   #peers=new Map();#closed=false;#timer=null;
-  constructor({core,transport,profile=global.DmashAccountHandshakeV4,Session=global.DmashAccountSessionV4,Store=global.DmashAccountSessionStoreV4,App=global.DmashAccountAppCipherV4,Outbox=global.DmashAccountAppOutboxV4,persistAuthenticated=null,persistOutgoing=null,nacl=global.nacl,kem=global.DmashKyberWasm,discovery=global.DmashRouteDiscoveryV4,crypto=global.crypto,clock=()=>Math.floor(Date.now()/1000),onStatus=()=>{}}){
+  constructor({core,transport,profile=global.DmashAccountHandshakeV4,Session=global.DmashAccountSessionV4,Store=global.DmashAccountSessionStoreV4,App=global.DmashAccountAppCipherV4,Outbox=global.DmashAccountAppOutboxV4,persistAuthenticated=null,persistOutgoing=null,persistOutgoingAck=null,nacl=global.nacl,kem=global.DmashKyberWasm,discovery=global.DmashRouteDiscoveryV4,crypto=global.crypto,clock=()=>Math.floor(Date.now()/1000),onStatus=()=>{}}){
    if(!core?.captureAccountSessionV4||!transport?.readRouteSnapshot||!transport?.prepareAndSubmitIntent||!profile||!Session||!Store||!nacl||!kem||!discovery||typeof onStatus!=='function')fail('DEPENDENCY');
    this.capture=core.captureAccountSessionV4();this.capture.assertCurrent();if(!this.capture.signal||!this.capture.keys?.sign||!this.capture.blindSalt||!this.capture.masterKey||!this.capture.db)fail('SESSION_REQUIRED');
-   this.transport=transport;this.profile=profile;this.Session=Session;this.Store=Store;this.App=App;this.Outbox=Outbox;this.persistAuthenticated=persistAuthenticated;this.persistOutgoing=persistOutgoing;this.nacl=nacl;this.kem=kem;this.crypto=crypto;this.clock=clock;this.onStatus=onStatus;this.local=key(hex(this.capture.keys.sign.publicKey));
+   this.transport=transport;this.profile=profile;this.Session=Session;this.Store=Store;this.App=App;this.Outbox=Outbox;this.persistAuthenticated=persistAuthenticated;this.persistOutgoing=persistOutgoing;this.persistOutgoingAck=persistOutgoingAck;this.nacl=nacl;this.kem=kem;this.crypto=crypto;this.clock=clock;this.onStatus=onStatus;this.local=key(hex(this.capture.keys.sign.publicKey));
    this.codec=profile.createCodec({nacl,discovery,crypto,clock});this.abort=()=>this.close();this.capture.signal.addEventListener('abort',this.abort,{once:true});this.check();
   }
   check(){if(this.#closed||this.capture.signal.aborted)fail('SESSION_CHANGED');this.capture.assertCurrent();}
@@ -26,7 +26,7 @@
     const salt=this.capture.blindSalt.slice();let blindKey;try{blindKey=await this.wait(this.crypto.subtle.importKey('raw',salt,{name:'HMAC',hash:'SHA-256'},false,['sign']));}finally{salt.fill(0);}
     entry.store=await this.Store.open({db:this.capture.db,dataKey:this.capture.masterKey,blindKey,owner,signal:this.capture.signal,crypto:this.crypto});this.check();if(entry.closed)fail('SESSION_CHANGED');
     entry.session=new this.Session({codec:this.codec,profile:this.profile,nacl:this.nacl,kem:this.kem,store:entry.store,owner,clock:this.clock});
-    if(this.App&&typeof this.persistAuthenticated==='function')entry.app=await this.App.open({store:entry.store,session:entry.session,blindSalt:this.capture.blindSalt,crypto:this.crypto,persistAuthenticated:this.persistAuthenticated,submit:async intent=>{await this._currentRoute(entry);const result=await this.wait(this.transport.prepareAndSubmitIntent(intent));await this._currentRoute(entry);return result;}});
+    if(this.App&&typeof this.persistAuthenticated==='function')entry.app=await this.App.open({store:entry.store,session:entry.session,blindSalt:this.capture.blindSalt,crypto:this.crypto,persistAuthenticated:this.persistAuthenticated,persistOutgoingAck:this.persistOutgoingAck,submit:async intent=>{await this._currentRoute(entry);const result=await this.wait(this.transport.prepareAndSubmitIntent(intent));await this._currentRoute(entry);return result;}});
     if(entry.app&&this.Outbox&&typeof this.persistOutgoing==='function')entry.outbox=await this.Outbox.open({store:entry.store,session:entry.session,app:entry.app,blindSalt:this.capture.blindSalt,crypto:this.crypto,persistOutgoing:this.persistOutgoing});
     await this._currentRoute(entry,allowArchived);entry.status=await this.wait(entry.session.status());return entry.status;
    })();
@@ -38,6 +38,7 @@
   async initiate(peer,options={}){const e=await this._entry(peer);const result=await this.wait(e.session.initiate(options));await this._notify(e);await this.flush(peer);return result;}
   async receive({peer,frame,localRouteId,bindingDigest,generation}){const e=await this._entry(peer,true);if(bindingDigest!==undefined&&(bindingDigest!==e.snapshot.digest||generation!==e.snapshot.generation))fail('DELIVERY_BINDING_MISMATCH');if(key(localRouteId)!==e.snapshot.localRouteId)fail('DELIVERY_ROUTE_MISMATCH');if(typeof frame!=='string'||new TextEncoder().encode(frame).length>16000)fail('FRAME_SIZE');let decoded;try{decoded=JSON.parse(frame);}catch(_){fail('FRAME_FORMAT');}
    if(decoded?.type==='ACCOUNT_APP_V4'){if(!e.app)fail('APP_PERSISTENCE_REQUIRED');return this.wait(e.app.receiveApplication(frame));}
+   if(decoded?.type==='ACCOUNT_APP_ACK_V4'){if(!e.app||!e.outbox)fail('APP_ACK_PERSISTENCE_REQUIRED');const receipt=await this.wait(e.app.receiveReceipt(frame));await this.wait(e.outbox.retireAcknowledged(receipt.operationId));return receipt;}
    if(new TextEncoder().encode(frame).length>12288)fail('FRAME_SIZE');const result=await this.wait(e.session.receive(frame));await this._notify(e,true);
    // The incoming frame is durably processed even if the outbound route is now
    // unavailable. Its response remains an intent and retry must not depend on UI.
