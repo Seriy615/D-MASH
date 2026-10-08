@@ -1,0 +1,9 @@
+# Account CONTROL V4 crypto contract (isolated candidate)
+
+`AccountSessionRuntimeV4.sendControl(peer, {operationId, type, payload})` requires a genuine ESTABLISHED Account session, a validated `DmashAccountMediaControlV4` payload, and a trusted `persistControl` callback. It returns `{operationId, durable:true, queued:false, recipientAck:false}` only after the sender's encrypted Account outbox intent commits locally. Background retry may submit later. The existing text-only `sendApplication` interface cannot inject CONTROL content.
+
+Wire types are `ACCOUNT_CONTROL_V4` and `ACCOUNT_CONTROL_ACK_V4`. They use separate HKDF purposes `CONTROL` and `CONTROL-ACK`, with Account binding, generation, confirmed session, sender, recipient, operation ID, and content type authenticated as AEAD additional data. The media schema carries only typed intent or outcome; file/media bytes remain on S-TURN. A transport delivery ACK is distinct from semantic `COMMIT_ACK` for a complete media transfer.
+
+On receive, `Runtime.receive` defers CONTROL/ACK while the Account session is unconfirmed. After AEAD verification and schema validation, `AppCipher.receiveApplication` calls the private `persistControl` callback; it returns `persisted:true` and may queue a typed transport ACK only after that callback durably commits. The callback is intended to be the owner-scoped encrypted `DmashAccountMediaDispatchV4.persist` journal, not caller-supplied UI state. Sender outbox retirement requires the authenticated exact-frame CONTROL ACK. The sender's control intent does not enter ordinary text history.
+
+Limits: pending CONTROL across a confirmed session successor currently fails closed with `CONTROL_SUCCESSOR_REQUIRED`; it must not be silently retired or resent under an old root. This candidate has synthetic-IDB UNIT coverage only. Real Worker/Python browser, ordinary UI, deployed behavior, and the complete N4 loss matrix remain open.

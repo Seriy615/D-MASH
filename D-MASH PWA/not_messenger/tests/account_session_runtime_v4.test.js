@@ -12,12 +12,13 @@ let now=1800000000;
   local.snapshot={peer:peer.core.keys.pub_hex,digest:'aa'.repeat(32),generation:1,localAccountKeys:{signing:local.core.keys.pub_hex},remoteAccountKeys:{signing:peer.core.keys.pub_hex},localCertificate:{route_id:local.routeId},remoteCertificate:{route_id:String(3-n).repeat(64)}};
   local.transport={async readRouteSnapshot(pid){assert.equal(pid,peer.core.keys.pub_hex);local.snapshots++;return structuredClone(local.snapshot);},async prepareAndSubmitIntent(intent){if(local.failSend)return {queued:false};assert.equal(intent.peer,peer.core.keys.pub_hex);assert.equal(intent.bindingDigest,local.snapshot.digest);assert.equal(intent.operationId,await local.runtime.codec.frameDigest(intent.frame));local.sent.push(intent);return {queued:true,state:'LOCAL_NODE_QUEUED'};}};
   const App={open:async()=>({receiveApplication:async()=>assert.fail('pre-confirmation application reached cipher'),close(){}})};
-  local.runtime=new Runtime({core:local.core,transport:local.transport,Store,Session,App,profile,nacl,kem:local.ctx.DmashKyberWasm,discovery,persistAuthenticated:async()=>({persisted:true}),clock:()=>now,onStatus:(peer,status)=>local.statuses.push(status)});
+  local.runtime=new Runtime({core:local.core,transport:local.transport,Store,Session,App,profile,nacl,kem:local.ctx.DmashKyberWasm,discovery,persistAuthenticated:async()=>({persisted:true}),persistControl:async()=>assert.fail('pre-confirmation control reached dispatcher'),controlSchema:{validate:()=>assert.fail('pre-confirmation control reached schema')},clock:()=>now,onStatus:(peer,status)=>local.statuses.push(status)});
  }
  const peerA=b.core.keys.pub_hex,peerB=a.core.keys.pub_hex;
  await assert.rejects(()=>a.runtime.openPeer(peerA),/SUITE_REQUIRED/);
  await Promise.all([a.runtime.openPeer(peerA,{requiredSuite:profile.SUITE}),a.runtime.openPeer(peerA,{requiredSuite:profile.SUITE})]);assert.equal(opened,1,'coalesced store construction');await b.runtime.openPeer(peerB,{requiredSuite:profile.SUITE});
  assert.deepEqual(await b.runtime.receive({peer:peerB,frame:JSON.stringify({type:'ACCOUNT_APP_V4'}),localRouteId:b.routeId}),{persisted:false,deferred:true},'application received before confirmed session stays in Inbox');
+ assert.deepEqual(await b.runtime.receive({peer:peerB,frame:JSON.stringify({type:'ACCOUNT_CONTROL_V4'}),localRouteId:b.routeId}),{persisted:false,deferred:true},'control received before confirmed session stays in Inbox');
  await a.runtime.initiate(peerA);assert.equal(a.sent.length,1);assert.equal((await a.runtime.status(peerA)).phase,'INIT_PREPARED');
  const deliver=async(to,from)=>{const intent=from.sent.shift();return to.runtime.receive({peer:from.core.keys.pub_hex,frame:intent.frame,localRouteId:to.routeId});};
  await assert.rejects(()=>b.runtime.receive({peer:peerB,frame:a.sent[0].frame,localRouteId:'ff'.repeat(32)}),/DELIVERY_ROUTE_MISMATCH/);
