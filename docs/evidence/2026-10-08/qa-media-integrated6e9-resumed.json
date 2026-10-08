@@ -1,0 +1,79 @@
+{
+  "scope": "Same fresh synthetic profiles resumed; original SEND role lookup failure preserved",
+  "sourceSHA": "6e9e867addc5fe9d95dfb581b2ffbf3d1540cf1b",
+  "sourceEvidence": "qa-media-integrated6e9.json",
+  "page": "transport-v3-node-preparation-20261008.29",
+  "sw": "BLOCKED",
+  "steps": [
+    {
+      "id": "resume-saved-account-after-gate-race",
+      "status": "PASS",
+      "at": "2026-10-08T03:36:27.489Z"
+    },
+    {
+      "id": "note-account-switch-isolation",
+      "status": "PASS",
+      "at": "2026-10-08T03:36:30.838Z"
+    },
+    {
+      "id": "note-peer-reconnect-recovery",
+      "status": "PASS",
+      "at": "2026-10-08T03:37:00.524Z"
+    },
+    {
+      "id": "circle-cancel",
+      "status": "PASS",
+      "at": "2026-10-08T03:37:00.754Z"
+    },
+    {
+      "id": "circle-send",
+      "status": "PASS",
+      "at": "2026-10-08T03:37:03.359Z"
+    },
+    {
+      "id": "circle-decode-ready-no-autoplay",
+      "status": "PASS",
+      "at": "2026-10-08T03:37:11.637Z"
+    }
+  ],
+  "states": [
+    {
+      "state": "other-account-empty",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 37–37 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nВЫБЕРИТЕ ЦЕЛЬ\n✎\nD-MASH build transport-v3-node-preparation-[id].29\nD-MASH update check failed. Network features may be unavailable."
+    },
+    {
+      "state": "reconnected-delivery",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 36–36 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [id]... (КОПИРОВАТЬ)\n📞\n✎\n🔒\nUI contact message 0\n×\n03:33 AM ✓✓\nUI contact message 1\n×\n03:33 AM\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:33 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:33 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:33 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:34 AM ✓✓\nДоставлено\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-[id].29\nD-MASH update check failed. Network features may be unavailable."
+    }
+  ],
+  "switchCircle": {
+    "before": [
+      {
+        "status": "delivered",
+        "retained": false
+      },
+      {
+        "status": "delivered",
+        "retained": false
+      },
+      {
+        "status": "delivered",
+        "retained": false
+      },
+      {
+        "status": "connecting",
+        "retained": true
+      }
+    ],
+    "notRun": [
+      "Cancel/retry blocked by missing post-reload controls in original candidate"
+    ],
+    "video": {
+      "duration": 2.34945,
+      "paused": true,
+      "autoplay": false,
+      "readyState": 4
+    }
+  },
+  "status": "PASS_REMAINING_CONTROLS"
+}

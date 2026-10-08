@@ -1,0 +1,2191 @@
+{
+  "scope": "Actual deletion UI on retained synthetic PUBLIC pair; corruption injected only as test precondition, never user data; SW blocked contexts",
+  "steps": [
+    {
+      "id": "integrated6e9-circle-actual-playback",
+      "phase": "existing6e9",
+      "status": "PASS"
+    },
+    {
+      "id": "reload-red3e-exact",
+      "phase": "red3e",
+      "status": "PASS"
+    },
+    {
+      "id": "red3e-voice-sanity",
+      "phase": "red3e",
+      "status": "PASS"
+    },
+    {
+      "id": "red3e-refusal-visible-no-side-effects",
+      "phase": "red3e",
+      "status": "FAIL",
+      "error": "Corrupt owner requires a visible refusal"
+    },
+    {
+      "id": "red3e-storage-preserved",
+      "phase": "red3e",
+      "status": "PASS"
+    },
+    {
+      "id": "reload-green668-exact",
+      "phase": "green668",
+      "status": "PASS"
+    },
+    {
+      "id": "green-delete-cancel",
+      "phase": "green668",
+      "status": "PASS"
+    },
+    {
+      "id": "green-corrupt-owner-visible-refusal",
+      "phase": "green668",
+      "status": "PASS"
+    },
+    {
+      "id": "green-valid-delete-preserves-unknown",
+      "phase": "green668",
+      "status": "PASS"
+    }
+  ],
+  "states": [
+    {
+      "phase": "red3e",
+      "label": "red3e-refusal-visible-no-side-effects",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[synthetic-id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 54–54 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id]... (КОПИРОВАТЬ)\n📞\n✎\n🔒\nUI contact message 0\n×\n03:33 AM ✓✓\nUI contact message 1\n×\n03:33 AM\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:33 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:33 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:33 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:34 AM ✓✓\nДоставлено\nРАСШИФРОВАТЬ КРУЖОК\n×\n03:37 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:42 AM ОЖИДАЕТ\nПодключение защищённой передачи…Отменить отправку\n📎\n⭕\n🎤\nSEND\nD-MASH build transport-v3-node-preparation-20261008.29\nD-MASH update check failed. Network features may be unavailable."
+    },
+    {
+      "phase": "green668",
+      "label": "green-visible-refusal",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[synthetic-id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 40–40 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\nQA Bob\n×\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id]... (КОПИРОВАТЬ)\n📞\n✎\n🔒\nUI contact message 0\n×\n03:33 AM ✓✓\nUI contact message 1\n×\n03:33 AM\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:33 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:33 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:33 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:34 AM ✓✓\nДоставлено\nРАСШИФРОВАТЬ КРУЖОК\n×\n03:37 AM ✓✓\nДоставлено\n[ ГОЛОСОВОЕ: voice_msg ]\nРАСШИФРОВАТЬ\n×\n03:42 AM ОЖИДАЕТ\nПодключение защищённой передачи…Отменить отправку\n📎\n⭕\n🎤\nSEND\nУДАЛЕНИЕ НЕ ВЫПОЛНЕНО\nДанные и ключи контакта сохранены. Проверьте локальное хранилище и повторите удаление после восстановления доступа.\nOK\nD-MASH build transport-v3-node-preparation-20261008.29\nD-MASH update check failed. Network features may be unavailable."
+    },
+    {
+      "phase": "green668",
+      "label": "green-delete-done",
+      "text": "D-MASH Gamma PWA\nМОЙ ID:\n[synthetic-id]...\nConnected 1 Nodes\nСЕТЬ:\n1 УЗЛ. · PING 40–40 ms\n[ QR ]\n[ + ]\n⚙\nИзбранное\n[ ВЫХОД ]\n←\nQA BOB\nID: [synthetic-id]... (КОПИРОВАТЬ)\n✎\n🔒\nГОТОВО\nХата, ключи и Mesh locator зачищены.\nOK\nD-MASH build transport-v3-node-preparation-20261008.29\nD-MASH update check failed. Network features may be unavailable."
+    }
+  ],
+  "sources": [
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "index.html",
+      "actual": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "expected": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/release.js",
+      "actual": "4dbc55856010a2fe1dd2f48a4b3c3f8d1b936cc0faeffa063068730eadec97de",
+      "expected": "4dbc55856010a2fe1dd2f48a4b3c3f8d1b936cc0faeffa063068730eadec97de",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/device_routes.js",
+      "actual": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "expected": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/dmash_links.js",
+      "actual": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "expected": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/quick_name_registry.js",
+      "actual": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "expected": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/ui_logic.js",
+      "actual": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "expected": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/secure_session.js",
+      "actual": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "expected": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/device_client_v3.js",
+      "actual": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "expected": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/device_authority_v3.js",
+      "actual": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "expected": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/device_envelope.js",
+      "actual": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "expected": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/device_inbox.js",
+      "actual": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "expected": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/account_node_inbox_v4.js",
+      "actual": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "expected": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/route_discovery_v4.js",
+      "actual": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "expected": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/account_node_transport_v4.js",
+      "actual": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "expected": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/private_routes_v3.js",
+      "actual": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "expected": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/contact_bootstrap_v3.js",
+      "actual": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "expected": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/contact_flow_v3.js",
+      "actual": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+      "expected": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/contact_payloads.js",
+      "actual": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "expected": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/contact_transport.js",
+      "actual": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "expected": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/pending_contact_requests.js",
+      "actual": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "expected": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actual": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expected": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/ui_global_bridge.js",
+      "actual": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "expected": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/runtime_fixes.js",
+      "actual": "85492caa67d2443d8a8f4b5d048d69f78bcdc53f2f02a904a1af5d33d41b1f55",
+      "expected": "85492caa67d2443d8a8f4b5d048d69f78bcdc53f2f02a904a1af5d33d41b1f55",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/public_contact_runtime.js",
+      "actual": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "expected": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/acceptance_fixes.js",
+      "actual": "9d74679e96ef3b5de96a63363549bea7d1d1edcfcc4e8b2a9d64c6cebb03b7f3",
+      "expected": "9d74679e96ef3b5de96a63363549bea7d1d1edcfcc4e8b2a9d64c6cebb03b7f3",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/acceptance_v50.js",
+      "actual": "393f25a104b78beeca58542fad4e308bb04619bd1e50854a9dae9c2bfb5cb60f",
+      "expected": "393f25a104b78beeca58542fad4e308bb04619bd1e50854a9dae9c2bfb5cb60f",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/acceptance_v51.js",
+      "actual": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "expected": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/call_signaling.js",
+      "actual": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "expected": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/call_runtime.js",
+      "actual": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expected": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/account_ratchet.js",
+      "actual": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expected": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/saved_messages.js",
+      "actual": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expected": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/chat_cipher.js",
+      "actual": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expected": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/chat_password.js",
+      "actual": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expected": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/account_ratchet_runtime.js",
+      "actual": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expected": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/account_recorded_media.js",
+      "actual": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+      "expected": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/file_channel.js",
+      "actual": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "expected": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/file_session.js",
+      "actual": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "expected": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/file_runtime.js",
+      "actual": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expected": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/recorded_note_turn.js",
+      "actual": "5022188531bc9b2aeeda5959af3fb2e1b289cd137ecd139d6709c3186af0433e",
+      "expected": "5022188531bc9b2aeeda5959af3fb2e1b289cd137ecd139d6709c3186af0433e",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/acceptance_v52.js",
+      "actual": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "expected": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/acceptance_v54.js",
+      "actual": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "expected": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/acceptance_v55.js",
+      "actual": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "expected": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/vendor/kyber768.js",
+      "actual": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "expected": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/vendor/nacl-util.min.js",
+      "actual": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "expected": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/vendor/qrcode.min.js",
+      "actual": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "expected": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/device_root.js",
+      "actual": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "expected": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/vendor/argon2-bundled.min.js",
+      "actual": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "expected": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/storage.js",
+      "actual": "a22199ed407e54d3cf10fe03a6885d25b64d77a52867bcf4a508dbf8af67c4f8",
+      "expected": "a22199ed407e54d3cf10fe03a6885d25b64d77a52867bcf4a508dbf8af67c4f8",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/call_signaling.js",
+      "actual": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "expected": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/call_runtime.js",
+      "actual": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expected": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/saved_messages.js",
+      "actual": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expected": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/chat_cipher.js",
+      "actual": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expected": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/account_ratchet.js",
+      "actual": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expected": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/chat_password.js",
+      "actual": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expected": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/account_ratchet_runtime.js",
+      "actual": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expected": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/vendor/html5-qrcode.min.js",
+      "actual": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "expected": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/file_channel.js",
+      "actual": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "expected": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/file_session.js",
+      "actual": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "expected": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/file_runtime.js",
+      "actual": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expected": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/call_session.js",
+      "actual": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "expected": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/node_manager.js",
+      "actual": "56a1d3fa3c799d09f5a375fb801429ec58becc72bb2ee981a851e01ac21b35d9",
+      "expected": "56a1d3fa3c799d09f5a375fb801429ec58becc72bb2ee981a851e01ac21b35d9",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/vendor/nacl-fast.min.js",
+      "actual": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "expected": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "js/core_engine.js",
+      "actual": "c183f7c9c8a93dc2843ab30e5b4a27ce5ff9c75545df31465db5f0a3cb08c530",
+      "expected": "c183f7c9c8a93dc2843ab30e5b4a27ce5ff9c75545df31465db5f0a3cb08c530",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "path": "nodes.json",
+      "actual": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "expected": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "index.html",
+      "actual": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "expected": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/release.js",
+      "actual": "4dbc55856010a2fe1dd2f48a4b3c3f8d1b936cc0faeffa063068730eadec97de",
+      "expected": "4dbc55856010a2fe1dd2f48a4b3c3f8d1b936cc0faeffa063068730eadec97de",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/device_routes.js",
+      "actual": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "expected": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/dmash_links.js",
+      "actual": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "expected": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/quick_name_registry.js",
+      "actual": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "expected": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/ui_logic.js",
+      "actual": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "expected": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/secure_session.js",
+      "actual": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "expected": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/device_client_v3.js",
+      "actual": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "expected": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/device_authority_v3.js",
+      "actual": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "expected": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/device_envelope.js",
+      "actual": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "expected": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/device_inbox.js",
+      "actual": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "expected": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/account_node_inbox_v4.js",
+      "actual": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "expected": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/route_discovery_v4.js",
+      "actual": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "expected": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/account_node_transport_v4.js",
+      "actual": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "expected": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/private_routes_v3.js",
+      "actual": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "expected": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/contact_bootstrap_v3.js",
+      "actual": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "expected": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/contact_flow_v3.js",
+      "actual": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+      "expected": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/contact_payloads.js",
+      "actual": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "expected": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/contact_transport.js",
+      "actual": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "expected": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/pending_contact_requests.js",
+      "actual": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "expected": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/resource_pow.js",
+      "actual": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expected": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/ui_global_bridge.js",
+      "actual": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "expected": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/runtime_fixes.js",
+      "actual": "85492caa67d2443d8a8f4b5d048d69f78bcdc53f2f02a904a1af5d33d41b1f55",
+      "expected": "85492caa67d2443d8a8f4b5d048d69f78bcdc53f2f02a904a1af5d33d41b1f55",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/public_contact_runtime.js",
+      "actual": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "expected": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/acceptance_fixes.js",
+      "actual": "9d74679e96ef3b5de96a63363549bea7d1d1edcfcc4e8b2a9d64c6cebb03b7f3",
+      "expected": "9d74679e96ef3b5de96a63363549bea7d1d1edcfcc4e8b2a9d64c6cebb03b7f3",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/acceptance_v50.js",
+      "actual": "393f25a104b78beeca58542fad4e308bb04619bd1e50854a9dae9c2bfb5cb60f",
+      "expected": "393f25a104b78beeca58542fad4e308bb04619bd1e50854a9dae9c2bfb5cb60f",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/acceptance_v51.js",
+      "actual": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "expected": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/call_signaling.js",
+      "actual": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "expected": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/call_runtime.js",
+      "actual": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expected": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/account_ratchet.js",
+      "actual": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expected": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/saved_messages.js",
+      "actual": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expected": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/chat_cipher.js",
+      "actual": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expected": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/chat_password.js",
+      "actual": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expected": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/account_ratchet_runtime.js",
+      "actual": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expected": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/account_recorded_media.js",
+      "actual": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+      "expected": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/file_channel.js",
+      "actual": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "expected": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/file_session.js",
+      "actual": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "expected": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/file_runtime.js",
+      "actual": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expected": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/recorded_note_turn.js",
+      "actual": "5022188531bc9b2aeeda5959af3fb2e1b289cd137ecd139d6709c3186af0433e",
+      "expected": "5022188531bc9b2aeeda5959af3fb2e1b289cd137ecd139d6709c3186af0433e",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/acceptance_v52.js",
+      "actual": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "expected": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/acceptance_v54.js",
+      "actual": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "expected": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/acceptance_v55.js",
+      "actual": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "expected": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/vendor/kyber768.js",
+      "actual": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "expected": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/vendor/qrcode.min.js",
+      "actual": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "expected": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/vendor/nacl-util.min.js",
+      "actual": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "expected": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/vendor/argon2-bundled.min.js",
+      "actual": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "expected": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/storage.js",
+      "actual": "a22199ed407e54d3cf10fe03a6885d25b64d77a52867bcf4a508dbf8af67c4f8",
+      "expected": "a22199ed407e54d3cf10fe03a6885d25b64d77a52867bcf4a508dbf8af67c4f8",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/device_root.js",
+      "actual": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "expected": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/call_runtime.js",
+      "actual": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expected": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/call_signaling.js",
+      "actual": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "expected": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/account_ratchet.js",
+      "actual": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expected": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/saved_messages.js",
+      "actual": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expected": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/chat_cipher.js",
+      "actual": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expected": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/chat_password.js",
+      "actual": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expected": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/account_ratchet_runtime.js",
+      "actual": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expected": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/file_channel.js",
+      "actual": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "expected": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/file_session.js",
+      "actual": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "expected": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/vendor/html5-qrcode.min.js",
+      "actual": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "expected": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/file_runtime.js",
+      "actual": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expected": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/call_session.js",
+      "actual": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "expected": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/node_manager.js",
+      "actual": "56a1d3fa3c799d09f5a375fb801429ec58becc72bb2ee981a851e01ac21b35d9",
+      "expected": "56a1d3fa3c799d09f5a375fb801429ec58becc72bb2ee981a851e01ac21b35d9",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/vendor/nacl-fast.min.js",
+      "actual": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "expected": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "js/core_engine.js",
+      "actual": "c183f7c9c8a93dc2843ab30e5b4a27ce5ff9c75545df31465db5f0a3cb08c530",
+      "expected": "c183f7c9c8a93dc2843ab30e5b4a27ce5ff9c75545df31465db5f0a3cb08c530",
+      "match": true
+    },
+    {
+      "phase": "red3e",
+      "profile": 1,
+      "path": "nodes.json",
+      "actual": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "expected": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "index.html",
+      "actual": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "expected": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/release.js",
+      "actual": "4dbc55856010a2fe1dd2f48a4b3c3f8d1b936cc0faeffa063068730eadec97de",
+      "expected": "4dbc55856010a2fe1dd2f48a4b3c3f8d1b936cc0faeffa063068730eadec97de",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/device_routes.js",
+      "actual": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "expected": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/dmash_links.js",
+      "actual": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "expected": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/quick_name_registry.js",
+      "actual": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "expected": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/ui_logic.js",
+      "actual": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "expected": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/secure_session.js",
+      "actual": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "expected": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/device_client_v3.js",
+      "actual": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "expected": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/device_authority_v3.js",
+      "actual": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "expected": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/device_envelope.js",
+      "actual": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "expected": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/device_inbox.js",
+      "actual": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "expected": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/account_node_inbox_v4.js",
+      "actual": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "expected": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/route_discovery_v4.js",
+      "actual": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "expected": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/account_node_transport_v4.js",
+      "actual": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "expected": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/private_routes_v3.js",
+      "actual": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "expected": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/contact_bootstrap_v3.js",
+      "actual": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "expected": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/contact_flow_v3.js",
+      "actual": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+      "expected": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/contact_payloads.js",
+      "actual": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "expected": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/contact_transport.js",
+      "actual": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "expected": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/pending_contact_requests.js",
+      "actual": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "expected": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actual": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expected": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/ui_global_bridge.js",
+      "actual": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "expected": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/runtime_fixes.js",
+      "actual": "85492caa67d2443d8a8f4b5d048d69f78bcdc53f2f02a904a1af5d33d41b1f55",
+      "expected": "85492caa67d2443d8a8f4b5d048d69f78bcdc53f2f02a904a1af5d33d41b1f55",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/public_contact_runtime.js",
+      "actual": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "expected": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/acceptance_fixes.js",
+      "actual": "9d74679e96ef3b5de96a63363549bea7d1d1edcfcc4e8b2a9d64c6cebb03b7f3",
+      "expected": "9d74679e96ef3b5de96a63363549bea7d1d1edcfcc4e8b2a9d64c6cebb03b7f3",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/acceptance_v50.js",
+      "actual": "393f25a104b78beeca58542fad4e308bb04619bd1e50854a9dae9c2bfb5cb60f",
+      "expected": "393f25a104b78beeca58542fad4e308bb04619bd1e50854a9dae9c2bfb5cb60f",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/acceptance_v51.js",
+      "actual": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "expected": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/call_signaling.js",
+      "actual": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "expected": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/call_runtime.js",
+      "actual": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expected": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/account_ratchet.js",
+      "actual": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expected": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/saved_messages.js",
+      "actual": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expected": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/chat_cipher.js",
+      "actual": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expected": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/chat_password.js",
+      "actual": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expected": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/account_ratchet_runtime.js",
+      "actual": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expected": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/account_recorded_media.js",
+      "actual": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+      "expected": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/file_channel.js",
+      "actual": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "expected": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/file_session.js",
+      "actual": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "expected": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/file_runtime.js",
+      "actual": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expected": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/recorded_note_turn.js",
+      "actual": "5022188531bc9b2aeeda5959af3fb2e1b289cd137ecd139d6709c3186af0433e",
+      "expected": "5022188531bc9b2aeeda5959af3fb2e1b289cd137ecd139d6709c3186af0433e",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/acceptance_v52.js",
+      "actual": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "expected": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/acceptance_v54.js",
+      "actual": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "expected": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/acceptance_v55.js",
+      "actual": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "expected": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/vendor/kyber768.js",
+      "actual": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "expected": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/vendor/qrcode.min.js",
+      "actual": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "expected": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/vendor/nacl-util.min.js",
+      "actual": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "expected": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/vendor/argon2-bundled.min.js",
+      "actual": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "expected": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/device_root.js",
+      "actual": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "expected": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/call_runtime.js",
+      "actual": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expected": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/account_ratchet.js",
+      "actual": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expected": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/call_signaling.js",
+      "actual": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "expected": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/chat_cipher.js",
+      "actual": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expected": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/storage.js",
+      "actual": "a22199ed407e54d3cf10fe03a6885d25b64d77a52867bcf4a508dbf8af67c4f8",
+      "expected": "a22199ed407e54d3cf10fe03a6885d25b64d77a52867bcf4a508dbf8af67c4f8",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/saved_messages.js",
+      "actual": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expected": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/chat_password.js",
+      "actual": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expected": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/account_ratchet_runtime.js",
+      "actual": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expected": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/file_channel.js",
+      "actual": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "expected": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/file_session.js",
+      "actual": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "expected": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/file_runtime.js",
+      "actual": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expected": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/call_session.js",
+      "actual": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "expected": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/vendor/html5-qrcode.min.js",
+      "actual": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "expected": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/node_manager.js",
+      "actual": "56a1d3fa3c799d09f5a375fb801429ec58becc72bb2ee981a851e01ac21b35d9",
+      "expected": "56a1d3fa3c799d09f5a375fb801429ec58becc72bb2ee981a851e01ac21b35d9",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/vendor/nacl-fast.min.js",
+      "actual": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "expected": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/core_engine.js",
+      "actual": "a7f32dd935602161ed65e104bf705549f24c43b03f31805bcfcdf72b4287ba84",
+      "expected": "a7f32dd935602161ed65e104bf705549f24c43b03f31805bcfcdf72b4287ba84",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "nodes.json",
+      "actual": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "expected": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 0,
+      "path": "js/resource_pow.js",
+      "actual": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expected": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "index.html",
+      "actual": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "expected": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/release.js",
+      "actual": "4dbc55856010a2fe1dd2f48a4b3c3f8d1b936cc0faeffa063068730eadec97de",
+      "expected": "4dbc55856010a2fe1dd2f48a4b3c3f8d1b936cc0faeffa063068730eadec97de",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/device_routes.js",
+      "actual": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "expected": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/dmash_links.js",
+      "actual": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "expected": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/quick_name_registry.js",
+      "actual": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "expected": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/ui_logic.js",
+      "actual": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "expected": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/secure_session.js",
+      "actual": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "expected": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/device_client_v3.js",
+      "actual": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "expected": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/device_authority_v3.js",
+      "actual": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "expected": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/device_envelope.js",
+      "actual": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "expected": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/device_inbox.js",
+      "actual": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "expected": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/account_node_inbox_v4.js",
+      "actual": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "expected": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/route_discovery_v4.js",
+      "actual": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "expected": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/account_node_transport_v4.js",
+      "actual": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "expected": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/private_routes_v3.js",
+      "actual": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "expected": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/contact_bootstrap_v3.js",
+      "actual": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "expected": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/contact_flow_v3.js",
+      "actual": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+      "expected": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/contact_payloads.js",
+      "actual": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "expected": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/contact_transport.js",
+      "actual": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "expected": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/pending_contact_requests.js",
+      "actual": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "expected": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/resource_pow.js",
+      "actual": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "expected": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/ui_global_bridge.js",
+      "actual": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "expected": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/runtime_fixes.js",
+      "actual": "85492caa67d2443d8a8f4b5d048d69f78bcdc53f2f02a904a1af5d33d41b1f55",
+      "expected": "85492caa67d2443d8a8f4b5d048d69f78bcdc53f2f02a904a1af5d33d41b1f55",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/public_contact_runtime.js",
+      "actual": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "expected": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/acceptance_fixes.js",
+      "actual": "9d74679e96ef3b5de96a63363549bea7d1d1edcfcc4e8b2a9d64c6cebb03b7f3",
+      "expected": "9d74679e96ef3b5de96a63363549bea7d1d1edcfcc4e8b2a9d64c6cebb03b7f3",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/acceptance_v50.js",
+      "actual": "393f25a104b78beeca58542fad4e308bb04619bd1e50854a9dae9c2bfb5cb60f",
+      "expected": "393f25a104b78beeca58542fad4e308bb04619bd1e50854a9dae9c2bfb5cb60f",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/acceptance_v51.js",
+      "actual": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "expected": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/call_signaling.js",
+      "actual": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "expected": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/call_runtime.js",
+      "actual": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expected": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/account_ratchet.js",
+      "actual": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expected": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/saved_messages.js",
+      "actual": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expected": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/chat_cipher.js",
+      "actual": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expected": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/chat_password.js",
+      "actual": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expected": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/account_ratchet_runtime.js",
+      "actual": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expected": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/account_recorded_media.js",
+      "actual": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+      "expected": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/file_channel.js",
+      "actual": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "expected": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/file_session.js",
+      "actual": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "expected": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/file_runtime.js",
+      "actual": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expected": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/recorded_note_turn.js",
+      "actual": "5022188531bc9b2aeeda5959af3fb2e1b289cd137ecd139d6709c3186af0433e",
+      "expected": "5022188531bc9b2aeeda5959af3fb2e1b289cd137ecd139d6709c3186af0433e",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/acceptance_v52.js",
+      "actual": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "expected": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/acceptance_v54.js",
+      "actual": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "expected": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/acceptance_v55.js",
+      "actual": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "expected": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/vendor/kyber768.js",
+      "actual": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "expected": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/vendor/qrcode.min.js",
+      "actual": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "expected": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/vendor/nacl-util.min.js",
+      "actual": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "expected": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/device_root.js",
+      "actual": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "expected": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/vendor/argon2-bundled.min.js",
+      "actual": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "expected": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/storage.js",
+      "actual": "a22199ed407e54d3cf10fe03a6885d25b64d77a52867bcf4a508dbf8af67c4f8",
+      "expected": "a22199ed407e54d3cf10fe03a6885d25b64d77a52867bcf4a508dbf8af67c4f8",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/call_runtime.js",
+      "actual": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "expected": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/call_signaling.js",
+      "actual": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "expected": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/saved_messages.js",
+      "actual": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "expected": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/account_ratchet.js",
+      "actual": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "expected": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/chat_password.js",
+      "actual": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "expected": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/account_ratchet_runtime.js",
+      "actual": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "expected": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/chat_cipher.js",
+      "actual": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "expected": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/file_session.js",
+      "actual": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "expected": "0b3148efe4b97928e98b24fcca278661ceca3521a5aaae533e9029dd27819ae7",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/file_runtime.js",
+      "actual": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "expected": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/file_channel.js",
+      "actual": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "expected": "032ce78f5788365ef5f434d27110973a09ba1e4916f9c7cd88f3fa98a2421980",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/call_session.js",
+      "actual": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "expected": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/vendor/html5-qrcode.min.js",
+      "actual": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "expected": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/node_manager.js",
+      "actual": "56a1d3fa3c799d09f5a375fb801429ec58becc72bb2ee981a851e01ac21b35d9",
+      "expected": "56a1d3fa3c799d09f5a375fb801429ec58becc72bb2ee981a851e01ac21b35d9",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/core_engine.js",
+      "actual": "a7f32dd935602161ed65e104bf705549f24c43b03f31805bcfcdf72b4287ba84",
+      "expected": "a7f32dd935602161ed65e104bf705549f24c43b03f31805bcfcdf72b4287ba84",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "js/vendor/nacl-fast.min.js",
+      "actual": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "expected": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "match": true
+    },
+    {
+      "phase": "green668",
+      "profile": 1,
+      "path": "nodes.json",
+      "actual": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "expected": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a",
+      "match": true
+    }
+  ],
+  "errors": [
+    {
+      "phase": "red3e",
+      "profile": 0,
+      "error": "Corrupt Account route owner record; no data deleted"
+    }
+  ],
+  "red3eIdentityPreserved": true,
+  "redBefore": {
+    "peer": true,
+    "history": 8,
+    "known": true,
+    "unknown": true,
+    "notes": 6,
+    "peerRevoked": false,
+    "routePresent": true
+  },
+  "redAfter": {
+    "peer": true,
+    "history": 8,
+    "known": true,
+    "unknown": true,
+    "notes": 6,
+    "peerRevoked": true,
+    "routePresent": false
+  },
+  "green668IdentityPreserved": true,
+  "greenBefore": {
+    "peer": true,
+    "history": 8,
+    "known": true,
+    "unknown": true,
+    "notes": 6,
+    "peerRevoked": false,
+    "routePresent": true
+  },
+  "greenAfter": {
+    "peer": true,
+    "history": 8,
+    "known": true,
+    "unknown": true,
+    "notes": 6,
+    "peerRevoked": false,
+    "routePresent": true
+  },
+  "validAfter": {
+    "peer": false,
+    "history": 0,
+    "known": false,
+    "unknown": true,
+    "notes": 0,
+    "peerRevoked": true,
+    "routePresent": false
+  },
+  "status": "EXPECTED_RED_THEN_GREEN_PASS",
+  "finalPageState": [
+    {
+      "page": "transport-v3-node-preparation-20261008.29",
+      "serviceWorkerController": null
+    },
+    {
+      "page": "transport-v3-node-preparation-20261008.29",
+      "serviceWorkerController": null
+    }
+  ]
+}
