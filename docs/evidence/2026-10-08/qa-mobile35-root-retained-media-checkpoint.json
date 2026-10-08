@@ -1,0 +1,36 @@
+{
+  "scope": "ROOT actual UI retained SAME deployed synthetic PRIVATE pair: voice/circle/16MiB WAV after connected call and six tiny files. No reset. Original intermittent120s FAIL remains OPEN.",
+  "productSha": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+  "release": "transport-v3-node-preparation-20261008.35",
+  "pageActiveSW35": true,
+  "loadedSources": {
+    "inheritedSamePairPriorGate": 134,
+    "mismatches": 0,
+    "newFullSourceAudit": false
+  },
+  "voice": {
+    "status": "PASS",
+    "elapsedMs": 5052,
+    "actualUIRecordingDeliveryDecryptPlayback": true
+  },
+  "circle": {
+    "status": "PASS",
+    "elapsedMs": 6480,
+    "actualUIRecordingDeliveryDecryptPlayback": true
+  },
+  "largeFile": {
+    "bytes": 16777216,
+    "senderEncryptedVault": "delivered",
+    "receiverEncryptedVault": "delivered",
+    "delivery": "PASS",
+    "inlinePreviewAndHash": "NOT ACCEPTED",
+    "reason": "Initial Open click intercepted by completed transfer panel. Same retained profile normal Close continuation then card locator timeout; raw failures preserved, no force click/reset."
+  },
+  "pageErrors": [],
+  "limitations": [
+    "Original120s tiny-file FAIL remains OPEN.",
+    "Physical Android latency NOT RUN.",
+    "Full deployed .35 media matrix NOT PASS.",
+    "N4/ordinary Node integration NOT ACCEPTED."
+  ]
+}

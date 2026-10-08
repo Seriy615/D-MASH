@@ -1,0 +1,52 @@
+{
+  "scope": "Synthetic mobile Chromium PRIVATE two-peer, exact deployed .35; actual call then six distinct 18-byte file UI actions through EMS S-TURN",
+  "release": "transport-v3-node-preparation-20261008.35",
+  "expectedSha": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+  "pageAndActiveSWExact": true,
+  "loadedSourcesExact": 134,
+  "loadedSourceMismatchCount": 0,
+  "checksPass": 22,
+  "checksFail": 0,
+  "fileResults": {
+    "count": 6,
+    "sizeBytesEach": 18,
+    "receiverInline": true,
+    "downloadHashEquality": true,
+    "senderAndReceiverEncryptedVaultStatus": "delivered",
+    "perFilePermissionPrompt": false
+  },
+  "senderTimings": [
+    {
+      "attempt": 1,
+      "admissionMs": 1260,
+      "tapToLocalDeliveredMs": 2932
+    },
+    {
+      "attempt": 2,
+      "admissionMs": 509,
+      "tapToLocalDeliveredMs": 2061
+    },
+    {
+      "attempt": 3,
+      "admissionMs": 1326,
+      "tapToLocalDeliveredMs": 2894
+    },
+    {
+      "attempt": 4,
+      "admissionMs": 812,
+      "tapToLocalDeliveredMs": 2324
+    },
+    {
+      "attempt": 5,
+      "admissionMs": 763,
+      "tapToLocalDeliveredMs": 2376
+    },
+    {
+      "attempt": 6,
+      "admissionMs": 967,
+      "tapToLocalDeliveredMs": 2588
+    }
+  ],
+  "pageErrors": 0,
+  "limitation": "Earlier independent deployed .35 run timed out 120s awaiting first receiver file card. This repeat PASS does not close intermittent failure. No Android physical-device measurement."
+}

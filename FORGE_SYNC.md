@@ -63,12 +63,18 @@ Production PWA `.35` штатный EMS `get_commit.sh` извлёк из exact6
 Backup `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T133221Z`.
 Root existing synthetic `.34` profile обновился до active controllingSW/page35,
 6/6UI PASS, сохранены DeviceRoot/Account identities и encrypted history rows.
-Source mobile19/video21/expandedfile21/BUSY23 scopes PASS; deployed media/file
-следующие gates. Детали/limits в CURRENT_HANDOFF.md и BROWSER_QA.md.
+Source mobile19/video21/expandedfile21/BUSY23 scopes PASS. Deployed `.35`
+file-after-call120s FAIL остаётся intermittent OPEN; retained same-pair six
+files22/22 PASS не отменяет FAIL. Детали/limits в CURRENT_HANDOFF.md и BROWSER_QA.md.
 
 Прямой Forge SSH push denied(publickey); existing EMS GitHub key публикует
 incremental Git bundle через temporary bare publisher, обычный fast-forward
 без force. Scoped safe.directory только для штатного deploy; никаких secret
 копий/глобальных настроек. Production Node backend, identities, DB/keys/TURN
 secrets не переносились и `.35` PWA deploy их не менял. Ordinary Node UI/N4/N7
-CONTROL/full N0–N8 продолжаются; пользовательский PUBLIC waiting bug OPEN.
+CONTROL/full N0–N8 НЕ DONE; PUBLIC waiting bug OPEN. Пользователь попросил
+остановиться на сегодня: цель поставлена на паузу после handoff.
+Сохранённые isolated source candidates: NODE/file `c42f036` (combined tests/browser
+NOT RUN), PUBLIC corrected authority `bb7b5e7` (targeted UNIT only), `.36`
+`cf02d94` HOLD до root review/integration/browser. Эти candidates не pushed/deployed.
+Подробные полные SHAs, worktrees, evidence и порядок resume — CURRENT_HANDOFF.md.

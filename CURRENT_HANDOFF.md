@@ -27,7 +27,7 @@ TTL для Probe; route-carried DUMMY/cover с корректным terminal dis
 может прийти до импорта contribution/QR; самостоятельно проверять UI контактов.
 Текущее поручение пользователя — автономно завершить N0–N8 и совместимые A–M/E6
 на Forge с делегированной реализацией и полной браузерной приёмкой. Постоянная
-цель активна в текущем Codex chat; полный DONE не достигнут.
+цель приостановлена по просьбе пользователя; полный DONE не достигнут.
 Пользователь назначил `forge-vps` для синхронизации source/context. Проверить
 существующий checkout и работать оттуда; итоговые path/branch/SHA фиксируются
 в FORGE_SYNC.md после операции. Перенос production runtime/доменов/секретов
@@ -41,15 +41,67 @@ protected off-checkout backup. Итог и GitHub SSH limitation —
 настройки; production runtime/данные не переносились. Последний documentation
 commit также доставляется на Forge, его полный SHA получить из Git.
 
-**N7-FILE-AFTER-CALL-35 FAIL, owner qa_remaining:** root exact deployed `.35`
-fresh PRIVATE pair passed key/text/real relay call+hangup; next tiny attachment
-receiver inline card absent after120s.134/134loadedresponses exact6a,page/SW35,
-pageerrors/console0. Old harness closed contexts onFAIL; retained reproduction
-with protected snapshots next, no speculative cause or reset. Source gates
-remain separate PASS, full deployed `.35` media acceptance **NOT PASS**.
-[Scoped failure](docs/evidence/2026-10-08/qa-mobile35-root-deployed-file-after-call-fail.json).
-PUBLIC authority duplicatePoW source fixd57652a reviewed/integrating but NOT
-published/deployed; full PUBLIC readiness/pull/expiry bug remains OPEN.
+**Контрольная точка остановки по просьбе пользователя, 8 октября 2026.**
+Пользователь: «На сегодня достаточно, до точки … дописывай, пиши хендофф и все».
+Цель N0–N8/A–M/E6 приостановлена, **НЕ DONE**. Production остаётся exact
+`6a01feb252c1b94772a2b19503c9e1576a8c6356`, PWA `.35`; backend/state не менялись.
+Новые product candidates не опубликованы и не deployed.
+
+**N7-FILE-AFTER-CALL-35 OPEN / intermittent FAIL, owner qa_remaining:**
+root fresh PRIVATE pair: реальный звонок/hangup PASS, следующий tiny file не
+появился у получателя за120s,134/134source exact6a,page/activeSW35,error0.
+Старый harness закрыл этот FAIL profile, точный этап потери не доказан.
+Retained новая synthetic pair: звонок + шесть отдельных18B файлов actual UI
+**22/22 PASS**,134/134source exact6a,page/activeSW35, шесть download SHA equal,
+обе encrypted FileVault DELIVERED; tap→DELIVERED2.1–2.9s. Это не отменяет FAIL.
+Root на ТОЙ ЖЕ retained pair: voice запись→доставка→decrypt→playback PASS
+за5.052s, circle аналогично PASS за6.480s.16MiB WAV sender/receiver encrypted
+FileVault DELIVERED, но inline preview/hash **НЕ ACCEPTED**: initial Open
+intercepted completion panel; после normal Close continuation потерял card
+locator. Raw failures и synthetic IDB snapshots сохранены без reset; причину
+UI/rerender исследовать после resume.
+[Root media checkpoint](docs/evidence/2026-10-08/qa-mobile35-root-retained-media-checkpoint.json).
+[Original failure](docs/evidence/2026-10-08/qa-mobile35-root-deployed-file-after-call-fail.json),
+[Retained repeats](docs/evidence/2026-10-08/qa-mobile35-retained-six-files.json).
+Physical Android >minute и full deployed media matrix остаются OPEN.
+
+**PUBLIC-WAIT-35 OPEN:** root deployed `.35` наблюдал DNSS/ENTRY_GRANT PoW
+(~7.8/39.7s), recipient route ещё unavailable и sender retry5/10/20/40/80/160s;
+после registration тот же PUBLIC flow13/13PASS. CDP logpoints влияют на timing:
+это causal observation, не latency acceptance. Persistent pull-failure gate
+не дошёл до Accept (180s request_pending/route readiness), signed expiry ещё
+NOT RUN. Не сводить perpetual waiting к одному потерянному CONFIRM.
+
+**PUBLIC `.36` HOLD:** `/tmp/dmash-public36-integration`, `codex/public36`,
+`cf02d9420bad623c0e26b54b5b07d87069fca0ad`: Python286/Origin11/всеJS PASS,
+НО root review нашёл небезопасное совместное использование одноразового PoW
+для разных RouteRegistration candidates. НЕ deploy и НЕ cherry initiald576
+отдельно. Исправление агента `/tmp/dmash-public-authority-red`,
+`codex/public-authority-red`, clean `bb7b5e71995b970735d493bdd0dfce070d5f0a9d`:
+backend-contract RED57e0878 → GREENbb7b5e7, полный registration tuple в key,
+random independent nonce/collision guard, один bounded REPLAYED retry.
+Node24 six targeted/Python registry9 PASS; root integration/full exact/browser
+NOT RUN. Следующий шаг: review+cherry57e0878/bb7b5e7, затем PUBLIC real UI.
+
+**Ordinary NODE candidate, НЕ final cutover:** clean worktree
+`/tmp/dmash-node-file-control-integrated`, branch `codex/node-file-control-integrated`,
+HEAD `c42f0360986e387211abc89a8a8c5f286aaaf667`.
+Собраны base19fb290 + receiver APPLIED retention346 + Core outcome expiry029 /
+per-peer drain742 + sender terminal369/e9 + losing INIT collisiona032 +
+Node file adapter8987/018/e470 и его authority/mode foundations.
+Объединённый c42: diff-check PASS, **общие tests/browser NOT RUN**.
+Последний полный exact19fb290 UNIT292+11+135 PASS, не переносить на c42.
+`managed-v4` всё ещё controlled opt-in; default legacy migration, это OPEN.
+File capability `nodeControlAuthorityV4` отсутствует: не включать до root
+cross-layer review, real IDB, ordinary PRIVATE UI и verified service gate.
+
+Node file отдельный clean candidate `/tmp/dmash-file-node-v4-control`,
+`codex/file-node-v4-control`, `8987daf2cbc1502fc75aaa429a69374bee87aada`;
+fixed expiry/operationId CAS follow-up018bb68, Node24 file_runtime/file_vault_mode
+PASS. Real IDB fixture `/tmp/dmash-file-node-mode-idb.browser.cjs` syntax PASS,
+**NOT RUN**. Ordinary PRIVATE fixture `tools/qa_node_private_ui.cjs` и real
+N4 CONTROL/lostACK/offline receipt fault fixtures ещё требуют browser gate.
+Все identities/keys/DB сохранять; никаких reset/force push.
 
 ## 2. Текущий Forge и EMS checkpoint
 
@@ -79,7 +131,7 @@ Root retained synthetic `.34` → `.35` active controlling SW/page upgrade:
 истории/peer/secrets/outbox/pairing сохранены; новые file stores добавлены,
 registry Accounts штатно перешифрованы при login. Первый harness reload пересёк
 автоматический controllerchange navigation и дал ERR_ABORTED; тот же профиль
-без reset повторно проверен PASS. Deployed media/file gates `.35` ещё идут;
+без reset повторно проверен PASS. Deployed media/file gates `.35` частичные, остановлены на checkpoint;
 Android latency и full Node cutover не объявлены завершёнными.
 
 **PUBLIC-WAIT-35 OPEN:** пользователь снова сообщил бесконечное
@@ -462,18 +514,26 @@ owner/proxy/ports, сохранить identities и state, проверить ro
 
 ## 6. Как воспроизвести и что делать первым
 
-Текущую `.27` PWA проверять на exact commit следующими командами. Browser
-harness создаёт fresh synthetic Accounts, не читает пользовательские vaults;
-Node/Playwright/Chromium paths должны соответствовать текущему окружению.
+Продолжение после явного resume: сначала проверить сохранённые worktrees и
+точные SHAs контрольной точки выше. Production PWA `.35` проверять против
+`6a01feb252c1b94772a2b19503c9e1576a8c6356`, не против docs-only HEAD.
+Reference Node24: `/tmp/dmash-browser-tools/node-v24.19.0-linux-x64/bin/node`,
+Playwright `/tmp/dmash-browser-tools/node_modules/playwright`, Chromium
+`/home/jcode/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome`.
+Полный suite: `.venv/bin/python tools/test_all.py` с Node24 в PATH.
+Production verifier и безопасный fast-forward publisher:
+`/tmp/dmash-verify35.py`, `/tmp/dmash-publish-checkpoint35.sh` (старые SHAs в
+publisher не переиспользовать без проверки remote).
 
-```bash
-python3 tools/verify_ems_revision.py 637c9bb02c2c57a05e8edc815678b6fb204f632c
-DMASH_EXPECT_SHA=637c9bb02c2c57a05e8edc815678b6fb204f632c \
-DMASH_EXPECT_RELEASE=transport-v3-node-preparation-20261008.27 \
-DMASH_CHROME=/absolute/path/to/chromium \
-DMASH_PLAYWRIGHT_MODULE=/absolute/path/to/playwright \
-node tools/qa_ui_hotfix.cjs
-```
+Raw evidence и encrypted synthetic snapshots вне Git,0600:
+`/tmp/dmash-qa-mobile35-inline-repeat.json`,
+`/tmp/dmash-mobile35-inline-profile{0..5}-{0,1}.json`,
+`/tmp/dmash-root35-retained-media.json`,
+`/tmp/dmash-root35-retained-profile-{0,1}.json`.
+Browser helper `/tmp/dmash-root35-retained-media.cjs`: настоящие клики,
+synthetic ONLY; snapshots нельзя применять к реальным Accounts.
+После сегодняшнего checkpoint live browser/test processes закрываются;
+старые handles не считать живыми без проверки.
 
 Основные scripts: `tools/test_node_transit_browser.cjs` +
 `node_transit_v4_browser_server.py`; `test_node_worker_ownership_browser.cjs`;
