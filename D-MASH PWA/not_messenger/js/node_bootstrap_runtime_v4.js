@@ -54,7 +54,7 @@
    this.#roots.delete(entry.rootToken);this.#routes.delete(routeId);entry.sign.secretKey.fill(0);entry.box.secretKey.fill(0);for(const key of entry.keys)key.fill(0);
   }
   async submit(token,handle,data){
-   const owner=this.ownership.owner(token),entry=this.#routes.get(owner.routeId),destination=this.local.routes.get(handle);if(!entry||!destination)throw Error('Bootstrap route unavailable');let wire;
+   const owner=this.ownership.owner(token),entry=this.#routes.get(owner.routeId),destination=this.local.routes.get(handle);if(!entry||!destination)throw Error('Bootstrap route unavailable');if(destination.ownerToken!==token)throw Error('Bootstrap destination owner mismatch');let wire;
    if(data.kind==='REQUEST'){
     const checked=await this.codec.inspect(data.targetBundle,data.serialized);if(checked.remoteAccount!==owner.accountPublic)throw Error('Outbound bootstrap signer mismatch');
     const target=JSON.parse(data.targetBundle).inbound_certificate;if(g.DmashSecureSession.canonical(target)!==g.DmashSecureSession.canonical(destination.certificate))throw Error('Bootstrap destination mismatch');
@@ -65,7 +65,7 @@
     if(g.DmashSecureSession.canonical(JSON.parse(peerBundle).inbound_certificate)!==g.DmashSecureSession.canonical(destination.certificate))throw Error('Bootstrap receipt destination mismatch');
     await this.dispatcher.receipt(token,data.exchangeId,data.serialized);wire=g.DmashSecureSession.canonical({type:'NODE_BOOTSTRAP_RECEIPT_V4',exchange_id:data.exchangeId,receipt:data.serialized});this.codec.fits(wire);
    }else throw Error('Bootstrap user payload forbidden');
-   this.ownership.owner(token);this.check();this.runtime.send(destination.route,g.DmashRecipientPayloadV4.sealPayload(decode(destination.certificate.recipient_box),wire),entry.handler);return {queued:true};
+   this.ownership.owner(token);this.check();if(this.local.routes.get(handle)!==destination||destination.ownerToken!==token)throw Error('Bootstrap destination released');this.runtime.send(destination.route,g.DmashRecipientPayloadV4.sealPayload(decode(destination.certificate.recipient_box),wire),entry.handler);return {queued:true};
   }
   close(){if(this.closed)return;this.closed=true;for(const entry of this.#routes.values()){entry.sign.secretKey.fill(0);entry.box.secretKey.fill(0);for(const key of entry.keys)key.fill(0);}this.#routes.clear();this.#roots.clear();this.dispatcher?.close();}
  }
