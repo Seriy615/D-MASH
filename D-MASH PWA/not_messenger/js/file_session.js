@@ -2,8 +2,10 @@
 (function (global) {
     function create({signaling, manifest, file, rtcFactory = config => new global.RTCPeerConnection(config), useRemoteIceServers = true,
         onProgress, onComplete, onError, onCommit}) {
+        const CallSession = global.DmashCallSession?.CallSignalingSession;
+        if (typeof CallSession !== 'function') throw Error('MEDIA_RUNTIME_UNAVAILABLE: Обновите страницу и повторите передачу.');
         global.DmashFileChannel.validate(manifest);
-        class FileSession extends global.DmashCallSession.CallSignalingSession {
+        class FileSession extends CallSession {
             async _setupMedia() {
                 if (this.closed) throw Error('File session cancelled');
                 this._createPeer();

@@ -2589,6 +2589,8 @@ const Core = {
 
         if (this.peerConnection) { this.peerConnection.close(); this.peerConnection = null; }
         this.killAllMedia();
+        const videoButton = document.getElementById('btn-vid-toggle');
+        if (videoButton) { videoButton.disabled = false; videoButton.removeAttribute('aria-busy'); videoButton.classList.add('off'); videoButton.textContent = '📷'; videoButton.setAttribute('aria-label', 'Включить камеру'); videoButton.title = 'Включить камеру'; }
         clearInterval(this.callTimer);
         this.callState = 'idle';
         this.callPeerId = null;
@@ -2687,39 +2689,44 @@ const Core = {
     },
     // Core.switchCamera       - Переключение между фронталкой и основой во время боя
     switchCamera: async function() {
-        if (Core.callState === 'idle') return; // В чате больше не переключаем заранее
-
-        Core.currentCamera = (Core.currentCamera === 'user') ? 'environment' : 'user';
+        const session = this.callSignalingSession, attempt = this._callAttempt;
+        if (this.callState !== 'connected' || !session?.videoTrack) return false;
+        const next = this.currentCamera === 'user' ? 'environment' : 'user';
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: Core.currentCamera, width: 640, height: 480 }
-            });
-            const newTrack = stream.getVideoTracks()[0];
-
-            if (Core.peerConnection) {
-                const sender = Core.peerConnection.getSenders().find(s => s.track?.kind === 'video');
-                if (sender) await sender.replaceTrack(newTrack);
-            }
-
-            const lv = document.getElementById('localVideo');
-            if (lv) {
-                lv.srcObject = stream;
-                lv.classList.toggle('mirrored', Core.currentCamera === 'user');
-            }
-
-            if (Core.localStream) {
-                Core.localStream.getVideoTracks().forEach(t => t.stop());
-                const audioTrack = Core.localStream.getAudioTracks()[0];
-                Core.localStream = new MediaStream([audioTrack, newTrack]);
-            }
-        } catch (e) { console.error("[!] Сбой смены", e); }
+            await session.switchVideoCamera({facingMode: next, width: 640, height: 480});
+            if (this._callAttempt !== attempt || this.callSignalingSession !== session) return false;
+            this.currentCamera = next;
+            document.getElementById('localVideo')?.classList.toggle('mirrored', next === 'user');
+            return true;
+        } catch (error) {
+            if (this._callAttempt === attempt && this.callSignalingSession === session)
+                this.customAlert('КАМЕРА', error.name === 'NotAllowedError' ? 'Разрешите доступ к камере в настройках браузера.' : error.message);
+            return false;
+        }
     },
     // Core.toggleMic/Video    - Мут микрофона или камеры
-    toggleVideo: function() {
-        const vt = Core.localStream.getVideoTracks()[0];
-        if (vt) {
-            vt.enabled = !vt.enabled;
-            document.getElementById('btn-vid-toggle').classList.toggle('off', !vt.enabled);
+    toggleVideo: async function() {
+        const session = this.callSignalingSession, attempt = this._callAttempt;
+        const button = document.getElementById('btn-vid-toggle');
+        if (!session || this.callState !== 'connected') {
+            this.customAlert('КАМЕРА', 'Дождитесь подключения звонка.');
+            return false;
+        }
+        if (button?.disabled) return false;
+        if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); button.textContent = '…'; }
+        try {
+            if (session.videoTrack?.readyState === 'live') await session.disableVideo();
+            else await session.enableVideo({facingMode: this.currentCamera, width: 640, height: 480});
+            if (this._callAttempt !== attempt || this.callSignalingSession !== session) return false;
+            button?.classList.toggle('off', !session.videoTrack);
+            if (button) { button.setAttribute('aria-label', session.videoTrack ? 'Выключить камеру' : 'Включить камеру'); button.title = button.getAttribute('aria-label'); }
+            return true;
+        } catch (error) {
+            if (this._callAttempt === attempt && this.callSignalingSession === session)
+                this.customAlert('КАМЕРА', error.name === 'NotAllowedError' ? 'Разрешите доступ к камере в настройках браузера.' : error.message);
+            return false;
+        } finally {
+            if (button) { button.disabled = false; button.removeAttribute('aria-busy'); button.textContent = '📷'; }
         }
     },
     toggleMic: function() {

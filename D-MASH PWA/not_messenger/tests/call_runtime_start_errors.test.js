@@ -7,6 +7,8 @@ function core(){return {keys:{},activeIdentity:'slot-A',activePeerId:'peer',call
  updateCallUI(){},shmon(){},customAlert(title,text){this.alerts.push({title,text});},attachCallSignaling(session){this.session=session;},
  endCall(){clearTimeout(this._callExpiry);this._callAttempt=null;this.callState='idle';}};}
 (async()=>{
+ const missing=core();assert.equal(await runtime.start(missing),false);assert.match(missing.alerts[0].text,/MEDIA_RUNTIME_UNAVAILABLE/);
+ context.window.DmashCallSession={CallSignalingSession:class{}};
  const disconnected=core();context.window.NodeManager={selectCallService:async()=>{throw Error('S-TURN unavailable');}};
  assert.equal(await runtime.start(disconnected),false);assert.match(disconnected.alerts[0].text,/S-TURN/);
  const noPeer=core();noPeer.activePeerId=null;assert.equal(await runtime.start(noPeer),false);assert.match(noPeer.alerts[0].text,/чат/);

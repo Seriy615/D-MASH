@@ -10,7 +10,9 @@
         return request;
     }
     function attach(core, signaling, attempt) {
-        const session = new global.DmashCallSession.CallSignalingSession({signaling,
+        const CallSession = global.DmashCallSession?.CallSignalingSession;
+        if (typeof CallSession !== 'function') throw Error('MEDIA_RUNTIME_UNAVAILABLE: Обновите страницу и повторите звонок.');
+        const session = new CallSession({signaling,
             rtcFactory: config => new global.RTCPeerConnection(config), mediaDevices: global.navigator.mediaDevices});
         core.attachCallSignaling(session);
         attempt.session=session;
@@ -28,6 +30,17 @@
             if (element) { element.srcObject = event.streams[0]; void element.play?.().catch(() => {}); }
             core.remoteStream = event.streams[0];
             if(session.pc?.connectionState==='connected')session.onconnected();
+        };
+        session.onvideochange = enabled => {
+            if (core._callAttempt !== attempt) return;
+            const button = global.document.getElementById('btn-vid-toggle');
+            if (button) {button.classList.toggle('off', !enabled); button.setAttribute('aria-label', enabled ? 'Выключить камеру' : 'Включить камеру'); button.title = button.getAttribute('aria-label');}
+            const local = global.document.getElementById('localVideo');
+            if (local) {
+                local.srcObject = session.stream;
+                local.classList.toggle('mirrored', core.currentCamera === 'user');
+                if (enabled) void local.play?.().catch(() => {});
+            }
         };
         return session;
     }
@@ -49,6 +62,10 @@
     async function start(core) {
         if (!core.activePeerId) {core.customAlert?.('ЗВОНОК','Откройте чат с собеседником.');return false;}
         if (core.callState !== 'idle') return false;
+        if (typeof global.DmashCallSession?.CallSignalingSession !== 'function') {
+            core.customAlert?.('ЗВОНОК НЕ НАЧАЛСЯ','MEDIA_RUNTIME_UNAVAILABLE: Обновите страницу и повторите звонок.');
+            return false;
+        }
         const keys=core.keys,slot=core.activeIdentity;
         const peer = core.activePeerId, attempt = begin(core, peer, 'calling');
         core.updateCallUI('calling');
@@ -85,6 +102,10 @@
     }
     async function incoming(core, value, peer) {
         if (core.callState !== 'idle') return false;
+        if (typeof global.DmashCallSession?.CallSignalingSession !== 'function') {
+            core.customAlert?.('ЗВОНОК НЕ НАЧАЛСЯ','MEDIA_RUNTIME_UNAVAILABLE: Обновите страницу и повторите звонок.');
+            return false;
+        }
         let request;
         try { request = validate(value); } catch (_) { return false; }
         const attempt = begin(core, peer, 'receiving');

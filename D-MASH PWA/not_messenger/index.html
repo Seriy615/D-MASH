@@ -345,7 +345,7 @@
        ========================================= */
     #sys-modal { 
         display: none; position: fixed; inset: 0; 
-        background: rgba(0,0,0,0.95); z-index: 9999; 
+        background: rgba(0,0,0,0.95); z-index: 10020;
         justify-content: center; align-items: center; padding: 20px; 
     }
     .sys-modal-box { 
@@ -444,7 +444,7 @@
             <button id="btn-speaker-toggle" onclick="Core.toggleSpeaker()" class="call-action-btn small">🔊</button>
         </div>
         <div style="display:flex; gap:35px;">
-            <button id="btn-vid-toggle" onclick="Core.toggleVideo()" class="call-action-btn off">📷</button>
+            <button id="btn-vid-toggle" onclick="Core.toggleVideo()" class="call-action-btn off" type="button" aria-label="Включить камеру" title="Включить камеру">📷</button>
             <button onclick="Core.endCall()" style="width:80px; height:80px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:2rem; cursor:pointer;">🛑</button>
             <button id="btn-mic-toggle" onclick="Core.toggleMic()" class="call-action-btn">🎤</button>
         </div>

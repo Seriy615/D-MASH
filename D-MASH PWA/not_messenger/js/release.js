@@ -18,6 +18,9 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-202610
     document.head.appendChild(css);
 
     const support = [
+        // Media is used by calls, files and recorded notes. Load its base
+        // before any optional repair can stop this sequential loader.
+        "js/call_session.js",
         "js/secure_session.js",
         "js/device_client_v3.js",
         "js/device_authority_v3.js",
@@ -57,11 +60,20 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-202610
     ];
 
     const load = src => new Promise((resolve, reject) => {
-        const existing = Array.from(document.scripts).find(script => script.src && new URL(script.src, location.href).pathname.endsWith("/" + src));
+        // ui_logic may have appended call_session.js but not evaluated it yet.
+        // A matching script element is therefore not proof the media base is
+        // available. Re-request this idempotent base and wait for evaluation.
+        const mediaBase = src === "js/call_session.js";
+        if (mediaBase && typeof global.DmashCallSession?.CallSignalingSession === "function") return resolve();
+        const existing = !mediaBase && Array.from(document.scripts).find(script => script.src && new URL(script.src, location.href).pathname.endsWith("/" + src));
         if (existing) return resolve();
         const script = document.createElement("script");
         script.src = `${src}?r=${ver}`;
-        script.onload = resolve;
+        script.onload = () => {
+            if (mediaBase && typeof global.DmashCallSession?.CallSignalingSession !== "function") {
+                reject(new Error("MEDIA_RUNTIME_UNAVAILABLE: call_session.js did not initialize"));
+            } else resolve();
+        };
         script.onerror = () => reject(new Error(`Failed to load ${src}`));
         document.head.appendChild(script);
     });

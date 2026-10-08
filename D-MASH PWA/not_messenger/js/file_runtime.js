@@ -85,6 +85,10 @@
     }
     async function send(core, file) {
         if (!core.activePeerId || core._fileTransfer) return false;
+        if (typeof global.DmashCallSession?.CallSignalingSession !== 'function') {
+            core.customAlert?.('ФАЙЛ НЕ ОТПРАВЛЕН', 'MEDIA_RUNTIME_UNAVAILABLE: Обновите страницу и повторите передачу.');
+            return false;
+        }
         const peer = core.activePeerId;
         if (file.size < 1 || file.size > global.DmashFileChannel.MAX_SIZE) {core.customAlert('ФАЙЛ', 'Поддерживаются файлы от 1 байта до 64 МиБ'); return false;}
         const task = panel(core, file.name);

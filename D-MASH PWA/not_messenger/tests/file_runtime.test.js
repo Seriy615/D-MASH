@@ -24,10 +24,15 @@ globalThis.DmashFileChannel={MAX_SIZE:64*1024*1024,validate:r=>r,
     async describe(file,id) {return {id,size:file.size,name:file.name};}};
 globalThis.NodeManager={async selectCallService(options) {assert(options.file); return 'wss://example.test';}};
 globalThis.DmashFileSession={create(options) {return {async startOffer() {},async accept() {this.accepted=true;},close() {this.closed=true;}};}};
-function core() {return {activePeerId:'fixed-peer',customAlert() {},async sendMessage(value,handshake,peer,alias,noQueue) {
+function core() {return {activePeerId:'fixed-peer',alerts:[],customAlert(title,text) {this.alerts.push({title,text});},async sendMessage(value,handshake,peer,alias,noQueue) {
     this.message=value; assert.equal(peer,'fixed-peer'); assert(noQueue); return true;
 }};}
 (async () => {
+    const missing=core();
+    assert.equal(await DmashFileRuntime.send(missing,{size:1024,name:'test.bin'}),false);
+    assert.match(missing.alerts[0].text,/MEDIA_RUNTIME_UNAVAILABLE/);
+    assert.equal(missing._fileTransfer,undefined,'missing base does not allocate a transfer or request S-TURN');
+    globalThis.DmashCallSession={CallSignalingSession:class {}};
     const sender=core();
     assert(await DmashFileRuntime.send(sender,{size:1024,name:'test.bin'}));
     assert.equal(sender.message.type,'voip_file_request');

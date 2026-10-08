@@ -98,7 +98,11 @@ const { TextEncoder, TextDecoder } = require("node:util");
       scripts: [],
       createElement(tag) { return { tagName: tag }; },
       head: { appendChild(element) {
-        if (element.tagName === "script") { loadedScripts.push(element.src); element.onload(); }
+        if (element.tagName === "script") {
+          loadedScripts.push(element.src);
+          if (element.src.startsWith('js/call_session.js?')) context.DmashCallSession = { CallSignalingSession: class {} };
+          element.onload();
+        }
       } },
       getElementById(id) { if (id === "keypad") return keypad; if (id === "dmash-build-id") return badge; return null; }
     },
