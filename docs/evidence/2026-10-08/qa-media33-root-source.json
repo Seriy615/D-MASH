@@ -1,0 +1,51 @@
+{
+  "scope": "Independent root source-overlay browser acceptance of release .33 with live EMS S-TURN; fresh synthetic PRIVATE Accounts, no user profile",
+  "source_commit": "71cbfe52693ac9e833a5869df1cd268b89abe300",
+  "release": "transport-v3-node-preparation-20261008.33",
+  "browser": "Chromium 156.0.8078.4",
+  "video": {
+    "ui_pass": 21,
+    "ui_fail": 0,
+    "source_responses": 130,
+    "source_match": true,
+    "page_errors": 0,
+    "sender_frames_encoded": 40,
+    "receiver_frames_decoded": 39,
+    "sender_video_bytes": 49653,
+    "receiver_video_bytes": 48668,
+    "relay_both": true,
+    "fingerprint_stable": true
+  },
+  "normal_mobile": {
+    "ui_pass": 19,
+    "ui_fail": 0,
+    "source_responses": 130,
+    "source_match": true,
+    "page_errors": 0,
+    "call_connected": true,
+    "file_sha_match": true
+  },
+  "startup_seam_mobile": {
+    "ui_pass": 19,
+    "ui_fail": 0,
+    "source_responses": 108,
+    "source_match": true,
+    "deliberately_injected_patch_responses": 2,
+    "page_errors": 0,
+    "call_connected": true,
+    "file_sha_match": true
+  },
+  "intermittent_voice_timeout": {
+    "first_run_prior_ui_pass": 17,
+    "failed_check": "voice-record-and-deliver",
+    "wait_seconds": 180,
+    "page_errors": 0,
+    "root_cause": "unknown; retained as open defect"
+  },
+  "limits": [
+    "Source overlay, not deployed .33",
+    "Physical Android not run",
+    "Intermittent voice timeout not resolved",
+    "Ordinary Node N0-N8 not accepted"
+  ]
+}

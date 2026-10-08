@@ -54,6 +54,24 @@ EMS publisher, Forge origin SHA сверен. Исторические сост�
 
 **Production PWA:** EMS `get_commit.sh` развернул exact `042d580...` с
 page и active controlling SW `transport-v3-node-preparation-20261008.32`.
+**Следующий кандидат `.33` ещё не опубликован:** integration product
+`cc673fdd80f263c7a355dcbb6f37455140dcc59d`, тестовый fix
+`71cbfe52693ac9e833a5869df1cd268b89abe300`. Детерминированная загрузка
+`call_session.js` закрывает Android `CallSignalingSession` при звонке/файле;
+video-toggle запрашивает камеру по клику и согласует видео в текущем S-TURN
+звонке. Независимый source-overlay Chromium на exact candidate: video **21/21**,
+130/130 loaded source bytes, RTP 40 encoded/39 decoded frames через relay,
+fingerprint не изменился, page errors 0. Первый independent mobile seam:
+звонок и файл/SHA PASS, но voice decrypt button не появился за 180 с после
+них (17 prior checks PASS). Повторный instrumented seam на новых Accounts:
+**19/19 PASS** включая voice/circle, 108 source bodies (2 intentional injection),
+page errors 0; оба media intent DELIVERED за одну попытку. Intermittent
+voice delay остаётся OPEN, причину первого таймаута не доказали.
+Normal mobile startup **19/19 PASS**, 130/130 source responses; общий
+[публичный metadata отчёт](docs/evidence/2026-10-08/qa-media33-root-source.json).
+Full `tools/test_all.py`: Python 286 + Origin 11 + все JS suites PASS.
+Затем push/deploy и
+exact deployed page/SW/transport. Не сбрасывать пользовательские профили.
 Backup PWA: `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T104727Z`.
 На текущем EMS каталог `/home/jcode/D-MASH` существует, но системного пользователя
 `jcode` нет: `su - jcode` отказал. Проверен и запущен тот же штатный
@@ -217,8 +235,16 @@ N7 video-toggle на deployed `.32` воспроизведён реальным�
 через relay работает, но после 📷 `getUserMedia` не вызывается повторно,
 локальных и удалённых video tracks нет и ошибки в UI нет. Причина в audio-only
 `_setupMedia` плюс `toggleVideo`, который только переключает уже существующий
-track; mid-call renegotiation пока не реализована. Агент готовит isolated fix
-и browser red/green, production video call всё ещё FAIL.
+track; mid-call renegotiation не было. Candidate `.33` прошёл независимый
+source-overlay browser RTP gate, но production video call остаётся FAIL до
+exact deployed retest.
+Новое явное требование пользователя для N7: подтверждённый контакт получает
+файлы автоматически, без согласия на каждый файл; файл остаётся в переписке
+как долговечный зашифрованный элемент с доступным preview/open, а отправитель
+видит durable статус/повтор после offline/reload. Никакой тихой загрузки в ОС.
+Агент готовит отдельный Account-owned encrypted file store/intent и quota,
+receiver commit должен предшествовать authenticated ACK; текущая ephemeral
+панель «Принять/Сохранить файл» это требование не выполняет. N7 остаётся OPEN.
 `CURRENT_HANDOFF.md` и [BROWSER_QA.md](BROWSER_QA.md) обновлять на следующем
 checkpoint по фактам, не подменяя deployed результат UNIT или synthetic PASS.
 
