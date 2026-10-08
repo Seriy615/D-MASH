@@ -39,6 +39,11 @@ gate и завершился exit 0. На `.31` реальный file repro бы
 поздней ошибки канала; исправление terminal monotonicity `c59170f` и ускорение
 admission PoW `1c87123` входят в `.32`. Результаты не закрывают N0–N8,
 полный N4 recovery, ordinary Node UI и физический мобильный тест.
+Отдельный [deployed `.32` video toggle red](docs/evidence/2026-10-08/qa-video32-deployed-red.json):
+при реальном аудиозвонке через relay кнопка 📷 после клика не вызвала запрос
+камеры и не создала ни локальный видеотрек, ни удалённый видеоприёмник;
+страница/active SW `.32`, звонок и аудио продолжили работу. Статус UI11
+video toggle **FAIL**, owner `qa_remaining`, source-overlay fix на проверке.
 
 Предыдущая опубликованная PWA: **`be6a1d9a58ba9fffeb0daad234a6506e5b269667`**,
 page и active controlling SW `.31` в двух новых synthetic Chromium profiles.
@@ -109,7 +114,7 @@ deletion остались **NOT RUN**. Исторические `.28`/`.27`/`.26
 | RECORDED-NOTE-QUEUE-01 | PASS deployed `.31` voice/circle | Fresh PRIVATE pair actual SEND, durable sender intent, receiver decrypt and final `DELIVERED`; older `.26` queue-full was historical, no universal latency claim |
 | RECORDER-MIME-31 / RECORDER-ALIAS-31 | PASS deployed `.31` scoped | Valid quoted codec parameter accepted without changing recorded bytes; delayed callback over Saved Messages no modal, original peer received; normal and locked-chat alias UNIT PASS, physical Android MIME/locked-chat browser NOT RUN |
 | NODE-REMOVED-RETRY-01 | PASS deployed `.29`; `.31` NOT RUN | Fresh browser 6/6, exact5a JS62/62, zero new loopback sockets for 3.5 s after removal |
-| S-TURN-HEALTH-01 / N7-FILE-TERMINAL-32 | PASS deployed `.32` scoped | 1 МиБ+13 байт file receiver/download SHA PASS after late DataChannel error; sender/receiver visible verified final, 24/24 deployed gate. Video toggle still NOT RUN `.32` |
+| S-TURN-HEALTH-01 / N7-FILE-TERMINAL-32 | PASS deployed `.32` scoped | 1 МиБ+13 байт file receiver/download SHA PASS after late DataChannel error; sender/receiver visible verified final, 24/24 deployed gate. Video toggle FAIL deployed `.32` (UI click no camera request/track); fix pending |
 | ADMISSION-LATENCY-32 | PASS desktop Chromium; Android NOT RUN | Same fixed difficulty-18 transcript Worker proof: 979→264 мс, identical counter and independent digest. Deployed `.32` voice stop→DELIVERED 4,127 с, WSS ticket 2,052 с; physical Android >1 min is user-reported on `.31`, not a browser measurement |
 
 ## Текущая интеграция (не deployed UI)

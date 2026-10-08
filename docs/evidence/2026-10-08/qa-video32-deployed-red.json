@@ -1,0 +1,100 @@
+{
+  "exactSHA": "042d5803d5d622da72848c67d96bd5c8243c4819",
+  "release": "transport-v3-node-preparation-20261008.32",
+  "mode": "DEPLOYED / ACTIVE SW / REAL EMS S-TURN",
+  "scope": "Fresh synthetic two-profile PRIVATE QR/contact/key/text and real relay audio call, then actual video button click; no live user profile or physical camera.",
+  "pageRelease": [
+    "transport-v3-node-preparation-20261008.32",
+    "transport-v3-node-preparation-20261008.32"
+  ],
+  "activeSW": [
+    "transport-v3-node-preparation-20261008.32",
+    "transport-v3-node-preparation-20261008.32"
+  ],
+  "checks": [
+    {
+      "id": "account-setup-0",
+      "status": "PASS"
+    },
+    {
+      "id": "node-request-0",
+      "status": "PASS"
+    },
+    {
+      "id": "account-setup-1",
+      "status": "PASS"
+    },
+    {
+      "id": "node-request-1",
+      "status": "PASS"
+    },
+    {
+      "id": "both-transport-ready",
+      "status": "PASS"
+    },
+    {
+      "id": "qr-copy-0",
+      "status": "PASS"
+    },
+    {
+      "id": "qr-copy-1",
+      "status": "PASS"
+    },
+    {
+      "id": "private-contact-import-0",
+      "status": "PASS"
+    },
+    {
+      "id": "private-contact-import-1",
+      "status": "PASS"
+    },
+    {
+      "id": "private-route-ready",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-click-0",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-click-1",
+      "status": "PASS"
+    },
+    {
+      "id": "key-exchange-button",
+      "status": "PASS"
+    },
+    {
+      "id": "text-send-and-receive",
+      "status": "PASS"
+    },
+    {
+      "id": "call-audio-only-connected-relay",
+      "status": "PASS"
+    },
+    {
+      "id": "video-toggle-adds-local-and-remote-track",
+      "status": "FAIL"
+    }
+  ],
+  "baseline": {
+    "bothSidesCallConnected": true,
+    "bothSidesRelayCandidatesAndInboundAudioBytes": true,
+    "bothSidesVideoTracks": 0,
+    "bothSidesAudioOnlyGetUserMedia": true
+  },
+  "afterVideoClickAndFiveSeconds": {
+    "additionalCameraGetUserMediaCalls": 0,
+    "callerEnabledVideoTracks": 0,
+    "callerVideoSenders": 0,
+    "receiverVideoTracks": 0,
+    "buttonStillOff": true,
+    "callStillConnected": true,
+    "sameSDPFingerprints": true,
+    "visibleModal": false
+  },
+  "pageErrors": 0,
+  "consoleWarningsOrErrors": 0,
+  "failure": "Clicked camera control silently did nothing: no camera permission request, local sender, or remote receiver.",
+  "limit": "This is a red reproduction. Video fix source-overlay/deployed retest remains required; browser used synthetic microphone/camera."
+}
