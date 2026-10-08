@@ -53,7 +53,8 @@ ordinary Account/contact UI → Node v4 cutover остаётся главным 
 ## Текущая разработка и публикация
 
 8 октября 2026: Forge HEAD и origin/transport-v3 после push/fetch совпали:
-`a70ebb9f06e86e9bb88bb66e07fa2d9597b89308` (inactive foundations, exact tests PASS).
+`7ce0b87db4cad80363f48398a412a6f84d8941d4` (managed ownership+journal,
+exact UNIT280+11+76 and Worker transit/Inbox/ownership PASS; ordinary UI not wired).
 Production runtime остаётся `3c513601ef3990b6514e247d879324b7b72da494`. Предыдущий QA-only checkpoint:
 `2c4523d533df34681fdb682ffeccded5d791b5eb`. Текущий runtime release `.26`
 опубликован через existing EMS get_commit.sh по полному SHA;214 source files

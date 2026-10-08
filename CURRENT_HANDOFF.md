@@ -48,12 +48,17 @@ commit также доставляется на Forge, его полный SHA �
 browser-first inventory ещё не завершены. Реализация делегирована агентам;
 лид независимо проверяет интеграцию и опубликованный UI.
 
-Текущий source checkpoint **`a70ebb9f06e86e9bb88bb66e07fa2d9597b89308`**
-pushed, HEAD=origin проверены. Inactive bilateral binding, durable mailbox и
-STORE_FORWARD codec; runtime wiring ещё отсутствует. Exact detached checkout
-`/tmp/dmash-foundation-a70ebb9`: test_all exit0,280 backend+11 Origin, JS suites PASS.
-Новые Host ownership/Account journal изменения остаются отдельной незавершённой
-работой; промежуточные browser fixtures не означают ordinary UI cutover.
+Текущий source checkpoint **`b9e405f70a8d6fed6578907d51992f4419e7ee76`**:
+managed Node owner proof+PREPARED/ACTIVE/RETIRED, Account four-row journal,
+private commit receipts и fixed receipt router. Лид independently проверил реальный
+Worker+IndexedDB same-Host A→B→A:25checks PASS, loaded source hashes совпали.
+Exact detached suite280backend+11Origin+76JS PASS. Harnessfix7ce0b87
+добавляет missing Worker import и CDP self-close: exact real Worker transit PASS
+после initial fixtureFAIL; CDP ownership retest69261 PASS (self.close, не OS kill). Pushed7ce0b87, Forge HEAD=origin проверены. Ordinary adapter/UI ещё не подключён; authenticated replacement/renewal,
+bootstrap/public neutral exchange и mailbox migration ещё не готовы.
+Предыдущий pushed checkpoint0ad1767 включает source a70ebb9 exact280backend+
+11Origin+74JS PASS и .26 pending controls4PASS. Новая разработка bootstrap/adapter
+остаётся вне текущего checkpoint; N4 агент работает в отдельном worktree.
 
 Текущий runtime commit **`3c513601ef3990b6514e247d879324b7b72da494`**, release
 **`transport-v3-node-preparation-20261008.26`**, pushed и deployed на EMS.

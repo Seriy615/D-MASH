@@ -1,0 +1,44 @@
+{
+  "sourceSHA": "b9e405f70a8d6fed6578907d51992f4419e7ee76",
+  "scope": "UNIT + isolated local BROWSER, not ordinary UI/DEPLOYED",
+  "backend": 280,
+  "origin": 11,
+  "javascriptSuites": 76,
+  "unitExitCode": 0,
+  "localBrowser": {
+    "checks": 25,
+    "sourceFiles": 27,
+    "exitCode": 0,
+    "artifact": "qa-ownership-lead-combined.json"
+  },
+  "inboxBrowser": {
+    "exitCode": 0,
+    "log": "PASS real IndexedDB Inbox: concurrent tabs, atomic duplicate/quota, encrypted slot isolation, malformed-first recovery, receipt/tombstone retention and lock-aborted write"
+  },
+  "limits": [
+    "Initial transit fixture missing import failed at b9e405f; corrected in7ce0b87, exact real Worker transit PASS",
+    "Initial Target.closeTarget unsupported; corrected CDP Worker self.close exact harness PASS, no OS hardkill claim",
+    "Ordinary Account UI/adapter, renewal and authenticated migration not implemented",
+    "Runtime remains deployed3c51360 release26"
+  ],
+  "transit": {
+    "sourceSHA": "7ce0b87db4cad80363f48398a412a6f84d8941d4",
+    "exitCode": 0,
+    "log": "WORKER + encrypted DeviceRoot persistence, durable local Inbox/deferred keys/slot isolation/route restore, root-lock cancellation and UI heartbeat PASS Python N1 -> real Chrome Node B -> Python N2: genuine discovery, signed route proof, random TTL/NCRH rewriting, late local route binding after cached Probe, opaque payload and label rewrite, no Account or original transit recipient keys at B, no bypass, cover during pending discovery and after route installation silently discarded, real payload after cover, disconnect becomes unavailable"
+  },
+  "workerOwnership": {
+    "sourceSHA": "7ce0b87db4cad80363f48398a412a6f84d8941d4",
+    "exitCode": 0,
+    "evidence": "qa-node-worker-ownership-7ce0b87.log",
+    "checks": [
+      "cross-tab exclusion",
+      "page close releases ownership",
+      "CDP Worker self.close releases WebLock before root lock",
+      "identity preserved across root lock/reload",
+      "missing/stale API refused"
+    ],
+    "limits": [
+      "CDP self.close, not OS hardkill; no public production Worker hook"
+    ]
+  }
+}

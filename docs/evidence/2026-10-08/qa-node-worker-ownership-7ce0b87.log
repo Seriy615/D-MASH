@@ -1,0 +1,5 @@
+Commit: 7ce0b87 (exact worktree /tmp/dmash-ownership-harness-exact)
+Execution handle: 69261
+Exit: 0
+PASS real Worker ownership: cross-tab rejection, unaffected winner, tab close, CDP self-close, root lock and reload; mixed API refusal and persistent Node identity
+Limits: CDP self.close, not OS process kill. Synthetic browser profile. Runtime and harness from exact commit.

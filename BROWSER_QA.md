@@ -42,9 +42,11 @@ RUN in that specific upgradeprofile due harness locator, independently PASS on.2
 Source a70ebb9: exact UNIT280 backend+11 Origin+JS suites PASS. Real local
 Worker/Account IndexedDB fixture проверяет proof-gated activation, но обычные UI
 contacts ещё v3. Lead review выявил same-Host Account-switch: one-time verifier
-пока привязан к одному journal; owner qa_account_media/node_audit, fix/retest pending.
-Managed inbox/key-rotation owner gating и post-await owner-token cleanup также
-переданы node_audit; не считать ownership полностью завершённым.
+был привязан к одному journal; исправлено fixed branded router в b9e405f, root
+independent browser25checks PASS включая sameHost A→B→A и rootrestore.
+Managed raw inbox/ACK/submit заблокированы; owner-bound APIs и post-await token
+cleanup добавлены. Rotation пока failclosed/unsupported; renewal/migration и
+ordinary adapter остаются открыты. Evidence: qa-ownership-lead-combined.json.
 
 .26 immutable source-overlay pending cancel rerun: harness FAIL (15s locator),
 видимый результат уже REQUEST_SAVED+одна waiting card, pageerrors[]. Preparation
@@ -53,6 +55,12 @@ PASS cancel. Evidence пока `/tmp/dmash-browser-tools/qa-remaining26.json`, S
 Отдельный pending-controls run exit0:4 actual UI PASS (read-close, Accept cancel,
 decline cancel, decline confirm), pageerrors[], source hashes сверены с3c51360.
 Evidence `docs/evidence/2026-10-08/qa-pending26-controls.json`; SW BLOCKED, real EMS.
+
+N5 source finding: Core legacy `DeviceRoot.deviceMaterial('ml-kem-768-v1')`
+делит static KEM material между Accounts одного root; signed V2 pairing rejects
+одинаковые participant keys. Owner qa_account_media: explicit per-Account key
+migration with preserved legacy decrypt material required, no regeneration/reset
+of existing key. Same-root UI upgrade acceptance ещё NOT RUN.
 
 ## Правила регистрации результата
 
