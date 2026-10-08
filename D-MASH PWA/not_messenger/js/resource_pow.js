@@ -121,6 +121,37 @@
         };
     }
 
+    // Admission PoW appends an ASCII decimal counter, unlike activation's
+    // eight-byte nonce. Reuse complete prefix blocks and the SHA work buffer
+    // without changing a single transcript byte.
+    function decimalSuffixHasher(prefix) {
+        const input = asBytes(prefix, "prefix");
+        const blocks = Math.floor(input.length / 64) * 64;
+        const initial = new Uint32Array(H0), w = new Uint32Array(64);
+        for (let at = 0; at < blocks; at += 64) compress(initial, w, input, at);
+        const remainder = input.length - blocks;
+        const tail = new Uint8Array(Math.ceil((remainder + 16 + 1 + 8) / 64) * 64);
+        tail.set(input.subarray(blocks));
+        const view = new DataView(tail.buffer), h = new Uint32Array(8), digest = new Uint8Array(32);
+        return counter => {
+            if (!Number.isSafeInteger(counter) || counter < 0) throw new RangeError("counter must be a non-negative safe integer");
+            const decimal = String(counter), length = Math.ceil((remainder + decimal.length + 1 + 8) / 64) * 64;
+            tail.fill(0, remainder);
+            for (let i = 0; i < decimal.length; i++) tail[remainder + i] = decimal.charCodeAt(i);
+            tail[remainder + decimal.length] = 0x80;
+            const bits = (input.length + decimal.length) * 8;
+            view.setUint32(length - 8, Math.floor(bits / 0x100000000), false);
+            view.setUint32(length - 4, bits >>> 0, false);
+            h.set(initial);
+            for (let at = 0; at < length; at += 64) compress(h, w, tail, at);
+            for (let i = 0; i < 8; i++) {
+                digest[i*4] = h[i] >>> 24; digest[i*4+1] = h[i] >>> 16;
+                digest[i*4+2] = h[i] >>> 8; digest[i*4+3] = h[i];
+            }
+            return digest;
+        };
+    }
+
     function leadingZeroBits(digest) {
         let bits = 0;
         for (const byte of digest) {
@@ -199,7 +230,7 @@
             catch (error) { global.postMessage({error: error.message}); }
         };
     }
-    const api = Object.freeze({ VERSION, sha256, leadingZeroBits, activationDigest, mineActivationPow: mineOffThread, cancelAll });
+    const api = Object.freeze({ VERSION, sha256, decimalSuffixHasher, leadingZeroBits, activationDigest, mineActivationPow: mineOffThread, cancelAll });
     global.DmashResourcePow = api;
     if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -14,7 +14,10 @@ globalThis.Worker = class BrowserWorker {
         assert.equal(workerPath, path.resolve(__dirname, '../js/call_admission_worker.js'));
         this.thread = new NodeWorker(`
             const {parentPort, workerData} = require('node:worker_threads');
-            globalThis.self = {postMessage: value => parentPort.postMessage(value)};
+            const path = require('node:path');
+            globalThis.self = globalThis;
+            globalThis.postMessage = value => parentPort.postMessage(value);
+            globalThis.importScripts = file => require(path.join(path.dirname(workerData), file));
             require(workerData);
             parentPort.on('message', data => { Promise.resolve(self.onmessage({data})).catch(error => { throw error; }); });
         `, {eval: true, workerData: workerPath});

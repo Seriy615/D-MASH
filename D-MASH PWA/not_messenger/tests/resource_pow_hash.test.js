@@ -1,7 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const {createHash} = require('node:crypto');
-const {sha256, activationDigest, mineActivationPow} = require('../js/resource_pow.js');
+const {sha256, decimalSuffixHasher, activationDigest, mineActivationPow} = require('../js/resource_pow.js');
 // Exercise SHA padding boundaries and overflowing round sums against an
 // independent implementation, not a second copy of the compression function.
 for (const size of [0,1,31,55,56,63,64,65,119,120,127,128,200,255,256,1024,4096]) {
@@ -13,6 +13,15 @@ for (const size of [0,1,31,55,56,63,64,65,119,120,127,128,200,255,256,1024,4096]
 const digest=activationDigest('aa'.repeat(32),'DNSS','bb'.repeat(32),new Uint8Array(16),42,2000000000);
 assert.equal(digest.length,32);
 console.log('PoW SHA-256 matches native SHA-256 at block/padding boundaries');
+
+for (const size of [0,1,3,39,55,56,63,64,65,119,120,127,128,195,255]) {
+ const prefix=Uint8Array.from({length:size},(_,i)=>(i*73+19)&255),hashCounter=decimalSuffixHasher(prefix);
+ for (const counter of [0,9,10,999,1000,0xffffffff,Number.MAX_SAFE_INTEGER]) {
+  const expected=createHash('sha256').update(prefix).update(String(counter)).digest();
+  assert.deepEqual(Buffer.from(hashCounter(counter)),expected,'ASCII counter/padding boundary must match native SHA-256');
+ }
+}
+console.log('Cached decimal-suffix SHA matches native SHA-256 across block and counter-width boundaries');
 
 (async()=>{
  const field=(size,value)=>{const out=Buffer.alloc(size);size===2?out.writeUInt16BE(value):out.writeUInt32BE(value);return out;};
