@@ -126,7 +126,7 @@ self.onmessage=async({data})=>{
    else if(data.type==='INBOX_ACK')result=await inbox.acknowledge(data.handle,data.accountSlot);
    else if(data.type==='STATS')result={...runtime.stats,owned:runtime.owned.length,peers:runtime.peers.size,
     queued:[...runtime.queues.values()].reduce((n,q)=>n+q.length,0),sending:runtime.senders.size,
-    cover:runtime.coverHistory.length,worker:true};
+    cover:runtime.coverHistory.length,preparedGrants:local.routes.size,worker:true};
    else if(data.type==='INJECT_COVER')result=runtime.injectCoverOnce(data.size);
    else if(data.type==='COVER_POLICY'){if(data.enabled)runtime.startCover(data.policy);else runtime.stopCover();result=true;}
    else throw Error();
