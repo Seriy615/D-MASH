@@ -1,0 +1,17 @@
+{
+  "scope": "BROWSER synthetic Account app outbox on real Chromium IndexedDB/WebCrypto; no Node/ordinary UI/recipient ACK claim",
+  "browser": "156.0.8078.4",
+  "sourceHashes": {
+    "/js/account_app_cipher_v4.js": "483c06d6b71b2a40e3f99b80ffa122699dff21e5ee5256923aa4a3eec5e10374",
+    "/js/account_app_outbox_v4.js": "a3c05942972a0ad745454e05dd1c5100ad6d6206c14c0156d59a1a95b307dbbc"
+  },
+  "checks": {
+    "historyFailureNoNodeSubmit": true,
+    "encryptedPendingIntent": true,
+    "crashResume": true,
+    "exactCiphertextRetry": true,
+    "operationConflict": true,
+    "realIdbCollision": true,
+    "rawRows": 3
+  }
+}
