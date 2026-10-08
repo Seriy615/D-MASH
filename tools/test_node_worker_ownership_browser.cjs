@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require(process.env.DMASH_PLAYWRIGHT_MODULE||'playwright');
 const scripts=['vendor/nacl-fast.min.js','vendor/blake3.min.js','secure_session.js','node_identity.js','vendor/argon2-bundled.min.js','device_root.js','node_runtime_host_v4.js'];
-const names=[...scripts,'node_runtime_worker_v4.js','node_relationships_v4.js','node_admission_v4.js','node_registration_v4.js','resource_pow.js','node_socket_v4.js','node_channel_v4.js','probe_primitives_v4.js','route_discovery_v4.js','recipient_payload_v4.js','node_routing_v4.js','node_inbox_v4.js','node_local_delivery_v4.js','vendor/argon2.wasm'];
+const names=[...scripts,'node_runtime_worker_v4.js','node_relationships_v4.js','node_admission_v4.js','node_registration_v4.js','resource_pow.js','node_socket_v4.js','node_channel_v4.js','probe_primitives_v4.js','route_discovery_v4.js','recipient_payload_v4.js','node_routing_v4.js','node_inbox_v4.js','node_local_delivery_v4.js','node_local_ownership_v4.js','vendor/argon2.wasm'];
 const sources=new Map(names.map(name=>['/js/'+name,fs.readFileSync(path.join(__dirname,'../D-MASH PWA/not_messenger/js',name))]));
 (async()=>{
  const server=http.createServer((req,res)=>{
@@ -32,7 +32,13 @@ const sources=new Map(names.map(name=>['/js/'+name,fs.readFileSync(path.join(__d
   // Closing the owner page kills its Worker, without relying on host cleanup.
   await one.close();await vacant(two);await unlock(two);assert.equal(await start(two),id);
   // Hard Worker termination also releases the browser lock automatically.
-  await two.evaluate(()=>{owner.worker.terminate();DeviceRoot.lock();});
+  const cdp=await browser.newBrowserCDPSession();
+  const {targetInfos}=await cdp.send('Target.getTargets');
+  const targets=targetInfos.filter(target=>target.type==='worker'&&target.url===url+'js/node_runtime_worker_v4.js');
+  assert.equal(targets.length,1,'one owned Worker target');
+  const stopped=await cdp.send('Target.closeTarget',{targetId:targets[0].targetId});
+  assert.equal(stopped.success,true,'CDP hard Worker termination');
+  await cdp.detach();await two.evaluate(()=>DeviceRoot.lock());
   await vacant(two);await unlock(two);assert.equal(await start(two),id);
   await two.evaluate(()=>DeviceRoot.lock());await vacant(two);
   await unlock(two);assert.equal(await start(two),id);
@@ -40,7 +46,7 @@ const sources=new Map(names.map(name=>['/js/'+name,fs.readFileSync(path.join(__d
   await two.reload();await vacant(two);await unlock(two);assert.equal(await start(two),id);
   await two.evaluate(()=>DeviceRoot.lock());await vacant(two);
   await unlock(two);
-  for(const apiVersion of [null,1,3])assert.equal(await two.evaluate(async apiVersion=>{
+  for(const apiVersion of [null,1,2,4])assert.equal(await two.evaluate(async apiVersion=>{
    const identity=await DmashNodeIdentity.unlockDeviceIdentity(DeviceRoot),actor=new Worker('/js/node_runtime_worker_v4.js');let timer;
    try{
     const seed=identity.signing.secretKey.slice(0,32);

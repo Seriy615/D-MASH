@@ -43,7 +43,7 @@
   read(key){return this.transaction('readonly',(store,done)=>{store.get(key).onsuccess=e=>done(e.target.result||null);},bucket(key));}
   all(){return this.transaction('readonly',(store,done)=>{store.getAll().onsuccess=e=>done(e.target.result);});}
   allBindings(){return this.transaction('readonly',(store,done)=>{store.getAll().onsuccess=e=>done(e.target.result);},'bindings');}
-  cas(key,revision,row){
+  cas(key,revision,row,{guard=()=>true}={}){
    const kind=bucket(key);
    return this.transaction('readwrite',(store,done,fail,usage)=>{
     store.get(key).onsuccess=e=>{
@@ -51,7 +51,7 @@
      if((current?.revision??null)!==revision){done(false);return;}
      usage.get(kind).onsuccess=event=>{
       try{
-       this.check();const totals=event.target.result;
+       this.check();if(!guard())throw Error('Inbox owner session changed');const totals=event.target.result;
        if(!Number.isSafeInteger(totals?.count)||!Number.isSafeInteger(totals?.bytes))throw Error('Inbox quota metadata missing');
        if(key==='owner'&&!current&&totals.count!==0)throw Error('Inbox owner missing');
        const count=totals.count+(row===null?-1:current?0:1);
@@ -154,15 +154,15 @@
    const remaining=after?records.filter(row=>row.receivedAt>after.receivedAt||(row.receivedAt===after.receivedAt&&row.handle>after.handle)):records;
    return {records:remaining.slice(0,limit),unreadable,deferred};
   }
-  async acknowledge(handle,accountSlot){
-   this.check();if(!token(handle)||!slot(accountSlot))throw Error('Invalid Inbox receipt');
+  async acknowledge(handle,accountSlot,{guard=()=>true}={}){
+   this.check();if(!guard())throw Error('Inbox owner session changed');if(!token(handle)||!slot(accountSlot))throw Error('Invalid Inbox receipt');
    const row=await this.store.read(handle);if(!row)return false;
    const value=await this.decrypt(row);
    if(value.accountSlot!==accountSlot)throw Error('Inbox Account mismatch');
    if(value.kind==='seen')return true;
    if(value.kind!=='pending')throw Error('Invalid Inbox state');
    // Caller sends this only after Account state/message persistence succeeds.
-   return this.store.cas(handle,row.revision,await this.encrypt(handle,{kind:'seen',accountSlot,seenAt:this.clock()}));
+   return this.store.cas(handle,row.revision,await this.encrypt(handle,{kind:'seen',accountSlot,seenAt:this.clock()}),{guard});
   }
   async saveBinding(routeId,value,{replace=false}={}){
    this.check();if(!token(routeId))throw Error('Invalid local route');

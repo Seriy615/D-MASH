@@ -272,6 +272,147 @@ consumed/zeroed as current host APIs do. Local tokens are process capabilities, 
 protection against arbitrary same-origin compromise. Existing host `bindLocal` cannot
 stand in for prepare/activate/retire; it binds immediately and rejects duplicates.
 
+## N3.3 inactive Account journal records and API
+
+`account_route_journal_v2.js` owns only new blind aliases in existing
+`pairing_material`; it never opens/deletes another DB, changes the schema, or writes
+history/legacy maps. `open({storage,core,deviceRoot,accountSignal,bindingCodec})`
+captures the exact IDB connection, AES CryptoKey, Account keys/signing object,
+Account identity, blind salt, monotonic Account boot-generation token and unlocked
+DeviceRoot state. A mandatory Account AbortSignal must abort synchronously **before**
+logout/switch changes the session; future Core integration must provide it. Existing
+Core has no such hook, therefore loading this inactive module does not enable journal
+use in normal flows. Root `onLock` also aborts outstanding transactions. Every await
+and IDB request/completion callback rechecks the captured session. Abort cannot undo
+an already committed transaction; captured-owner encryption and postcommit checks
+prevent cross-Account writes or returning a receipt to a replacement session.
+
+Aliases are lowercase HMAC-SHA256 under a captured Account blind salt, with input
+`D-MASH|ACCOUNT-ROUTE-JOURNAL|V2<NUL>account<NUL>kind<NUL>id`. Derivation is performed
+using a captured nonextractable HMAC key; no mutable Storage/Core helper is called.
+Each physical row remains exactly `{alias,blob}`, where blob retains the current
+base64(12-byte IV || AES-GCM ciphertext+tag) format. Encrypted plaintext envelope is
+`{schema:2,kind,account,alias,payload}`; decrypt verifies all context fields so moving
+a valid ciphertext to a different blind row fails closed. All crypto finishes before
+a readwrite IDB transaction starts. Missing rows differ from corrupt/unreadable rows;
+corruption cannot be overwritten as an empty slot.
+
+Logical encrypted records (all aliases scoped to the captured Account):
+
+- `active:<peer>`: generation/digest, local/remote certificate mapping aliases,
+  journal alias and `ACCOUNT_COMMITTED_BLOCKED` gate. This is an Account commit
+  pointer, **not** Node dispatch authorization.
+- `inbound:<local route>` and `outbound:<peer>`: the same binding digest/generation,
+  exact verified local/remote certificates, peer, and blocked state.
+- `journal:<binding digest>`: both canonical bundles, both exact receipts, complete
+  new mappings and previous committed pointer metadata. Prior journal records and
+  old inbound/history rows remain retained; no cleanup is performed by this slice.
+- `signature:<peer>:<generation>`: one immutable binding digest and the local exact
+  phase receipt. A competing digest can never replace this reservation.
+- `offer:<offer Account>:<pairing ID>`: binding digest/peer/offer owner pin, for both
+  bundles. A reserved null-target local offer cannot be consumed for another peer.
+
+`stage(bundles,peer)` reads/decrypts the latest committed pointer and verifies both
+bundles through the binding codec; it returns an ephemeral branded handle without
+writes. `reserveAndSign(handle,acceptReceipt?)` rechecks the latest pointer and
+pins the signing slot plus both offers in one transaction, persisting exact local
+receipt bytes before returning them. A duplicate returns the identical saved receipt;
+a conflict returns an error. Signature calculation may occur before the transaction,
+but no conflicting signature is returned/published on an aborted CAS. This is
+publication-after-reservation, not a claim that no signature bytes ever exist in
+JavaScript memory before reservation or that JavaScript memory is securely erased. No raw-key
+signing API is exposed by the journal. Reservations are not silently released on
+expiry/cancel; safe supersession of an uncommitted reservation is a later explicit
+protocol, not a local reset shortcut.
+
+`commit(handle,receipts)` requires both codec-verified receipts and a matching durable
+local reservation/offer pins. It rechecks the current committed generation/digest,
+then writes inbound/outbound/journal/active pointer in a **single** IDB readwrite
+transaction. All snapshot rows are reread and compared by their exact encrypted blob
+inside that transaction; conflicting commits fail CAS and require a fresh retry.
+There are no awaits inside the transaction. Abort/crash before commit preserves the
+old coherent pointer/maps; restart after completion reads the complete new tuple.
+`readCommitted(peer)` checks that pointer/journal/inbound/outbound agree before
+returning a blocked Account projection. Coherent ciphertext CAS does not detect an
+external rollback of the entire encrypted database to an older valid snapshot. `close()` aborts operations and retires the
+captured session without closing the shared Storage connection or deleting data.
+
+The journal projection remains `ACCOUNT_COMMITTED_BLOCKED` and its legacy
+`activate()` method rejects `NODE_ACTIVATION_UNIMPLEMENTED`. The proof extension
+below now permits real Host/Worker activation in the isolated integration fixture;
+ordinary UI/adapter readiness, mailbox transfer and authenticated replacement
+migration remain unimplemented. No caller boolean or fabricated host-proof string
+unlocks submission, no v3 fallback occurs, and no cross-database atomicity is claimed.
+The later managed adapter must compare the persisted Node ACTIVE tuple before
+exposing ordinary Account submission readiness.
+
+### N3.3 proof-bound commit receipt extension
+
+One-time constructor injection of trusted `verifyPreparation(handle,expected)` is
+permitted. It is stored privately and cannot be replaced per commit. Expected fields
+are the captured `accountPublic`, local certified `routeId`, `bindingDigest` and new
+certificate `generation` (>=1). Host returns the immutable tuple in this order:
+`ownerSlot,routeAuthorityDigest,routeId,migrationId,bindingDigest,generation,
+preparationDigest,accountPublic`; all non-generation fields are lowercase hex32.
+Optional Host state metadata is recognized only as `NODE_PREPARED` or `ACTIVE` and
+is not part of immutable tuple equality. Host must verify its private branded handle,
+current root/Account owner and genuinely persisted Worker preparation; no caller
+string or object literal is sufficient.
+
+`commit(handle,receipts,{preparation})` checks that Host proof before encryption,
+before opening the IDB commit transaction, and after completion. The same immutable
+preparation tuple is encrypted into all four Account records. Only after successful
+transaction completion and fresh Host recheck does the journal mint an opaque frozen
+commit-receipt object held in a private WeakMap. The historical no-proof diagnostic
+commit still returns `ready:false` and **no receipt**. Promoting such a blocked row
+requires a new four-row proof-bound transaction; an existing tuple cannot be silently
+replaced. Idempotent reissue verifies the durable matching tuple, both signed receipts
+and a readwrite CAS barrier over the complete committed records.
+
+`verifyCommitReceipt(receipt,expectedTuple)` returns a Promise<boolean>. It requires
+the exact private object brand, current captured Account/root session, fresh Host
+preparation check, coherent durable current Account pointer and all three related
+records, and equality of every immutable tuple field. Cloning the object, providing
+only a digest, switching Accounts, retiring preparation or advancing the Account
+pointer invalidates verification. The coordinator installs this trusted verifier in
+the Host once; callers cannot supply an alternate verifier per activation. Host
+attests the verified tuple to its Worker after the local private-brand check; the
+Worker separately checks its persisted tuple and session. A JavaScript object brand
+is not claimed to survive structured clone.
+
+These checks do not make the two databases atomic. An Account commit may remain
+blocked if Node activation fails; a race between verification and a later independent
+commit requires adapters to match both current Account pointer and Node ACTIVE tuple
+before submission/delivery. Root persistence/restore and proof-gated activation remain
+the Node owner's responsibility. This module still never declares READY/ESTABLISHED.
+
+### Same-Host Account switching: fixed receipt router
+
+A Host must not be permanently wired to one Account's journal verifier. The trusted
+coordinator creates `Journal.createReceiptRouter(deviceRoot)` once per root job and
+installs its fixed `verify` function once in that Host. The router captures the root
+object/state, admits only successfully opened journal instances bearing the module's
+private class brand and the same root, and invokes the module-captured original
+prototype verifier. An instance-supplied/monkeypatched verifier is never authority.
+
+`router.register(journal)` returns an opaque registration capability; repeat
+registration of the same journal is idempotent. Maximum 32 live registrations.
+`unregister(capability)` removes only that registration. The captured Account signal,
+journal.close or root lock automatically revokes registration; root lock/coordinator
+stop closes the router. Each asynchronous dispatch rechecks that registration and
+root session remain current before accepting a receipt. A failed/unavailable journal
+cannot block another registered Account. Cloned receipt/registration objects confer
+no authority, and no caller can inject a replacement verification callback.
+
+Coordinator exposes `registerAccountJournal(journal)` / `unregisterAccountJournal(cap)`
+for its current managed root job. Account A logout revokes A's receipt authority but
+does not recreate the Host/Node or erase committed bindings. B can register its own
+captured journal and activate its own proof-bound route on the same Host; returning
+to A opens a fresh captured journal and reauthenticates the persisted tuple. Old
+receipts remain invalid even when their binding digest matches a reopened journal.
+This is local capability lifecycle behavior, not a claim that arbitrary same-origin
+code compromise is contained or that normal Core/UI lifecycle hooks already exist.
+
 ## Legacy pairing V1 and mailbox migration
 
 V1's Account ID/contribution and v3 derived locator are not a signed V2 bundle. Keep

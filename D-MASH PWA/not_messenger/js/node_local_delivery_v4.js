@@ -15,7 +15,7 @@
    this.busy.add(id);let entry,seed,boxSeed;
    try{
     seed=key(data.discoverySeed);boxSeed=key(data.discoveryBox);
-    entry={certificate,accountSlot:data.accountSlot,sign:nacl.sign.keyPair.fromSeed(seed),box:nacl.box.keyPair.fromSecretKey(boxSeed),recipientKeys:[]};
+    entry={certificate,accountSlot:data.accountSlot,ownership:data.ownership||null,retired:false,sign:nacl.sign.keyPair.fromSeed(seed),box:nacl.box.keyPair.fromSecretKey(boxSeed),recipientKeys:[]};
     if(!Array.isArray(data.recipientKeys)||data.recipientKeys.length>2)throw Error('Invalid recipient keys');
     for(const value of data.recipientKeys)entry.recipientKeys.push(key(value));
     if(hex(entry.sign.publicKey)!==certificate.discovery_sign||hex(entry.box.publicKey)!==certificate.discovery_box)throw Error('Discovery key mismatch');
@@ -24,7 +24,7 @@
     if(persist&&!await this.inbox.saveBinding(id,saved))throw Error('Local route already persisted');
     this.check();
     const binding=entry;
-    entry.handler=async(_,packet)=>{this.check();return this.inbox.receive(id,binding.accountSlot,packet.payload,binding.recipientKeys);};
+    entry.handler=async(_,packet)=>{this.check();if(binding.retired)throw Error('Binding retired');return this.inbox.receive(id,binding.accountSlot,packet.payload,binding.recipientKeys);};
     this.runtime.bindLocal(certificate,entry.sign,entry.box,entry.handler);
     this.bindings.set(id,entry);entry=null;
     return {bound:true};
@@ -33,11 +33,13 @@
   validateRecipient(entry,keys){
    if(keys.length){const pair=nacl.box.keyPair.fromSecretKey(keys[0]);try{if(hex(pair.publicKey)!==entry.certificate.recipient_box)throw Error('Recipient key mismatch');}finally{pair.secretKey.fill(0);}}
   }
-  async restore(){
+  async restore({managedOnly=false}={}){
    const stored=await this.inbox.bindings();let unavailable=stored.unreadable;
    for(const value of stored.records){
+    if(managedOnly&&!value.ownership){unavailable++;continue;}
+    if(value.ownership&&value.state!=='ACTIVE')continue;
     const material=[];const decode=value=>{const bytes=unhex(value);material.push(bytes);return bytes;};
-    try{await this.bind({certificate:value.certificate,accountSlot:value.accountSlot,discoverySeed:decode(value.discoverySeed),discoveryBox:decode(value.discoveryBox),recipientKeys:value.recipientKeys.map(decode)},{persist:false});}
+    try{await this.bind({ownership:value.ownership,certificate:value.certificate,accountSlot:value.accountSlot,discoverySeed:decode(value.discoverySeed),discoveryBox:decode(value.discoveryBox),recipientKeys:value.recipientKeys.map(decode)},{persist:false});}
     catch(error){this.check();unavailable++;}
     finally{for(const bytes of material)bytes.fill(0);}
    }
@@ -45,6 +47,7 @@
   }
   async installRecipientKeys(id,values){
    this.check();const entry=this.bindings.get(id);
+   if(entry?.ownership)throw Error('Managed binding requires explicit key migration');
    if(!entry||this.busy.has(id)||!Array.isArray(values)||values.length<1||values.length>2)throw Error('Local route unavailable');
    this.busy.add(id);const keys=[];let installed=false;
    try{
@@ -56,6 +59,7 @@
     const processed=await this.inbox.retryDeferred(id,entry.accountSlot,keys);return {installed:true,processed};
    }finally{this.busy.delete(id);if(!installed)for(const bytes of keys)bytes.fill(0);}
   }
+  retireOwned(id){const entry=this.bindings.get(id);if(!entry)return;entry.retired=true;this.runtime.owned=this.runtime.owned.filter(row=>row.handler!==entry.handler);for(const [key,row]of this.runtime.labels||[])if(row.target===entry.handler)this.runtime.labels.delete(key);this.bindings.delete(id);wipe(entry);}
   prune(){for(const [id,row] of this.routes)if(row.route.expires_at<=this.runtime.clock()||this.runtime.peers.get(row.route.peer)!==row.route.channel)this.routes.delete(id);}
   async discover(certificate){
    this.check();this.prune();if(this.pending>=4||this.routes.size+this.pending>=128)throw Error('Local discovery quota');

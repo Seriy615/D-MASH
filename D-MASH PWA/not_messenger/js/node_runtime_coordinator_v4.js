@@ -8,15 +8,17 @@
   return Object.freeze({version:4,nodeId:value.nodeId,url:url.href});
  }
  class NodeRuntimeCoordinatorV4{
-  #root;#factory;#unsubscribe;#job=null;#generation=0;#closed=false;#peers=new Map();
+  #root;#factory;#unsubscribe;#job=null;#generation=0;#closed=false;#peers=new Map();#localOwnership;#journalClass;
   // trustedDescriptors is an application-owned, independently provisioned catalog
   // snapshot. This constructor does not authenticate a directory or learn pins
   // from sockets. The caller must establish its publisher/OOB trust beforehand.
-  constructor(deviceRoot,{trustedDescriptors=[],hostFactory=global.DmashNodeRuntimeHostV4}={}){
+  constructor(deviceRoot,{trustedDescriptors=[],hostFactory=global.DmashNodeRuntimeHostV4,localOwnership='legacy-migration'}={}){
    if(typeof deviceRoot?.onLock!=='function'||typeof hostFactory?.startForDevice!=='function')throw failure('NODE_RUNTIME_UNAVAILABLE','Node root lifecycle/host unavailable');
    if(!Array.isArray(trustedDescriptors)||trustedDescriptors.length>32)throw failure('NODE_DESCRIPTOR_INVALID','Node catalog quota exceeded');
    const urls=new Set(),ids=new Set();
    for(const item of trustedDescriptors){const value=descriptor(item);if(urls.has(value.url)||ids.has(value.nodeId))throw failure('NODE_DESCRIPTOR_INVALID','Duplicate Node catalog entry');urls.add(value.url);ids.add(value.nodeId);this.#peers.set(Object.freeze({}),value);}
+   if(!['legacy-migration','managed'].includes(localOwnership))throw failure('NODE_OWNERSHIP_PROFILE','Explicit local ownership profile required');
+   this.#localOwnership=localOwnership;this.#journalClass=global.DmashAccountRouteJournalV2;
    this.#root=deviceRoot;this.#factory=hostFactory;
    this.#unsubscribe=deviceRoot.onLock(()=>this.stop());
   }
@@ -34,10 +36,12 @@
    const cancelled=new Promise((_,reject)=>{onAbort=()=>reject(failure('NODE_SESSION_CHANGED','Node root session changed'));job.abort.signal.addEventListener('abort',onAbort,{once:true});});
    const started=Promise.resolve().then(()=>{
     if(!this.#current(job))throw failure('NODE_SESSION_CHANGED','Node root session changed');
-    return this.#factory.startForDevice(this.#root,{signal:job.abort.signal});
+    if(this.#localOwnership==='managed'){if(typeof this.#journalClass?.createReceiptRouter!=='function')throw failure('NODE_RECEIPT_ROUTER_UNAVAILABLE','Trusted journal receipt router required');job.receipts=this.#journalClass.createReceiptRouter(this.#root);}
+    return this.#factory.startForDevice(this.#root,{signal:job.abort.signal,localOwnership:this.#localOwnership});
    }).then(host=>{
     if(!this.#current(job)){host?.close();throw failure('NODE_SESSION_CHANGED','Node root session changed');}
     if(!host||host.closed||typeof host.close!=='function'||typeof host.connect!=='function'){host?.close?.();throw failure('NODE_RUNTIME_UNAVAILABLE','Invalid Node host');}
+    if(job.receipts)host.setCommitReceiptVerifier(job.receipts.verify);
     job.host=host;return host;
    });
    job.promise=Promise.race([started,cancelled]).catch(error=>{
@@ -45,6 +49,8 @@
    }).finally(()=>job.abort.signal.removeEventListener('abort',onAbort));
    return job.promise;
   }
+  registerAccountJournal(journal){const job=this.#job;if(!job?.receipts||!job.host||!this.#current(job))throw failure('NODE_RECEIPT_ROUTER_UNAVAILABLE','Managed Node receipt router not ready');return job.receipts.register(journal);}
+  unregisterAccountJournal(capability){const job=this.#job;if(!job?.receipts||!this.#current(job))return false;return job.receipts.unregister(capability);}
   capture(){
    const job=this.#job;
    if(!job?.host||!this.#current(job))throw failure('NODE_RUNTIME_UNAVAILABLE','Node runtime not ready');
@@ -68,7 +74,7 @@
   }
   stop(){
    const job=this.#job;if(!job)return;this.#job=null;++this.#generation;
-   job.abort.abort();job.host?.close();job.connections.clear();
+   job.abort.abort();job.receipts?.close();job.host?.close();job.connections.clear();
   }
   close(){if(this.#closed)return;this.#closed=true;this.stop();this.#unsubscribe?.();this.#unsubscribe=null;this.#peers.clear();}
  }

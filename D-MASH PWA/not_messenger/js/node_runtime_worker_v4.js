@@ -8,13 +8,14 @@ self.DMASH_NODE_WORKER_URLS=Object.freeze({
 importScripts('vendor/nacl-fast.min.js','vendor/blake3.min.js','secure_session.js',
  'node_identity.js','node_relationships_v4.js','node_admission_v4.js','node_registration_v4.js',
  'resource_pow.js','node_socket_v4.js','node_channel_v4.js','probe_primitives_v4.js',
- 'route_discovery_v4.js','recipient_payload_v4.js','node_routing_v4.js','node_inbox_v4.js','node_local_delivery_v4.js');
-let closed=false,ready=false,initializing=false,signing=null,store=null,runtime=null,gate=null,inbox=null,local=null;
+ 'route_discovery_v4.js','recipient_payload_v4.js','node_routing_v4.js','node_inbox_v4.js','node_local_delivery_v4.js','node_local_ownership_v4.js');
+let localOwnership='legacy-migration';
+let closed=false,ready=false,initializing=false,signing=null,store=null,runtime=null,gate=null,inbox=null,local=null,ownership=null;
 const abort=new AbortController(),connecting=new Set(),requests=new Set();
 const hex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
 const wipe=value=>{if(value instanceof Uint8Array&&value.byteLength)value.fill(0);};
 async function stop(){
- if(closed)return;closed=true;ready=false;abort.abort();inbox?.close();local?.close();store?.close();gate?.close();
+ if(closed)return;closed=true;ready=false;abort.abort();ownership?.close();inbox?.close();local?.close();store?.close();gate?.close();
  try{await runtime?.close();}finally{wipe(signing?.secretKey);self.close();}
 }
 async function claimActor(){
@@ -32,7 +33,8 @@ async function claimActor(){
 async function initialize(data){
  if(initializing||runtime||closed)throw Error();initializing=true;
  try{
-  if(data.apiVersion!==2)throw Error('Incompatible Node worker API');
+  if(data.apiVersion!==3)throw Error('Incompatible Node worker API');
+  if(!['legacy-migration','managed'].includes(data.localOwnership))throw Error('Ownership profile required');localOwnership=data.localOwnership;
   for(const value of [data.seed,data.storageKey,data.baseNcrh])if(!(value instanceof Uint8Array)||value.length!==32)throw Error();
   signing=nacl.sign.keyPair.fromSeed(data.seed);const nodeId=hex(signing.publicKey);
   if(!DmashNodeIdentity.verify(nodeId))throw Error();
@@ -42,9 +44,9 @@ async function initialize(data){
   runtime=new DmashNodeRoutingV4(data.baseNcrh);
   inbox=await DmashNodeInboxV4.open(data.storageKey,nodeId,{isCurrent:()=>!closed});
   local=new DmashNodeLocalDeliveryV4(runtime,inbox);await inbox.pruneSeen();
-  const restored=await local.restore();
+  const restored=await local.restore({managedOnly:localOwnership==='managed'});ownership=new DmashNodeLocalOwnershipV4(local,inbox);
   if(data.credential)gate=new DmashNodeAdmissionV4.PasswordGate(data.credential);
-  ready=true;return {apiVersion:2,nodeId,worker:true,...restored};
+  ready=true;return {apiVersion:3,localOwnership,nodeId,worker:true,...restored};
  }catch(error){self.postMessage({id:data.id,ok:false});await stop();throw error;}
  finally{wipe(data.seed);wipe(data.storageKey);wipe(data.baseNcrh);wipe(data.credential?.key);}
 }
@@ -73,7 +75,18 @@ self.onmessage=async({data})=>{
   else if(data.type==='CONNECT')result=await connect(data);
   else{
    if(!ready||closed)throw Error();
-   if(data.type==='BIND_LOCAL')result=await local.bind(data);
+   if(localOwnership==='managed'&&['BIND_LOCAL','INSTALL_RECIPIENT_KEYS','INBOX_LIST','INBOX_ACK','SUBMIT'].includes(data.type))throw Error('Managed owner capability required');
+   if(data.type==='OWNER_CHALLENGE')result=await ownership.challenge(data.accountPublic,data.certificate);
+   else if(data.type==='OWNER_REGISTER')result=await ownership.register(data.challenge,data.signature);
+   else if(data.type==='OWNER_PREPARE')result=await ownership.prepare(data.ownerToken,data);
+   else if(data.type==='OWNER_INBOX_LIST'){const owner=ownership.owner(data.ownerToken);result=await inbox.list(owner.ownerSlot,data.limit,data.after);ownership.owner(data.ownerToken);}
+   else if(data.type==='OWNER_INBOX_ACK'){const owner=ownership.owner(data.ownerToken);result=await inbox.acknowledge(data.handle,owner.ownerSlot,{guard:()=>{ownership.owner(data.ownerToken);return true;}});ownership.owner(data.ownerToken);}
+   else if(data.type==='OWNER_SUBMIT'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=local.send(data.handle,data.payload,owner.routeId);}
+   else if(data.type==='OWNER_RELEASE'){ownership.owners.delete(data.ownerToken);result=true;}
+   else if(data.type==='OWNER_QUERY')result=await ownership.query(data.ownerToken,data.migrationId);
+   else if(data.type==='OWNER_ACTIVATE')result=await ownership.change(data.ownerToken,data.tuple,'ACTIVE');
+   else if(data.type==='OWNER_RETIRE')result=await ownership.change(data.ownerToken,data.tuple,'RETIRED');
+   else if(data.type==='BIND_LOCAL'){if(localOwnership==='managed')throw Error('Explicit migration required');result=await local.bind(data);}
    else if(data.type==='INSTALL_RECIPIENT_KEYS')result=await local.installRecipientKeys(data.routeId,data.recipientKeys);
    else if(data.type==='DISCOVER')result=await local.discover(data.certificate);
    else if(data.type==='SUBMIT')result=local.send(data.handle,data.payload,data.replyRouteId);

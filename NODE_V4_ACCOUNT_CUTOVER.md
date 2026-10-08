@@ -223,3 +223,31 @@ Then real Python↔JS transport tests must demonstrate the same authorized queue
 semantics for an offline transit neighbor and an offline local-delivery neighbor.
 Old-v3 mailbox ownership transfer remains a separately authenticated two-owner
 migration; do not delete or adopt old ciphertext through an alias rename.
+
+### Local ownership integration candidate (not deployed)
+
+Host/Worker API3 now has explicit `managed` versus `legacy-migration` local policy.
+The default retained compatibility mode is not ordinary Account v4 acceptance.
+Managed mode refuses BIND_LOCAL and leaves legacy encrypted rows/history intact,
+without advertising them or inferring authenticated ownership from accountSlot.
+Fresh local owner registration verifies an Account signature over a Worker nonce,
+Node identity, root-HMAC blind slot and exact certificate digest; this public proof
+is local only. Node never receives the Account signing secret. Worker and ownership
+RPC permit are private Host fields. Capabilities/handles are opaque Host references.
+
+prepareLocalBinding persists encrypted NODE_PREPARED with exact eight-field tuple,
+private discovery/recipient material verified against certificate, and no network
+advertisement. query/verifyPreparation reads real Worker state; root/Account guards
+are checked across awaits. ACTIVE is persisted before dispatch installation; failed
+installation can resume idempotently or after restart. RETIRED skips restoration
+and leaves history/material encrypted. No certificate renewal or new generation
+on an existing route is implemented: a different certificate digest fails closed,
+never overwrites the previous row. This is not full ownership migration.
+
+The Account journal's one-time injected preparation verifier and Host's one-time
+commit receipt verifier join two durable stores without claiming cross-DB atomicity.
+Only the journal's branded post-commit receipt may activate through the private
+Host endpoint; an arbitrary digest/dictionary cannot. This remains a same-origin
+trusted-module boundary, not isolation from arbitrary hostile scripts executing
+inside the page. BOOTSTRAP_ONLY authenticated receipt dispatch is still absent;
+ordinary new-contact v4 flow remains blocked on it and bootstrap integration.
