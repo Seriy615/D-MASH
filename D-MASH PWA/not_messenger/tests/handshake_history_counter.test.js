@@ -1,0 +1,16 @@
+'use strict';
+const assert=require('node:assert/strict'),{createCore,nacl}=require('./fixtures/core_vm.cjs');
+const h=x=>Buffer.from(x).toString('hex'),fixed=n=>new Uint8Array(32).fill(n);
+(async()=>{const {core,ctx,storage,rows}=await createCore();core.keys.kyber={secretKey:new Uint8Array(2400)};core.activePeerId=null;core.sendKyberFinal=async()=>true;
+ storage.commitHandshakeSecretsGamma=async(peer,fields,{phase,expectedPendingAttempt}={})=>{const old=await storage.getBox('blind_secrets',peer)||{};if(phase==='init'&&old.staticShared)throw Error('HANDSHAKE_STATE_CHANGED');if(phase==='final'&&old.pendingKyberInit?.attempt_id!==expectedPendingAttempt)throw Error('HANDSHAKE_STATE_CHANGED');const next={...old,...fields,msgCount:old.msgCount??0};if(phase==='init')delete next.kyberFinalReceipt;if(phase==='final'){delete next.pendingKyberInit;delete next.pendingKyberFinal;}await storage.putBox('blind_secrets',{alias:peer,data:next});return next;};
+ ctx.DmashKyberWasm.init=()=>true;ctx.DmashKyberWasm.encapsulate=()=>({success:true,ss:fixed(7),ct:new Uint8Array(1088).fill(9)});ctx.DmashKyberWasm.decapsulate=()=>({success:true,ss:fixed(8)});
+ const peer=nacl.sign.keyPair(),id=h(peer.publicKey),eph=nacl.box.keyPair(),nonce=nacl.randomBytes(24),body=Buffer.from(JSON.stringify({t:'pqc_init',attempt_id:h(fixed(12)),c_pub:h(eph.publicKey),k_pub:'ab'.repeat(1184),data:'test'}));
+ rows.set('blind_secrets'+id,{msgCount:3,psk:h(fixed(1)),staticShared:null,kyberFinalReceipt:{attempt_id:'stale'},unrelated:'preserve'});rows.set('blind_messages'+id+'seq1',{text:'old'});
+ const packet=h(Buffer.concat([Buffer.from([1]),nonce,eph.publicKey,nacl.box(body,nonce,core.keys.box.publicKey,eph.secretKey)]));await core.decrypt(packet,id,true);
+ const afterInit=await storage.getBox('blind_secrets',id);assert.equal(afterInit.msgCount,3,'0x01 rekey must not hide existing history');assert.equal(afterInit.unrelated,'preserve');assert(afterInit.pendingKyberFinal);assert.equal(afterInit.kyberFinalReceipt,undefined,'stale final receipt retired');assert(rows.has('blind_messages'+id+'seq1'));
+ const other=nacl.sign.keyPair(),id2=h(other.publicKey),attempt=h(fixed(13)),capsule=new Uint8Array(1088).fill(14),nonce2=nacl.randomBytes(24),ss=fixed(8),payload=Buffer.from(JSON.stringify({psk:h(fixed(15)),shift:7,attempt_id:attempt}));
+ rows.set('blind_secrets'+id2,{msgCount:4,psk:h(fixed(2)),pendingKyberInit:{attempt_id:attempt},pendingKyberFinal:{capsule:'stale'},unrelated:'still here'});
+ const final=h(Buffer.concat([Buffer.from([3]),capsule,nonce2,nacl.secretbox(payload,nonce2,ss)]));await core.decrypt(final,id2,true);
+ const afterFinal=await storage.getBox('blind_secrets',id2);assert.equal(afterFinal.msgCount,4,'0x03 final must not hide existing history');assert.equal(afterFinal.unrelated,'still here');assert.equal(afterFinal.pendingKyberInit,undefined);assert.equal(afterFinal.pendingKyberFinal,undefined,'stale outbound final retired');assert(afterFinal.kyberFinalReceipt);
+ console.log('PASS actual Core 0x01/0x03 rekey preserve history counter and unrelated encrypted state');
+})().catch(e=>{console.error(e);process.exitCode=1;});

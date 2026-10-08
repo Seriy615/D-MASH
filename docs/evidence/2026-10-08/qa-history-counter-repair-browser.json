@@ -1,0 +1,15 @@
+{
+  "scope": "BROWSER synthetic history counter repair with real Chromium IndexedDB; no live profile mutation",
+  "browser": "156.0.8078.4",
+  "sourceSha256": "ce55b9f32a2fb256f8d42ad86b35b18f2101215f574f845f27a2a899cebc5ac5",
+  "checks": {
+    "readOnlyInspection": true,
+    "orphanSaveRejected": true,
+    "rekeyCounterPreserved": true,
+    "exactRepair": true,
+    "oldCiphertextUnchanged": true,
+    "concurrentNoOverwrite": true,
+    "foreignRowsRejectRepair": true,
+    "finalCount": 5
+  }
+}

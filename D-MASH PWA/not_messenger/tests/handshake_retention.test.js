@@ -2,7 +2,8 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const nacl=require('../js/vendor/nacl-fast.min.js');
 const rows=new Map(),hex=value=>Buffer.from(value).toString('hex');
-const storage={getAlias:async id=>id,getBox:async(table,id)=>structuredClone(rows.get(table+id)||null),putBox:async(table,{alias,data})=>rows.set(table+alias,structuredClone(data))};
+const storage={getAlias:async id=>id,getBox:async(table,id)=>structuredClone(rows.get(table+id)||null),putBox:async(table,{alias,data})=>rows.set(table+alias,structuredClone(data)),
+ async commitHandshakeSecretsGamma(peer,fields,{phase,expectedPendingAttempt}={}){const old=await this.getBox('blind_secrets',peer)||{};if(phase==='init'&&old.staticShared)throw Error('HANDSHAKE_STATE_CHANGED');if(phase==='final'&&old.pendingKyberInit?.attempt_id!==expectedPendingAttempt)throw Error('HANDSHAKE_STATE_CHANGED');const next={...old,...fields,msgCount:old.msgCount??0};if(phase==='init')delete next.kyberFinalReceipt;if(phase==='final'){delete next.pendingKyberInit;delete next.pendingKyberFinal;}await this.putBox('blind_secrets',{alias:peer,data:next});return next;}};
 const context={console,Uint8Array,TextEncoder,TextDecoder,DataView,crypto,URL,Map,Set,Storage:storage,
  localStorage:{getItem:()=>null},sessionStorage:{getItem:()=>null},document:{getElementById:()=>null},setTimeout:()=>0,
  window:{nacl,crypto,location:{},addEventListener(){}}};

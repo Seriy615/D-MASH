@@ -1011,17 +1011,17 @@ const Core = {
                 await Storage.putBox('blind_peers', { alias: aliasL1, data: peer });
                 KyberWasm.init();
                 const k = KyberWasm.encapsulate(this.hexToBytes(payload.k_pub));
+                const sharedHex = this.bytesToHex(k.ss); k.ss.fill(0);
                 // НОВЫЙ ШИФТ: в миллисекундах до +-2^32
                 const newPSK = window.nacl.randomBytes(32);
                 const newShift = this.randomInt32();
-                await Storage.putBox('blind_secrets', {
-                    alias: aliasL1,
-                    data: { staticShared: this.bytesToHex(k.ss), psk: this.bytesToHex(newPSK), epochShift: newShift,
-                        ratchetRoot: this.bytesToHex(k.ss), ratchetEpoch: 0, ratchetPreviousRoot: null, ratchetPreviousRoots: [], ratchetPending: null,
-                        ratchetLastUpdate: null, msgCount: 0,
+                await Storage.commitHandshakeSecretsGamma(pid,
+                    { staticShared: sharedHex, psk: this.bytesToHex(newPSK), epochShift: newShift,
+                        ratchetRoot: sharedHex, ratchetEpoch: 0, ratchetPreviousRoot: null, ratchetPreviousRoots: [], ratchetPending: null,
+                        ratchetLastUpdate: null,
                         pendingKyberFinal: {capsule: this.bytesToHex(k.ct), psk: this.bytesToHex(newPSK), shift: newShift,
-                            attempt_id: payload.attempt_id || this.bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256', raw)))} }
-                });
+                            attempt_id: payload.attempt_id || this.bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256', raw)))} },
+                    {phase: 'init'});
                 const pendingAttempt = (await Storage.getBox('blind_secrets', aliasL1)).pendingKyberFinal.attempt_id;
                 const sent = await this.sendKyberFinal(pid, k.ct, newPSK, newShift, pendingAttempt);
                 if (this.activePeerId === pid) this.selectPeer(pid);
@@ -1048,13 +1048,13 @@ const Core = {
                     !Number.isInteger(final.shift) || (secrets?.pendingKyberInit &&
                      final.attempt_id !== secrets.pendingKyberInit.attempt_id)) { ss.fill(0); return processed(); }
                 const confirmationId = final.attempt_id || null;
-                const next = { staticShared: this.bytesToHex(ss), psk: final.psk, epochShift: final.shift,
-                    ratchetRoot: this.bytesToHex(ss), ratchetEpoch: 0, ratchetPreviousRoot: null, ratchetPreviousRoots: [], ratchetPending: null,
-                    ratchetLastUpdate: null, msgCount: 0,
+                const sharedHex = this.bytesToHex(ss); ss.fill(0);
+                const next = { staticShared: sharedHex, psk: final.psk, epochShift: final.shift,
+                    ratchetRoot: sharedHex, ratchetEpoch: 0, ratchetPreviousRoot: null, ratchetPreviousRoots: [], ratchetPending: null,
+                    ratchetLastUpdate: null,
                     kyberFinalReceipt: confirmationId ? {attempt_id: confirmationId, capsule: this.bytesToHex(encapsulated)} : null };
-                delete next.pendingKyberInit;
-                await Storage.putBox('blind_secrets', {alias: aliasL1, data: next});
-                ss.fill(0);
+                await Storage.commitHandshakeSecretsGamma(pid, next,
+                    {phase: 'final', expectedPendingAttempt: confirmationId});
                 this.shmon("INFO", "КВАНТОВЫЙ КАНАЛ УСТАНОВЛЕН!");
                 if (this.activePeerId === pid) this.selectPeer(pid);
                 return {...processed(), ...(confirmationId ? {confirmation: {type: 'pqc_confirm', attempt_id: confirmationId}} : {})};

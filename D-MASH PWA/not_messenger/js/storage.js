@@ -78,34 +78,217 @@ const Storage = {
      */
 // В storage.js измени saveMessageGamma:
     saveMessageGamma: async function(peerID, text, inbound, isRead, transportState = null, wireId = null) {
-        const aliasL1 = await this.getAlias(peerID, "L1");
-
-        let secrets = await this.getBox('blind_secrets', aliasL1);
-        if (!secrets) {
-            secrets = { msgCount: 0, psk: this.uint8ToHex(window.nacl.randomBytes(32)), epochShift: 0, staticShared: null };
-        }
-
-        const seqNum = (secrets.msgCount || 0) + 1;
-        secrets.msgCount = seqNum;
-        await this.putBox('blind_secrets', { alias: aliasL1, data: secrets });
-
-        const aliasL3 = await this.getAlias(aliasL1 + seqNum, "L3");
-        await this.putBox('blind_messages', {
-            alias: aliasL3,
-            // Outgoing data has only entered local transport at this point.
-            // Do not claim DELIVERED or READ without authenticated receipts.
-            data: { text: window.DmashChatPassword ? await window.DmashChatPassword.protect(this, peerID, text) : text, ts: Date.now(), inbound, transportState: inbound ? null : (transportState || 'SENT'), wireId }
+        const db = this.db, masterKey = this.masterKey, salt = Core.blindSalt, account = Core.activeIdentity;
+        const check = () => {
+            if (this.db !== db || this.masterKey !== masterKey || Core.blindSalt !== salt ||
+                Core.activeIdentity !== account || Core._accountTransitioning)
+                throw new Error('Account vault changed during message save');
+        };
+        const read = (table, alias) => new Promise((resolve, reject) => {
+            check(); const tx = db.transaction(table, 'readonly'), request = tx.objectStore(table).get(alias);
+            request.onsuccess = () => resolve(request.result ?? null);
+            request.onerror = () => reject(request.error || Error('Message preflight failed'));
+            tx.onabort = () => reject(tx.error || Error('Message preflight aborted'));
         });
-
-        const peerInfo = await this.getBox('blind_peers', aliasL1) || { id: peerID, name: `Peer-${peerID.substring(0,4)}` };
-        peerInfo.last_ts = Date.now();
-        // An outgoing message or a read inbound message must not erase a
-        // previously pending unread marker; only opening the chat clears it.
+        check(); const aliasL1 = await this.getAlias(peerID, 'L1'); check();
+        const peerRaw = await read('blind_peers', aliasL1);
+        const existingPeer = peerRaw ? await this.decryptBox(peerRaw.blob) : null; check();
+        if (peerRaw && (!existingPeer || existingPeer.id !== peerID)) throw Error('Corrupt chat owner; no message saved');
+        const secretAlias = window.DmashChatPassword ?
+            await window.DmashChatPassword.location(this, aliasL1, 'L2', existingPeer?.chatLock) : aliasL1;
+        check(); const secretRaw = await read('blind_secrets', secretAlias);
+        const old = secretRaw ? await this.decryptBox(secretRaw.blob) : null; check();
+        if (secretRaw && !old) throw Error('Corrupt chat counter; no message saved');
+        const count = old?.msgCount ?? 0;
+        if (!Number.isSafeInteger(count) || count < 0 || count >= 1000000) throw Error('Invalid chat counter; no message saved');
+        const seqNum = count + 1, aliasL3 = await this.getAlias(aliasL1 + seqNum, 'L3'); check();
+        const secrets = old ? {...old, msgCount: seqNum} :
+            {msgCount: seqNum, psk: this.uint8ToHex(window.nacl.randomBytes(32)), epochShift: 0, staticShared: null};
+        const peerInfo = existingPeer ? {...existingPeer} : {id: peerID, name: `Peer-${peerID.substring(0,4)}`};
+        const ts = Date.now(); peerInfo.last_ts = ts;
         if (inbound && !isRead) peerInfo.unread = true;
-        await this.putBox('blind_peers', { alias: aliasL1, data: peerInfo });
-
-        // ФИКС: Возвращаем SeqNum
+        const protectedText = window.DmashChatPassword ? await window.DmashChatPassword.protect(this, peerID, text) : text;
+        check(); const secretBlob = await this.encryptBox(secrets);
+        const messageBlob = await this.encryptBox({text: protectedText, ts, inbound,
+            transportState: inbound ? null : (transportState || 'SENT'), wireId});
+        const peerBlob = await this.encryptBox(peerInfo); check();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(['blind_secrets', 'blind_messages', 'blind_peers'], 'readwrite');
+            let problem = null, remaining = 3;
+            const fail = error => {problem = error; try {tx.abort();} catch (_) {reject(error);}};
+            const actual = {}, lookups = [['blind_secrets', secretAlias], ['blind_messages', aliasL3], ['blind_peers', aliasL1]];
+            for (const [table, alias] of lookups) {
+                const request = tx.objectStore(table).get(alias);
+                request.onsuccess = () => {
+                    try {
+                        check(); actual[table] = request.result ?? null;
+                        if (--remaining) return;
+                        if ((actual.blind_secrets?.blob ?? null) !== (secretRaw?.blob ?? null) ||
+                            (actual.blind_peers?.blob ?? null) !== (peerRaw?.blob ?? null))
+                            throw Error('Chat state changed; retry message save');
+                        if (actual.blind_messages) throw Error('Existing message at next sequence; repair counter before sending');
+                        tx.objectStore('blind_secrets').put({alias: secretAlias, blob: secretBlob});
+                        tx.objectStore('blind_messages').put({alias: aliasL3, blob: messageBlob});
+                        tx.objectStore('blind_peers').put({alias: aliasL1, blob: peerBlob});
+                    } catch (error) {fail(error);}
+                };
+            }
+            tx.oncomplete = () => {try {check(); resolve();} catch (error) {reject(error);}};
+            tx.onabort = () => reject(problem || tx.error || Error('Message save aborted'));
+            tx.onerror = () => {};
+        });
         return seqNum;
+    },
+
+    // A key exchange may replace cryptographic session fields but must never
+    // reset the independent, encrypted Gamma history counter. Compare the
+    // exact encrypted owner rows inside one transaction; a concurrent message
+    // append or chat-lock change makes this attempt retryable, never lossy.
+    commitHandshakeSecretsGamma: async function(peerID, fields, {phase, expectedPendingAttempt = null} = {}) {
+        if (!['init', 'final'].includes(phase) || !fields || typeof fields !== 'object' ||
+            Object.hasOwn(fields, 'msgCount')) throw Error('Invalid handshake state update');
+        const db = this.db, masterKey = this.masterKey, salt = Core.blindSalt, account = Core.activeIdentity;
+        const check = () => {
+            if (this.db !== db || this.masterKey !== masterKey || Core.blindSalt !== salt ||
+                Core.activeIdentity !== account || Core._accountTransitioning)
+                throw Error('Account vault changed during handshake');
+        };
+        const read = (table, alias) => new Promise((resolve, reject) => {
+            check(); const tx = db.transaction(table, 'readonly'), request = tx.objectStore(table).get(alias);
+            request.onsuccess = () => resolve(request.result ?? null);
+            request.onerror = () => reject(request.error || Error('Handshake preflight failed'));
+            tx.onabort = () => reject(tx.error || Error('Handshake preflight aborted'));
+        });
+        const aliasL1 = await this.getAlias(peerID, 'L1'); check();
+        const peerRaw = await read('blind_peers', aliasL1);
+        const peer = peerRaw ? await this.decryptBox(peerRaw.blob) : null; check();
+        if (peerRaw && (!peer || peer.id !== peerID)) throw Error('Corrupt chat owner; handshake refused');
+        const secretAlias = window.DmashChatPassword ?
+            await window.DmashChatPassword.location(this, aliasL1, 'L2', peer?.chatLock) : aliasL1;
+        check(); const previousRaw = await read('blind_secrets', secretAlias);
+        const previous = previousRaw ? await this.decryptBox(previousRaw.blob) : null; check();
+        if (previousRaw && !previous) throw Error('Corrupt chat counter; handshake refused');
+        const count = previous?.msgCount ?? 0;
+        if (!Number.isSafeInteger(count) || count < 0 || count > 1000000) throw Error('Invalid chat counter; handshake refused');
+        if (phase === 'init' && (previous?.staticShared || previous?.pendingKyberInit)) throw Error('Handshake state changed; retry');
+        if (phase === 'final' && (previous?.staticShared && !previous.pendingKyberInit ||
+            previous?.pendingKyberInit && previous.pendingKyberInit.attempt_id !== expectedPendingAttempt))
+            throw Error('Handshake state changed; retry');
+        const next = {...previous, ...fields, msgCount: count};
+        if (phase === 'init') delete next.kyberFinalReceipt;
+        if (phase === 'final') {delete next.pendingKyberInit; delete next.pendingKyberFinal;}
+        const blob = await this.encryptBox(next); check();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(['blind_peers', 'blind_secrets'], 'readwrite');
+            let problem = null, remaining = 2; const actual = {};
+            const fail = error => {problem = error; try {tx.abort();} catch (_) {reject(error);}};
+            for (const [table, alias] of [['blind_peers', aliasL1], ['blind_secrets', secretAlias]]) {
+                const request = tx.objectStore(table).get(alias);
+                request.onsuccess = () => {
+                    try {
+                        check(); actual[table] = request.result ?? null;
+                        if (--remaining) return;
+                        if ((actual.blind_peers?.blob ?? null) !== (peerRaw?.blob ?? null) ||
+                            (actual.blind_secrets?.blob ?? null) !== (previousRaw?.blob ?? null))
+                            throw Error('Handshake state changed; retry');
+                        tx.objectStore('blind_secrets').put({alias: secretAlias, blob});
+                    } catch (error) {fail(error);}
+                };
+            }
+            tx.oncomplete = () => {try {check(); resolve();} catch (error) {reject(error);}};
+            tx.onabort = () => reject(problem || tx.error || Error('Handshake state update aborted'));
+            tx.onerror = () => {};
+        });
+        return next;
+    },
+
+    // Explicit recovery only. This deliberately requires a single-peer vault:
+    // every raw message row must match the contiguous, authenticated aliases
+    // for this peer. It never guesses ownership of a foreign or gapped row.
+    _historyCounterProofGamma: async function(peerID, targetCount, expectedCurrentCount) {
+        if (!/^[0-9a-f]{64}$/.test(peerID) || !Number.isSafeInteger(targetCount) ||
+            targetCount < 1 || targetCount > 1000 || !Number.isSafeInteger(expectedCurrentCount) ||
+            expectedCurrentCount < 0 || expectedCurrentCount >= targetCount)
+            throw Error('Invalid history repair scope');
+        const db = this.db, masterKey = this.masterKey, salt = Core.blindSalt, account = Core.activeIdentity;
+        const check = () => {
+            if (this.db !== db || this.masterKey !== masterKey || Core.blindSalt !== salt ||
+                Core.activeIdentity !== account || Core._accountTransitioning)
+                throw Error('Account vault changed during history inspection');
+        };
+        const read = (table, alias) => new Promise((resolve, reject) => {
+            check(); const tx = db.transaction(table, 'readonly'), request = tx.objectStore(table).get(alias);
+            request.onsuccess = () => resolve(request.result ?? null);
+            request.onerror = () => reject(request.error || Error('History inspection failed'));
+            tx.onabort = () => reject(tx.error || Error('History inspection aborted'));
+        });
+        check(); const aliasL1 = await this.getAlias(peerID, 'L1'); check();
+        const peerRaw = await read('blind_peers', aliasL1);
+        const peer = peerRaw ? await this.decryptBox(peerRaw.blob) : null; check();
+        if (!peer || peer.id !== peerID || peer.chatLock) throw Error('History owner missing, corrupt, or locked');
+        const secretRaw = await read('blind_secrets', aliasL1);
+        const secrets = secretRaw ? await this.decryptBox(secretRaw.blob) : null; check();
+        if (!secrets || secrets.msgCount !== expectedCurrentCount)
+            throw Error('History counter changed or corrupt');
+        const aliases = [];
+        for (let i = 1; i <= targetCount; i++) {aliases.push(await this.getAlias(aliasL1 + i, 'L3')); check();}
+        const boundary = await this.getAlias(aliasL1 + (targetCount + 1), 'L3'); check();
+        const rawMessages = await new Promise((resolve, reject) => {
+            check(); const tx = db.transaction('blind_messages', 'readonly'), request = tx.objectStore('blind_messages').getAll();
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => reject(request.error || Error('History scan failed'));
+            tx.onabort = () => reject(tx.error || Error('History scan aborted'));
+        });
+        check(); const found = new Map(rawMessages.map(row => [row.alias, row]));
+        if (rawMessages.length !== targetCount || found.size !== targetCount || found.has(boundary) ||
+            aliases.some(alias => !found.has(alias)))
+            throw Error('History aliases are gapped or include another owner; repair refused');
+        for (const alias of aliases) {
+            const value = await this.decryptBox(found.get(alias).blob); check();
+            if (!value || typeof value !== 'object' || !Object.hasOwn(value, 'text') ||
+                !Number.isSafeInteger(value.ts) || typeof value.inbound !== 'boolean')
+                throw Error('Corrupt history row; repair refused');
+        }
+        return {db, masterKey, check, aliasL1, peerRaw, secretRaw, secrets, aliases, rawMessages};
+    },
+    inspectHistoryCounterGamma: async function(peerID, targetCount, expectedCurrentCount = 0) {
+        const proof = await this._historyCounterProofGamma(peerID, targetCount, expectedCurrentCount);
+        proof.check();
+        return {repairable: true, currentCount: expectedCurrentCount, contiguousCount: targetCount,
+            totalMessageRows: proof.rawMessages.length, singlePeerVault: true};
+    },
+    repairHistoryCounterGamma: async function(peerID, targetCount, expectedCurrentCount = 0) {
+        const proof = await this._historyCounterProofGamma(peerID, targetCount, expectedCurrentCount);
+        const next = {...proof.secrets, msgCount: targetCount};
+        proof.check(); const blob = await this.encryptBox(next); proof.check();
+        await new Promise((resolve, reject) => {
+            const tx = proof.db.transaction(['blind_peers', 'blind_secrets', 'blind_messages'], 'readwrite');
+            let problem = null, remaining = 3; const actual = {};
+            const fail = error => {problem = error; try {tx.abort();} catch (_) {reject(error);}};
+            const requests = [['blind_peers', 'get', proof.aliasL1],
+                ['blind_secrets', 'get', proof.aliasL1], ['blind_messages', 'getAll', null]];
+            for (const [table, action, alias] of requests) {
+                const request = tx.objectStore(table)[action](...(alias === null ? [] : [alias]));
+                request.onsuccess = () => {
+                    try {
+                        proof.check(); actual[table] = request.result;
+                        if (--remaining) return;
+                        if ((actual.blind_peers?.blob ?? null) !== proof.peerRaw.blob ||
+                            (actual.blind_secrets?.blob ?? null) !== proof.secretRaw.blob)
+                            throw Error('History owner or counter changed; repair refused');
+                        const before = proof.rawMessages, now = actual.blind_messages || [];
+                        if (now.length !== before.length || now.some((row, i) =>
+                            row.alias !== before[i].alias || row.blob !== before[i].blob))
+                            throw Error('History changed during repair');
+                        tx.objectStore('blind_secrets').put({alias: proof.aliasL1, blob});
+                    } catch (error) {fail(error);}
+                };
+            }
+            tx.oncomplete = () => {try {proof.check(); resolve();} catch (error) {reject(error);}};
+            tx.onabort = () => reject(problem || tx.error || Error('History repair aborted'));
+            tx.onerror = () => {};
+        });
+        return {repaired: true, previousCount: expectedCurrentCount, messageCount: targetCount};
     },
 
     hasMessageWireId: async function(peerID, wireId) {
