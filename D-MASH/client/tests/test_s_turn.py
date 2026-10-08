@@ -102,18 +102,19 @@ class STurnTests(unittest.TestCase):
         for size in (31,129):
             with self.assertRaises(ValueError):STurnService(shared_secret=b's'*size)
 
-    def test_from_env_requires_shared_secret_and_probes_turn_listener(self):
+    def test_from_env_requires_real_async_health_before_advertising(self):
         env = {
             "DMASH_SIGNALING_WSS": "wss://node.example/signal/v1",
             "DMASH_TURN_URLS": "turn:turn.example:3478",
             "DMASH_TURN_SHARED_SECRET_B64": "" + __import__('base64').b64encode(b"e" * 32).decode(),
         }
-        with patch.dict(os.environ, env, clear=False), patch("backend.s_turn.socket.create_connection") as connect:
-            connect.return_value.__enter__.return_value = object()
+        with patch.dict(os.environ, env, clear=False):
             service = STurnService.from_env()
-            self.assertIsNotNone(service)
-            self.assertTrue(service.healthy())
-            connect.assert_called_once_with(("turn.example", 3478), timeout=0.4)
+            self.assertIsNotNone(service.health_monitor)
+            self.assertFalse(service.healthy())
+            self.assertFalse(service.available())
+            self.assertEqual(service.descriptor(), {"can_s_turn": False})
+            service.close()
         with patch.dict(os.environ, {**env, "DMASH_TURN_SHARED_SECRET_B64": "bad"}, clear=False):
             with self.assertRaises(ValueError): STurnService.from_env()
 
