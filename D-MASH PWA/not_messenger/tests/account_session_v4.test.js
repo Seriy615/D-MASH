@@ -38,6 +38,9 @@ async function establish(a,b){await a.session.initiate();const init=intent(a,'IN
  await initiator.session.receive(losingInit);
  assert.equal(initiator.value.confirmed.root,confirmedRoot);
  assert.equal(initiator.value.recovery===null,true,'losing initial proposal became a fresh recovery request');
+ initiator.restart();await initiator.session.receive(losingInit);assert.equal(initiator.value.recovery,null,'losing INIT replay after restart created phantom recovery');
+ await responder.session.initiate({recover:true});const freshRecoveryInit=intent(responder,'INIT');assert.notEqual(freshRecoveryInit,losingInit);await initiator.session.receive(freshRecoveryInit);assert.equal(initiator.value.recovery.remoteInit,freshRecoveryInit,'fresh signed recovery INIT was suppressed with losing replay');
+ await initiator.session.receive(losingInit);assert.equal(initiator.value.recovery.remoteInit,freshRecoveryInit,'losing replay replaced a fresh recovery proposal');
  // Failed state publication leaks no outbound intent and leaves old data intact.
  const [e,f]=await pair();e.failWrite=true;await assert.rejects(()=>e.session.initiate(),/WRITE_FAILED/);assert.equal(e.value,null);assert.equal(e.sent.length,0);e.failWrite=false;await e.session.initiate();const eInit=intent(e,'INIT');await e.session.initiate();assert.equal(intent(e,'INIT'),eInit);
  f.failWrite=true;await assert.rejects(()=>f.session.receive(eInit),/WRITE_FAILED/);assert.equal(f.value,null);f.failWrite=false;await f.session.receive(eInit);const ff=intent(f,'FINAL');f.restart();await f.session.receive(eInit);assert.equal(intent(f,'FINAL'),ff,'exact FINAL retry');

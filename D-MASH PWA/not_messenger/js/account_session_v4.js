@@ -72,6 +72,8 @@
   async _init(s,f,raw,digest,authorized){
    const p=s.pending;if(!authorized&&['EXPIRED','REFUSED'].includes(p?.phase)&&p.initDigest===digest)fail(p.phase);
    if(p?.initDigest===digest&&p.role==='responder'){this._queue(s,p.outbound);return {phase:p.phase};}
+   // A delayed exact replay of a simultaneous losing INIT is not recovery.
+   if(!authorized&&s.superseded.includes(digest))return {phase:s.confirmed?'ESTABLISHED':p?.phase??'SUPERSEDED',ignored:true};
    if((s.ledger||(p&&(p.role==='responder'||['EXPIRED','REFUSED'].includes(p.phase))&&p.initDigest!==digest))&&!authorized){
     if(s.recovery?.role==='authority'&&s.recovery.challenge&&(!s.recovery.consumed||s.pending)&&JSON.parse(s.recovery.challenge).expires_at>this.clock()&&s.recovery.initDigest!==digest)fail('RECOVERY_BUSY');
     s.recovery={...(s.recovery||{}),role:s.recovery?.role||'authority',remoteInit:raw,remoteInitDigest:digest,...(s.recovery?.role==='requester'?{}:{initDigest:digest})};return {phase:'RECOVERY_REQUIRED'};
@@ -79,7 +81,7 @@
    this._authority(s,f);
    if(p&&p.initDigest!==digest){
     if(p.phase!=='INIT_PREPARED'&&!authorized)fail('PENDING_CONFLICT');const current=JSON.parse(p.init),localOrder=current.sender+current.attempt_id,remoteOrder=f.sender+f.attempt_id;
-    if(!authorized&&localOrder<remoteOrder){this._queue(s,p.outbound);return {phase:p.phase};}
+    if(!authorized&&localOrder<remoteOrder){s.superseded.push(digest);s.superseded=s.superseded.slice(-32);this._queue(s,p.outbound);return {phase:p.phase};}
     s.superseded.push(p.initDigest);s.superseded=s.superseded.slice(-32);this._retireIntents(s,p.attempt);
    }
    if(s.superseded.includes(digest))fail('SUPERSEDED');
