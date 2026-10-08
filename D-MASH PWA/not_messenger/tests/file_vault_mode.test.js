@@ -49,6 +49,8 @@ vault.meta = async () => ({...base, ...(metadataMode === undefined ? {} : {contr
         'a legacy inventory cannot silently adopt Node authority');
     const normalize = new DmashFileVault(core, storage);
     normalize.fileAlias = async () => alias;
+    normalize.ownerAlias = async () => alias;
+    normalize.owner = vault.owner;
     normalize.open = async () => base;
     storage.db.transaction = () => ({objectStore: () => ({get: () => {
         const query = {};
@@ -57,5 +59,8 @@ vault.meta = async () => ({...base, ...(metadataMode === undefined ? {} : {contr
     }})});
     assert.equal((await normalize.meta(peer, fileId)).controlMode, 'v3-private',
         'actual legacy row read normalizes only to v3-private');
+    entryMode = 'node-v4';
+    await assert.rejects(normalize.meta(peer, fileId), /Corrupt file owner/,
+        'direct metadata reads also require matching Account inventory authority');
     console.log('file_vault_mode.test.js: authority ownership and legacy separation passed');
 })().catch(error => {console.error(error);process.exitCode = 1;});

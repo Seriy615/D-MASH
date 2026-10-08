@@ -169,7 +169,7 @@
             if (prior) {
                 if (prior.peer !== peer || prior.fileId !== fileId || prior.size !== blob.size ||
                     prior.inbound !== details.inbound) throw Error('File owner collision');
-                const existing = await this.meta(peer, fileId, session);
+                const existing = await this.meta(peer, fileId, session, prior);
                 if (existing?.sha256 !== details.sha256 || existing.name !== details.name ||
                     existing.mime !== details.mime || modeOf(existing.controlMode) !== controlMode ||
                     modeOf(prior.controlMode) !== controlMode) throw Error('File identity collision');
@@ -192,7 +192,7 @@
                 if (known) {
                     if (known.peer !== peer || known.fileId !== fileId || known.size !== blob.size ||
                         known.inbound !== details.inbound) throw Error('File owner collision');
-                    const existing = await this.meta(peer, fileId, session);
+                    const existing = await this.meta(peer, fileId, session, known);
                     if (existing?.sha256 !== digest || existing.name !== details.name ||
                         existing.mime !== details.mime || modeOf(existing.controlMode) !== controlMode ||
                         modeOf(known.controlMode) !== controlMode) throw Error('File identity collision');
@@ -234,23 +234,38 @@
             throw Error('File inventory changed; retry');
         }
 
-        async meta(peer, fileId, session = this.capture()) {
+        async meta(peer, fileId, session = this.capture(), ownerEntry = undefined) {
             const alias = await this.fileAlias(session, peer, fileId);
+            if (ownerEntry === undefined) {
+                const ownerAlias = await this.ownerAlias(session);
+                const owner = await this.owner(session, ownerAlias);
+                ownerEntry = owner.value.entries.find(entry => entry.alias === alias);
+            }
             const row = await request(session.db, 'blind_files', alias); session.check();
-            if (!row) return null;
+            if (!row && !ownerEntry) return null;
+            if (!row || !ownerEntry || ownerEntry.alias !== alias ||
+                ownerEntry.peer !== peer || ownerEntry.fileId !== fileId)
+                throw Error('Corrupt file owner');
             const meta = await this.open(session, alias, 'meta', row);
-            if (!this.validMeta(session, peer, fileId, meta)) throw Error('Corrupt file owner');
+            if (!this.validMeta(session, peer, fileId, meta) || meta.size !== ownerEntry.size ||
+                meta.inbound !== ownerEntry.inbound || meta.status !== ownerEntry.status ||
+                modeOf(meta.controlMode) !== modeOf(ownerEntry.controlMode))
+                throw Error('Corrupt file owner');
             return {...meta, controlMode: modeOf(meta.controlMode)};
         }
 
         async get(peer, fileId) {
             const session = this.capture(), alias = await this.fileAlias(session, peer, fileId);
+            const meta = await this.meta(peer, fileId, session);
+            if (!meta) return null;
             const row = await request(session.db, 'blind_files', alias); session.check();
-            if (!row) return null;
-            const meta = await this.open(session, alias, 'meta', row);
-            if (!this.validMeta(session, peer, fileId, meta)) throw Error('Corrupt file owner');
-            return {meta: {...meta, controlMode: modeOf(meta.controlMode)},
-                blob: await this._decryptBody(session, alias, meta, row)};
+            if (!row) throw Error('Corrupt file owner');
+            const current = await this.open(session, alias, 'meta', row);
+            if (!this.validMeta(session, peer, fileId, current) ||
+                current.sha256 !== meta.sha256 || current.size !== meta.size ||
+                modeOf(current.controlMode) !== meta.controlMode)
+                throw Error('Corrupt file owner');
+            return {meta, blob: await this._decryptBody(session, alias, meta, row)};
         }
 
         async update(peer, fileId, status, changes = {}) {
@@ -325,7 +340,7 @@
             for (const entry of entries) {
                 if (entry.alias !== await this.fileAlias(session, entry.peer, entry.fileId))
                     throw Error('Corrupt file owner inventory');
-                const meta = await this.meta(entry.peer, entry.fileId, session);
+                const meta = await this.meta(entry.peer, entry.fileId, session, entry);
                 if (!meta || meta.size !== entry.size || meta.inbound !== entry.inbound ||
                     meta.status !== entry.status || modeOf(meta.controlMode) !== modeOf(entry.controlMode))
                     throw Error('Corrupt file inventory');
@@ -342,7 +357,7 @@
             for (const entry of entries) {
                 if (entry.alias !== await this.fileAlias(session, peer, entry.fileId))
                     throw Error('Corrupt file owner; chat deletion refused');
-                const meta = await this.meta(peer, entry.fileId, session);
+                const meta = await this.meta(peer, entry.fileId, session, entry);
                 if (!meta || meta.size !== entry.size || meta.inbound !== entry.inbound ||
                     meta.status !== entry.status || modeOf(meta.controlMode) !== modeOf(entry.controlMode))
                     throw Error('Corrupt file owner; chat deletion refused');
@@ -359,7 +374,7 @@
             const owner = await this.owner(session, ownerAlias);
             const entry = owner.value.entries.find(item => item.alias === alias && item.peer === peer && item.fileId === fileId);
             if (!entry) throw Error('File owner missing; message deletion refused');
-            const meta = await this.meta(peer, fileId, session);
+            const meta = await this.meta(peer, fileId, session, entry);
             if (!meta || meta.size !== entry.size || meta.inbound !== entry.inbound ||
                 meta.status !== entry.status || modeOf(meta.controlMode) !== modeOf(entry.controlMode))
                 throw Error('Corrupt file owner; message deletion refused');
