@@ -1,0 +1,101 @@
+{
+  "mode": "BROWSER supplemental fault injection; full local source overlay; SW BLOCKED",
+  "limits": [
+    "Fresh synthetic A/B only; actual UI login/logout/menu/accept/retry",
+    "Incoming request metadata injected; real NaCl signatures and DeviceRoot encrypted storage",
+    "Send failure and captured successful queue injected; real remote delivery NOT RUN",
+    "Expiry uses genuinely signed short lifetime; no signed state rewrite"
+  ],
+  "steps": [
+    {
+      "id": "actual-ui-create-A-and-history",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-A-sign-then-send-fails",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-create-B-and-owner-guidance",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-owner-switch-and-exact-retry",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-expired-signed-accept-refused",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-caller-self-not-accepted",
+      "status": "PASS"
+    },
+    {
+      "id": "actual-ui-history-retained",
+      "status": "PASS"
+    }
+  ],
+  "sources": {
+    "index.html": "c78355ea6463f783e7f6cef37f636596a1839b95e2f99db12f71a06da5a4313a",
+    "js/release.js": "4e9d9a442c428ab22694ae31b3487688e8f700b30f4a3e016b9b9ddb0c7a02a9",
+    "js/device_routes.js": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+    "js/dmash_links.js": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+    "js/quick_name_registry.js": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+    "css/runtime_fixes.css": "8890a358595136854d2491cb5ab689f2bce0baeaf10605332133086084ad84cd",
+    "js/ui_logic.js": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+    "js/secure_session.js": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+    "js/device_client_v3.js": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+    "js/device_authority_v3.js": "a4f94a03b8a5444490338467f40b7cb43160a819b0ad553054b6e2d9671346b1",
+    "js/device_envelope.js": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+    "js/device_inbox.js": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+    "js/account_node_inbox_v4.js": "162a2dc2eb81d2657045993f34c6600266177b1727ebd492a9d3616692b9bd9c",
+    "js/route_discovery_v4.js": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+    "js/account_node_transport_v4.js": "8f363d6c0e5cb0efb9128b84fcc21bbdfe9c5d0cd34950374544e90e488a5cff",
+    "js/private_routes_v3.js": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+    "js/contact_bootstrap_v3.js": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+    "js/contact_flow_v3.js": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+    "js/contact_payloads.js": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+    "js/contact_transport.js": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+    "js/pending_contact_requests.js": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+    "js/resource_pow.js": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+    "js/ui_global_bridge.js": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+    "js/runtime_fixes.js": "5db76b6806db16deef7ba24e20e66b7c0cce7b72f4e5fb305aa5bc77d31f288b",
+    "js/public_contact_runtime.js": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+    "js/acceptance_fixes.js": "9d74679e96ef3b5de96a63363549bea7d1d1edcfcc4e8b2a9d64c6cebb03b7f3",
+    "js/acceptance_v50.js": "4c929f585e6ac4971659daea9ad6d8b78743a3c1fa98da248e5ad50ff5210804",
+    "js/acceptance_v51.js": "6970a537e22ac78a872456881db92d448116d81e4a2e61b29ddab27060387a65",
+    "js/call_signaling.js": "c0e368cb664d26b9b0311ee74a0d727d44dff00a64f18f973ecc857ea27e0560",
+    "js/call_runtime.js": "3db056a3cb6d2facb3b2f106130c979ab00bf2ef042c5cab7511039a41906679",
+    "js/account_ratchet.js": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+    "js/saved_messages.js": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+    "js/chat_cipher.js": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+    "js/chat_password.js": "1fd5b16af804eb73f834c6e1ab5c11c124d2ebf6d777aa543fd22e0533a9c96e",
+    "js/account_ratchet_runtime.js": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+    "js/account_recorded_media.js": "1b2e661a8fd3c773f1a25eec0a0076086f0040c1ec7f75f5f1e6df2defb6328e",
+    "js/file_channel.js": "6689f5803a52ca53a717dc80ece21cd9397b8f0b565a69675181bc6a4e8848c9",
+    "js/file_session.js": "2ab7617ba2c3e09d81d714b3c99d020150180fb1fb042ebf714dd2abf058ad81",
+    "js/file_runtime.js": "eff7ed6dd6c833775731d2b4a489246d6df3663d9441b37951e69dac2ccd5b3c",
+    "js/acceptance_v52.js": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+    "js/acceptance_v54.js": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+    "js/acceptance_v55.js": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+    "calc_icon.png": "e2edfaf28b60df71725c0a96fab4c6c80b135415c2913614ac497064b023f4da",
+    "js/vendor/kyber768.js": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+    "js/vendor/html5-qrcode.min.js": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+    "js/vendor/qrcode.min.js": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+    "js/vendor/nacl-util.min.js": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+    "js/vendor/argon2-bundled.min.js": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+    "js/device_root.js": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+    "js/storage.js": "ec79617c484fd130c2eff815262690d6c3f9b5e5cc40f37a5ade58366e329bb0",
+    "js/call_session.js": "ab5ed3e2db0635d971d83da70a45ed4811e977d35740c9d8dc64d29499952648",
+    "js/node_manager.js": "09e43547444a49ab4d20fe43d83df17f853ec487d3b0be0e62c2d82b3d4cec06",
+    "js/core_engine.js": "af02aa45ff0fba29f6acac16a4fadff282cab47de49e465c0f78b4c33cc415e1",
+    "js/vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "js/vendor/kyber768.wasm": "e9b316e56f5d1eef1f44f28bca99bec16ec9cff69af4b17d318143512255b009",
+    "nodes.json": "c2eb210ee181663a2a649730995e761e3195f0a341ec632ca21e4f415984290a"
+  },
+  "errors": [],
+  "browser": "156.0.8078.4",
+  "page": "transport-v3-node-preparation-20261008.26",
+  "sw": "BLOCKED"
+}
