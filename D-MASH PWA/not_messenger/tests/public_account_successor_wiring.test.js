@@ -1,0 +1,11 @@
+'use strict';
+// Real orchestration construction, trusted module doubles. Crypto/CAS is tested
+// in the history/runtime suites, not asserted by this dependency wiring fixture.
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+let source=fs.readFileSync(require.resolve('../js/public_account_orchestrator_v4.js'),'utf8').replace(' class PublicAccountOrchestratorV4{',` class PublicAccountOrchestratorV4{
+ static async wiringFixture(){const x=new PublicAccountOrchestratorV4();x.#session={assertCurrent(){},signal:new AbortController().signal};x.#core={};return {adapter:x,runtime:await x.#openRuntime()};}
+`);
+let historyOptions,runtimeOptions,receiver;
+class History{constructor(options){historyOptions=options;receiver=this;}persistAuthenticated(){}persistOutgoing(){}ackOutgoing(){}migrateOutgoingContext(value){assert.equal(this,receiver);return value;}outgoingDeliveryStatus(value){assert.equal(this,receiver);return value;}verifyOutgoingDeliveryStatus(value){assert.equal(this,receiver);return value;}close(){}}
+const context={Uint8Array,TextEncoder,AbortController,console,DmashAccountAuthenticatedHistoryV4:History,DmashAccountSealedOperationV4:{open:async()=>({close(){}})},DmashAccountNodeTransportV4:class{close(){}},DmashAccountInboxProgressV4:{open:async()=>({close(){}})},DmashAccountManagedInboxV4:class{close(){}},DmashAccountSessionRuntimeV4:class{constructor(options){runtimeOptions=options;}verifyPendingSuccessor(proof,expected){return {proof,expected};}close(){}}};vm.createContext(context);vm.runInContext(source,context);
+(async()=>{const {adapter}=await context.DmashPublicAccountOrchestratorV4.wiringFixture(),proof={},expected={};const verified=await historyOptions.verifySuccessor(proof,expected);assert.equal(verified.proof,proof);assert.equal(verified.expected,expected);for(const name of ['migrateOutgoing','outgoingDeliveryStatus','verifyOutgoingDeliveryStatus']){const input={};assert.equal(runtimeOptions[name](input),input);}adapter.close();assert.throws(()=>historyOptions.verifySuccessor(proof,expected),/PUBLIC_ACCOUNT_CLOSED/);console.log('PASS ordinary orchestrator wires successor verification, history CAS migration and durable delivery-proof callbacks; stale Account rejected');})().catch(e=>{console.error(e);process.exitCode=1;});

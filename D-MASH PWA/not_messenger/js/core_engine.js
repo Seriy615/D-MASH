@@ -195,6 +195,9 @@ const Core = {
         throw Object.assign(new Error('Не удалось открыть сохранённые данные устройства. Данные и ключи не удалены; требуется восстановление доступа.'), {code: 'RECOVERY_REQUIRED'});
     },
     _invalidateAccountSessionV4(reason = 'ACCOUNT_CHANGED') {
+        const publicNode = this._publicAccountNodeV4;
+        this._publicAccountNodeV4 = null;
+        publicNode?.promise.then(adapter => adapter.close()).catch(() => {});
         const session = this._accountSessionV4;
         this._accountSessionV4 = null;
         session?.controller.abort(reason);
@@ -231,6 +234,64 @@ const Core = {
         if (!capability) throw new Error('ACCOUNT_SESSION_UNAVAILABLE');
         capability.assertCurrent();
         return capability;
+    },
+    async openPublicAccountNodeV4(coordinator) {
+        const session = this.captureAccountSessionV4();
+        const existing = this._publicAccountNodeV4;
+        if (existing?.session === session && existing.coordinator === coordinator) return existing.promise;
+        if (!window.DmashPublicAccountOrchestratorV4 || !coordinator) throw new Error('PUBLIC_NODE_NOT_READY');
+        existing?.promise.then(adapter => adapter.close()).catch(() => {});
+        const entry = {session, coordinator, promise: null};
+        this._publicAccountNodeV4 = entry;
+        entry.promise = window.DmashPublicAccountOrchestratorV4.open({core: this, storage: Storage,
+            deviceRoot: window.DeviceRoot, coordinator}).then(adapter => {
+            try {
+                session.assertCurrent();
+                if (this._publicAccountNodeV4 !== entry) throw new Error('ACCOUNT_SESSION_CHANGED');
+                return adapter;
+            } catch (error) { adapter.close(); throw error; }
+        }).catch(error => {
+            if (this._publicAccountNodeV4 === entry) this._publicAccountNodeV4 = null;
+            throw error;
+        });
+        return entry.promise;
+    },
+    async _nodeMediaAdapterV4() {
+        const entry=this._publicAccountNodeV4;
+        if(!entry) throw new Error('NODE_MEDIA_ACCOUNT_REQUIRED');
+        entry.session.assertCurrent();const adapter=await entry.promise;entry.session.assertCurrent();
+        if(this._publicAccountNodeV4!==entry)throw new Error('ACCOUNT_SESSION_CHANGED');return adapter;
+    },
+    async canQueueNodeMediaV4(peer) { return (await this._nodeMediaAdapterV4()).canQueueMedia(peer); },
+    async confirmedNodeMediaPeerV4(peer) { return (await this._nodeMediaAdapterV4()).confirmMediaPeer(peer); },
+    async selectNodeMediaServiceV4(value) { return (await this._nodeMediaAdapterV4()).selectMediaService(value); },
+    async sendNodeMediaControlV4(value) { return (await this._nodeMediaAdapterV4()).sendMediaControl(value); },
+    async verifyNodeMediaControlV4(authority,expected) { return (await this._nodeMediaAdapterV4()).verifyMediaControl(authority,expected); },
+    async beginNodeFileTransferV4(authority,value) { return (await this._nodeMediaAdapterV4()).beginFileTransfer(authority,value); },
+    async drainNodeMediaControlsV4() { return (await this._nodeMediaAdapterV4()).drainMediaControls(); },
+    async acceptNodePublicContact(coordinator, registration, requestId, requestDigest) {
+        const adapter = await this.openPublicAccountNodeV4(coordinator);
+        return adapter.accept(registration, requestId, requestDigest);
+    },
+    async confirmNodePublicContact(coordinator, registration, requestId, requestDigest, selectedPeer) {
+        const adapter = await this.openPublicAccountNodeV4(coordinator);
+        return adapter.confirm(registration, requestId, requestDigest, selectedPeer);
+    },
+    async advanceNodePublicContact(coordinator, registration, requestId, requestDigest) {
+        const adapter = await this.openPublicAccountNodeV4(coordinator);
+        return adapter.advance(registration, requestId, requestDigest);
+    },
+    async restoreNodePublicContacts(coordinator) {
+        const adapter = await this.openPublicAccountNodeV4(coordinator);
+        return adapter.rehydrate();
+    },
+    async establishNodePublicContact(coordinator, peer) {
+        const adapter = await this.openPublicAccountNodeV4(coordinator);
+        return adapter.establish(peer);
+    },
+    async pollNodePublicContacts(coordinator) {
+        const adapter = await this.openPublicAccountNodeV4(coordinator);
+        return adapter.pollSessions();
     },
     async changeDeviceMasterSecret(currentMasterPin, nextMasterPin) {
         // This is deliberately device-scoped.  Account passwords never unwrap

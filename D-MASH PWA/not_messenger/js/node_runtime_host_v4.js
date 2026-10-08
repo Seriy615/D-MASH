@@ -44,7 +44,7 @@
    host.#worker.onmessage=({data})=>{
     if(host.closed)return;if(host.rootGuard&&!host.rootGuard()){host.close();return;}const job=host.pending.get(data?.id);if(!job)return;
     host.pending.delete(data.id);clearTimeout(job.timer);
-    if(data.ok)job.resolve(data.result);else job.reject(Error('Node worker operation failed'));
+    if(data.ok)job.resolve(data.result);else job.reject(Error(job.type==='SERVICE_DESCRIPTOR'&&['SERVICE_UNAVAILABLE','SERVICE_EXPIRED','SERVICE_CONTEXT','SERVICE_TIMEOUT','SERVICE_PEER_REQUIRED','SERVICE_CHANNEL_CHANGED','SERVICE_CHANNEL_CLOSED','SERVICE_SIGNATURE'].includes(data.code)?data.code:'Node worker operation failed'));
    };
    host.#worker.onerror=()=>host.close();
    const cancel=()=>host.close();signal?.addEventListener('abort',cancel,{once:true});
@@ -68,7 +68,7 @@
    const id=++this.sequence;
    return new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>{this.pending.delete(id);reject(Error('Node worker operation expired'));this.close();},type==='CONNECT'?310000:(type==='DISCOVER'||type==='OWNER_DISCOVER'||type==='PUBLIC_REQUEST'||type==='PUBLIC_CONTROL')?190000:30000);
-    this.pending.set(id,{resolve,reject,timer});
+    this.pending.set(id,{resolve,reject,timer,type});
     try{this.#worker.postMessage({...fields,id,type},transfer);}catch(error){clearTimeout(timer);this.pending.delete(id);reject(error);}
    });
   }
@@ -133,6 +133,7 @@
   async selectBootstrap(cap,exchangeId,requestDigest,{deny=false}={}){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_BOOTSTRAP_SELECT',{ownerToken:owner.token,exchangeId,requestDigest,deny});this.#owner(cap);return result;}
   async bootstrapSubmit(cap,handle,control){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_BOOTSTRAP_SUBMIT',{ownerToken:owner.token,handle,control});this.#owner(cap);return result;}
   async ownerDiscover(cap,certificate){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_DISCOVER',{ownerToken:owner.token,certificate});this.#owner(cap);return result;}
+  async ownerReleaseGrant(cap,handle){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_RELEASE_GRANT',{ownerToken:owner.token,handle});this.#owner(cap);return result;}
   async ownerInboxList(cap,limit=32,after=null){const owner=this.#owner(cap,{archiveAllowed:true}),result=await this.#ownerCall('OWNER_INBOX_LIST',{ownerToken:owner.token,limit,after});this.#owner(cap,{archiveAllowed:true});return result;}
   async ownerAcknowledgeInbox(cap,handle){const owner=this.#owner(cap,{archiveAllowed:true}),result=await this.#ownerCall('OWNER_INBOX_ACK',{ownerToken:owner.token,handle});this.#owner(cap,{archiveAllowed:true});return result;}
   async ownerSubmitSealed(cap,handle,{certificateDigest,blob}){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_SUBMIT_SEALED',{ownerToken:owner.token,handle,certificateDigest,blob});this.#owner(cap);return result;}
@@ -159,6 +160,7 @@
   submit(handle,payload,replyRouteId){return this.call('SUBMIT',{handle,payload,replyRouteId});}
   inboxList(accountSlot,limit=32,after=null){return this.call('INBOX_LIST',{accountSlot,limit,after});}
   acknowledgeInbox(handle,accountSlot){return this.call('INBOX_ACK',{handle,accountSlot});}
+  serviceDescriptor({nodeId,signalingWss}){return this.call('SERVICE_DESCRIPTOR',{nodeId,signalingWss});}
   stats(){return this.call('STATS');}
   injectCoverOnce(size=1024){return this.call('INJECT_COVER',{size});}
   coverPolicy(enabled,policy){return this.call('COVER_POLICY',{enabled,policy});}

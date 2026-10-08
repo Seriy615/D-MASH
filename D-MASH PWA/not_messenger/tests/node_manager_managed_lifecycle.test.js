@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const source=fs.readFileSync(require.resolve('../js/node_manager.js'),'utf8'),body=source.match(/async onDeviceUnlocked\(\) \{([\s\S]*?)\n    \},/)[1];
+const invoke=new Function('window','return async function(){'+body+'};');
+(async()=>{let legacy=0,managed=0;const self={autoConnect(){legacy++;},probeActivePublicDeviceRoutes(){legacy++;}},root={state:{root:{}}};const win={DMASH_NODE_PROFILE:'managed-v4',DeviceRoot:root,Core:{device:{signing:{}}}};
+ await assert.rejects(()=>invoke(win).call(self),/NODE_ROOT_LIFECYCLE_UNAVAILABLE/);assert.equal(legacy,0);
+ win.DmashNodeRootLifecycleV4={attach(value){assert.equal(value,root);return {start:async()=>{managed++;throw Error('PIN_MISMATCH');}};}};
+ await assert.rejects(()=>invoke(win).call(self),/PIN_MISMATCH/);assert.equal(legacy,0);assert.equal(managed,1);
+ console.log('PASS managed unlock refuses missing runtime or failed pin without legacy autoConnect/probe fallback');
+})().catch(e=>{console.error(e);process.exitCode=1;});

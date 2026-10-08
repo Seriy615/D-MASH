@@ -14,7 +14,7 @@
    if(!(base instanceof Uint8Array)||base.length!==32)throw Error('Invalid BaseNCRH');
    this.base=base.slice();this.clock=clock;this.monotonic=monotonic;this.peers=new Map();this.owned=[];this.labels=new Map();this.seen=new Map();
    this.queues=new Map();this.timers=new Map();this.senders=new Map();this.tasks=new Set();this.pending=new Set();this.rates=new Map();this.probes=[];this.coverHistory=[];this.coverTimer=null;this.coverPolicy=null;
-   this.closed=false;this.stats={forwarded:0,received:0,probes:0,batches:0};
+   this.serviceQueries=new Map();this.closed=false;this.stats={forwarded:0,received:0,probes:0,batches:0};
   }
   prune(){
    const now=this.clock();this.probes=this.probes.filter(row=>row.packet.expires_at>now&&this.peers.has(row.peer));for(const table of [this.labels,this.seen])for(const [key,row] of table)if(row.expires<=now)table.delete(key);
@@ -64,6 +64,7 @@
    finally{if(this.peers.get(peer)===channel)this.removePeer(peer);channel.close();}
   }
   removePeer(peer){
+   for(const [key,q]of this.serviceQueries)if(q.peer===peer){clearTimeout(q.timer);q.reject(Error('SERVICE_CHANNEL_CLOSED'));this.serviceQueries.delete(key);}
    this.peers.delete(peer);this.queues.delete(peer);clearTimeout(this.timers.get(peer));this.timers.delete(peer);this.rates.delete(peer);
    for(const [key,row] of this.labels)if(row.peer===peer||(Array.isArray(row.target)&&row.target[0]===peer))this.labels.delete(key);
    if(!this.peers.size)for(const pending of this.pending)pending.reject(Error('Node path unavailable'));
@@ -156,9 +157,23 @@
    this.send({peer,label:row.target[1],expires_at:row.expires,channel:this.peers.get(peer)},global.DmashRecipientPayloadV4.coverBox(size),async()=>{});
    this.coverHistory.push({at:now,peer,size});return true;
   }
+  requestService(peer){
+   const channel=this.peers.get(peer);if(this.closed||!channel||this.serviceQueries.size>=8)return Promise.reject(Error('SERVICE_UNAVAILABLE'));
+   const challenge=randomLabel();return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.serviceQueries.delete(challenge);reject(Error('SERVICE_TIMEOUT'));},10000);this.serviceQueries.set(challenge,{peer,channel,resolve,reject,timer});try{this.enqueue(peer,{type:'SERVICE_QUERY',version:4,challenge,expires_at:Math.floor(this.clock())+10});}catch(e){clearTimeout(timer);this.serviceQueries.delete(challenge);reject(e);}});
+  }
   async receive(peer,packet){
    if(!packet||packet.version!==4||!Number.isSafeInteger(packet.expires_at)||packet.expires_at>this.clock()+180)throw Error('Invalid Node packet');
    const expires=packet.expires_at;if(expires<=this.clock())return;
+   if(packet.type==='SERVICE_UNAVAILABLE'){
+    if(!exact(packet,'challenge,code,expires_at,type,version')||!token(packet.challenge)||packet.code!=='SERVICE_UNAVAILABLE')throw Error('SERVICE_REPLY_INVALID');
+    const q=this.serviceQueries.get(packet.challenge);if(!q)return;if(q.peer!==peer||this.peers.get(peer)!==q.channel)throw Error('SERVICE_CONTEXT');
+    this.serviceQueries.delete(packet.challenge);clearTimeout(q.timer);q.reject(Error('SERVICE_UNAVAILABLE'));return;
+   }
+   if(packet.type==='SERVICE_REPLY'){
+    if(!exact(packet,'challenge,descriptor,expires_at,type,version')||!token(packet.challenge))throw Error('SERVICE_REPLY_INVALID');
+    const q=this.serviceQueries.get(packet.challenge);if(!q)return;if(q.peer!==peer||this.peers.get(peer)!==q.channel)throw Error('SERVICE_CONTEXT');
+    this.serviceQueries.delete(packet.challenge);clearTimeout(q.timer);q.resolve({descriptor:packet.descriptor,challenge:packet.challenge,channel:q.channel});return;
+   }
    if(packet.type==='PROBE'){
     if(!exact(packet,'box,expires_at,ncrh,return_label,ttl,type,version')||!token(packet.return_label)||!token(packet.ncrh))throw Error('Invalid Probe');
     const remaining=global.DmashProbePrimitivesV4.consumeHop(packet.ttl),blob=packet.box;
@@ -189,6 +204,7 @@
   }
   async close(){
    this.closed=true;this.stopCover();
+   for(const q of this.serviceQueries.values()){clearTimeout(q.timer);q.reject(Error('SERVICE_RUNTIME_CLOSED'));}this.serviceQueries.clear();
    for(const pending of this.pending)pending.reject(Error('Node runtime closed'));
    for(const timer of this.timers.values())clearTimeout(timer);
    for(const channel of this.peers.values())channel.close();

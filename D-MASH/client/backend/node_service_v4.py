@@ -1,4 +1,6 @@
 """Opt-in native v4 process lifecycle and protected persistent Node material."""
+import asyncio
+import time
 import base64
 import json
 import os
@@ -103,6 +105,27 @@ class NodeServiceV4:
         except BaseException:
             if self.store: self.store.close()
             raise
+
+    def configure_service(self, signing_key, service, capabilities):
+        if service is None:
+            self.runtime.service_provider = None
+            return
+        async def descriptor(peer, channel, challenge):
+            if __package__:
+                from .node_service_descriptor_v4 import sign
+            else:
+                from node_service_descriptor_v4 import sign
+            channel.require_authorized()
+            status = await asyncio.to_thread(service.descriptor)
+            channel.require_authorized()
+            session = channel.secure.session
+            now = int(time.time())
+            healthy = status.get('can_s_turn') is True
+            return sign(dict(version=1, issuer=session.local_id, holder=peer,
+                transcript_hash=session.transcript_hash.hex(), challenge=challenge,
+                issued_at=now, expires_at=now+30, signaling_wss=service.signaling_wss,
+                can_s_turn=healthy, can_relay_blob=healthy and bool(getattr(capabilities, 'can_relay_blob', False))), signing_key)
+        self.runtime.service_provider = descriptor
 
     async def close(self):
         try:

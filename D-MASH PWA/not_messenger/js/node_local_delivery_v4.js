@@ -24,7 +24,7 @@
     if(persist&&!await this.inbox.saveBinding(id,saved))throw Error('Local route already persisted');
     this.check();
     const binding=entry;
-    entry.handler=async(_,packet)=>{this.check();if(binding.retired)throw Error('Binding retired');return this.inbox.receive(id,binding.accountSlot,packet.payload,binding.recipientKeys);};
+    entry.handler=async(_,packet)=>{this.check();if(binding.retired)throw Error('Binding retired');if(this.finalControl&&await this.finalControl(id,packet,binding.recipientKeys)){this.check();if(binding.retired)throw Error('Binding retired');return {control:true};}this.check();if(binding.retired)throw Error('Binding retired');return this.inbox.receive(id,binding.accountSlot,packet.payload,binding.recipientKeys);};
     this.runtime.bindLocal(certificate,entry.sign,entry.box,entry.handler);
     this.bindings.set(id,entry);entry=null;
     return {bound:true};
@@ -61,18 +61,22 @@
   }
   retireOwned(id){const entry=this.bindings.get(id);if(!entry)return;entry.retired=true;this.runtime.owned=this.runtime.owned.filter(row=>row.handler!==entry.handler);for(const [key,row]of this.runtime.labels||[])if(row.target===entry.handler)this.runtime.labels.delete(key);this.bindings.delete(id);wipe(entry);}
   prune(){for(const [id,row] of this.routes)if(row.route.expires_at<=this.runtime.clock()||this.runtime.peers.get(row.route.peer)!==row.route.channel)this.routes.delete(id);}
-  async discover(certificate){
+  async discover(certificate,{ownerToken=null}={}){
    this.check();this.prune();if(this.pending>=4||this.routes.size+this.pending>=128)throw Error('Local discovery quota');
+   if(ownerToken!==null&&(typeof ownerToken!=='string'||!/^[0-9a-f]{64}$/.test(ownerToken)))throw Error('Invalid discovery owner');
    certificate={...certificate};this.pending++;
    try{
     const route=await this.runtime.discover(certificate);this.check();
-    const handle=hex(crypto.getRandomValues(new Uint8Array(32)));this.routes.set(handle,{route,certificate});
+    const handle=hex(crypto.getRandomValues(new Uint8Array(32)));this.routes.set(handle,{route,certificate,ownerToken});
     return {handle,expiresAt:route.expires_at};
    }finally{this.pending--;}
   }
-  async sendSealed(handle,blob,replyRouteId,certificateDigest,{guard=()=>true}={}){
+  releaseGrant(handle,ownerToken){this.check();const row=this.routes.get(handle);if(!row)return false;if(!ownerToken||row.ownerToken!==ownerToken)throw Error('Discovery owner mismatch');this.routes.delete(handle);return true;}
+  releaseOwnerGrants(ownerToken){this.check();if(typeof ownerToken!=='string'||!/^[0-9a-f]{64}$/.test(ownerToken))throw Error('Invalid discovery owner');let released=0;for(const [handle,row] of this.routes)if(row.ownerToken===ownerToken){this.routes.delete(handle);released++;}return released;}
+  async sendSealed(handle,blob,replyRouteId,certificateDigest,{guard=()=>true,ownerToken=null}={}){
    this.check();this.prune();const destination=this.routes.get(handle),reply=this.bindings.get(replyRouteId);
    if(!destination||!reply||typeof blob!=='string'||blob.length>21848||typeof certificateDigest!=='string'||!/^[0-9a-f]{64}$/.test(certificateDigest))throw Error('Invalid prepared recipient envelope');
+   if(destination.ownerToken!==ownerToken)throw Error('Discovery owner mismatch');
    const raw=Uint8Array.from(atob(blob),c=>c.charCodeAt(0));if(raw.length<72||raw.length>16384||btoa(String.fromCharCode(...raw))!==blob)throw Error('Invalid prepared recipient encoding');
    global.DmashRouteDiscoveryV4.validateX25519PublicKey(hex(raw.subarray(0,32)));
    global.DmashRouteDiscoveryV4.verifyCertificate(destination.certificate);
@@ -80,9 +84,10 @@
    this.check();if(expected!==certificateDigest||!guard()||reply.retired)throw Error('Prepared recipient target changed');
    this.runtime.send(destination.route,blob,reply.handler);return {queued:true,certificateDigest};
   }
-  send(handle,payload,replyRouteId){
+  send(handle,payload,replyRouteId,ownerToken=null){
    this.check();this.prune();const destination=this.routes.get(handle),reply=this.bindings.get(replyRouteId);
    if(!destination||!reply)throw Error('Local route unavailable');
+   if(destination.ownerToken!==ownerToken)throw Error('Discovery owner mismatch');
    global.DmashRouteDiscoveryV4.verifyCertificate(destination.certificate);
    this.runtime.send(destination.route,global.DmashRecipientPayloadV4.sealPayload(unhex(destination.certificate.recipient_box),payload),reply.handler);
    return {queued:true};

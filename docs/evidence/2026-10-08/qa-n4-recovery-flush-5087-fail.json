@@ -1,0 +1,25 @@
+{
+  "scope": "BROWSER synthetic two-Worker Account session through a real Python Node and Chromium 156; no ordinary UI, deployed page, or Service Worker claim",
+  "result": "FAIL",
+  "sourceCommit": "1c74f4838d0459122fe1efda7ab3bbd6a8757598",
+  "sessionSourceSha256": "acb30404ce864ba96440d4972645b33063520d50d36acbeebc0418276b443116",
+  "transportSourceSha256": "9b608ad124fffc10b84e05a28e07a9c4335d16ab55db6bd42138e267828a8486",
+  "runFixtureSha256": "48b9487082933f0772ec4c1ca87aa3677eb2e49585fea9a722e255bc3a3809db",
+  "logSha256": "40da5582bfb6e9b0e36e19a0d1aa4f6378c4204ea701474741a81bba49265c62",
+  "deadlineMs": 180000,
+  "passedStages": [
+    "managed-worker-0-ready",
+    "managed-worker-1-ready",
+    "initial-confirmed-after-lost-final",
+    "page-reload-preserved-session-and-inbox-progress"
+  ],
+  "failedStage": "one-sided active-state loss recovery",
+  "deadlineState": {
+    "requester": {"phase": "INIT_PREPARED", "confirmed": false, "pendingIntents": ["INIT", "RECOVERY_PROOF"], "processed": 1, "inboxUnacknowledged": 1},
+    "authority": {"phase": "RESPONDER_PENDING", "oldConfirmed": true, "pendingIntents": ["CONFIRM_ACK", "FINAL"], "processed": 6, "inboxUnacknowledged": 0},
+    "opaquePackets": 38,
+    "repeatedOpaquePackets": 23
+  },
+  "observation": "The independent-intent flush fix allowed a FINAL submit to return queued=true. The requester still had one unacknowledged Inbox record at the deadline. This does not prove the packet contents or eventual convergence; the 180-second recovery gate remains red.",
+  "limits": "The shell used tee without pipefail, so its exit status was zero while Node printed a thrown deadline error. The result is recorded as FAIL from the explicit error; a future runner must propagate the Node exit status. Synthetic profiles only, no live user data touched."
+}
