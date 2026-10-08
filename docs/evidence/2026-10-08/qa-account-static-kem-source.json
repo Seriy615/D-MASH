@@ -1,0 +1,19 @@
+{
+  "baseSha": "5dd6860bebbd4771edd47d95971227f504649471",
+  "runHandle": 6978,
+  "exitCode": 0,
+  "unitScripts": 2,
+  "browser": "actual WASM/IndexedDB with synthetic Account guard; no network/miner",
+  "pending": "genuine KEM twoWorkerPython transport; Core/ordinary UI integration",
+  "sha256": {
+    "D-MASH PWA/not_messenger/js/account_static_kem_v1.js": "12008dbfe62f6f5c539767f3dad707d90e544376534b91de4c285d468bba9b33",
+    "D-MASH PWA/not_messenger/js/account_pairing_v2.js": "49692f34da52870e90d9f447ce8252afff40d82d972b238af3b5040e2a213a63",
+    "D-MASH PWA/not_messenger/js/account_route_binding_v2.js": "209f83e06cd6aa5439b23b627dcf534acb7abf1bd820334cf09bd737e58f312b",
+    "D-MASH PWA/not_messenger/js/vendor/kyber768.js": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+    "D-MASH PWA/not_messenger/js/vendor/kyber768.wasm": "e9b316e56f5d1eef1f44f28bca99bec16ec9cff69af4b17d318143512255b009",
+    "tools/test_account_static_kem_browser.cjs": "f4816a086f53865277213cae8caab9eeb34ab601da627a500e1c52a83d735300",
+    "tools/test_public_account_kem_browser.cjs": "a92158ebd234ebec3f0262305b17e325f8abe6bb57d03879a9237df817c938d3",
+    "D-MASH PWA/not_messenger/tests/account_pairing_v2.test.js": "6b312de1d99e9c7cda6847bab92e47603ff3ed6afd4c1355edec9f96f356e585",
+    "D-MASH PWA/not_messenger/tests/account_route_binding_v2.test.js": "d78b1a65635f18c5173b9bb0e36b70c0976115b5b42e0b5d8d211b1bc4acaf93"
+  }
+}

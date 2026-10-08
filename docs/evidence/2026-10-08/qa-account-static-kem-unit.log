@@ -1,0 +1,12 @@
+account_pairing_v2 real Ed25519/X25519/certificate tests PASS; vector SHA256 44a7fa01501ba685894225d33298a15354eb5c153e0381e486f1de1105b562a9
+✔ D-MASH PWA/not_messenger/tests/account_pairing_v2.test.js (2010.679584ms)
+PASS Account route bilateral binding: canonical real signatures, two phases, identity/certificate pinning, crossed-offer advisory order, replay/generation/predecessor and expiry guards
+✔ D-MASH PWA/not_messenger/tests/account_route_binding_v2.test.js (6330.825271ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8367.358653

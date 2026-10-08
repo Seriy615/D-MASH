@@ -1,0 +1,1 @@
+{"result":"PASS","scope":"real WASM/IndexedDB with synthetic Account session guards; no ordinary UI or Node transport claim","checks":{"distinctSameRootAccounts":true,"reopenSameMaterial":true,"concurrentCreateSameMaterial":true,"releaseAndAbortZeroed":true,"staleDecryptAndFailedGenerationZeroed":true,"realKyberRoundTrip":true,"corruptFailClosed":true,"legacyPreserved":true}}

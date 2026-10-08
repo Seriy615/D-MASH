@@ -16,6 +16,9 @@ assert.equal(result.identityStatus,'UNPINNED_CANDIDATE');
 assert.equal(api.parse(result.serialized,{now,expectedPeer:body.account_keys.signing,previousBinding:null,expectedGeneration:1}).identityStatus,'PINNED_CANDIDATE');
 assert(Object.isFrozen(result.bundle.account_keys));
 const clone=()=>JSON.parse(result.serialized);
+const isolatedProfile=api.sign({...body,account_keys:{...body.account_keys,kem_profile:'ACCOUNT_STATIC_LEGACY_KYBER768_V1'}},signer.secretKey,{now});
+assert.equal(api.parse(isolatedProfile.serialized,{now}).bundle.account_keys.kem_profile,'ACCOUNT_STATIC_LEGACY_KYBER768_V1');
+const downgraded=JSON.parse(isolatedProfile.serialized);downgraded.account_keys.kem_profile='LEGACY_KYBER768_BUNDLE_V1';assert.throws(()=>api.verify(downgraded,{now}),e=>e.code==='ACCOUNT_SIGNATURE');
 function rejects(fn,code){assert.throws(fn,e=>!code||e.code===code);}
 for(const key of ['pairing_id','contribution']){const b=clone();b[key]='aa'.repeat(32);rejects(()=>api.verify(b,{now}),'ACCOUNT_SIGNATURE');}
 for(const key of ['signing','box','kem_public']){const b=clone();b.account_keys[key]=key==='kem_public'?Buffer.alloc(1184,10).toString('base64url'):'ab'.repeat(32);rejects(()=>api.verify(b,{now}),'ACCOUNT_SIGNATURE');}

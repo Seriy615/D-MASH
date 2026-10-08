@@ -12,7 +12,7 @@ const alice=person(1),bob=person(11),mallory=person(21),people=[alice,bob].sort(
 const expectedParticipants=people.map(p=>hex(p.account.publicKey));
 function bundle(p,options={}){
  const generation=options.generation??1,issued_at=1800000000;
- const body={type:'DMASH_PAIRING_V2',version:2,transport_version:4,pairing_id:hex(seed(options.id??p.n+30)),generation,issued_at,expires_at:issued_at+600,previous_binding:options.previous??null,intended_peer:options.target??null,contribution:hex(seed(options.contribution??p.n+60)),account_keys:{signing:hex(p.account.publicKey),box:hex(p.box.publicKey),kem_profile:'LEGACY_KYBER768_BUNDLE_V1',kem_public:Buffer.alloc(1184,p.n).toString('base64url')},inbound_certificate:discovery.issueCertificate(p.route,p.discovery.publicKey,p.discoveryBox.publicKey,p.recipient.publicKey,{generation,issuedAt:issued_at,expiresAt:issued_at+900})};
+ const body={type:'DMASH_PAIRING_V2',version:2,transport_version:4,pairing_id:hex(seed(options.id??p.n+30)),generation,issued_at,expires_at:issued_at+600,previous_binding:options.previous??null,intended_peer:options.target??null,contribution:hex(seed(options.contribution??p.n+60)),account_keys:{signing:hex(p.account.publicKey),box:hex(p.box.publicKey),kem_profile:options.profile??'LEGACY_KYBER768_BUNDLE_V1',kem_public:Buffer.alloc(1184,p.n).toString('base64url')},inbound_certificate:discovery.issueCertificate(p.route,p.discovery.publicKey,p.discoveryBox.publicKey,p.recipient.publicKey,{generation,issuedAt:issued_at,expiresAt:issued_at+900})};
  return pairing.sign(body,p.account.secretKey,{now,localAccount:options.target??undefined}).serialized;
 }
 const context=(committed=null)=>({expectedParticipants,committed});
@@ -23,6 +23,9 @@ function receipts(candidate){const accept=api.signReceipt(candidate,'ACCEPT',peo
 (async()=>{
  const originalSecrets=people.map(p=>p.account.secretKey.slice()),a=bundle(alice),b=bundle(bob,{target:hex(alice.account.publicKey)});
  const candidate=await api.prepare([a,b],context());
+ const profile='ACCOUNT_STATIC_LEGACY_KYBER768_V1',newA=bundle(alice,{profile}),newB=bundle(bob,{profile,target:hex(alice.account.publicKey)});
+ await rejects(()=>api.prepare([newA,b],context()),'PROFILE');
+ assert.equal((await api.prepare([newA,newB],context())).binding.kem_profile,profile);
  assert.equal(candidate.status,'UNSIGNED_CANDIDATE');assert(Object.isFrozen(candidate.binding.participants[0]));
  const reverse=await api.prepare([b,a],context());assert.equal(reverse.serialized,candidate.serialized);assert.equal(reverse.digest,candidate.digest);
  const signed=receipts(candidate);

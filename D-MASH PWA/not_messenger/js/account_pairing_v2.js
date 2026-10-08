@@ -32,7 +32,7 @@
   if(b.previous_binding!==null)hex(b.previous_binding);if(b.intended_peer!==null)hex(b.intended_peer);
   const a=b.account_keys,c=b.inbound_certificate;
   hex(a.signing);hex(a.box);
-  if(a.kem_profile!==PROFILE)fail('PROFILE');
+  if(![PROFILE,'ACCOUNT_STATIC_LEGACY_KYBER768_V1'].includes(a.kem_profile))fail('PROFILE');
   if(typeof a.kem_public!=='string'||!/^[A-Za-z0-9_-]{1579}$/.test(a.kem_public))fail('KEM_ENCODING');
   const raw=atob(a.kem_public.replace(/-/g,'+').replace(/_/g,'/')+'=');
   if(raw.length!==1184||btoa(raw).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')!==a.kem_public)fail('KEM_ENCODING');
