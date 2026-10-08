@@ -16,6 +16,10 @@ require('../js/file_channel.js');require('../js/call_signaling.js');require('../
   await assert.rejects(runtime.receive({...message,manifest:{...manifest,mime:'audio/ogg'}},peer,()=>true),/Запись с таким номером уже существует/);
   assert.equal(rows.get(alias).blob,blob,'MIME substitution must not rewrite an encrypted reservation');assert.equal(sent.length,0);
  }
+ for(const owner of [{peerId:'f'.repeat(64),noteId},{peerId:peer,noteId:'f'.repeat(64)}]){
+  const blob=await runtime.crypt(session,{record:'turn_note_received_v1',status:'committed',sha256:manifest.sha256,size:manifest.size,mediaType:'voice',mime:'audio/webm',...owner});rows.set(alias,{blob});await assert.rejects(runtime.receive(message,peer,()=>true),/Запись с таким номером уже существует/);assert.equal(rows.get(alias).blob,blob);assert.equal(sent.length,0);
+ }
+ rows.set(alias,{blob:await runtime.crypt(session,{record:'turn_note_received_v1',peerId:peer,noteId,status:'committed',sha256:manifest.sha256,size:manifest.size,mediaType:'voice',mime:'audio/webm'})});
  assert.equal(await runtime.receive(message,peer,()=>true),true);assert.equal(sent.length,1);assert.equal(sent[0].type,'voip_note_complete');assert.equal(sent[0].sha256,manifest.sha256);
  console.log('PASS real AES reservation: pending/committed MIME substitution refused unchanged, original MIME retry returns metadata receipt');
 })().catch(e=>{console.error(e);process.exitCode=1;});

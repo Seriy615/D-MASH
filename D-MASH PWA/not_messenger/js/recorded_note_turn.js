@@ -79,13 +79,13 @@
    // Only a prior authenticated note with the same content may answer a retry.
    const receiveAlias=await this.alias(s,'received:'+peer+':'+message.note_id);
    const previous=await this.wait(s,new Promise((resolve,reject)=>{const q=s.db.transaction('pairing_material').objectStore('pairing_material').get(receiveAlias);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);}));
-   if(previous){const saved=await this.open(s,previous.blob);if(saved.sha256!==manifest.sha256||saved.size!==manifest.size||saved.mediaType!==message.media_type||saved.mime!==manifest.mime)throw Error('Запись с таким номером уже существует');if(saved.status==='committed')return this.send(s,peer,{type:'voip_note_complete',note_id:message.note_id,sha256:manifest.sha256});}
+   if(previous){const saved=await this.open(s,previous.blob);if(saved.record!=='turn_note_received_v1'||(saved.peerId!==undefined&&saved.peerId!==peer)||(saved.noteId!==undefined&&saved.noteId!==message.note_id)||saved.sha256!==manifest.sha256||saved.size!==manifest.size||saved.mediaType!==message.media_type||saved.mime!==manifest.mime)throw Error('Запись с таким номером уже существует');if(saved.status==='committed')return this.send(s,peer,{type:'voip_note_complete',note_id:message.note_id,sha256:manifest.sha256});}
    const key='in:'+peer+':'+message.note_id;if(this.tasks.has(key))return true;
    if([...this.tasks.values()].filter(t=>!t.outbound).length>=2)return false;
    const approvedEndpoint=await this.wait(s,global.NodeManager.selectCallService({file:true}));
    if(global.DmashCallSignaling.validEndpoint(approvedEndpoint)!==global.DmashCallSignaling.validEndpoint(invitation.signaling.wss_endpoint))throw Error('Сервер передачи записи не совпадает с подключённым S-TURN');
    if(!previous){
-    const reservation=await this.crypt(s,{record:'turn_note_received_v1',status:'receiving',sha256:manifest.sha256,size:manifest.size,mediaType:message.media_type,mime:manifest.mime});
+    const reservation=await this.crypt(s,{record:'turn_note_received_v1',peerId:peer,noteId:message.note_id,status:'receiving',sha256:manifest.sha256,size:manifest.size,mediaType:message.media_type,mime:manifest.mime});
     await this.wait(s,new Promise((resolve,reject)=>{const tx=s.db.transaction('pairing_material','readwrite');tx.objectStore('pairing_material').put({alias:receiveAlias,blob:reservation});tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);}));
    }
    const task={key,peer,controller:new AbortController(),closed:false};this.tasks.set(key,task);const valid=()=>s.current()&&current()&&!task.closed;task.current=valid;
@@ -95,7 +95,7 @@
      if(!valid())throw Error('Приём отменён');const bytes=new Uint8Array(await this.wait(s,blob.arrayBuffer()));if(!valid())throw Error('Приём отменён');
      const note={type:message.media_type,name:message.media_type==='voice'?'voice_msg':'circle',mime:manifest.mime,data:'data:'+manifest.mime+';base64,'+b64(bytes)};
      await this.history(s,peer,note,true,message.note_id);if(!valid())throw Error('Приём отменён');
-     const encrypted=await this.crypt(s,{record:'turn_note_received_v1',status:'committed',sha256:manifest.sha256,size:manifest.size,mediaType:message.media_type,mime:manifest.mime});s.check();
+     const encrypted=await this.crypt(s,{record:'turn_note_received_v1',peerId:peer,noteId:message.note_id,status:'committed',sha256:manifest.sha256,size:manifest.size,mediaType:message.media_type,mime:manifest.mime});s.check();
      await this.wait(s,new Promise((resolve,reject)=>{const tx=s.db.transaction('pairing_material','readwrite');tx.objectStore('pairing_material').put({alias:receiveAlias,blob:encrypted});tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);}));
     },onComplete:()=>{if(valid()){if(this.core.activePeerId===peer)void this.core.loadChat();else void this.core.renderPeers();}clearTimeout(task.timer);task.timer=setTimeout(()=>this.stop(task),2000);},onError:()=>this.stop(task)});
     task.session.onclose=()=>this.stop(task);task.timer=setTimeout(()=>this.stop(task),90000);await this.wait(s,task.session.accept(manifest.id));
