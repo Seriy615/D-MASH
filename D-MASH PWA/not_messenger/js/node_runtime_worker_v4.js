@@ -10,12 +10,12 @@ importScripts('vendor/nacl-fast.min.js','vendor/blake3.min.js','secure_session.j
  'resource_pow.js','node_socket_v4.js','node_channel_v4.js','probe_primitives_v4.js',
  'route_discovery_v4.js','recipient_payload_v4.js','node_routing_v4.js','node_inbox_v4.js','node_local_delivery_v4.js','node_local_ownership_v4.js');
 let localOwnership='legacy-migration';
-let closed=false,ready=false,initializing=false,signing=null,store=null,runtime=null,gate=null,inbox=null,local=null,ownership=null,bootstrap=null;
+let closed=false,ready=false,initializing=false,signing=null,store=null,runtime=null,gate=null,inbox=null,local=null,ownership=null,bootstrap=null,publicBootstrap=null;
 const abort=new AbortController(),connecting=new Set(),requests=new Set();
 const hex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
 const wipe=value=>{if(value instanceof Uint8Array&&value.byteLength)value.fill(0);};
 async function stop(){
- if(closed)return;closed=true;ready=false;abort.abort();bootstrap?.close();ownership?.close();inbox?.close();local?.close();store?.close();gate?.close();
+ if(closed)return;closed=true;ready=false;abort.abort();publicBootstrap?.close();bootstrap?.close();ownership?.close();inbox?.close();local?.close();store?.close();gate?.close();
  try{await runtime?.close();}finally{wipe(signing?.secretKey);self.close();}
 }
 async function claimActor(){
@@ -35,7 +35,7 @@ async function initialize(data){
  try{
   if(data.apiVersion!==3)throw Error('Incompatible Node worker API');
   const bootstrapProfile=data.bootstrapProfile??null;
-  if(bootstrapProfile!==null&&(bootstrapProfile!=='private-v1'||data.localOwnership!=='managed'))throw Error('Unsupported bootstrap profile');
+  if(bootstrapProfile!==null&&(!['private-v1','public-v1'].includes(bootstrapProfile)||data.localOwnership!=='managed'))throw Error('Unsupported bootstrap profile');
   if(!['legacy-migration','managed'].includes(data.localOwnership))throw Error('Ownership profile required');localOwnership=data.localOwnership;
   for(const value of [data.seed,data.storageKey,data.baseNcrh])if(!(value instanceof Uint8Array)||value.length!==32)throw Error();
   signing=nacl.sign.keyPair.fromSeed(data.seed);const nodeId=hex(signing.publicKey);
@@ -47,11 +47,12 @@ async function initialize(data){
   inbox=await DmashNodeInboxV4.open(data.storageKey,nodeId,{isCurrent:()=>!closed});
   local=new DmashNodeLocalDeliveryV4(runtime,inbox);await inbox.pruneSeen();
   const restored=await local.restore({managedOnly:localOwnership==='managed'});ownership=new DmashNodeLocalOwnershipV4(local,inbox);
-  if(bootstrapProfile==='private-v1'){
+  if(['private-v1','public-v1'].includes(bootstrapProfile)){
    importScripts('account_pairing_v2.js','account_route_binding_v2.js','node_bootstrap_control_v4.js','node_bootstrap_dispatcher_v4.js','node_bootstrap_runtime_v4.js');
    bootstrap=await DmashNodeBootstrapRuntimeV4.open(data.storageKey,nodeId,{runtime,ownership,local,isCurrent:()=>!closed});
    ownership.detachBootstrap=routeId=>bootstrap.detach(routeId);ownership.archiveRowProvider=owner=>bootstrap.archiveRow(owner);
   }
+  if(bootstrapProfile==='public-v1'){importScripts('node_public_bootstrap_control_v4.js','node_public_bootstrap_runtime_v4.js');publicBootstrap=await DmashNodePublicBootstrapRuntimeV4.open(data.storageKey,nodeId,{runtime,ownership,local,isCurrent:()=>!closed});}
   if(data.credential)gate=new DmashNodeAdmissionV4.PasswordGate(data.credential);
   ready=true;return {apiVersion:3,localOwnership,bootstrapProfile,nodeId,worker:true,...restored};
  }catch(error){self.postMessage({id:data.id,ok:false});await stop();throw error;}
@@ -83,7 +84,19 @@ self.onmessage=async({data})=>{
   else{
    if(!ready||closed)throw Error();
    if(localOwnership==='managed'&&['BIND_LOCAL','INSTALL_RECIPIENT_KEYS','INBOX_LIST','INBOX_ACK','SUBMIT','DISCOVER'].includes(data.type))throw Error('Managed owner capability required');
-   if(data.type==='OWNER_ARCHIVE_CHALLENGE')result=await ownership.challenge(data.accountPublic,data.certificate,{archive:true});
+   if(data.type.startsWith('PUBLIC_')){
+    if(!publicBootstrap)throw Error('Public bootstrap profile required');
+    if(data.type==='PUBLIC_REGISTER')result=await publicBootstrap.register(data.registration);
+    else if(data.type==='PUBLIC_RELEASE')result=publicBootstrap.release(data.publicToken);
+    else if(data.type==='PUBLIC_ROUTES')result=await publicBootstrap.routes();
+    else if(data.type==='PUBLIC_LIST')result=await publicBootstrap.list(data.publicToken,data.page);
+    else if(data.type==='PUBLIC_REQUEST')result=await publicBootstrap.request(data.publicToken,data.certificate,data.request);
+    else if(data.type==='PUBLIC_DECLINE')result=await publicBootstrap.decline(data.publicToken,data.requestId,data.requestDigest);
+    else if(data.type==='PUBLIC_CLAIM')result=await publicBootstrap.claim(data.publicToken,data.ownerToken,data.requestId,data.requestDigest,data.localBundle);
+    else if(data.type==='PUBLIC_CONTROL'){if(!['ACCEPT','CONFIRM','RECEIPT'].includes(data.kind))throw Error('Public control kind');result=await publicBootstrap[data.kind.toLowerCase()](data.publicToken,data.ownerToken,data.requestId,data.serialized);}
+    else throw Error('Unknown public operation');
+   }
+   else if(data.type==='OWNER_ARCHIVE_CHALLENGE')result=await ownership.challenge(data.accountPublic,data.certificate,{archive:true});
    else if(data.type==='OWNER_CHALLENGE')result=await ownership.challenge(data.accountPublic,data.certificate);
    else if(data.type==='OWNER_REGISTER')result=await ownership.register(data.challenge,data.signature);
    else if(data.type==='OWNER_PREPARE')result=await ownership.prepare(data.ownerToken,data);

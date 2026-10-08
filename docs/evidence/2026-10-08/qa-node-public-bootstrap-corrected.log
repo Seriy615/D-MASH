@@ -1,0 +1,4 @@
+stage native Node ready
+stage both browser roots connected
+{"stage":"neutral-intake-repeat","samples":[{"count":1,"states":["PENDING"],"neutral":true},{"count":1,"states":["PENDING"],"neutral":true},{"count":1,"states":["PENDING"],"neutral":true}]}
+PASS real Worker↔Python Node↔Worker public neutral REQUEST without Account; genuine Account claim/ACCEPT/CONFIRM and bilateral receipts; root journal retained/reopened, no final ACTIVE/user inbox/ordinary UI claim

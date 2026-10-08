@@ -19,6 +19,7 @@ vm.createContext(context);vm.runInContext(fs.readFileSync(require.resolve('../js
 const Host=context.DmashNodeRuntimeHostV4;
 const materials=()=>({seed:new Uint8Array(32).fill(1),storageKey:new Uint8Array(32).fill(2),baseNcrh:new Uint8Array(32).fill(3)});
 (async()=>{
+ await assert.rejects(Host.startMaterials(materials(),{localOwnership:'managed',bootstrapProfile:'public-v1'}),/Incompatible/);
  actorVersion=undefined;await assert.rejects(Host.startMaterials(materials()),/Incompatible/);
  actorVersion=1;await assert.rejects(Host.startMaterials(materials()),/Incompatible/);actorVersion=2;await assert.rejects(Host.startMaterials(materials()),/Incompatible/);actorVersion=3;
  const backing=new Uint8Array(256).fill(99),input={...materials(),seed:backing.subarray(0,32)};
@@ -37,6 +38,8 @@ const materials=()=>({seed:new Uint8Array(32).fill(1),storageKey:new Uint8Array(
  assert.equal(worker.messages.at(-1).recipientKeys[0].buffer.byteLength,32);
  assert(installBuffer.subarray(32,64).every(value=>value===0));assert(installBuffer.subarray(64).every(value=>value===17));
  await assert.rejects(host.call('OWNER_ACTIVATE'),/Private ownership/);
+ await assert.rejects(host.call('PUBLIC_REGISTER'),/Private ownership/);
+ await assert.rejects(host.call('STATS',{type:'PUBLIC_CLAIM'}),/Invalid worker RPC fields/);
  await assert.rejects(host.call('STATS',{type:'OWNER_ACTIVATE'}),/Invalid worker RPC fields/);
  assert.equal(host.worker,undefined);
  worker.hold=true;const pending=Array.from({length:16},()=>host.stats());

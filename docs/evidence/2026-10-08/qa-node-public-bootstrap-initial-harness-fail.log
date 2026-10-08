@@ -1,0 +1,6 @@
+page.evaluate: TypeError: Cannot read properties of undefined (reading 'state')
+    at eval (eval at evaluate (:370:30), <anonymous>:1:110)
+    at async <anonymous>:396:30
+    at /home/jcode/D-MASH/tools/test_node_public_bootstrap_browser.cjs:20:25 {
+  log: []
+}

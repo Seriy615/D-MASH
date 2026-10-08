@@ -1,0 +1,15 @@
+stage native Node ready
+stage both browser roots connected
+{"stage":"neutral-intake-repeat","samples":[{"count":0,"states":[],"neutral":false},{"count":0,"states":[],"neutral":false},{"count":0,"states":[],"neutral":false}]}
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(neutral.every(row=>row.neutral))
+
+    at /home/jcode/D-MASH/tools/test_node_public_bootstrap_browser.cjs:20:449 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

@@ -2,7 +2,7 @@
 (function(global){
  const source=global.document?.currentScript?.src,owners=new WeakMap();
  class NodeRuntimeHostV4{
-  #localOwners=new Map();#preparations=new Map();#commitVerifier=null;#worker=null;#ownerPermit=Object.freeze({});
+  #publicCaps=new Map();#localOwners=new Map();#preparations=new Map();#commitVerifier=null;#worker=null;#ownerPermit=Object.freeze({});
 
   static async startForDevice(deviceRoot,{signal,credential=null,localOwnership='legacy-migration',bootstrapProfile=null}={}){
    const session=deviceRoot?.state;
@@ -36,7 +36,7 @@
    if(!source||!global.Worker||material.some(key=>!(key instanceof Uint8Array)||key.length!==32))throw Error('Invalid Node worker materials');
    if(signal?.aborted)throw Error('Node worker cancelled');
    const copies=material.map(key=>key.slice());
-   if(bootstrapProfile!==null&&(bootstrapProfile!=='private-v1'||localOwnership!=='managed'))throw Error('Unsupported bootstrap profile');
+   if(bootstrapProfile!==null&&(!['private-v1','public-v1'].includes(bootstrapProfile)||localOwnership!=='managed'))throw Error('Unsupported bootstrap profile');
    if(!['legacy-migration','managed'].includes(localOwnership))throw Error('Invalid local ownership policy');
    const host=new NodeRuntimeHostV4();host.localOwnership=localOwnership;host.closed=false;host.pending=new Map();host.sequence=0;
    try{
@@ -61,13 +61,13 @@
   call(type,fields={},transfer=[],permit=null){
    if(typeof type!=='string'||!fields||Object.getPrototypeOf(fields)!==Object.prototype||Reflect.ownKeys(fields).some(key=>typeof key!=='string'||key==='id'||key==='type'||!Object.hasOwn(Object.getOwnPropertyDescriptor(fields,key),'value')))return Promise.reject(Error('Invalid worker RPC fields'));
    if(this.localOwnership==='managed'&&['BIND_LOCAL','INSTALL_RECIPIENT_KEYS','INBOX_LIST','INBOX_ACK','SUBMIT','DISCOVER'].includes(type))return Promise.reject(Error('Managed owner capability required'));
-   if(type.startsWith('OWNER_')&&permit!==this.#ownerPermit)return Promise.reject(Error('Private ownership endpoint'));
+   if((type.startsWith('OWNER_')||type.startsWith('PUBLIC_'))&&permit!==this.#ownerPermit)return Promise.reject(Error('Private ownership endpoint'));
    if(this.rootGuard&&!this.rootGuard())this.close();
    if(this.closed)return Promise.reject(Error('Node worker closed'));
    if(this.pending.size>=16)return Promise.reject(Error('Node worker request quota'));
    const id=++this.sequence;
    return new Promise((resolve,reject)=>{
-    const timer=setTimeout(()=>{this.pending.delete(id);reject(Error('Node worker operation expired'));this.close();},type==='CONNECT'?310000:(type==='DISCOVER'||type==='OWNER_DISCOVER')?190000:30000);
+    const timer=setTimeout(()=>{this.pending.delete(id);reject(Error('Node worker operation expired'));this.close();},type==='CONNECT'?310000:(type==='DISCOVER'||type==='OWNER_DISCOVER'||type==='PUBLIC_REQUEST'||type==='PUBLIC_CONTROL')?190000:30000);
     this.pending.set(id,{resolve,reject,timer});
     try{this.#worker.postMessage({...fields,id,type},transfer);}catch(error){clearTimeout(timer);this.pending.delete(id);reject(error);}
    });
@@ -76,6 +76,15 @@
    if(this.#commitVerifier||typeof verifier!=='function')throw Error('Commit verifier already configured');
    this.#commitVerifier=verifier;
   }
+  #public(cap){if(this.closed||!this.rootGuard?.()||this.identity?.bootstrapProfile!=='public-v1')throw Error('Public root session required');const row=this.#publicCaps.get(cap);if(!row)throw Error('Public root handle required');return row;}
+  async publicRoutes(){if(!this.rootGuard?.()||this.identity?.bootstrapProfile!=='public-v1')throw Error('Public root session required');const result=await this.#ownerCall('PUBLIC_ROUTES');if(!this.rootGuard?.())throw Error('Root session changed');return result;}
+  async registerPublicBootstrap(data){if(!this.rootGuard?.()||this.identity?.bootstrapProfile!=='public-v1')throw Error('Public root session required');const result=await this.#ownerCall('PUBLIC_REGISTER',{registration:data});if(!this.rootGuard?.())throw Error('Root session changed');const {token,...descriptor}=result,capability=Object.freeze({});this.#publicCaps.set(capability,{token});return {capability,...descriptor};}
+  async releasePublicBootstrap(cap){const row=this.#public(cap);this.#publicCaps.delete(cap);return this.#ownerCall('PUBLIC_RELEASE',{publicToken:row.token});}
+  async publicRequests(cap,page={}){const row=this.#public(cap),result=await this.#ownerCall('PUBLIC_LIST',{publicToken:row.token,page});this.#public(cap);return result;}
+  async sendPublicRequest(cap,certificate,request){const row=this.#public(cap),result=await this.#ownerCall('PUBLIC_REQUEST',{publicToken:row.token,certificate,request});this.#public(cap);return result;}
+  async declinePublicRequest(cap,requestId,requestDigest){const row=this.#public(cap),result=await this.#ownerCall('PUBLIC_DECLINE',{publicToken:row.token,requestId,requestDigest});this.#public(cap);return result;}
+  async claimPublicRequest(cap,ownerCap,requestId,requestDigest,localBundle){const row=this.#public(cap),owner=this.#owner(ownerCap),result=await this.#ownerCall('PUBLIC_CLAIM',{publicToken:row.token,ownerToken:owner.token,requestId,requestDigest,localBundle});this.#public(cap);this.#owner(ownerCap);return result;}
+  async submitPublicControl(cap,ownerCap,requestId,kind,serialized){if(!['ACCEPT','CONFIRM','RECEIPT'].includes(kind))throw Error('Public control kind');const row=this.#public(cap),owner=this.#owner(ownerCap),result=await this.#ownerCall('PUBLIC_CONTROL',{publicToken:row.token,ownerToken:owner.token,requestId,kind,serialized});this.#public(cap);this.#owner(ownerCap);return result;}
   challengeArchivedOwner(accountPublic,certificate){if(this.localOwnership!=='managed'||!this.rootGuard?.())throw Error('Managed root required');return this.#ownerCall('OWNER_ARCHIVE_CHALLENGE',{accountPublic,certificate});}
   challengeLocalOwner(accountPublic,certificate){if(this.localOwnership!=='managed')throw Error('Managed ownership profile required');if(!this.rootGuard||!this.rootGuard())throw Error('Root-owned host required');return this.#ownerCall('OWNER_CHALLENGE',{accountPublic,certificate});}
   async registerLocalOwner(challenge,signature,{accountPublic,isAccountCurrent,signal}){
@@ -118,7 +127,7 @@
   async queryLocalBinding(cap,migrationId){const owner=this.#owner(cap,{archiveAllowed:true}),result=await this.#ownerCall('OWNER_QUERY',{ownerToken:owner.token,migrationId});this.#owner(cap,{archiveAllowed:true});if(!result)return null;if(this.#preparations.size>=128)throw Error('Preparation handle quota');const handle=Object.freeze({});this.#preparations.set(handle,{cap,tuple:result,accountPublic:owner.accountPublic});return {handle,...result};}
   async provisionBootstrap(cap,data){
    const material=[data.discoverySeed,data.discoveryBox,...(Array.isArray(data.recipientKeys)?data.recipientKeys:[])];let copies=[];
-   try{const owner=this.#owner(cap);if(this.identity.bootstrapProfile!=='private-v1'||!Array.isArray(data.recipientKeys)||data.recipientKeys.length!==1)throw Error('Private bootstrap profile/material required');copies=material.map(v=>{if(!(v instanceof Uint8Array)||v.length!==32)throw Error('Bootstrap key required');return v.slice();});const result=await this.#ownerCall('OWNER_BOOTSTRAP_PROVISION',{ownerToken:owner.token,localBundle:data.localBundle,discoverySeed:copies[0],discoveryBox:copies[1],recipientKeys:copies.slice(2)},copies.map(v=>v.buffer));this.#owner(cap);return result;}finally{for(const v of [...material,...copies])if(v?.byteLength)v.fill(0);}
+   try{const owner=this.#owner(cap);if(!['private-v1','public-v1'].includes(this.identity.bootstrapProfile)||!Array.isArray(data.recipientKeys)||data.recipientKeys.length!==1)throw Error('Private bootstrap profile/material required');copies=material.map(v=>{if(!(v instanceof Uint8Array)||v.length!==32)throw Error('Bootstrap key required');return v.slice();});const result=await this.#ownerCall('OWNER_BOOTSTRAP_PROVISION',{ownerToken:owner.token,localBundle:data.localBundle,discoverySeed:copies[0],discoveryBox:copies[1],recipientKeys:copies.slice(2)},copies.map(v=>v.buffer));this.#owner(cap);return result;}finally{for(const v of [...material,...copies])if(v?.byteLength)v.fill(0);}
   }
   async bootstrapList(cap){const owner=this.#owner(cap,{archiveAllowed:true}),result=await this.#ownerCall('OWNER_BOOTSTRAP_LIST',{ownerToken:owner.token});this.#owner(cap,{archiveAllowed:true});return result;}
   async selectBootstrap(cap,exchangeId,requestDigest,{deny=false}={}){const owner=this.#owner(cap),result=await this.#ownerCall('OWNER_BOOTSTRAP_SELECT',{ownerToken:owner.token,exchangeId,requestDigest,deny});this.#owner(cap);return result;}
@@ -154,7 +163,7 @@
   injectCoverOnce(size=1024){return this.call('INJECT_COVER',{size});}
   coverPolicy(enabled,policy){return this.call('COVER_POLICY',{enabled,policy});}
   close(){
-   if(this.closed)return;this.closed=true;this.#localOwners.clear();this.#preparations.clear();this.#commitVerifier=null;this.cleanup?.();this.cleanup=null;this.rootGuard=null;
+   if(this.closed)return;this.closed=true;this.#publicCaps.clear();this.#localOwners.clear();this.#preparations.clear();this.#commitVerifier=null;this.cleanup?.();this.cleanup=null;this.rootGuard=null;
    for(const job of this.pending.values()){clearTimeout(job.timer);job.reject(Error('Node worker closed'));}this.pending.clear();
    // Stop can abort nested mining before termination. The bounded termination
    // also works if an unexpectedly busy actor cannot process its next message.
