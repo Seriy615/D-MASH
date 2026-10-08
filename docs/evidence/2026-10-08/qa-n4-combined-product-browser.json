@@ -1,0 +1,53 @@
+{
+  "scope": "BROWSER synthetic Account mechanism, two real Chromium Workers and separate Python Node; no ordinary UI, page/SW, live Account, or deployed acceptance",
+  "candidateCommit": "b4a88bb1adf3501e62f73ef5d34aa061bcaa0e2a",
+  "candidateTree": "58536e193de651ad62170380427b986474b6c341",
+  "browserVersion": "Chromium 156.0.8078.4",
+  "nodeTestRuntime": "Node.js 24.19.0",
+  "pythonTransportRuntime": "Python 3.12.14",
+  "sourceHashes": {
+    "node_runtime_worker_v4.js": "d15cf76353423cdb4841298166a2f39e66f12d0071a26fedcb7ade8029154e62",
+    "node_runtime_host_v4.js": "64cae7068c0676490a1aed7d28a408ed082cbfaf357e4b4e254d8f2ec4c5b0a1",
+    "account_node_transport_v4.js": "ca515765bf88db317c2bb0eab49562e0e60ec119ce7f3a4819f47abe24ec2b17",
+    "account_app_cipher_v4.js": "b9365d7e352cba95ad26174ddf0e36dd514bebcbe354e3384e91cff43a7fc4cc",
+    "account_app_outbox_v4.js": "9ef66b96452527234e8d03dda0a6eb2c980203f03d63e62e8b6abb2cc7eac71f"
+  },
+  "gates": [
+    {
+      "fixture": "tools/test_account_ack_same_grant_node_browser.cjs",
+      "exitCode": 0,
+      "checks": [
+        "lost initial FINAL recovers to confirmed session",
+        "recipient Account history commits before authenticated ACK",
+        "first ACK deliberately withheld after recipient commit",
+        "sender remains PENDING until authenticated recipient ACK",
+        "retry preserves exact inner ciphertext under fresh outer transport operation",
+        "retry uses same live grant and reaches recipient after original Inbox tombstone",
+        "authenticated ACK advances existing sender history to DELIVERED and retires pending outbox",
+        "Python transit has no Account keys"
+      ],
+      "opaquePacketCount": 14,
+      "privateRawEvidenceSha256": "d5c18779aac354c78fbd561c389991691611976aad358e126fa0fd93481f1d40"
+    },
+    {
+      "fixture": "tools/test_account_session_node_browser.cjs",
+      "exitCode": 0,
+      "checks": [
+        "two managed Workers establish only after key confirmation",
+        "lost FINAL retries exact opaque ciphertext",
+        "page reload preserves Node identity, confirmed session, and encrypted Inbox progress",
+        "one-sided active-state loss recovers through authenticated generation 2",
+        "surviving ledger is retained and Python transit has no Account keys"
+      ],
+      "opaquePacketCount": 28,
+      "repeatedOpaquePacketCount": 10,
+      "privateRawEvidenceSha256": "1b6cb50f063c82c61703b410882a9d18979e11f35f0986e4d3d5ee226126be23"
+    }
+  ],
+  "limits": [
+    "Synthetic Account setup invokes Core/runtime functions; it does not click ordinary contact/chat controls.",
+    "No deployed page, service worker, actual user Account, or production EMS is part of these gates.",
+    "Pending migration across confirmed-session rekey, never-online first send, and full N4 loss/reorder/crash matrix remain unverified.",
+    "The combined candidate is inactive in ordinary Core UI; Worker CONNECT reuse fix requires separate Node integration."
+  ]
+}
