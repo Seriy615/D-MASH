@@ -173,9 +173,12 @@ fail-closed password repeat. Продолжение подтвердило genui
 дублировался в DOM. Protected snapshot доказал две разные operation ID и по
 две корректные history rows, без DB-дублей. Причина UI: Node callback вызывал
 `Core.loadChat(true)` (загрузку старой страницы), а не обновление текущей;
-узкий fix `4b7f407...` имеет UNIT, same-state реальный browser retest ещё
-**NOT RUN**. Browser profiles сохранены в protected off-Git snapshots; reset
-реальных identities не выполнялся. Текущий Node App contract пропускает только
+узкий fix `4b7f407...` теперь прошёл same-state source-overlay browser:
+8 реальных UI этапов PASS, прежние identities/wrapped root сохранены, два
+старых сообщения и новые тексты в обе стороны видны ровно по одному разу;
+230/230 loaded response hashes exact, page errors 0. Это не deployed cutover.
+Browser profiles сохранены в protected off-Git snapshots; reset реальных
+identities не выполнялся. Текущий Node App contract пропускает только
 text: typed media/call S-TURN control через N4 ещё не проведён; полный cutover
 контактов в production не готов, скрытый v3 fallback запрещён.
 
@@ -185,10 +188,13 @@ requester `INIT_PREPARED`, responder `RESPONDER_PENDING`, финального
 подтверждения нет. Timestamp trace показал: после reload challenge был queued
 немедленно, но requester получил его лишь через ~169 с; после доставки
 INIT/PROOF/FINAL прошли примерно за 12 с. Старая grant/route cache — гипотеза,
-не доказанная причина. Изолированный bounded grant refresh candidate
-`d678d9a...` сохраняет pinned cert/binding, ограничивает reuse 15 с и освобождает
-owner-scoped старые handles после in-flight send; UNIT/quota PASS, real browser
-recovery proof ещё **NOT RUN**. Node Inbox `seen`
+подтверждённая транспортная задержка, а не остановка криптографического автомата.
+Изолированный bounded grant refresh candidate `d678d9a...` сохраняет pinned
+cert/binding, ограничивает reuse 15 с и освобождает owner-scoped старые handles
+после in-flight send. UNIT/quota и real two-Worker/Python browser PASS:
+one-sided active-state loss восстановлен gen1→2 за 46,7 с вместо прежнего
+timeout180 с; prepared grants по одному на сторону. Это узкий recovery gate,
+не весь N4 fault matrix и не deployed ordinary UI. Node Inbox `seen`
 tombstone не позволяет выдавать повтор старого application envelope за новый
 доставленный ACK; нужен аутентифицированный bounded ACK request/replay либо
 эквивалентное durable решение, без удаления tombstone или повторного seal.
@@ -207,6 +213,12 @@ browser PASS, ещё не merged/deployed ordinary UI acceptance. Pending intent
 N0 endpoint/privacy и threat model, N2 no-bypass failover на текущем SHA,
 N5 verifier/legacy exposure/PCS/PQ/security, N6 password/installer, N7 file/call
 полная приёмка и N8 migration/rollback/полный UI01–UI14 остаются PARTIAL.
+N7 video-toggle на deployed `.32` воспроизведён реальными кнопками: audio call
+через relay работает, но после 📷 `getUserMedia` не вызывается повторно,
+локальных и удалённых video tracks нет и ошибки в UI нет. Причина в audio-only
+`_setupMedia` плюс `toggleVideo`, который только переключает уже существующий
+track; mid-call renegotiation пока не реализована. Агент готовит isolated fix
+и browser red/green, production video call всё ещё FAIL.
 `CURRENT_HANDOFF.md` и [BROWSER_QA.md](BROWSER_QA.md) обновлять на следующем
 checkpoint по фактам, не подменяя deployed результат UNIT или synthetic PASS.
 
