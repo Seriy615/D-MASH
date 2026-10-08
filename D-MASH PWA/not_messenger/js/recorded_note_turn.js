@@ -5,6 +5,34 @@
  const encode=x=>new TextEncoder().encode(x),hash=async x=>hex(new Uint8Array(await crypto.subtle.digest('SHA-256',x)));
  const b64=x=>{let s='';for(let i=0;i<x.length;i+=8192)s+=String.fromCharCode(...x.subarray(i,i+8192));return btoa(s);};
  const raw=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0));
+ const BASE64_ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+ function recorderMime(value,type){
+  if(typeof value!=='string'||!value||value.length>512||/[^\x20-\x7e]/.test(value))throw Error('Формат записи не поддерживается');
+  const [essence,...parameters]=value.split(';'),base=essence.trim().toLowerCase();
+  const category=type==='voice'?'audio':type==='video_note'?'video':null;
+  if(!category||!new RegExp('^'+category+'/[a-z0-9.+-]+$').test(base))throw Error('Формат записи не поддерживается');
+  const names=new Set();
+  for(const part of parameters){
+   const match=/^\s*([a-z][a-z0-9_-]{0,31})\s*=\s*(?:"([a-z0-9.+,_/ -]{1,128})"|([a-z0-9.+_/-]+(?:\s*,\s*[a-z0-9.+_/-]+)*))\s*$/i.exec(part);
+   if(!match||names.has(match[1].toLowerCase()))throw Error('Формат записи не поддерживается');
+   names.add(match[1].toLowerCase());
+  }
+  return base;
+ }
+ function recorderData(value,type,declaredMime){
+  if(typeof value!=='string'||!/^data:/i.test(value))throw Error('Формат записи не поддерживается');
+  const header=value.slice(0,526),delimiter=header.toLowerCase().lastIndexOf(';base64,');
+  if(delimiter<5||delimiter>517)throw Error('Формат записи не поддерживается');
+  const mime=recorderMime(value.slice(5,delimiter),type);
+  if(declaredMime&&recorderMime(declaredMime,type)!==mime)throw Error('Формат записи не поддерживается');
+  const encoded=value.slice(delimiter+8);
+  if(encoded.length>Math.ceil(MAX/3)*4)throw Error('Запись превышает 16 МиБ. Разделите её на несколько частей.');
+  if(!encoded||!(/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)))throw Error('Формат записи не поддерживается');
+  let bytes;try{bytes=raw(encoded);}catch(_){throw Error('Формат записи не поддерживается');}
+  if(!bytes.length||(encoded.endsWith('==')&&(BASE64_ALPHABET.indexOf(encoded.at(-3))&15)!==0)||(encoded.endsWith('=')&&!encoded.endsWith('==')&&(BASE64_ALPHABET.indexOf(encoded.at(-2))&3)!==0))throw Error('Формат записи не поддерживается');
+  if(bytes.length>MAX)throw Error('Запись превышает 16 МиБ. Разделите её на несколько частей.');
+  return {mime,encoded,bytes};
+ }
  class RecordedNoteTurn {
   constructor(core,storage){this.core=core;this.storage=storage;this.tasks=new Map();this.peerEpochs=new WeakMap();this.serial=Promise.resolve();this.incoming=Promise.resolve();this.flushing=null;global.DeviceRoot?.onLock?.(()=>this.close());}
   capture(peer=null){const c=this.core,s=this.storage,keys=c.keys,salt=c.blindSalt,slot=c.activeIdentity,db=s.db,key=s.masterKey,root=global.DeviceRoot?.state;
@@ -27,9 +55,8 @@
   async row(s,noteId){const alias=await this.alias(s,noteId),stored=await this.wait(s,new Promise((resolve,reject)=>{const tx=s.db.transaction('blind_outbox'),q=tx.objectStore('blind_outbox').get(alias);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);}));return stored?this.open(s,stored.blob):null;}
   async history(s,peer,note,inbound,noteId){await this.wait(s,this.core.withContactAccountV3(s.slot,async()=>{s.check();if(!await s.vault.hasMessageWireId(peer,noteId)){s.check();await s.vault.saveMessageGamma(peer,note,inbound,this.core.activePeerId===peer,inbound?null:'WAITING',noteId);s.check();}}));}
   async queue(peer,note){const s=this.capture(peer);if(!id(peer)||!['voice','video_note'].includes(note?.type)||typeof note.data!=='string')throw Error('Недействительная запись');
-   const match=/^data:((?:audio|video)\/[a-z0-9.+-]+)(?:;codecs=[^;,]+(?:,[^;]+)?)?;base64,([A-Za-z0-9+/]*={0,2})$/i.exec(note.data);if(!match)throw Error('Формат записи не поддерживается');if(match[2].length>Math.ceil(MAX/3)*4)throw Error('Запись превышает 16 МиБ. Разделите её на несколько частей.');
-   const bytes=raw(match[2]);if(!bytes.length||bytes.length>MAX)throw Error('Запись превышает 16 МиБ. Разделите её на несколько частей.');
-   const noteId=hex(crypto.getRandomValues(new Uint8Array(32))),content={type:note.type,name:note.type==='voice'?'voice_msg':'circle',mime:match[1],data:'data:'+match[1]+';base64,'+match[2]};
+   const {mime,encoded,bytes}=recorderData(note.data,note.type,note.mime);
+   const noteId=hex(crypto.getRandomValues(new Uint8Array(32))),content={type:note.type,name:note.type==='voice'?'voice_msg':'circle',mime,data:'data:'+mime+';base64,'+encoded};
    const protectedContent=global.DmashChatPassword?await this.wait(s,global.DmashChatPassword.protect(s.vault,peer,content)):content;
    const row={record:'turn_note_v1',id:noteId,peerID:peer,size:bytes.length,sha256:await hash(bytes),content:protectedContent,status:'waiting',nextAttempt:0,attempts:0,createdAt:Date.now()};s.check();
    await this.exclusive(s,async()=>{const rows=await this.rows(s);if(rows.filter(r=>r.content).reduce((n,r)=>n+r.size,0)+row.size>QUOTA)throw Error('Для сохранённых записей занято 128 МиБ. Дождитесь доставки или освободите локальное место. Существующие записи не удалены.');await this.write(s,row);await this.history(s,peer,content,false,noteId);});
