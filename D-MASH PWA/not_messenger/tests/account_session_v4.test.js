@@ -32,6 +32,12 @@ async function establish(a,b){await a.session.initiate();const init=intent(a,'IN
  await b.session.receive(confirm);assert.equal(intent(b,'CONFIRM_ACK'),ack);await assert.rejects(()=>b.session.receive(proof),/RECOVERY_CONTEXT/);await b.session.receive(exchange.init);assert.equal(b.value.confirmed.root,a.value.confirmed.root,'stale proposal cannot replace root');
  // Initial simultaneous proposals choose one durable deterministic transcript.
  const [c,d]=await pair();await Promise.all([c.session.initiate(),d.session.initiate()]);const ci=intent(c,'INIT'),di=intent(d,'INIT');await c.session.receive(di);await d.session.receive(ci);const responder=c.value.pending.role==='responder'?c:d,initiator=responder===c?d:c;await initiator.session.receive(intent(responder,'FINAL'));await responder.session.receive(intent(initiator,'CONFIRM'));await initiator.session.receive(intent(responder,'CONFIRM_ACK'));assert.equal(c.value.confirmed.root,d.value.confirmed.root);
+ // A delayed copy of the losing simultaneous INIT must not start a recovery
+ // workflow after the winning transcript has been confirmed.
+ const losingInit=responder===c?ci:di,confirmedRoot=initiator.value.confirmed.root;
+ await initiator.session.receive(losingInit);
+ assert.equal(initiator.value.confirmed.root,confirmedRoot);
+ assert.equal(initiator.value.recovery===null,true,'losing initial proposal became a fresh recovery request');
  // Failed state publication leaks no outbound intent and leaves old data intact.
  const [e,f]=await pair();e.failWrite=true;await assert.rejects(()=>e.session.initiate(),/WRITE_FAILED/);assert.equal(e.value,null);assert.equal(e.sent.length,0);e.failWrite=false;await e.session.initiate();const eInit=intent(e,'INIT');await e.session.initiate();assert.equal(intent(e,'INIT'),eInit);
  f.failWrite=true;await assert.rejects(()=>f.session.receive(eInit),/WRITE_FAILED/);assert.equal(f.value,null);f.failWrite=false;await f.session.receive(eInit);const ff=intent(f,'FINAL');f.restart();await f.session.receive(eInit);assert.equal(intent(f,'FINAL'),ff,'exact FINAL retry');
