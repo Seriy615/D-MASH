@@ -8,10 +8,10 @@
  // chat, legacy Core.encrypt or automatic legacy fallback enters this module.
  class AccountSessionRuntimeV4 {
   #peers=new Map();#closed=false;#timer=null;
-  constructor({core,transport,profile=global.DmashAccountHandshakeV4,Session=global.DmashAccountSessionV4,Store=global.DmashAccountSessionStoreV4,App=global.DmashAccountAppCipherV4,persistAuthenticated=null,nacl=global.nacl,kem=global.DmashKyberWasm,discovery=global.DmashRouteDiscoveryV4,crypto=global.crypto,clock=()=>Math.floor(Date.now()/1000),onStatus=()=>{}}){
+  constructor({core,transport,profile=global.DmashAccountHandshakeV4,Session=global.DmashAccountSessionV4,Store=global.DmashAccountSessionStoreV4,App=global.DmashAccountAppCipherV4,Outbox=global.DmashAccountAppOutboxV4,persistAuthenticated=null,persistOutgoing=null,nacl=global.nacl,kem=global.DmashKyberWasm,discovery=global.DmashRouteDiscoveryV4,crypto=global.crypto,clock=()=>Math.floor(Date.now()/1000),onStatus=()=>{}}){
    if(!core?.captureAccountSessionV4||!transport?.readRouteSnapshot||!transport?.prepareAndSubmitIntent||!profile||!Session||!Store||!nacl||!kem||!discovery||typeof onStatus!=='function')fail('DEPENDENCY');
    this.capture=core.captureAccountSessionV4();this.capture.assertCurrent();if(!this.capture.signal||!this.capture.keys?.sign||!this.capture.blindSalt||!this.capture.masterKey||!this.capture.db)fail('SESSION_REQUIRED');
-   this.transport=transport;this.profile=profile;this.Session=Session;this.Store=Store;this.App=App;this.persistAuthenticated=persistAuthenticated;this.nacl=nacl;this.kem=kem;this.crypto=crypto;this.clock=clock;this.onStatus=onStatus;this.local=key(hex(this.capture.keys.sign.publicKey));
+   this.transport=transport;this.profile=profile;this.Session=Session;this.Store=Store;this.App=App;this.Outbox=Outbox;this.persistAuthenticated=persistAuthenticated;this.persistOutgoing=persistOutgoing;this.nacl=nacl;this.kem=kem;this.crypto=crypto;this.clock=clock;this.onStatus=onStatus;this.local=key(hex(this.capture.keys.sign.publicKey));
    this.codec=profile.createCodec({nacl,discovery,crypto,clock});this.abort=()=>this.close();this.capture.signal.addEventListener('abort',this.abort,{once:true});this.check();
   }
   check(){if(this.#closed||this.capture.signal.aborted)fail('SESSION_CHANGED');this.capture.assertCurrent();}
@@ -19,7 +19,7 @@
   async _snapshot(peer,allowExpired=false){key(peer);if(peer===this.local)fail('SELF');const s=await this.wait(this.transport.readRouteSnapshot(peer));if(s?.readiness==='ROUTE_EXPIRED'&&!allowExpired)fail('ROUTE_EXPIRED');if(s?.readiness==='COMMIT_EPOCH_UPGRADE_REQUIRED')fail('COMMIT_EPOCH_UPGRADE_REQUIRED');if(!s||s.peer!==peer||s.localAccountKeys?.signing!==this.local||s.remoteAccountKeys?.signing!==peer||!Number.isSafeInteger(s.generation)||s.generation<1)fail('AUTHENTICATED_ROUTE_REQUIRED');key(s.digest);key(s.localCertificate?.route_id);key(s.remoteCertificate?.route_id);return s;}
   async openPeer(peer,{requiredSuite,allowArchived=false}={}){
    this.check();key(peer);if(requiredSuite!==this.profile.SUITE)fail('SUITE_REQUIRED');const existing=this.#peers.get(peer);if(existing){if(existing.suite!==requiredSuite)fail('SUITE_REQUIRED');await this.wait(existing.ready);await this._currentRoute(existing,allowArchived);return existing.status;}
-   if(this.#peers.size>=MAX_PEERS)fail('SESSION_QUOTA');const entry={peer,suite:requiredSuite,closed:false,store:null,session:null,app:null,snapshot:null,status:null,ready:null};this.#peers.set(peer,entry);
+   if(this.#peers.size>=MAX_PEERS)fail('SESSION_QUOTA');const entry={peer,suite:requiredSuite,closed:false,store:null,session:null,app:null,outbox:null,snapshot:null,status:null,ready:null};this.#peers.set(peer,entry);
    entry.ready=(async()=>{const snapshot=await this._snapshot(peer,allowArchived);if(entry.closed)fail('SESSION_CHANGED');entry.snapshot=Object.freeze({peer,digest:snapshot.digest,generation:snapshot.generation,localRouteId:snapshot.localCertificate.route_id,remoteRouteId:snapshot.remoteCertificate.route_id});
     const context=Object.freeze({local:this.local,peer,bindingDigest:snapshot.digest,bindingGeneration:snapshot.generation,requiredSuite});
     const owner={context:()=>context,assertCurrent:()=>{this.check();if(entry.closed)fail('SESSION_CHANGED');},signingKey:()=>{this.check();if(entry.closed)fail('SESSION_CHANGED');return this.capture.keys.sign.secretKey;}};
@@ -27,9 +27,10 @@
     entry.store=await this.Store.open({db:this.capture.db,dataKey:this.capture.masterKey,blindKey,owner,signal:this.capture.signal,crypto:this.crypto});this.check();if(entry.closed)fail('SESSION_CHANGED');
     entry.session=new this.Session({codec:this.codec,profile:this.profile,nacl:this.nacl,kem:this.kem,store:entry.store,owner,clock:this.clock});
     if(this.App&&typeof this.persistAuthenticated==='function')entry.app=await this.App.open({store:entry.store,session:entry.session,blindSalt:this.capture.blindSalt,crypto:this.crypto,persistAuthenticated:this.persistAuthenticated,submit:async intent=>{await this._currentRoute(entry);const result=await this.wait(this.transport.prepareAndSubmitIntent(intent));await this._currentRoute(entry);return result;}});
+    if(entry.app&&this.Outbox&&typeof this.persistOutgoing==='function')entry.outbox=await this.Outbox.open({store:entry.store,session:entry.session,app:entry.app,blindSalt:this.capture.blindSalt,crypto:this.crypto,persistOutgoing:this.persistOutgoing});
     await this._currentRoute(entry,allowArchived);entry.status=await this.wait(entry.session.status());return entry.status;
    })();
-   try{return await this.wait(entry.ready);}catch(error){entry.closed=true;entry.app?.close();entry.store?.close();if(this.#peers.get(peer)===entry)this.#peers.delete(peer);throw error;}
+   try{return await this.wait(entry.ready);}catch(error){entry.closed=true;entry.outbox?.close();entry.app?.close();entry.store?.close();if(this.#peers.get(peer)===entry)this.#peers.delete(peer);throw error;}
   }
   async _currentRoute(entry,allowExpired=false){this.check();if(entry.closed||!entry.snapshot)fail('SESSION_CHANGED');const snapshot=await this._snapshot(entry.peer,allowExpired),s=entry.snapshot;if(snapshot.digest!==s.digest||snapshot.generation!==s.generation||snapshot.localCertificate.route_id!==s.localRouteId||snapshot.remoteCertificate.route_id!==s.remoteRouteId){entry.closed=true;entry.store?.close();fail('BINDING_MIGRATION_REQUIRED');}return snapshot;}
   async _entry(peer,allowExpired=false){this.check();const e=this.#peers.get(key(peer));if(!e)fail('SESSION_NOT_OPEN');await this.wait(e.ready);await this._currentRoute(e,allowExpired);return e;}
@@ -44,11 +45,12 @@
    return Object.freeze({persisted:true,phase:result.phase,outboundReady:queued});
   }
   async flush(peer){const e=await this._entry(peer);return this.wait(e.session.flush({submitIntent:async intent=>{await this._currentRoute(e);const result=await this.wait(this.transport.prepareAndSubmitIntent(intent));await this._currentRoute(e);if(result?.queued!==true)fail('LOCAL_NODE_REFUSED');return result;}}));}
-  async sendApplication(peer,{operationId,plaintext,contentType='text/plain;charset=utf-8'}={}){const e=await this._entry(peer);if(!e.app)fail('APP_PERSISTENCE_REQUIRED');return this.wait(e.app.sendApplication({operationId,plaintext,contentType}));}
+  async sendApplication(peer,{operationId,plaintext,contentType='text/plain;charset=utf-8'}={}){const e=await this._entry(peer);if(!e.outbox)fail('APP_OUTBOX_REQUIRED');return this.wait(e.outbox.sendApplication({operationId,plaintext,contentType}));}
+  async resumeApplications(peer){const e=await this._entry(peer);if(!e.outbox)fail('APP_OUTBOX_REQUIRED');return this.wait(e.outbox.resumeApplications());}
   async status(peer){return this._notify(await this._entry(peer,true),true);}
-  async resume(){this.check();const results=[];for(const peer of this.#peers.keys()){try{await this.flush(peer);results.push({peer,status:await this.status(peer)});}catch(error){this.check();results.push({peer,error:error.code||'SESSION_RETRY_FAILED'});}}return results;}
+  async resume(){this.check();const results=[];for(const peer of this.#peers.keys()){try{await this.flush(peer);const status=await this.status(peer),application=this.#peers.get(peer)?.outbox&&status.phase==='ESTABLISHED'?await this.resumeApplications(peer):null;results.push({peer,status,application});}catch(error){this.check();results.push({peer,error:error.code||'SESSION_RETRY_FAILED'});}}return results;}
   startRetries(){this.check();if(this.#timer!==null)return;const tick=async()=>{this.#timer=null;if(this.#closed)return;try{await this.resume();}catch(_){/* Closed/invalidated owner is checked before any subsequent work. */}if(!this.#closed&&!this.capture.signal.aborted)this.#timer=setTimeout(tick,5000);};this.#timer=setTimeout(tick,5000);}
-  close(){if(this.#closed)return;this.#closed=true;if(this.#timer!==null)clearTimeout(this.#timer);this.#timer=null;this.capture.signal.removeEventListener('abort',this.abort);for(const e of this.#peers.values()){e.closed=true;e.app?.close();e.store?.close();}this.#peers.clear();}
+  close(){if(this.#closed)return;this.#closed=true;if(this.#timer!==null)clearTimeout(this.#timer);this.#timer=null;this.capture.signal.removeEventListener('abort',this.abort);for(const e of this.#peers.values()){e.closed=true;e.outbox?.close();e.app?.close();e.store?.close();}this.#peers.clear();}
  }
  global.DmashAccountSessionRuntimeV4=AccountSessionRuntimeV4;if(typeof module!=='undefined')module.exports=AccountSessionRuntimeV4;
 })(typeof window!=='undefined'?window:globalThis);

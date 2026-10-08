@@ -1,0 +1,55 @@
+'use strict';
+(function(global){
+ const TABLE='pairing_material',DOMAIN='D-MASH|ACCOUNT-APP-OUTBOX|V4\0',MAX_PENDING=512;
+ const fail=code=>{throw Object.assign(Error(code),{code});};
+ const utf=s=>new TextEncoder().encode(s),hex=a=>Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');
+ const h64=s=>typeof s==='string'&&/^[0-9a-f]{64}$/.test(s);
+ const b64=a=>{let s='';for(const b of a)s+=String.fromCharCode(b);return btoa(s);};
+ const from64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+ class AccountAppOutboxV4 {
+  #store;#session;#app;#persist;#crypto;#blindKey;#closed=false;#transactions=new Set();#abort;#tasks=new Map();#next=0;#clock;
+  static async open(options){const out=new AccountAppOutboxV4(options),salt=options.blindSalt.slice();try{out.#blindKey=await out.#wait(out.#crypto.subtle.importKey('raw',salt,{name:'HMAC',hash:'SHA-256'},false,['sign']));return out;}catch(e){out.close();throw e;}finally{salt.fill(0);}}
+  constructor({store,session,app,blindSalt,persistOutgoing,crypto=global.crypto,clock=()=>Date.now()}){
+   if(!store?.load||!store?.check||!store?.db?.objectStoreNames.contains(TABLE)||store.dataKey?.algorithm?.name!=='AES-GCM'||!store.context||!store.signal||!session?.status||!app?.sendApplication||!(blindSalt instanceof Uint8Array)||blindSalt.length!==32||typeof persistOutgoing!=='function'||!crypto?.subtle||typeof clock!=='function')fail('APP_OUTBOX_DEPENDENCY');
+   this.#store=store;this.#session=session;this.#app=app;this.#persist=persistOutgoing;this.#crypto=crypto;this.#clock=clock;this.#abort=()=>this.close();store.signal.addEventListener('abort',this.#abort,{once:true});this.#check();
+  }
+  #check(){if(this.#closed)fail('APP_OUTBOX_CLOSED');this.#store.check();}
+  async #wait(p){this.#check();const x=await p;this.#check();return x;}
+  close(){if(this.#closed)return;this.#closed=true;for(const tx of this.#transactions)try{tx.abort();}catch(_){}this.#transactions.clear();this.#store.signal.removeEventListener('abort',this.#abort);this.#blindKey=null;this.#tasks.clear();}
+  async #digest(s){return hex(new Uint8Array(await this.#wait(this.#crypto.subtle.digest('SHA-256',utf(s)))));}
+  async #alias(kind,id=''){const c=this.#store.context;return hex(new Uint8Array(await this.#wait(this.#crypto.subtle.sign('HMAC',this.#blindKey,utf(DOMAIN+c.local+'\0'+c.peer+'\0'+kind+'\0'+id)))));}
+  async #active(){this.#check();const status=await this.#wait(this.#session.status()),c=this.#store.context;if(status.phase!=='ESTABLISHED'||!h64(status.sessionId)||!Number.isSafeInteger(status.generation)||status.generation<1||!h64(c.bindingDigest)||c.bindingGeneration<1)fail('APP_SESSION_NOT_ESTABLISHED');return {sessionId:status.sessionId,sessionGeneration:status.generation,bindingDigest:c.bindingDigest,bindingGeneration:c.bindingGeneration};}
+  #tx(lookups,writes=null){this.#check();return new Promise((resolve,reject)=>{let tx,problem;try{tx=this.#store.db.transaction(TABLE,writes?'readwrite':'readonly');this.#transactions.add(tx);}catch(e){reject(e);return;}const actual={};const abort=e=>{problem=e;try{tx.abort();}catch(_){reject(e);}};
+   tx.onabort=()=>{this.#transactions.delete(tx);reject(problem||tx.error||Error('APP_OUTBOX_ABORTED'));};tx.onerror=()=>{};tx.oncomplete=()=>{this.#transactions.delete(tx);try{this.#check();resolve(actual);}catch(e){reject(e);}};
+   let remaining=lookups.length;const table=tx.objectStore(TABLE);for(const [kind,alias] of lookups){const request=table.get(alias);request.onsuccess=()=>{try{this.#check();actual[kind]=request.result??null;if(--remaining)return;if(writes){for(const [name,expected] of Object.entries(writes.expected))if((actual[name]?.blob??null)!==(expected?.blob??null))fail('APP_OUTBOX_CAS');for(const row of writes.rows)table.put(row);}}catch(e){abort(e);}};}
+  });}
+  async #encode(alias,record){const plain=utf(JSON.stringify(record));if(plain.length>50000)fail('APP_OUTBOX_SIZE');const iv=this.#crypto.getRandomValues(new Uint8Array(12));try{const sealed=new Uint8Array(await this.#wait(this.#crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:utf(DOMAIN+alias)},this.#store.dataKey,plain))),packed=new Uint8Array(12+sealed.length);packed.set(iv);packed.set(sealed,12);return {alias,blob:b64(packed)};}finally{plain.fill(0);}}
+  async #decode(alias,row,kind){if(!row)return null;let plain;try{if(row.alias!==alias||typeof row.blob!=='string'||row.blob.length>80000)fail('APP_OUTBOX_CORRUPT');const raw=from64(row.blob);if(raw.length<28||b64(raw)!==row.blob)fail('APP_OUTBOX_CORRUPT');plain=new Uint8Array(await this.#wait(this.#crypto.subtle.decrypt({name:'AES-GCM',iv:raw.subarray(0,12),additionalData:utf(DOMAIN+alias)},this.#store.dataKey,raw.subarray(12))));const x=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(plain));if(x.schema!==1||x.type!=='ACCOUNT_APP_OUTBOX_V4'||x.kind!==kind||x.alias!==alias)fail('APP_OUTBOX_CORRUPT');return x;}catch(_){this.#check();fail('APP_OUTBOX_CORRUPT');}finally{plain?.fill(0);}}
+  #match(record,a,id,digest,kind){const c=this.#store.context;if(record.kind!=='intent'||record.operationId!==id||record.peer!==c.peer||record.local!==c.local||record.sessionId!==a.sessionId||record.sessionGeneration!==a.sessionGeneration||record.bindingDigest!==a.bindingDigest||record.bindingGeneration!==a.bindingGeneration||record.contentType!==kind||record.plaintextDigest!==digest||typeof record.plaintext!=='string'||!Number.isSafeInteger(record.attempts)||record.attempts<0||!Number.isSafeInteger(record.nextAt)||record.nextAt<0)fail('APP_OUTBOX_CONFLICT');}
+  async #stage({operationId,plaintext,contentType},a){const c=this.#store.context,digest=await this.#digest(plaintext),indexAlias=await this.#alias('index'),intentAlias=await this.#alias('intent',operationId);for(let tries=0;tries<5;tries++){
+   const raw=await this.#wait(this.#tx([['index',indexAlias],['intent',intentAlias]])),index=await this.#decode(indexAlias,raw.index,'index')||{schema:1,type:'ACCOUNT_APP_OUTBOX_V4',kind:'index',alias:indexAlias,local:c.local,peer:c.peer,ids:[]},old=await this.#decode(intentAlias,raw.intent,'intent');
+   if(index.local!==c.local||index.peer!==c.peer||!Array.isArray(index.ids)||index.ids.length>MAX_PENDING||index.ids.some(x=>!h64(x))||new Set(index.ids).size!==index.ids.length)fail('APP_OUTBOX_CORRUPT');
+   if(old){this.#match(old,a,operationId,digest,contentType);if(!index.ids.includes(operationId))fail('APP_OUTBOX_CORRUPT');return old;}
+   if(index.ids.includes(operationId))fail('APP_OUTBOX_CORRUPT');if(index.ids.length>=MAX_PENDING)fail('APP_OUTBOX_CAPACITY');
+   const intent={schema:1,type:'ACCOUNT_APP_OUTBOX_V4',kind:'intent',alias:intentAlias,operationId,local:c.local,peer:c.peer,sessionId:a.sessionId,sessionGeneration:a.sessionGeneration,bindingDigest:a.bindingDigest,bindingGeneration:a.bindingGeneration,contentType,plaintextDigest:digest,plaintext,attempts:0,nextAt:0};
+   const rows=[await this.#encode(indexAlias,{...index,ids:[...index.ids,operationId]}),await this.#encode(intentAlias,intent)];try{await this.#wait(this.#tx([['index',indexAlias],['intent',intentAlias]],{expected:raw,rows}));return intent;}catch(e){if(e.code!=='APP_OUTBOX_CAS')throw e;}
+  }fail('APP_OUTBOX_BUSY');}
+  async #intent(operationId){const alias=await this.#alias('intent',operationId),raw=(await this.#wait(this.#tx([['intent',alias]]))).intent,record=await this.#decode(alias,raw,'intent');if(!record)fail('APP_OUTBOX_MISSING');return {alias,raw,record};}
+  async #reserve(operationId,record){const alias=await this.#alias('intent',operationId);for(let tries=0;tries<5;tries++){
+   const current=await this.#intent(operationId),now=this.#clock();if(current.record.nextAt>now)return false;
+   this.#match(current.record,{sessionId:record.sessionId,sessionGeneration:record.sessionGeneration,bindingDigest:record.bindingDigest,bindingGeneration:record.bindingGeneration},operationId,record.plaintextDigest,record.contentType);
+   const attempts=current.record.attempts+1,nextAt=now+Math.min(300000,5000*2**Math.min(attempts-1,6)),row=await this.#encode(alias,{...current.record,attempts,nextAt});try{await this.#wait(this.#tx([['intent',alias]],{expected:{intent:current.raw},rows:[row]}));return true;}catch(e){if(e.code!=='APP_OUTBOX_CAS')throw e;}
+  }fail('APP_OUTBOX_BUSY');}
+  async #deliver(record,a){const c=this.#store.context,digest=await this.#digest(record.plaintext);this.#match(record,a,record.operationId,digest,record.contentType);
+   const committed=await this.#wait(this.#persist(Object.freeze({peer:c.peer,operationId:record.operationId,plaintext:record.plaintext,contentType:record.contentType,bindingDigest:a.bindingDigest,generation:a.bindingGeneration,sessionId:a.sessionId})));if(committed?.persisted!==true)fail('APP_OUTGOING_HISTORY_NOT_DURABLE');
+   if(!await this.#reserve(record.operationId,record))return {operationId:record.operationId,durable:true,queued:false,recipientAck:false,deferred:true};
+   const queued=await this.#wait(this.#app.sendApplication({operationId:record.operationId,plaintext:record.plaintext,contentType:record.contentType}));return Object.freeze({operationId:record.operationId,durable:true,queued:queued.queued===true,recipientAck:false});
+  }
+  async #single(id,work){const prior=this.#tasks.get(id),run=(prior?prior.catch(()=>{}):Promise.resolve()).then(work);this.#tasks.set(id,run);try{return await run;}finally{if(this.#tasks.get(id)===run)this.#tasks.delete(id);}}
+  async sendApplication({operationId,plaintext,contentType='text/plain;charset=utf-8'}){if(!h64(operationId)||typeof plaintext!=='string'||utf(plaintext).length>8192||contentType!=='text/plain;charset=utf-8')fail('APP_OUTBOX_INPUT');return this.#single(operationId,async()=>{const a=await this.#active(),record=await this.#stage({operationId,plaintext,contentType},a);return this.#deliver(record,a);});}
+  async resumeApplications(limit=32){if(!Number.isSafeInteger(limit)||limit<1||limit>32)fail('APP_OUTBOX_PAGE');const a=await this.#active(),alias=await this.#alias('index'),raw=(await this.#wait(this.#tx([['index',alias]]))).index,index=await this.#decode(alias,raw,'index');if(!index)return {attempted:0,queued:0,deferred:0,failed:0};const c=this.#store.context;if(index.local!==c.local||index.peer!==c.peer||!Array.isArray(index.ids)||index.ids.length>MAX_PENDING||index.ids.some(x=>!h64(x))||new Set(index.ids).size!==index.ids.length)fail('APP_OUTBOX_CORRUPT');
+   const result={attempted:0,queued:0,deferred:0,failed:0};for(let i=0;i<Math.min(limit,index.ids.length);i++){const id=index.ids[this.#next++%index.ids.length];try{await this.#single(id,async()=>{const {record}=await this.#intent(id);result.attempted++;const sent=await this.#deliver(record,a);if(sent.queued)result.queued++;else result.deferred++;});}catch(e){this.#check();result.failed++;}}return result;
+  }
+ }
+ global.DmashAccountAppOutboxV4=AccountAppOutboxV4;if(typeof module!=='undefined')module.exports=AccountAppOutboxV4;
+})(typeof window!=='undefined'?window:globalThis);
