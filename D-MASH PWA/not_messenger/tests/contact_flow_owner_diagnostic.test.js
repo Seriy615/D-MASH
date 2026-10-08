@@ -72,10 +72,10 @@ function device(slot) {
   await recipient.flow.resume();
   assert.equal(recipient.sent.length,count,'automatic resume skips expired Accept');
   assert.equal((await recipient.flow.read(request.request_id)).status,'accept_sent','expiry currently has no truthful terminal status');
-  await recipient.flow.accept(request,recipient.certificate,'A');
-  assert.equal(recipient.sent.length,count+1,'BUG: explicit accept resends expired signed Accept');
-  const expired=JSON.parse(Envelope.open(sender.box.secretKey,recipient.sent.at(-1)).account_payload);
-  assert.throws(()=>Bootstrap.verify(expired,{requestId:request.request_id,recipientRouteId:sender.certificate.routeId,senderRouteId:recipient.certificate.routeId,phase:'ACCEPT',acceptHash:null}),/Invalid/);
+  await assert.rejects(recipient.flow.accept(request,recipient.certificate,'A'),/Срок подписанного принятия истёк/);
+  assert.equal(recipient.sent.length,count,'explicit accept must not resend an expired signature');
+  assert.deepEqual((await recipient.flow.read(request.request_id)).accept,original,
+      'expired refusal must preserve the original signed Accept');
  } finally {Date.now=actualNow;}
- console.log('PASS: A→B prepared/sent and caller/self owner conflicts reproduced; encrypted rows unchanged; original owner exact Accept resume; expired explicit Accept resend BUG reproduced');
+ console.log('PASS: A→B prepared/sent and caller/self owner conflicts; encrypted rows unchanged; original owner exact Accept resume; expired explicit Accept refused without rewrite');
 })().catch(error=>{console.error(error);process.exitCode=1;});
