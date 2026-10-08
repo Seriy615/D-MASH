@@ -236,6 +236,7 @@ const Core = {
         return capability;
     },
     async openPublicAccountNodeV4(coordinator) {
+        if(window.DMASH_NODE_PROFILE!=='managed-v4')throw new Error('NODE_REVIEW_OPT_IN_REQUIRED');
         const session = this.captureAccountSessionV4();
         const existing = this._publicAccountNodeV4;
         if (existing?.session === session && existing.coordinator === coordinator) return existing.promise;
