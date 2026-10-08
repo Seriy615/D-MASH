@@ -1,0 +1,38 @@
+{
+  "scope": "Independent integrated .34 source-overlay actual UI, two fresh synthetic PRIVATE Accounts, real EMS S-TURN transport; no user profile",
+  "source_sha": "b4db71b8e3c749258cbcc22ed124c05846b00acf",
+  "page_release": "transport-v3-node-preparation-20261008.34",
+  "service_worker": "BLOCKED for source overlay",
+  "checks_pass": 17,
+  "checks_fail": 0,
+  "actual_checks": [
+    "account-setup-0",
+    "node-request-0",
+    "account-setup-1",
+    "node-request-1",
+    "both-transport-ready",
+    "qr-copy-0",
+    "qr-copy-1",
+    "private-contact-import-0",
+    "private-contact-import-1",
+    "private-route-ready",
+    "chat-click-0",
+    "chat-click-1",
+    "key-exchange-button",
+    "text-preflight",
+    "generic-1mib-plus-13-auto-inline-hash",
+    "valid-wav-16mib-auto-preview",
+    "reload-both-file-cards-and-status"
+  ],
+  "loaded_source_responses": 268,
+  "loaded_source_responses_exact": 268,
+  "page_errors": 0,
+  "generic_1mib_plus_13_elapsed_ms": 3684,
+  "wav_16mib_elapsed_ms": 19518,
+  "limits": [
+    "Source overlay, not deployed release",
+    "Synthetic profiles only",
+    "Concurrent incoming busy fix b8f285f not included in this exact gate",
+    "Full ordinary Node v4 media CONTROL and physical Android timing remain open"
+  ]
+}

@@ -52,9 +52,11 @@ ordinary Account/contact UI → Node v4 cutover остаётся главным 
 
 ## Текущая разработка и публикация
 
-На 8 октября 2026 опубликованная source/context ветка `transport-v3` в
-`origin` указывает на `.34` product commit
-`afab8ed187c6312a81b7dda46c29ff9e45da6d9e` после успешного fast-forward.
+На 8 октября 2026 последний `.34` product commit —
+`afab8ed187c6312a81b7dda46c29ff9e45da6d9e`. Последующие
+documentation-only checkpoints, начиная с `a75fb848...`, не меняют PWA
+subtree; текущий `origin/transport-v3` проверять через `git rev-parse`.
+Публикация идёт обычным fast-forward.
 Forge integration worktree `/tmp/dmash-node-public-integration` тогда был
 сверен с `origin`; общий checkout `/home/jcode/D-MASH` содержит work-in-progress
 агентов и не является release tree. Следующие commits могут сдвинуть tip —
