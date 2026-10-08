@@ -51,6 +51,14 @@ module.exports = async ({pages, report, step, click, observeRelay}) => {
     const actual=await recipient.locator('#log audio').evaluateAll(async elements=>{const out=[];for(const e of elements.slice(-3)){const bytes=await(await fetch(e.currentSrc||e.src)).arrayBuffer();out.push(Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join(''));}return out.sort();});
     assert.deepEqual(actual,expected);result.receiverHashEquality={count:3,equal:true};
   });
+  await step('turn-voice-native-playback',recipient,async()=>{
+    const player=recipient.locator('#log audio').first(),box=await player.boundingBox();
+    await recipient.mouse.click(box.x+22,box.y+box.height/2);
+    await recipient.waitForFunction(()=>document.querySelector('#log audio')?.currentTime>0);
+    await recipient.mouse.click(box.x+22,box.y+box.height/2);
+    assert(await player.evaluate(e=>e.paused),'Native pause control must stop playback');
+    result.nativePlaybackAndPause=true;
+  });
   if(observeRelay){result.relay=await observeRelay();
     await step('turn-voice-relay-metadata',sender,async()=>{
       assert(result.relay.messages.some(m=>m.type==='voip_note_request'),'Observed metadata invitations required');

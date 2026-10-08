@@ -1,9 +1,9 @@
 'use strict';
-const fs=require('node:fs'),path=require('node:path');
+const fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process');
 module.exports=async({pages,sourceRoot,report})=>{
  const result=report.noteTransportObservation={limits:'Metadata-only CDP logpoint + readonly RTC stats polling; instrumentation may affect timings; no secrets or payload bodies recorded',messages:[],relay:[]};
  const sessions=[];let closed=false;
- const src=fs.readFileSync(path.join(sourceRoot,'js/core_engine.js'),'utf8'),anchor='const current=()=>!sessionGuard||sessionGuard();',at=src.indexOf(anchor);
+ const src=process.env.DMASH_EXPECT_SHA?execFileSync('git',['show',process.env.DMASH_EXPECT_SHA+':D-MASH PWA/not_messenger/js/core_engine.js'],{encoding:'utf8'}):fs.readFileSync(path.join(sourceRoot,'js/core_engine.js'),'utf8'),anchor='const current=()=>!sessionGuard||sessionGuard();',at=src.indexOf(anchor);
  if(at<0)throw Error('Missing send observation anchor');
  for(const [profile,p]of pages.entries()){
   const s=await p.context().newCDPSession(p);sessions.push(s);await s.send('Runtime.enable');await s.send('Debugger.enable');
