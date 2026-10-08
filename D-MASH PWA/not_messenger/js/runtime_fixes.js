@@ -472,6 +472,7 @@
         // nulled deviceState and cleared all sessionStorage, which caused the
         // black-screen/locked-state regression.
         core.accountLogout = async function repairedAccountLogout() {
+            this.recordedNoteTurn?.close();
             global.DmashFileRuntime?.cancel(this);
             const zero = value => {
                 if (value instanceof Uint8Array) value.fill(0);

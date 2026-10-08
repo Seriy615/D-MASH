@@ -41,6 +41,13 @@ async function transfer(file, manifest, transform) {
     const wrongHash = await transfer(file, {...manifest, sha256:'b'.repeat(64)});
     assert.equal(wrongHash.result[1], null, 'Authenticated chunks do not bypass whole-file hash');
 
+    // Final transport ACK must wait for durable receiver history commit.
+    const [commitA,commitB]=pair(), entered=deferred(), release=deferred(), finished=deferred();let sentBeforeCommit=false;
+    const commitReceiver=new FileChannel({channel:commitB,manifest,onCommit:async()=>{entered.resolve();await release.promise;},onError:e=>{throw e;}});
+    const commitSender=new FileChannel({channel:commitA,manifest,file,onComplete:()=>{sentBeforeCommit=true;finished.resolve();},onError:e=>{throw e;}});
+    await entered.promise;assert.equal(sentBeforeCommit,false);assert(commitSender.pending);
+    release.resolve();await finished.promise;assert(commitReceiver.complete);commitSender.close();commitReceiver.close();
+
     const [a,b] = pair(() => null);
     const cancelled = deferred();
     const sender = new FileChannel({channel:a, manifest, file, onError: () => cancelled.resolve()});

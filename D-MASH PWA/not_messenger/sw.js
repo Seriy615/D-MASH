@@ -30,7 +30,7 @@ const CORE_ASSETS = [
     './js/chat_password.js',
     './js/account_ratchet_runtime.js',
     './js/account_recorded_media.js',
-    './js/file_channel.js', './js/file_session.js', './js/file_runtime.js',
+    './js/file_channel.js', './js/file_session.js', './js/file_runtime.js', './js/recorded_note_turn.js',
     './js/device_routes.js', './js/dmash_links.js', './js/quick_name_registry.js',
     './js/contact_payloads.js', './js/contact_transport.js', './js/pending_contact_requests.js',
     './js/resource_pow.js', './js/ui_global_bridge.js', './js/runtime_fixes.js', './js/public_contact_runtime.js',

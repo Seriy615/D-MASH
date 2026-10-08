@@ -282,6 +282,7 @@ const Core = {
             guard();
             window.DmashChatPassword?.clear();
             window.DmashFileRuntime?.cancel(this);
+            this.recordedNoteTurn?.close();
             this.gammaKeys = {master: fullHash.slice(0, 32), sign: null, box: null};
             this.blindSalt = stagedSalt;
             this.keys = stagedKeys;
@@ -569,6 +570,7 @@ const Core = {
         this._accountBootAttempt = null;
         window.DmashChatPassword?.clear();
         window.DmashFileRuntime?.cancel(this);
+        this.recordedNoteTurn?.close();
         const zero = value => {
             if (value instanceof Uint8Array) value.fill(0);
             else if (value && typeof value === 'object') Object.values(value).forEach(zero);
@@ -640,7 +642,7 @@ const Core = {
         this._flushingOutbox = true;
         try {
             for (const item of await Storage.getAllBoxes('blind_outbox')) {
-                if(item.record==='media_outbound')continue;
+                if(['media_outbound','turn_note_v1'].includes(item.record))continue;
                 let content;
                 try {content = window.DmashChatPassword ? await window.DmashChatPassword.reveal(Storage, item.peerID, item.content) : item.content;}
                 catch (_) {continue;}
@@ -1205,8 +1207,8 @@ const Core = {
         const pid = targetPid || this.activePeerId;
         if (!pid) return;
         if (window.DmashSavedMessages?.isLocal(pid)) return window.DmashSavedMessages.send(this, Storage, c, forceHandshake);
-        if(!forceHandshake&&c&&['voice','video_note','video'].includes(c.type)&&window.DmashAccountRecordedMedia){
-            try{return await this.getRecordedMedia().queue(pid,c);}catch(error){this.customAlert('ЗАПИСЬ НЕ ОТПРАВЛЕНА',error.message);return false;}
+        if(!forceHandshake&&c&&['voice','video_note','video'].includes(c.type)){
+            try{if(['voice','video_note'].includes(c.type)){if(!window.DmashRecordedNoteTurn)throw Error('Передача записей недоступна. Обновите страницу.');return await this.getRecordedNoteTurn().queue(pid,c);}return await this.getRecordedMedia().queue(pid,c);}catch(error){this.customAlert('ЗАПИСЬ НЕ ОТПРАВЛЕНА',error.message);return false;}
         }
 
         if (this.accountTransportMode() !== 'legacy') {
@@ -1361,6 +1363,26 @@ const Core = {
         this.nodeInboxV4 = new window.DmashAccountNodeInboxV4(host, this);
         return this.nodeInboxV4;
     },
+    getRecordedNoteTurn() {
+        this.recordedNoteTurn ||= new window.DmashRecordedNoteTurn(this,Storage);
+        return this.recordedNoteTurn;
+    },
+    async retryRecordedNote(id) { try { await this.getRecordedNoteTurn().retry(id); } catch(error) { this.customAlert('ЗАПИСЬ',error.message); } },
+    async cancelRecordedNote(id) { try { await this.getRecordedNoteTurn().cancel(id); } catch(error) { this.customAlert('ЗАПИСЬ',error.message); } },
+    refreshRecordedNoteState(peer,id,state,progress) {
+        if(this.activePeerId!==peer)return;
+        for(const box of document.querySelectorAll?.('#log .msg.out[data-wire-id]')||[]){
+            if(box.dataset.wireId!==encodeURIComponent(id))continue;
+            let status=box.querySelector('.note-transfer-state');
+            if(!status){status=document.createElement('div');status.className='note-transfer-state';status.setAttribute('role','status');box.append(status);}
+            const labels={waiting:'Ожидает получателя · запись хранится на этом устройстве',connecting:'Подключение защищённой передачи…',sending:'Передача '+(progress||0)+'%',delivered:'Доставлено',cancelled:'Отправка остановлена · запись сохранена; получатель мог уже получить её'};
+            status.textContent=labels[state]||state;
+            if(state!=='delivered'){
+                const cancel=document.createElement('button');cancel.textContent=state==='cancelled'?'Повторить':'Отменить отправку';
+                cancel.onclick=()=>state==='cancelled'?this.retryRecordedNote(id):this.cancelRecordedNote(id);status.append(cancel);
+            }
+        }
+    },
     getRecordedMedia() {
         if(!window.DmashAccountRecordedMedia)return null;
         this.recordedMedia ||= new window.DmashAccountRecordedMedia(this,Storage);
@@ -1447,6 +1469,10 @@ const Core = {
             try { return await this._handleRatchetAck(message, peerId); }
             catch (error) { this.shmon('WARN', `Ratchet ACK rejected: ${error.message}`); return false; }
         }
+        if (message && typeof message === 'object' && message.type?.startsWith('voip_note_')) {
+            if(!window.DmashRecordedNoteTurn)return false;
+            return this.getRecordedNoteTurn().receive(message,peerId,current);
+        }
         if (message && typeof message === 'object' && message.type?.startsWith('voip_')) {
             const handled=await this.getRecordedMedia()?.profile(message,peerId,current);
             if(handled!==null&&handled!==undefined)return current()&&handled===true;
@@ -1474,7 +1500,8 @@ const Core = {
     },
     // Core.syncNetwork        - Опрос сервера (PULL), получение и сортировка новых маляв
     async syncNetwork() {
-        if(this.recordedMedia)void this.recordedMedia.flush().catch(error=>this.shmon('WARN','Recorded-note retry deferred: '+error.message));
+        if(window.DmashRecordedNoteTurn)void this.getRecordedNoteTurn().flush();
+        if(window.DmashAccountRecordedMedia)void this.getRecordedMedia().flush().catch(error=>this.shmon('WARN','Recorded-note retry deferred: '+error.message));
         if (this.nodeInboxV4 && !this.nodeInboxV4.closed) {
             try { await this.nodeInboxV4.drain(); }
             catch (error) { this.shmon('WARN', 'Local Node Inbox sync deferred: ' + error.message); }
@@ -1962,7 +1989,7 @@ const Core = {
             if (pairing?.contribution) {
                 existing.pairingContribution = pairing.contribution;
                 await Storage.putBox('blind_peers', { alias: aliasL1, data: existing });
-                this.recordedMedia?.allowPeer(cleanId);
+                this.recordedMedia?.allowPeer(cleanId);this.recordedNoteTurn?.allowPeer(cleanId);
                 await this.renderPeers();
                 void this.ensureAutomaticMeshRoute(cleanId, pairing.contribution).catch(error => this.shmon('WARN', `Route deferred: ${error.message}`));
                 return this.customAlert("PAIRING", "Pairing locator обновлён автоматически.");
@@ -1989,7 +2016,7 @@ const Core = {
             });
 
             this.shmon("INFO", `Кент ${alias} добавлен в базу.`);
-            this.recordedMedia?.allowPeer(cleanId);
+            this.recordedMedia?.allowPeer(cleanId);this.recordedNoteTurn?.allowPeer(cleanId);
             await this.renderPeers();
             if (pairing?.contribution) void this.ensureAutomaticMeshRoute(cleanId, pairing.contribution).catch(error => this.shmon('WARN', `Route deferred: ${error.message}`));
           } catch (error) {
@@ -2026,6 +2053,7 @@ const Core = {
     // Core.deleteChatFlow     - Полное удаление переписки и ключей кента
     deleteChatFlow: function(id, name) {
         Core.customConfirm("СНОС ЧАТА", `Ликвидировать всю переписку с ${name}?`, async () => {
+            Core.recordedNoteTurn?.forgetPeer(id);
             await Core.recordedMedia?.forgetPeer(id);
             let nodeCleanup = null;
             try {
@@ -2975,7 +3003,7 @@ const Core = {
                 await Storage.putBox('blind_peers', {alias, data: {...existing, id: peerId, curvePub, kyberPub,
                     name: existing?.name || body.display_name, pairingContribution: body.contribution,
                     last_ts: Date.now(), unread: existing?.unread || false}});
-                this.recordedMedia?.allowPeer(peerId);
+                this.recordedMedia?.allowPeer(peerId);this.recordedNoteTurn?.allowPeer(peerId);
                 await this.renderPeers();
                 // Already protected by the Account contact task. A boot may
                 // be waiting for it, so finish route installation before release.
@@ -3422,7 +3450,7 @@ const Core = {
                 const content = this.renderStub(parsed, id || ts);
 
                 return `
-                    <div class="msg ${side}" id="msg-box-${id || ts}">
+                    <div class="msg ${side}" id="msg-box-${id || ts}" data-wire-id="${encodeURIComponent(String(msg.wireId || ''))}">
                         <div class="m-txt">
                             ${content}
                             <span class="msg-del-btn" onclick="Core.deleteMessageFlow('${id || ts}')">×</span>
@@ -3440,7 +3468,7 @@ const Core = {
         if (!content || content.trim() === "") return "";
 
         return `
-            <div class="msg ${side}" id="msg-box-${id || ts}">
+            <div class="msg ${side}" id="msg-box-${id || ts}" data-wire-id="${encodeURIComponent(String(msg.wireId || ''))}">
                 <div class="m-txt">
                     ${content}
                     <span class="msg-del-btn" onclick="Core.deleteMessageFlow('${id || ts}')">×</span>
@@ -3448,11 +3476,20 @@ const Core = {
                 <small class="m-ts">${time}${this.messageStatusHtml(msg)}</small>
             </div>`;
     },
-    // Receipts are not implemented yet. Never render optimistic delivered/read
-    // ticks: only an explicit transport state may be presented to the user.
+    refreshMessageTransportState(peer, wireId, state) {
+        if (this.activePeerId !== peer || typeof wireId !== 'string') return;
+        const encoded = encodeURIComponent(wireId);
+        for (const box of document.querySelectorAll?.('#log .msg.out[data-wire-id]') || []) {
+            if (box.dataset.wireId !== encoded) continue;
+            const status = box.querySelector('.m-state');
+            if (status) status.outerHTML = this.messageStatusHtml({inbound: false, transportState: state});
+        }
+    },
+    // Render delivered/read only after authenticated durable receipts.
     messageStatusHtml(msg) {
         if (msg.inbound || !msg.transportState) return "";
         const states = {
+            WAITING: ' <span class="m-state" title="Ожидает получателя · хранится на этом устройстве">ОЖИДАЕТ</span>',
             QUEUED: " <span class=\"m-state\" title=\"Улетит при первой возможности\">⌛</span>",
             SENT: " <span class=\"m-state\" title=\"Sent to transport\">✓</span>",
             FAILED: " <span class=\"m-state\" title=\"Запись не отправлена: формат недоступен или срок передачи истёк\">НЕ ОТПРАВЛЕНО</span>",
