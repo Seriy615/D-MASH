@@ -8,7 +8,39 @@
 
 ## Актуальный release checkpoint
 
-Актуальная опубликованная PWA: **`be6a1d9a58ba9fffeb0daad234a6506e5b269667`**,
+Актуальная опубликованная PWA: **`042d5803d5d622da72848c67d96bd5c8243c4819`**,
+page и active controlling SW `.32` в двух новых synthetic Chromium profiles.
+Независимый [deployed `.32` voice/file gate](docs/evidence/2026-10-08/qa-voice-file32-deployed.json):
+**24/24 PASS**, 128/128 обычных загруженных response bodies совпали с exact SHA,
+page errors и console warnings/errors 0. Отдельно в обоих профилях сверены
+served и active SW CacheStorage SHA-256 для `call_admission_worker.js` и
+импортируемого `resource_pow.js`; реальный Worker вернул proof, независимо
+проверенный WebCrypto. Через действительный EMS/S-TURN после UI создания двух
+Account, PRIVATE QR, контакта, обмена ключами и текста голосовая запись 30 532
+байта расшифрована получателем, отправитель получил `DELIVERED` и освободил
+локальные байты. От нажатия отправки до квитанции прошло **4,127 с**,
+WSS ticket занял **2,052 с** на этом desktop Chromium. Пользователь сообщил,
+что на физическом Android `.31` голосовая доставка занимала более минуты;
+этот Android на `.32` ещё не измерен. Предыдущий fresh desktop browser `.31`
+показал 11,625 с stop→DELIVERED и 9,489 с WSS ticket — сравнение разных
+challenge/состояний сети, не обещание постоянного ускорения.
+
+Файл **1 МиБ + 13 байт** получен и скачан с тем же SHA-256, обе стороны
+сохранили «Передано и проверено». Поздняя нативная ошибка DataChannel спустя
+91 мс после проверенного завершения не перезаписала успех.
+[Совмещённый source-overlay gate](docs/evidence/2026-10-08/qa-voice-file32-source-overlay.json)
+на том же exact candidate: 20/20 PASS, 140/140 exact bodies, SW blocked, real
+transport; voice 2,480 с, WSS ticket 464 мс, файл и download SHA PASS.
+В первом deployed прогоне все 24 UI/Worker checks прошли, но общий сборщик
+response bodies попытался прочитать уже закрытый короткий test Worker и дал
+harness FAIL. Чистый повтор проверил Worker-ресурсы отдельным served/cache hash
+gate и завершился exit 0. На `.31` реальный file repro был FAIL: отправитель
+успешен, получатель сменил успешный статус на `File channel failed` после
+поздней ошибки канала; исправление terminal monotonicity `c59170f` и ускорение
+admission PoW `1c87123` входят в `.32`. Результаты не закрывают N0–N8,
+полный N4 recovery, ordinary Node UI и физический мобильный тест.
+
+Предыдущая опубликованная PWA: **`be6a1d9a58ba9fffeb0daad234a6506e5b269667`**,
 page и active controlling SW `.31` в двух новых synthetic Chromium profiles.
 Независимый [deployed `.31` media gate](docs/evidence/2026-10-08/qa-private-media31-deployed.json):
 **22/22 PASS**, 268/268 загруженных response bodies совпали с exact SHA,
@@ -54,9 +86,9 @@ N0–N8/A–M/E6 и полный UI01–UI14 не DONE.
 с 142/142 exact loaded responses: PUBLIC/key/text/FlipLock и relay call
 decline/accept/mute/speaker/hangup PASS; video toggle и 1 МиБ+13 байт file
 complete FAIL. Последний показал отправителю «Передано и проверено»,
-получателю `File channel failed`; причины ещё исследуются. На `.31` эти два
-сценария file/video call и Account deletion ещё **NOT RUN**, поэтому не переносить старые
-результаты как текущий PASS или FAIL. Исторические `.28`/`.27`/`.26` evidence
+получателю `File channel failed`; причина late DataChannel error после verified completion
+затем воспроизведена на `.31` fresh PRIVATE pair. На `.31` video call и Account
+deletion остались **NOT RUN**. Исторические `.28`/`.27`/`.26` evidence
 остаются ниже; `ROUTE-READY-01` OPEN, physical mobile/WebAuthn NOT RUN.
 
 Текущие результаты исправлений (предыдущие строки initial FAIL ниже исторические):
@@ -77,7 +109,8 @@ complete FAIL. Последний показал отправителю «Пер
 | RECORDED-NOTE-QUEUE-01 | PASS deployed `.31` voice/circle | Fresh PRIVATE pair actual SEND, durable sender intent, receiver decrypt and final `DELIVERED`; older `.26` queue-full was historical, no universal latency claim |
 | RECORDER-MIME-31 / RECORDER-ALIAS-31 | PASS deployed `.31` scoped | Valid quoted codec parameter accepted without changing recorded bytes; delayed callback over Saved Messages no modal, original peer received; normal and locked-chat alias UNIT PASS, physical Android MIME/locked-chat browser NOT RUN |
 | NODE-REMOVED-RETRY-01 | PASS deployed `.29`; `.31` NOT RUN | Fresh browser 6/6, exact5a JS62/62, zero new loopback sockets for 3.5 s after removal |
-| S-TURN-HEALTH-01 | PASS scoped EMS/voice/circle; file flow FAIL `.29` | Deployed `.31` real voice/circle sender/receiver delivery PASS; previous 1 МиБ+13 байт file receiver `File channel failed`, sender misleading success; `.31` file retest NOT RUN |
+| S-TURN-HEALTH-01 / N7-FILE-TERMINAL-32 | PASS deployed `.32` scoped | 1 МиБ+13 байт file receiver/download SHA PASS after late DataChannel error; sender/receiver visible verified final, 24/24 deployed gate. Video toggle still NOT RUN `.32` |
+| ADMISSION-LATENCY-32 | PASS desktop Chromium; Android NOT RUN | Same fixed difficulty-18 transcript Worker proof: 979→264 мс, identical counter and independent digest. Deployed `.32` voice stop→DELIVERED 4,127 с, WSS ticket 2,052 с; physical Android >1 min is user-reported on `.31`, not a browser measurement |
 
 ## Текущая интеграция (не deployed UI)
 

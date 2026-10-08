@@ -1,0 +1,130 @@
+{
+  "release": "transport-v3-node-preparation-20261008.32",
+  "exactSHA": "042d5803d5d622da72848c67d96bd5c8243c4819",
+  "browser": "156.0.8078.4",
+  "scope": "Two fresh synthetic PRIVATE Accounts; actual QR copy/import, Node connect, contact/key exchange, text, microphone recording, file chooser and accept over real EMS/S-TURN. No live user profile.",
+  "checks": [
+    {
+      "id": "account-setup-0",
+      "status": "PASS"
+    },
+    {
+      "id": "node-request-0",
+      "status": "PASS"
+    },
+    {
+      "id": "account-setup-1",
+      "status": "PASS"
+    },
+    {
+      "id": "node-request-1",
+      "status": "PASS"
+    },
+    {
+      "id": "both-transport-ready",
+      "status": "PASS"
+    },
+    {
+      "id": "qr-copy-0",
+      "status": "PASS"
+    },
+    {
+      "id": "qr-copy-1",
+      "status": "PASS"
+    },
+    {
+      "id": "private-contact-import-0",
+      "status": "PASS"
+    },
+    {
+      "id": "private-contact-import-1",
+      "status": "PASS"
+    },
+    {
+      "id": "private-route-ready",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-click-0",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-click-1",
+      "status": "PASS"
+    },
+    {
+      "id": "key-exchange-button",
+      "status": "PASS"
+    },
+    {
+      "id": "text-send-and-receive",
+      "status": "PASS"
+    },
+    {
+      "id": "voice-latency-click-start-stop",
+      "status": "PASS"
+    },
+    {
+      "id": "voice-latency-delivery",
+      "status": "PASS"
+    },
+    {
+      "id": "file-choose-1mib-plus-13",
+      "status": "PASS"
+    },
+    {
+      "id": "file-accept",
+      "status": "PASS"
+    },
+    {
+      "id": "file-terminal-observation",
+      "status": "PASS"
+    },
+    {
+      "id": "file-download-integrity",
+      "status": "PASS"
+    }
+  ],
+  "pageErrors": 0,
+  "voice": {
+    "voiceBytes": 30532,
+    "stopClickToDeliveredMs": 2480,
+    "wssTicketMs": 464,
+    "senderFinal": "DELIVERED, retained bytes released",
+    "receiver": "decrypted and playable"
+  },
+  "file": {
+    "bytes": 1048589,
+    "senderFinal": "Передано и проверено",
+    "receiverFinal": "Передано и проверено",
+    "receiverDownloadLink": true,
+    "downloadSha256EqualsInput": true,
+    "receiverLateNativeChannelErrorAfterVerifiedCompleteMs": 75,
+    "receiverFailedAfterLateError": false
+  },
+  "limits": [
+    "Fresh synthetic profiles and desktop Chromium, not physical Android.",
+    "A successful file transfer and voice delivery do not close ordinary Node N0–N8 or full browser inventory."
+  ],
+  "mode": "SOURCE OVERLAY / SW BLOCKED / REAL TRANSPORT",
+  "pageRelease": [
+    "transport-v3-node-preparation-20261008.32",
+    "transport-v3-node-preparation-20261008.32"
+  ],
+  "activeSW": "BLOCKED by Playwright for source overlay",
+  "ordinaryLoadedBodiesExact": {
+    "matched": 140,
+    "total": 140
+  },
+  "consoleWarnings": [
+    "Expected Playwright Service Worker registration blocked in each profile"
+  ],
+  "fileLateErrorNote": "Receiver DataChannel error after verified completion did not overwrite visible success or corrupt downloaded bytes.",
+  "fixedWorkerProofBenchmark": {
+    "environment": "Chromium 156, one fixed public difficulty-18 transcript, same first valid counter and independent WebCrypto verification",
+    "baselineSerialWebCryptoMs": 979,
+    "candidateCachedSha256Ms": 264,
+    "speedup": 3.71,
+    "specChange": "none; same transcript, difficulty and 25-second deadline"
+  }
+}
