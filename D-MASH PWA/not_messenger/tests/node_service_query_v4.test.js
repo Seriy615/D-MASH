@@ -1,0 +1,4 @@
+'use strict';
+const assert=require('node:assert/strict'),Routing=require('../js/node_routing_v4.js');
+(async()=>{const r=new Routing(new Uint8Array(32)),peer='a'.repeat(64),channel={close(){}};r.peers.set(peer,channel);let packet;r.enqueue=(p,v)=>packet=v;const query=r.requestService(peer),closed=assert.rejects(query,/SERVICE_RUNTIME_CLOSED/);await r.close();await closed;assert.equal(r.serviceQueries.size,0);
+ const r2=new Routing(new Uint8Array(32));r2.peers.set(peer,channel);r2.enqueue=(p,v)=>packet=v;const reply=r2.requestService(peer);await r2.receive(peer,{type:'SERVICE_REPLY',version:4,expires_at:Math.floor(Date.now()/1000)+10,challenge:packet.challenge,descriptor:{signed:'opaque'}});assert.equal((await reply).channel,channel);assert.equal(r2.serviceQueries.size,0);await r2.close();console.log('PASS bounded service query channel correlation and immediate shutdown rejection');})().catch(e=>{console.error(e);process.exitCode=1;});

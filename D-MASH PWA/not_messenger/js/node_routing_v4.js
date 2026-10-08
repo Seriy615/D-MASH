@@ -199,6 +199,7 @@
   }
   async close(){
    this.closed=true;this.stopCover();
+   for(const q of this.serviceQueries.values()){clearTimeout(q.timer);q.reject(Error('SERVICE_RUNTIME_CLOSED'));}this.serviceQueries.clear();
    for(const pending of this.pending)pending.reject(Error('Node runtime closed'));
    for(const timer of this.timers.values())clearTimeout(timer);
    for(const channel of this.peers.values())channel.close();
