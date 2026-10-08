@@ -48,12 +48,13 @@
        if(await this.host.acknowledgeInbox(record.handle,slot))result.processed++;else result.deferred++;
       }else result.deferred++;
      }catch(error){if(!current())return result;result.failed++;}
-     // Advance only after Account persistence and local Inbox ACK were attempted.
-     // A crash before this checkpoint replays the record; the Account wire ID
-     // and Node Inbox tombstone make that replay idempotent.
-     if(!await checkpoint(next))return result;
+     // Advance only after Account persistence and local Inbox ACK were
+     // attempted. A crash before the page checkpoint replays at most 32
+     // records; Account wire IDs and Inbox tombstones make that idempotent.
+     this.cursor=next;
     }
-    if(page.records.length<32){await checkpoint(null);break;}
+    if(!await checkpoint(page.records.length<32?null:this.cursor))return result;
+    if(page.records.length<32)break;
    }
    return result;
   }
