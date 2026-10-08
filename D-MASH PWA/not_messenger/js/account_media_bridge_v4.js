@@ -29,7 +29,8 @@
   }
   function outcome(message,record){
    if(!record||!['voice','circle','file'].includes(record.kind))fail();const id=record.kind==='file'?message?.file_id:message?.note_id;if(id!==record.transferId||message.sha256!==record.sha256)fail();
-   const base={version:1,transferId:record.transferId,kind:record.kind,expiresAt:clock()+300};
+   if(!Number.isSafeInteger(record.expiresAt)||record.expiresAt<=clock()||record.expiresAt>clock()+300)throw Error('NODE_MEDIA_OUTCOME_EXPIRY');
+   const base={version:1,transferId:record.transferId,kind:record.kind,expiresAt:record.expiresAt};
    if(message.type==='voip_file_reject'&&record.kind==='file'&&message.reason==='RECEIVER_BUSY'&&(message.session_id!==record.transportId||!/^[0-9a-f]{64}$/.test(record.transportId||'')))fail();
    if(message.type==='voip_file_reject'&&record.kind==='file')return {type:'DECLINE',payload:schema.validate('DECLINE',{...base,sha256:record.sha256,reason:message.reason,...(message.reason==='RECEIVER_BUSY'?{transportId:record.transportId}:{})},{now:clock()})};
    if(message.type!==(record.kind==='file'?'voip_file_complete':'voip_note_complete'))fail();
