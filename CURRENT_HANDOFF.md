@@ -41,6 +41,16 @@ protected off-checkout backup. Итог и GitHub SSH limitation —
 настройки; production runtime/данные не переносились. Последний documentation
 commit также доставляется на Forge, его полный SHA получить из Git.
 
+**N7-FILE-AFTER-CALL-35 FAIL, owner qa_remaining:** root exact deployed `.35`
+fresh PRIVATE pair passed key/text/real relay call+hangup; next tiny attachment
+receiver inline card absent after120s.134/134loadedresponses exact6a,page/SW35,
+pageerrors/console0. Old harness closed contexts onFAIL; retained reproduction
+with protected snapshots next, no speculative cause or reset. Source gates
+remain separate PASS, full deployed `.35` media acceptance **NOT PASS**.
+[Scoped failure](docs/evidence/2026-10-08/qa-mobile35-root-deployed-file-after-call-fail.json).
+PUBLIC authority duplicatePoW source fixd57652a reviewed/integrating but NOT
+published/deployed; full PUBLIC readiness/pull/expiry bug remains OPEN.
+
 ## 2. Текущий Forge и EMS checkpoint
 
 **Source и production PWA:** exact product commit

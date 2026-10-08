@@ -1,0 +1,100 @@
+{
+  "scope": "DEPLOYED .35 fresh synthetic PRIVATE pair actual UI; file after real call failed visible receive deadline",
+  "sha": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+  "pages": [
+    {
+      "pageRelease": "transport-v3-node-preparation-20261008.35",
+      "swRelease": "transport-v3-node-preparation-20261008.35"
+    },
+    {
+      "pageRelease": "transport-v3-node-preparation-20261008.35",
+      "swRelease": "transport-v3-node-preparation-20261008.35"
+    }
+  ],
+  "checks": [
+    {
+      "id": "account-setup-0",
+      "status": "PASS"
+    },
+    {
+      "id": "node-request-0",
+      "status": "PASS"
+    },
+    {
+      "id": "account-setup-1",
+      "status": "PASS"
+    },
+    {
+      "id": "node-request-1",
+      "status": "PASS"
+    },
+    {
+      "id": "both-transport-ready",
+      "status": "PASS"
+    },
+    {
+      "id": "qr-copy-0",
+      "status": "PASS"
+    },
+    {
+      "id": "qr-copy-1",
+      "status": "PASS"
+    },
+    {
+      "id": "private-contact-import-0",
+      "status": "PASS"
+    },
+    {
+      "id": "private-contact-import-1",
+      "status": "PASS"
+    },
+    {
+      "id": "private-route-ready",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-click-0",
+      "status": "PASS"
+    },
+    {
+      "id": "chat-click-1",
+      "status": "PASS"
+    },
+    {
+      "id": "key-exchange-button",
+      "status": "PASS"
+    },
+    {
+      "id": "text-send-and-receive",
+      "status": "PASS"
+    },
+    {
+      "id": "mobile-module-state-before-actions",
+      "status": "PASS"
+    },
+    {
+      "id": "mobile-call-button-outcome",
+      "status": "PASS"
+    },
+    {
+      "id": "mobile-file-button-outcome",
+      "status": "FAIL"
+    }
+  ],
+  "loadedResponses": 134,
+  "allBytesExact": true,
+  "pageErrors": 0,
+  "consoleErrors": 0,
+  "callOutcome": {
+    "kind": "connected",
+    "modal": ""
+  },
+  "failure": "Tiny synthetic file attached after connected call/hangup: receiver inline card not visible within120s",
+  "owner": "qa_remaining",
+  "limits": [
+    "Old harness closed fresh contexts on failure; no retained state for packet-stage diagnosis",
+    "This contradicts full deployed media acceptance, not prior source-overlay PASS",
+    "Not proof of exact transport cause; retained reproduction next",
+    "No real user profile accessed; no reset"
+  ]
+}

@@ -6,6 +6,16 @@
 интегрированный результат. Этот файл — журнал и начальная матрица, не утверждение,
 что полный обход UI уже выполнен.
 
+**N7-FILE-AFTER-CALL-35 FAIL, owner qa_remaining:** root exact deployed `.35`
+fresh PRIVATE pair passed key/text/real relay call+hangup; next tiny attachment
+receiver inline card absent after120s.134/134loadedresponses exact6a,page/SW35,
+pageerrors/console0. Old harness closed contexts onFAIL; retained reproduction
+with protected snapshots next, no speculative cause or reset. Source gates
+remain separate PASS, full deployed `.35` media acceptance **NOT PASS**.
+[Scoped failure](docs/evidence/2026-10-08/qa-mobile35-root-deployed-file-after-call-fail.json).
+PUBLIC authority duplicatePoW source fixd57652a reviewed/integrating but NOT
+published/deployed; full PUBLIC readiness/pull/expiry bug remains OPEN.
+
 ## Актуальный release checkpoint
 
 Актуальная опубликованная PWA: **`6a01feb252c1b94772a2b19503c9e1576a8c6356`**,
