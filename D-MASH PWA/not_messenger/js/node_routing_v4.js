@@ -178,7 +178,9 @@
    }else if(packet.type==='DATA'){
     if(!exact(packet,'expires_at,label,offer,payload,type,version')||!token(packet.label)||!token(packet.offer))throw Error('Invalid DATA');
     opaque(packet.payload);this.prune();const binding=this.labels.get(labelKey(peer,packet.label));if(!binding||expires>binding.expires)return;
-    if(!await this.dedupe('DATA',packet.payload,expires)||this.labels.get(labelKey(peer,packet.label))!==binding||!this.peers.has(peer))return;this.stats.received++;
+    // A fresh authenticated hop grant may retry the same recipient box.
+    // Keep duplicate suppression within the validated peer/label namespace.
+    if(!await this.dedupe('DATA:'+labelKey(peer,packet.label),packet.payload,expires)||this.labels.get(labelKey(peer,packet.label))!==binding||!this.peers.has(peer))return;this.stats.received++;
     const target=binding.target;
     if(Array.isArray(target)){
      const offer=this.label(target[0],[peer,packet.offer],expires);this.enqueue(target[0],{...packet,label:target[1],offer});this.stats.forwarded++;

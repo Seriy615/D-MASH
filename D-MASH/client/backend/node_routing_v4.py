@@ -259,7 +259,9 @@ class NodeRoutingV4:
             _opaque(packet['payload'])
             self._prune();binding=self.labels.get((peer,packet['label']))
             if not binding or expires>binding['expires']:return
-            if not self._dedupe('DATA',packet['payload'],expires):return
+            # A fresh authenticated hop grant may retry the same recipient box.
+            # Suppress repeats only within the validated peer/label namespace.
+            if not self._dedupe(('DATA',peer,packet['label']),packet['payload'],expires):return
             target=binding['target'];self.stats['received']+=1
             if isinstance(target,tuple):
                 offer=self._label(target[0],(peer,packet['offer']),expires)
