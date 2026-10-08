@@ -25,6 +25,7 @@ const materials=()=>({seed:new Uint8Array(32).fill(1),storageKey:new Uint8Array(
  const backing=new Uint8Array(256).fill(99),input={...materials(),seed:backing.subarray(0,32)};
  const host=await Host.startMaterials(input),worker=instances.at(-1),init=worker.messages[0];
  assert.equal(init.apiVersion,3);
+ worker.hold=true;for(const [code,expected]of [['SERVICE_EXPIRED','SERVICE_EXPIRED'],['private database secret','Node worker operation failed']]){const pending=host.serviceDescriptor({nodeId:'a'.repeat(64),signalingWss:'wss://example.test/signal'}),check=assert.rejects(pending,e=>e.message===expected);worker.onmessage({data:{id:worker.messages.at(-1).id,ok:false,code}});await check;}worker.hold=false;
  assert.equal(init.seed.buffer.byteLength,32,'unrelated bytes from a backing buffer must never reach the actor');
  assert(backing.subarray(32).every(b=>b===99));assert(input.seed.every(b=>b===0));assert(input.storageKey.every(b=>b===0));
  const localBuffer=new Uint8Array(128).fill(21),ownerSecret=new Uint8Array(32).fill(44),recipientKey=new Uint8Array(32).fill(31);
