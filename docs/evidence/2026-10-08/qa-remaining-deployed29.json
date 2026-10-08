@@ -1,0 +1,358 @@
+{
+  "scope": "Fresh synthetic Chromium browser actions against deployed EMS PWA; no user profile, CDP9449 or CDP9490 touched; no storage reset of existing profiles",
+  "sourceSHA": "5a2439834a2fc22db8f6ecd0b9674d533397ea8a",
+  "page": "transport-v3-node-preparation-20261008.29",
+  "activeServiceWorker": "transport-v3-node-preparation-20261008.29",
+  "browser": "156.0.8078.4",
+  "checks": {
+    "calculator": {
+      "status": "24 PASS, 0 FAIL",
+      "actions": [
+        {
+          "id": "CALC-MASTER-SHORT",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-WIPE-SHORT",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-0",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-1",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-2",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-3",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-4",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-5",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-6",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-7",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-8",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-9",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-+",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC--",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-*",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-/",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-SIGN",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-PERCENT",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-DECIMAL",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-ZERO-DIV",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-WRONG-PIN",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-UNLOCK",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-RELOAD-LOCK",
+          "status": "PASS"
+        },
+        {
+          "id": "CALC-WIPE",
+          "status": "PASS"
+        }
+      ],
+      "script": "tools/qa_calculator.cjs"
+    },
+    "accountLifecycle": {
+      "status": "9 PASS, 1 FAIL",
+      "actions": [
+        {
+          "id": "UI02-empty-error",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-create-0",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-create-1",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-switch-isolation",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-wrong-nonempty",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-wrong-retry-correct",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-registry-open",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-remove-cancel",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-remove-confirm",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-removal-history-erased",
+          "status": "FAIL"
+        }
+      ],
+      "script": "tools/qa_account_lifecycle.cjs",
+      "bug": "ACCOUNT-DELETE-01; after confirm/recreate same synthetic Account, previously saved local message is visible"
+    },
+    "nodeQrNavigationScanner": {
+      "status": "9 PASS, 0 FAIL",
+      "actions": [
+        {
+          "id": "real-wss",
+          "status": "PASS"
+        },
+        {
+          "id": "NODE-QR-01",
+          "status": "PASS"
+        },
+        {
+          "id": "UI-SHARE-CREATE",
+          "status": "PASS"
+        },
+        {
+          "id": "scanner-denied-cancel",
+          "status": "PASS"
+        },
+        {
+          "id": "scanner-rapid-reopen-and-running-cancel",
+          "status": "PASS"
+        },
+        {
+          "id": "scanner-delayed-real-camera-cancel-reopen",
+          "status": "PASS"
+        },
+        {
+          "id": "UI-PUBLIC-ACCEPT-NAV",
+          "status": "PASS"
+        },
+        {
+          "id": "PENDING-BACK-01",
+          "status": "PASS"
+        },
+        {
+          "id": "global-node-request-pin",
+          "status": "PASS"
+        }
+      ],
+      "script": "tools/qa_ui_blockers.cjs"
+    },
+    "savedMessagesMediaMaster": {
+      "status": "27 PASS, 0 FAIL",
+      "actions": [
+        {
+          "id": "UI02-empty",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-create",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-open",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-empty",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-send",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-rename-cancel",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-delete-cancel",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-password-cancel",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-password-set",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-password-wrong",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-password-unlock",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-password-remove",
+          "status": "PASS"
+        },
+        {
+          "id": "UI09-delete",
+          "status": "PASS"
+        },
+        {
+          "id": "UI10-voice-cancel",
+          "status": "PASS"
+        },
+        {
+          "id": "UI10-voice-send",
+          "status": "PASS"
+        },
+        {
+          "id": "UI10-voice-play",
+          "status": "PASS"
+        },
+        {
+          "id": "UI10-circle-cancel",
+          "status": "PASS"
+        },
+        {
+          "id": "UI12-local-file",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-logout",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-select",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-return",
+          "status": "PASS"
+        },
+        {
+          "id": "UI02-login",
+          "status": "PASS"
+        },
+        {
+          "id": "UI01-master-history",
+          "status": "PASS"
+        },
+        {
+          "id": "UI01-master-wrong",
+          "status": "PASS"
+        },
+        {
+          "id": "UI01-master-change",
+          "status": "PASS"
+        },
+        {
+          "id": "UI01-master-old-deny",
+          "status": "PASS"
+        },
+        {
+          "id": "UI01-master-new-retain",
+          "status": "PASS"
+        }
+      ],
+      "script": "tools/qa_account_media.cjs"
+    },
+    "nodeRemovedRetry": {
+      "status": "6 PASS, 0 FAIL",
+      "actions": [
+        {
+          "id": "loopback-add",
+          "status": "PASS"
+        },
+        {
+          "id": "loopback-duplicate",
+          "status": "PASS"
+        },
+        {
+          "id": "loopback-connect-error",
+          "status": "PASS"
+        },
+        {
+          "id": "loopback-retry-error",
+          "status": "PASS"
+        },
+        {
+          "id": "loopback-remove-cancel",
+          "status": "PASS"
+        },
+        {
+          "id": "loopback-remove-stops-retry",
+          "status": "PASS"
+        }
+      ],
+      "script": "temporary deployed .29 adaptation of tools/qa_node_unavailable_local.cjs",
+      "socketAttempts": 2,
+      "loadedJsResponses": 62,
+      "sourceMatch": true,
+      "pageErrors": [],
+      "notRun": [
+        "Password/admission/authenticatedNode/offlineEntry/loadingdisabled require actual controlledNode fixture",
+        "No externalNode/EMS or resourcePoW; unavailableloopbackonly"
+      ]
+    }
+  },
+  "limits": [
+    "The first four scripts verified page and active SW release, but did not hash every fetched source in their own run; separate deployed gate and exact verifier cover source content.",
+    "Unavailable WSS is loopback only; not password/auth resource acceptance.",
+    "Synthetic media devices, not physical mobile/WebAuthn.",
+    "Ordinary Account→NodeRuntimeHostV4 and N4 recovery/migration NOT RUN by these cases."
+  ]
+}

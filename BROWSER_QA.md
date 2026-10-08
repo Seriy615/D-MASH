@@ -6,6 +6,12 @@
 интегрированный результат. Этот файл — журнал и начальная матрица, не утверждение,
 что полный обход UI уже выполнен.
 
+**Свежий дополняющий проход `.29`:** [санитизированные результаты](docs/evidence/2026-10-08/qa-remaining-deployed29.json)
+и [план оставшейся приёмки](docs/evidence/2026-10-08/qa-remaining-deployed29-plan.md)
+относятся к опубликованной PWA `5a2439834a2fc22db8f6ecd0b9674d533397ea8a`.
+Они не меняют статусы N3/N4 и полного UI01–UI14; старые release checkpoint
+и FAIL ниже — исторические записи с явными версиями.
+
 ## Актуальный release checkpoint
 
 PWA **fd2a7505ba7325ee0d47e38cb2cfc8271cbfc0c1**, `.28`, опубликована на EMS;
@@ -328,3 +334,41 @@ Account recovery remains NOT RUN in this inventory: an authenticated root-loss/s
 **Текущий независимый DEPLOYED UI gate:** exact `5a2439834a2fc22db8f6ecd0b9674d533397ea8a`, actual HTTPS EMS, page и active controlling SW `.29`, без overlay. PUBLIC Request/Accept/Confirm, key/text в обе стороны, voice burst/hash/relay/decrypt/playback, offline/reload/visible cancel/retry/Account switch/reconnect, circle и безопасное удаление контакта PASS на свежей synthetic паре. Исходное прерывание Settings входящим notification сохранено; после actual OK тот же профиль прошёл 27/27 continuation checks.206 loaded responses exact (122 from SW), pageerrors0. SEND→durable203/251/263ms; все три delivered через45.641s после первого durable save — это не обещание постоянной скорости доставки. Corrupt-owner refusal сохраняет history/keys/media/route/epoch; valid deletion сохраняет unknown opaque row и identity. [Матрица и ограничения](docs/evidence/2026-10-08/qa-deployed5a-summary.md). N4 safety-only, не full recovery/migration. Legacy pending migration NOT RUN (CDP9452 unavailable); user9449 untouched, synthetic9490 retained. Full N0–N8/A–M/E6 и оставшиеся controls не объявлены DONE.
 
 Bug retest owners: `NOTE-RELOAD-CONTROLS-01` / recorded-note UI — qa_account_media, deployed PASS; `CHAT-DELETE-PREFLIGHT-UI-01` — Storage/Core owners, deployed PASS; initial incoming-notification Settings interruption remains a preserved QA control observation, handled with actual OK on the same profiles. No physical authenticator or full recovery claim. The previous source-only gates above remain historical, not alternate deployed targets.
+
+## Дополнительный deployed `.29` browser-first проход
+
+Новые fresh synthetic Chromium profiles; пользовательский CDP9449 и retained
+synthetic CDP9490 не открывались. Page и active controlling SW во всех пяти
+прогонах — `transport-v3-node-preparation-20261008.29`. Источник приложения —
+`5a2439834a2fc22db8f6ecd0b9674d533397ea8a` (дальнейший `df59bb9`
+изменил QA/docs, но не PWA). [Компактный журнал действий](docs/evidence/2026-10-08/qa-remaining-deployed29.json)
+не содержит Account IDs, credentials или plaintext из браузерного хранилища.
+
+| Slice | Actual UI actions / result | Limits |
+| --- | --- | --- |
+| UI01 calculator | 24/24 PASS: все цифры/операторы, short master/wipe, wrong/unlock, reload lock и wipe только пустого synthetic профиля | Physical orientation/WebAuthn NOT RUN |
+| UI02 Account lifecycle | 9 PASS / 1 FAIL: два синтетических Account, wrong→correct, switch/history isolation, registry remove cancel/confirm | `ACCOUNT-DELETE-01` ниже |
+| UI03–06 navigation/Node/QR | 9/9 PASS: real WSS request, Node QR/copy, public route UI, camera denied/running/delayed cancel/reopen, pending Back и global node pin | Private/password Node и route readiness NOT RUN |
+| UI09/local UI10/UI12/master | 27/27 PASS: Saved Messages text/password wrong/correct/remove/delete, voice capture/cancel/decrypt/play, circle cancel, unsupported local file notice, master rewrap + retained Account/history | Remote calls/files and physical devices NOT RUN |
+| `NODE-REMOVED-RETRY-01` | 6/6 PASS: unavailable WSS add/dedupe, Connect/retry remain RECONNECTING, Delete dismiss/accept; after removal no new socket for 3.5s | Loopback negative flow only; 62 loaded JS responses match exact source SHA; page errors 0 |
+
+`ACCOUNT-DELETE-01` — **FAIL deployed `.29`, P1 privacy/UX, owner TBD**.
+На fresh test profile создать Account A и B, в B через «Избранное» отправить
+синтетическое локальное сообщение; выйти, открыть global Account manager,
+нажать «УДАЛИТЬ АККАУНТ» для B. Cancel сохраняет B. Повторить, ввести
+`УДАЛИТЬ`, подтвердить; строка B исчезает из registry. После «+ НОВЫЙ ВХОД»
+создать B с тем же идентификатором и паролем, открыть «Избранное»: прежнее
+сообщение видно. Проверка ждала конкретный текст в chat DOM, это не гонка
+локатора. Prompt обещает «Вся история будет стерта!», success — «аккаунт и его
+ключи полностью ликвидированы», поэтому фактическая сохранность противоречит
+действующему UI-контракту. Исправление требует owner-aware preflight и проверки
+соседнего Account; не удалять production vault ради QA. Fix/retest **NOT RUN**.
+
+`NODE-REMOVED-RETRY-01` — **PASS deployed `.29` для прежнего reproducer**;
+исходный `.27` FAIL сохранён выше как история. Это не проверка password/admission
+или реального authenticated Node. Прогон Node проверил каждый fetched JS body
+по exact `5a24398`; остальные четыре прогона сверили page/active SW build, но
+не хешировали все свои response bodies, что явно ограничивает их provenance.
+Старый exact verifier и независимая deployed gate дополняют это наблюдение.
+Обычная переписка через NodeRuntimeHostV4, полный N4 recovery/migration и
+общий inventory UI01–UI14 остаются **NOT RUN** как целостные матрицы.
