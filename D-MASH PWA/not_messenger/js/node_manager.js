@@ -308,9 +308,8 @@ const NodeManager = {
         this.endpoints = this.endpoints.filter(item => item.url !== url);
         const connection = this.connections.get(url);
         if (connection) {
-            clearTimeout(connection.reconnectTimer); this.stopPings(connection);
-            this.rejectPending(connection, new Error('D-MASH node removed'));
-            this.connections.delete(url); connection.socket?.close(1000, 'node removed');
+            this.connections.delete(url);
+            this.retireConnection(connection, new Error('D-MASH node removed'));
         }
         if (this.active?.url === url) this.active = this.endpoints[0] || null;
         this.save();
@@ -459,10 +458,12 @@ const NodeManager = {
     },
     connectEndpoint(endpoint) {
         this.assertNodeIdentity(endpoint);
+        if (!this.endpoints.includes(endpoint)) return null;
         const existing = this.connections.get(endpoint.url);
         if (existing?.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(existing.socket.readyState)) return existing;
         const connection = { endpoint, socket: null, capabilities: new Set(), state: 'connecting', error: null, pendingPings: new Map(), pendingRequests: new Map(), reconnectAttempt: existing?.reconnectAttempt || 0, reconnectTimer: null, pingTimer: null, lastLatencyMs: null, lastConnectedAt: null, dnssReadyState: 'pending' };
         this.connections.set(endpoint.url, connection);
+        if (existing) this.retireConnection(existing, new Error('D-MASH node connection replaced'));
         const disconnected = error => {
             connection.authority?.close();
             if (this.connections.get(endpoint.url) !== connection) return;
@@ -959,14 +960,19 @@ const NodeManager = {
         for (const pending of connection.pendingRequests.values()) pending.reject(error);
         connection.pendingRequests.clear();
     },
+    retireConnection(connection, error) {
+        clearTimeout(connection.reconnectTimer); connection.reconnectTimer = null;
+        this.stopPings(connection);
+        this.rejectPending(connection, error);
+        connection.authority?.close();
+        if (connection.client) connection.client.close();
+        else connection.socket?.close(1000, 'client disconnect');
+    },
     disconnect(reconnect = false) {
         clearTimeout(this.reconnectTimer); this.reconnectTimer = null;
-        for (const connection of this.connections.values()) {
-            clearTimeout(connection.reconnectTimer); this.stopPings(connection);
-            this.rejectPending(connection, new Error('D-MASH node disconnected'));
-            if (connection.socket) connection.socket.close(1000, 'client disconnect');
-        }
+        const connections = [...this.connections.values()];
         this.connections.clear(); this.socket = null;
+        for (const connection of connections) this.retireConnection(connection, new Error('D-MASH node disconnected'));
         this.setState('disconnected');
         if (reconnect) this.scheduleReconnect();
     },
@@ -975,16 +981,18 @@ const NodeManager = {
         const endpoint = this.endpoints.find(item => item.url === url);
         if (endpoint?.notificationEnabled) return this.showMessage('Узел обеспечивает уведомления и не может быть отключён.');
         if (!connection) return;
-        clearTimeout(connection.reconnectTimer); this.stopPings(connection);
-        this.rejectPending(connection, new Error('D-MASH node disconnected'));
-        this.connections.delete(url); connection.socket?.close(1000, 'client disconnect');
+        this.connections.delete(url);
+        this.retireConnection(connection, new Error('D-MASH node disconnected'));
         this.updateState();
     },
     scheduleReconnect(connection) {
         if (connection) {
-            if (!this.connections.has(connection.endpoint.url) || connection.reconnectTimer) return;
+            if (this.connections.get(connection.endpoint.url) !== connection || connection.reconnectTimer) return;
             const delay = Math.min(30000, 1000 * (2 ** connection.reconnectAttempt++));
-            connection.reconnectTimer = setTimeout(() => { connection.reconnectTimer = null; this.connectEndpoint(connection.endpoint); }, delay);
+            connection.reconnectTimer = setTimeout(() => {
+                connection.reconnectTimer = null;
+                if (this.connections.get(connection.endpoint.url) === connection) this.connectEndpoint(connection.endpoint);
+            }, delay);
             return;
         }
         if (this.reconnectTimer) return;
