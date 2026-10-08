@@ -27,10 +27,22 @@ Accept prompt. Rejection and limit errors remain visible, and the sender must
   authority from `Core.confirmedNodeMediaPeerV4(peer)`, select a signed
   same-channel S-TURN service through `Core.selectNodeMediaServiceV4`, and
   persist typed encrypted CONTROL through `Core.sendNodeMediaControlV4`.
+  Local offline attachment is a separate decision:
+  `Core.canQueueNodeMediaV4(peer)` checks the Account-owned confirmed Node
+  contact before FileVault stores a `node-v4` WAITING row. It grants no right
+  to submit a network control.
   Incoming effects must first pass `Core.verifyNodeMediaControlV4` against
   a private, durable N4 dispatcher row. No raw message, staticShared secret,
   or legacy service selection is accepted as Node authority. These Core
   seams and the real ordinary-Node browser gate remain separate work.
+- A Node INVITE is accepted only after `Core.beginNodeFileTransferV4` atomically
+  records the authenticated APPLIED control and exact accepted transfer task.
+  An in-progress transfer can finish after the INVITE expires only while fresh
+  private `phase:'commit'` verification finds the same task within its original
+  one-hour deadline. A cancelled or completed accepted task leaves a bounded
+  encrypted terminal outcome marker for replay suppression; pending semantic
+  COMMIT_ACK/DECLINE controls keep the same operation ID until N4 Outbox durably
+  enqueues them. The marker never authorizes a new transfer start.
 - voip_file_request is an Account end-to-end encrypted typed control payload.
   Version 2 adds a stable random file_id distinct from the per-attempt
   S-TURN session_id. The request retains expires_at, signaling,

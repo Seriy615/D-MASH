@@ -5,6 +5,24 @@
     const encoder = new TextEncoder(), decoder = new TextDecoder();
     const isId = value => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
     const validMode = mode => mode === 'v3-private' || mode === 'node-v4';
+    const validOutcome = value => value && isId(value.peer) && isId(value.fileId) &&
+        isId(value.sha256) && isId(value.operationId) &&
+        Number.isSafeInteger(value.size) && value.size >= 1 && value.size <= MAX &&
+        (value.type === 'voip_file_complete' ? value.reason === null :
+            value.type === 'voip_file_reject' &&
+            ['RECEIVER_BUSY', 'RECEIVER_STORAGE_FULL', 'RECEIVER_DECLINED'].includes(value.reason)) &&
+        (value.reason === 'RECEIVER_BUSY' ? isId(value.transportId) :
+            value.transportId === null || isId(value.transportId)) &&
+        typeof value.queued === 'boolean' &&
+        (!value.queued || value.terminalUntil !== null) &&
+        (value.terminalUntil === null ? value.controlDigest === null :
+            Number.isSafeInteger(value.terminalUntil) && value.terminalUntil > 0 &&
+            isId(value.controlDigest) && isId(value.transportId) &&
+            (value.type === 'voip_file_complete' ||
+                ['RECEIVER_DECLINED','RECEIVER_STORAGE_FULL'].includes(value.reason)));
+    const sameOutcome = (a, b) => a.peer === b.peer && a.fileId === b.fileId &&
+        a.sha256 === b.sha256 && a.size === b.size && a.type === b.type && a.reason === b.reason &&
+        a.transportId === b.transportId && a.controlDigest === b.controlDigest;
     // Existing authenticated v1 rows predate the authority tag and were
     // created only by the private-v3 file path. Never infer Node authority.
     const modeOf = value => value === undefined ? 'v3-private' : value;
@@ -128,6 +146,107 @@
                 if (peerBytes + size > INBOUND_PEER_QUOTA)
                     throw Error('Недостаточно места для файлов от этого контакта: лимит 128 МиБ. Удалите старые файлы.');
             }
+        }
+
+        outcomeAlias(session) {
+            if (!session.db.objectStoreNames.contains('pairing_material'))
+                throw Error('FILE_OUTCOME_JOURNAL_UNAVAILABLE');
+            return this.alias(session, 'file-outcomes-v1:' + session.owner, 'L2');
+        }
+
+        async _outcomes(session, alias) {
+            const row = await request(session.db, 'pairing_material', alias); session.check();
+            const value = row ? await this.open(session, alias, 'outcomes', row) :
+                {schema: 'dmash_file_outcomes_v1', account: session.owner, entries: []};
+            if (value?.schema !== 'dmash_file_outcomes_v1' || value.account !== session.owner ||
+                !Array.isArray(value.entries) || value.entries.length > 128 ||
+                value.entries.some(entry => !validOutcome(entry)) ||
+                new Set(value.entries.map(entry => entry.operationId)).size !== value.entries.length ||
+                new Set(value.entries.map(entry => [entry.peer, entry.fileId, entry.sha256,
+                    entry.size, entry.type, entry.reason, entry.transportId,
+                    entry.controlDigest].join(':'))).size !== value.entries.length)
+                throw Error('Corrupt file outcome journal');
+            return {row, value};
+        }
+
+        async _commitOutcomes(session, alias, before, value) {
+            const sealed = await this.seal(session, alias, 'outcomes', value);
+            return new Promise((resolve, reject) => {
+                session.check();
+                const tx = session.db.transaction('pairing_material', 'readwrite');
+                const q = tx.objectStore('pairing_material').get(alias);
+                q.onsuccess = () => {
+                    try {
+                        session.check();
+                        if ((q.result?.revision || 0) !== (before?.revision || 0))
+                            throw Error('File outcome journal changed');
+                        tx.objectStore('pairing_material').put({alias, ...sealed,
+                            revision: (before?.revision || 0) + 1});
+                    } catch (error) {try {tx.abort();} catch (_) {} reject(error);}
+                };
+                q.onerror = () => reject(q.error || Error('File outcome read failed'));
+                tx.oncomplete = () => {try {session.check(); resolve();} catch (error) {reject(error);}};
+                tx.onabort = () => reject(tx.error || Error('File outcome commit failed'));
+                tx.onerror = () => {};
+            });
+        }
+
+        async stageOutcome(details) {
+            const session = this.capture();
+            if (!validOutcome(details)) throw Error('Invalid file outcome');
+            const alias = await this.outcomeAlias(session);
+            for (let attempt = 0; attempt < 8; attempt++) {
+                const {row, value} = await this._outcomes(session, alias);
+                const live = value.entries.filter(entry => !entry.queued ||
+                    entry.terminalUntil === null || entry.terminalUntil > Date.now());
+                const prior = live.find(entry => sameOutcome(entry, details));
+                if (prior) return {...prior};
+                if (live.length >= 128) throw Error('Очередь подтверждений файлов заполнена.');
+                const next = {...value, entries: [...live, {...details}]};
+                try {await this._commitOutcomes(session, alias, row, next);return {...details};}
+                catch (error) {
+                    if (error.message !== 'File outcome journal changed') throw error;
+                }
+            }
+            throw Error('File outcome journal changed; retry');
+        }
+
+        async listOutcomes() {
+            const session = this.capture(), alias = await this.outcomeAlias(session);
+            const {value} = await this._outcomes(session, alias);
+            return value.entries.filter(entry => !entry.queued)
+                .map(entry => ({...entry}));
+        }
+
+        async terminalOutcome(peer, fileId, sha256, size, transportId, controlDigest) {
+            if (![peer,fileId,sha256,transportId,controlDigest].every(isId) ||
+                !Number.isSafeInteger(size) || size < 1 || size > MAX)
+                throw Error('Invalid file outcome');
+            const session = this.capture(), alias = await this.outcomeAlias(session);
+            const {value} = await this._outcomes(session, alias);
+            const found = value.entries.find(entry => entry.terminalUntil > Date.now() &&
+                entry.peer === peer && entry.fileId === fileId && entry.sha256 === sha256 &&
+                entry.size === size && entry.transportId === transportId &&
+                entry.controlDigest === controlDigest);
+            return found ? {...found} : null;
+        }
+
+        async retireOutcome(operationId) {
+            if (!isId(operationId)) throw Error('Invalid file outcome');
+            const session = this.capture(), alias = await this.outcomeAlias(session);
+            for (let attempt = 0; attempt < 8; attempt++) {
+                const {row, value} = await this._outcomes(session, alias);
+                const found = value.entries.find(entry => entry.operationId === operationId);
+                if (!found) return false;
+                const next = {...value, entries: value.entries.flatMap(entry =>
+                    entry.operationId !== operationId ? [entry] :
+                        entry.terminalUntil > Date.now() ? [{...entry, queued:true}] : [])};
+                try {await this._commitOutcomes(session, alias, row, next);return true;}
+                catch (error) {
+                    if (error.message !== 'File outcome journal changed') throw error;
+                }
+            }
+            throw Error('File outcome journal changed; retry');
         }
 
         async _encryptBody(session, alias, fileId, size, sha256, blob) {

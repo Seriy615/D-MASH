@@ -9,16 +9,16 @@
         return bytes;
     };
     function requestFor(manifest, invitation, fileId = manifest.id) {
-        // Core.sendMessage encrypts this whole Account payload before it is
-        // wrapped in FILE_SESSION_REQUEST.  Keep the file manifest opaque to
-        // the Device/Node layer while retaining the strict wire shape.
+        // The selected Account control path encrypts this whole payload
+        // before transport. Keep the manifest opaque to the Node transit
+        // layer while retaining the strict file request wire shape.
         const metadata = b64(textEncoder.encode(JSON.stringify(manifest)));
         return {version: 2, file_id: fileId, session_id: manifest.id, expires_at: invitation.expires_at,
             signaling: invitation.signaling, encrypted_metadata: metadata,
             size_bytes: manifest.size, chunk_bytes: manifest.chunk_bytes,
             sha256: manifest.sha256, resumable: false};
     }
-    function parseRequest(request) {
+    function parseRequest(request, {verifiedResume = false} = {}) {
         const required = ['version', 'session_id', 'expires_at', 'signaling', 'encrypted_metadata',
             'size_bytes', 'chunk_bytes', 'sha256', 'resumable'];
         if (!request || ![1,2].includes(request.version) ||
@@ -27,7 +27,8 @@
             (request.version === 2 && (!Object.prototype.hasOwnProperty.call(request,'file_id') ||
                 !/^[0-9a-f]{64}$/.test(request.file_id || ''))) ||
             !/^[0-9a-f]{64}$/.test(request.session_id || '') || !Number.isInteger(request.expires_at) ||
-            request.expires_at <= Date.now() / 1000 || request.expires_at > Date.now() / 1000 + 3600 ||
+            (!verifiedResume && request.expires_at <= Date.now() / 1000) ||
+            request.expires_at > Date.now() / 1000 + 3600 ||
             !Number.isInteger(request.size_bytes) || !Number.isInteger(request.chunk_bytes) ||
             !/^[0-9a-f]{64}$/.test(request.sha256 || '') || request.resumable !== false ||
             typeof request.signaling !== 'object') throw Error('Недействительное приглашение файла');
@@ -70,7 +71,13 @@
                 if (task.url) URL.revokeObjectURL(task.url);
                 box.remove(); if (core._fileTransfer === task) core._fileTransfer = null;
             }};
-        cancel.onclick = () => {void task.decline?.(); task.close();}; core._fileTransfer = task;
+        cancel.onclick = () => {
+            if (task.finished || task.failed || !task.decline) {task.close();return;}
+            void (async () => {
+                if (await task.decline() === false) throw Error('Отмена не сохранена. Повторите действие.');
+                task.close();
+            })().catch(error => task.error(error));
+        }; core._fileTransfer = task;
         task.timer = setTimeout(() => {task.error(Error('Время передачи истекло')); task.signaling?.close(); void task.session?.close();}, 15 * 60 * 1000);
         return task;
     }
@@ -94,7 +101,9 @@
         return new global.DmashFileVault(core, global.DMashStorage);
     };
     const managedNode = core => core.accountTransportMode?.() === 'node-v4';
-    let active = null, retryTimer = null, flushing = null;
+    const randomId = () => Array.from(global.crypto.getRandomValues(new Uint8Array(32)),
+        b => b.toString(16).padStart(2, '0')).join('');
+    let active = null, retryTimer = null, retryAt = 0, flushing = null, outcomeFlushing = null;
     const locallyCancelled = new Set();
     async function history(core, vault, meta, inbound) {
         const storage = global.DMashStorage;
@@ -116,13 +125,8 @@
         if (!core.activePeerId) return false;
         // A managed Node contact needs authenticated N4 CONTROL authority.
         // Never re-use an old private-v3 staticShared secret as a fallback.
-        if (managedNode(core)) {
-            core.customAlert?.('ФАЙЛ НЕ ОТПРАВЛЕН',
-                'NODE_MEDIA_CONTROL_UNAVAILABLE: подтверждённый Node-контроль файлов пока недоступен. Файл не поставлен в очередь.');
-            return false;
-        }
-        if (typeof global.DmashCallSession?.CallSignalingSession !== 'function' ||
-            !global.DmashFileVault) {
+        if (!global.DmashFileVault ||
+            (!managedNode(core) && typeof global.DmashCallSession?.CallSignalingSession !== 'function')) {
             core.customAlert?.('ФАЙЛ НЕ ОТПРАВЛЕН', 'MEDIA_RUNTIME_UNAVAILABLE: Обновите страницу и повторите передачу.');
             return false;
         }
@@ -133,17 +137,26 @@
         let persisted = false;
         try {
             const vault = vaultFor(core), captured = vault.capture();
-            if (!await trusted(core, peer)) {
+            const mode = managedNode(core) ? 'node-v4' : 'v3-private';
+            if (mode === 'node-v4' && typeof core.canQueueNodeMediaV4 !== 'function') {
+                core.customAlert?.('ФАЙЛ НЕ ОТПРАВЛЕН',
+                    'NODE_MEDIA_CONTROL_UNAVAILABLE: обновите страницу. Файл не поставлен в очередь.');
+                return false;
+            }
+            const allowed = mode === 'node-v4' ?
+                await core.canQueueNodeMediaV4(peer) : await trusted(core, peer);
+            if (allowed !== true) {
                 core.customAlert?.('ФАЙЛ', 'Сначала подтвердите контакт и обменяйтесь ключами.'); return false;
             }
             captured.check();
-            const fileId = Array.from(global.crypto.getRandomValues(new Uint8Array(32)),
-                b => b.toString(16).padStart(2,'0')).join('');
+            const fileId = randomId();
             const digest = Array.from(new Uint8Array(await global.crypto.subtle.digest('SHA-256', await file.arrayBuffer())),
                 b => b.toString(16).padStart(2,'0')).join('');
             captured.check();
+            if ((managedNode(core) ? 'node-v4' : 'v3-private') !== mode)
+                throw Error('Режим контакта изменился. Повторите отправку файла.');
             const meta = await vault.put(peer, fileId, file, {name:file.name, mime:file.type || '',
-                size:file.size, sha256:digest, inbound:false, controlMode:'v3-private'});
+                size:file.size, sha256:digest, inbound:false, controlMode:mode});
             persisted = true;
             captured.check();
             await history(core, vault, meta, false);
@@ -164,8 +177,12 @@
         if (active === task) active = null;
     }
     function wake(core, delay) {
+        const when = Date.now() + Math.max(1000, Math.min(60000, delay));
+        if (retryTimer && retryAt <= when) return;
         clearTimeout(retryTimer);
-        retryTimer = setTimeout(() => {retryTimer = null; void flush(core);}, Math.max(1000, Math.min(60000, delay)));
+        retryAt = when;
+        retryTimer = setTimeout(() => {retryTimer = null; retryAt = 0; void flush(core);},
+            Math.max(1, when - Date.now()));
     }
     async function runOutbound(core) {
         const vault = vaultFor(core), captured = vault.capture();
@@ -174,20 +191,28 @@
             .filter(row => !row.inbound).sort((a,b) => a.createdAt - b.createdAt);
         captured.check();
         for (const row of pending) await history(core, vault, row, false);
-        // All existing untagged rows are private-v3.  Preserve them locally
-        // when this Account uses Node v4; no silent wire-role downgrade.
-        if (managedNode(core)) return;
-        const compatible = pending.filter(item => item.controlMode === 'v3-private');
+        // All existing untagged rows are private-v3.  Each durable intent
+        // keeps its original control authority across Account transport changes.
+        const mode = managedNode(core) ? 'node-v4' : 'v3-private';
+        const compatible = pending.filter(item => item.controlMode === mode);
         const row = compatible.find(item => item.nextAttempt <= Date.now());
         if (!row) {
             if (compatible.length) wake(core, Math.min(...compatible.map(item => item.nextAttempt)) - Date.now());
+            return;
+        }
+        if (mode === 'node-v4' &&
+            (typeof core.confirmedNodeMediaPeerV4 !== 'function' ||
+                typeof core.selectNodeMediaServiceV4 !== 'function' ||
+                typeof core.sendNodeMediaControlV4 !== 'function')) {
+            wake(core, 30000);
             return;
         }
         const task = {core, peer:row.peer, fileId:row.fileId, closed:false, settled:false};
         active = task;
         const current = () => {try {
             captured.check();
-            return active === task && !task.closed && !locallyCancelled.has(row.fileId);
+            return active === task && !task.closed && !locallyCancelled.has(row.fileId) &&
+                (managedNode(core) ? 'node-v4' : 'v3-private') === mode;
         } catch (_) {return false;}};
         const defer = async (error, permanent = false) => {
             if (!current() || task.settled) return;
@@ -210,17 +235,28 @@
             } catch (_) { /* Old Account state remains durable for its next login. */ }
         };
         try {
+            let authority = null;
+            if (mode === 'node-v4') {
+                authority = await core.confirmedNodeMediaPeerV4(row.peer);
+                if (!current()) {stopActive(task);return;}
+                if (!authority) {stopActive(task);wake(core, 30000);return;}
+            }
             await vault.update(row.peer, row.fileId, 'connecting', {attempts:row.attempts + 1,
                 nextAttempt:Date.now() + 30000});
-            const endpoint = await global.NodeManager.selectCallService({file:true});
-            if (!current()) return;
+            const service = mode === 'node-v4' ?
+                await core.selectNodeMediaServiceV4({peer:row.peer,authority,file:true}) : null;
+            const endpoint = mode === 'node-v4' ? service?.endpoint :
+                await global.NodeManager.selectCallService({file:true});
+            if (mode === 'node-v4' && (typeof endpoint !== 'string' || !service))
+                throw Error('NODE_MEDIA_SERVICE_UNAVAILABLE');
+            if (!current()) {stopActive(task);return;}
             task.signal = await global.DmashCallSignaling.WebSocketSignaling.create(endpoint);
-            if (!current()) {task.signal.close();return;}
+            if (!current()) {stopActive(task);return;}
             const saved = await vault.get(row.peer, row.fileId);
             if (!saved || saved.meta.sha256 !== row.sha256 || !current()) throw Error('Локальный файл повреждён.');
             const file = new File([saved.blob], row.name, {type:row.mime});
             const manifest = await global.DmashFileChannel.describe(file, task.signal.invitation.call_id);
-            if (!current()) return;
+            if (!current()) {stopActive(task);return;}
             task.sessionId = manifest.id;
             task.session = global.DmashFileSession.create({signaling:task.signal, manifest, file,
                 onProgress:(done,total) => {
@@ -244,17 +280,26 @@
                 onError:error=>{void defer(error);}});
             task.session.onclose = () => {if (!task.settled) void defer(Error('File channel disconnected'));};
             await task.session.startOffer(manifest.id);
-            if (!current()) return;
+            if (!current()) {stopActive(task);return;}
             const request = requestFor(manifest, task.signal.invitation, row.fileId);
-            if (!await core.sendMessage({type:'voip_file_request',request},false,row.peer,null,true))
+            if (mode === 'node-v4') {
+                const message = {type:'voip_file_request',request};
+                const receipt = await core.sendNodeMediaControlV4({peer:row.peer,message,service,
+                    record:{kind:'file',transferId:row.fileId,size:request.size_bytes,
+                        sha256:row.sha256,transportId:request.session_id},
+                    operationId:randomId(),authority});
+                if (receipt?.durable !== true) throw Error('NODE_MEDIA_CONTROL_NOT_DURABLE');
+            } else if (!await core.sendMessage({type:'voip_file_request',request},false,row.peer,null,true)) {
                 throw Error('Приглашение файла пока не доставлено');
+            }
         } catch (error) {
             await defer(error, /повреждён|integrity|owner/i.test(error.message || ''));
         }
     }
     function flush(core) {
         if (flushing) return flushing;
-        flushing = runOutbound(core).catch(error => {core.shmon?.('WARN', 'File retry deferred: '+error.message);})
+        flushing = (async () => {await flushOutcomes(core);await runOutbound(core);})()
+            .catch(error => {core.shmon?.('WARN', 'File retry deferred: '+error.message);})
             .finally(() => {flushing = null;});
         return flushing;
     }
@@ -270,41 +315,114 @@
         const secret = await storage.getBox('blind_secrets', secretAlias); captured.check();
         return typeof secret?.staticShared === 'string' && /^[0-9a-f]{64}$/.test(secret.staticShared);
     }
-    async function notify(core, peer, type, fileId, sha256, reason = undefined, sessionId = undefined) {
+    function flushOutcomes(core) {
+        if (outcomeFlushing) return outcomeFlushing;
+        outcomeFlushing = (async () => {
+            if (!managedNode(core)) return;
+            const vault = vaultFor(core), captured = vault.capture();
+            const pending = await vault.listOutcomes();
+            if (!pending.length) return;
+            if (typeof core.confirmedNodeMediaPeerV4 !== 'function' ||
+                typeof core.sendNodeMediaControlV4 !== 'function') {wake(core, 30000);return;}
+            for (const row of pending) {
+                captured.check();
+                const authority = await core.confirmedNodeMediaPeerV4(row.peer);
+                captured.check();
+                if (!authority) continue;
+                const message = {type:row.type,file_id:row.fileId,sha256:row.sha256,
+                    ...(row.reason ? {reason:row.reason} : {}),
+                    ...(row.reason === 'RECEIVER_BUSY' ? {session_id:row.transportId} : {})};
+                const record = {kind:'file',transferId:row.fileId,size:row.size,
+                    sha256:row.sha256,transportId:row.transportId};
+                const receipt = await core.sendNodeMediaControlV4({peer:row.peer,message,record,
+                    operationId:row.operationId,authority});
+                captured.check();
+                if (receipt?.durable === true) await vault.retireOutcome(row.operationId);
+            }
+            if ((await vault.listOutcomes()).length) wake(core, 30000);
+        })().catch(error => {
+            core.shmon?.('WARN', 'File outcome retry deferred: '+error.message);
+            if (managedNode(core)) wake(core, 30000);
+        })
+            .finally(() => {outcomeFlushing = null;});
+        return outcomeFlushing;
+    }
+    async function notify(core, peer, type, fileId, sha256, reason = undefined, sessionId = undefined,
+        context = undefined) {
         if (!isId(fileId) || !isId(sha256) || (sessionId !== undefined && !isId(sessionId))) return false;
+        if (context?.controlMode === 'node-v4') {
+            context.captured.check();
+            const terminal = type === 'voip_file_complete' ||
+                (context.taskStarted && ['RECEIVER_DECLINED','RECEIVER_STORAGE_FULL'].includes(reason));
+            const staged = await context.vault.stageOutcome({peer,fileId,sha256,size:context.size,
+                type,reason:reason || null,
+                transportId:reason === 'RECEIVER_BUSY' ? sessionId :
+                    (terminal ? context.transportId : null),
+                controlDigest:terminal ? context.controlDigest : null,
+                terminalUntil:terminal ? Date.now() + 3600000 : null,
+                queued:false,operationId:randomId()});
+            context.captured.check();
+            void flushOutcomes(core);
+            return !!staged;
+        }
         return core.sendMessage({type, file_id:fileId, sha256, ...(reason ? {reason} : {}),
             ...(sessionId ? {session_id:sessionId} : {})},
             false, peer, null, true);
     }
-    async function incoming(core, request, peer) {
-        if (managedNode(core)) return false;
+    async function incoming(core, request, peer, options = undefined) {
+        const node = options?.controlMode === 'node-v4';
+        if (node !== managedNode(core) || (options && !node)) return false;
         const vault = vaultFor(core), captured = vault.capture();
-        if (!await trusted(core, peer)) {
+        const envelope = {type:'voip_file_request',request};
+        if (node) {
+            if (!options.authority || typeof core.verifyNodeMediaControlV4 !== 'function' ||
+                typeof core.beginNodeFileTransferV4 !== 'function' ||
+                await core.verifyNodeMediaControlV4(options.authority,
+                    {peer,message:envelope,phase:options.resuming ? 'commit' : 'start',
+                        ...(options.resuming ? {taskToken:options.taskToken} : {})}) !== true) return false;
+        } else if (!await trusted(core, peer)) {
             core.customAlert?.('ВХОДЯЩИЙ ФАЙЛ', 'Автоматический приём доступен только подтверждённому контакту.');
             return false;
         }
         captured.check();
         let parsed;
-        try { parsed = parseRequest(request); }
+        try { parsed = parseRequest(request,
+            {verifiedResume:node && options.resuming === true}); }
         catch (_) {
             core.customAlert?.('ВХОДЯЩИЙ ФАЙЛ', 'Неверный формат или размер файла. Допустимый размер — до 64 МиБ.');
             return false;
         }
         const {manifest, fileId} = parsed;
         captured.check();
+        const controlDigest = node ? Array.from(new Uint8Array(await global.crypto.subtle.digest(
+            'SHA-256', textEncoder.encode(JSON.stringify(envelope)))),
+        b => b.toString(16).padStart(2,'0')).join('') : null;
+        captured.check();
+        const context = node ? {controlMode:'node-v4',vault,captured,size:manifest.size,
+            transportId:manifest.id,controlDigest,taskStarted:options.resuming === true} : undefined;
+        if (node && await vault.terminalOutcome(peer,fileId,manifest.sha256,manifest.size,
+            manifest.id,controlDigest)) {
+            void flushOutcomes(core);
+            return {accepted:true};
+        }
         const previous = await vault.meta(peer, fileId);
         if (previous) {
             if (!previous.inbound || previous.sha256 !== manifest.sha256 || previous.size !== manifest.size ||
-                previous.name !== manifest.name || previous.mime !== manifest.mime) throw Error('File identity collision');
+                previous.name !== manifest.name || previous.mime !== manifest.mime ||
+                previous.controlMode !== (node ? 'node-v4' : 'v3-private')) throw Error('File identity collision');
             await history(core, vault, previous, true);
-            await notify(core, peer, 'voip_file_complete', fileId, manifest.sha256);
-            return true;
+            const durable = await notify(core, peer, 'voip_file_complete', fileId, manifest.sha256,
+                undefined, undefined, context);
+            return node ? (durable ? {accepted:true} : false) : true;
         }
         // The completed file already has an inline chat card. Release its
         // short-lived panel immediately if another invitation arrives.
         if (core._fileTransfer?.finished) core._fileTransfer.close();
         if (core._fileTransfer) {
             const busy = core._fileTransfer;
+            if (node && busy.controlMode === 'node-v4' && busy.peer === peer &&
+                busy.fileId === fileId && busy.sessionId === manifest.id)
+                return {accepted:true};
             if (!busy.busyNotice) {
                 busy.busyNotice = document.createElement('div');
                 busy.busyNotice.setAttribute('role', 'status');
@@ -314,23 +432,40 @@
             // A new S-TURN attempt is required after this active panel closes.
             // Bind the transient answer to this attempt so a late BUSY cannot
             // stop a newer session for the same durable file_id.
-            await notify(core, peer, 'voip_file_reject', fileId, manifest.sha256,
-                'RECEIVER_BUSY', manifest.id);
-            return true;
+            const durable = await notify(core, peer, 'voip_file_reject', fileId, manifest.sha256,
+                'RECEIVER_BUSY', manifest.id, context);
+            return node ? (durable ? {accepted:true} : false) : true;
         }
         const task = panel(core, manifest.name);
         task.peer = peer;
+        task.fileId = fileId; task.sessionId = manifest.id;
+        task.controlMode = node ? 'node-v4' : 'v3-private';
         task.decline = async () => {
             if (!task.finished && !task.failed)
-                await notify(core,peer,'voip_file_reject',fileId,manifest.sha256,'RECEIVER_DECLINED');
+                return notify(core,peer,'voip_file_reject',fileId,manifest.sha256,
+                    'RECEIVER_DECLINED',undefined,context);
+            return true;
         };
         task.status.textContent = 'АВТОПРИЁМ ФАЙЛА: 0%';
+        let durableOutcome = false;
         try {
             const estimate = await global.navigator?.storage?.estimate?.(); captured.check();
             if (estimate && Number.isSafeInteger(estimate.quota) && Number.isSafeInteger(estimate.usage) &&
                 estimate.quota - estimate.usage < manifest.size + Math.ceil(manifest.size / 100) + 1024 * 1024) {
-                await notify(core, peer, 'voip_file_reject', fileId, manifest.sha256, 'RECEIVER_STORAGE_FULL');
+                durableOutcome = await notify(core, peer, 'voip_file_reject', fileId, manifest.sha256,
+                    'RECEIVER_STORAGE_FULL',undefined,context);
                 throw Error('Недостаточно места для автоматического сохранения файла.');
+            }
+            if (node) {
+                task.taskToken = options.resuming ? options.taskToken :
+                    await core.beginNodeFileTransferV4(options.authority,
+                        {peer,transferId:fileId,transportId:manifest.id,
+                            sha256:manifest.sha256,size:manifest.size});
+                captured.check();
+                context.taskStarted = true;
+                if (await core.verifyNodeMediaControlV4(options.authority,
+                    {peer,message:envelope,phase:'commit',taskToken:task.taskToken}) !== true)
+                    throw Error('NODE_MEDIA_TASK_AUTHORITY');
             }
             task.signaling = new global.DmashCallSignaling.WebSocketSignaling({endpoint:request.signaling.wss_endpoint,
                 sessionId:request.signaling.session_id, ticket:request.signaling.one_time_key});
@@ -343,10 +478,16 @@
                 },
                 onCommit:async blob=>{
                     captured.check();
+                    if (node && await core.verifyNodeMediaControlV4(options.authority,
+                        {peer,message:envelope,phase:'commit',taskToken:task.taskToken}) !== true)
+                        throw Error('NODE_MEDIA_TASK_AUTHORITY');
                     const meta = await vault.put(peer, fileId, blob, {name:manifest.name,mime:manifest.mime,
-                        size:manifest.size,sha256:manifest.sha256,inbound:true,controlMode:'v3-private'});
+                        size:manifest.size,sha256:manifest.sha256,inbound:true,
+                        controlMode:node ? 'node-v4' : 'v3-private'});
                     captured.check();
                     await history(core, vault, meta, true);
+                    if (node) await notify(core, peer, 'voip_file_complete', fileId, manifest.sha256,
+                        undefined, undefined, context);
                 },
                 onComplete:()=>{
                     if (!task.current()) return;
@@ -360,22 +501,33 @@
                     task.decline = null;
                     task.error(error);
                     if (error.name === 'QuotaExceededError' || /Недостаточно места/.test(error.message || ''))
-                        void notify(core, peer, 'voip_file_reject', fileId, manifest.sha256, 'RECEIVER_STORAGE_FULL');
+                        void notify(core, peer, 'voip_file_reject', fileId, manifest.sha256,
+                            'RECEIVER_STORAGE_FULL',undefined,context);
                 }});
             task.session.onclose = () => {if (!task.session.finished) task.error(Error('Передача прервана'));};
             await task.session.accept(manifest.id);
-            return true;
+            return node ? {accepted:true} : true;
         } catch (error) {
             task.decline = null; task.error(error); task.signaling?.close(); void task.session?.close();
-            return false;
+            return node && durableOutcome ? {accepted:true} : false;
         }
     }
-    async function outcome(core, message, peer) {
-        if (managedNode(core)) return false;
+    async function outcome(core, message, peer, options = undefined) {
+        const node = options?.controlMode === 'node-v4';
+        if (node !== managedNode(core) || (options && !node)) return false;
         if (!isId(message?.file_id) || !isId(message?.sha256)) return false;
-        const vault = vaultFor(core), meta = await vault.meta(peer, message.file_id);
-        if (!meta || meta.inbound || meta.controlMode !== 'v3-private' ||
+        const vault = vaultFor(core), captured = vault.capture();
+        if (node && (!options.authority || typeof core.verifyNodeMediaControlV4 !== 'function' ||
+            await core.verifyNodeMediaControlV4(options.authority,
+                {peer,message,phase:'start'}) !== true)) return false;
+        captured.check();
+        const meta = await vault.meta(peer, message.file_id);
+        if (!meta || meta.inbound || meta.controlMode !== (node ? 'node-v4' : 'v3-private') ||
             meta.sha256 !== message.sha256) return false;
+        if (node && await core.verifyNodeMediaControlV4(options.authority,
+            {peer,message,phase:'start'}) !== true) return false;
+        captured.check();
+        const accepted = () => node ? {accepted:true} : true;
         if (message.type === 'voip_file_reject') {
             if (message.reason === 'RECEIVER_BUSY') {
                 if (!isId(message.session_id)) return false;
@@ -384,7 +536,7 @@
                 // sent. The durable file_id is stable, but the session is not.
                 if (!task || task.core !== core || task.peer !== peer ||
                     task.fileId !== message.file_id || task.sessionId !== message.session_id ||
-                    task.settled || meta.status === 'delivered' || meta.status === 'cancelled') return true;
+                    task.settled || meta.status === 'delivered' || meta.status === 'cancelled') return accepted();
                 task.settled = true;
                 stopActive(task);
                 const delay = Math.min(30000, 5000 * 2 ** Math.min(Math.max(meta.attempts - 1, 0), 3));
@@ -402,19 +554,19 @@
                     }
                 } catch (error) {core.shmon?.('WARN', 'File busy retry deferred: '+error.message);}
                 wake(core, delay);
-                return true;
+                return accepted();
             }
             if (!['RECEIVER_STORAGE_FULL','RECEIVER_DECLINED'].includes(message.reason)) return false;
             const saved = await vault.update(peer, message.file_id, 'failed');
-            if (saved.status === 'delivered') return true;
-            if (saved.status === 'cancelled') return true;
+            if (saved.status === 'delivered') return accepted();
+            if (saved.status === 'cancelled') return accepted();
             await global.DMashStorage.markMessageSendFailure(peer,message.file_id,'RECEIVER_STORAGE_FULL');
             core.refreshMessageTransportState?.(peer,message.file_id,'FAILED');
             if (active?.fileId === message.file_id) stopActive(active);
             core.customAlert?.('ФАЙЛ НЕ ДОСТАВЛЕН',message.reason === 'RECEIVER_STORAGE_FULL' ?
                 'У получателя недостаточно места для файла. Он сохранён на вашем устройстве.' :
                 'Получатель отменил приём. Файл сохранён на вашем устройстве.');
-            return true;
+            return accepted();
         }
         if (message.type !== 'voip_file_complete') return false;
         await vault.update(peer, message.file_id, 'delivered');
@@ -422,7 +574,7 @@
         core.refreshMessageTransportState?.(peer,message.file_id,'DELIVERED');
         if (active?.fileId === message.file_id) stopActive(active);
         void flush(core);
-        return true;
+        return accepted();
     }
     async function cancelFile(core, peer, fileId) {
         if (core.activePeerId !== peer || !isId(peer) || !isId(fileId)) return false;
@@ -539,7 +691,7 @@
             if (core._fileTransfer?.peer === peer) core._fileTransfer.close();
         },
         cancel: core => {
-            clearTimeout(retryTimer); retryTimer = null;
+            clearTimeout(retryTimer); retryTimer = null; retryAt = 0;
             if (active?.core === core) stopActive(active);
             locallyCancelled.clear();
             core._fileTransfer?.close();

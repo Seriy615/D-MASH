@@ -47,8 +47,10 @@ globalThis.NodeManager={async selectCallService(options){
     assert.equal(options.file,true);return 'wss://example.test';
 }};
 const owned=new WeakMap();
+const pendingOutcomes=new WeakMap();
 globalThis.DmashFileVault=class {
-    constructor(core) {this.core=core;if(!owned.has(core))owned.set(core,new Map());}
+    constructor(core) {this.core=core;if(!owned.has(core))owned.set(core,new Map());
+        if(!pendingOutcomes.has(core))pendingOutcomes.set(core,new Map());}
     capture() {return {check:()=>{if(this.core.changed)throw Error('Account changed');}};}
     async put(peer,fileId,blob,details) {
         const meta={...details,peer,fileId,status:details.inbound?'delivered':'waiting',
@@ -65,6 +67,27 @@ globalThis.DmashFileVault=class {
         if(row.meta.status==='delivered'&&status!=='delivered')return row.meta;
         if(row.meta.status==='cancelled'&&status!=='delivered')return row.meta;
         row.meta={...row.meta,status,...changes};return row.meta;
+    }
+    async stageOutcome(details) {
+        if(this.core.failOutcome)throw Error('Synthetic outcome journal unavailable');
+        const rows=pendingOutcomes.get(this.core);
+        const prior=[...rows.values()].find(row=>row.peer===details.peer&&row.fileId===details.fileId&&
+            row.sha256===details.sha256&&row.type===details.type&&row.reason===details.reason&&
+            row.transportId===details.transportId&&row.controlDigest===details.controlDigest);
+        if(prior)return prior;
+        rows.set(details.operationId,details);return details;
+    }
+    async listOutcomes() {return [...pendingOutcomes.get(this.core).values()].filter(x=>!x.queued);}
+    async terminalOutcome(peer,fileId,sha256,size,transportId,controlDigest) {
+        return [...pendingOutcomes.get(this.core).values()].find(x=>x.peer===peer&&x.fileId===fileId&&
+            x.sha256===sha256&&x.size===size&&x.transportId===transportId&&
+            x.controlDigest===controlDigest&&x.terminalUntil>Date.now())||null;
+    }
+    async retireOutcome(operationId) {
+        const rows=pendingOutcomes.get(this.core),row=rows.get(operationId);
+        if(!row)return false;
+        if(row.terminalUntil>Date.now())row.queued=true;else rows.delete(operationId);
+        return true;
     }
 };
 function core() {return {activePeerId:'f'.repeat(64),alerts:[],history:[],
@@ -104,7 +127,7 @@ function storageFor(owner) {return {
     assert.equal(await DmashFileRuntime.send(nodeManaged,file),false,
         'managed Node file click cannot use a surviving v3 staticShared secret');
     assert.match(nodeManaged.alerts.at(-1).text,/NODE_MEDIA_CONTROL_UNAVAILABLE/);
-    assert.equal(owned.get(nodeManaged),undefined,'fail-closed click creates no v3 intent');
+    assert.equal(owned.get(nodeManaged).size,0,'fail-closed click creates no v3 intent');
     const oldFileId='9'.repeat(64),oldDigest=crypto.createHash('sha256').update(bytes).digest('hex');
     await new DmashFileVault(nodeManaged).put(nodeManaged.activePeerId,oldFileId,file,
         {name:file.name,mime:file.type,size:file.size,sha256:oldDigest,inbound:false,
@@ -113,9 +136,161 @@ function storageFor(owner) {return {
     assert.equal(owned.get(nodeManaged).get(oldFileId).meta.status,'waiting',
         'pre-migration v3 pending file stays durable under managed Node');
     assert.equal(nodeManaged.messages,undefined,'managed Node never sends legacy file invitation');
+    const nodeReady=core(),authority=Object.freeze({synthetic:true}),
+        service=Object.freeze({endpoint:'wss://example.test',wssEndpoint:'wss://example.test',
+            nodeId:'e'.repeat(64)});
+    nodeReady.accountTransportMode=()=> 'node-v4';
+    nodeReady.canQueueNodeMediaV4=async()=>true;
+    nodeReady.confirmedNodeMediaPeerV4=async()=>authority;
+    nodeReady.selectNodeMediaServiceV4=async args=>{
+        assert.equal(args.peer,nodeReady.activePeerId);
+        assert.equal(args.authority,authority);
+        assert.equal(args.file,true);
+        return service;
+    };
+    nodeReady.sendNodeMediaControlV4=async args=>{
+        nodeReady.nodeControl=args;
+        return {durable:true,queued:false,recipientAck:false};
+    };
+    globalThis.DMashStorage=storageFor(nodeReady);
+    const oldSelect=NodeManager.selectCallService;
+    NodeManager.selectCallService=()=>{throw Error('managed Node used v3 service selection');};
+    try {
+        assert.equal(await DmashFileRuntime.send(nodeReady,file),true,
+            'confirmed managed contact can queue locally');
+        await DmashFileRuntime.flush(nodeReady);
+        assert.equal(nodeReady.history.length,1);
+        assert.equal(nodeReady.history[0].status,'WAITING');
+        assert.equal(nodeReady.nodeControl.service,service,
+            'signed same-channel service object passes unchanged');
+        assert.equal(nodeReady.nodeControl.authority,authority);
+        assert.equal(nodeReady.nodeControl.message.type,'voip_file_request');
+        assert.equal(nodeReady.nodeControl.record.transportId,
+            nodeReady.nodeControl.message.request.session_id);
+        assert.equal(nodeReady.nodeControl.record.transferId,
+            nodeReady.nodeControl.message.request.file_id);
+        assert.match(nodeReady.nodeControl.operationId,/^[0-9a-f]{64}$/);
+        assert.equal(nodeReady.messages,undefined,'Node control never enters legacy Core.sendMessage');
+        assert.equal([...owned.get(nodeReady).values()][0].meta.controlMode,'node-v4');
+    } finally {
+        NodeManager.selectCallService=oldSelect;
+        DmashFileRuntime.cancel(nodeReady);
+    }
+    const nodeRequest=nodeReady.nodeControl.message.request;
+    const nodeReceiver=core(),inboundAuthority=Object.freeze({inbound:true}),
+        taskToken=Object.freeze({task:true});
+    nodeReceiver.accountTransportMode=()=> 'node-v4';
+    nodeReceiver.confirmedNodeMediaPeerV4=async()=>authority;
+    nodeReceiver.verifyNodeMediaControlV4=async (cap,expected)=>{
+        assert.equal(cap,inboundAuthority);
+        assert.equal(expected.peer,nodeReceiver.activePeerId);
+        assert.equal(expected.message.type,'voip_file_request');
+        if(expected.phase==='commit')assert.equal(expected.taskToken,taskToken);
+        return true;
+    };
+    nodeReceiver.beginNodeFileTransferV4=async (cap,details)=>{
+        assert.equal(cap,inboundAuthority);
+        assert.equal(details.transferId,nodeRequest.file_id);
+        assert.equal(details.transportId,nodeRequest.session_id);
+        return taskToken;
+    };
+    nodeReceiver.sendNodeMediaControlV4=async args=>{
+        nodeReceiver.outcomes||=[];nodeReceiver.outcomes.push(args);
+        return {durable:true,queued:false,recipientAck:false};
+    };
+    globalThis.DMashStorage=storageFor(nodeReceiver);
+    assert.equal(await DmashFileRuntime.incoming(nodeReceiver,nodeRequest,nodeReceiver.activePeerId),false,
+        'managed Node refuses a raw v3-looking invitation without private authority');
+    assert.deepEqual(await DmashFileRuntime.incoming(nodeReceiver,nodeRequest,nodeReceiver.activePeerId,
+        {controlMode:'node-v4',authority:inboundAuthority}),{accepted:true});
+    const nodeInbound=sessions.at(-1);
+    assert.equal(nodeInbound.accepted,true,'Node receiver accepts only after durable task begin');
+    await nodeInbound.options.onCommit(new Blob([bytes]));
+    await DmashFileRuntime.flush(nodeReceiver);
+    assert.equal(nodeReceiver.history.length,1);
+    assert.equal(owned.get(nodeReceiver).get(nodeRequest.file_id).meta.controlMode,'node-v4');
+    assert(nodeReceiver.outcomes.some(item=>item.message.type==='voip_file_complete'),
+        'receiver retains and enqueues typed COMMIT_ACK after durable file commit');
+    assert.equal((await new DmashFileVault(nodeReceiver).listOutcomes()).length,0,
+        'durable N4 enqueue retires send work while retaining bounded terminal proof');
+    assert.deepEqual(await DmashFileRuntime.incoming(nodeReceiver,nodeRequest,nodeReceiver.activePeerId,
+        {controlMode:'node-v4',authority:inboundAuthority}),{accepted:true});
+    assert.equal(nodeReceiver.history.length,1,'authenticated Node replay does not duplicate chat file');
+    nodeInbound.options.onComplete();
+    nodeReceiver._fileTransfer.cancel.onclick();
+    DmashFileRuntime.cancel(nodeReceiver);
+    const nodeExpired=core(),expiredRequest={...nodeRequest,
+        expires_at:Math.floor(Date.now()/1000)-1};
+    nodeExpired.accountTransportMode=()=> 'node-v4';
+    nodeExpired.verifyNodeMediaControlV4=async (cap,expected)=>
+        cap===inboundAuthority&&expected.phase==='commit'&&expected.taskToken===taskToken;
+    nodeExpired.beginNodeFileTransferV4=async()=>{throw Error('expired resume restarted task');};
+    globalThis.DMashStorage=storageFor(nodeExpired);
+    assert.deepEqual(await DmashFileRuntime.incoming(nodeExpired,expiredRequest,nodeExpired.activePeerId,
+        {controlMode:'node-v4',authority:inboundAuthority,resuming:true,taskToken}),{accepted:true},
+    'a private durable APPLIED task may structurally resume after INVITE expiry');
+    DmashFileRuntime.cancel(nodeExpired);
+    const nodeDecliner=core();
+    nodeDecliner.accountTransportMode=()=> 'node-v4';
+    nodeDecliner.verifyNodeMediaControlV4=async()=>true;
+    nodeDecliner.beginNodeFileTransferV4=async()=>taskToken;
+    nodeDecliner.confirmedNodeMediaPeerV4=async()=>authority;
+    nodeDecliner.sendNodeMediaControlV4=async()=>({durable:true});
+    globalThis.DMashStorage=storageFor(nodeDecliner);
+    assert.deepEqual(await DmashFileRuntime.incoming(nodeDecliner,nodeRequest,nodeDecliner.activePeerId,
+        {controlMode:'node-v4',authority:inboundAuthority}),{accepted:true});
+    const startedSessions=sessions.length;
+    nodeDecliner._fileTransfer.cancel.onclick();
+    await new Promise(resolve=>setTimeout(resolve,10));
+    await DmashFileRuntime.flush(nodeDecliner);
+    assert([...pendingOutcomes.get(nodeDecliner).values()].some(x=>x.reason==='RECEIVER_DECLINED'&&
+        x.queued&&x.terminalUntil>Date.now()),'cancel retains encrypted terminal replay suppression');
+    assert.deepEqual(await DmashFileRuntime.incoming(nodeDecliner,nodeRequest,nodeDecliner.activePeerId,
+        {controlMode:'node-v4',authority:inboundAuthority,resuming:true,taskToken}),{accepted:true});
+    assert.equal(sessions.length,startedSessions,'accepted cancelled task never restarts bytes on replay');
+    DmashFileRuntime.cancel(nodeDecliner);
+    const savedEstimate=navigator.storage.estimate;
+    navigator.storage.estimate=async()=>({quota:100,usage:99});
+    try {
+        const nodeQuota=core();
+        nodeQuota.accountTransportMode=()=> 'node-v4';
+        nodeQuota.verifyNodeMediaControlV4=async()=>true;
+        nodeQuota.beginNodeFileTransferV4=async()=>{throw Error('quota started transport');};
+        globalThis.DMashStorage=storageFor(nodeQuota);
+        assert.deepEqual(await DmashFileRuntime.incoming(nodeQuota,nodeRequest,nodeQuota.activePeerId,
+            {controlMode:'node-v4',authority:inboundAuthority}),{accepted:true},
+        'quota rejection is consumed only after encrypted DECLINE intent');
+        assert.equal(nodeQuota._fileTransfer.failed,true);
+        assert((await new DmashFileVault(nodeQuota).listOutcomes()).some(x=>
+            x.reason==='RECEIVER_STORAGE_FULL'));
+        DmashFileRuntime.cancel(nodeQuota);
+        const nodeFault=core();
+        nodeFault.accountTransportMode=()=> 'node-v4';
+        nodeFault.verifyNodeMediaControlV4=async()=>true;
+        nodeFault.beginNodeFileTransferV4=async()=>{throw Error('quota started transport');};
+        nodeFault.failOutcome=true;
+        globalThis.DMashStorage=storageFor(nodeFault);
+        assert.equal(await DmashFileRuntime.incoming(nodeFault,nodeRequest,nodeFault.activePeerId,
+            {controlMode:'node-v4',authority:inboundAuthority}),false,
+        'failed encrypted outcome commit never reports authenticated receipt');
+        assert.equal(nodeFault._fileTransfer.failed,true);
+        DmashFileRuntime.cancel(nodeFault);
+    } finally {navigator.storage.estimate=savedEstimate;}
+    globalThis.DMashStorage=storageFor(nodeReady);
+    nodeReady.verifyNodeMediaControlV4=async (cap,expected)=>
+        cap===inboundAuthority&&expected.message.type==='voip_file_complete';
+    const completed={type:'voip_file_complete',file_id:nodeRequest.file_id,
+        sha256:nodeReady.nodeControl.record.sha256};
+    assert.equal(await DmashFileRuntime.outcome(nodeReady,completed,nodeReady.activePeerId,
+        {controlMode:'node-v4',authority:{forged:true}}),false,
+        'forged Node receipt cannot update sender status');
+    assert.deepEqual(await DmashFileRuntime.outcome(nodeReady,completed,nodeReady.activePeerId,
+        {controlMode:'node-v4',authority:inboundAuthority}),{accepted:true});
+    assert.equal(owned.get(nodeReady).get(nodeRequest.file_id).meta.status,'delivered');
     globalThis.DMashStorage=storageFor(sender);
     assert.equal(await DmashFileRuntime.send(sender,file),true);
     await DmashFileRuntime.flush(sender);
+    const senderSession=sessions.at(-1);
     assert.equal(sender.history.length,1,'sender intent is durable before invitation');
     assert.equal(sender.history[0].content.type,'file_ref');
     assert.equal(sender.history[0].status,'WAITING');
@@ -173,7 +348,7 @@ function storageFor(owner) {return {
     DmashFileRuntime.cancel(noSpace);
 
     globalThis.DMashStorage=storageFor(sender);
-    sessions[0].options.onComplete();
+    senderSession.options.onComplete();
     await new Promise(resolve=>setTimeout(resolve,10));
     assert.equal(owned.get(sender).get(request.file_id).meta.status,'delivered');
     assert.equal(sender.storageStatus,'DELIVERED');
