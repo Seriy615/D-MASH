@@ -160,6 +160,7 @@
   submit(handle,payload,replyRouteId){return this.call('SUBMIT',{handle,payload,replyRouteId});}
   inboxList(accountSlot,limit=32,after=null){return this.call('INBOX_LIST',{accountSlot,limit,after});}
   acknowledgeInbox(handle,accountSlot){return this.call('INBOX_ACK',{handle,accountSlot});}
+  serviceDescriptor({nodeId,signalingWss}){return this.call('SERVICE_DESCRIPTOR',{nodeId,signalingWss});}
   stats(){return this.call('STATS');}
   injectCoverOnce(size=1024){return this.call('INJECT_COVER',{size});}
   coverPolicy(enabled,policy){return this.call('COVER_POLICY',{enabled,policy});}

@@ -135,6 +135,13 @@ self.onmessage=async({data})=>{
    else if(data.type==='SUBMIT')result=local.send(data.handle,data.payload,data.replyRouteId);
    else if(data.type==='INBOX_LIST')result=await inbox.list(data.accountSlot,data.limit,data.after);
    else if(data.type==='INBOX_ACK')result=await inbox.acknowledge(data.handle,data.accountSlot);
+   else if(data.type==='SERVICE_DESCRIPTOR'){
+    if(!self.DmashNodeServiceDescriptorV4)importScripts('node_service_descriptor_v4.js');
+    const channel=runtime.peers.get(data.nodeId);if(!channel||typeof data.signalingWss!=='string')throw Error('SERVICE_PEER_REQUIRED');
+    await channel.requireAuthorized();const response=await runtime.requestService(data.nodeId);await channel.requireAuthorized();
+    if(closed||runtime.peers.get(data.nodeId)!==channel||response.channel!==channel)throw Error('SERVICE_CHANNEL_CHANGED');
+    result=DmashNodeServiceDescriptorV4.verify(response.descriptor,{now:Math.floor(Date.now()/1000),issuer:data.nodeId,holder:channel.secure.session.localId,transcript_hash:hex(channel.secure.session.transcriptHash),challenge:response.challenge,signaling_wss:data.signalingWss});
+   }
    else if(data.type==='STATS')result={...runtime.stats,owned:runtime.owned.length,peers:runtime.peers.size,
     queued:[...runtime.queues.values()].reduce((n,q)=>n+q.length,0),sending:runtime.senders.size,
     cover:runtime.coverHistory.length,preparedGrants:local.routes.size,worker:true};

@@ -35,7 +35,7 @@ class NodeRoutingV4:
         if not isinstance(base_ncrh,bytes) or len(base_ncrh)!=32:raise ValueError('Invalid BaseNCRH')
         self.base=base_ncrh;self.clock=clock;self.monotonic=monotonic;self.peers={};self.owned=[];self.labels={};self.seen={}
         self.queues={};self.timers={};self.senders={};self.tasks=set();self.pending=set();self.rates={};self.probes=[];self.cover_history=[];self.cover_timer=None;self.cover_policy=None
-        self.closed=False;self.stats=dict(forwarded=0,received=0,probes=0,batches=0)
+        self.service_provider=None;self.service_rates={};self.closed=False;self.stats=dict(forwarded=0,received=0,probes=0,batches=0)
 
     def _prune(self):
         now=self.clock()
@@ -108,7 +108,7 @@ class NodeRoutingV4:
     def _remove_peer(self,peer):
         self.peers.pop(peer,None);self.queues.pop(peer,None);timer=self.timers.pop(peer,None)
         if timer:timer.cancel()
-        self.rates.pop(peer,None)
+        self.rates.pop(peer,None);self.service_rates.pop(peer,None)
         if not self.peers:
             for future in self.pending:
                 if not future.done():future.set_exception(ConnectionError('Node path unavailable'))
@@ -233,6 +233,19 @@ class NodeRoutingV4:
         expires=packet.get('expires_at')
         if type(expires) is not int or expires>self.clock()+180:raise ValueError('Invalid packet expiry')
         if expires<=self.clock():return
+        if packet.get('type')=='SERVICE_QUERY':
+            if set(packet)!={'type','version','challenge','expires_at'} or not isinstance(packet['challenge'],str) or not TOKEN.fullmatch(packet['challenge']):raise ValueError('Invalid service query')
+            if self.service_provider is None:raise ValueError('SERVICE_PROFILE_UPGRADE_REQUIRED')
+            channel=self.peers.get(peer)
+            if channel is None:raise ConnectionError('Service peer closed')
+            bucket=int(self.clock()//60);prior=self.service_rates.get(peer,(bucket,0));count=prior[1] if prior[0]==bucket else 0
+            if count>=4:raise BufferError('Service query rate')
+            self.service_rates[peer]=(bucket,count+1);channel.require_authorized()
+            descriptor=await self.service_provider(peer,channel,packet['challenge'])
+            channel.require_authorized()
+            if self.closed or self.peers.get(peer) is not channel:return
+            self._enqueue(peer,dict(type='SERVICE_REPLY',version=4,challenge=packet['challenge'],descriptor=descriptor,expires_at=int(self.clock())+30))
+            return
         if packet.get('type')=='PROBE':
             if set(packet)!={'type','version','box','return_label','ncrh','ttl','expires_at'}:raise ValueError('Invalid Probe')
             for key in ('return_label','ncrh'):
