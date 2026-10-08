@@ -150,6 +150,6 @@ self.onmessage=async({data})=>{
    else throw Error();
   }
   if(!closed)self.postMessage({id:data.id,ok:true,result});
- }catch(_){if(!closed)self.postMessage({id:data.id,ok:false});}
+ }catch(error){if(!closed){const codes=['SERVICE_UNAVAILABLE','SERVICE_EXPIRED','SERVICE_CONTEXT','SERVICE_TIMEOUT','SERVICE_PEER_REQUIRED','SERVICE_CHANNEL_CHANGED','SERVICE_CHANNEL_CLOSED','SERVICE_SIGNATURE'];self.postMessage({id:data.id,ok:false,...(data.type==='SERVICE_DESCRIPTOR'&&codes.includes(error.message)?{code:error.message}:{})});}}
  finally{requests.delete(data.id);wipe(data.discoverySeed);wipe(data.discoveryBox);if(Array.isArray(data.recipientKeys))for(const key of data.recipientKeys)wipe(key);}
 };

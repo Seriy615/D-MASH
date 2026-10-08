@@ -44,7 +44,7 @@
    host.#worker.onmessage=({data})=>{
     if(host.closed)return;if(host.rootGuard&&!host.rootGuard()){host.close();return;}const job=host.pending.get(data?.id);if(!job)return;
     host.pending.delete(data.id);clearTimeout(job.timer);
-    if(data.ok)job.resolve(data.result);else job.reject(Error('Node worker operation failed'));
+    if(data.ok)job.resolve(data.result);else job.reject(Error(job.type==='SERVICE_DESCRIPTOR'&&['SERVICE_UNAVAILABLE','SERVICE_EXPIRED','SERVICE_CONTEXT','SERVICE_TIMEOUT','SERVICE_PEER_REQUIRED','SERVICE_CHANNEL_CHANGED','SERVICE_CHANNEL_CLOSED','SERVICE_SIGNATURE'].includes(data.code)?data.code:'Node worker operation failed'));
    };
    host.#worker.onerror=()=>host.close();
    const cancel=()=>host.close();signal?.addEventListener('abort',cancel,{once:true});
@@ -68,7 +68,7 @@
    const id=++this.sequence;
    return new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>{this.pending.delete(id);reject(Error('Node worker operation expired'));this.close();},type==='CONNECT'?310000:(type==='DISCOVER'||type==='OWNER_DISCOVER'||type==='PUBLIC_REQUEST'||type==='PUBLIC_CONTROL')?190000:30000);
-    this.pending.set(id,{resolve,reject,timer});
+    this.pending.set(id,{resolve,reject,timer,type});
     try{this.#worker.postMessage({...fields,id,type},transfer);}catch(error){clearTimeout(timer);this.pending.delete(id);reject(error);}
    });
   }
