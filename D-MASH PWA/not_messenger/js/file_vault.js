@@ -7,6 +7,7 @@
     const validMode = mode => mode === 'v3-private' || mode === 'node-v4';
     const validOutcome = value => value && isId(value.peer) && isId(value.fileId) &&
         isId(value.sha256) && isId(value.operationId) &&
+        Number.isSafeInteger(value.expiresAt) && value.expiresAt > 0 &&
         Number.isSafeInteger(value.size) && value.size >= 1 && value.size <= MAX &&
         (value.type === 'voip_file_complete' ? value.reason === null :
             value.type === 'voip_file_reject' &&
@@ -193,7 +194,9 @@
 
         async stageOutcome(details) {
             const session = this.capture();
-            if (!validOutcome(details)) throw Error('Invalid file outcome');
+            const now = Math.floor(Date.now() / 1000);
+            if (!validOutcome(details) || details.expiresAt <= now || details.expiresAt > now + 300)
+                throw Error('Invalid file outcome');
             const alias = await this.outcomeAlias(session);
             for (let attempt = 0; attempt < 8; attempt++) {
                 const {row, value} = await this._outcomes(session, alias);
@@ -216,6 +219,31 @@
             const {value} = await this._outcomes(session, alias);
             return value.entries.filter(entry => !entry.queued)
                 .map(entry => ({...entry}));
+        }
+
+        async renewOutcome(operationId, replacementId, expiresAt) {
+            const now = Math.floor(Date.now() / 1000);
+            if (![operationId, replacementId].every(isId) || operationId === replacementId ||
+                !Number.isSafeInteger(expiresAt) || expiresAt <= now || expiresAt > now + 300)
+                throw Error('Invalid file outcome renewal');
+            const session = this.capture(), alias = await this.outcomeAlias(session);
+            for (let attempt = 0; attempt < 8; attempt++) {
+                const {row, value} = await this._outcomes(session, alias);
+                const index = value.entries.findIndex(entry => entry.operationId === operationId);
+                if (index < 0) return null;
+                const prior = value.entries[index];
+                if (prior.queued) return null;
+                if (prior.expiresAt > Math.floor(Date.now() / 1000)) return {...prior};
+                if (value.entries.some(entry => entry.operationId === replacementId))
+                    throw Error('File outcome operation collision');
+                const nextEntry = {...prior, operationId: replacementId, expiresAt};
+                const next = {...value, entries:value.entries.map((entry, i) => i === index ? nextEntry : entry)};
+                try {await this._commitOutcomes(session, alias, row, next);return {...nextEntry};}
+                catch (error) {
+                    if (error.message !== 'File outcome journal changed') throw error;
+                }
+            }
+            throw Error('File outcome journal changed; retry');
         }
 
         async terminalOutcome(peer, fileId, sha256, size, transportId, controlDigest) {

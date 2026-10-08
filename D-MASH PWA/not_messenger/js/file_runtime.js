@@ -324,8 +324,14 @@
             if (!pending.length) return;
             if (typeof core.confirmedNodeMediaPeerV4 !== 'function' ||
                 typeof core.sendNodeMediaControlV4 !== 'function') {wake(core, 30000);return;}
-            for (const row of pending) {
+            for (let row of pending) {
                 captured.check();
+                if (row.expiresAt <= Math.floor(Date.now() / 1000)) {
+                    row = await vault.renewOutcome(row.operationId, randomId(),
+                        Math.floor(Date.now() / 1000) + 300);
+                    captured.check();
+                    if (!row) continue;
+                }
                 const authority = await core.confirmedNodeMediaPeerV4(row.peer);
                 captured.check();
                 if (!authority) continue;
@@ -333,7 +339,7 @@
                     ...(row.reason ? {reason:row.reason} : {}),
                     ...(row.reason === 'RECEIVER_BUSY' ? {session_id:row.transportId} : {})};
                 const record = {kind:'file',transferId:row.fileId,size:row.size,
-                    sha256:row.sha256,transportId:row.transportId};
+                    sha256:row.sha256,transportId:row.transportId,expiresAt:row.expiresAt};
                 const receipt = await core.sendNodeMediaControlV4({peer:row.peer,message,record,
                     operationId:row.operationId,authority});
                 captured.check();
@@ -360,7 +366,7 @@
                     (terminal ? context.transportId : null),
                 controlDigest:terminal ? context.controlDigest : null,
                 terminalUntil:terminal ? Date.now() + 3600000 : null,
-                queued:false,operationId:randomId()});
+                queued:false,operationId:randomId(),expiresAt:Math.floor(Date.now() / 1000) + 300});
             context.captured.check();
             void flushOutcomes(core);
             return !!staged;

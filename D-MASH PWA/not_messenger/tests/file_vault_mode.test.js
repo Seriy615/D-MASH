@@ -71,5 +71,33 @@ vault.meta = async () => ({...base, ...(metadataMode === undefined ? {} : {contr
     entryMode = 'node-v4';
     await assert.rejects(normalize.meta(peer, fileId), /Corrupt file owner/,
         'direct metadata reads also require matching Account inventory authority');
+    const journal = new DmashFileVault(core, storage);
+    journal.outcomeAlias = async () => alias;
+    let revision = 0, value = {schema:'dmash_file_outcomes_v1',account,entries:[]};
+    journal._outcomes = async () => ({row:{revision},value});
+    journal._commitOutcomes = async (session,rowAlias,before,next) => {
+        assert.equal(rowAlias,alias);
+        if(before.revision !== revision)throw Error('File outcome journal changed');
+        revision++;value=structuredClone(next);
+    };
+    const firstExpiry=Math.floor(Date.now()/1000)+300;
+    const outcome={peer,fileId,sha256:id('e'),size:1,operationId:id('f'),
+        expiresAt:firstExpiry,type:'voip_file_reject',reason:'RECEIVER_BUSY',
+        transportId:id('1'),queued:false,terminalUntil:null,controlDigest:null};
+    assert.deepEqual(await journal.stageOutcome(outcome),outcome);
+    assert.equal((await journal.listOutcomes()).length,1);
+    assert.equal((await journal.stageOutcome({...outcome,operationId:id('2')})).operationId,id('f'),
+        'same logical outcome reuses operation and expiry');
+    await assert.rejects(journal.stageOutcome({...outcome,fileId:id('3'),expiresAt:firstExpiry+1}),
+        /Invalid file outcome/,'a new outcome cannot extend beyond five minutes');
+    assert.equal((await journal.renewOutcome(id('f'),id('2'),firstExpiry)).operationId,id('f'),
+        'live operation cannot rotate early');
+    value.entries[0].expiresAt=Math.floor(Date.now()/1000)-1;
+    const renewed=await journal.renewOutcome(id('f'),id('2'),Math.floor(Date.now()/1000)+300);
+    assert.equal(renewed.operationId,id('2'));
+    assert.equal(renewed.peer,peer);
+    assert.equal(renewed.fileId,fileId);
+    assert.equal(await journal.renewOutcome(id('f'),id('4'),Math.floor(Date.now()/1000)+300),null,
+        'stale operation cannot rotate the same intent again');
     console.log('file_vault_mode.test.js: authority ownership and legacy separation passed');
 })().catch(error => {console.error(error);process.exitCode = 1;});

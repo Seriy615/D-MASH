@@ -78,6 +78,13 @@ globalThis.DmashFileVault=class {
         rows.set(details.operationId,details);return details;
     }
     async listOutcomes() {return [...pendingOutcomes.get(this.core).values()].filter(x=>!x.queued);}
+    async renewOutcome(operationId,replacementId,expiresAt) {
+        const rows=pendingOutcomes.get(this.core),row=rows.get(operationId);
+        if(!row||row.queued)return null;
+        if(row.expiresAt>Math.floor(Date.now()/1000))return {...row};
+        rows.delete(operationId);const next={...row,operationId:replacementId,expiresAt};
+        rows.set(replacementId,next);return {...next};
+    }
     async terminalOutcome(peer,fileId,sha256,size,transportId,controlDigest) {
         return [...pendingOutcomes.get(this.core).values()].find(x=>x.peer===peer&&x.fileId===fileId&&
             x.sha256===sha256&&x.size===size&&x.transportId===transportId&&
@@ -287,6 +294,38 @@ function storageFor(owner) {return {
     assert.deepEqual(await DmashFileRuntime.outcome(nodeReady,completed,nodeReady.activePeerId,
         {controlMode:'node-v4',authority:inboundAuthority}),{accepted:true});
     assert.equal(owned.get(nodeReady).get(nodeRequest.file_id).meta.status,'delivered');
+    await new Promise(resolve=>setTimeout(resolve,20));
+    const nodeRetry=core(),retryAuthority=Object.freeze({retry:true}),retryCalls=[];
+    nodeRetry.accountTransportMode=()=> 'node-v4';
+    nodeRetry.confirmedNodeMediaPeerV4=async()=>retryAuthority;
+    nodeRetry.sendNodeMediaControlV4=async args=>{
+        retryCalls.push(args);if(retryCalls.length<3)throw Error('Synthetic uncertain enqueue');
+        return {durable:true};
+    };
+    globalThis.DMashStorage=storageFor(nodeRetry);
+    const retryVault=new DmashFileVault(nodeRetry),retryId='8'.repeat(64),
+        firstExpiry=Math.floor(Date.now()/1000)+300;
+    await retryVault.stageOutcome({peer:nodeRetry.activePeerId,fileId:retryId,sha256:oldDigest,
+        operationId:'7'.repeat(64),expiresAt:firstExpiry,size:bytes.length,
+        type:'voip_file_reject',reason:'RECEIVER_BUSY',transportId:'6'.repeat(64),
+        queued:false,terminalUntil:null,controlDigest:null});
+    await DmashFileRuntime.flush(nodeRetry);
+    await new Promise(resolve=>setTimeout(resolve,10));
+    await DmashFileRuntime.flush(nodeRetry);
+    assert.equal(retryCalls.length,2);
+    assert.equal(retryCalls[0].operationId,retryCalls[1].operationId,
+        'uncertain enqueue retries the same operation until expiry');
+    assert.equal(retryCalls[0].record.expiresAt,firstExpiry);
+    assert.equal(retryCalls[1].record.expiresAt,firstExpiry,
+        'typed bridge receives one persisted expiry, never a fresh clock');
+    pendingOutcomes.get(nodeRetry).get('7'.repeat(64)).expiresAt=Math.floor(Date.now()/1000)-1;
+    await DmashFileRuntime.flush(nodeRetry);
+    assert.equal(retryCalls.length,3);
+    assert.notEqual(retryCalls[2].operationId,retryCalls[1].operationId,
+        'expired operation rotates once under the same logical outcome');
+    assert(retryCalls[2].record.expiresAt>Math.floor(Date.now()/1000));
+    assert.equal((await retryVault.listOutcomes()).length,0);
+    DmashFileRuntime.cancel(nodeRetry);
     globalThis.DMashStorage=storageFor(sender);
     assert.equal(await DmashFileRuntime.send(sender,file),true);
     await DmashFileRuntime.flush(sender);
