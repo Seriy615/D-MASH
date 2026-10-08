@@ -100,6 +100,17 @@
     function patchCore(core) {
         if (!core || core[PATCH]) return;
 
+        const originalPendingContacts = core.openPendingContacts?.bind(core);
+        if (originalPendingContacts) core.openPendingContacts = async function pendingContactsBack(...args) {
+            await originalPendingContacts(...args);
+            const button = document.querySelector('#sys-modal [onclick="Core.openSettings()"]');
+            if (button) {
+                button.removeAttribute('onclick');
+                button.dataset.dmashPendingClose = '1';
+                button.onclick = () => { this.closeModal(); this.openSettings(); };
+            }
+        };
+
         // Account Settings stays Account-only.  The device-wide account
         // registry is intentionally moved to Global Settings below.
         core.openSettings = function accountOnlySettings() {
@@ -175,7 +186,7 @@
                             <button class="dmash-share-tab active" onclick="Core.setShareMode('public')">PUBLIC</button>
                         </div>
                         <div class="dmash-settings-note">Активных Public Routes нет.</div>
-                        <button class="dmash-settings-action" onclick="Core.closeModal(); ui.openPublicRoutes()">СОЗДАТЬ PUBLIC ROUTE</button>
+                        <button class="dmash-settings-action" onclick="ui.openPublicRoutes()">СОЗДАТЬ PUBLIC ROUTE</button>
                         <button class="dmash-settings-action primary" onclick="Core.closeModal()">ЗАКРЫТЬ</button>`;
                     this.openModal("PUBLIC / PRIVATE", html);
                     return;
@@ -260,13 +271,15 @@
                         ${route.current ? '<button class="gate-btn secondary" onclick="ui.reissuePublicRoute()">REISSUE</button>' : ""}
                     </div>
                 </div>`).join("") || '<div class="dmash-settings-note">Public Routes ещё не созданы.</div>';
-            gateBox.innerHTML = `
+            const html = `
                 <div class="dmash-settings-title">PUBLIC ROUTES</div>
                 <div class="dmash-settings-note">Маршрут принадлежит Device. Просмотр списка не требует входа в Account. Создание/активация требуют разблокированный DeviceRoot.</div>
                 <div id="dmash-route-status" class="dmash-route-status"></div>
                 ${rows}
                 <button class="dmash-settings-action" onclick="ui.createPublicRoute()">СОЗДАТЬ PUBLIC ROUTE</button>
-                <button class="gate-btn dmash-settings-back" onclick="ui.renderGlobalSettings()">НАЗАД</button>`;
+                <button class="gate-btn dmash-settings-back" onclick="${global.Core?.activeIdentity ? 'Core.showMyQR()' : 'ui.renderGlobalSettings()'}">НАЗАД</button>`;
+            if (global.Core?.activeIdentity) global.Core.openModal("PUBLIC ROUTES", html);
+            else gateBox.innerHTML = html;
         };
 
         ui.createPublicRoute = async function createPublicRouteAcceptance() {

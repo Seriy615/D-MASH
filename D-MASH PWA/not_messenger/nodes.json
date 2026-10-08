@@ -3,7 +3,8 @@
   "nodes": [
     {
       "label": "D-MASH EMS staging",
-      "url": "wss://stage-api-ems.d-mash.ru/dmash-client/v1"
+      "url": "wss://stage-api-ems.d-mash.ru/dmash-client/v1",
+      "nodeId": "3e4a0e3f796f8d594e5473249f49460c769bfdd293b4788cdaf78bc314f12b17"
     }
   ]
 }

@@ -17,7 +17,9 @@ class NodeEndpoint {
         // A node ID is an identity assertion from a canonical D-MASH link,
         // not a credential.  Retain it so re-shared QR codes remain bound to
         // the same node and so the DEVICE_AUTH challenge can be checked.
-        this.nodeId = typeof options.nodeId === 'string' ? options.nodeId : null;
+        // Loading preserves legacy malformed pins for explicit user repair.
+        // Catalog/add/connect validate them before any trust or network action.
+        this.nodeId = typeof options.nodeId === 'string' ? options.nodeId.toLowerCase() : (options.nodeId ?? null);
         this.capabilities = Array.isArray(options.capabilities) ? options.capabilities.slice() : null;
         this.public = options.public === true;
         this.autoConnect = options.autoConnect === true;
@@ -279,19 +281,28 @@ const NodeManager = {
         if (this.active) localStorage.setItem(this.activeKey, this.active.url);
         else localStorage.removeItem(this.activeKey);
     },
+    assertNodeIdentity(endpoint) {
+        if (endpoint.nodeId != null && (typeof endpoint.nodeId !== 'string' || !/^[0-9a-f]{64}$/.test(endpoint.nodeId))) {
+            throw new Error('NodeID must be 32-byte hex; saved entry requires explicit repair');
+        }
+    },
     add(url, label = '', options = {}) {
         if (isExcludedNode(url)) throw new Error('Forge is not an eligible Messenger node');
         const endpoint = new NodeEndpoint(url, label, options);
+        this.assertNodeIdentity(endpoint);
         const existing = this.endpoints.find(item => item.url === endpoint.url);
-        if (existing) Object.assign(existing, {
-            label: endpoint.label, public: endpoint.public,
-            nodeId: endpoint.nodeId, capabilities: endpoint.capabilities
-        });
-        // Catalog refreshes must never silently change a user's connection
-        // policy. Only an explicit add/edit can carry autoConnect.
-        if (existing && Object.hasOwn(options, 'autoConnect')) existing.autoConnect = endpoint.autoConnect;
-        else this.endpoints.push(endpoint);
-        this.save(); return endpoint;
+        if (existing) {
+            if (existing.nodeId && endpoint.nodeId && existing.nodeId !== endpoint.nodeId) {
+                throw new Error('NodeID conflicts with the saved identity');
+            }
+            existing.label = endpoint.label; existing.public = endpoint.public;
+            if (endpoint.nodeId) existing.nodeId = endpoint.nodeId;
+            if (Object.hasOwn(options, 'capabilities')) existing.capabilities = endpoint.capabilities;
+            if (Object.hasOwn(options, 'dmpcEndpoint')) existing.dmpcEndpoint = endpoint.dmpcEndpoint;
+            // Catalog metadata never silently changes an existing local policy.
+            if (Object.hasOwn(options, 'autoConnect')) existing.autoConnect = endpoint.autoConnect;
+        } else this.endpoints.push(endpoint);
+        this.save(); return existing || endpoint;
     },
     remove(url) {
         this.endpoints = this.endpoints.filter(item => item.url !== url);
@@ -310,13 +321,14 @@ const NodeManager = {
         if (!response.ok) throw new Error(`Node list HTTP ${response.status}`);
         const data = await response.json();
         this.originNodes = (data.nodes || []).filter(item => item && !isExcludedNode(item.url))
-            .map(item => ({ ...item, public: true }));
+            .map(item => { const endpoint = new NodeEndpoint(item.url, item.label, { ...item, public: true }); this.assertNodeIdentity(endpoint); return endpoint; });
         return this.originNodes;
     },
     async autoConnect() {
         // Connections belong to this device. Nothing from the public catalog is
         // added or chosen until the user explicitly requests a node.
         for (const endpoint of this.endpoints.filter(item => item.autoConnect === true || item.notificationEnabled === true)) {
+            try { this.assertNodeIdentity(endpoint); } catch (_) { continue; }
             if (this.connections.get(endpoint.url)?.state !== 'connected') await this.connect(endpoint.url);
         }
     },
@@ -328,12 +340,19 @@ const NodeManager = {
         // routes explicitly at this lifecycle boundary.
         await this.probeActivePublicDeviceRoutes();
     },
+    addCatalogNode(selected) {
+        return this.add(selected.url, selected.label, {
+            public: true, autoConnect: true, nodeId: selected.nodeId,
+            ...(Array.isArray(selected.capabilities) ? { capabilities: selected.capabilities } : {}),
+            ...(selected.dmpcEndpoint ? { dmpcEndpoint: selected.dmpcEndpoint } : {})
+        });
+    },
     async requestNode() {
         if (!this.originNodes.length) await this.loadOriginList();
         const candidates = this.originNodes;
         if (!candidates.length) throw new Error('Публичные узлы не найдены');
         const selected = candidates[Math.floor(Math.random() * candidates.length)];
-        const endpoint = this.add(selected.url, selected.label, { public: true, autoConnect: true });
+        const endpoint = this.addCatalogNode(selected);
         this.select(endpoint.url);
         await this.connect(endpoint.url);
         return endpoint;
@@ -439,6 +458,7 @@ const NodeManager = {
         return connection?.ready;
     },
     connectEndpoint(endpoint) {
+        this.assertNodeIdentity(endpoint);
         const existing = this.connections.get(endpoint.url);
         if (existing?.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(existing.socket.readyState)) return existing;
         const connection = { endpoint, socket: null, capabilities: new Set(), state: 'connecting', error: null, pendingPings: new Map(), pendingRequests: new Map(), reconnectAttempt: existing?.reconnectAttempt || 0, reconnectTimer: null, pingTimer: null, lastLatencyMs: null, lastConnectedAt: null, dnssReadyState: 'pending' };
@@ -1015,25 +1035,79 @@ const NodeManager = {
         return endpoint;
     },
     openNodeScanner() {
+        this._nodeScannerSession?.cancel(false);
+        const session = { cancelled: false, scanner: null, timer: null, root: window.DeviceRoot?.state };
+        const readerId = `node-qr-reader-${this._nodeScannerSerial = (this._nodeScannerSerial || 0) + 1}`;
+        this._nodeScannerSession = session;
+        const cleanup = async () => {
+            // Keep a cancelled pending reader connected until its real camera
+            // startup settles; removing its video early rejects vendor play().
+            if (session.starting) return;
+            if (session.cleanupPromise) return session.cleanupPromise;
+            session.cleanupPromise = (async () => {
+                // start() can resolve before the vendor's unawaited play()
+                // settles. Let that playback promise settle before stop removes
+                // the video; bound the wait for broken media implementations.
+                const video = box.querySelector('video');
+                if (video?.srcObject) {
+                    let playbackTimer;
+                    try {
+                        await Promise.race([
+                            video.play().catch(() => {}),
+                            new Promise(resolve => { playbackTimer = setTimeout(resolve, 1000); })
+                        ]);
+                    } finally { clearTimeout(playbackTimer); }
+                }
+                try { await session.scanner?.stop(); } catch (_) { }
+                try { session.scanner?.clear(); } catch (_) { }
+                box.remove();
+            })();
+            return session.cleanupPromise;
+        };
+        session.cancel = (showSettings = true) => {
+            session.cancelled = true;
+            clearTimeout(session.timer);
+            session.observer?.disconnect(); session.unsubscribeLock?.();
+            if (box.isConnected) { box.style.display = 'none'; document.body.appendChild(box); }
+            if (this._nodeScannerSession === session) {
+                this._nodeScannerSession = null; this.nodeScanner = null;
+                if (window.Core) Core.flipLockSuppressed = false;
+                if (showSettings) this.renderSettings();
+            }
+            void cleanup();
+        };
         if (window.Core) Core.flipLockSuppressed = true;
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
         const box = document.createElement('div'); box.className = 'sys-modal-box';
-        box.innerHTML = '<h4>СКАНИРОВАТЬ QR УЗЛА</h4><div id="node-qr-reader" style="min-height:240px;background:#000"></div>';
-        const cancel = this.makeButton('ОТМЕНА', () => {
-            this.nodeScanner?.stop().catch(() => {}).finally(() => { this.nodeScanner = null; if (window.Core) Core.flipLockSuppressed = false; this.renderSettings(); });
+        box.innerHTML = `<h4>СКАНИРОВАТЬ QR УЗЛА</h4><div id="${readerId}" style="min-height:240px;background:#000"></div>`;
+        box.appendChild(this.makeButton('ОТМЕНА', () => session.cancel())); modal.appendChild(box);
+        session.unsubscribeLock = window.DeviceRoot?.onLock?.(() => session.cancel(false));
+        session.observer = new MutationObserver(() => {
+            if (!box.isConnected || !modal.contains(box)) session.cancel(false);
         });
-        box.appendChild(cancel); modal.appendChild(box);
-        setTimeout(async () => {
+        session.observer.observe(modal, { childList: true });
+        session.timer = setTimeout(async () => {
+            if (session.cancelled) return;
             try {
-                this.nodeScanner = new Html5Qrcode('node-qr-reader');
-                await this.nodeScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 220 }, async value => {
+                session.scanner = this.nodeScanner = new Html5Qrcode(readerId);
+                session.starting = true;
+                await session.scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 220 }, async value => {
+                    if (session.cancelled || window.DeviceRoot?.state !== session.root) return;
                     try {
                         const endpoint = this.importNodeProvisioning(value);
-                        await this.nodeScanner.stop(); this.nodeScanner = null; if (window.Core) Core.flipLockSuppressed = false;
-                        this.renderSettings(); this.showMessage(`Узел «${endpoint.label}» добавлен. Подключение — отдельной кнопкой.`);
-                    } catch (error) { this.showMessage(error, true); }
+                        session.cancel();
+                        this.showMessage(`Узел «${endpoint.label}» добавлен. Подключение — отдельной кнопкой.`);
+                    } catch (error) { if (!session.cancelled) this.showMessage(error, true); }
                 });
-            } catch (_) { if (window.Core) Core.flipLockSuppressed = false; this.showMessage('Камера недоступна', true); }
+            } catch (_) {
+                if (!session.cancelled) {
+                    if (window.Core) Core.flipLockSuppressed = false;
+                    this.showMessage('Камера недоступна', true);
+                }
+            } finally {
+                session.starting = false;
+                if (session.cancelled) await cleanup();
+            }
         }, 100);
     },
     showNodeQR(endpoint) {
@@ -1052,7 +1126,7 @@ const NodeManager = {
         const modal = document.getElementById('sys-modal'); modal.replaceChildren(); modal.style.display = 'flex';
         const box = document.createElement('div'); box.className = 'sys-modal-box';
         const target = document.createElement('div'); target.id = 'node-qr-target'; target.style.cssText = 'background:#fff;padding:12px;margin:12px auto;width:max-content';
-        if (window.QRCode) new QRCode(target, { text: uri, width: 210, height: 210 });
+        if (window.QRCode) new QRCode(target, { text: uri, width: 210, height: 210, correctLevel: QRCode.CorrectLevel.M });
         const copy = this.makeButton('КОПИРОВАТЬ ССЫЛКУ', async () => {
             try { await navigator.clipboard.writeText(uri); this.showMessage('Ссылка узла скопирована.'); }
             catch (_) { this.showMessage('Не удалось скопировать ссылку узла.', true); }

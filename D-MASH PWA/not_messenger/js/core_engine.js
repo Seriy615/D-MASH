@@ -213,118 +213,102 @@ const Core = {
         return window.DeviceRoot.migrateLegacyAccountPassphrase(accountPassphrase, calculatorMasterPin);
     },
     async boot(identity, passphrase, options = {}) {
-        window.DmashChatPassword?.clear();
+        const attempt = {};
+        this._accountBootAttempt = attempt;
         this._accountTransitioning = true;
-        window.DmashFileRuntime?.cancel(this);
-        // Account keys are shared by the historical crypto implementation.
-        // Finish an in-flight Inbox transaction before replacing those keys.
-        if (this._inboxAccountTask) await this._inboxAccountTask.catch(() => {});
-        if (this._accountRouteTask) await this._accountRouteTask.catch(() => {});
-        if (this._contactAccountTask) await this._contactAccountTask.catch(() => {});
         const statusEl = document.getElementById('gate-status-text');
+        let fullHash, stagedKeys, stagedSalt, committed = false;
+        let expectedRoot = window.DeviceRoot ? window.DeviceRoot.state : this.deviceState;
+        const current = () => this._accountBootAttempt === attempt &&
+            expectedRoot && (window.DeviceRoot ? window.DeviceRoot.state : this.deviceState) === expectedRoot;
+        const guard = () => { if (!current()) throw new Error('ВХОД ОТМЕНЁН: состояние устройства изменилось.'); };
         try {
-            if (statusEl) statusEl.innerText = "КУЗНИЦА КЛЮЧЕЙ (1024 bit)...";
-
-            // Bootstrap or unlock the installation-scoped root first.  The
-            // existing p2 calculator secret serves as the local wrapping PIN
-            // for this foundation; it is never a DeviceRoot derivation input.
-            // A legacy Gamma vault without an explicit migration is rejected
-            // rather than silently replacing its established Account identity.
-            // DeviceRoot was unlocked at the calculator gate.  Account login
-            // must not unlock, replace, or relock the installation root.
-            let deviceState = this.deviceState || window.DeviceRoot?.state;
-            if (!deviceState) throw new Error("УСТРОЙСТВО НЕ РАЗБЛОКИРОВАНО");
-
-            // 1. Выжимаем 128 байт энтропии через Argon2id.  This is the
-            // session KDF; credential bindings must validate against it.
+            // Let existing Account writes settle before preparing replacement keys.
+            for (const task of [this._inboxAccountTask, this._accountRouteTask, this._contactAccountTask]) {
+                if (task) await task.catch(() => {});
+            }
+            if (!expectedRoot) throw new Error('УСТРОЙСТВО НЕ РАЗБЛОКИРОВАНО');
+            guard();
+            if (statusEl) statusEl.innerText = 'КУЗНИЦА КЛЮЧЕЙ (1024 bit)...';
             const result = await window.argon2.hash({
-                pass: passphrase, salt: identity + "D_MASH_GAMMA_V1_STABLE",
+                pass: passphrase, salt: identity + 'D_MASH_GAMMA_V1_STABLE',
                 time: 3, mem: 65536, hashLen: 128, type: window.argon2.argon2id
             });
-            const fullHash = result.hash;
-
-            // 2. Распил 128-байтного выхлопа
-            this.gammaKeys ||= { master: null, sign: null, box: null };
-            this.gammaKeys.master = fullHash.slice(0, 32);
-            this.blindSalt = fullHash.slice(32, 64);
-            const seedSign = fullHash.slice(64, 96);
-            const seedBox = fullHash.slice(96, 128);
-
-            // --- 3. ГЕНЕРАЦИЯ КЛЮЧЕЙ ---
-            this.keys.sign = window.nacl.sign.keyPair.fromSeed(seedSign);
-            this.keys.box = window.nacl.box.keyPair.fromSecretKey(seedBox);
-
-            // Legacy migration starts only after the pre-existing Account key
-            // has been deterministically unlocked. It signs a local binding;
-            // neither Account identity nor binding is sent to an Entry Node.
-            if (deviceState.legacy || deviceState.record?.migration?.state === 'in_progress') {
-                deviceState = await window.DeviceRoot.migrateLegacy(
-                    passphrase, this.bytesToHex(this.keys.sign.publicKey), this.keys.sign.secretKey
-                );
+            fullHash = result.hash;
+            guard();
+            stagedKeys = {
+                sign: window.nacl.sign.keyPair.fromSeed(fullHash.slice(64, 96)),
+                box: window.nacl.box.keyPair.fromSecretKey(fullHash.slice(96, 128))
+            };
+            stagedSalt = fullHash.slice(32, 64);
+            const signingId = this.bytesToHex(stagedKeys.sign.publicKey);
+            // The encrypted registry is installation-owned and can be read without
+            // opening the candidate Account vault. A saved identity is authority,
+            // never a hint that may be replaced after a mistyped credential.
+            const account = await Storage.getRegistryAccount(identity);
+            guard();
+            if (account) {
+                const savedSigningId = typeof account.pk === 'string' ? account.pk.slice(0, 64).toLowerCase() : '';
+                if (!/^[0-9a-f]{64}$/.test(savedSigningId) || savedSigningId !== signingId) {
+                    throw new Error('Неверный ключ доступа для сохранённого аккаунта.');
+                }
             }
-
-    KyberWasm.init();
-    const serializedKyber = deviceState.legacy ? null : await window.DeviceRoot.deviceMaterial("ml-kem-768-v1", () => {
-        const generated = KyberWasm.generateKeys();
-        if (!generated.success) throw new Error("WASM Квантовая кузница выдала брак!");
-        const serialized = new Uint8Array(generated.pk.length + generated.sk.length);
-        serialized.set(generated.pk);
-        serialized.set(generated.sk, generated.pk.length);
-        return serialized;
-    });
-    if (serializedKyber && serializedKyber.length !== 3584) throw new Error("Device ML-KEM material is corrupt; it was not regenerated.");
-    const quantum = serializedKyber
-        ? { pk: serializedKyber.slice(0, 1184), sk: serializedKyber.slice(1184), success: true }
-        : KyberWasm.generateKeys();
-    if (!quantum.success) throw new Error("WASM Квантовая кузница выдала брак!");
-
-    if (quantum.success) {
-        this.keys.kyber = { publicKey: quantum.pk, secretKey: quantum.sk };
-        this.shmon("INFO", "WASM Kyber-768 пара готова.");
-    } else {
-        throw new Error("WASM Квантовая кузница выдала брак!");
-    }
-
-    // Формируем ID (1312 знаков)
-    const edPubHex = this.bytesToHex(this.keys.sign.publicKey);
-    const curvePubHex = this.bytesToHex(this.keys.box.publicKey);
-    const kyberPubHex = this.bytesToHex(this.keys.kyber.publicKey);
-    this.keys.pub_hex = edPubHex + curvePubHex + kyberPubHex;
-
-            this.keys.server_id = edPubHex;
+            // No Account key, vault, registry identity or legacy Account migration
+            // has been changed before the saved signing identity was verified.
+            let deviceState = expectedRoot;
+            if (deviceState.legacy || deviceState.record?.migration?.state === 'in_progress') {
+                deviceState = await window.DeviceRoot.migrateLegacy(passphrase, signingId, stagedKeys.sign.secretKey);
+                if (this._accountBootAttempt !== attempt || !window.DeviceRoot?.state) throw new Error('ВХОД ОТМЕНЁН');
+                expectedRoot = deviceState;
+            }
+            KyberWasm.init();
+            const serializedKyber = deviceState.legacy ? null : await window.DeviceRoot.deviceMaterial('ml-kem-768-v1', () => {
+                const generated = KyberWasm.generateKeys();
+                if (!generated.success) throw new Error('WASM Квантовая кузница выдала брак!');
+                const serialized = new Uint8Array(generated.pk.length + generated.sk.length);
+                serialized.set(generated.pk); serialized.set(generated.sk, generated.pk.length);
+                return serialized;
+            });
+            guard();
+            if (serializedKyber && serializedKyber.length !== 3584) throw new Error('Device ML-KEM material is corrupt; it was not regenerated.');
+            const quantum = serializedKyber
+                ? {pk: serializedKyber.slice(0, 1184), sk: serializedKyber.slice(1184), success: true}
+                : KyberWasm.generateKeys();
+            if (!quantum.success) throw new Error('WASM Квантовая кузница выдала брак!');
+            stagedKeys.kyber = {publicKey: quantum.pk, secretKey: quantum.sk};
+            stagedKeys.pub_hex = signingId + this.bytesToHex(stagedKeys.box.publicKey) + this.bytesToHex(quantum.pk);
+            stagedKeys.server_id = signingId;
+            await Storage.initGamma(fullHash.slice(0, 32), {isCurrent: current});
+            guard();
+            window.DmashChatPassword?.clear();
+            window.DmashFileRuntime?.cancel(this);
+            this.gammaKeys = {master: fullHash.slice(0, 32), sign: null, box: null};
+            this.blindSalt = stagedSalt;
+            this.keys = stagedKeys;
             this.device = deviceState.legacy ? null : Object.freeze({
-                id: deviceState.identity.deviceId,
-                fingerprints: deviceState.identity.fingerprints,
-                // These are device-scoped algorithm keys.  Existing Account
-                // crypto remains frozen in this prerequisite milestone.
-                signing: deviceState.identity.signing,
-                agreement: deviceState.identity.agreement
+                id: deviceState.identity.deviceId, fingerprints: deviceState.identity.fingerprints,
+                signing: deviceState.identity.signing, agreement: deviceState.identity.agreement
             });
             this.activeIdentity = identity;
             this.privateRouteProbeGeneration++;
-            this.shmon("INFO", `Система готова. ID: ${this.keys.server_id.substring(0,8)}`);
-
-            // Account login is the lifecycle boundary for private routes.  The
-            // route descriptors are account-vault data and are passed only to
-            // the event-driven probe path; public DeviceRoutes remain separate.
-            // Route discovery is best-effort network work, not an account-login
-            // prerequisite.  In particular a node that never answers
-            // START_PROBE must not delay vault initialization or the workspace.
-            void this.advertiseActiveAccountPrivateRoutes();
-
-            // 5. Инициализация хранилища и запуск
-            await Storage.initGamma(this.gammaKeys.master);
-            if (options.register === true) await Storage.registerAccount(identity, this.keys.pub_hex);
-
+            committed = true;
+            if (options.register === true) await Storage.registerAccount(identity, stagedKeys.pub_hex);
+            guard();
             this._accountTransitioning = false;
+            void this.advertiseActiveAccountPrivateRoutes();
             await this.launchWorkspace();
             return true;
-
-        } catch (e) {
-            console.error(e);
-            if (statusEl) statusEl.innerText = "ОШИБКА ЯДРА: " + e.message;
-            throw e;
-        } finally { this._accountTransitioning = false; }
+        } catch (error) {
+            if (this._accountBootAttempt === attempt && statusEl) statusEl.innerText = 'ОШИБКА ЯДРА: ' + error.message;
+            throw error;
+        } finally {
+            fullHash?.fill(0);
+            if (!committed) {
+                stagedSalt?.fill(0);
+                for (const pair of Object.values(stagedKeys || {})) pair?.secretKey?.fill(0);
+            }
+            if (this._accountBootAttempt === attempt) this._accountTransitioning = false;
+        }
     },
     async activeAccountPrivateRoutes(identity = this.activeIdentity) {
         if (!identity || !window.Storage?.getRegistryAccount) return [];
@@ -582,6 +566,7 @@ const Core = {
     // NodeManager deliberately survive so another local account can be chosen
     // without a device lock or transport reconnect.
     async accountLogout() {
+        this._accountBootAttempt = null;
         window.DmashChatPassword?.clear();
         window.DmashFileRuntime?.cancel(this);
         const zero = value => {
@@ -666,6 +651,7 @@ const Core = {
     },
     // Core.terminateSession   - Экстренное затирание ключей в RAM и выход в "калькулятор"
     terminateSession: function() {
+        this._accountBootAttempt = null;
         window.DmashResourcePow?.cancelAll();
         window.DmashChatPassword?.clear();
         console.log("[!!!] ШУХЕР! ГАСИМ ПРИБОРЫ...");
@@ -3094,7 +3080,7 @@ const Core = {
             if (!request || request.status !== "pending") throw new Error("ЗАПРОС НЕ НАЙДЕН ИЛИ УЖЕ РЕШЁН");
             const payload = this.pendingContactRequestPayload(request);
             if (window.ContactFlowV3) {
-                if (this.bytesToHex(this.keys?.sign?.publicKey || new Uint8Array()) !== selectedAccountIdentifier) throw Error('Откройте выбранный Account и повторите принятие запроса');
+                if (this.bytesToHex(this.keys?.sign?.publicKey || new Uint8Array()) !== selectedAccountIdentifier) throw Error('Войдите в выбранный Account, затем откройте Настройки → Запросы в контакты и повторите принятие.');
                 const local = window.DeviceRoutes.resolve(request.receivedRoute);
                 if (!payload || !local) throw Error('Contact bootstrap metadata unavailable');
                 await this.getContactFlowV3().accept(payload, local.certificate, quickName, this.activeIdentity);

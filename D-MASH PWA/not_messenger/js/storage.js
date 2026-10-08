@@ -11,13 +11,15 @@ const Storage = {
     /**
      * ИНИЦИАЛИЗАЦИЯ СЛЕПОГО СЕЙФА (Gamma-1)
      */
-    initGamma: function(keyBytes) {
+    initGamma: function(keyBytes, {isCurrent = () => true} = {}) {
         return new Promise(async (resolve, reject) => {
             try {
                 // Импортируем MasterKey для шифрования боксов на диске
-                this.masterKey = await window.crypto.subtle.importKey(
+                const masterKey = await window.crypto.subtle.importKey(
                     "raw", keyBytes, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]
                 );
+
+                if (!isCurrent()) throw new Error("Account vault opening cancelled");
 
                 // Открываем теневое хранилище
                 const request = indexedDB.open("dm_gamma_vault", this.REG_VER);
@@ -47,6 +49,8 @@ const Storage = {
                 };
 
                 request.onsuccess = (e) => {
+                    if (!isCurrent()) { e.target.result.close(); reject(new Error("Account vault opening cancelled")); return; }
+                    this.masterKey = masterKey;
                     this.db = e.target.result;
                     resolve();
                 };

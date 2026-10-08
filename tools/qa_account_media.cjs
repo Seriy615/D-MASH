@@ -5,16 +5,29 @@ const {chromium}=require(process.env.DMASH_PLAYWRIGHT_MODULE||'/tmp/dmash-browse
 const output=path.resolve(process.env.DMASH_QA_OUTPUT||'docs/evidence/2026-10-08/qa-account-media.json');
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:process.env.DMASH_CHROME||undefined,args:['--no-sandbox','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']});
- const context=await browser.newContext({permissions:['microphone','camera']});const page=await context.newPage();page.setDefaultTimeout(12000);
+ const overlay=process.env.DMASH_TEST_PWA_ROOT;const context=await browser.newContext({permissions:['microphone','camera'],...(overlay?{serviceWorkers:'block'}:{})});const page=await context.newPage();page.setDefaultTimeout(12000);
  const report={time:new Date().toISOString(),target:'https://messenger.d-mash.ru/not_messenger/',limitations:['Fresh synthetic Account only','No real user storage','Local Saved Messages audit; remote media matrix separately required'],steps:[],inventory:[]};
+ if(overlay){
+  const root=path.resolve(overlay);
+  report.source={kind:'uncommitted full PWA source overlay',baseSHA:require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),files:{}};
+  await context.route('**/not_messenger/**',async route=>{
+   const suffix=decodeURIComponent(new URL(route.request().url()).pathname.split('/not_messenger/')[1]||'index.html');
+   const file=path.resolve(root,suffix);
+   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return route.continue();
+   report.source.files[suffix]=require('node:crypto').createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+   const contentType={'.js':'application/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.wasm':'application/wasm'}[path.extname(file)]||'application/octet-stream';
+   return route.fulfill({path:file,contentType});
+  });
+ }
+
  const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
  const inventory=async(state)=>report.inventory.push({state,controls:await page.locator('button,input,textarea,[onclick]').evaluateAll(es=>es.filter(e=>e.getClientRects().length).map(e=>({tag:e.tagName,id:e.id,label:(e.getAttribute('aria-label')||e.textContent||e.getAttribute('placeholder')||'').trim().slice(0,100),type:e.type,disabled:e.disabled,onclick:e.getAttribute('onclick')})))});
  const step=async(id,action,fn)=>{try{await fn();report.steps.push({id,action,status:'PASS'});}catch(e){report.steps.push({id,action,status:'FAIL',error:e.message.split('\n')[0],visibleText:(await page.locator('body').innerText()).replace(/[0-9a-f]{16,}/g,'[REDACTED]').slice(-3500)});}save();};
  const click=label=>page.getByRole('button',{name:label,exact:true}).click();
  const prompt=async(value)=>{await page.locator('#p-in').fill(value);await page.locator('#p-ok').click();};
  try{
- await page.goto(report.target);await page.evaluate(()=>navigator.serviceWorker.ready);await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
- report.page=await page.evaluate(()=>window.DMASH_RELEASE?.id);report.sw=await context.serviceWorkers()[0].evaluate(()=>RELEASE_ID);report.browser=browser.version();
+ await page.goto(report.target);if(!overlay){await page.evaluate(()=>navigator.serviceWorker.ready);await page.waitForFunction(()=>!!navigator.serviceWorker.controller);}
+ report.page=await page.evaluate(()=>window.DMASH_RELEASE?.id);report.sw=overlay?'BLOCKED: uncommitted source overlay':await context.serviceWorkers()[0].evaluate(()=>RELEASE_ID);report.browser=browser.version();
  const digits=async(s)=>{for(const d of s)await click(d);await click('=');};
  await page.getByText('УСТАНОВКА MASTER-КОДА',{exact:true}).waitFor();await digits('3333');await page.getByText('УСТАНОВКА WIPE-КОДА',{exact:true}).waitFor();await digits('9876');await page.getByText('СИСТЕМА ГОТОВА',{exact:true}).waitFor();await page.waitForTimeout(1300);await digits('3333');await page.locator('#p1').waitFor();
  await inventory('Account login');
