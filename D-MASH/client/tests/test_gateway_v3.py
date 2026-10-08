@@ -41,6 +41,16 @@ class GatewayV3Tests(unittest.TestCase):
                 status = session.open(socket.receive_json())
                 self.assertEqual(status['s_turn'], descriptor)
                 self.assertTrue(status['can_relay_blob'])
+                for policy, healthy in [(True, False), (False, True), (False, False)]:
+                    self.state.capabilities.can_relay_blob = policy
+                    descriptor['can_s_turn'] = healthy
+                    socket.send_json(session.seal({'type': 'STATUS', 'request_id': 'degraded'}))
+                    degraded = session.open(socket.receive_json())
+                    self.assertFalse(degraded['can_relay_blob'])
+                self.app.state.s_turn_service = None
+                self.state.capabilities.can_relay_blob = True
+                socket.send_json(session.seal({'type': 'STATUS', 'request_id': 'missing'}))
+                self.assertFalse(session.open(socket.receive_json())['can_relay_blob'])
                 socket.send_json(session.seal({"type": "REGISTER_INBOUND_LOCATOR", "locator": "victim"}))
                 self.assertEqual(session.open(socket.receive_json())["code"], "UNSUPPORTED_OPERATION")
 
