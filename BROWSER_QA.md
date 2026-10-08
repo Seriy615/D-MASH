@@ -9,9 +9,9 @@
 ## Актуальный release checkpoint
 
 PWA **fd2a7505ba7325ee0d47e38cb2cfc8271cbfc0c1**, `.28`, опубликована на EMS;
-backend остаётся **3c513601ef3990b6514e247d879324b7b72da494**. Exact source
-**217/217**, missing/changed []; source branch merge `f0af5b1` exact UNIT281
-backend +11 Origin +84 JS PASS. Independent deployed Chromium fresh two-profile
+backend `.26` foundation плюс scoped S-TURN health из **b944d26**. Exact combined
+source **218/218**, missing/changed []; published source merge `31c37f2` exact
+UNIT286 backend +11 Origin +85 JS PASS. Independent deployed Chromium fresh two-profile
 PUBLIC Request/Accept/Confirm, key exchange, messages and FlipLock: **16/16 PASS**,
 page+SW обоих profiles `.28`, 136 loaded sources exact SHA, errors [], exit0.
 Immediate key feedback 157 ms. Перед deploy первый immutable `.28` public run
@@ -52,7 +52,8 @@ RUN in that specific upgradeprofile due harness locator, independently PASS on.2
 | FLIPLOCK-MISSING-01 | PASS .27 | Both Account and global settings OFF→ON→OFF via real deployed UI; physical mobile orientation NOT RUN |
 | CONTACT-OWNER-MISMATCH-01 | PASS .28 for saved-owner guidance/retry | User screenshot .26; dd357e1 exact encrypted-flow diagnosis; 7/7 deployed supplemental UI PASS. Real remote owner-conflict delivery NOT RUN |
 | RECORDED-NOTE-QUEUE-01 | FAIL .26; .27 NOT RUN | User `Recorded-note queue full`; deployed .26 synthetic 2.3 s voice took ~54 s, delivered but open sender still ⌛ until chat reopen; third immediate recording hit queue-full and was discarded. S-TURN media redesign pending. No storage reset |
-| S-TURN-HEALTH-01 | OPEN | EMS real WSS ticket + forced relay 32 KiB/hash PASS; advertised health still TCP-only; call/file/recorded-note UI acceptance NOT RUN |
+| NODE-REMOVED-RETRY-01 | FAIL deployed `.27`; source-overlay PASS | d34b1b6 direct-connect-compatible fix, actual browser 6/6 PASS and zero sockets after removal. `.28` PWA still lacks fix; deployed retest NOT RUN |
+| S-TURN-HEALTH-01 | PASS backend mechanism on EMS | b944d26, protected snapshot; authenticated allocation/return UDP+TCP, normal WSS, Chromium relay/relay 32 KiB/hash PASS, exact218/218. `can_relay_blob=1`; voice/circle/file UI acceptance NOT RUN |
 
 ## Текущая интеграция (не deployed UI)
 
@@ -288,6 +289,6 @@ production attack attempted.
 
 Evidence and exact-source limits: [voice baseline](docs/evidence/2026-10-08/qa-sender-voice-summary.md).
 
-`NODE-REMOVED-RETRY-01` — confirmed **FAIL**, owner assignment pending (`ui_inventory` triage): deployed `.27`, exact PWA `637c9bb02c2c57a05e8edc815678b6fb204f632c`; global Nodes → add unavailable loopback WSS → Connect → Connect retry → Delete cancel → Delete confirm. Card disappears but WebSocket attempts rise 3→5 during the following3.5s. Fresh synthetic profile, no Account/EMS/PoW, no page errors;61 captured JS responses exact-match. [Evidence](docs/evidence/2026-10-08/qa-node-unavailable-local27.json):5 controls PASS, remove-stop-retry FAIL. Earlier `.26` harness expected transient ERROR rather than observable RECONNECTING; those state assertions were harness assumptions, not product failures.
+`NODE-REMOVED-RETRY-01` — confirmed **FAIL** deployed `.27`, exact PWA `637c9bb02c2c57a05e8edc815678b6fb204f632c`; global Nodes → add unavailable loopback WSS → Connect → Connect retry → Delete cancel → Delete confirm. Card disappears but WebSocket attempts rise 3→5 during the following3.5s. Fresh synthetic profile, no Account/EMS/PoW, no page errors;61 captured JS responses exact-match. [Evidence](docs/evidence/2026-10-08/qa-node-unavailable-local27.json):5 controls PASS, remove-stop-retry FAIL. Agent `node_retry_cleanup` fix `d34b1b6` preserves direct NodeEndpoint interop and retires replaced timers/clients; [source-overlay retest](docs/evidence/2026-10-08/qa-node-removed-retry-direct-source27.json) 6/6 PASS, zero post-delete sockets over3.5 s. Published source includes fix; production PWA `.28` still has old node_manager.js, so DEPLOYED retest remains NOT RUN.
 
 Read-only localization: `NodeManager.connectEndpoint` replaces a disconnected connection object without clearing its old reconnect timer. `scheduleReconnect` timer calls `connectEndpoint` without checking current generation or endpoint membership; deleting the newer map entry leaves the replaced object's callback able to reinsert the removed Node. This is a source-supported hypothesis for the observed retry, requiring narrow lifecycle regression and actual browser retest. No product patch included.

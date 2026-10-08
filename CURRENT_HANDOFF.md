@@ -92,9 +92,10 @@ origin сверить после следующего docs/checkpoint push; prod
 Текущая production PWA на EMS — узкий commit
 **`fd2a7505ba7325ee0d47e38cb2cfc8271cbfc0c1`**, release
 **`transport-v3-node-preparation-20261008.28`**. Он достижим из published
-source branch `f0af5b10aa31b7ee875071b78edffae813d2bf00`, но развёрнут
-отдельно от незавершённой Node-миграции. Exact-source PWA+backend проверка:
-**217 checked, missing=[], changed=[]**. Два свежих Chromium profiles на
+source branch; media/Node-миграция не развёрнуты. После узкого backend
+S-TURN health deploy точный combined PWA+backend target
+**`b944d26136261182494a3c8e1686ac6aa17dcc28`**: **218 checked,
+missing=[], changed=[]**. Два свежих Chromium profiles на
 опубликованной странице: **16/16 real UI actions PASS**, page/SW обе `.28`,
 136 loaded sources exact SHA, errors 0, immediate key feedback 157 ms;
 Request/Accept/Confirm, двусторонние сообщения и оба FlipLock controls проверены.
@@ -107,15 +108,24 @@ loaded sources exact SHA, errors 0. Intermittent `ROUTE-READY-01` остаётс
 Предыдущая `.27` deployed 16/16 — historical evidence. Physical mobile
 orientation NOT RUN. PWA-only deploy через EMS `get_commit.sh`; static backup:
 `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T024105Z`.
-Ни Node backend, ни runtime keys/DB/services этот deploy не менял.
+Этот PWA deploy не менял Node backend/keys/DB; отдельный health deploy ниже.
 
-Backend EMS остаётся от **`3c513601ef3990b6514e247d879324b7b72da494`**
-(`.26`), включая `route_discovery_v4.py`; перед его предыдущим обновлением Node
-был остановлен и создан согласованный protected runtime snapshot:
-`/root/dmash-runtime-backups/release26-20261008T004030Z` (6 SQLite quick_check PASS).
-После restart все4 identity/key files побайтно равны backup. Static PWA backup:
-`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T004036Z`.
-Секреты/snapshot вне Git; production на Forge не переносился.
+Backend EMS — `.26` foundation
+**`3c513601ef3990b6514e247d879324b7b72da494`** плюс ровно четыре Python
+файла S-TURN health из reachable `b944d26` (`core.py`, `s_turn.py`,
+`s_turn_health.py`, `signaling_gateway.py`) и pinned `aioice==0.10.2`.
+`DMASH_CAN_S_TURN=1`, `DMASH_CAN_RELAY_BLOB=1` на EMS test target; `can_signal`
+не включён. Health требует authenticated TURN allocation, bidirectional nonce/hash
+UDP/TCP и обычный WSS ticket flow, freshness ≤45 s. После остановки Node
+protected runtime snapshots:
+`/root/dmash-runtime-backups/sturn-health-20261008T025452Z` и
+`/root/dmash-runtime-backups/sturn-relay-flag-20261008T025653Z`; 3 active SQLite
+quick_check PASS в каждом, identity files byte hashes равны после restart,
+service active. Последующий Chromium forced relay/relay 32 KiB/hash PASS и
+Python UDP/TCP/WSS PASS. Ранее `.26` snapshot
+`/root/dmash-runtime-backups/release26-20261008T004030Z` остаётся для rollback.
+Секреты/snapshots вне Git; production на Forge не переносился. Full media UI
+приёмка ещё не выполнена, capability может быть отозвана через сохранённый env.
 
 Совместный live test с пользователем на его `.26` и отдельном synthetic
 Account подтвердил двусторонний E2EE чат: текст получен, authenticated READ
@@ -133,10 +143,12 @@ browser baseline: 2.3 s voice → 13 Mesh fragments → ~54 s до receiver audi
 S-TURN; Account-encrypted ordinary messages несут лишь invitation/receipt
 metadata. Offline запись зашифрована на устройстве отправителя до подтверждения
 online peer; bounded retry invitation без отдельного presence oracle. Старые
-pending rows сохранить. S-TURN EMS уже включён и real WSS ticket + forced
-relay datachannel 32 KiB/hash PASS, но Node health сейчас ошибочно проверяет
-лишь TCP connect. Ни live call/file UI, ни новый recorded-note path ещё не PASS.
-Owner agents: qa_account_media (media), node_audit (S-TURN health), ui_inventory
+pending rows сохранить. На EMS теперь real health + relay capability, но новая
+PWA media `.29` пока **candidate** `a524bc0` в isolated worktree: encrypted
+offline intent, only metadata through Account message, bytes relay-only,
+bounded retry/ACK/reload/Account switch mechanism PASS; actual ordinary UI
+browser run выполняется, не DEPLOYED. Ни live call/file UI, ни новый recorded-note
+ordinary UI path ещё не PASS. Owner agents: qa_account_media (media), node_audit (Node public/KEM), ui_inventory
 (браузерная приёмка). Полная N7/N3 цель остаётся открытой.
 
 `Contact acceptance owner mismatch` воспроизведён без изменения существующего
