@@ -37,6 +37,7 @@
    for(const saved of await this.rows(s))this.view(saved,saved.status);
    void this.flush();return true;
   }
+  async hydrate(peer){const s=this.capture(peer),rows=await this.rows(s);s.check();if(this.core.activePeerId!==peer)return;for(const row of rows)if(row.peerID===peer)this.view(row,row.status);}
   view(row,status,progress){this.core.refreshRecordedNoteState?.(row.peerID,row.id,status,progress);}
   async send(s,peer,payload){return this.wait(s,this.core.sendMessage(payload,false,peer,'turn-note-control',true,null,null,s.current));}
   async state(s,row,status){row.status=status;await this.write(s,row);this.view(row,status);}

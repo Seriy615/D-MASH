@@ -1405,6 +1405,7 @@ const Core = {
         this.recordedNoteTurn ||= new window.DmashRecordedNoteTurn(this,Storage);
         return this.recordedNoteTurn;
     },
+    async hydrateRecordedNotes(peer) { if(!window.DmashRecordedNoteTurn)return;try { await this.getRecordedNoteTurn().hydrate(peer); } catch (_) { /* A revoked Account must not hydrate another vault. */ } },
     async retryRecordedNote(id) { try { await this.getRecordedNoteTurn().retry(id); } catch(error) { this.customAlert('ЗАПИСЬ',error.message); } },
     async cancelRecordedNote(id) { try { await this.getRecordedNoteTurn().cancel(id); } catch(error) { this.customAlert('ЗАПИСЬ',error.message); } },
     refreshRecordedNoteState(peer,id,state,progress) {
@@ -1922,6 +1923,8 @@ const Core = {
                 }
             }
 
+            await this.hydrateRecordedNotes(id);
+
             // Only after the complete initial page is painted may concurrent
             // inbound traffic append at the bottom.  Older history is added
             // above solely by explicit upward-pagination.
@@ -1998,6 +2001,8 @@ const Core = {
             log.scrollTop = log.scrollHeight;
         }
 
+        await Core.hydrateRecordedNotes(historyPeer);
+        if (Core.activePeerId !== historyPeer) { Core.isLoadingHistory = false; Core.isDrawing = false; return; }
         Core.chatOffset += rawBatch.length;
         if (rawBatch.length === Core.chatLimit) Core.prefetchOlderHistory(Core.activePeerId, Core.chatOffset);
         Core.isLoadingHistory = false; Core.isDrawing = false;
