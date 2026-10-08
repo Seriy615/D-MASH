@@ -463,7 +463,9 @@
         let url;
         try {
             if (!global.DmashFileVault || !global.DMashStorage) throw Error('Хранилище файлов недоступно. Обновите страницу.');
-            const result = await new global.DmashFileVault(core, global.DMashStorage).get(peer, ref.fileId);
+            const vault = new global.DmashFileVault(core, global.DMashStorage), captured = vault.capture();
+            const result = await vault.get(peer, ref.fileId);
+            captured.check();
             if (core.activePeerId !== peer || !card.isConnected) return false;
             if (!result || result.meta.sha256 !== ref.sha256 || result.meta.size !== ref.size ||
                 result.meta.name !== ref.name || result.meta.mime !== ref.mime)

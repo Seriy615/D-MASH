@@ -231,6 +231,35 @@ function storageFor(owner) {return {
     assert.equal(owned.get(busySender).get(busyRequest.file_id).meta.status,'connecting');
     globalThis.nextSyntheticCallId=null;
     DmashFileRuntime.cancel(busySender);DmashFileRuntime.cancel(busyReceiver);
+    // An Account switch during the awaited vault read must never create an
+    // object URL or attach the old Account's file to a same-peer chat card.
+    const previewCore=core(),previewId='d'.repeat(64),previewRef={fileId:previewId,
+        sha256:'e'.repeat(64),size:bytes.length,name:'synthetic.txt',mime:'text/plain'};
+    const previewTarget=new Element(),previewCard=new Element();
+    previewCard.dataset={fileId:previewId};previewCard.isConnected=true;
+    previewCard.closest=()=>({id:'msg-box-synthetic'});
+    previewCard.querySelector=selector=>selector==='.dmash-file-preview'?previewTarget:null;
+    const oldQuery=document.querySelectorAll;
+    document.querySelectorAll=()=>[previewCard];
+    const originalGet=DmashFileVault.prototype.get;
+    let releaseGet,urlCalls=0;
+    DmashFileVault.prototype.get=()=>new Promise(resolve=>{releaseGet=resolve;});
+    const oldCreateUrl=URL.createObjectURL;
+    URL.createObjectURL=()=>{urlCalls++;return 'blob:synthetic';};
+    try {
+        const opening=DmashFileRuntime.openInline(previewCore,previewCore.activePeerId,previewRef,'synthetic');
+        await new Promise(resolve=>setTimeout(resolve,0));
+        assert.equal(typeof releaseGet,'function','preview vault read is pending');
+        previewCore.changed=true;
+        releaseGet({meta:{...previewRef},blob:new Blob([bytes])});
+        await assert.rejects(opening,/Account changed/);
+        assert.equal(urlCalls,0,'old Account bytes never become a BlobURL');
+        assert.notEqual(previewCard.dataset.loaded,'true');
+    } finally {
+        document.querySelectorAll=oldQuery;
+        DmashFileVault.prototype.get=originalGet;
+        URL.createObjectURL=oldCreateUrl;
+    }
     DmashFileRuntime.cancel(sender3);
     DmashFileRuntime.cancel(sender);DmashFileRuntime.cancel(receiver);
     console.log('file_runtime.test.js: durable intent, trusted auto-receive, inline history and retry dedupe passed');
