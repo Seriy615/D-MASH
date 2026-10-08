@@ -45,8 +45,9 @@ commit также доставляется на Forge, его полный SHA �
 
 **Source и production PWA:** Forge `/home/jcode/D-MASH`, ветка `transport-v3`,
 проверенный product commit `afab8ed187c6312a81b7dda46c29ff9e45da6d9e`.
-GitHub `origin/transport-v3` сверен с ним после fast-forward через временный
-EMS publisher. В EMS штатный `get_commit.sh` развернул только PWA из этого exact
+Последующие documentation-only checkpoints не меняют PWA subtree; текущий
+`origin/transport-v3` сверять через `git rev-parse` после push. В EMS штатный
+`get_commit.sh` развернул только PWA из exact
 commit. Страница и active controlling SW на новом synthetic Chromium profile —
 `transport-v3-node-preparation-20261008.34`; read-only verifier **212/212**
 tracked PWA files, `missing=[]`, `changed=[]`, extras 0, HTTPS index/SW byte-exact.
@@ -235,11 +236,17 @@ browser PASS, ещё не merged/deployed ordinary UI acceptance. Pending intent
 genuine browser fixture. Но расширенный real rekey gate выявил старый `APP_ACK`
 во время восстановления: Inbox повторил кадр, а ещё не ESTABLISHED App session
 вернул `APP_SESSION_NOT_ESTABLISHED`. Узкий `a5541e3...` сохраняет такой
-authenticated frame до retry; UNIT PASS, browser retest ещё не проведён.
-Bounded route re-probe 0/5/15 с, deadline30 с и owner cancellation из
-`15202ea...`/`ed96a1a...` пока отдельные UNIT-green commits; genuine recipient
-rejoin browser gate NOT RUN. Весь N4 candidate не интегрирован/не опубликован,
-authenticated state/mailbox migration остаётся OPEN.
+authenticated frame до retry. Combined exact `f0ece74aa3dc872d5eb5e1e9872e6ba134448f23`
+включает bounded route re-probe 0/5/15 с, deadline30 с и owner cancellation.
+Два genuine Chromium/two managed Worker/separate Python Node gates **PASS**:
+lost FINAL/first ACK и односторонняя потеря активного состояния восстановлены
+как gen2, один логический recipient history, новый ciphertext и authenticated
+ACK→DELIVERED; отдельно первое сообщение при offline recipient возвращает
+local encrypted PENDING <5 с, после same-identity rejoin доставлено один раз и
+ACK освобождает outbox. [Публичные metadata](docs/evidence/2026-10-08/qa-n4-fast-pending-rekey-offline-browser.json).
+Это direct synthetic runtime, не обычный UI; full fault matrix, CONTROL,
+authenticated state/mailbox migration и deployed acceptance остаются OPEN.
+N4 candidate не интегрирован/не опубликован.
 
 N0 endpoint/privacy и threat model, N2 no-bypass failover на текущем SHA,
 N5 verifier/legacy exposure/PCS/PQ/security, N6 password/installer, N7 file/call
@@ -263,8 +270,17 @@ first real UI gate auto-receive/inline generic 1 MiB+13 B и WAV 16 MiB прош
 а AES/vault/hash — доли секунды. Candidate `79974e7...` допускает до 8
 bounded фрагментов в полёте; targeted UNIT и повторный genuine browser gate
 **17/17 PASS**, 16 MiB за **27,330 с** (~6× быстрее), внутри file-chunk ACK
-13,222 с (~1,27 MB/s), source overlay `.32`/SW blocked, page errors 0. На
-Android и integrated/deployed Node это пока не проверено. Пользователь просит
+13,222 с (~1,27 MB/s), source overlay `.32`/SW blocked, page errors 0.
+Window16 отдельно дал 17/17, но ACK span 14,750 с и file-send→complete 19,158 с
+против 19,335 с у Window8: существенного byte-phase выигрыша нет, выбран
+Window8. Root independently cherry-picked Window8 into `.34` base as
+`b4db71b...`; full Python286/Origin11/все JS PASS и integrated source-overlay
+actual UI **17/17 PASS**, 268/268 loaded source responses exact, page errors 0,
+1 MiB+13 B за 3,684 с и 16 MiB WAV за 19,518 с в этом прогоне;
+[metadata](docs/evidence/2026-10-08/qa-n7-integrated34-root-source.json).
+После него `b8f285f...` добавил authenticated bounded `RECEIVER_BUSY` для
+одновременных входящих; его expanded browser retest ещё идёт. На
+Android и deployed Node это пока не проверено. Пользователь просит
 рассмотреть передачу файлов без WebRTC. Текущий браузер не имеет raw TURN
 socket API; `/signal/v1` ограничен signaling JSON, не bulk bytes. Отдельный
 bounded binary WSS `/relay/v1` в EMS backend технически возможен, но требует

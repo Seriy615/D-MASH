@@ -1,0 +1,45 @@
+{
+  "sourceCommit": "f0ece74aa3dc872d5eb5e1e9872e6ba134448f23",
+  "scope": "BROWSER synthetic Accounts, two managed Chromium Workers and separate Python Node; no ordinary UI, active service worker or deployed acceptance",
+  "versions": {
+    "chromium": "156.0.8078.4",
+    "node": "24.19.0",
+    "python": "3.12"
+  },
+  "sourceFilesHashedPerRawReport": 44,
+  "gates": [
+    {
+      "name": "sender pending across one-sided confirmed successor",
+      "status": "PASS",
+      "checks": [
+        "sender local PENDING returned within five seconds without waiting for Node",
+        "lost initial FINAL and first authenticated application ACK recovered",
+        "one-sided active state loss recovered as confirmed generation two",
+        "same logical operation stored once at recipient",
+        "successor used fresh root-bound ciphertext and outer transport operation",
+        "authenticated ACK marked existing sender history DELIVERED and retired outbox"
+      ],
+      "opaqueNodePackets": 34,
+      "rawEvidenceSha256": "9a1bbad761221ca2a8a8e81088860e712ab3b69a52536c5da309c863897e2e50"
+    },
+    {
+      "name": "recipient Worker offline at first application send",
+      "status": "PASS",
+      "checks": [
+        "sender local PENDING returned within five seconds while recipient offline",
+        "first encrypted send attempted while recipient Worker absent",
+        "recipient returned with same Node identity",
+        "exact inner Account ciphertext retried, recipient history stored once",
+        "authenticated ACK alone marked existing sender history DELIVERED and retired outbox"
+      ],
+      "opaqueNodePackets": 16,
+      "rawEvidenceSha256": "a6c6624ce5ab45ee169e44bf5ec771b9186764143ff3548186a8b4c6c9652b82"
+    }
+  ],
+  "rawEvidenceLocalOnly": true,
+  "limits": [
+    "browser fixtures use synthetic Accounts and direct runtime calls rather than ordinary UI actions",
+    "typed CONTROL and media semantics are not part of these gates",
+    "full N4 loss matrix, active service worker and deployed acceptance remain open"
+  ]
+}
