@@ -1,0 +1,50 @@
+{
+  "bug": "MEDIA-LOADER-ANDROID-33",
+  "date_utc": "2026-10-08",
+  "deployed_sha": "042d5803d5d622da72848c67d96bd5c8243c4819",
+  "release": "transport-v3-node-preparation-20261008.32",
+  "scope": "Fresh synthetic two-Account PRIVATE pairing; actual mobile Chromium 390x844 UI and real EMS/S-TURN. Only acceptance_v51.js patch response withheld to force original startup path. No user profile or content in evidence.",
+  "red": {
+    "mode": "DEPLOYED / active SW .32",
+    "checks_passed": 17,
+    "call_session_before": "undefined",
+    "call_runtime_before": "function",
+    "file_session_before": "function",
+    "call_modal": "ЗВОНОК НЕ НАЧАЛСЯ\nCannot read properties of undefined (reading 'CallSignalingSession')\nOK",
+    "file_visible_status": "Cannot read properties of undefined (reading 'CallSignalingSession')",
+    "unmodified_loaded_bodies_exact_sha": 104,
+    "injected_patch_responses": 2,
+    "page_errors": 0,
+    "result": "EXPECTED FAIL: missing CallSignalingSession"
+  },
+  "normal_candidate": {
+    "mode": "SOURCE OVERLAY / SW BLOCKED / no injected patch",
+    "checks_passed": 17,
+    "call_connected": true,
+    "file_download_sha_equal": true,
+    "loaded_source_bodies_exact_candidate": 130,
+    "page_errors": 0,
+    "result": "PASS"
+  },
+  "race_candidate": {
+    "mode": "SOURCE OVERLAY / SW BLOCKED / patch withheld",
+    "checks_passed": 19,
+    "call_session_present": true,
+    "call_connected": true,
+    "file_download_sha_equal": true,
+    "voice_delivered_content_released": true,
+    "voice_size_bytes": 22796,
+    "circle_delivered_content_released": true,
+    "circle_size_bytes": 116235,
+    "unmodified_loaded_bodies_exact_candidate": 106,
+    "injected_patch_responses": 2,
+    "page_errors": 0,
+    "result": "PASS"
+  },
+  "limits": [
+    "Source-overlay candidate page/SW .32; not deployed .33 acceptance.",
+    "Mobile Chromium uses synthetic media devices; user physical Android MIME/device/performance not measured.",
+    "Synthetic patch seam tests deterministic loader failure path; only injected response differs from exact source.",
+    "Candidate index.html had two touched CRLF lines normalized to LF after browser observation; root independent exact-source gate required."
+  ]
+}
