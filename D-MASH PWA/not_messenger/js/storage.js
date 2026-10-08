@@ -234,39 +234,69 @@ deleteMessageGamma: async function(peerID, msgId) {
      * УДАЛЕНИЕ ЧАТА (Снос всех уровней)
      */
     deleteChatGamma: async function(peerID) {
-        const aliasL1 = await this.getAlias(peerID, "L1");
-        const secrets = await this.getBox('blind_secrets', aliasL1);
-
-        if (secrets && secrets.msgCount) {
-            const messageAliases = [];
-            for (let i = 1; i <= secrets.msgCount; i++) {
-                messageAliases.push(await this.getAlias(aliasL1 + i, "L3"));
-            }
-            const tx = this.db.transaction('blind_messages', 'readwrite');
-            const store = tx.objectStore('blind_messages');
-            messageAliases.forEach(aliasL3 => store.delete(aliasL3));
-            await new Promise((resolve, reject) => {
-                tx.oncomplete = resolve;
-                tx.onerror = () => reject(tx.error || new Error('message deletion failed'));
-                tx.onabort = () => reject(tx.error || new Error('message deletion aborted'));
-            });
-        }
-
-        const peer = await this.getBox('blind_peers', aliasL1);
-        const secretsAlias = window.DmashChatPassword ? await window.DmashChatPassword.location(this, aliasL1, 'L2', peer?.chatLock) : aliasL1;
-        await new Promise((resolve, reject) => {
-            const tx2 = this.db.transaction(['blind_peers', 'blind_secrets'], 'readwrite');
-            tx2.objectStore('blind_peers').delete(aliasL1);
-            tx2.objectStore('blind_secrets').delete(secretsAlias);
-            tx2.oncomplete = resolve;
-            tx2.onerror = () => reject(tx2.error || new Error('peer deletion failed'));
-            tx2.onabort = () => reject(tx2.error || new Error('peer deletion aborted'));
+        // Resolve every owner-bound alias and inspect mixed-format rows before
+        // deleting anything. New v4 records share pairing_material but use
+        // their own authenticated formats; a legacy scan cannot claim them.
+        const db = this.db, masterKey = this.masterKey, salt = Core.blindSalt, account = Core.activeIdentity;
+        const check = () => {
+            if (this.db !== db || this.masterKey !== masterKey || Core.blindSalt !== salt || Core.activeIdentity !== account)
+                throw new Error('Account vault changed during chat deletion');
+        };
+        const readRaw = (storeName, alias) => new Promise((resolve, reject) => {
+            check(); const tx = db.transaction(storeName, 'readonly'), request = tx.objectStore(storeName).get(alias);
+            request.onsuccess = () => resolve(request.result ?? null);
+            request.onerror = () => reject(request.error || new Error('Chat deletion preflight failed'));
+            tx.onabort = () => reject(tx.error || new Error('Chat deletion preflight aborted'));
         });
+        check();
+        const aliasL1 = await this.getAlias(peerID, "L1");
+        check();
+        const peerRow = await readRaw('blind_peers', aliasL1);
+        const peer = peerRow ? await this.decryptBox(peerRow.blob) : null;
+        check();
+        if (peerRow && !peer) throw new Error('Corrupt chat owner record; no data deleted');
+        const secretsAlias = window.DmashChatPassword ? await window.DmashChatPassword.location(this, aliasL1, 'L2', peer?.chatLock) : aliasL1;
+        check();
+        const secretsRow = await readRaw('blind_secrets', secretsAlias);
+        const secrets = secretsRow ? await this.decryptBox(secretsRow.blob) : null;
+        check();
+        if (secretsRow && !secrets) throw new Error('Corrupt chat owner record; no data deleted');
+        if (secrets && (!Number.isSafeInteger(secrets.msgCount || 0) || secrets.msgCount < 0 || secrets.msgCount > 1000000))
+            throw new Error('Corrupt chat message count; no data deleted');
+        const messageAliases = [];
+        for (let i = 1; i <= (secrets?.msgCount || 0); i++) {
+            messageAliases.push(await this.getAlias(aliasL1 + i, "L3")); check();
+        }
         const queued = await this.getAllBoxes('blind_outbox');
-        await Promise.all(queued.filter(item => item?.peerID === peerID).map(item => this.deleteBox('blind_outbox', item.alias)));
+        check();
         const mappings = await this.getAllBoxes('pairing_material');
-        await Promise.all(mappings.filter(item => item?.peerId === peerID).map(item => this.deleteBox('pairing_material', item.alias)));
-        await this.deleteBox('pairing_material', await this.getAlias('node-peer-v4:' + peerID, 'L2'));
+        check();
+        const knownAlias = await this.getAlias('node-peer-v4:' + peerID, 'L2'); check();
+        const knownRow = await readRaw('pairing_material', knownAlias);
+        if (knownRow) {
+            const known = await this.decryptBox(knownRow.blob); check();
+            if (!known || typeof known !== 'object' || (known.peerId && known.peerId !== peerID))
+                throw new Error('Corrupt Account route owner record; no data deleted');
+        }
+        const outboxAliases = queued.filter(item => item?.peerID === peerID).map(item => item.alias);
+        const mappingAliases = mappings.filter(item => item?.peerId === peerID && !item.schema && !item.kind).map(item => item.alias);
+        if (knownRow) mappingAliases.push(knownAlias);
+        check();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(['blind_messages', 'blind_peers', 'blind_secrets', 'blind_outbox', 'pairing_material'], 'readwrite');
+            try {
+                check();
+                for (const alias of messageAliases) tx.objectStore('blind_messages').delete(alias);
+                tx.objectStore('blind_peers').delete(aliasL1);
+                tx.objectStore('blind_secrets').delete(secretsAlias);
+                for (const alias of outboxAliases) tx.objectStore('blind_outbox').delete(alias);
+                for (const alias of new Set(mappingAliases)) tx.objectStore('pairing_material').delete(alias);
+            } catch (error) { try { tx.abort(); } catch (_) {} reject(error); return; }
+            tx.oncomplete = () => { try { check(); resolve(); } catch (error) { reject(error); } };
+            tx.onerror = () => reject(tx.error || new Error('chat deletion failed'));
+            tx.onabort = () => reject(tx.error || new Error('chat deletion aborted'));
+        });
+        return {unknownPairingRows: mappings.filter(item => !item.peerId && item.alias !== knownAlias).length};
     },
 
     async getAllBoxes(storeName) {
