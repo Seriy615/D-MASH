@@ -17,6 +17,17 @@
         q.onerror = () => reject(q.error || Error('File vault read failed'));
         tx.onabort = () => reject(tx.error || Error('File vault read aborted'));
     });
+    const requestWithOwner = (db, ownerAlias, fileAlias) => new Promise((resolve, reject) => {
+        const tx = db.transaction(['blind_file_owners', 'blind_files'], 'readonly');
+        let ownerRow = null, fileRow = null;
+        const owner = tx.objectStore('blind_file_owners').get(ownerAlias);
+        const file = tx.objectStore('blind_files').get(fileAlias);
+        owner.onsuccess = () => {ownerRow = owner.result || null;};
+        file.onsuccess = () => {fileRow = file.result || null;};
+        owner.onerror = file.onerror = () => reject(Error('File vault read failed'));
+        tx.oncomplete = () => resolve({ownerRow, fileRow});
+        tx.onabort = () => reject(tx.error || Error('File vault read aborted'));
+    });
 
     class FileVault {
         constructor(core, storage) { this.core = core; this.storage = storage; }
@@ -73,8 +84,9 @@
             return JSON.parse(decoder.decode(plain));
         }
 
-        async owner(session, ownerAlias) {
-            const row = await request(session.db, 'blind_file_owners', ownerAlias);
+        async owner(session, ownerAlias, suppliedRow = undefined) {
+            const row = suppliedRow === undefined ?
+                await request(session.db, 'blind_file_owners', ownerAlias) : suppliedRow;
             session.check();
             const value = row ? await this.open(session, ownerAlias, 'owner', row) :
                 {schema: 'dmash_file_owner_v1', account: session.owner, entries: []};
@@ -236,12 +248,16 @@
 
         async meta(peer, fileId, session = this.capture(), ownerEntry = undefined) {
             const alias = await this.fileAlias(session, peer, fileId);
+            let row;
             if (ownerEntry === undefined) {
                 const ownerAlias = await this.ownerAlias(session);
-                const owner = await this.owner(session, ownerAlias);
+                const pair = await requestWithOwner(session.db, ownerAlias, alias); session.check();
+                const owner = await this.owner(session, ownerAlias, pair.ownerRow);
                 ownerEntry = owner.value.entries.find(entry => entry.alias === alias);
+                row = pair.fileRow;
+            } else {
+                row = await request(session.db, 'blind_files', alias); session.check();
             }
-            const row = await request(session.db, 'blind_files', alias); session.check();
             if (!row && !ownerEntry) return null;
             if (!row || !ownerEntry || ownerEntry.alias !== alias ||
                 ownerEntry.peer !== peer || ownerEntry.fileId !== fileId)

@@ -50,13 +50,22 @@ vault.meta = async () => ({...base, ...(metadataMode === undefined ? {} : {contr
     const normalize = new DmashFileVault(core, storage);
     normalize.fileAlias = async () => alias;
     normalize.ownerAlias = async () => alias;
-    normalize.owner = vault.owner;
-    normalize.open = async () => base;
-    storage.db.transaction = () => ({objectStore: () => ({get: () => {
-        const query = {};
-        queueMicrotask(() => {query.result = {alias}; query.onsuccess();});
-        return query;
-    }})});
+    normalize.open = async (session, rowAlias, kind) => kind === 'owner' ?
+        {schema: 'dmash_file_owner_v1', account, entries: [{alias, peer, fileId, size: 1,
+            inbound: false, status: 'waiting',
+            ...(entryMode === undefined ? {} : {controlMode: entryMode})}]} : base;
+    storage.db.transaction = () => {
+        let done = 0;
+        const tx = {objectStore: () => ({get: () => {
+            const query = {};
+            queueMicrotask(() => {
+                query.result = {alias}; query.onsuccess();
+                if (++done === 2) tx.oncomplete();
+            });
+            return query;
+        }})};
+        return tx;
+    };
     assert.equal((await normalize.meta(peer, fileId)).controlMode, 'v3-private',
         'actual legacy row read normalizes only to v3-private');
     entryMode = 'node-v4';
