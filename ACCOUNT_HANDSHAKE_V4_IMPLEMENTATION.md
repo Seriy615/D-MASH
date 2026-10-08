@@ -55,8 +55,12 @@ The consumed ticket never regenerates FINAL.
 Only normal FINAL/CONFIRM/ACK establishes the replacement and advances the ledger.
 
 The ledger, challenge/ticket and replay tombstones occupy a separate encrypted row
-from active/pending session secrets. Both rows are written by one compare-and-swap
-IDB transaction in `pairing_material`, with Account-keyed HMAC blind aliases. Missing
+from active/pending session secrets. A third encrypted Account/peer binding pointer records the current binding. All
+three rows are written by one compare-and-swap IDB transaction in `pairing_material`.
+Ledger/state HMAC aliases include the authenticated binding digest and generation;
+the stable blind pointer detects replacement bindings before empty new aliases can
+be mistaken for a new session. A changed binding fails BINDING_MIGRATION_REQUIRED
+and preserves every old row; authenticated migration is a separate explicit step. Missing
 state with an intact ledger enables recovery; ciphertext corruption is an error,
 not an empty session. A complete rollback of all records is not prevented here.
 Existing contact/history stores and legacy session records remain untouched.
@@ -86,6 +90,6 @@ JSON-escaping+72-byte overhead within the existing16KiB limit.
 
 All asynchronous boundaries recheck the captured owner. The real IDB store captures
 AES/HMAC keys and DB, aborts its live transactions synchronously on Account/root
-signal, encrypts before opening transactions, and compares both previously read
+signal, encrypts before opening transactions, and compares all three previously read
 ciphertext rows before writes. JavaScript secret-field deletion and byte-buffer
 clearing do not imply guaranteed physical memory erasure.
