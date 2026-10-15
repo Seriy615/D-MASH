@@ -119,18 +119,67 @@ async function transfer(file, manifest, transform, afterComplete) {
         'duplicate ACK is rejected and cannot complete a file');
     dupSender.close();dupReceiver.close();
 
-    const [pressureA,pressureB]=pair(),pressureSent=deferred(),pressureReceived=deferred();
+    // Isolate the product's timer globals so host scheduling/real AES latency
+    // cannot consume the 100ms protocol deadline in this pressure scenario.
+    // Crypto, file bytes, frame delivery and authenticated ACKs remain genuine.
+    const vm=require('node:vm'),fs=require('node:fs'),waiting=deferred(),timers=new Map();
+    let clock=0,timerId=0;
+    const scope={crypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,Map,Set,
+        Blob,structuredClone,atob,btoa,Date:{now:()=>clock},
+        setTimeout(fn,delay){const id=++timerId;timers.set(id,{at:clock+delay,fn,delay});if(delay===5)waiting.resolve();return id;},
+        clearTimeout(id){timers.delete(id);}};
+    vm.createContext(scope);
+    vm.runInContext(fs.readFileSync(require.resolve('../js/file_channel.js'),'utf8'),scope);
+    const ClockFileChannel=scope.DmashFileChannel.FileChannel;
+    const tickPressure=async()=>{
+        const [id,job]=[...timers].sort((a,b)=>a[1].at-b[1].at||a[0]-b[0])[0]||[];
+        assert(job,'pressure wait must register a timer');
+        assert.equal(job.delay,5,'advance the pressure poll, never an ACK deadline');
+        timers.delete(id);clock=job.at;job.fn();
+        await new Promise(resolve=>setImmediate(resolve));
+    };
+    const [pressureA,pressureB]=pair(),pressureSent=deferred(),pressureReceived=deferred(),pressureErrors=[];
     pressureA.bufferedAmount=200000;
-    let firstSendAt=0;const pressureStart=Date.now(),originalPressureSend=pressureA.send;
-    pressureA.send=frame=>{firstSendAt=Date.now();originalPressureSend(frame);};
-    setTimeout(()=>{pressureA.bufferedAmount=0;},15);
-    const pressureReceiver=new FileChannel({channel:pressureB,manifest,
-        onComplete:()=>pressureReceived.resolve(true),onError:()=>pressureReceived.resolve(false)});
-    const pressureSender=new FileChannel({channel:pressureA,manifest,file,ackTimeoutMs:100,
-        onComplete:()=>pressureSent.resolve(true),onError:()=>pressureSent.resolve(false)});
-    assert.deepEqual(await Promise.all([pressureSent.promise,pressureReceived.promise]),[true,true]);
-    assert(firstSendAt-pressureStart>=10,'bufferedAmount backpressure waits instead of overflowing');
-    pressureSender.close();pressureReceiver.close();
+    const sentIndices=[],ackIndices=[];let finalAck=null,senderComplete=false;
+    const originalPressureSend=pressureA.send;
+    pressureA.send=frame=>{
+        assert.equal(pressureA.bufferedAmount,0,'never send before the buffer is explicitly released');
+        sentIndices.push(new DataView(frame).getUint32(0));originalPressureSend(frame);
+    };
+    pressureB.send=frame=>{
+        const index=new DataView(frame).getUint32(0);ackIndices.push(index);
+        if(index===Math.ceil(manifest.size/manifest.chunk_bytes)){finalAck=structuredClone(frame);return;}
+        queueMicrotask(()=>pressureA.onmessage?.({data:structuredClone(frame)}));
+    };
+    const pressureReceiver=new ClockFileChannel({channel:pressureB,manifest,
+        onComplete:blob=>pressureReceived.resolve(blob),onError:error=>{pressureErrors.push(error);pressureReceived.resolve(null);}});
+    const pressureSender=new ClockFileChannel({channel:pressureA,manifest,file,ackTimeoutMs:100,
+        onComplete:()=>{senderComplete=true;pressureSent.resolve(true);},onError:error=>{pressureErrors.push(error);pressureSent.resolve(false);}});
+    // This real-time watchdog only detects a broken test/event barrier. The
+    // product ACK/backpressure clock above advances solely under test control.
+    let watchdog;
+    const stalled=new Promise((_,reject)=>{watchdog=setTimeout(()=>reject(Error('Pressure fixture stalled')),20000);});
+    const bounded=promise=>Promise.race([promise,stalled]);
+    try{
+        await bounded(waiting.promise);
+        assert.deepEqual(sentIndices,[],'sender is waiting while the buffer is full');
+        await tickPressure();await tickPressure();
+        assert.equal(clock,10);assert.deepEqual(sentIndices,[],'multiple pressure polls cannot send early');
+        assert.equal(senderComplete,false);assert.equal(pressureReceiver.index,0);
+        pressureA.bufferedAmount=0;await tickPressure();
+        const blob=await bounded(pressureReceived.promise);
+        assert(blob,'receiver must verify the entire file');
+        assert.deepEqual(new Uint8Array(await blob.arrayBuffer()),content);
+        assert.equal(senderComplete,false,'verified receiver cannot complete sender before final authenticated ACK');
+        assert(pressureSender.pending.has(pressureSender.count));assert(finalAck);
+        queueMicrotask(()=>pressureA.onmessage?.({data:finalAck}));
+        assert.equal(await bounded(pressureSent.promise),true);
+        const expected=Array.from({length:pressureSender.count+1},(_,index)=>index);
+        assert.deepEqual(sentIndices,expected,'every data frame and END sent exactly once');
+        assert.deepEqual(ackIndices,expected,'every chunk and END authenticated by receiver');
+        assert.equal(pressureSender.complete,true);assert.equal(pressureReceiver.complete,true);
+        assert.deepEqual(pressureErrors,[]);assert.equal(timers.size,0,'all ACK/pressure timers cleared');
+    }finally{clearTimeout(watchdog);pressureSender.close();pressureReceiver.close();}
     await assert.rejects(describe({size:MAX_SIZE + 1}, 'a'.repeat(64)));
     console.log('file_channel.test.js: integrity, bounded pipeline, out-of-order/lost/duplicate ACK and cancellation passed');
 })().catch(error => {console.error(error); process.exitCode = 1;});
