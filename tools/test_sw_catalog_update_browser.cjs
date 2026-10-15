@@ -44,7 +44,14 @@ const server = http.createServer((req, res) => {
         await page.waitForFunction(() => !!navigator.serviceWorker.controller);
         latest = true;
         await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
-        await page.waitForFunction(async release => (await caches.keys()).includes('dmash-static-' + release) && !(await caches.keys()).some(key => key.endsWith('.36')), release, {timeout: 60000});
+        await page.waitForFunction(async release => {
+            const registration = await navigator.serviceWorker.getRegistration();
+            const keys = await caches.keys();
+            return registration?.active?.state === 'activated'
+                && navigator.serviceWorker.controller === registration.active
+                && keys.includes('dmash-static-' + release)
+                && !keys.some(key => key.endsWith('.36'));
+        }, release, {timeout: 60000});
         assert.equal(await page.evaluate(async () => (await (await caches.open((await caches.keys()).find(k => k.endsWith('.37')))).match('nodes.json')).text()), JSON.stringify({generation:'fresh'}), 'new installation bypassed stale HTTP catalog');
         assert.equal(await page.evaluate(async () => (await (await fetch('nodes.json', {cache:'no-store'})).json()).generation), 'fresh');
         await page.evaluate(async release => {
