@@ -103,7 +103,20 @@
     const managedNode = core => core.accountTransportMode?.() === 'node-v4';
     const randomId = () => Array.from(global.crypto.getRandomValues(new Uint8Array(32)),
         b => b.toString(16).padStart(2, '0')).join('');
-    let active = null, retryTimer = null, retryAt = 0, flushing = null, outcomeFlushing = null;
+    let active = null;
+    const retrySessions = new WeakMap();
+    function retrySession(core) {
+        let session = retrySessions.get(core);
+        if (!session) {
+            session = {timer:null, at:0, flushing:null, outcomeFlushing:null};
+            retrySessions.set(core, session);
+        }
+        return session;
+    }
+    const currentRetry = (core, session) => retrySessions.get(core) === session;
+    function checkRetry(core, session) {
+        if (!currentRetry(core, session)) throw Error('FILE_RETRY_SESSION_CANCELLED');
+    }
     const locallyCancelled = new Set();
     async function history(core, vault, meta, inbound) {
         const storage = global.DMashStorage;
@@ -176,41 +189,47 @@
         task.signal?.close(); void task.session?.close();
         if (active === task) active = null;
     }
-    function wake(core, delay) {
+    function wake(core, delay, session = retrySession(core)) {
+        if (!currentRetry(core, session)) return;
         const when = Date.now() + Math.max(1000, Math.min(60000, delay));
-        if (retryTimer && retryAt <= when) return;
-        clearTimeout(retryTimer);
-        retryAt = when;
-        retryTimer = setTimeout(() => {retryTimer = null; retryAt = 0; void flush(core);},
-            Math.max(1, when - Date.now()));
+        if (session.timer && session.at <= when) return;
+        clearTimeout(session.timer);
+        session.at = when;
+        session.timer = setTimeout(() => {
+            if (!currentRetry(core, session)) return;
+            session.timer = null; session.at = 0; void flush(core);
+        }, Math.max(1, when - Date.now()));
     }
-    async function runOutbound(core) {
+    async function runOutbound(core, retry = retrySession(core)) {
+        checkRetry(core, retry);
         const vault = vaultFor(core), captured = vault.capture();
         if (active && !active.closed) return;
         const pending = (await vault.list(null, ['waiting','connecting','sending']))
             .filter(row => !row.inbound).sort((a,b) => a.createdAt - b.createdAt);
-        captured.check();
-        for (const row of pending) await history(core, vault, row, false);
+        captured.check(); checkRetry(core, retry);
+        for (const row of pending) {
+            await history(core, vault, row, false); checkRetry(core, retry);
+        }
         // All existing untagged rows are private-v3.  Each durable intent
         // keeps its original control authority across Account transport changes.
         const mode = managedNode(core) ? 'node-v4' : 'v3-private';
         const compatible = pending.filter(item => item.controlMode === mode);
         const row = compatible.find(item => item.nextAttempt <= Date.now());
         if (!row) {
-            if (compatible.length) wake(core, Math.min(...compatible.map(item => item.nextAttempt)) - Date.now());
+            if (compatible.length) wake(core, Math.min(...compatible.map(item => item.nextAttempt)) - Date.now(), retry);
             return;
         }
         if (mode === 'node-v4' &&
             (typeof core.confirmedNodeMediaPeerV4 !== 'function' ||
                 typeof core.selectNodeMediaServiceV4 !== 'function' ||
                 typeof core.sendNodeMediaControlV4 !== 'function')) {
-            wake(core, 30000);
+            wake(core, 30000, retry);
             return;
         }
-        const task = {core, peer:row.peer, fileId:row.fileId, closed:false, settled:false};
+        const task = {core, retry, peer:row.peer, fileId:row.fileId, closed:false, settled:false};
         active = task;
         const current = () => {try {
-            captured.check();
+            captured.check(); checkRetry(core, retry);
             return active === task && !task.closed && !locallyCancelled.has(row.fileId) &&
                 (managedNode(core) ? 'node-v4' : 'v3-private') === mode;
         } catch (_) {return false;}};
@@ -231,7 +250,7 @@
                 if (core.activePeerId === row.peer) core.refreshMessageTransportState?.(row.peer, row.fileId,
                     permanent ? 'FAILED' : 'WAITING');
                 if (permanent) core.customAlert?.('ФАЙЛ НЕ ОТПРАВЛЕН', error.message);
-                else wake(core, delay);
+                else wake(core, delay, retry);
             } catch (_) { /* Old Account state remains durable for its next login. */ }
         };
         try {
@@ -239,7 +258,7 @@
             if (mode === 'node-v4') {
                 authority = await core.confirmedNodeMediaPeerV4(row.peer);
                 if (!current()) {stopActive(task);return;}
-                if (!authority) {stopActive(task);wake(core, 30000);return;}
+                if (!authority) {stopActive(task);wake(core, 30000, retry);return;}
             }
             await vault.update(row.peer, row.fileId, 'connecting', {attempts:row.attempts + 1,
                 nextAttempt:Date.now() + 30000});
@@ -297,11 +316,18 @@
         }
     }
     function flush(core) {
-        if (flushing) return flushing;
-        flushing = (async () => {await flushOutcomes(core);await runOutbound(core);})()
-            .catch(error => {core.shmon?.('WARN', 'File retry deferred: '+error.message);})
-            .finally(() => {flushing = null;});
-        return flushing;
+        const retry = retrySession(core);
+        if (retry.flushing) return retry.flushing;
+        const work = (async () => {
+            await flushOutcomes(core, retry);
+            if (currentRetry(core, retry)) await runOutbound(core, retry);
+        })().catch(error => {
+            if (currentRetry(core, retry)) core.shmon?.('WARN', 'File retry deferred: '+error.message);
+        }).finally(() => {
+            if (retry.flushing === work) retry.flushing = null;
+        });
+        retry.flushing = work;
+        return work;
     }
     async function trusted(core, peer) {
         const storage = global.DMashStorage, vault = vaultFor(core), captured = vault.capture();
@@ -315,43 +341,58 @@
         const secret = await storage.getBox('blind_secrets', secretAlias); captured.check();
         return typeof secret?.staticShared === 'string' && /^[0-9a-f]{64}$/.test(secret.staticShared);
     }
-    function flushOutcomes(core) {
-        if (outcomeFlushing) return outcomeFlushing;
-        outcomeFlushing = (async () => {
+    function flushOutcomes(core, retry = retrySession(core)) {
+        if (retry.outcomeFlushing) return retry.outcomeFlushing;
+        const work = (async () => {
+            checkRetry(core, retry);
             if (!managedNode(core)) return;
             const vault = vaultFor(core), captured = vault.capture();
-            const pending = await vault.listOutcomes();
+            const check = () => {captured.check();checkRetry(core, retry);};
+            const pending = await vault.listOutcomes(); check();
             if (!pending.length) return;
             if (typeof core.confirmedNodeMediaPeerV4 !== 'function' ||
-                typeof core.sendNodeMediaControlV4 !== 'function') {wake(core, 30000);return;}
+                typeof core.sendNodeMediaControlV4 !== 'function') {wake(core, 30000, retry);return;}
             for (let row of pending) {
-                captured.check();
-                if (row.expiresAt <= Math.floor(Date.now() / 1000)) {
-                    row = await vault.renewOutcome(row.operationId, randomId(),
-                        Math.floor(Date.now() / 1000) + 300);
-                    captured.check();
-                    if (!row) continue;
+                check();
+                try {
+                    if (row.expiresAt <= Math.floor(Date.now() / 1000)) {
+                        row = await vault.renewOutcome(row.operationId, randomId(),
+                            Math.floor(Date.now() / 1000) + 300);
+                        check();
+                        if (!row) continue;
+                    }
+                    const authority = await core.confirmedNodeMediaPeerV4(row.peer);
+                    check();
+                    if (!authority) continue;
+                    const message = {type:row.type,file_id:row.fileId,sha256:row.sha256,
+                        ...(row.reason ? {reason:row.reason} : {}),
+                        ...(row.reason === 'RECEIVER_BUSY' ? {session_id:row.transportId} : {})};
+                    const record = {kind:'file',transferId:row.fileId,size:row.size,
+                        sha256:row.sha256,transportId:row.transportId,expiresAt:row.expiresAt};
+                    const receipt = await core.sendNodeMediaControlV4({peer:row.peer,message,record,
+                        operationId:row.operationId,authority});
+                    check();
+                    if (receipt?.durable === true) {
+                        await vault.retireOutcome(row.operationId); check();
+                    }
+                } catch (error) {
+                    // A peer/storage failure leaves this durable intent retryable.
+                    // Account cancellation must terminate the old pass immediately.
+                    check();
+                    core.shmon?.('WARN', 'File outcome retry deferred: '+error.message);
                 }
-                const authority = await core.confirmedNodeMediaPeerV4(row.peer);
-                captured.check();
-                if (!authority) continue;
-                const message = {type:row.type,file_id:row.fileId,sha256:row.sha256,
-                    ...(row.reason ? {reason:row.reason} : {}),
-                    ...(row.reason === 'RECEIVER_BUSY' ? {session_id:row.transportId} : {})};
-                const record = {kind:'file',transferId:row.fileId,size:row.size,
-                    sha256:row.sha256,transportId:row.transportId,expiresAt:row.expiresAt};
-                const receipt = await core.sendNodeMediaControlV4({peer:row.peer,message,record,
-                    operationId:row.operationId,authority});
-                captured.check();
-                if (receipt?.durable === true) await vault.retireOutcome(row.operationId);
             }
-            if ((await vault.listOutcomes()).length) wake(core, 30000);
+            const remaining = await vault.listOutcomes(); check();
+            if (remaining.length) wake(core, 30000, retry);
         })().catch(error => {
+            if (!currentRetry(core, retry)) return;
             core.shmon?.('WARN', 'File outcome retry deferred: '+error.message);
-            if (managedNode(core)) wake(core, 30000);
-        })
-            .finally(() => {outcomeFlushing = null;});
-        return outcomeFlushing;
+            if (managedNode(core)) wake(core, 30000, retry);
+        }).finally(() => {
+            if (retry.outcomeFlushing === work) retry.outcomeFlushing = null;
+        });
+        retry.outcomeFlushing = work;
+        return work;
     }
     async function notify(core, peer, type, fileId, sha256, reason = undefined, sessionId = undefined,
         context = undefined) {
@@ -549,6 +590,7 @@
                 try {
                     const saved = await vault.update(peer, message.file_id, 'waiting',
                         {nextAttempt:Date.now() + delay});
+                    captured.check(); checkRetry(core, task.retry);
                     if (saved.status === 'waiting') {
                         core.refreshMessageTransportState?.(peer, message.file_id, 'WAITING');
                         if (core.activePeerId === peer)
@@ -559,7 +601,7 @@
                                 }
                     }
                 } catch (error) {core.shmon?.('WARN', 'File busy retry deferred: '+error.message);}
-                wake(core, delay);
+                wake(core, delay, task.retry);
                 return accepted();
             }
             if (!['RECEIVER_STORAGE_FULL','RECEIVER_DECLINED'].includes(message.reason)) return false;
@@ -697,7 +739,9 @@
             if (core._fileTransfer?.peer === peer) core._fileTransfer.close();
         },
         cancel: core => {
-            clearTimeout(retryTimer); retryTimer = null; retryAt = 0;
+            const retry = retrySessions.get(core);
+            if (retry) clearTimeout(retry.timer);
+            retrySessions.delete(core);
             if (active?.core === core) stopActive(active);
             locallyCancelled.clear();
             core._fileTransfer?.close();
