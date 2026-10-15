@@ -6,7 +6,7 @@ const fs=require('node:fs'),path=require('node:path');
 const PREFIX='DMASH_QA_READINESS ';
 const safeError=expression=>`(${expression} == null ? null : /^[A-Z][A-Z0-9_]{2,60}$/.test(${expression}||'')?${expression}:['Account changed','Contact reply route is disabled or retired','Contact reply registration unavailable','Contact request route unavailable','Route unavailable','Initial request was not queued'].includes(${expression})?${expression}:'other_error')`;
 const probes=[
- ['device_authority_v3.js','return this.mine({ nodeId:', 'pow-request','({kind,difficulty})'],
+ ['device_authority_v3.js','const proof = await this.mine({...args, startNonce});', 'pow-request','({kind:args.activationType,difficulty:args.difficulty})'],
  ['device_authority_v3.js',"if (error.message !== 'DNSS_NOT_REGISTERED')",'dnss-response-error',`({code:${safeError('error.message')}})`],
  ['device_authority_v3.js',"if (operation !== 'REGISTER_ROUTE'",'route-response-error',`({operation,kind,code:${safeError('error.message')}})`],
  ['device_client_v3.js','this.state = \'connected\'; clearTimeout(this.deadline);','node-policy','({difficulty:this.resourcePowDifficulty})'],
