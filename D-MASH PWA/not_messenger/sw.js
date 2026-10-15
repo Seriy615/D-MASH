@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user/device data lives.
  */
 
-const RELEASE_ID = 'transport-v3-node-preparation-20261008.36';
+const RELEASE_ID = 'transport-v3-node-preparation-20261008.37';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './index.html', './manifest.json', './nodes.json',
@@ -45,7 +45,8 @@ const CORE_ASSETS = [
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(CORE_ASSETS))
+            .then(cache => cache.addAll(CORE_ASSETS.map(asset =>
+                new Request(new URL(asset, self.location.href), { cache: 'no-store' }))))
             .then(() => self.skipWaiting())
     );
 });
@@ -67,12 +68,18 @@ self.addEventListener('message', event => {
     if (event.data?.type === 'DMASH_ACTIVATE_RELEASE') self.skipWaiting();
 });
 
+// Never let a stale or unrelated CacheStorage generation supply app assets.
+const matchCurrentRelease = request => caches.open(CACHE_NAME).then(cache => cache.match(request));
+
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
     const url = new URL(event.request.url);
     if (url.pathname.includes('/api/')) return;
 
-    const networkFirst = event.request.mode === 'navigate'
+    const networkFirst = event.request.cache === 'no-store'
+        || event.request.cache === 'reload'
+        || url.pathname.endsWith('/nodes.json')
+        || event.request.mode === 'navigate'
         || url.pathname.endsWith('/index.html')
         || url.pathname.endsWith('/js/release.js')
         || url.pathname.endsWith('.js');
@@ -89,13 +96,13 @@ self.addEventListener('fetch', event => {
                         .catch(() => {}));
                 }
                 return response;
-            }).catch(() => caches.match(event.request))
+            }).catch(async () => (await matchCurrentRelease(event.request)) || Response.error())
         );
         return;
     }
 
     event.respondWith(
-        caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+        matchCurrentRelease(event.request).then(cached => cached || fetch(event.request).then(response => {
             if (response?.ok) {
                 const cachedResponse = response.clone();
                 event.waitUntil(caches.open(CACHE_NAME)
@@ -104,7 +111,7 @@ self.addEventListener('fetch', event => {
             }
             return response;
         }).catch(() => {
-            if (event.request.mode === 'navigate') return caches.match('./index.html');
+            if (event.request.mode === 'navigate') return matchCurrentRelease('./index.html');
             return Response.error();
         }))
     );
