@@ -3,7 +3,7 @@
  * IndexedDB or localStorage, where user/device data lives.
  */
 
-const RELEASE_ID = 'transport-v3-node-preparation-20261008.35';
+const RELEASE_ID = 'transport-v3-node-preparation-20261008.37';
 const CACHE_NAME = `dmash-static-${RELEASE_ID}`;
 const CORE_ASSETS = [
     './js/account_pairing_v2.js', './js/account_route_binding_v2.js', './js/account_static_kem_v1.js', './js/account_route_journal_v2.js', './js/node_runtime_coordinator_v4.js', './js/node_public_bootstrap_control_v4.js', './js/node_bootstrap_control_v4.js', './js/account_private_pairing_link_v4.js', './js/account_sealed_operation_v4.js', './js/account_inbox_progress_v4.js', './js/account_managed_inbox_v4.js', './js/account_handshake_v4.js', './js/account_session_store_v4.js', './js/account_session_v4.js', './js/account_app_cipher_v4.js', './js/account_app_outbox_v4.js', './js/account_session_runtime_v4.js', './js/account_authenticated_history_v4.js', './js/account_media_control_v4.js', './js/account_media_bridge_v4.js', './js/account_media_dispatch_v4.js', './js/account_media_authority_v4.js', './js/public_account_orchestrator_v4.js', './js/managed_node_catalog_v4.js', './js/node_account_ui_v4.js', './js/node_root_lifecycle_v4.js',
@@ -47,7 +47,8 @@ const CORE_ASSETS = [
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(CORE_ASSETS))
+            .then(cache => cache.addAll(CORE_ASSETS.map(asset =>
+                new Request(new URL(asset, self.location.href), { cache: 'no-store' }))))
             .then(() => self.skipWaiting())
     );
 });
@@ -69,12 +70,18 @@ self.addEventListener('message', event => {
     if (event.data?.type === 'DMASH_ACTIVATE_RELEASE') self.skipWaiting();
 });
 
+// Never let a stale or unrelated CacheStorage generation supply app assets.
+const matchCurrentRelease = request => caches.open(CACHE_NAME).then(cache => cache.match(request));
+
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
     const url = new URL(event.request.url);
     if (url.pathname.includes('/api/')) return;
 
-    const networkFirst = event.request.mode === 'navigate'
+    const networkFirst = event.request.cache === 'no-store'
+        || event.request.cache === 'reload'
+        || url.pathname.endsWith('/nodes.json')
+        || event.request.mode === 'navigate'
         || url.pathname.endsWith('/index.html')
         || url.pathname.endsWith('/js/release.js')
         || url.pathname.endsWith('.js');
@@ -91,13 +98,13 @@ self.addEventListener('fetch', event => {
                         .catch(() => {}));
                 }
                 return response;
-            }).catch(() => caches.match(event.request))
+            }).catch(async () => (await matchCurrentRelease(event.request)) || Response.error())
         );
         return;
     }
 
     event.respondWith(
-        caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+        matchCurrentRelease(event.request).then(cached => cached || fetch(event.request).then(response => {
             if (response?.ok) {
                 const cachedResponse = response.clone();
                 event.waitUntil(caches.open(CACHE_NAME)
@@ -106,7 +113,7 @@ self.addEventListener('fetch', event => {
             }
             return response;
         }).catch(() => {
-            if (event.request.mode === 'navigate') return caches.match('./index.html');
+            if (event.request.mode === 'navigate') return matchCurrentRelease('./index.html');
             return Response.error();
         }))
     );
