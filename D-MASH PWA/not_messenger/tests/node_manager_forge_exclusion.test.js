@@ -42,6 +42,6 @@ assert.throws(() => manager.add(forgeUrl), /not an eligible Messenger node/, "ma
 (async () => {
   const originNodes = await manager.loadOriginList();
   assert.deepEqual(originNodes.map(node => node.url), ["wss://catalog.example.test/dmash-client/v1"], "Forge is absent from catalog candidates");
-  assert.deepEqual(JSON.parse(fs.readFileSync(require.resolve("../nodes.json"), "utf8")).nodes.map(node => node.url), ["wss://stage-api-ems.d-mash.ru/dmash-client/v1"], "nodes.json contains no Forge entry");
+  assert.deepEqual(JSON.parse(fs.readFileSync(require.resolve("../nodes.json"), "utf8")).nodes.map(node => node.url), ["wss://proxy.d-mash.ru/dmash-client/v1"], "nodes.json contains no Forge entry");
   console.log("NodeManager Forge exclusion: all assertions passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });
