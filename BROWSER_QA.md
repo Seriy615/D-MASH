@@ -6,11 +6,97 @@
 интегрированный результат. Этот файл — журнал и начальная матрица, не утверждение,
 что полный обход UI уже выполнен.
 
-**Контрольная точка остановки по просьбе пользователя, 8 октября 2026.**
-Пользователь: «На сегодня достаточно, до точки … дописывай, пиши хендофф и все».
-Цель N0–N8/A–M/E6 приостановлена, **НЕ DONE**. Production остаётся exact
-`6a01feb252c1b94772a2b19503c9e1576a8c6356`, PWA `.35`; backend/state не менялись.
-Новые product candidates не опубликованы и не deployed.
+**Возобновление: 15 октября 2026, UTC. Цель ACTIVE, НЕ DONE.**
+Проверены Forge hostname/path, сохранённые isolated candidates и remote
+`transport-v3=38a67a56b7db3878197e4aafaf1b878e2a1f8765`; source refs fetched.
+Shared `/home/jcode/D-MASH` HEAD62f97d7 с WIP сохранён без reset/clean.
+Root integration/context: `/tmp/dmash-oct15-integration`, `codex/oct15-integration`.
+Read-only fresh EMS verifier:214/214 PWA exact6a,missing/changed/extras0,
+HTTPS index/SW/release exact; это source proof, не новая browser acceptance.
+[Fresh deployed source check](docs/evidence/2026-10-15/production35-exact-source.json).
+Текущие исполнители (явноgpt-6.1-sol): node_sol N4 browser, public_sol
+canonical/fullUNIT, node_ui_sol minimal endpoint PWA. Старые агенты не возобновлены.
+PWA/backend product deploy пока нет; API infrastructure обновлена, см. ниже.
+Предыдущая остановка была8октября; ниже сохранены scoped результаты и остаток.
+
+**Актуальная инфраструктура API (15 октября):** пользователь назначил
+`proxy.d-mash.ru` на прежнем EMS `85.198.64.183`; прежние stage/API hostnames
+удалены/не использовать. Root применил проверенные tools из published
+`codex/canonical-ems-domain=9748e95ab54d48987efb8822ed3ad0db6fb32398`:
+отдельный ACME/TLS-vhost, четыре exact API location, затем scoped migration
+двух существующих конфигов signaling/TURN. Backend code и PWA пока unchanged.
+Protected consistent runtime backup:16files/4SQLite quick_check PASS;
+5identity/key/secret files byte-identical, TURN realm/sharedsecret сохранены.
+nginx/dmash-node/dmash-sturn active. Public normalTLS +все4WS101 PASS;
+real external signaling roundtrip и TURN3479 UDP/TCP relay integrity PASS.
+После операции PWA214/214 exact6a/.35, extras/missing/changed0.
+Это **DEPLOYED INFRA**, не UI/media/fullNode PASS. Canonical PWA emergency
+release готовит node_ui_sol отдельно от broadNode candidate; старые клиенты
+до её deploy всё ещё содержат retiredhost.
+[Проверки и protected rollback paths](docs/evidence/2026-10-15/proxy-domain-infrastructure.json).
+
+**Node/Public candidates:** broad canonical9748 (изb6 +reviewed PUBLIC authority)
+published только в отдельной ветке, НЕ deployed; default legacy review mode и
+NodeControl capability ограничения сохранены. FullUNIT9748 завершён FAIL, детали ниже.
+CorrectedPUBLIC9d099aa уже fullUNIT287Python/11Origin/99JS PASS, browser HOLD.
+Root realChromium IndexedDB FileVault legacy→b6:15/15mechanism checks PASS,
+сохраняет body/mode/ownership/outcomeCAS; это не UI/transport acceptance.
+[Real IDB scope](docs/evidence/2026-10-15/qa-node-file-mode-real-idb.json).
+N4CONTROL gateb6:initial lostFINAL recovery PASS; subsequent originalfixture
+FAIL из-за assert общего числа новыхretryrows вместо consumption originalhandle.
+Read-only proof:5outer retries/1innerop,1dispatch,errors0. Harness-onlyfix83c5ad3;
+Same-profile continuation закончилась по исходному300s expiry, без его продления;
+rekey/sender-offline NOT RUN. Protected snapshots сохранены, owned browser/hub
+закрыты. Исправленный83c5ad3 требует отдельного bounded rerun, FullN4 OPEN.
+[Границы N4 проверки](docs/evidence/2026-10-15/qa-n4-control-harness-race.json).
+
+**Emergency endpoint PWA candidate:** minimal production6a→
+`bfff0caa7cbde2d64f974fab22d4c64a67c71d41`,6files, page/SW `.36`, без
+PUBLICauthority/FileRuntime/newNode изменений. Полный UNIT PASS286Python,
+11Origin,100JS (Python3.12.14/Node24.19.0), clean exact source.
+Root same retained35profile: wrappedRoot+encrypted identity/pairing rows unchanged,
+known pinned endpoint migrated, actual normalTLS autoConnect и eventual DNSS ready;
+old Saved history readable +new actualSEND once PASS;68captured source hashes exact.
+**Latency FAIL сохраняется:** DNSSdifficulty22 не ready за180s; позже тот же
+session стал ready. Причина долгого PoW/влияния harness ещё не доказана; no timeout
+or difficulty relaxation, не объявлять latency PASS. ExistingSW source-overlay
+interception и absent Request-button после autoConnect — отдельные harnessFAILs,
+не исправления продукта. SecondaryCDP36B emptyorigins НЕ backup; owning persistent
+profile сохраняется. Before deploy нужны точный source/normal SW и real UI checks.
+[UNIT](docs/evidence/2026-10-15/proxy36-unit-summary.json),
+[root source upgrade](docs/evidence/2026-10-15/qa-proxy36-preserved-source-upgrade.json).
+Broad9748 fullUNIT **FAIL**:293Python/11Origin/140JS passed, unchanged
+file_channel buffered-pressure100ms fixture failed; focused rerunPASS отдельно.
+Не подменять этот FAIL минимальным `.36` PASS.
+
+**Свежие проверки 15 октября:** production `.35` bounded inventory27 initial
+checks +7 corrected same-profile continuation PASS; original biometric-Cancel
+harness expectation ошибочна, штатный возврат в чат. Initial45 responses exact,
+это не весь lazy-loaded набор. Root отдельно сверил65 compiled main-page JS
+через read-only CDP Debugger с exact6a:65/65 PASS (не Worker/HTML/CSS audit).
+Root actual Saved SEND/empty SEND/file unsupported/mic denial/camera denial/OK
+и Back/reopen history PASS; старый #back-btn locator исправлен в same-profile
+continuation, не продуктовый баг.
+[Inventory](docs/evidence/2026-10-15/qa-inventory35-first-slice.json),
+[root local UI](docs/evidence/2026-10-15/qa-root35-local-ui.json),
+[root actual loaded JS](docs/evidence/2026-10-15/qa-root35-loaded-script-hashes.json).
+
+**N3-NODE-PANEL-OVERFLOW-01 FAIL baseline / fix retest идёт:** genuine c42
+root unlock/Worker + Account create PASS. Desktop1280×720 и mobile390×844:
+modal h1028/overflowvisible, Node Connect нижеviewport и wheel не помогает.
+Owner node_ui_sol fix74282af limits modal height and enables native scrolling;
+same-profile preserved identity/root and desktop reachability PASS. Mobile
+normal click теперь принят, но реальная Node вернула `Node worker operation
+failed`: это следующий отдельный blocker, НЕ green full N3.
+[Baseline](docs/evidence/2026-10-15/qa-node-panel-overflow-baseline.json).
+
+**Текущий Node integration:** `/tmp/dmash-node-oct15-integration`, branch
+`codex/node-oct15-integration`, clean `b6ad115e26179b154ac0d4825a760f07ad50157f`:
+c42 + UI742 + retry-session/per-peer outcomes fix4ccdfb6 (RED008150b).
+New7 liveness cases and six targeted suites PASS; capability absent/default
+legacy review restriction сохранены. Exactc42 combined UNIT coverage завершено:
+backend292/Origin11 +37 JS before STOP +102 resumed JS =139 total; **не один
+непрерывный test_all run**. Full ordinary UI/real IDB/N4 acceptance ещё NOT PASS.
 
 **N7-FILE-AFTER-CALL-35 OPEN / intermittent FAIL, owner qa_remaining:**
 root fresh PRIVATE pair: реальный звонок/hangup PASS, следующий tiny file не
@@ -37,7 +123,7 @@ Physical Android >minute и full deployed media matrix остаются OPEN.
 не дошёл до Accept (180s request_pending/route readiness), signed expiry ещё
 NOT RUN. Не сводить perpetual waiting к одному потерянному CONFIRM.
 
-**PUBLIC `.36` HOLD:** `/tmp/dmash-public36-integration`, `codex/public36`,
+**PUBLIC authority HOLD (прежнее proposed `.36`, не emergency endpoint release):** `/tmp/dmash-public36-integration`, `codex/public36`,
 `cf02d9420bad623c0e26b54b5b07d87069fca0ad`: Python286/Origin11/всеJS PASS,
 НО root review нашёл небезопасное совместное использование одноразового PoW
 для разных RouteRegistration candidates. НЕ deploy и НЕ cherry initiald576

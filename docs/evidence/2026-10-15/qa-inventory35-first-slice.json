@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-15 UTC",
+  "scope": "Fresh synthetic persistent Chromium profile; deployed PWA .35; actual visible controls. Bounded first inventory slice, not full UI01–UI14 or N0–N8 acceptance.",
+  "sourceSHA": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+  "pageRelease": "transport-v3-node-preparation-20261008.35",
+  "activeControllingSWRelease": "transport-v3-node-preparation-20261008.35",
+  "servedSWByteExact": true,
+  "loadedSourceResponses": {
+    "checked": 45,
+    "byteExact": 45,
+    "mismatches": 0,
+    "limitation": "Collector45 captured initial load before lazy post-login modules; root separately checked currently compiled65 main-page scripts."
+  },
+  "pageErrors": 0,
+  "browserActions": {
+    "pass": [
+      "DeviceRoot master/wipe setup and unlock",
+      "global settings open",
+      "FlipLock OFF→ON→OFF with visible state",
+      "empty pending requests and Close",
+      "quick-name prompt Cancel, Add, Delete Cancel, Delete Confirm",
+      "Account registry open and Back",
+      "synthetic Account create/login",
+      "contact import Cancel, malformed input rejection, error OK",
+      "Account settings open",
+      "biometric empty-secret no-op and Cancel returning to chat",
+      "Account ID copy and confirmation OK",
+      "PRIVATE pairing view, copy and confirmation OK"
+    ],
+    "productFail": [],
+    "harnessCorrection": "Initial biometric Cancel assertion expected Account settings. Same retained page showed chat with Избранное; source handler is Core.closeModal(). A continuation on the same profile verified that return and seven subsequent checks. The original raw FAIL remains preserved separately."
+  },
+  "snapshot": {
+    "kind": "Owned primary persistent-context Playwright storageState({indexedDB:true})",
+    "protectedOffGit": true,
+    "mode": "0600",
+    "bytes": 9262,
+    "originCount": 1,
+    "nonemptyStoresAtSnapshot": [
+      "dm_registry_secure_v1/meta",
+      "dmash_device_root_v1/device_root"
+    ],
+    "limitation": "Snapshot preceded later asynchronous pairing_material write. Read-only native count on same retained page subsequently showed pairing_material=1; this early snapshot is not a complete latest-state backup."
+  },
+  "notRun": [
+    "complete calculator/error/gesture matrix",
+    "Account logout/switch/recovery/delete and locked-state controls",
+    "Node add/connect/retry/removal and ordinary Node v4 transit",
+    "PUBLIC route readiness/contact exchange/remote chat",
+    "Saved Messages, voice/circle, call, files and all media previews",
+    "physical WebAuthn, orientation, camera and Android behavior",
+    "full UI01–UI14 and N0–N8/A–M/E6"
+  ],
+  "retainedEvidence": "Raw report, continuation and synthetic profile retained in protected off-Git /tmp/dmash-qa-oct15-oct15-a; no IDs, keys or DB contents are included here."
+}

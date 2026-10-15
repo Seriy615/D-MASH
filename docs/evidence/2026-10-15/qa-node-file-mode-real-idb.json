@@ -1,0 +1,68 @@
+{
+  "scope": "Synthetic IndexedDB only, no user profile or transport",
+  "legacySourceSha256": "f62e5d921f5f80a5dbcec0db58dc4c06124e94aeea07d710c097b7879e908c3c",
+  "candidateSourceSha256": "212deabf54c951e4fd80b80a4b7a06701b10e02f68dfa5ef20aa34ed6fc883de",
+  "checks": [
+    {
+      "id": "legacy authenticated row maps only to v3-private",
+      "status": "PASS"
+    },
+    {
+      "id": "legacy encrypted body remains readable",
+      "status": "PASS"
+    },
+    {
+      "id": "new Node row records mode in authenticated metadata",
+      "status": "PASS"
+    },
+    {
+      "id": "new Node row remains readable",
+      "status": "PASS"
+    },
+    {
+      "id": "mixed legacy and Node inventory enumerates exactly",
+      "status": "PASS"
+    },
+    {
+      "id": "existing Node file cannot be rebound to private-v3",
+      "status": "PASS"
+    },
+    {
+      "id": "encrypted outcome stages durably",
+      "status": "PASS"
+    },
+    {
+      "id": "outcome stage is idempotent with stable operation ID",
+      "status": "PASS"
+    },
+    {
+      "id": "pending encrypted outcome can be enumerated",
+      "status": "PASS"
+    },
+    {
+      "id": "live outcome keeps its operation and expiry",
+      "status": "PASS"
+    },
+    {
+      "id": "expired outcome CAS rotates operation and expiry in real IndexedDB",
+      "status": "PASS"
+    },
+    {
+      "id": "old operation cannot rotate the same intent twice",
+      "status": "PASS"
+    },
+    {
+      "id": "durable CONTROL enqueue retires send work",
+      "status": "PASS"
+    },
+    {
+      "id": "terminal replay suppression survives retirement",
+      "status": "PASS"
+    },
+    {
+      "id": "authenticated owner/meta mode mismatch blocks direct read",
+      "status": "PASS"
+    }
+  ],
+  "result": "PASS"
+}

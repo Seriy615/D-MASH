@@ -1,0 +1,16 @@
+{
+  "checkedAtUTC": "2026-10-15T22:23:00Z",
+  "scope": "Read-only production PWA full tracked-file comparison over authenticated EMS SSH plus public HTTPS; no behavior/state/backend acceptance",
+  "expectedProductSha": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+  "checked": 214,
+  "missing": [],
+  "changed": [],
+  "extras": [],
+  "httpsExact": {
+    "index.html": true,
+    "sw.js": true,
+    "js/release.js": true
+  },
+  "result": "PASS",
+  "method": "Existing /tmp/dmash-verify35.py, ssh ems-vps python3 stdin, exit0"
+}

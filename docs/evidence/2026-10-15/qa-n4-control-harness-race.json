@@ -1,0 +1,263 @@
+{
+  "sha": "b6ad115e26179b154ac0d4825a760f07ad50157f",
+  "scope": "BROWSER mechanism: real Chromium/twoWorkers/separate Python Node; synthetic Account setup; not ordinary UI/deployed/fullN4",
+  "result": "HARNESS_FAIL_THEN_NATURAL_EXPIRY_CONTINUATION_FAIL",
+  "originalFailure": "total CONTROL Inbox count asserted0 while newer outer retries legitimately arrived",
+  "diagnosis": "five distinct outer operations carried one innerframe/logicaloperation; original consume committed one dispatch; no reject before assertion",
+  "continuationFailure": "original CONTROL expiresAt crossed before APPLIED; CONTROL_EXPIRED_REPLAY_MISSING correctly refused un-applied expired replay",
+  "completedObservations": [
+    "lost initial FINAL recovered to ESTABLISHED",
+    "durable local CONTROL enqueue",
+    "tampered CONTROL rejected APP_AUTH_FAILED",
+    "one typed COMMIT_ACK durable dispatch",
+    "first authenticated control ACK faulted",
+    "fresh outer retry operations retain exact inner frame"
+  ],
+  "notRun": [
+    "successor rekey",
+    "sender-terminal rekey",
+    "simultaneous loser replay browser",
+    "sender-offline receipt fixture",
+    "fullN4",
+    "ordinary UI",
+    "production"
+  ],
+  "harnessFixCommit": "83c5ad3",
+  "rawProtected": true,
+  "sourceInputHashes": [
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_app_cipher_v4.js",
+      "sha256": "cbf1a950305c324cf848156cb7f5cbc31572711899443eec7ad596aa2b3c714b",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_app_outbox_v4.js",
+      "sha256": "a5fb5b8b51b439944647b96b04cc9d44c569e94b6d07331132e7343aaab6a9ae",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_authenticated_history_v4.js",
+      "sha256": "90c7263dccfbbda2ad332c44d4fe9580121e6debbf017122fee653c87b64000e",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_handshake_v4.js",
+      "sha256": "d34819c870e0d2aa923f78cebee43b986e2ddaa5e3d94123402c3805a707fc52",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_inbox_progress_v4.js",
+      "sha256": "851e6b2cdd067f09317a96e9276e51b0e08ed488d7b8c8d7d0bb4480422aa25f",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_managed_inbox_v4.js",
+      "sha256": "f3532f537542ff3dd2c7b58b8a7c4c5b4e22f790efaa1c445cc8c678ffa046c3",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_media_control_v4.js",
+      "sha256": "0e54c0fb4ef3e2d54ad66db15aa729ad523571a50c834a7af3267474df8dac9d",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_media_dispatch_v4.js",
+      "sha256": "c0e13b3c2bdeabf6f94b8c33dd88696b7a34901a141a1a031064e216a4f76886",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_node_transport_v4.js",
+      "sha256": "ca515765bf88db317c2bb0eab49562e0e60ec119ce7f3a4819f47abe24ec2b17",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_pairing_v2.js",
+      "sha256": "49692f34da52870e90d9f447ce8252afff40d82d972b238af3b5040e2a213a63",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_route_binding_v2.js",
+      "sha256": "209f83e06cd6aa5439b23b627dcf534acb7abf1bd820334cf09bd737e58f312b",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_route_journal_v2.js",
+      "sha256": "8cb693a53a623d03d81c35b52f613c977e43a3095931757ee405fba2ede29665",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_sealed_operation_v4.js",
+      "sha256": "f01ef000b15fe13ac503c24e0241871e5af6fa7861468c8b7790092f86844f13",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_session_runtime_v4.js",
+      "sha256": "7dee73e39b1deecad76e49a0d1586865ae0a79ee4f2b9262ea641af90175da60",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_session_store_v4.js",
+      "sha256": "68592c93ac40c4f340100932183a8347cf9f4d8ecee48cd86274e169e94b3f80",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/account_session_v4.js",
+      "sha256": "709c777aff3f5101dd25672ea3dc5cacb635f2d2ad57f0a8414d6b3850f568cf",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/core_engine.js",
+      "sha256": "5628cc19df5f9acd46afc1257270fa6a5d40ee7a68f70b01c2520478e70db3ef",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/device_root.js",
+      "sha256": "45448a410c10502cfce3f699800696d359974bc2dc64f9eaba3a9352d2a34a2c",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_admission_v4.js",
+      "sha256": "9c89e3aeba7c1e8ce8d99821ead92c43f1e59f083af7e73dacae5220f7705f50",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_bootstrap_control_v4.js",
+      "sha256": "c2f04dafebc3f93df8262edbb4c9e9a8bef665b1aa7f538ed651d7f63eee56f2",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_bootstrap_dispatcher_v4.js",
+      "sha256": "2741afd5d220c9ca3f7e0154490600ec075dca5ee77fa77f14896ff988576a4b",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_bootstrap_runtime_v4.js",
+      "sha256": "bb0e8aed378b6e91213989988989b4d392c4b57ee40d8d34ff8e64e934475592",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_channel_v4.js",
+      "sha256": "75faf8dbe71754e30a50ba399a3a403e0cd1475886a02933ae63f2d5909e65f3",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_identity.js",
+      "sha256": "47a18f80fd7e76b3bde39e0680830c8f317ab03eb0e282dddd32e26256560f43",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_inbox_v4.js",
+      "sha256": "44d0271df2e831445db79692c8a2631d6f3a8aede7c3804b396faf1e7229524f",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_local_delivery_v4.js",
+      "sha256": "8f610ac165381e34438cb4ff87daf8155ba96ff1e7c6a1a2cd09b66ff56de710",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_local_ownership_v4.js",
+      "sha256": "c3ff0523f260fbeaa41ec973e6ad5ed94688dae6bb9ef628d4ca841ca3bf5464",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_registration_v4.js",
+      "sha256": "674508bb0cf6f24e6a95bdee3cdb7b619af8c0c34ff12e9ed8474a029b9164d2",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_relationships_v4.js",
+      "sha256": "98c2889f0a915181d89dc0f36be2c236cd3b204346a11528587471ed5a677173",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_routing_v4.js",
+      "sha256": "9ae26919aed67ddadf62d681f9b398a2f51cbb4e54cc6fdd3244b4e0d320d900",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_runtime_coordinator_v4.js",
+      "sha256": "203aace2938f92b22a46943d24ea14fc6f90f6a499e979e1962a6899ac444ae7",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_runtime_host_v4.js",
+      "sha256": "ae62fc05079655a25e61edd1af6802ef3564437986c3cf722c42234cb6f8a7e5",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_runtime_worker_v4.js",
+      "sha256": "b7ec8e63528c20578a048f032afaf37be3e00d91165806ceb50b2763a6a1e684",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_socket_v4.js",
+      "sha256": "327eb904751b432c9035440e354be7f7a68c50033fed7858f26d684f7d58f106",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/probe_primitives_v4.js",
+      "sha256": "3cc1b7dbbb016258bb756279a7b2b18c907ef69849759b59c3fc021dee26011e",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/recipient_payload_v4.js",
+      "sha256": "8167b736b6a8e29c50ef8ffb146b0a712e3369cfa9895bdef171ff24b95e6a6a",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/resource_pow.js",
+      "sha256": "89a85384c71581d716c051fa5475ed01c7e3a761033e2cbd4fb7b6bd794ab81b",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/route_discovery_v4.js",
+      "sha256": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/secure_session.js",
+      "sha256": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/storage.js",
+      "sha256": "a9c925caf69bea63d56a0a54e0391eb804b78377c05d8b89b4a2a5074e71742d",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/vendor/argon2-bundled.min.js",
+      "sha256": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/vendor/argon2.wasm",
+      "sha256": "0c2149886c13e4eae4a6ca25ee71d47423c5c8740a874cf04ff816d1b2c901d7",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/vendor/blake3.min.js",
+      "sha256": "8071ab35cb39002f3ba58c0b3ed48ce1be876d1c93a06a27572fe59d62afca0c",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/vendor/kyber768.js",
+      "sha256": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/vendor/kyber768.wasm",
+      "sha256": "e9b316e56f5d1eef1f44f28bca99bec16ec9cff69af4b17d318143512255b009",
+      "matchesGit": true
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/js/vendor/nacl-fast.min.js",
+      "sha256": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+      "matchesGit": true
+    }
+  ],
+  "provenanceLimit": "Original harness records served source inputs; does not hash every browser response",
+  "processesClosed": true,
+  "storageReset": false,
+  "timeoutInflation": false
+}

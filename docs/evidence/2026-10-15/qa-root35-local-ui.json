@@ -1,0 +1,22 @@
+{
+  "scope": "ROOT independent same synthetic deployed35 profile; scoped Saved/error controls, not remote media acceptance",
+  "productSha": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+  "pageAndActiveSW": ".35",
+  "checks": [
+    "Saved open",
+    "empty SEND no row",
+    "text SEND persists",
+    "local file unsupported explicit notice and OK",
+    "microphone denial/OK restores control",
+    "camera denial/OK restores control",
+    "actual visible Back/reopen retains same text once"
+  ],
+  "result": "PASS scoped",
+  "harnessCorrection": "Initial stale #back-btn locator timeout; DOM uses visible Back without id after chat render. Same retained-profile actual Back/reopen continuation PASS. Raw original preserved.",
+  "pageErrors": 0,
+  "limitations": [
+    "Real microphone/camera and remote media not exercised",
+    "Full UI01–14 still incomplete",
+    "No production change"
+  ]
+}

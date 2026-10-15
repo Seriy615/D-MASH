@@ -1,0 +1,71 @@
+{
+  "dateUTC": "2026-10-15",
+  "scope": "DEPLOYED INFRASTRUCTURE only; PWA/backend source unchanged; full browser/API feature acceptance separate",
+  "userSelectedHost": "proxy.d-mash.ru",
+  "emsIPv4": "85.198.64.183",
+  "toolCommit": "9748e95ab54d48987efb8822ed3ad0db6fb32398",
+  "publishedBranch": "codex/canonical-ems-domain",
+  "toolsSha256": {
+    "provision_ems_proxy_tls.py": "6c73840c0a4dd066c502ce307caa41d56a16e8057f2c142e830c573d222a81f3",
+    "migrate_ems_domain.py": "28b160eb5a64293f8334947457dc0f02bacb1a19f8fb7e3b19cec579128bdeea"
+  },
+  "runtimeBackup": {
+    "protectedPath": "/root/dmash-runtime-backups/proxy-domain-20261015T225924.393311Z",
+    "files": 16,
+    "sqliteQuickCheckPass": 4,
+    "nodeRestoredActive": true,
+    "restoreAcceptance": "NOT RUN"
+  },
+  "tlsBackup": "/root/dmash-domain-backups/tls-20261015T230255.235591Z",
+  "configurationRollbackBackup": "/root/dmash-domain-backups/20261015T230427.881795Z",
+  "modifiedExistingConfigurationFiles": 2,
+  "normalPublicTLSVerified": true,
+  "websocketUpgradeStatus": {
+    "/mesh/v4": 101,
+    "/dmp-c/v3": 101,
+    "/dmash-client/v1": 101,
+    "/signal/v1": 101
+  },
+  "unknownHTTPSPathStatus": 404,
+  "keyPreservation": {
+    "filesChecked": 5,
+    "allKeyBytesUnchanged": true,
+    "turnRealmUnchanged": true,
+    "turnSecretUnchanged": true
+  },
+  "servicesActive": [
+    "nginx",
+    "dmash-node",
+    "dmash-sturn"
+  ],
+  "advertisedSignaling": "wss://proxy.d-mash.ru/signal/v1",
+  "turnURLs": [
+    "turn:proxy.d-mash.ru:3479?transport=udp",
+    "turn:proxy.d-mash.ru:3479?transport=tcp"
+  ],
+  "externalRelay": {
+    "host": "proxy.d-mash.ru",
+    "scope": "External Forge normal TLS signaling admission and real two-allocation TURN roundtrip; browser ICE/UI separate",
+    "signalingRoundtrip": true,
+    "relay": {
+      "turn:proxy.d-mash.ru:3479?transport=udp": true,
+      "turn:proxy.d-mash.ru:3479?transport=tcp": true
+    },
+    "secretsPrinted": false
+  },
+  "productionPwa": {
+    "sha": "6a01feb252c1b94772a2b19503c9e1576a8c6356",
+    "filesChecked": 214,
+    "changed": 0,
+    "missing": 0,
+    "extras": 0,
+    "httpsIndexSWReleaseExact": true
+  },
+  "limitations": [
+    "Existing browser PWA still advertises deleted API host until reviewed endpoint release deploy",
+    "Real browser ICE/call/file verification on canonical hostname NOT RUN",
+    "Full N0-N8/A-M/E6 remains PARTIAL",
+    "Runtime backup restore/rollback not exercised",
+    "Initial pre-migration signaling403 due unhealthy retired endpoint; normal101 after settings migration"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "scope": "Source-overlay exact c42 genuine ordinary Node UI first baseline; no forced click or style mutation",
+  "sha": "c42f0360986e387211abc89a8a8c5f286aaaf667",
+  "pageRelease": ".35",
+  "serviceWorker": "BLOCKED",
+  "setupAndAccountCreate": "PASS",
+  "NodeConnect": "FAIL button outside viewport",
+  "bug": "N3-NODE-PANEL-OVERFLOW-01",
+  "owner": "node_ui_sol",
+  "geometry": {
+    "viewport": {
+      "w": 1280,
+      "h": 720
+    },
+    "chain": [
+      {
+        "tag": "BUTTON",
+        "id": "",
+        "cls": "",
+        "y": 776.265625,
+        "height": 21,
+        "width": 126.953125,
+        "scrollHeight": 17,
+        "clientHeight": 17,
+        "overflow": "visible",
+        "overflowY": "visible",
+        "position": "static"
+      },
+      {
+        "tag": "SECTION",
+        "id": "",
+        "cls": "",
+        "y": 708.265625,
+        "height": 89,
+        "width": 268,
+        "scrollHeight": 89,
+        "clientHeight": 89,
+        "overflow": "visible",
+        "overflowY": "visible",
+        "position": "static"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "cls": "",
+        "y": -67.734375,
+        "height": 865,
+        "width": 268,
+        "scrollHeight": 865,
+        "clientHeight": 865,
+        "overflow": "visible",
+        "overflowY": "visible",
+        "position": "static"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "cls": "sys-modal-box",
+        "y": -154.265625,
+        "height": 1028.53125,
+        "width": 320,
+        "scrollHeight": 1027,
+        "clientHeight": 1027,
+        "overflow": "visible",
+        "overflowY": "visible",
+        "position": "static"
+      },
+      {
+        "tag": "DIV",
+        "id": "sys-modal",
+        "cls": "",
+        "y": 0,
+        "height": 720,
+        "width": 1280,
+        "scrollHeight": 874,
+        "clientHeight": 720,
+        "overflow": "visible",
+        "overflowY": "visible",
+        "position": "fixed"
+      },
+      {
+        "tag": "BODY",
+        "id": "",
+        "cls": "",
+        "y": 0,
+        "height": 720,
+        "width": 1280,
+        "scrollHeight": 720,
+        "clientHeight": 720,
+        "overflow": "hidden",
+        "overflowY": "hidden",
+        "position": "fixed"
+      }
+    ]
+  },
+  "actualWheelAndMobile": {
+    "scope": "Same synthetic Node panel baseline actual wheel + desktop/mobile viewport, no force click/style edits",
+    "checks": [
+      {
+        "viewport": 720,
+        "button": {
+          "y": 776.265625,
+          "bottom": 797.265625
+        },
+        "modalScrollTop": 0,
+        "modalHeight": 1028.53125,
+        "reachable": false
+      },
+      {
+        "viewport": 844,
+        "button": {
+          "y": 838.265625,
+          "bottom": 859.265625
+        },
+        "modalScrollTop": 0,
+        "modalHeight": 1028.53125,
+        "reachable": false
+      }
+    ]
+  },
+  "fixCandidate": "74282af41dc8883dc4099e03b61f620be382dbbb",
+  "retest": "IN PROGRESS; desktop fixed reachability PASS, mobile normal click accepted but Node worker returned generic failure; entire N3 gate not PASS",
+  "identitiesPreserved": true
+}
