@@ -35,6 +35,45 @@ class NodeEndpoint {
 // endpoint paths all apply the same exclusion.
 const EXCLUDED_NODE_HOSTS = new Set(['forgeai.isgood.host']);
 
+// Operator-pinned EMS moved domains. This changes addresses only; the persisted
+// Node pin and DeviceRoot-derived DNSS/key material remain owned by that Node.
+const EMS_NODE_PIN = '3e4a0e3f796f8d594e5473249f49460c769bfdd293b4788cdaf78bc314f12b17';
+function migrateProvisionedEmsEndpoints(items, activeUrl) {
+    const canonical = 'wss://proxy.d-mash.ru';
+    const known = value => {
+        try { const u = new URL(value); return u.origin === 'wss://stage-api-ems.d-mash.ru' &&
+            !u.username && !u.password && !u.search && !u.hash &&
+            ['/dmash-client/v1', '/dmash-client/v3', '/dmp-c/v3'].includes(u.pathname); }
+        catch (_) { return false; }
+    };
+    const output = items.slice(0, 0), byUrl = new Map(); let changed = false;
+    for (const item of items) {
+        let next = item;
+        if (item && item.nodeId?.toLowerCase?.() === EMS_NODE_PIN && known(item.url) &&
+            (!item.dmpcEndpoint || known(item.dmpcEndpoint) || item.dmpcEndpoint === canonical + '/dmp-c/v3')) {
+            next = {...item, url: canonical + '/dmash-client/v1', dmpcEndpoint: canonical + '/dmp-c/v3'};
+            if (activeUrl === item.url) activeUrl = next.url;
+            changed = true;
+        }
+        if (next?.url === canonical + '/dmash-client/v1') {
+            const previous = byUrl.get(next.url);
+            if (previous) {
+                // Never choose one of two pins/preferences silently.
+                const normalize = value => JSON.stringify(value, Object.keys(value).sort());
+                if (normalize(previous) !== normalize(next)) throw Error('EMS_ENDPOINT_MIGRATION_CONFLICT');
+                changed = true; continue;
+            }
+            byUrl.set(next.url, next);
+        }
+        output.push(next);
+    }
+    // A prior interrupted localStorage write may already have saved the list.
+    if (known(activeUrl) && !output.some(item => item?.url === activeUrl) && output.some(item => item?.url === canonical + '/dmash-client/v1' && item.nodeId?.toLowerCase?.() === EMS_NODE_PIN)) {
+        activeUrl = canonical + '/dmash-client/v1'; changed = true;
+    }
+    return {items: output, activeUrl, changed};
+}
+
 function isExcludedNode(url) {
     try { return EXCLUDED_NODE_HOSTS.has(new URL(url, window.location.href).hostname.toLowerCase()); }
     catch (_) { return false; }
@@ -56,12 +95,26 @@ const NodeManager = {
     isExcludedNode(url) { return isExcludedNode(url); },
 
     load() {
+        let activeUrl = localStorage.getItem(this.activeKey);
         try {
-            this.endpoints = JSON.parse(localStorage.getItem(this.storageKey) || '[]')
+            const original = localStorage.getItem(this.storageKey);
+            const migration = migrateProvisionedEmsEndpoints(JSON.parse(original || '[]'), activeUrl);
+            if (migration.changed) {
+                const previousActive = activeUrl;
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(migration.items));
+                    if (migration.activeUrl !== activeUrl) localStorage.setItem(this.activeKey, migration.activeUrl);
+                } catch (error) {
+                    if (original === null) localStorage.removeItem(this.storageKey); else localStorage.setItem(this.storageKey, original);
+                    if (previousActive === null) localStorage.removeItem(this.activeKey); else localStorage.setItem(this.activeKey, previousActive);
+                    throw error;
+                }
+            }
+            activeUrl = migration.activeUrl;
+            this.endpoints = migration.items
                 .filter(item => item && !isExcludedNode(item.url))
                 .map(item => new NodeEndpoint(item.url, item.label, item));
-        } catch (_) { this.endpoints = []; }
-        const activeUrl = localStorage.getItem(this.activeKey);
+        } catch (error) { this.endpoints = []; this.error = error.message; this.state = 'error'; }
         this.active = this.endpoints.find(item => item.url === activeUrl) || null;
         this.transportMode = localStorage.getItem(this.transportModeKey) === 'legacy' ? 'legacy' : 'mesh';
     },

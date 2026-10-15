@@ -2,7 +2,7 @@
 (function(g){
  // Provisioned from EMS signing public key through the authenticated SSH
  // management path on 2026-10-08. Never derive this pin from a socket or v3 URL.
- const entries=Object.freeze([Object.freeze({version:4,nodeId:'3e4a0e3f796f8d594e5473249f49460c769bfdd293b4788cdaf78bc314f12b17',url:'wss://stage-api-ems.d-mash.ru/mesh/v4'})]);
+ const entries=Object.freeze([Object.freeze({version:4,nodeId:'3e4a0e3f796f8d594e5473249f49460c769bfdd293b4788cdaf78bc314f12b17',url:'wss://proxy.d-mash.ru/mesh/v4'})]);
  const coordinators=new WeakMap();
  function coordinator(root){
   if(!root||typeof root.onLock!=='function')throw Error('NODE_ROOT_REQUIRED');

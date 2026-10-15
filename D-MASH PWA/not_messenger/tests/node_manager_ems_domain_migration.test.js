@@ -1,0 +1,25 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const pin='3e4a0e3f796f8d594e5473249f49460c769bfdd293b4788cdaf78bc314f12b17',old='wss://stage-api-ems.d-mash.ru/dmash-client/v1',url='wss://proxy.d-mash.ru/dmash-client/v1';
+function fixture(items,active=old){
+ const data=new Map([['dmash_node_endpoints_v1',JSON.stringify(items)],['dmash_active_node_v1',active],['identity-sentinel','unchanged']]),storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,String(v)),removeItem:k=>data.delete(k)};
+ const context={URL,Map,Set,Object,Array,Error,Promise,console,localStorage:storage,sessionStorage:storage,window:{location:{href:'https://messenger.d-mash.ru/'},dispatchEvent(){}},document:{getElementById:()=>null},CustomEvent:class{}};
+ vm.createContext(context);vm.runInContext(fs.readFileSync(require.resolve('../js/node_manager.js'),'utf8'),context);
+ return {manager:context.window.NodeManager,data};
+}
+const oldRow={url:old,nodeId:pin,label:'My Node',public:true,autoConnect:true,notificationEnabled:true,capabilities:['PULL'],customPreference:'retain'};
+const other={url:'wss://custom.invalid/dmp-c/v3',nodeId:'a'.repeat(64),label:'custom'};
+let f=fixture([oldRow,other]);
+assert.equal(f.manager.active.url,url);assert.equal(f.manager.endpoints[0].dmpcEndpoint,'wss://proxy.d-mash.ru/dmp-c/v3');
+assert.deepEqual(JSON.parse(f.data.get('dmash_node_endpoints_v1')),[{...oldRow,url,dmpcEndpoint:'wss://proxy.d-mash.ru/dmp-c/v3'},other]);
+assert.equal(f.data.get('identity-sentinel'),'unchanged');const saved=f.data.get('dmash_node_endpoints_v1');f.manager.load();assert.equal(f.data.get('dmash_node_endpoints_v1'),saved);
+for(const row of [{...oldRow,nodeId:'b'.repeat(64)},{...oldRow,url:old+'?custom=1'},{...oldRow,dmpcEndpoint:'wss://custom.invalid/dmp-c/v3'},{...oldRow,url:'wss://stage-api-ems.d-mash.ru/custom'}]){
+ f=fixture([row]);assert.deepEqual(JSON.parse(f.data.get('dmash_node_endpoints_v1')),[row]);
+}
+const canonical={...oldRow,url,dmpcEndpoint:'wss://proxy.d-mash.ru/dmp-c/v3'};
+f=fixture([{...oldRow,nodeId:'d'.repeat(64)},canonical]);assert.equal(f.manager.active.url,old,'never redirect active wrong-pin entry to a different node');
+f=fixture([oldRow,canonical]);assert.equal(f.manager.endpoints.length,1);assert.equal(f.manager.active.url,url);
+for(const conflict of [{...canonical,nodeId:'c'.repeat(64)},{...canonical,notificationEnabled:false}]){
+ f=fixture([oldRow,conflict]);assert.equal(f.manager.endpoints.length,0);assert.equal(f.manager.error,'EMS_ENDPOINT_MIGRATION_CONFLICT');assert.equal(f.manager.active,null);assert.deepEqual(JSON.parse(f.data.get('dmash_node_endpoints_v1')),[oldRow,conflict]);
+}
+console.log('PASS preexisting pinned EMS URL migration preserves preferences/selection/identity; custom and wrong-pin untouched; conflicts fail closed without storage reset');
