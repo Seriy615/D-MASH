@@ -1,0 +1,14 @@
+{
+  "sha": "992adf973820e09ee1fbefe0167eb93ef1acfffe",
+  "checked": 215,
+  "missing": [],
+  "changed": [],
+  "extras": [],
+  "httpsExact": {
+    "index.html": true,
+    "sw.js": true,
+    "js/release.js": true
+  },
+  "stockGetCommitExit": 0,
+  "backendSourceUnchanged": "6a01feb252c1b94772a2b19503c9e1576a8c6356"
+}

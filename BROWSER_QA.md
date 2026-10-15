@@ -16,15 +16,34 @@ HTTPS index/SW/release exact; это source proof, не новая browser accep
 [Fresh deployed source check](docs/evidence/2026-10-15/production35-exact-source.json).
 Текущие исполнители (явноgpt-6.1-sol): node_sol N4 browser, public_sol
 canonical/fullUNIT, node_ui_sol minimal endpoint PWA. Старые агенты не возобновлены.
-PWA/backend product deploy пока нет; API infrastructure обновлена, см. ниже.
+PWA36 и API infrastructure обновлены, backend code прежний; см. текущую приёмку ниже.
 Предыдущая остановка была8октября; ниже сохранены scoped результаты и остаток.
+
+**Текущая production PWA (15 октября, после исходного .35 baseline):**
+stock `/home/jcode/D-MASH/tools/get_commit.sh` exit0 deployed exact
+`992adf973820e09ee1fbefe0167eb93ef1acfffe`, branch `transport-v3`, `.36`.
+Root verifier215/215 files, extras/missing/changed0, HTTPS index/SW/release exact.
+Этот merge имеет product/backend/tools trees byte-identical fullUNIT bfff;
+добавлены только текущие docs/evidence. Backend runtime code остаётся6a.
+Normal Chromium existing35profile: actual page+activeSW36 update PASS,
+wrappedRoot/pairing сохранены, visible canonical pinnedNode+DNSSready PASS.
+**Общая browser acceptance FAIL SW-CATALOG-STALE-36:** controlled fetch и
+единственный cache36 содержат старый nodes.json c2eb… вместо server ff49… .
+No manual cache clear/reset; node_ui_sol готовит `.37` fresh install/catalog
+network-first +ownversion cachefallback, meaningfulRED→GREEN, realSWtest ещёNOTRUN.
+Saved:4distinct rows после actualSEND/reopen наблюдались, но полный scopedgate
+не принят из-за harness ciphertext/locator/async/prefix assertions; retest needed.
+OWNINGcontext fresh snapshot13163B/1origin/4DB protected; secondary36B emptyorigins
+не backup. Root Chrome9484 закрыт; correctedN4 browser сейчас уnode_sol.
+[Exact deployed source](docs/evidence/2026-10-15/production36-exact-source.json),
+[normal deployed profile / cache bug](docs/evidence/2026-10-15/qa-proxy36-deployed-profile.json).
 
 **Актуальная инфраструктура API (15 октября):** пользователь назначил
 `proxy.d-mash.ru` на прежнем EMS `85.198.64.183`; прежние stage/API hostnames
 удалены/не использовать. Root применил проверенные tools из published
 `codex/canonical-ems-domain=9748e95ab54d48987efb8822ed3ad0db6fb32398`:
 отдельный ACME/TLS-vhost, четыре exact API location, затем scoped migration
-двух существующих конфигов signaling/TURN. Backend code и PWA пока unchanged.
+двух существующих конфигов signaling/TURN. На этапе infra backend/PWA не менялись; позже PWA36 deployed отдельно, см. выше.
 Protected consistent runtime backup:16files/4SQLite quick_check PASS;
 5identity/key/secret files byte-identical, TURN realm/sharedsecret сохранены.
 nginx/dmash-node/dmash-sturn active. Public normalTLS +все4WS101 PASS;
@@ -32,7 +51,7 @@ real external signaling roundtrip и TURN3479 UDP/TCP relay integrity PASS.
 После операции PWA214/214 exact6a/.35, extras/missing/changed0.
 Это **DEPLOYED INFRA**, не UI/media/fullNode PASS. Canonical PWA emergency
 release готовит node_ui_sol отдельно от broadNode candidate; старые клиенты
-до её deploy всё ещё содержат retiredhost.
+до автоматического обновления могут содержать retiredhost; stale SW catalog требует37.
 [Проверки и protected rollback paths](docs/evidence/2026-10-15/proxy-domain-infrastructure.json).
 
 **Node/Public candidates:** broad canonical9748 (изb6 +reviewed PUBLIC authority)
