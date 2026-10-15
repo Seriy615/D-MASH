@@ -22,4 +22,13 @@ f=fixture([oldRow,canonical]);assert.equal(f.manager.endpoints.length,1);assert.
 for(const conflict of [{...canonical,nodeId:'c'.repeat(64)},{...canonical,notificationEnabled:false}]){
  f=fixture([oldRow,conflict]);assert.equal(f.manager.endpoints.length,0);assert.equal(f.manager.error,'EMS_ENDPOINT_MIGRATION_CONFLICT');assert.equal(f.manager.active,null);assert.deepEqual(JSON.parse(f.data.get('dmash_node_endpoints_v1')),[oldRow,conflict]);
 }
+for(const [left,right] of [[{foo:1},{foo:2}],[{items:[1,2]},{items:[2,1]}],[{foo:null},{}],[{outer:{foo:1}},{outer:{foo:2}}]]){
+ const oldNested={...oldRow,customPreference:left},newNested={...canonical,customPreference:right};
+ f=fixture([oldNested,newNested]);assert.equal(f.manager.error,'EMS_ENDPOINT_MIGRATION_CONFLICT','nested preferences must never be silently discarded');assert.equal(f.manager.endpoints.length,0);assert.deepEqual(JSON.parse(f.data.get('dmash_node_endpoints_v1')),[oldNested,newNested]);
+}
+// Equal JSON objects may reorder keys; arrays retain their actual order.
+f=fixture([{...oldRow,customPreference:{outer:{a:1,b:2},list:[1,null]}},{...canonical,customPreference:{list:[1,null],outer:{b:2,a:1}}}]);assert.equal(f.manager.endpoints.length,1);assert.equal(f.manager.active.url,url);
+const collision=[{...oldRow,customPreference:{foo:1}},{...canonical,customPreference:{foo:2}},other];
+f=fixture(collision,other.url);assert.equal(f.manager.error,'EMS_ENDPOINT_MIGRATION_CONFLICT');assert.equal(f.manager.endpoints.length,1);assert.equal(f.manager.endpoints[0].url,other.url);assert.equal(f.manager.active.url,other.url);assert.equal(f.data.get('dmash_node_endpoints_v1'),JSON.stringify(collision),'conflict leaves exact persisted bytes intact');assert.equal(f.data.get('identity-sentinel'),'unchanged');
+f=fixture(collision);assert.equal(f.manager.active,null);assert.equal(f.manager.endpoints.length,1);assert(!f.manager.endpoints.some(item=>item.url===old||item.url===url),'quarantined EMS never falls back to retired host');
 console.log('PASS preexisting pinned EMS URL migration preserves preferences/selection/identity; custom and wrong-pin untouched; conflicts fail closed without storage reset');

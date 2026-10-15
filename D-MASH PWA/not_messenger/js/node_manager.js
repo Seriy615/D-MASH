@@ -46,7 +46,12 @@ function migrateProvisionedEmsEndpoints(items, activeUrl) {
             ['/dmash-client/v1', '/dmash-client/v3', '/dmp-c/v3'].includes(u.pathname); }
         catch (_) { return false; }
     };
-    const output = items.slice(0, 0), byUrl = new Map(); let changed = false;
+    const output = items.slice(0, 0), byUrl = new Map(); let changed = false, conflict = false;
+    const normalize = value => {
+        if (value === null || typeof value !== 'object') return JSON.stringify(value);
+        if (Array.isArray(value)) return '[' + value.map(normalize).join(',') + ']';
+        return '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + normalize(value[key])).join(',') + '}';
+    };
     for (const item of items) {
         let next = item;
         if (item && item.nodeId?.toLowerCase?.() === EMS_NODE_PIN && known(item.url) &&
@@ -59,13 +64,19 @@ function migrateProvisionedEmsEndpoints(items, activeUrl) {
             const previous = byUrl.get(next.url);
             if (previous) {
                 // Never choose one of two pins/preferences silently.
-                const normalize = value => JSON.stringify(value, Object.keys(value).sort());
-                if (normalize(previous) !== normalize(next)) throw Error('EMS_ENDPOINT_MIGRATION_CONFLICT');
+                if (normalize(previous) !== normalize(next)) conflict = true;
                 changed = true; continue;
             }
             byUrl.set(next.url, next);
         }
         output.push(next);
+    }
+    if (conflict) {
+        // Keep the original storage intact and quarantine just the conflicting
+        // EMS addresses in memory. Unrelated custom Nodes remain available.
+        return {items: items.filter(item => item?.url !== canonical + '/dmash-client/v1' &&
+            !(item?.nodeId?.toLowerCase?.() === EMS_NODE_PIN && known(item.url))), activeUrl,
+            changed: false, conflict: true};
     }
     // A prior interrupted localStorage write may already have saved the list.
     if (known(activeUrl) && !output.some(item => item?.url === activeUrl) && output.some(item => item?.url === canonical + '/dmash-client/v1' && item.nodeId?.toLowerCase?.() === EMS_NODE_PIN)) {
@@ -99,6 +110,7 @@ const NodeManager = {
         try {
             const original = localStorage.getItem(this.storageKey);
             const migration = migrateProvisionedEmsEndpoints(JSON.parse(original || '[]'), activeUrl);
+            if (migration.conflict) { this.error = 'EMS_ENDPOINT_MIGRATION_CONFLICT'; this.state = 'error'; }
             if (migration.changed) {
                 const previousActive = activeUrl;
                 try {
