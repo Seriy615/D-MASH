@@ -46,6 +46,16 @@ const person=n=>({n,sign:nacl.sign.keyPair.fromSeed(seed(n)),box:nacl.box.keyPai
  // Re-encryption changes exact authenticated dependencies even with equal plaintext.
  await nativePut(await journal.encrypt(journalLocation,coherent.journal));
  const beforeReencrypt=verifies;await journal.readRouteSnapshot(peer);assert.equal(verifies,beforeReencrypt+1);
+ // Every dependency, including unchanged plaintext re-encrypted with a fresh IV,
+ // participates in the key. Deleting any row cannot reuse prior validation.
+ for(const [kind,alias] of [['active',active.alias],['inbound',coherent.pointer.inbound],['outbound',coherent.pointer.outbound],['journal',coherent.pointer.journal]]){
+  const location={kind,alias},original=await raw(alias),value=await journal.decrypt(location,original);
+  await nativePut(await journal.encrypt(location,value));const before=verifies;
+  await journal.readRouteSnapshot(peer);assert.equal(verifies,before+1,kind+' ciphertext dependency');
+  await new Promise(resolve=>{const tx=db.transaction('pairing_material','readwrite');tx.objectStore('pairing_material').delete(alias);tx.oncomplete=resolve;});
+  if(kind==='active')assert.equal(await journal.readRouteSnapshot(peer),null);else await assert.rejects(()=>journal.readRouteSnapshot(peer));
+  await nativePut(original);const restored=verifies;await journal.readRouteSnapshot(peer);assert.equal(verifies,restored+1,kind+' deletion invalidates');
+ }
  // Same-alias, valid AES-GCM with an invalid signed receipt must never hit cache.
  const corrupted=structuredClone(coherent.journal),receipt=JSON.parse(corrupted.receipts[0]);receipt.signature='00'.repeat(64);corrupted.receipts[0]=JSON.stringify(receipt);
  await nativePut(await journal.encrypt(journalLocation,corrupted));
@@ -78,6 +88,31 @@ const person=n=>({n,sign:nacl.sign.keyPair.fromSeed(seed(n)),box:nacl.box.keyPai
  const pending=journal.readRouteSnapshot(peer);while(verifies===beforeInterleave)await new Promise(resolve=>setImmediate(resolve));
  await nativePut(journalRow);gate=null;release();await assert.rejects(pending,e=>e.code==='CAS_CONFLICT');
  const beforeLast=verifies;await journal.readRouteSnapshot(peer);assert.equal(verifies,beforeLast+1);
+ // Public codec replacement during verification cannot publish a stale decision.
+ for(const replaceObject of [false,true]){
+  await nativePut(await journal.encrypt(journalLocation,coherent.journal));
+  let done;gate=new Promise(resolve=>{done=resolve;});const before=verifies;
+  const pending=journal.readRouteSnapshot(peer);while(verifies===before)await new Promise(resolve=>setImmediate(resolve));
+  const previous=journal.codec,fn=previous.verifyCommitted;
+  if(replaceObject)journal.codec={...previous};else previous.verifyCommitted=(...args)=>fn(...args);
+  gate=null;done();await assert.rejects(pending,e=>e.code==='CAS_CONFLICT');
+  if(replaceObject)journal.codec=previous;else previous.verifyCommitted=fn;
+  const restored=verifies;await journal.readRouteSnapshot(peer);assert.equal(verifies,restored+1);
+ }
+ // An ownership change while verification is suspended cannot publish a memo.
+ await nativePut(await journal.encrypt(journalLocation,coherent.journal));
+ let resume;gate=new Promise(resolve=>{resume=resolve;});const beforeSwitch=verifies;
+ const switching=journal.readRouteSnapshot(peer);while(verifies===beforeSwitch)await new Promise(resolve=>setImmediate(resolve));
+ const priorRoot=root.state;root.state={};gate=null;resume();
+ await assert.rejects(switching,e=>e.code==='SESSION_CHANGED');root.state=priorRoot;
+ const afterSwitch=verifies;await journal.readRouteSnapshot(peer);assert.equal(verifies,afterSwitch+1);
+ // Other coherent readers observing a changed row invalidate the previous memo.
+ await nativePut(await journal.encrypt(journalLocation,coherent.journal));await journal.readCommitted(peer);
+ await nativePut(journalRow);const afterObservedChange=verifies;
+ await journal.readRouteSnapshot(peer);assert.equal(verifies,afterObservedChange+1);
+ // Invalid current time must evict; restoring a valid clock requires verification.
+ now=NaN;await assert.rejects(()=>journal.readRouteSnapshot(peer),e=>e.code==='COMMIT_EPOCH_FUTURE');
+ now=1800000100;const afterInvalid=verifies;await journal.readRouteSnapshot(peer);assert.equal(verifies,afterInvalid+1);
  controller.abort();await assert.rejects(()=>journal.readRouteSnapshot(peer),e=>e.code==='SESSION_CHANGED');db.close();
  console.log('PASS real signed pairing/receipts + AES-GCM synthetic IDB: validation reuse, fresh decrypt/coherence, ciphertext/tamper/owner/clock/expiry/reload invalidation and interleaved-write CAS; no browser/UI claim');
 })().catch(error=>{console.error(error);process.exitCode=1;});

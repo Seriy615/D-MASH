@@ -14,6 +14,7 @@
   return Object.freeze(result);
  }
  const sameTuple=(a,b)=>JSON.stringify(a??null)===JSON.stringify(b??null);
+ const sameDependencies=(a,b)=>a.length===b.length&&a.every((row,i)=>row[0]===b[i][0]&&row[1]===b[i][1]);
  class AccountRouteJournalV2{
   #verifyPreparation;
   #sessionCapability=null;
@@ -21,6 +22,8 @@
   #accountSignal;
   #closeObservers=new Set();
   #commitReceipts=new WeakMap();
+  #validatedRoutes=new Map();
+  #validationClock=null;
   static async open(options){
    const journal=new AccountRouteJournalV2(options);
    try{journal.aliasKey=await journal.wait(journal.crypto.subtle.importKey('raw',journal.s.saltCopy,{name:'HMAC',hash:'SHA-256'},false,['sign']));journal.#opened=true;return journal;}
@@ -65,12 +68,12 @@
   }
   check(){
    const s=this.s,c=this.core;
-   this.#sessionCapability?.assertCurrent();
+   try{this.#sessionCapability?.assertCurrent();}catch(error){this.#validatedRoutes.clear();throw error;}
    const attemptChanged=!this.#sessionCapability&&(c._accountTransitioning||c._accountBootAttempt!==s.generation);
-   if(this.closed||this.#accountSignal.aborted||attemptChanged||this.storage.db!==s.db||this.storage.masterKey!==s.key||c.keys!==s.keys||c.keys.sign!==s.sign||c.activeIdentity!==s.identity||this.root.state!==s.root||!this.root.state||c.blindSalt!==s.salt||s.salt.length!==s.saltCopy.length||s.salt.some((v,i)=>v!==s.saltCopy[i])||hex(s.sign.publicKey)!==s.account)fail('SESSION_CHANGED');
+   if(this.closed||this.#accountSignal.aborted||attemptChanged||this.storage.db!==s.db||this.storage.masterKey!==s.key||c.keys!==s.keys||c.keys.sign!==s.sign||c.activeIdentity!==s.identity||this.root.state!==s.root||!this.root.state||c.blindSalt!==s.salt||s.salt.length!==s.saltCopy.length||s.salt.some((v,i)=>v!==s.saltCopy[i])||hex(s.sign.publicKey)!==s.account){this.#validatedRoutes.clear();fail('SESSION_CHANGED');}
   }
   async wait(promise){this.check();const result=await promise;this.check();return result;}
-  close(){if(this.closed)return;this.closed=true;for(const tx of this.transactions){try{tx.abort();}catch(_){}}this.transactions.clear();this.#accountSignal.removeEventListener('abort',this.abort);this.offRoot?.();this.s.saltCopy.fill(0);this.aliasKey=null;this.#commitReceipts=new WeakMap();for(const observer of [...this.#closeObservers])observer();this.#closeObservers.clear();}
+  close(){if(this.closed)return;this.closed=true;for(const tx of this.transactions){try{tx.abort();}catch(_){}}this.transactions.clear();this.#accountSignal.removeEventListener('abort',this.abort);this.offRoot?.();this.s.saltCopy.fill(0);this.aliasKey=null;this.#commitReceipts=new WeakMap();this.#validatedRoutes.clear();this.#validationClock=null;for(const observer of [...this.#closeObservers])observer();this.#closeObservers.clear();}
   async location(kind,id){
    this.check();const alias=hex(new Uint8Array(await this.wait(this.crypto.subtle.sign('HMAC',this.aliasKey,text('D-MASH|ACCOUNT-ROUTE-JOURNAL|V2\0'+this.s.account+'\0'+kind+'\0'+id)))));
    return Object.freeze({kind,alias});
@@ -92,7 +95,7 @@
    }catch(error){this.check();fail('CORRUPT_RECORD');}finally{plain?.fill(0);}
   }
   transaction(locations,expected=null,writes=[]){
-   this.check();return new Promise((resolve,reject)=>{
+   this.check();if(writes.length)this.#validatedRoutes.clear();return new Promise((resolve,reject)=>{
     let tx,problem=null;const rows=new Map();
     try{tx=this.s.db.transaction(STORE,expected?'readwrite':'readonly');this.transactions.add(tx);}catch(error){reject(error);return;}
     const stop=error=>{problem=error;try{tx.abort();}catch(_){reject(error);}};
@@ -208,8 +211,9 @@
   }
   async readCommitted(peer){return (await this.readCoherent(peer))?.summary??null;}
   async readCoherent(peer){
+   try{
    this.check();key(peer);const active=await this.wait(this.location('active',peer)),first=await this.wait(this.read([active])),pointer=first.get(active);
-   if(pointer===null)return null;this.pointerSnapshot(pointer,peer);
+   if(pointer===null){this.#validatedRoutes.delete(peer);return null;}this.pointerSnapshot(pointer,peer);
    const locations=[active,{kind:'inbound',alias:pointer.inbound},{kind:'outbound',alias:pointer.outbound},{kind:'journal',alias:pointer.journal}],saved=await this.wait(this.read(locations));
    if(saved.rows.get(active.alias)?.blob!==first.rows.get(active.alias)?.blob)fail('CAS_CONFLICT');
    for(const location of locations){const value=saved.get(location);if(!value||value.digest!==pointer.digest||value.generation!==pointer.generation||value.peer!==peer||value.state!==STATE)fail('CORRUPT_COMMIT');}
@@ -219,22 +223,54 @@
    if(preparation&&(preparation.bindingDigest!==pointer.digest||preparation.generation!==pointer.generation||preparation.accountPublic!==this.s.account||preparation.routeId!==journal.inbound?.certificate?.route_id))fail('CORRUPT_COMMIT');
    if(JSON.stringify(saved.get(locations[1]))!==JSON.stringify(journal.inbound)||JSON.stringify(saved.get(locations[2]))!==JSON.stringify(journal.outbound))fail('CORRUPT_COMMIT');
    for(const location of locations)if(saved.get(location).commit_version!==pointer.commit_version||saved.get(location).verified_at!==pointer.verified_at)fail('CORRUPT_COMMIT');
-   return {pointer,journal,summary:Object.freeze({peer,generation:pointer.generation,digest:pointer.digest,state:STATE,ready:false,replayed:false,preparation})};
+   const dependencies=Object.freeze(locations.map(location=>Object.freeze([location.alias,saved.rows.get(location.alias).blob])));
+   const cached=this.#validatedRoutes.get(peer);if(cached&&!sameDependencies(cached.dependencies,dependencies))this.#validatedRoutes.delete(peer);
+   return {pointer,journal,dependencies,summary:Object.freeze({peer,generation:pointer.generation,digest:pointer.digest,state:STATE,ready:false,replayed:false,preparation})};
+   }catch(error){this.#validatedRoutes.delete(peer);throw error;}
   }
   async readRouteSnapshot(peer){
-   const records=await this.wait(this.readCoherent(peer));if(!records)return null;
-   const {pointer,journal,summary}=records;
-   if(pointer.commit_version!==1||!Number.isSafeInteger(pointer.verified_at)||pointer.verified_at<0)return Object.freeze({...summary,readiness:'COMMIT_EPOCH_UPGRADE_REQUIRED'});
-   if(typeof this.codec.verifyCommitted!=='function')fail('HISTORICAL_CODEC_REQUIRED');
-   const verified=await this.wait(this.codec.verifyCommitted(journal.bundles,journal.receipts,{expectedParticipants:[this.s.account,peer],committed:this.pointerSnapshot(journal.previous,peer),verifiedAt:pointer.verified_at}));
-   if(verified.digest!==pointer.digest||verified.binding.generation!==pointer.generation)fail('CORRUPT_COMMIT');
-   const bundles=journal.bundles.map(serialized=>JSON.parse(serialized));
-   const local=bundles.find(bundle=>bundle.account_keys.signing===this.s.account),remote=bundles.find(bundle=>bundle.account_keys.signing===peer);
-   if(!local||!remote||JSON.stringify(local.inbound_certificate)!==JSON.stringify(journal.inbound.certificate)||JSON.stringify(remote.inbound_certificate)!==JSON.stringify(journal.outbound.certificate))fail('CORRUPT_COMMIT');
-   const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
-   const present=this.clock();if(!Number.isSafeInteger(present)||present<0||pointer.verified_at>present)fail('COMMIT_EPOCH_FUTURE');
-   const expired=Math.min(local.inbound_certificate.expires_at,remote.inbound_certificate.expires_at)<=present;
-   return freeze({...summary,verifiedAt:pointer.verified_at,localCertificate:local.inbound_certificate,remoteCertificate:remote.inbound_certificate,localAccountKeys:local.account_keys,remoteAccountKeys:remote.account_keys,readiness:expired?'ROUTE_EXPIRED':'NODE_PROOF_REQUIRED'});
+   // Reuse only historical signature validation. Every lookup still reads and
+   // authenticates all dependency rows in this Account/root's captured context.
+   try{
+    this.check();
+    const records=await this.wait(this.readCoherent(peer));
+    if(!records){this.#validatedRoutes.delete(peer);return null;}
+    const {pointer,journal,summary,dependencies}=records;
+    const observeClock=()=>{const present=this.clock();
+     if(!Number.isSafeInteger(present)||present<0||pointer.verified_at>present){this.#validatedRoutes.clear();fail('COMMIT_EPOCH_FUTURE');}
+     if(this.#validationClock!==null&&present<this.#validationClock)this.#validatedRoutes.clear();
+     this.#validationClock=present;return present;
+    };
+    if(pointer.commit_version!==1||!Number.isSafeInteger(pointer.verified_at)||pointer.verified_at<0){this.#validatedRoutes.delete(peer);return Object.freeze({...summary,readiness:'COMMIT_EPOCH_UPGRADE_REQUIRED'});}
+    let present=observeClock();
+    const codec=this.codec,verify=codec.verifyCommitted;
+    if(typeof verify!=='function')fail('HISTORICAL_CODEC_REQUIRED');
+    let validated=this.#validatedRoutes.get(peer),miss=false;
+    if(!validated||validated.codec!==codec||validated.verify!==verify||validated.expiresAt<=present||!sameDependencies(validated.dependencies,dependencies)){
+     this.#validatedRoutes.delete(peer);miss=true;
+     const verified=await this.wait(verify.call(codec,journal.bundles,journal.receipts,{expectedParticipants:[this.s.account,peer],committed:this.pointerSnapshot(journal.previous,peer),verifiedAt:pointer.verified_at}));
+     if(verified.digest!==pointer.digest||verified.binding.generation!==pointer.generation)fail('CORRUPT_COMMIT');
+     const expiresAt=verified.binding.expires_at;if(!Number.isSafeInteger(expiresAt)||expiresAt<=pointer.verified_at)fail('CORRUPT_COMMIT');
+     // The verifier is asynchronous: never publish a decision for rows or a
+     // codec that changed while it ran. This is a read barrier, not a write.
+     const current=await this.wait(this.readCoherent(peer));
+     if(this.codec!==codec||codec.verifyCommitted!==verify||!current||!sameDependencies(dependencies,current.dependencies))fail('CAS_CONFLICT');
+     validated={codec,verify,dependencies,expiresAt};
+    }
+    const bundles=journal.bundles.map(serialized=>JSON.parse(serialized));
+    const local=bundles.find(bundle=>bundle.account_keys.signing===this.s.account),remote=bundles.find(bundle=>bundle.account_keys.signing===peer);
+    if(!local||!remote||JSON.stringify(local.inbound_certificate)!==JSON.stringify(journal.inbound.certificate)||JSON.stringify(remote.inbound_certificate)!==JSON.stringify(journal.outbound.certificate))fail('CORRUPT_COMMIT');
+    const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
+    present=observeClock();
+    const expiresAt=Math.min(validated.expiresAt,local.inbound_certificate.expires_at,remote.inbound_certificate.expires_at);
+    if(expiresAt<=present)this.#validatedRoutes.delete(peer);
+    else if(miss){
+     if(this.#validatedRoutes.size>=32)this.#validatedRoutes.delete(this.#validatedRoutes.keys().next().value);
+     this.#validatedRoutes.set(peer,Object.freeze({...validated,expiresAt}));
+    }
+    const expired=Math.min(local.inbound_certificate.expires_at,remote.inbound_certificate.expires_at)<=present;
+    return freeze({...summary,verifiedAt:pointer.verified_at,localCertificate:local.inbound_certificate,remoteCertificate:remote.inbound_certificate,localAccountKeys:local.account_keys,remoteAccountKeys:remote.account_keys,readiness:expired?'ROUTE_EXPIRED':'NODE_PROOF_REQUIRED'});
+   }catch(error){this.#validatedRoutes.delete(peer);throw error;}
   }
   activate(){fail('NODE_ACTIVATION_UNIMPLEMENTED');}
  }
