@@ -185,13 +185,36 @@ actual74f UI diagnostic observed Runtime.resume maxoverlap **65sender/34receiver
 startRetries clears timerownership BEFORE awaitresume; UI polling canstartanother
 train, oldcompletion thenarmsanother unownedtimer. Independent actualscheduler
 fakeclock REDdb57a17 proves overlap2/futuretimers2/pendingafterclose1 vs1/1/0.
-Small timerownership fix assigned in /tmp/dmash-account-retry-timer-red, pending.
+Small timerownership fix **6ff5515fa253a3f177ebce41cd7b12d5d06dffd0** frozen clean
+/tmp/dmash-account-retry-timer-red; independent ACCEPT, sixfocused UNIT +root
+scheduler suite PASS. SameRED2/2/1→GREEN1/1/0,5scadence/manualresume preserved.
 Cadence5s/auth/backoff/difficulty unchanged; no broad queue removal/reset.
 Observed diagnosticSEND local11.169s/authACK25.915s hasobserveroverhead and doesNOT
 erase uninstrumented90.8s performanceFAIL. Perpageprototype totals aggregateinstances;
 onlyonecurrentAccount/adapterexpected; dropped rawring notfulltrace, totalsretained.
 Allwrappersrestored. Exact90s causality/afterfix latency acceptance stillOPEN.
 [Diagnostic and limits](docs/evidence/2026-10-16/qa-retry-timer-overlap74f-diagnostic.json).
+
+**Exact6ff ordinaryUI retained reload/no-chat scoped PASS:** root actual both
+reload/PIN/login/NodeConnect/Saved→SEND→NEWauthenticatedACK BEFOREcontactopen,
+thencontentonce; identities/root/Nodepreserved.532/532capturedresponsesexact,
+compiledruntimeSHA beb35a33…+journalSHA7159acc3… bothpages matchfrozen6ff.
+ColdSEND0.988s/composerclear0.770s, ACK19.495s afterrow(~20.5s afterSEND),
+versus74f baseline~90.8s. **Remaining latency OPEN**, not allspeedfixed.
+Original6ffrunner79455 stoppedBEFORESEND dueSavedtitleassertrace; eventualSaved
+DOMconfirmed, sameprofilecontinuation84700PASS local1.888s/ACK13.373s, then
+NEWcorrectedbothreload75517PASS above. OriginalFAILretained, no timeoutchanges.
+Sourceoverlay/SWblocked/managedoptin, NOTDEPLOYED/fullN3/fullgoal.
+Old74fkeeper4617 gracefullyreleased; **6ffpersistentkeeper36605(pid1785825)**
+keepsroutes acrossCDPclients; originalbrowser77016/CDP9485stilllive.
+Freshprotectedcustomrawexports259296/242664B7DBeachbeforenewsource, live-separate
+captures/restoreNOTRUN, notvalidatedrollbackbackups. Short60sRuntimeobserver **PASS: maxoverlap1bothpages**,11/12resume calls despite
+42/40startRetries requests; zero rawevents dropped, automaticexpiry/restored both.
+Actualdiagnostic UI local0.996s/authACK16.213s, observeroverhead/notperformancePASS.
+[Browser retry ownership](docs/evidence/2026-10-16/qa-timer6ff-browser-overlap.json).
+Full exact6ff UNIT STARTED onlyafterall latency/diagnostics ended, agentpublic_sol
+handle12693; referencePython3.12.14/Node24.19.0,145JSsuitesexpected, NOTfinalPASSyet.
+[Corrected browser source/flow/limits](docs/evidence/2026-10-16/qa-timer6ff-retained-nochat.json).
 
 **LocalSEND25.827s whenpriorreceiver-inactive retriesqueued remainsOPEN**, despite
 cleanerretainedUI1.4–1.9s PASS; do notclaimall latencyfixed. FullUNIT endedbefore

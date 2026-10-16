@@ -1,0 +1,175 @@
+{
+  "productSha": "6ff5515fa253a3f177ebce41cd7b12d5d06dffd0",
+  "toolSha": "2c52e85e5e15012efb5b377c3f15f0b2f648144e",
+  "scope": "Root actual UI SEND/ACK while recipient Saved; numeric-only Runtime observer for60s, no optional storage wrappers; source overlay/SW blocked/real EMS, NOT DEPLOYED or performance acceptance",
+  "bug": "N3-RETRY-TIMER-OVERLAP-01",
+  "result": "PASS scoped retry ownership; max concurrent Runtime.resume1 each page",
+  "pages": [
+    {
+      "page": 0,
+      "instrumentationRestored": true,
+      "autoExpired": true,
+      "rawEventsDropped": 0,
+      "totals": [
+        {
+          "method": "Runtime.resume",
+          "calls": 11,
+          "resolved": 11,
+          "rejected": 0,
+          "totalMs": 5568.699999809265,
+          "maxMs": 3990.300000190735,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "AppCipher.flushReceipts",
+          "calls": 11,
+          "resolved": 11,
+          "rejected": 0,
+          "totalMs": 43.700000286102295,
+          "maxMs": 14.199999809265137,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Runtime.startRetries",
+          "calls": 42,
+          "resolved": 42,
+          "rejected": 0,
+          "totalMs": 2.4000000953674316,
+          "maxMs": 1.3999996185302734,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Core.sendMessage",
+          "calls": 1,
+          "resolved": 1,
+          "rejected": 0,
+          "totalMs": 579.6999998092651,
+          "maxMs": 579.6999998092651,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Adapter.rehydrate",
+          "calls": 1,
+          "resolved": 1,
+          "rejected": 0,
+          "totalMs": 238.5,
+          "maxMs": 238.5,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Adapter.sendApplication",
+          "calls": 1,
+          "resolved": 1,
+          "rejected": 0,
+          "totalMs": 229.30000019073486,
+          "maxMs": 229.30000019073486,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Transport.prepareAndSubmitIntent",
+          "calls": 2,
+          "resolved": 2,
+          "rejected": 0,
+          "totalMs": 4013.9000000953674,
+          "maxMs": 3662.2000002861023,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "AppCipher.receiveReceipt",
+          "calls": 2,
+          "resolved": 2,
+          "rejected": 0,
+          "totalMs": 58.40000009536743,
+          "maxMs": 37,
+          "inFlight": 0,
+          "maxInFlight": 1
+        }
+      ]
+    },
+    {
+      "page": 1,
+      "instrumentationRestored": true,
+      "autoExpired": true,
+      "rawEventsDropped": 0,
+      "totals": [
+        {
+          "method": "Runtime.startRetries",
+          "calls": 40,
+          "resolved": 40,
+          "rejected": 0,
+          "totalMs": 2.700000762939453,
+          "maxMs": 0.5999999046325684,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Runtime.resume",
+          "calls": 12,
+          "resolved": 12,
+          "rejected": 0,
+          "totalMs": 1548.3000011444092,
+          "maxMs": 289.40000009536743,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "AppCipher.flushReceipts",
+          "calls": 14,
+          "resolved": 14,
+          "rejected": 0,
+          "totalMs": 5233.799998760223,
+          "maxMs": 2879,
+          "inFlight": 0,
+          "maxInFlight": 2
+        },
+        {
+          "method": "AppCipher.receiveApplication",
+          "calls": 2,
+          "resolved": 2,
+          "rejected": 0,
+          "totalMs": 132.60000038146973,
+          "maxMs": 80.80000019073486,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Transport.prepareAndSubmitIntent",
+          "calls": 2,
+          "resolved": 2,
+          "rejected": 0,
+          "totalMs": 2960.7000002861023,
+          "maxMs": 2756,
+          "inFlight": 0,
+          "maxInFlight": 1
+        }
+      ]
+    }
+  ],
+  "uiSteps": [
+    {
+      "id": "composer-empty",
+      "seconds": 0.829
+    },
+    {
+      "id": "local-row",
+      "seconds": 0.996
+    },
+    {
+      "id": "authenticated-ACK-before-open",
+      "seconds": 16.213
+    }
+  ],
+  "limits": [
+    "Prototype concurrency aggregates instances per page, one current Account/adapter expected",
+    "Observer adds overhead; compare uninstrumented cold report separately",
+    "~20.5s cold authenticated ACK still OPEN",
+    "Full goal and migration/multiAccount/locked/offline/coldpairing/media matrices not closed by timer test"
+  ]
+}

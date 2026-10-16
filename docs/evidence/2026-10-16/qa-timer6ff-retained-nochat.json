@@ -1,0 +1,151 @@
+{
+  "productSha": "6ff5515fa253a3f177ebce41cd7b12d5d06dffd0",
+  "scope": "Actual retained recipient reload/login + Node-connect UI + Saved selected; sender actual SEND; no adapter/Core network calls before unread observation; source overlay/SW blocked, real public EMS",
+  "limits": [
+    "No concurrent full UNIT; retained retry backlog remains; preexisting unread ignored; unique new-operation ACK required before receiver opens chat",
+    "Corrected NEW both-page reload/login run after same-profile continuation; no reset or timeout extension",
+    "~20.5s authenticated ACK after SEND remains slow; does not close all latency requirements",
+    "Managed review opt-in / source overlay / SW blocked, NOT DEPLOYED or full goal DONE",
+    "All served source response hashes exact; compiled runtime+journal fingerprints checked on both pages",
+    "Full exact6ff UNIT not yet run; separate focused suites only",
+    "Original 79455 harness FAIL preserved; eventual DOM confirmation and corrected continuation do not retroactively turn it into PASS"
+  ],
+  "steps": [
+    {
+      "id": "sender-reload-login-contact-preserved",
+      "at": "2026-10-16T01:24:13.143Z",
+      "status": "PASS",
+      "seconds": 9.016
+    },
+    {
+      "id": "recipient-reload-login-preserved",
+      "at": "2026-10-16T01:24:22.160Z",
+      "status": "PASS",
+      "seconds": 9.376
+    },
+    {
+      "id": "recipient-node-connect-without-contact-open",
+      "at": "2026-10-16T01:24:31.537Z",
+      "status": "PASS",
+      "seconds": 6.488
+    },
+    {
+      "id": "receiver-started-while-Saved",
+      "at": "2026-10-16T01:24:38.027Z",
+      "status": "PASS",
+      "seconds": 0.061
+    },
+    {
+      "id": "sender-SEND-durable-local-row",
+      "at": "2026-10-16T01:24:38.130Z",
+      "status": "PASS",
+      "seconds": 0.988
+    },
+    {
+      "id": "new-operation-authenticated-ACK-before-recipient-open",
+      "at": "2026-10-16T01:24:39.123Z",
+      "status": "PASS",
+      "seconds": 19.495
+    },
+    {
+      "id": "manual-contact-open-delivers-once",
+      "at": "2026-10-16T01:24:58.620Z",
+      "status": "PASS",
+      "seconds": 1.004
+    },
+    {
+      "id": "sender-authenticated-DELIVERED",
+      "at": "2026-10-16T01:24:59.624Z",
+      "status": "PASS",
+      "seconds": 0.035
+    }
+  ],
+  "sourceFingerprints": [
+    {
+      "runtimeSha": "beb35a330065165c6d4e97b694204be0331c082cbb60d66ed88ffdf3530265a5",
+      "expectedRuntimeSha": "beb35a330065165c6d4e97b694204be0331c082cbb60d66ed88ffdf3530265a5",
+      "release": "transport-v3-node-preparation-20261008.37",
+      "sessionSubscription": true,
+      "journalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7",
+      "expectedJournalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7"
+    },
+    {
+      "runtimeSha": "beb35a330065165c6d4e97b694204be0331c082cbb60d66ed88ffdf3530265a5",
+      "expectedRuntimeSha": "beb35a330065165c6d4e97b694204be0331c082cbb60d66ed88ffdf3530265a5",
+      "release": "transport-v3-node-preparation-20261008.37",
+      "sessionSubscription": true,
+      "journalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7",
+      "expectedJournalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7"
+    }
+  ],
+  "recipientBeforeSend": {
+    "accountAdapterOpened": true,
+    "rootNodeAlive": true,
+    "selectedSaved": true
+  },
+  "composerClearedSeconds": 0.77,
+  "result": "PASS scoped new-operation authenticated ACK while recipient Saved; later content once",
+  "recipientIdentityRootNodePreserved": true,
+  "sourceGate": {
+    "responses": 532,
+    "allExact": true,
+    "errors": 0,
+    "changedRuntimeResponses": [
+      {
+        "profile": 0,
+        "path": "js/account_session_runtime_v4.js",
+        "status": 200,
+        "actual": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+        "expected": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+        "match": true,
+        "at": "2026-10-16T01:21:39.891Z"
+      },
+      {
+        "profile": 1,
+        "path": "js/account_session_runtime_v4.js",
+        "status": 200,
+        "actual": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+        "expected": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+        "match": true,
+        "at": "2026-10-16T01:21:59.271Z"
+      },
+      {
+        "profile": 0,
+        "path": "js/account_session_runtime_v4.js",
+        "status": 200,
+        "actual": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+        "expected": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+        "match": true,
+        "at": "2026-10-16T01:24:15.853Z"
+      },
+      {
+        "profile": 1,
+        "path": "js/account_session_runtime_v4.js",
+        "status": 200,
+        "actual": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+        "expected": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+        "match": true,
+        "at": "2026-10-16T01:24:24.483Z"
+      }
+    ]
+  },
+  "review": {
+    "independent": "ACCEPT",
+    "schedulerRED": "db57a178487212870a87ac32566edc86a4787d80",
+    "schedulerGREEN": [
+      1,
+      1,
+      0
+    ],
+    "focusedSuites": 6,
+    "rootSchedulerSuite": "PASS"
+  },
+  "priorHarnessFailure": {
+    "result": "FAIL preserved, no SEND reached",
+    "stage": "Saved title assertion ran before asynchronous selection rendered",
+    "sameProfileDOMAfterFailure": "Saved visibly selected",
+    "sameProfileContinuationResult": "PASS",
+    "sameProfileContinuationLocalSendSeconds": 1.888,
+    "sameProfileContinuationAckAfterLocalRowSeconds": 13.373
+  }
+}
