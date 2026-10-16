@@ -1,0 +1,1355 @@
+{
+  "startedAt": "2026-10-15T23:46:56.940Z",
+  "productSha": "3a784714060f5645d1b6317c87c59285e1f95b39",
+  "harnessSha256": "9055e8bd3e424b2b6fa096113eabfcd40666162c5454a2cee7d0191ca7f37ea5",
+  "productRoot": "/tmp/dmash-oct15-integration/D-MASH PWA/not_messenger",
+  "events": [
+    {
+      "type": "http",
+      "at": 1792108020922,
+      "url": "/not_messenger/fixture.html",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021159,
+      "url": "/favicon.ico",
+      "latest": false
+    },
+    {
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "type": "http",
+      "at": 1792108021399,
+      "url": "/not_messenger/nodes.json",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021478,
+      "url": "/not_messenger/sw.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021579,
+      "url": "/not_messenger/index.html",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021598,
+      "url": "/not_messenger/manifest.json",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021653,
+      "url": "/not_messenger/css/foundation.css",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021657,
+      "url": "/not_messenger/css/app_shell.css",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021668,
+      "url": "/not_messenger/js/release.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021671,
+      "url": "/not_messenger/css/runtime_fixes.css",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021681,
+      "url": "/not_messenger/js/locales/en.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021685,
+      "url": "/not_messenger/js/locales/ru.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021707,
+      "url": "/not_messenger/js/i18n.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021714,
+      "url": "/not_messenger/js/app_shell.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021723,
+      "url": "/not_messenger/js/ui_logic.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021749,
+      "url": "/not_messenger/js/node_manager.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021764,
+      "url": "/not_messenger/js/secure_session.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021793,
+      "url": "/not_messenger/js/device_authority_v3.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021802,
+      "url": "/not_messenger/js/device_client_v3.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021839,
+      "url": "/not_messenger/js/device_inbox.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021845,
+      "url": "/not_messenger/js/account_node_inbox_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021858,
+      "url": "/not_messenger/js/device_envelope.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021879,
+      "url": "/not_messenger/js/account_node_transport_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021892,
+      "url": "/not_messenger/js/private_routes_v3.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021923,
+      "url": "/not_messenger/js/contact_bootstrap_v3.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021945,
+      "url": "/not_messenger/js/contact_flow_v3.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021960,
+      "url": "/not_messenger/js/core_engine.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108021977,
+      "url": "/not_messenger/js/storage.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022024,
+      "url": "/not_messenger/js/device_root.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022059,
+      "url": "/not_messenger/js/node_identity.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022069,
+      "url": "/not_messenger/js/node_admission_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022088,
+      "url": "/not_messenger/js/node_relationships_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022094,
+      "url": "/not_messenger/js/node_registration_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022126,
+      "url": "/not_messenger/js/node_socket_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022160,
+      "url": "/not_messenger/js/node_channel_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022171,
+      "url": "/not_messenger/js/probe_primitives_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022198,
+      "url": "/not_messenger/js/route_discovery_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022230,
+      "url": "/not_messenger/js/recipient_payload_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022248,
+      "url": "/not_messenger/js/node_routing_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022285,
+      "url": "/not_messenger/js/node_local_delivery_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022289,
+      "url": "/not_messenger/js/node_inbox_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022306,
+      "url": "/not_messenger/js/node_runtime_worker_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022335,
+      "url": "/not_messenger/js/node_runtime_host_v4.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022347,
+      "url": "/not_messenger/js/call_session.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022371,
+      "url": "/not_messenger/js/vendor/blake3.min.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022393,
+      "url": "/not_messenger/js/call_admission_worker.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022407,
+      "url": "/not_messenger/js/call_signaling.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022433,
+      "url": "/not_messenger/js/account_ratchet.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022449,
+      "url": "/not_messenger/js/call_runtime.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022479,
+      "url": "/not_messenger/js/saved_messages.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022500,
+      "url": "/not_messenger/js/chat_cipher.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022506,
+      "url": "/not_messenger/js/chat_password.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022519,
+      "url": "/not_messenger/js/account_ratchet_runtime.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022539,
+      "url": "/not_messenger/js/account_recorded_media.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022563,
+      "url": "/not_messenger/js/file_channel.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022574,
+      "url": "/not_messenger/js/file_vault.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022588,
+      "url": "/not_messenger/js/file_session.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022608,
+      "url": "/not_messenger/js/recorded_note_turn.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022626,
+      "url": "/not_messenger/js/file_runtime.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022642,
+      "url": "/not_messenger/js/device_routes.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022666,
+      "url": "/not_messenger/js/dmash_links.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022688,
+      "url": "/not_messenger/js/quick_name_registry.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022745,
+      "url": "/not_messenger/js/contact_transport.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022756,
+      "url": "/not_messenger/js/pending_contact_requests.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022802,
+      "url": "/not_messenger/js/contact_payloads.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022814,
+      "url": "/not_messenger/js/resource_pow.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022831,
+      "url": "/not_messenger/js/ui_global_bridge.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022840,
+      "url": "/not_messenger/js/runtime_fixes.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022880,
+      "url": "/not_messenger/js/public_contact_runtime.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022892,
+      "url": "/not_messenger/js/acceptance_fixes.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022908,
+      "url": "/not_messenger/js/acceptance_v50.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022917,
+      "url": "/not_messenger/js/acceptance_v51.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022939,
+      "url": "/not_messenger/js/acceptance_v52.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022985,
+      "url": "/not_messenger/js/acceptance_v54.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108022999,
+      "url": "/not_messenger/js/acceptance_v55.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108023076,
+      "url": "/not_messenger/js/vendor/nacl-util.min.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108023077,
+      "url": "/not_messenger/js/vendor/nacl-fast.min.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108023083,
+      "url": "/not_messenger/js/vendor/qrcode.min.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108023141,
+      "url": "/not_messenger/js/vendor/html5-qrcode.min.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108023154,
+      "url": "/not_messenger/js/vendor/argon2-bundled.min.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108023165,
+      "url": "/not_messenger/js/vendor/argon2.wasm",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108023190,
+      "url": "/not_messenger/js/vendor/kyber768.js",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108023193,
+      "url": "/not_messenger/js/vendor/kyber768.wasm",
+      "latest": false
+    },
+    {
+      "type": "http",
+      "at": 1792108024318,
+      "url": "/not_messenger/sw.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024377,
+      "url": "/not_messenger/index.html",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024380,
+      "url": "/not_messenger/manifest.json",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024380,
+      "url": "/not_messenger/nodes.json",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024460,
+      "url": "/not_messenger/css/foundation.css",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024463,
+      "url": "/not_messenger/css/app_shell.css",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024465,
+      "url": "/not_messenger/css/runtime_fixes.css",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024477,
+      "url": "/not_messenger/js/release.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024480,
+      "url": "/not_messenger/js/locales/ru.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024480,
+      "url": "/not_messenger/js/locales/en.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024494,
+      "url": "/not_messenger/js/i18n.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024495,
+      "url": "/not_messenger/js/app_shell.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024497,
+      "url": "/not_messenger/js/ui_logic.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024509,
+      "url": "/not_messenger/js/node_manager.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024515,
+      "url": "/not_messenger/js/secure_session.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024524,
+      "url": "/not_messenger/js/device_client_v3.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024527,
+      "url": "/not_messenger/js/device_authority_v3.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024533,
+      "url": "/not_messenger/js/device_envelope.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024533,
+      "url": "/not_messenger/js/device_inbox.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024542,
+      "url": "/not_messenger/js/account_node_inbox_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024554,
+      "url": "/not_messenger/js/account_node_transport_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024554,
+      "url": "/not_messenger/js/private_routes_v3.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024555,
+      "url": "/not_messenger/js/contact_bootstrap_v3.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024563,
+      "url": "/not_messenger/js/contact_flow_v3.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024564,
+      "url": "/not_messenger/js/core_engine.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024585,
+      "url": "/not_messenger/js/storage.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024586,
+      "url": "/not_messenger/js/device_root.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024588,
+      "url": "/not_messenger/js/node_identity.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024606,
+      "url": "/not_messenger/js/node_admission_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024607,
+      "url": "/not_messenger/js/node_registration_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024608,
+      "url": "/not_messenger/js/node_relationships_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024613,
+      "url": "/not_messenger/js/node_socket_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024621,
+      "url": "/not_messenger/js/node_channel_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024622,
+      "url": "/not_messenger/js/probe_primitives_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024622,
+      "url": "/not_messenger/js/route_discovery_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024641,
+      "url": "/not_messenger/js/recipient_payload_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024642,
+      "url": "/not_messenger/js/node_routing_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024643,
+      "url": "/not_messenger/js/node_inbox_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024650,
+      "url": "/not_messenger/js/node_local_delivery_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024660,
+      "url": "/not_messenger/js/node_runtime_host_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024661,
+      "url": "/not_messenger/js/node_runtime_worker_v4.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024671,
+      "url": "/not_messenger/js/vendor/blake3.min.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024671,
+      "url": "/not_messenger/js/call_session.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024682,
+      "url": "/not_messenger/js/call_signaling.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024686,
+      "url": "/not_messenger/js/call_admission_worker.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024690,
+      "url": "/not_messenger/js/call_runtime.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024693,
+      "url": "/not_messenger/js/account_ratchet.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024704,
+      "url": "/not_messenger/js/saved_messages.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024706,
+      "url": "/not_messenger/js/chat_cipher.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024708,
+      "url": "/not_messenger/js/chat_password.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024718,
+      "url": "/not_messenger/js/account_ratchet_runtime.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024718,
+      "url": "/not_messenger/js/account_recorded_media.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024726,
+      "url": "/not_messenger/js/file_channel.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024728,
+      "url": "/not_messenger/js/file_vault.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024731,
+      "url": "/not_messenger/js/file_session.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024737,
+      "url": "/not_messenger/js/file_runtime.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024738,
+      "url": "/not_messenger/js/recorded_note_turn.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024739,
+      "url": "/not_messenger/js/device_routes.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024749,
+      "url": "/not_messenger/js/dmash_links.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024750,
+      "url": "/not_messenger/js/quick_name_registry.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024752,
+      "url": "/not_messenger/js/contact_payloads.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024768,
+      "url": "/not_messenger/js/contact_transport.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024769,
+      "url": "/not_messenger/js/pending_contact_requests.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024781,
+      "url": "/not_messenger/js/resource_pow.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024787,
+      "url": "/not_messenger/js/ui_global_bridge.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024790,
+      "url": "/not_messenger/js/runtime_fixes.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024793,
+      "url": "/not_messenger/js/public_contact_runtime.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024800,
+      "url": "/not_messenger/js/acceptance_fixes.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024801,
+      "url": "/not_messenger/js/acceptance_v50.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024805,
+      "url": "/not_messenger/js/acceptance_v51.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024812,
+      "url": "/not_messenger/js/acceptance_v52.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024813,
+      "url": "/not_messenger/js/acceptance_v54.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024813,
+      "url": "/not_messenger/js/acceptance_v55.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024821,
+      "url": "/not_messenger/js/vendor/nacl-fast.min.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024822,
+      "url": "/not_messenger/js/vendor/nacl-util.min.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024827,
+      "url": "/not_messenger/js/vendor/qrcode.min.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024840,
+      "url": "/not_messenger/js/vendor/html5-qrcode.min.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024844,
+      "url": "/not_messenger/js/vendor/argon2-bundled.min.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024846,
+      "url": "/not_messenger/js/vendor/argon2.wasm",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024854,
+      "url": "/not_messenger/js/vendor/kyber768.js",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108024856,
+      "url": "/not_messenger/js/vendor/kyber768.wasm",
+      "latest": true
+    },
+    {
+      "type": "http",
+      "at": 1792108026703,
+      "url": "/not_messenger/nodes.json",
+      "latest": true
+    },
+    {
+      "type": "console",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    }
+  ],
+  "cacheObservation": {
+    "activationMessages": [
+      {
+        "at": 1792108024230,
+        "type": "DMASH_RELEASE_ACTIVATED",
+        "release": "transport-v3-node-preparation-20261008.36"
+      },
+      {
+        "at": 1792108026642,
+        "type": "DMASH_RELEASE_ACTIVATED",
+        "release": "transport-v3-node-preparation-20261008.37"
+      }
+    ],
+    "href": "http://127.0.0.1:43843/not_messenger/fixture.html",
+    "baseURI": "http://127.0.0.1:43843/not_messenger/fixture.html",
+    "controller": "http://127.0.0.1:43843/not_messenger/sw.js",
+    "caches": [
+      {
+        "name": "dmash-static-transport-v3-node-preparation-20261008.37",
+        "requests": [
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/index.html",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/manifest.json",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/nodes.json",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/css/foundation.css",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/css/app_shell.css",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/css/runtime_fixes.css",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/release.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/locales/en.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/locales/ru.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/i18n.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/app_shell.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/ui_logic.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_manager.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/secure_session.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/device_client_v3.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/device_authority_v3.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/device_envelope.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/device_inbox.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/account_node_inbox_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/account_node_transport_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/private_routes_v3.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/contact_bootstrap_v3.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/contact_flow_v3.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/core_engine.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/storage.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/device_root.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_identity.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_admission_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_registration_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_relationships_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_socket_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_channel_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/probe_primitives_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/route_discovery_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/recipient_payload_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_routing_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_inbox_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_local_delivery_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_runtime_host_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/node_runtime_worker_v4.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/vendor/blake3.min.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/call_session.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/call_signaling.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/call_admission_worker.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/call_runtime.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/account_ratchet.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/saved_messages.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/chat_cipher.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/chat_password.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/account_ratchet_runtime.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/account_recorded_media.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/file_channel.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/file_vault.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/file_session.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/file_runtime.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/recorded_note_turn.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/device_routes.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/dmash_links.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/quick_name_registry.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/contact_payloads.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/contact_transport.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/pending_contact_requests.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/resource_pow.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/ui_global_bridge.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/runtime_fixes.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/public_contact_runtime.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/acceptance_fixes.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/acceptance_v50.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/acceptance_v51.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/acceptance_v52.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/acceptance_v54.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/acceptance_v55.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/vendor/nacl-fast.min.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/vendor/nacl-util.min.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/vendor/qrcode.min.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/vendor/html5-qrcode.min.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/vendor/argon2-bundled.min.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/vendor/argon2.wasm",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/vendor/kyber768.js",
+            "cache": "default"
+          },
+          {
+            "url": "http://127.0.0.1:43843/not_messenger/js/vendor/kyber768.wasm",
+            "cache": "default"
+          }
+        ],
+        "relativeCatalog": true,
+        "absoluteCatalog": true
+      }
+    ]
+  },
+  "result": "PASS",
+  "harnessCommit": "329f62d18625746308b0af42d41bea1f8b637795",
+  "scope": "BROWSER local genuine SW36->37 lifecycle/HTTP-cache/offline/ghost tests; syntheticsentinels only, not fullAccount/UI/Mesh acceptance"
+}

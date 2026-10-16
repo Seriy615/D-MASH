@@ -5,7 +5,7 @@
 `gpt-6.1-sol` и `gpt-6-luna`. Прежние агенты не возобновляются; новые
 `node_sol` и `public_sol` созданы с явным `gpt-6.1-sol`.
 Предыдущие full UNIT были намеренно прерваны по СТОП: итоговый PASS отсутствует.
-Production PWA36 deployed992adf9; acceptance FAIL stale catalog, подробности ниже.
+ProductionPWA37 exact3a784 deployed и scoped browserPASS; fullgoal НЕ DONE, детали ниже.
 
 Дата среза: **15 октября 2026 года, UTC**. Этот файл — единственная
 текущая сводка состояния. Старые checkpoints сохранены в
@@ -58,34 +58,50 @@ HTTPS index/SW/release exact; это source proof, не новая browser accep
 [Fresh deployed source check](docs/evidence/2026-10-15/production35-exact-source.json).
 Текущие исполнители (явноgpt-6.1-sol): node_sol N4 browser, public_sol
 canonical/fullUNIT, node_ui_sol minimal endpoint PWA. Старые агенты не возобновлены.
-PWA36 и API infrastructure обновлены, backend code прежний; см. текущую приёмку ниже.
+PWA37 и API infrastructure обновлены, backend code прежний; см. scopedприёмку ниже.
 Предыдущая остановка была8октября; ниже сохранены scoped результаты и остаток.
 
-**Текущая production PWA (15 октября, после исходного .35 baseline):**
-stock `/home/jcode/D-MASH/tools/get_commit.sh` exit0 deployed exact
-`992adf973820e09ee1fbefe0167eb93ef1acfffe`, branch `transport-v3`, `.36`.
-Root verifier215/215 files, extras/missing/changed0, HTTPS index/SW/release exact.
-Этот merge имеет product/backend/tools trees byte-identical fullUNIT bfff;
-добавлены только текущие docs/evidence. Backend runtime code остаётся6a.
-Normal Chromium existing35profile: actual page+activeSW36 update PASS,
-wrappedRoot/pairing сохранены, visible canonical pinnedNode+DNSSready PASS.
-**Общая browser acceptance FAIL SW-CATALOG-STALE-36:** controlled fetch и
-единственный cache36 содержат старый nodes.json c2eb… вместо server ff49… .
-No manual cache clear/reset; node_ui_sol готовит `.37` fresh install/catalog
-network-first +ownversion cachefallback, meaningfulRED→GREEN, realSWtest ещёNOTRUN.
-Saved:4distinct rows после actualSEND/reopen наблюдались, но полный scopedgate
-не принят из-за harness ciphertext/locator/async/prefix assertions; retest needed.
-OWNINGcontext fresh snapshot13163B/1origin/4DB protected; secondary36B emptyorigins
-не backup. Root Chrome9484 закрыт; correctedN4 browser сейчас уnode_sol.
-[Exact deployed source](docs/evidence/2026-10-15/production36-exact-source.json),
-[normal deployed profile / cache bug](docs/evidence/2026-10-15/qa-proxy36-deployed-profile.json).
+**Текущая production PWA (15–16 октября 2026, UTC):** stock
+`/home/jcode/D-MASH/tools/get_commit.sh` exit0 deployed exact
+`3a784714060f5645d1b6317c87c59285e1f95b39`, pushed `transport-v3`, `.37`.
+Source216/216PWA exact, extras/missing/changed0; combinedPWA/backend264/264 exact,
+HTTPSindex/SW/release exact. Backend code/schema unchanged from6a;
+API/signaling/TURN canonical `proxy.d-mash.ru`, existingEMS85.198.64.183.
+Full UNIT exact3a784:286Python/11Origin/101JS PASS; no failedsuites.
+Root **DEPLOYED scopedPASS** on SAME retained35→36→37 syntheticprofile:
+normal page/activeSW37,100phase1responsehashes exact, unhandledpageerrors0;
+wrappedRoot/pairing preserved, visible pinnedcanonicalNode+DNSSready;
+Saved4oldrows readable +newSEND/reopen once (5rows) PASS. Normal controlled
+catalogfetch SHA ff4979… and ONLYcache37, no manualcache/storageclear.
+SW-CATALOG-STALE-36 закрыт этим exact37retest; original36FAIL сохранён.
+Local genuineSW36→37 fixture PASS: stale1yHTTPcatalog bypassed, ownversion
+fallbackoffline, ghostoldscriptdenied, syntheticlocalStorage+IDBsentinels preserved.
+OriginallocalfixtureFAILs были prematureasyncpolling; corrected harness329f62d
+проверен, sourceproduct неизменён. Current docs/toolhead может быть новее
+production productSHA; PWA/backend/testinput trees сравниваются отдельно.
+FreshOWNINGsnapshot13577B/1origin/4DB protected, rootChrome9484 closed.
+Это endpoint/SW/localhistory acceptance, **не fullNode/contact/media/N8DONE**.
+[Source](docs/evidence/2026-10-15/production37-exact-source.json),
+[UNIT](docs/evidence/2026-10-15/proxy37-unit-summary.json),
+[deployedprofile](docs/evidence/2026-10-15/qa-proxy37-deployed-profile.json),
+[genuineSWupdate](docs/evidence/2026-10-15/qa-sw37-local-update.json).
+
+**N4 на текущем Node candidate:** correctedb6/829UTF8 freshgate уnode_sol,
+SAME live28895/CDP9493, separatePythonNode; Rootне запускаетChrome параллельно.
+Предыдущий32182 дошёл до gen2, APPLIEDonce, freshciphertext/outeroperation,
+oldrootreplaydeny и verifiedCONTROLACK retirement, **но общийFAILsourcegate**:
+8/136responses четырёх nonASCIIJSfiles decodedWindows1252 vsGitUTF8.
+Fixturecharsetfix829 +fastHTTPcallbackRED→GREEN; freshbrowserverification идёт,
+не переобозначать старыйFAIL вPASS. Senderoffline/newterminal/collision matrix
+ещёNOTRUN/fullN4OPEN.
+[Encodinggate scope](docs/evidence/2026-10-15/qa-n4-control-encoding-source-gate.json).
 
 **Актуальная инфраструктура API (15 октября):** пользователь назначил
 `proxy.d-mash.ru` на прежнем EMS `85.198.64.183`; прежние stage/API hostnames
 удалены/не использовать. Root применил проверенные tools из published
 `codex/canonical-ems-domain=9748e95ab54d48987efb8822ed3ad0db6fb32398`:
 отдельный ACME/TLS-vhost, четыре exact API location, затем scoped migration
-двух существующих конфигов signaling/TURN. На этапе infra backend/PWA не менялись; позже PWA36 deployed отдельно, см. выше.
+двух существующих конфигов signaling/TURN. На этапе infra backend/PWA не менялись; позже PWA36→37 deployed отдельно, см. выше.
 Protected consistent runtime backup:16files/4SQLite quick_check PASS;
 5identity/key/secret files byte-identical, TURN realm/sharedsecret сохранены.
 nginx/dmash-node/dmash-sturn active. Public normalTLS +все4WS101 PASS;
@@ -93,7 +109,7 @@ real external signaling roundtrip и TURN3479 UDP/TCP relay integrity PASS.
 После операции PWA214/214 exact6a/.35, extras/missing/changed0.
 Это **DEPLOYED INFRA**, не UI/media/fullNode PASS. Canonical PWA emergency
 release готовит node_ui_sol отдельно от broadNode candidate; старые клиенты
-до автоматического обновления могут содержать retiredhost; stale SW catalog требует37.
+до автоматического обновления могут содержать retiredhost; stale SW catalog исправлен37; initialphase0 старогоSW не считать новымsourcePASS.
 [Проверки и protected rollback paths](docs/evidence/2026-10-15/proxy-domain-infrastructure.json).
 
 **Node/Public candidates:** broad canonical9748 (изb6 +reviewed PUBLIC authority)
@@ -111,7 +127,7 @@ rekey/sender-offline NOT RUN. Protected snapshots сохранены, owned brow
 закрыты. Исправленный83c5ad3 требует отдельного bounded rerun, FullN4 OPEN.
 [Границы N4 проверки](docs/evidence/2026-10-15/qa-n4-control-harness-race.json).
 
-**Emergency endpoint PWA candidate:** minimal production6a→
+**Проверенная база emergency endpoint PWA36:** minimal production6a→
 `bfff0caa7cbde2d64f974fab22d4c64a67c71d41`,6files, page/SW `.36`, без
 PUBLICauthority/FileRuntime/newNode изменений. Полный UNIT PASS286Python,
 11Origin,100JS (Python3.12.14/Node24.19.0), clean exact source.

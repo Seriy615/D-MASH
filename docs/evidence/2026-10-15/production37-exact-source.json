@@ -1,0 +1,22 @@
+{
+  "sha": "3a784714060f5645d1b6317c87c59285e1f95b39",
+  "stockGetCommitExit": 0,
+  "pwa": {
+    "checked": 216,
+    "missing": [],
+    "changed": [],
+    "extras": [],
+    "httpsExact": {
+      "index.html": true,
+      "sw.js": true,
+      "js/release.js": true
+    }
+  },
+  "pwaAndBackendSource": {
+    "checked": 264,
+    "missing": [],
+    "changed": []
+  },
+  "backendUpgrade": false,
+  "backendContentIdenticalTo": "6a01feb252c1b94772a2b19503c9e1576a8c6356"
+}

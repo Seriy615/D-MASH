@@ -1,0 +1,13 @@
+{
+  "sha": "3a784714060f5645d1b6317c87c59285e1f95b39",
+  "worktree_clean": true,
+  "scope": "UNIT only; not browser or deployed",
+  "python": "3.12.14",
+  "node": "24.19.0",
+  "exit_code": 0,
+  "backend_tests": 286,
+  "origin_tests": 11,
+  "js_suites_passed": 101,
+  "failed_suites": [],
+  "log_sha256": "0b749bb747fa5429934f5ee5097e8702ca761c68cea9f5963f28b309d85b2d04"
+}

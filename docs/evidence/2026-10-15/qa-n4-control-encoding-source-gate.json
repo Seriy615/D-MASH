@@ -1,0 +1,102 @@
+{
+  "productSha": "b6ad115e26179b154ac0d4825a760f07ad50157f",
+  "harnessSha": "beeaed622bc7296bc14e5ac12693d2b48cfe29f6",
+  "result": "FAIL_SOURCE_RESPONSE_GATE",
+  "scope": "BROWSER mechanism real Chromium/two Workers/separate Python Node; synthetic Accounts; not ordinary UI/deployed/full N4",
+  "protocolFinalStageObserved": true,
+  "stages": [
+    {
+      "stage": "python-hub-ready",
+      "at": "2026-10-15T23:31:06.895Z"
+    },
+    {
+      "stage": "managed-worker-0-ready",
+      "at": "2026-10-15T23:31:56.580Z"
+    },
+    {
+      "stage": "managed-worker-1-ready",
+      "at": "2026-10-15T23:32:27.466Z"
+    },
+    {
+      "stage": "initial-confirmed-after-lost-final",
+      "at": "2026-10-15T23:33:56.051Z"
+    },
+    {
+      "stage": "control-pending-sender-held",
+      "at": "2026-10-15T23:33:56.548Z"
+    },
+    {
+      "stage": "recipient-control-committed-first-transport-ack-lost",
+      "at": "2026-10-15T23:34:25.244Z"
+    },
+    {
+      "stage": "one-sided-active-state-lost-with-pending-outbox",
+      "at": "2026-10-15T23:34:35.244Z"
+    },
+    {
+      "stage": "authenticated-successor-session-established",
+      "at": "2026-10-15T23:37:24.252Z"
+    },
+    {
+      "stage": "control-successor-applied-once-and-authenticated-ack-retired",
+      "at": "2026-10-15T23:38:58.835Z"
+    },
+    {
+      "stage": "FAIL: loaded response differs from frozen source",
+      "at": "2026-10-15T23:38:59.387Z"
+    },
+    {
+      "stage": "FAIL_RETAINED_CDP9493_SAME_PROCESS",
+      "at": "2026-10-15T23:39:00.164Z"
+    }
+  ],
+  "responseHashes": {
+    "captured": 136,
+    "matching": 128,
+    "mismatching": 8,
+    "uniqueMismatches": [
+      {
+        "path": "/js/route_discovery_v4.js",
+        "expectedSha256": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+        "capturedSha256": "6672d5930374fdedb274e1bbff3484ce7fa45a66b797339b49d37263c2208d9e",
+        "whatwgWindows1252ReencodedSha256": "6672d5930374fdedb274e1bbff3484ce7fa45a66b797339b49d37263c2208d9e",
+        "encodingMatches": true,
+        "sourceBytes": 9374,
+        "reencodedBytes": 9379
+      },
+      {
+        "path": "/js/core_engine.js",
+        "expectedSha256": "5628cc19df5f9acd46afc1257270fa6a5d40ee7a68f70b01c2520478e70db3ef",
+        "capturedSha256": "dfb6e55089da7748369dd9cbd099f928170fd3a9864ce4d73fbdd56f05240002",
+        "whatwgWindows1252ReencodedSha256": "dfb6e55089da7748369dd9cbd099f928170fd3a9864ce4d73fbdd56f05240002",
+        "encodingMatches": true,
+        "sourceBytes": 227709,
+        "reencodedBytes": 256322
+      },
+      {
+        "path": "/js/vendor/kyber768.js",
+        "expectedSha256": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+        "capturedSha256": "36e15a3d492ae8a6c906ba5b981df882e775b76c67203b2dde0d6dadea5a2485",
+        "whatwgWindows1252ReencodedSha256": "36e15a3d492ae8a6c906ba5b981df882e775b76c67203b2dde0d6dadea5a2485",
+        "encodingMatches": true,
+        "sourceBytes": 12196,
+        "reencodedBytes": 12258
+      },
+      {
+        "path": "/js/storage.js",
+        "expectedSha256": "a9c925caf69bea63d56a0a54e0391eb804b78377c05d8b89b4a2a5074e71742d",
+        "capturedSha256": "59ad04cd1aa430f5aabe9bf4829d0302e79ff1160753d7239982f89fa1d7951d",
+        "whatwgWindows1252ReencodedSha256": "59ad04cd1aa430f5aabe9bf4829d0302e79ff1160753d7239982f89fa1d7951d",
+        "encodingMatches": true,
+        "sourceBytes": 40770,
+        "reencodedBytes": 41759
+      }
+    ]
+  },
+  "diagnosis": "Fixture HTML/JS lacked explicit charset; every captured mismatch hash equals WHATWG Windows-1252 decoding then UTF-8 reencoding of frozen source. This does not retroactively satisfy original exact-response assertion.",
+  "nextHarnessFixSha": "829bfb2bbaf7f5cd55e2f426394b807684b0fb09",
+  "followupRequired": "Fresh bounded UTF-8 fixture run and exact response gate; sender-offline not run",
+  "processesClosed": true,
+  "storageReset": false,
+  "timeoutInflation": false
+}

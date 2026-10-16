@@ -4,12 +4,14 @@
 Исходный shared checkout `/home/jcode/D-MASH` остаётся HEAD62f97d7 на
 `transport-v3` с ценным agentWIP; reset/clean/pull поверх него не выполняются.
 Root интеграция/context `/tmp/dmash-oct15-integration`, `codex/oct15-integration`;
-remote transport-v3 и PWA product release992adf973820e09ee1fbefe0167eb93ef1acfffe.
+PWA product release3a784714060f5645d1b6317c87c59285e1f95b39 pushed через
+transport-v3; currentbranchhead может включать более новые docs/harness-onlycommits.
 Ниже8Oct source-sync — historical baseline, не утверждение currentcleanHEAD.
 Контекст синхронизируется отдельно с protected backup; sourceWIP сохраняется.
 User explicitly назначил API proxy.d-mash.ru на прежнем EMS85.198.64.183;
 это отдельная авторизованная infraоперация, Nodeidentities/keys/DB сохранены.
-PWA36 exact215file PASS, realSW/page36 PASS, catalog browserFAIL требует37.
+PWA37 exact216PWA/264combinedsource PASS, normalSW/page37/canonicalcatalog/
+preservedroot+pairing+SavedUI scopedPASS. Original36catalogFAIL закрыт37retest.
 Только делегированные gpt-6.1-sol/gpt-6-luna; прежниеunknownagents не возобновлять.
 
 Дата: 8 октября 2026, Europe/Moscow. Пользователь назначил forge-vps для
