@@ -95,13 +95,40 @@ visible texts exactlyonce bothways;266capturedappresponses exact, pageerrors0.
 N3-COMPOSER-LATENCY-01 / N3-LOCAL-SEND-LATENCY-01 closed ONLY for this retained
 sourceUI scope. OriginalFAILs remain recorded; coldPRIVATE key244s gate NOT retested.
 Source overlay/managedoptin/SW BLOCKED, **not DEPLOYED or full N3/N4 DONE**.
-Full UNIT8330 now livepublic_sol SAME43043, protected /tmp/dmash-8330-full-unit.log;
-DO NOT restart without verifying livehandle. Root no-chat recipientreload/login/
-Saved scenario now SAME80227/CDP9485; rootkeeper77016 remains live.
-New no-chat timing shares host withfullUNIT; not isolatedperformance evidence.
+Full UNIT8330 **PASS exit0:293Python/11Origin/143JS**, sourceclean;
+protectedlog /tmp/dmash-8330-full-unit.log SHA2561b3414f10a7deb38ee220dc97b563222a6ab828f8a0fe317499cce077452a549.
+[UNIT scope](docs/evidence/2026-10-16/journal8330-full-unit-summary.json).
+Root subsequentno-chat runs80227/83102/12215 **INVALID exactsourceproof**:
+after8330UIrunner disconnected, its page routes disappeared and receiverreload
+fell back to originalkeeper9748/.35. Retained8330gate above remainedgenuine
+266hashPASS whilethatclientheldroutes. Originalmixedsourcefailurespreserved.
+[Disposition](docs/evidence/2026-10-16/qa-nochat-prior-source-gate-invalid.json).
+Correctednochat SAME93360 completed genuineFAIL/manualrecoveryPASS below;
+PERSISTENT8330overlaykeeper42369(pid1743110) remainslive,
+originalbrowserkeeper77016/CDP9485stilllive. Compilejournalfunctionhash+release
+checkedonbothpages beforefreshuniqueauthenticatedACK-before-chatopengate.
+Do NOT restart/close anykeeper before freshprotectedexports and root handback.
 Freshcustomrawstorageexports133303/140859B,7DBeach600 outsideGit; restoreNOTRUN,
 not validatedrollback backups. Originalowningsnapshots beforepair preserved.
 [Retained actual UI and exact source](docs/evidence/2026-10-16/qa-journal-validation-retained-ui.json).
+
+**N3-ACCOUNT-RECEIVER-STARTUP-01 exact8330 BROWSER FAIL:** corrected genuine
+93360 terminal after source-pinned overlay42369; both pagesrelease37+compiled
+journalSHA7159acc3… match8330,133/133 freshreceiverresponses exact/errors0.
+Afterreload/PIN/login/actualNodeConnect/Saved, Nodealive but AccountadapterNOTopen.
+UniqueNEWoperation authenticatedsenderACK absent180.041s; SAMEprofiles actual
+manualcontactopen then newmessageonce +authenticatedsenderDELIVERED PASS.
+Identities/root/Node preserved. Earliergenericunread/mixedsource runs INVALID
+remainseparate; this is fresh exactsource failure, notretroactive acceptance.
+Ownernode_sol NEWworktree /tmp/dmash-account-receiver-startup from8330;
+REDbd663a9 reproducesmissingAccountsessionstartupconsumer. Minimalmanaged-only
+subscription→rootlifecycle→rehydrate→onewatch implementation/reviewpending;
+no NodeHost/keys/wire/legacyfallback changes. Root browser9485/originalkeeper77016
+and persistentoverlay42369(pid1743110) remainlive;93360closedrunneronly.
+**LocalSEND25.827s whenpriorreceiver-inactive retriesqueued remainsOPEN**, despite
+cleanerretainedUI1.4–1.9s PASS; do notclaimall latencyfixed. FullUNIT endedbefore
+this correctedrun; stale copiedconcurrentlimit notcurrentevidence.
+[Exact-source no-chat failure/manual recovery](docs/evidence/2026-10-16/qa-nochat-exact8330-fail.json).
 
 **Актуальная инфраструктура API (15 октября):** пользователь назначил
 `proxy.d-mash.ru` на прежнем EMS `85.198.64.183`; прежние stage/API hostnames

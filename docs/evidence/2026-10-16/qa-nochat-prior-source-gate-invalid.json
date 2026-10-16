@@ -1,0 +1,15 @@
+{
+  "result": "INVALID_EXACT_SOURCE_GATE",
+  "reason": "After retained8330 runner disconnected its page routes were removed; subsequent reload fell back to original keeper9748 routes. Read-only DOM showed sender37, receiver35. Nochat source8330 labels were hardcoded and unsupported.",
+  "reportsPreserved": [
+    "nochat-receive.json",
+    "nochat-authenticated-receive.json",
+    "nochat-new-operation-ack.json"
+  ],
+  "scopedResultsUnaffected": [
+    "8330 full UNIT293/11/143 PASS",
+    "Retained8330 actualUI266responsehashes while fixed runner held routes PASS"
+  ],
+  "correctiveAction": "Persistent overlay keeper42369 and compiled journal function/release fingerprints on both pages before new operation, fresh response source hashes",
+  "noStorageReset": true
+}

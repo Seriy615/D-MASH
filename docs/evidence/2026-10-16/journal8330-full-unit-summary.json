@@ -1,0 +1,15 @@
+{
+  "sha": "8330be8eb89af5e5eb212c6ea6380495b4cb587a",
+  "worktree_clean": true,
+  "scope": "UNIT only; not browser/deployed/fullgoal",
+  "python": "3.12.14",
+  "node": "24.19.0",
+  "exit_code": 0,
+  "backend_tests": 293,
+  "origin_tests": 11,
+  "js_suites_passed": 143,
+  "failed_suites": [],
+  "log_sha256": "1b3414f10a7deb38ee220dc97b563222a6ab828f8a0fe317499cce077452a549",
+  "raw_log": "/tmp/dmash-8330-full-unit.log",
+  "limits": "Root browser no-chat investigation ran concurrently; browser latency may reflect host contention. This test result is separate from browser/deployed acceptance."
+}

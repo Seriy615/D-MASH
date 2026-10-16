@@ -1,0 +1,85 @@
+{
+  "productSha": "8330be8eb89af5e5eb212c6ea6380495b4cb587a",
+  "scope": "Actual retained recipient reload/login + Node-connect UI + Saved selected; sender actual SEND; no adapter/Core network calls before unread observation; source overlay/SW blocked, real public EMS",
+  "limits": [
+    "Source overlay/SW blocked and real public EMS, not production acceptance",
+    "Full UNIT8330 ended before this corrected run; copied earlier concurrent-UNIT limit in raw report was stale",
+    "Frozen8330 keeper persisted across recipient reload, 133/133 captured receiver app responses match; sender earlier8330 retained gate266/266 exact and compiled journal fingerprint rechecked",
+    "Functional no-chat FAIL180.041s; local visible SEND25.827s under queued prior retries remains OPEN",
+    "Prior mixed-source/generic-unread runs remain separately INVALID source proof"
+  ],
+  "steps": [
+    {
+      "id": "recipient-reload-login-preserved",
+      "at": "2026-10-16T00:56:57.563Z",
+      "status": "PASS",
+      "seconds": 30.26
+    },
+    {
+      "id": "recipient-node-connect-without-contact-open",
+      "at": "2026-10-16T00:57:27.834Z",
+      "status": "PASS",
+      "seconds": 6.72
+    },
+    {
+      "id": "sender-SEND-durable-local-row",
+      "at": "2026-10-16T00:57:34.748Z",
+      "status": "PASS",
+      "seconds": 25.827
+    },
+    {
+      "id": "new-operation-authenticated-ACK-before-recipient-open",
+      "at": "2026-10-16T00:58:00.576Z",
+      "status": "FAIL",
+      "error": "locator.waitFor: Timeout 180000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#log .msg').filter({ hasText: 'NOCHAT actual UI 1792112217563' }).locator('.m-state[title=\"Получение подтверждено собеседником\"]') to be visible\u001b[22m\n",
+      "seconds": 180.041
+    },
+    {
+      "id": "manual-contact-open-delivers-once",
+      "at": "2026-10-16T01:01:00.651Z",
+      "status": "PASS",
+      "seconds": 8.42
+    },
+    {
+      "id": "sender-authenticated-DELIVERED",
+      "at": "2026-10-16T01:01:09.071Z",
+      "status": "PASS",
+      "seconds": 7.246
+    }
+  ],
+  "sourceFingerprints": [
+    {
+      "release": "transport-v3-node-preparation-20261008.37",
+      "journalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7",
+      "expectedJournalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7"
+    },
+    {
+      "release": "transport-v3-node-preparation-20261008.37",
+      "journalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7",
+      "expectedJournalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7"
+    }
+  ],
+  "recipientBeforeSend": {
+    "accountAdapterOpened": false,
+    "rootNodeAlive": true,
+    "selectedSaved": true
+  },
+  "recipientAfterWait": {
+    "accountAdapterOpened": false,
+    "rootNodeAlive": true,
+    "selectedSaved": true
+  },
+  "result": "FAIL no-chat; manual-open recovery separate PASS",
+  "recipientIdentityRootNodePreserved": true,
+  "persistentOverlaySource": {
+    "sha": "8330be8eb89af5e5eb212c6ea6380495b4cb587a",
+    "responses": 133,
+    "allCapturedExact": true,
+    "sourceErrors": []
+  },
+  "sourceGate": "PASS compiled journal fingerprints/release both pages + captured response hashes",
+  "resultScope": "FAIL no automatic Account receive after login while Saved; manual actual contact open restores new message once and authenticated sender receipt",
+  "bugOwner": "node_sol",
+  "fixStatus": "RED startup hook regression committed bd663a9 in /tmp/dmash-account-receiver-startup; implementation/review pending",
+  "storageReset": false
+}
