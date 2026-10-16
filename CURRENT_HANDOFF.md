@@ -7,7 +7,7 @@
 Предыдущие full UNIT были намеренно прерваны по СТОП: итоговый PASS отсутствует.
 ProductionPWA37 exact3a784 deployed и scoped browserPASS; fullgoal НЕ DONE, детали ниже.
 
-Дата среза: **15 октября 2026 года, UTC**. Этот файл — единственная
+Дата среза: **16 октября 2026 года, UTC**. Этот файл — единственная
 текущая сводка состояния. Старые checkpoints сохранены в
 [docs/archive/2026-10-08](docs/archive/2026-10-08/). Они не задают текущий план.
 
@@ -102,6 +102,28 @@ Senderoffline/newterminal/collision/fullN4 matrix, ordinary UI/production и med
 UI gate на canonical9748 через proxy без DNS override, CDP9485.
 [Fresh scoped PASS](docs/evidence/2026-10-15/qa-n4-control-utf8-browser.json),
 [previous source gate](docs/evidence/2026-10-15/qa-n4-control-encoding-source-gate.json).
+
+**Ordinary PRIVATE Node UI baseline (16 октября):** exact canonical9748,
+explicit managed-v4/source overlay, SW BLOCKED, real proxyTLS без DNSoverride.
+Два synthetic root/Account setup и Nodeconnect PASS; actual PRIVATE QR visibleIMG,
+copy→inspect correctAccountID→request→повторные Confirm/Refresh clicks PASS.
+Original hidden-first canvas locator и premature PUBLIC_SESSION_REQUIRED getter
+harnessFAILs сохранены, не product bugs. Captured264appresponses byte-exact.
+**N3-PRIVATE-KEY-LATENCY-01 FAIL:** bilateralkey gate244.777s >240s;
+позднее оба ESTABLISHED/gen1, оба authenticated bootstrap receipts имеются.
+Это eventual recovery, не ретроактивный latencyPASS и не permanentdeadlock.
+**N3-COMPOSER-LATENCY-01 FAIL:** после visible keysconfirmed/closepanel/sidebar
+select composerhidden >20s; позднее первый composer visible. Точная причина
+ещё исследуется; не приписывать её шифрованию без измерений.
+**N3-LOCAL-SEND-LATENCY-01 FAIL:** actual SEND не показал senderrow за5s;
+позднее одна localrow PENDING, у receiver0rows (00:20:47Z). OriginalFAIL
+не переименован. Owner node_sol: assigned bounded authenticated validation-reuse fix after profiling;
+mainpage NaCl hotfunctions77–81% samples, Workers96–98%idle;
+RouteJournal100/104completedreads average~1.95s (overlap, не суммировать какwalltime).
+Fresh coherentDB/AESauth/CAS/owner/expiry/root checks должны сохраняться.
+[Diagnostic and limits](docs/evidence/2026-10-15/qa-node-main-thread-validation-diagnostic.json).
+Recipient delivery/reload/no-chat ещё NOT RUN. SAME identities/root/Node сохранены, browser9485/keeper77016 live.
+[Baseline and limits](docs/evidence/2026-10-15/qa-private-node-ui-baseline.json).
 
 **Актуальная инфраструктура API (15 октября):** пользователь назначил
 `proxy.d-mash.ru` на прежнем EMS `85.198.64.183`; прежние stage/API hostnames
@@ -650,15 +672,16 @@ owner/proxy/ports, сохранить identities и state, проверить ro
 ## 6. Как воспроизвести и что делать первым
 
 Продолжение после явного resume: сначала проверить сохранённые worktrees и
-точные SHAs контрольной точки выше. Production PWA `.35` проверять против
-`6a01feb252c1b94772a2b19503c9e1576a8c6356`, не против docs-only HEAD.
+точные SHAs контрольной точки выше. Production PWA `.37` проверять против
+`3a784714060f5645d1b6317c87c59285e1f95b39`, не против более нового docs/tools HEAD.
 Reference Node24: `/tmp/dmash-browser-tools/node-v24.19.0-linux-x64/bin/node`,
 Playwright `/tmp/dmash-browser-tools/node_modules/playwright`, Chromium
 `/home/jcode/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome`.
 Полный suite: `.venv/bin/python tools/test_all.py` с Node24 в PATH.
 Production verifier и безопасный fast-forward publisher:
-`/tmp/dmash-verify35.py`, `/tmp/dmash-publish-checkpoint35.sh` (старые SHAs в
-publisher не переиспользовать без проверки remote).
+`/tmp/dmash-verify37.py`; publisher использует temporary bare + incremental
+Git bundle через EMS, normal fast-forward. Старые expected-base/publish SHAs
+не переиспользовать без проверки фактического remote.
 
 Raw evidence и encrypted synthetic snapshots вне Git,0600:
 `/tmp/dmash-qa-mobile35-inline-repeat.json`,
@@ -671,8 +694,13 @@ owned-context snapshots выше. Post-media read-only raw IDB export:
 на профиль; Blob/typed bytes закодированы, restore fixture НЕ проверен. Не импортировать пустую secondaryCDP запись как restore.
 Browser helper `/tmp/dmash-root35-retained-media.cjs`: настоящие клики,
 synthetic ONLY; snapshots нельзя применять к реальным Accounts.
-После сегодняшнего checkpoint live browser/test processes закрываются;
-старые handles не считать живыми без проверки.
+Завершённые старые browser/test processes закрыты; старые handles не считать
+живыми без проверки. Root текущий ordinary PRIVATE gate сохраняет CDP9485/
+keeper77016, same-profile continuation60861; НЕ закрывать до свежего protected
+экспорта и явного handback. Raw reports /tmp/dmash-private-canonical-oct16/.
+Original QR hidden-first locator FAIL сохранён; visibleIMG/copy/inspect/request
+PASS в same-profile continuation. Это не product QR failure. Ordinary text,
+reload/no-chat delivery ещё не приняты.
 
 Основные scripts: `tools/test_node_transit_browser.cjs` +
 `node_transit_v4_browser_server.py`; `test_node_worker_ownership_browser.cjs`;

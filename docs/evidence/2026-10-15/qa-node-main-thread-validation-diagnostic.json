@@ -1,0 +1,5716 @@
+{
+  "scope": "Read-only instrumented diagnostic AFTER original unmodified UI FAIL; not a clean BROWSER acceptance",
+  "productSha": "9748e95ab54d48987efb8822ed3ad0db6fb32398",
+  "tracerCommits": [
+    "88f3027ffccb871a3ed64a4ac103398234bc8e6f",
+    "c440269f6575ccbe1abb05e744fc71d6ef12f75c",
+    "8ed05d9d2051e339ffaadc1bc78546afee1dbbea"
+  ],
+  "workerCpu": [
+    {
+      "worker": 0,
+      "samples": 3485,
+      "top": [
+        [
+          "(idle) ",
+          3428
+        ],
+        [
+          "$ nacl-fast.min.js",
+          24
+        ],
+        [
+          "F nacl-fast.min.js",
+          17
+        ],
+        [
+          "(garbage collector) ",
+          5
+        ],
+        [
+          "q nacl-fast.min.js",
+          2
+        ],
+        [
+          "transaction ",
+          1
+        ],
+        [
+          "encode ",
+          1
+        ],
+        [
+          "addEventListener ",
+          1
+        ],
+        [
+          "Q nacl-fast.min.js",
+          1
+        ],
+        [
+          "nr nacl-fast.min.js",
+          1
+        ],
+        [
+          "V nacl-fast.min.js",
+          1
+        ],
+        [
+          "hex route_discovery_v4.js",
+          1
+        ]
+      ]
+    },
+    {
+      "worker": 1,
+      "samples": 3378,
+      "top": [
+        [
+          "(idle) ",
+          3260
+        ],
+        [
+          "$ nacl-fast.min.js",
+          68
+        ],
+        [
+          "F nacl-fast.min.js",
+          29
+        ],
+        [
+          "(garbage collector) ",
+          4
+        ],
+        [
+          "nr nacl-fast.min.js",
+          4
+        ],
+        [
+          "q nacl-fast.min.js",
+          3
+        ],
+        [
+          "(program) ",
+          1
+        ],
+        [
+          "G nacl-fast.min.js",
+          1
+        ],
+        [
+          "discover node_routing_v4.js",
+          1
+        ],
+        [
+          "edSignature route_discovery_v4.js",
+          1
+        ],
+        [
+          "b64 route_discovery_v4.js",
+          1
+        ],
+        [
+          "TextEncoder ",
+          1
+        ]
+      ]
+    }
+  ],
+  "pageCpu": [
+    {
+      "worker": 0,
+      "samples": 1977,
+      "top": [
+        [
+          "$ nacl-fast.min.js",
+          1023
+        ],
+        [
+          "F nacl-fast.min.js",
+          507
+        ],
+        [
+          "(garbage collector) ",
+          83
+        ],
+        [
+          "(program) ",
+          56
+        ],
+        [
+          "nr nacl-fast.min.js",
+          51
+        ],
+        [
+          "q nacl-fast.min.js",
+          28
+        ],
+        [
+          "decrypt account_route_journal_v2.js",
+          26
+        ],
+        [
+          "transaction ",
+          21
+        ],
+        [
+          "get ",
+          17
+        ],
+        [
+          "schema account_pairing_v2.js",
+          12
+        ],
+        [
+          "unhex route_discovery_v4.js",
+          10
+        ],
+        [
+          "encode ",
+          10
+        ]
+      ]
+    },
+    {
+      "worker": 1,
+      "samples": 2022,
+      "top": [
+        [
+          "$ nacl-fast.min.js",
+          1059
+        ],
+        [
+          "F nacl-fast.min.js",
+          573
+        ],
+        [
+          "(garbage collector) ",
+          74
+        ],
+        [
+          "nr nacl-fast.min.js",
+          37
+        ],
+        [
+          "(program) ",
+          34
+        ],
+        [
+          "decrypt account_route_journal_v2.js",
+          28
+        ],
+        [
+          "q nacl-fast.min.js",
+          26
+        ],
+        [
+          "schema account_pairing_v2.js",
+          20
+        ],
+        [
+          "edSignature route_discovery_v4.js",
+          13
+        ],
+        [
+          "b64 account_route_journal_v2.js",
+          11
+        ],
+        [
+          "z nacl-fast.min.js",
+          11
+        ],
+        [
+          "transaction ",
+          9
+        ]
+      ]
+    }
+  ],
+  "methodTimings": {
+    "scope": "Method timing only; no UI acceptance claim",
+    "mode": "status",
+    "startedAt": "2026-10-16T00:23:27.210Z",
+    "samples": [
+      {
+        "at": "2026-10-16T00:23:30.222Z",
+        "pages": [
+          {
+            "page": 0,
+            "installed": true,
+            "waitingAdapter": false,
+            "optionalSendMethods": true,
+            "optionalStorageMethods": true,
+            "dropped": 0,
+            "records": [
+              {
+                "id": 1,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110161433,
+                "startMs": 1094902.8000001907
+              },
+              {
+                "id": 2,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110161446,
+                "startMs": 1094915.9000000954
+              },
+              {
+                "id": 3,
+                "method": "Host.verifyPreparation",
+                "event": "start",
+                "at": 1792110163338,
+                "startMs": 1096807.8000001907
+              },
+              {
+                "id": 1,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110163347,
+                "elapsedMs": 1914.5999999046326
+              },
+              {
+                "id": 4,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110163349,
+                "startMs": 1096819.5999999046
+              },
+              {
+                "id": 5,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110163353,
+                "startMs": 1096822.8000001907
+              },
+              {
+                "id": 3,
+                "method": "Host.verifyPreparation",
+                "event": "resolve",
+                "at": 1792110164355,
+                "elapsedMs": 1017.2999997138977
+              },
+              {
+                "id": 6,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110164357,
+                "startMs": 1097827.5999999046
+              },
+              {
+                "id": 4,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110164390,
+                "elapsedMs": 1040.3000001907349
+              },
+              {
+                "id": 7,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110164390,
+                "startMs": 1097860.0999999046
+              },
+              {
+                "id": 8,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110164394,
+                "startMs": 1097864.1999998093
+              },
+              {
+                "id": 2,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110164931,
+                "elapsedMs": 3484.9000000953674
+              },
+              {
+                "id": 7,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110164943,
+                "elapsedMs": 552.7000002861023
+              },
+              {
+                "id": 9,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110164943,
+                "startMs": 1098412.9000000954
+              },
+              {
+                "id": 10,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110164947,
+                "startMs": 1098417.6999998093
+              },
+              {
+                "id": 5,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110165299,
+                "elapsedMs": 1946.7999997138977
+              },
+              {
+                "id": 6,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110165965,
+                "elapsedMs": 1608
+              },
+              {
+                "id": 9,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110166054,
+                "elapsedMs": 1111.4000000953674
+              },
+              {
+                "id": 11,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110166056,
+                "startMs": 1099526.5
+              },
+              {
+                "id": 12,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110166058,
+                "startMs": 1099527.8000001907
+              },
+              {
+                "id": 8,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110166440,
+                "elapsedMs": 2046.2000002861023
+              },
+              {
+                "id": 13,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110166447,
+                "startMs": 1099917.1999998093
+              },
+              {
+                "id": 11,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110166454,
+                "elapsedMs": 398
+              },
+              {
+                "id": 14,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110166455,
+                "startMs": 1099924.8000001907
+              },
+              {
+                "id": 15,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110166455,
+                "startMs": 1099924.9000000954
+              },
+              {
+                "id": 10,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110167039,
+                "elapsedMs": 2091.800000190735
+              },
+              {
+                "id": 14,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110167058,
+                "elapsedMs": 603.8999996185303
+              },
+              {
+                "id": 16,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110167059,
+                "startMs": 1100528.8000001907
+              },
+              {
+                "id": 17,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110167059,
+                "startMs": 1100529
+              },
+              {
+                "id": 12,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110167566,
+                "elapsedMs": 1508.2999997138977
+              },
+              {
+                "id": 13,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110167917,
+                "elapsedMs": 1470.4000000953674
+              },
+              {
+                "id": 18,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110167974,
+                "startMs": 1101444.0999999046
+              },
+              {
+                "id": 16,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110167982,
+                "elapsedMs": 923.2999997138977
+              },
+              {
+                "id": 19,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110167982,
+                "startMs": 1101452.1999998093
+              },
+              {
+                "id": 20,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110167985,
+                "startMs": 1101455.6999998093
+              },
+              {
+                "id": 15,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110168619,
+                "elapsedMs": 2164.7999997138977
+              },
+              {
+                "id": 19,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110168639,
+                "elapsedMs": 656.6000003814697
+              },
+              {
+                "id": 21,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110168639,
+                "startMs": 1102108.9000000954
+              },
+              {
+                "id": 22,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110168639,
+                "startMs": 1102109
+              },
+              {
+                "id": 17,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110168914,
+                "elapsedMs": 1855.1999998092651
+              },
+              {
+                "id": 18,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110169507,
+                "elapsedMs": 1532.5999999046326
+              },
+              {
+                "id": 23,
+                "method": "Host.verifyPreparation",
+                "event": "start",
+                "at": 1792110169507,
+                "startMs": 1102976.9000000954
+              },
+              {
+                "id": 21,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110169516,
+                "elapsedMs": 877
+              },
+              {
+                "id": 24,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110169516,
+                "startMs": 1102986
+              },
+              {
+                "id": 25,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110169519,
+                "startMs": 1102989.1999998093
+              },
+              {
+                "id": 20,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110169917,
+                "elapsedMs": 1931.7000002861023
+              },
+              {
+                "id": 23,
+                "method": "Host.verifyPreparation",
+                "event": "resolve",
+                "at": 1792110169923,
+                "elapsedMs": 415.7999997138977
+              },
+              {
+                "id": 26,
+                "method": "Host.ownerDiscover",
+                "event": "start",
+                "at": 1792110169923,
+                "startMs": 1103392.6999998093
+              },
+              {
+                "id": 24,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110169934,
+                "elapsedMs": 417.90000009536743
+              },
+              {
+                "id": 27,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110169934,
+                "startMs": 1103404
+              },
+              {
+                "id": 28,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110169935,
+                "startMs": 1103405.5999999046
+              },
+              {
+                "id": 22,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110170276,
+                "elapsedMs": 1637.4000000953674
+              },
+              {
+                "id": 27,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110170329,
+                "elapsedMs": 394.90000009536743
+              },
+              {
+                "id": 29,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110170329,
+                "startMs": 1103799
+              },
+              {
+                "id": 30,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110170329,
+                "startMs": 1103799.1999998093
+              },
+              {
+                "id": 25,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110170875,
+                "elapsedMs": 1355.8000001907349
+              },
+              {
+                "id": 29,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110170881,
+                "elapsedMs": 552
+              },
+              {
+                "id": 31,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110170881,
+                "startMs": 1104351.0999999046
+              },
+              {
+                "id": 32,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110170881,
+                "startMs": 1104351.3000001907
+              },
+              {
+                "id": 28,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110171421,
+                "elapsedMs": 1485.8000001907349
+              },
+              {
+                "id": 31,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110171430,
+                "elapsedMs": 548.8000001907349
+              },
+              {
+                "id": 33,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110171430,
+                "startMs": 1104900
+              },
+              {
+                "id": 34,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110171431,
+                "startMs": 1104900.9000000954
+              },
+              {
+                "id": 30,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110171862,
+                "elapsedMs": 1532.8000001907349
+              },
+              {
+                "id": 33,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110171875,
+                "elapsedMs": 444.69999980926514
+              },
+              {
+                "id": 35,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110171875,
+                "startMs": 1105344.8000001907
+              },
+              {
+                "id": 36,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110171875,
+                "startMs": 1105345
+              },
+              {
+                "id": 32,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110172286,
+                "elapsedMs": 1404.7999997138977
+              },
+              {
+                "id": 35,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110172299,
+                "elapsedMs": 424.3999996185303
+              },
+              {
+                "id": 37,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110172299,
+                "startMs": 1105769.4000000954
+              },
+              {
+                "id": 38,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110172300,
+                "startMs": 1105770.5999999046
+              },
+              {
+                "id": 34,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110172582,
+                "elapsedMs": 1151.7999997138977
+              },
+              {
+                "id": 26,
+                "method": "Host.ownerDiscover",
+                "event": "resolve",
+                "at": 1792110172583,
+                "elapsedMs": 2660.5
+              },
+              {
+                "id": 39,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110172590,
+                "startMs": 1106059.8000001907
+              },
+              {
+                "id": 37,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110172598,
+                "elapsedMs": 298.59999990463257
+              },
+              {
+                "id": 40,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110172598,
+                "startMs": 1106068.1999998093
+              },
+              {
+                "id": 41,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110172598,
+                "startMs": 1106068.3000001907
+              },
+              {
+                "id": 36,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110173034,
+                "elapsedMs": 1158.6999998092651
+              },
+              {
+                "id": 40,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110173046,
+                "elapsedMs": 446.30000019073486
+              },
+              {
+                "id": 42,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110173047,
+                "startMs": 1106516.8000001907
+              },
+              {
+                "id": 43,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110173047,
+                "startMs": 1106517.0999999046
+              },
+              {
+                "id": 38,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110173390,
+                "elapsedMs": 1089.9000000953674
+              },
+              {
+                "id": 39,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110173742,
+                "elapsedMs": 1152.3999996185303
+              },
+              {
+                "id": 44,
+                "method": "Host.verifyPreparation",
+                "event": "start",
+                "at": 1792110173742,
+                "startMs": 1107212.1999998093
+              },
+              {
+                "id": 42,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110173750,
+                "elapsedMs": 703.1999998092651
+              },
+              {
+                "id": 45,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110173750,
+                "startMs": 1107220.0999999046
+              },
+              {
+                "id": 46,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110173750,
+                "startMs": 1107220.3000001907
+              },
+              {
+                "id": 41,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110174132,
+                "elapsedMs": 1533.1999998092651
+              },
+              {
+                "id": 44,
+                "method": "Host.verifyPreparation",
+                "event": "resolve",
+                "at": 1792110174132,
+                "elapsedMs": 390.2000002861023
+              },
+              {
+                "id": 47,
+                "method": "Host.ownerSubmitSealed",
+                "event": "start",
+                "at": 1792110174132,
+                "startMs": 1107602.4000000954
+              },
+              {
+                "id": 45,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110174147,
+                "elapsedMs": 396.80000019073486
+              },
+              {
+                "id": 48,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110174147,
+                "startMs": 1107617
+              },
+              {
+                "id": 49,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110174151,
+                "startMs": 1107621.6999998093
+              },
+              {
+                "id": 43,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110174626,
+                "elapsedMs": 1579.3000001907349
+              },
+              {
+                "id": 47,
+                "method": "Host.ownerSubmitSealed",
+                "event": "resolve",
+                "at": 1792110174630,
+                "elapsedMs": 497.59999990463257
+              },
+              {
+                "id": 50,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110174630,
+                "startMs": 1108100.0999999046
+              },
+              {
+                "id": 48,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110174642,
+                "elapsedMs": 495
+              },
+              {
+                "id": 51,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110174642,
+                "startMs": 1108112.1999998093
+              },
+              {
+                "id": 52,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110174645,
+                "startMs": 1108114.9000000954
+              },
+              {
+                "id": 46,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110175292,
+                "elapsedMs": 1542.3999996185303
+              },
+              {
+                "id": 51,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110175329,
+                "elapsedMs": 686.9000000953674
+              },
+              {
+                "id": 53,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110175329,
+                "startMs": 1108799.1999998093
+              },
+              {
+                "id": 54,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110175335,
+                "startMs": 1108804.9000000954
+              },
+              {
+                "id": 49,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110175942,
+                "elapsedMs": 1790.5
+              },
+              {
+                "id": 50,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110176475,
+                "elapsedMs": 1845
+              },
+              {
+                "id": 55,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110176475,
+                "startMs": 1109945.1999998093
+              },
+              {
+                "id": 53,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110176500,
+                "elapsedMs": 1171.2000002861023
+              },
+              {
+                "id": 56,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110176500,
+                "startMs": 1109970.5
+              },
+              {
+                "id": 57,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110176500,
+                "startMs": 1109970.8000001907
+              },
+              {
+                "id": 52,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110177127,
+                "elapsedMs": 2481.7999997138977
+              },
+              {
+                "id": 56,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110177136,
+                "elapsedMs": 635.8000001907349
+              },
+              {
+                "id": 58,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110177136,
+                "startMs": 1110606.4000000954
+              },
+              {
+                "id": 59,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110177142,
+                "startMs": 1110612
+              },
+              {
+                "id": 54,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110177572,
+                "elapsedMs": 2237.0999999046326
+              },
+              {
+                "id": 55,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110178029,
+                "elapsedMs": 1554.1000003814697
+              },
+              {
+                "id": 58,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110178049,
+                "elapsedMs": 912.5
+              },
+              {
+                "id": 60,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110178049,
+                "startMs": 1111519.0999999046
+              },
+              {
+                "id": 61,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110178051,
+                "startMs": 1111520.9000000954
+              },
+              {
+                "id": 57,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110178581,
+                "elapsedMs": 2080.5
+              },
+              {
+                "id": 60,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110178586,
+                "elapsedMs": 537.5999999046326
+              },
+              {
+                "id": 62,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110178587,
+                "startMs": 1112056.8000001907
+              },
+              {
+                "id": 63,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110178587,
+                "startMs": 1112057.0999999046
+              },
+              {
+                "id": 61,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110178593,
+                "elapsedMs": 542.7999997138977
+              },
+              {
+                "id": 59,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110179121,
+                "elapsedMs": 1979.6999998092651
+              },
+              {
+                "id": 64,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110179122,
+                "startMs": 1112591.6999998093
+              },
+              {
+                "id": 62,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110179135,
+                "elapsedMs": 548
+              },
+              {
+                "id": 65,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110179135,
+                "startMs": 1112605
+              },
+              {
+                "id": 66,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110179139,
+                "startMs": 1112608.8000001907
+              },
+              {
+                "id": 65,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110179152,
+                "elapsedMs": 16.90000009536743
+              },
+              {
+                "id": 67,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110179152,
+                "startMs": 1112621.9000000954
+              },
+              {
+                "id": 68,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110179152,
+                "startMs": 1112622.0999999046
+              },
+              {
+                "id": 63,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110179664,
+                "elapsedMs": 1076.8000001907349
+              },
+              {
+                "id": 69,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110179664,
+                "startMs": 1113133.9000000954
+              },
+              {
+                "id": 64,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110180080,
+                "elapsedMs": 958.3000001907349
+              },
+              {
+                "id": 67,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110180084,
+                "elapsedMs": 932.5
+              },
+              {
+                "id": 70,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110180084,
+                "startMs": 1113554.5999999046
+              },
+              {
+                "id": 71,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110180084,
+                "startMs": 1113554.6999998093
+              },
+              {
+                "id": 66,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110180613,
+                "elapsedMs": 1474.3999996185303
+              },
+              {
+                "id": 70,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110180622,
+                "elapsedMs": 537.7000002861023
+              },
+              {
+                "id": 72,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110180622,
+                "startMs": 1114092.4000000954
+              },
+              {
+                "id": 73,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110180627,
+                "startMs": 1114097
+              },
+              {
+                "id": 68,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110181088,
+                "elapsedMs": 1935.7000002861023
+              },
+              {
+                "id": 74,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110181088,
+                "startMs": 1114558
+              },
+              {
+                "id": 69,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110181865,
+                "elapsedMs": 2201.5
+              },
+              {
+                "id": 72,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110181887,
+                "elapsedMs": 1264.7999997138977
+              },
+              {
+                "id": 75,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110181887,
+                "startMs": 1115357.3000001907
+              },
+              {
+                "id": 76,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110181887,
+                "startMs": 1115357.5
+              },
+              {
+                "id": 71,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110182436,
+                "elapsedMs": 2351.300000190735
+              },
+              {
+                "id": 77,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110182436,
+                "startMs": 1115906.0999999046
+              },
+              {
+                "id": 75,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110182450,
+                "elapsedMs": 562.6999998092651
+              },
+              {
+                "id": 78,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110182450,
+                "startMs": 1115920.0999999046
+              },
+              {
+                "id": 79,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110182450,
+                "startMs": 1115920.5
+              },
+              {
+                "id": 73,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110182978,
+                "elapsedMs": 2351.4000000953674
+              },
+              {
+                "id": 80,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110182978,
+                "startMs": 1116448.4000000954
+              },
+              {
+                "id": 74,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110183596,
+                "elapsedMs": 2508.5
+              },
+              {
+                "id": 78,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110183602,
+                "elapsedMs": 1152
+              },
+              {
+                "id": 81,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110183602,
+                "startMs": 1117072.1999998093
+              },
+              {
+                "id": 82,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110183602,
+                "startMs": 1117072.5
+              },
+              {
+                "id": 76,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110184080,
+                "elapsedMs": 2193
+              },
+              {
+                "id": 83,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110184081,
+                "startMs": 1117551.6999998093
+              },
+              {
+                "id": 77,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110184503,
+                "elapsedMs": 2067.2000002861023
+              },
+              {
+                "id": 81,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110184508,
+                "elapsedMs": 906.4000000953674
+              },
+              {
+                "id": 84,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110184509,
+                "startMs": 1117978.8000001907
+              },
+              {
+                "id": 85,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110184509,
+                "startMs": 1117979
+              },
+              {
+                "id": 79,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110185029,
+                "elapsedMs": 2578.800000190735
+              },
+              {
+                "id": 86,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110185029,
+                "startMs": 1118499.3000001907
+              },
+              {
+                "id": 87,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110185030,
+                "startMs": 1118500.0999999046
+              },
+              {
+                "id": 80,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110185418,
+                "elapsedMs": 2439.5
+              },
+              {
+                "id": 84,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110185422,
+                "elapsedMs": 913.0999999046326
+              },
+              {
+                "id": 88,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110185422,
+                "startMs": 1118892.0999999046
+              },
+              {
+                "id": 89,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110185422,
+                "startMs": 1118892.1999998093
+              },
+              {
+                "id": 82,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110185956,
+                "elapsedMs": 2354.0999999046326
+              },
+              {
+                "id": 83,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110186369,
+                "elapsedMs": 2287.4000000953674
+              },
+              {
+                "id": 90,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110186369,
+                "startMs": 1119839.0999999046
+              },
+              {
+                "id": 88,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110186378,
+                "elapsedMs": 955.9000000953674
+              },
+              {
+                "id": 91,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110186378,
+                "startMs": 1119848.0999999046
+              },
+              {
+                "id": 92,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110186378,
+                "startMs": 1119848.3000001907
+              },
+              {
+                "id": 85,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110187097,
+                "elapsedMs": 2588.0999999046326
+              },
+              {
+                "id": 93,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110187097,
+                "startMs": 1120567.1999998093
+              },
+              {
+                "id": 86,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110187681,
+                "elapsedMs": 2651.7999997138977
+              },
+              {
+                "id": 87,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110188284,
+                "elapsedMs": 3254
+              },
+              {
+                "id": 91,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110188322,
+                "elapsedMs": 1944
+              },
+              {
+                "id": 94,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110188322,
+                "startMs": 1121792.1999998093
+              },
+              {
+                "id": 95,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110188332,
+                "startMs": 1121802.0999999046
+              },
+              {
+                "id": 89,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110188938,
+                "elapsedMs": 3516.300000190735
+              },
+              {
+                "id": 96,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110188938,
+                "startMs": 1122408.5999999046
+              },
+              {
+                "id": 90,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110189471,
+                "elapsedMs": 3102.4000000953674
+              },
+              {
+                "id": 97,
+                "method": "Host.verifyPreparation",
+                "event": "start",
+                "at": 1792110189473,
+                "startMs": 1122943.5
+              },
+              {
+                "id": 94,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110189475,
+                "elapsedMs": 1152.8000001907349
+              },
+              {
+                "id": 98,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110189475,
+                "startMs": 1122945.1999998093
+              },
+              {
+                "id": 99,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110189478,
+                "startMs": 1122948.5999999046
+              },
+              {
+                "id": 92,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110189788,
+                "elapsedMs": 3409.5
+              },
+              {
+                "id": 100,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110189788,
+                "startMs": 1123257.9000000954
+              },
+              {
+                "id": 97,
+                "method": "Host.verifyPreparation",
+                "event": "resolve",
+                "at": 1792110189808,
+                "elapsedMs": 334.40000009536743
+              },
+              {
+                "id": 93,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110190358,
+                "elapsedMs": 3260.9000000953674
+              },
+              {
+                "id": 98,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110190373,
+                "elapsedMs": 897.6000003814697
+              },
+              {
+                "id": 101,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110190373,
+                "startMs": 1123843
+              },
+              {
+                "id": 102,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110190373,
+                "startMs": 1123843.1999998093
+              },
+              {
+                "id": 95,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110190801,
+                "elapsedMs": 2468.9000000953674
+              },
+              {
+                "id": 103,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110190801,
+                "startMs": 1124271
+              },
+              {
+                "id": 104,
+                "method": "Adapter.pollSessions",
+                "event": "start",
+                "at": 1792110190813,
+                "startMs": 1124283.5
+              },
+              {
+                "id": 96,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110191113,
+                "elapsedMs": 2174.5
+              },
+              {
+                "id": 101,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110191119,
+                "elapsedMs": 746.3000001907349
+              },
+              {
+                "id": 105,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110191119,
+                "startMs": 1124589.5
+              },
+              {
+                "id": 106,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110191123,
+                "startMs": 1124593.5
+              },
+              {
+                "id": 99,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110191517,
+                "elapsedMs": 2038.7000002861023
+              },
+              {
+                "id": 107,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110191517,
+                "startMs": 1124987.4000000954
+              },
+              {
+                "id": 100,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110191664,
+                "elapsedMs": 1876
+              },
+              {
+                "id": 108,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110191665,
+                "startMs": 1125135.5999999046
+              },
+              {
+                "id": 105,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110191668,
+                "elapsedMs": 548.9000000953674
+              },
+              {
+                "id": 109,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110191668,
+                "startMs": 1125138.5
+              },
+              {
+                "id": 110,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110191670,
+                "startMs": 1125139.8000001907
+              },
+              {
+                "id": 102,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110192128,
+                "elapsedMs": 1754.6000003814697
+              },
+              {
+                "id": 111,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110192128,
+                "startMs": 1125597.8000001907
+              },
+              {
+                "id": 103,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110192447,
+                "elapsedMs": 1646.4000000953674
+              },
+              {
+                "id": 109,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110192455,
+                "elapsedMs": 786.3000001907349
+              },
+              {
+                "id": 112,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110192455,
+                "startMs": 1125924.9000000954
+              },
+              {
+                "id": 113,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110192455,
+                "startMs": 1125925.0999999046
+              },
+              {
+                "id": 106,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110192686,
+                "elapsedMs": 1557.9000000953674
+              },
+              {
+                "id": 114,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110192686,
+                "startMs": 1126155.8000001907
+              },
+              {
+                "id": 107,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110193141,
+                "elapsedMs": 1623.5
+              },
+              {
+                "id": 108,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110193526,
+                "elapsedMs": 1860.7000002861023
+              },
+              {
+                "id": 112,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110193532,
+                "elapsedMs": 1077.5999999046326
+              },
+              {
+                "id": 115,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110193532,
+                "startMs": 1127002.5999999046
+              },
+              {
+                "id": 116,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110193533,
+                "startMs": 1127003.6999998093
+              },
+              {
+                "id": 110,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110193973,
+                "elapsedMs": 2303.2999997138977
+              },
+              {
+                "id": 117,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110193973,
+                "startMs": 1127443.0999999046
+              },
+              {
+                "id": 111,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110194346,
+                "elapsedMs": 2218.0999999046326
+              },
+              {
+                "id": 115,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110194354,
+                "elapsedMs": 821.9000000953674
+              },
+              {
+                "id": 118,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110194357,
+                "startMs": 1127827.1999998093
+              },
+              {
+                "id": 119,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110194358,
+                "startMs": 1127827.8000001907
+              },
+              {
+                "id": 113,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110194688,
+                "elapsedMs": 2232.9000000953674
+              },
+              {
+                "id": 120,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110194688,
+                "startMs": 1128158.1999998093
+              },
+              {
+                "id": 114,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110195127,
+                "elapsedMs": 2441.5999999046326
+              },
+              {
+                "id": 121,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110195259,
+                "startMs": 1128729.0999999046
+              },
+              {
+                "id": 118,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110195274,
+                "elapsedMs": 917.2000002861023
+              },
+              {
+                "id": 122,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110195274,
+                "startMs": 1128744.5
+              },
+              {
+                "id": 123,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110195281,
+                "startMs": 1128751.1999998093
+              },
+              {
+                "id": 116,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110195778,
+                "elapsedMs": 2244.6000003814697
+              },
+              {
+                "id": 124,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110195778,
+                "startMs": 1129248.4000000954
+              },
+              {
+                "id": 117,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110196200,
+                "elapsedMs": 2227.5999999046326
+              },
+              {
+                "id": 125,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110196208,
+                "startMs": 1129678.3000001907
+              },
+              {
+                "id": 122,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110196210,
+                "elapsedMs": 935.3000001907349
+              },
+              {
+                "id": 126,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110196210,
+                "startMs": 1129679.9000000954
+              },
+              {
+                "id": 127,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110196210,
+                "startMs": 1129680
+              },
+              {
+                "id": 119,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110196457,
+                "elapsedMs": 2099.5999999046326
+              },
+              {
+                "id": 128,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110196462,
+                "startMs": 1129932.1999998093
+              },
+              {
+                "id": 120,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110196715,
+                "elapsedMs": 2026.7000002861023
+              },
+              {
+                "id": 121,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110196879,
+                "elapsedMs": 1619.9000000953674
+              },
+              {
+                "id": 126,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110196891,
+                "elapsedMs": 681.1999998092651
+              },
+              {
+                "id": 129,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110196891,
+                "startMs": 1130361.1999998093
+              },
+              {
+                "id": 130,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110196891,
+                "startMs": 1130361.4000000954
+              },
+              {
+                "id": 123,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110197425,
+                "elapsedMs": 2144.2000002861023
+              },
+              {
+                "id": 131,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110197425,
+                "startMs": 1130895.4000000954
+              },
+              {
+                "id": 124,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110197765,
+                "elapsedMs": 1986.7999997138977
+              },
+              {
+                "id": 125,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110198122,
+                "elapsedMs": 1914
+              },
+              {
+                "id": 129,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110198127,
+                "elapsedMs": 1236.3000001907349
+              },
+              {
+                "id": 132,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110198127,
+                "startMs": 1131597.6999998093
+              },
+              {
+                "id": 133,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110198130,
+                "startMs": 1131600.5999999046
+              },
+              {
+                "id": 127,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110198436,
+                "elapsedMs": 2226.300000190735
+              },
+              {
+                "id": 134,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110198436,
+                "startMs": 1131906.3000001907
+              },
+              {
+                "id": 128,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110198855,
+                "elapsedMs": 2393.4000000953674
+              },
+              {
+                "id": 132,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110198900,
+                "elapsedMs": 772.1000003814697
+              },
+              {
+                "id": 135,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110198900,
+                "startMs": 1132369.9000000954
+              },
+              {
+                "id": 136,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110198904,
+                "startMs": 1132374.5999999046
+              },
+              {
+                "id": 130,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110199437,
+                "elapsedMs": 2545.4000000953674
+              },
+              {
+                "id": 137,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110199437,
+                "startMs": 1132906.9000000954
+              },
+              {
+                "id": 131,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110199767,
+                "elapsedMs": 2341.7999997138977
+              },
+              {
+                "id": 135,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110199771,
+                "elapsedMs": 871.7999997138977
+              },
+              {
+                "id": 138,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110199772,
+                "startMs": 1133241.8000001907
+              },
+              {
+                "id": 139,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110199772,
+                "startMs": 1133242
+              },
+              {
+                "id": 133,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110199982,
+                "elapsedMs": 1851.7000002861023
+              },
+              {
+                "id": 140,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110199982,
+                "startMs": 1133452.4000000954
+              },
+              {
+                "id": 134,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110200217,
+                "elapsedMs": 1780.5
+              },
+              {
+                "id": 138,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110200221,
+                "elapsedMs": 449.09999990463257
+              },
+              {
+                "id": 141,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110200221,
+                "startMs": 1133691.0999999046
+              },
+              {
+                "id": 142,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110200221,
+                "startMs": 1133691.5999999046
+              },
+              {
+                "id": 136,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110200565,
+                "elapsedMs": 1660.7000002861023
+              },
+              {
+                "id": 143,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110200565,
+                "startMs": 1134035.4000000954
+              },
+              {
+                "id": 137,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110200983,
+                "elapsedMs": 1546.2999997138977
+              },
+              {
+                "id": 141,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110200993,
+                "elapsedMs": 772.5
+              },
+              {
+                "id": 144,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110200994,
+                "startMs": 1134463.8000001907
+              },
+              {
+                "id": 145,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110200994,
+                "startMs": 1134464.1999998093
+              },
+              {
+                "id": 139,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110201341,
+                "elapsedMs": 1569.0999999046326
+              },
+              {
+                "id": 146,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201341,
+                "startMs": 1134811.0999999046
+              },
+              {
+                "id": 140,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110201653,
+                "elapsedMs": 1670.5999999046326
+              },
+              {
+                "id": 144,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110201655,
+                "elapsedMs": 661.6999998092651
+              },
+              {
+                "id": 147,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110201655,
+                "startMs": 1135125.5999999046
+              },
+              {
+                "id": 148,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201656,
+                "startMs": 1135125.8000001907
+              },
+              {
+                "id": 142,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110201991,
+                "elapsedMs": 1769.2000002861023
+              },
+              {
+                "id": 149,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201991,
+                "startMs": 1135460.9000000954
+              },
+              {
+                "id": 143,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110202314,
+                "elapsedMs": 1748.6999998092651
+              },
+              {
+                "id": 147,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110202320,
+                "elapsedMs": 664.7000002861023
+              },
+              {
+                "id": 150,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110202320,
+                "startMs": 1135790.4000000954
+              },
+              {
+                "id": 151,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110202320,
+                "startMs": 1135790.5
+              },
+              {
+                "id": 145,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110202761,
+                "elapsedMs": 1761.3000001907349
+              },
+              {
+                "id": 152,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110202761,
+                "startMs": 1136231.6999998093
+              },
+              {
+                "id": 146,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110203011,
+                "elapsedMs": 1669.5999999046326
+              },
+              {
+                "id": 150,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110203019,
+                "elapsedMs": 698.5999999046326
+              },
+              {
+                "id": 153,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110203019,
+                "startMs": 1136489.1999998093
+              },
+              {
+                "id": 154,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203027,
+                "startMs": 1136496.9000000954
+              },
+              {
+                "id": 148,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110203381,
+                "elapsedMs": 1725.5999999046326
+              },
+              {
+                "id": 155,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203381,
+                "startMs": 1136851.4000000954
+              },
+              {
+                "id": 149,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110203621,
+                "elapsedMs": 1630.0999999046326
+              },
+              {
+                "id": 153,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110203625,
+                "elapsedMs": 606.1000003814697
+              },
+              {
+                "id": 156,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110203625,
+                "startMs": 1137095.4000000954
+              },
+              {
+                "id": 157,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203625,
+                "startMs": 1137095.5
+              },
+              {
+                "id": 151,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110203793,
+                "elapsedMs": 1472.6999998092651
+              },
+              {
+                "id": 158,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203793,
+                "startMs": 1137263.3000001907
+              },
+              {
+                "id": 152,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110204121,
+                "elapsedMs": 1359.4000000953674
+              },
+              {
+                "id": 156,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110204131,
+                "elapsedMs": 506.09999990463257
+              },
+              {
+                "id": 159,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110204131,
+                "startMs": 1137601.6999998093
+              },
+              {
+                "id": 160,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110204132,
+                "startMs": 1137602
+              },
+              {
+                "id": 154,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110204356,
+                "elapsedMs": 1329.6999998092651
+              },
+              {
+                "id": 161,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110204356,
+                "startMs": 1137826.6999998093
+              },
+              {
+                "id": 155,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110204664,
+                "elapsedMs": 1282.9000000953674
+              },
+              {
+                "id": 159,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110204669,
+                "elapsedMs": 538
+              },
+              {
+                "id": 162,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110204670,
+                "startMs": 1138139.8000001907
+              },
+              {
+                "id": 163,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110204670,
+                "startMs": 1138140
+              },
+              {
+                "id": 157,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110205015,
+                "elapsedMs": 1389.5999999046326
+              },
+              {
+                "id": 164,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110205015,
+                "startMs": 1138485.0999999046
+              },
+              {
+                "id": 158,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110205336,
+                "elapsedMs": 1542.6999998092651
+              },
+              {
+                "id": 162,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110205346,
+                "elapsedMs": 676.5999999046326
+              },
+              {
+                "id": 165,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110205346,
+                "startMs": 1138816.5
+              },
+              {
+                "id": 166,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110205353,
+                "startMs": 1138823
+              },
+              {
+                "id": 160,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110205834,
+                "elapsedMs": 1702.5999999046326
+              },
+              {
+                "id": 167,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110205834,
+                "startMs": 1139304.6999998093
+              },
+              {
+                "id": 161,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110206205,
+                "elapsedMs": 1848.9000000953674
+              },
+              {
+                "id": 165,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110206214,
+                "elapsedMs": 867.5999999046326
+              },
+              {
+                "id": 168,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110206214,
+                "startMs": 1139684.1999998093
+              },
+              {
+                "id": 169,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110206215,
+                "startMs": 1139684.9000000954
+              },
+              {
+                "id": 166,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110206218,
+                "elapsedMs": 865.0999999046326
+              },
+              {
+                "id": 163,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110206676,
+                "elapsedMs": 2006.5999999046326
+              },
+              {
+                "id": 170,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110206676,
+                "startMs": 1140146.6999998093
+              },
+              {
+                "id": 164,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110207120,
+                "elapsedMs": 2105.4000000953674
+              },
+              {
+                "id": 168,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110207136,
+                "elapsedMs": 921.9000000953674
+              },
+              {
+                "id": 171,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110207136,
+                "startMs": 1140606.1999998093
+              },
+              {
+                "id": 172,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110207137,
+                "startMs": 1140607.4000000954
+              },
+              {
+                "id": 167,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110207403,
+                "elapsedMs": 1568.5
+              },
+              {
+                "id": 171,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110207427,
+                "elapsedMs": 290.6000003814697
+              },
+              {
+                "id": 173,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110207427,
+                "startMs": 1140896.9000000954
+              },
+              {
+                "id": 174,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110207427,
+                "startMs": 1140897.0999999046
+              },
+              {
+                "id": 172,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110207430,
+                "elapsedMs": 292.69999980926514
+              },
+              {
+                "id": 169,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110207966,
+                "elapsedMs": 1751.5999999046326
+              },
+              {
+                "id": 175,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110207966,
+                "startMs": 1141436.5
+              }
+            ],
+            "totals": [
+              {
+                "method": "SessionStore.load",
+                "calls": 66,
+                "resolved": 64,
+                "rejected": 0,
+                "totalMs": 47677.80000209808,
+                "maxMs": 1944
+              },
+              {
+                "method": "RouteJournal.readRouteSnapshot",
+                "calls": 102,
+                "resolved": 100,
+                "rejected": 0,
+                "totalMs": 194506.00000095367,
+                "maxMs": 3516.300000190735
+              },
+              {
+                "method": "Host.verifyPreparation",
+                "calls": 4,
+                "resolved": 4,
+                "rejected": 0,
+                "totalMs": 2157.699999809265,
+                "maxMs": 1017.2999997138977
+              },
+              {
+                "method": "Host.ownerDiscover",
+                "calls": 1,
+                "resolved": 1,
+                "rejected": 0,
+                "totalMs": 2660.5,
+                "maxMs": 2660.5
+              },
+              {
+                "method": "Host.ownerSubmitSealed",
+                "calls": 1,
+                "resolved": 1,
+                "rejected": 0,
+                "totalMs": 497.59999990463257,
+                "maxMs": 497.59999990463257
+              },
+              {
+                "method": "Adapter.pollSessions",
+                "calls": 1,
+                "resolved": 0,
+                "rejected": 0,
+                "totalMs": 0,
+                "maxMs": 0
+              }
+            ],
+            "inFlight": [
+              {
+                "id": 104,
+                "method": "Adapter.pollSessions",
+                "startMs": 1124283.5,
+                "at": 1792110190813,
+                "elapsedMs": 17165.599999904633
+              },
+              {
+                "id": 170,
+                "method": "RouteJournal.readRouteSnapshot",
+                "startMs": 1140146.6999998093,
+                "at": 1792110206676,
+                "elapsedMs": 1302.4000000953674
+              },
+              {
+                "id": 173,
+                "method": "SessionStore.load",
+                "startMs": 1140896.9000000954,
+                "at": 1792110207427,
+                "elapsedMs": 552.1999998092651
+              },
+              {
+                "id": 174,
+                "method": "SessionStore.load",
+                "startMs": 1140897.0999999046,
+                "at": 1792110207427,
+                "elapsedMs": 552
+              },
+              {
+                "id": 175,
+                "method": "RouteJournal.readRouteSnapshot",
+                "startMs": 1141436.5,
+                "at": 1792110207966,
+                "elapsedMs": 12.599999904632568
+              }
+            ],
+            "skipped": []
+          },
+          {
+            "page": 1,
+            "installed": true,
+            "waitingAdapter": false,
+            "optionalSendMethods": true,
+            "optionalStorageMethods": true,
+            "dropped": 0,
+            "records": [
+              {
+                "id": 1,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110162769,
+                "startMs": 1119916.1999998093
+              },
+              {
+                "id": 2,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110162777,
+                "startMs": 1119924.3999996185
+              },
+              {
+                "id": 1,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110162818,
+                "elapsedMs": 49
+              },
+              {
+                "id": 3,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110162821,
+                "startMs": 1119968.3999996185
+              },
+              {
+                "id": 4,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110162825,
+                "startMs": 1119971.6999998093
+              },
+              {
+                "id": 2,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110162853,
+                "elapsedMs": 75.7000002861023
+              },
+              {
+                "id": 5,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110164617,
+                "startMs": 1121764
+              },
+              {
+                "id": 3,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110164623,
+                "elapsedMs": 1801.7000002861023
+              },
+              {
+                "id": 6,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110164623,
+                "startMs": 1121770.1999998093
+              },
+              {
+                "id": 7,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110164626,
+                "startMs": 1121773
+              },
+              {
+                "id": 6,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110164645,
+                "elapsedMs": 21.199999809265137
+              },
+              {
+                "id": 8,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110164645,
+                "startMs": 1121791.5999999046
+              },
+              {
+                "id": 9,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110164649,
+                "startMs": 1121795.5999999046
+              },
+              {
+                "id": 4,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110165128,
+                "elapsedMs": 2303.5999999046326
+              },
+              {
+                "id": 10,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110165163,
+                "startMs": 1122309.8999996185
+              },
+              {
+                "id": 5,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110165640,
+                "elapsedMs": 1023.3999996185303
+              },
+              {
+                "id": 8,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110165642,
+                "elapsedMs": 997.5
+              },
+              {
+                "id": 11,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110165642,
+                "startMs": 1122789.1999998093
+              },
+              {
+                "id": 12,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110165644,
+                "startMs": 1122790.799999714
+              },
+              {
+                "id": 9,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110165646,
+                "elapsedMs": 997.7999997138977
+              },
+              {
+                "id": 7,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110166130,
+                "elapsedMs": 1503.6999998092651
+              },
+              {
+                "id": 13,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110166130,
+                "startMs": 1123276.799999714
+              },
+              {
+                "id": 14,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110166134,
+                "startMs": 1123281
+              },
+              {
+                "id": 15,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110166140,
+                "startMs": 1123286.5999999046
+              },
+              {
+                "id": 11,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110166146,
+                "elapsedMs": 503.80000019073486
+              },
+              {
+                "id": 16,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110166146,
+                "startMs": 1123293.0999999046
+              },
+              {
+                "id": 17,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110166149,
+                "startMs": 1123295.5
+              },
+              {
+                "id": 12,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110166149,
+                "elapsedMs": 505.5
+              },
+              {
+                "id": 10,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110166504,
+                "elapsedMs": 1340.9000000953674
+              },
+              {
+                "id": 16,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110166507,
+                "elapsedMs": 361.09999990463257
+              },
+              {
+                "id": 18,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110166507,
+                "startMs": 1123654.3999996185
+              },
+              {
+                "id": 19,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110166510,
+                "startMs": 1123656.6999998093
+              },
+              {
+                "id": 13,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110167153,
+                "elapsedMs": 1022.9000000953674
+              },
+              {
+                "id": 20,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110167167,
+                "startMs": 1124313.5
+              },
+              {
+                "id": 14,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110167567,
+                "elapsedMs": 1432.5
+              },
+              {
+                "id": 15,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110167941,
+                "elapsedMs": 1801.7999997138977
+              },
+              {
+                "id": 18,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110167943,
+                "elapsedMs": 1435
+              },
+              {
+                "id": 21,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110167943,
+                "startMs": 1125089.5
+              },
+              {
+                "id": 22,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110167945,
+                "startMs": 1125091.5
+              },
+              {
+                "id": 17,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110168527,
+                "elapsedMs": 2378
+              },
+              {
+                "id": 23,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110168527,
+                "startMs": 1125673.5999999046
+              },
+              {
+                "id": 24,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110168528,
+                "startMs": 1125675
+              },
+              {
+                "id": 21,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110168531,
+                "elapsedMs": 588.3999996185303
+              },
+              {
+                "id": 25,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110168531,
+                "startMs": 1125677.8999996185
+              },
+              {
+                "id": 26,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110168531,
+                "startMs": 1125678.299999714
+              },
+              {
+                "id": 22,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110168532,
+                "elapsedMs": 587.5
+              },
+              {
+                "id": 19,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110168949,
+                "elapsedMs": 2439.699999809265
+              },
+              {
+                "id": 27,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110168949,
+                "startMs": 1126096.3999996185
+              },
+              {
+                "id": 20,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110169501,
+                "elapsedMs": 2334.0999999046326
+              },
+              {
+                "id": 25,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110169517,
+                "elapsedMs": 986.2000002861023
+              },
+              {
+                "id": 28,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110169517,
+                "startMs": 1126664.1999998093
+              },
+              {
+                "id": 29,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110169518,
+                "startMs": 1126664.5
+              },
+              {
+                "id": 23,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110169995,
+                "elapsedMs": 1468.1999998092651
+              },
+              {
+                "id": 24,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110170391,
+                "elapsedMs": 1862.7999997138977
+              },
+              {
+                "id": 30,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110170392,
+                "startMs": 1127538.6999998093
+              },
+              {
+                "id": 28,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110170802,
+                "elapsedMs": 1284.5
+              },
+              {
+                "id": 31,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110170802,
+                "startMs": 1127948.799999714
+              },
+              {
+                "id": 32,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110170802,
+                "startMs": 1127949
+              },
+              {
+                "id": 26,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110171410,
+                "elapsedMs": 2878.7000002861023
+              },
+              {
+                "id": 33,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110171410,
+                "startMs": 1128557
+              },
+              {
+                "id": 34,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110171419,
+                "startMs": 1128565.6999998093
+              },
+              {
+                "id": 27,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110171803,
+                "elapsedMs": 2853.1000003814697
+              },
+              {
+                "id": 31,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110171809,
+                "elapsedMs": 1007.0999999046326
+              },
+              {
+                "id": 35,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110171809,
+                "startMs": 1128956
+              },
+              {
+                "id": 36,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110171809,
+                "startMs": 1128956.0999999046
+              },
+              {
+                "id": 29,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110172223,
+                "elapsedMs": 2705.5999999046326
+              },
+              {
+                "id": 37,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110172228,
+                "startMs": 1129375.299999714
+              },
+              {
+                "id": 38,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110172235,
+                "startMs": 1129382
+              },
+              {
+                "id": 30,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110173095,
+                "elapsedMs": 2703.5999999046326
+              },
+              {
+                "id": 35,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110173103,
+                "elapsedMs": 1294
+              },
+              {
+                "id": 39,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110173103,
+                "startMs": 1130250.0999999046
+              },
+              {
+                "id": 40,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110173104,
+                "startMs": 1130250.5999999046
+              },
+              {
+                "id": 36,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110173104,
+                "elapsedMs": 1295.2999997138977
+              },
+              {
+                "id": 32,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110173450,
+                "elapsedMs": 2647.5
+              },
+              {
+                "id": 41,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110173450,
+                "startMs": 1130596.5
+              },
+              {
+                "id": 33,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110173906,
+                "elapsedMs": 2495.5999999046326
+              },
+              {
+                "id": 34,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110174283,
+                "elapsedMs": 2863.800000190735
+              },
+              {
+                "id": 42,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110174292,
+                "startMs": 1131438.799999714
+              },
+              {
+                "id": 39,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110174301,
+                "elapsedMs": 1197.7999997138977
+              },
+              {
+                "id": 43,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110174301,
+                "startMs": 1131448
+              },
+              {
+                "id": 44,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110174303,
+                "startMs": 1131449.6999998093
+              },
+              {
+                "id": 37,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110174819,
+                "elapsedMs": 2590.5
+              },
+              {
+                "id": 38,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110175611,
+                "elapsedMs": 3376.2999997138977
+              },
+              {
+                "id": 43,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110175651,
+                "elapsedMs": 1350.1999998092651
+              },
+              {
+                "id": 45,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110175651,
+                "startMs": 1132798.3999996185
+              },
+              {
+                "id": 46,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110175652,
+                "startMs": 1132798.5999999046
+              },
+              {
+                "id": 40,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110176063,
+                "elapsedMs": 2959.5999999046326
+              },
+              {
+                "id": 47,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110176063,
+                "startMs": 1133210.1999998093
+              },
+              {
+                "id": 41,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110176523,
+                "elapsedMs": 3073.5
+              },
+              {
+                "id": 42,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110177530,
+                "elapsedMs": 3237.9000000953674
+              },
+              {
+                "id": 45,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110177532,
+                "elapsedMs": 1880.8000001907349
+              },
+              {
+                "id": 48,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110177533,
+                "startMs": 1134680.3999996185
+              },
+              {
+                "id": 49,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110177534,
+                "startMs": 1134680.6999998093
+              },
+              {
+                "id": 44,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110177919,
+                "elapsedMs": 3615.699999809265
+              },
+              {
+                "id": 50,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110177926,
+                "startMs": 1135073.0999999046
+              },
+              {
+                "id": 48,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110177928,
+                "elapsedMs": 394.2000002861023
+              },
+              {
+                "id": 51,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110177928,
+                "startMs": 1135074.6999998093
+              },
+              {
+                "id": 52,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110177928,
+                "startMs": 1135074.799999714
+              },
+              {
+                "id": 49,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110177941,
+                "elapsedMs": 407.40000009536743
+              },
+              {
+                "id": 46,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110178589,
+                "elapsedMs": 2936.9000000953674
+              },
+              {
+                "id": 47,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110179045,
+                "elapsedMs": 2982
+              },
+              {
+                "id": 51,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110179056,
+                "elapsedMs": 1128.0999999046326
+              },
+              {
+                "id": 53,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110179056,
+                "startMs": 1136202.8999996185
+              },
+              {
+                "id": 54,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110179063,
+                "startMs": 1136210.0999999046
+              },
+              {
+                "id": 50,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110179513,
+                "elapsedMs": 1587.0999999046326
+              },
+              {
+                "id": 53,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110179514,
+                "elapsedMs": 458.1000003814697
+              },
+              {
+                "id": 55,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110179514,
+                "startMs": 1136661.0999999046
+              },
+              {
+                "id": 56,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110179517,
+                "startMs": 1136663.6999998093
+              },
+              {
+                "id": 57,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110179521,
+                "startMs": 1136667.799999714
+              },
+              {
+                "id": 52,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110179967,
+                "elapsedMs": 2039.4000000953674
+              },
+              {
+                "id": 55,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110179968,
+                "elapsedMs": 453.7999997138977
+              },
+              {
+                "id": 58,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110179968,
+                "startMs": 1137115.0999999046
+              },
+              {
+                "id": 59,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110179971,
+                "startMs": 1137118.299999714
+              },
+              {
+                "id": 54,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110180449,
+                "elapsedMs": 1385.5999999046326
+              },
+              {
+                "id": 58,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110180451,
+                "elapsedMs": 482.5
+              },
+              {
+                "id": 60,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110180451,
+                "startMs": 1137597.5999999046
+              },
+              {
+                "id": 61,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110180453,
+                "startMs": 1137600.299999714
+              },
+              {
+                "id": 59,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110180454,
+                "elapsedMs": 483
+              },
+              {
+                "id": 56,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110181063,
+                "elapsedMs": 1546.8000001907349
+              },
+              {
+                "id": 57,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110181638,
+                "elapsedMs": 2117
+              },
+              {
+                "id": 60,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110181642,
+                "elapsedMs": 1191.2999997138977
+              },
+              {
+                "id": 62,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110181642,
+                "startMs": 1138789
+              },
+              {
+                "id": 63,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110181644,
+                "startMs": 1138790.799999714
+              },
+              {
+                "id": 62,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110181659,
+                "elapsedMs": 17.09999990463257
+              },
+              {
+                "id": 64,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110181661,
+                "startMs": 1138807.6999998093
+              },
+              {
+                "id": 65,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110181661,
+                "startMs": 1138808
+              },
+              {
+                "id": 63,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110181664,
+                "elapsedMs": 20.5
+              },
+              {
+                "id": 61,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110182362,
+                "elapsedMs": 1908.9000000953674
+              },
+              {
+                "id": 64,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110182374,
+                "elapsedMs": 713.4000000953674
+              },
+              {
+                "id": 66,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110182378,
+                "startMs": 1139525.299999714
+              },
+              {
+                "id": 67,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110182379,
+                "startMs": 1139525.5
+              },
+              {
+                "id": 66,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110182396,
+                "elapsedMs": 17.59999990463257
+              },
+              {
+                "id": 68,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110182400,
+                "startMs": 1139547.3999996185
+              },
+              {
+                "id": 69,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110182401,
+                "startMs": 1139547.5
+              },
+              {
+                "id": 67,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110182401,
+                "elapsedMs": 22.799999713897705
+              },
+              {
+                "id": 65,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110182934,
+                "elapsedMs": 1273.1999998092651
+              },
+              {
+                "id": 68,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110182940,
+                "elapsedMs": 539.4000000953674
+              },
+              {
+                "id": 70,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110182940,
+                "startMs": 1140086.799999714
+              },
+              {
+                "id": 71,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110182940,
+                "startMs": 1140087
+              },
+              {
+                "id": 70,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110182953,
+                "elapsedMs": 13
+              },
+              {
+                "id": 72,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110182953,
+                "startMs": 1140099.799999714
+              },
+              {
+                "id": 73,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110182953,
+                "startMs": 1140100
+              },
+              {
+                "id": 71,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110182954,
+                "elapsedMs": 13.699999809265137
+              },
+              {
+                "id": 69,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110183451,
+                "elapsedMs": 1050.2999997138977
+              },
+              {
+                "id": 72,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110183522,
+                "elapsedMs": 568.9000000953674
+              },
+              {
+                "id": 74,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110183522,
+                "startMs": 1140668.6999998093
+              },
+              {
+                "id": 75,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110183522,
+                "startMs": 1140669
+              },
+              {
+                "id": 74,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110183545,
+                "elapsedMs": 23.699999809265137
+              },
+              {
+                "id": 76,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110183546,
+                "startMs": 1140692.5
+              },
+              {
+                "id": 77,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110183546,
+                "startMs": 1140692.5999999046
+              },
+              {
+                "id": 75,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110183546,
+                "elapsedMs": 24.199999809265137
+              },
+              {
+                "id": 73,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110184061,
+                "elapsedMs": 1108.0999999046326
+              },
+              {
+                "id": 76,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110184069,
+                "elapsedMs": 523.7999997138977
+              },
+              {
+                "id": 78,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110184069,
+                "startMs": 1141216.5
+              },
+              {
+                "id": 79,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110184070,
+                "startMs": 1141216.5999999046
+              },
+              {
+                "id": 80,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110184070,
+                "startMs": 1141216.799999714
+              },
+              {
+                "id": 77,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110184075,
+                "elapsedMs": 528.9000000953674
+              },
+              {
+                "id": 78,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110184081,
+                "elapsedMs": 11.199999809265137
+              },
+              {
+                "id": 81,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110184081,
+                "startMs": 1141227.799999714
+              },
+              {
+                "id": 82,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110184081,
+                "startMs": 1141227.8999996185
+              },
+              {
+                "id": 81,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110184100,
+                "elapsedMs": 18.700000286102295
+              },
+              {
+                "id": 83,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110184100,
+                "startMs": 1141246.5999999046
+              },
+              {
+                "id": 84,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110184100,
+                "startMs": 1141246.6999998093
+              },
+              {
+                "id": 79,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110184532,
+                "elapsedMs": 462.69999980926514
+              },
+              {
+                "id": 85,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110184532,
+                "startMs": 1141679.5
+              },
+              {
+                "id": 80,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110185111,
+                "elapsedMs": 1040.8000001907349
+              },
+              {
+                "id": 83,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110185119,
+                "elapsedMs": 1018.9000000953674
+              },
+              {
+                "id": 86,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110185119,
+                "startMs": 1142265.5999999046
+              },
+              {
+                "id": 84,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110185123,
+                "elapsedMs": 1023.1999998092651
+              },
+              {
+                "id": 82,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110185422,
+                "elapsedMs": 1341.2000002861023
+              },
+              {
+                "id": 87,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110185422,
+                "startMs": 1142569.1999998093
+              },
+              {
+                "id": 86,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110185429,
+                "elapsedMs": 309.90000009536743
+              },
+              {
+                "id": 88,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110185429,
+                "startMs": 1142575.5
+              },
+              {
+                "id": 89,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110185429,
+                "startMs": 1142575.8999996185
+              },
+              {
+                "id": 85,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110185936,
+                "elapsedMs": 1403.1999998092651
+              },
+              {
+                "id": 88,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110185938,
+                "elapsedMs": 509.59999990463257
+              },
+              {
+                "id": 90,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110185938,
+                "startMs": 1143085.0999999046
+              },
+              {
+                "id": 91,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110185940,
+                "startMs": 1143086.5
+              },
+              {
+                "id": 87,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110186453,
+                "elapsedMs": 1030.6999998092651
+              },
+              {
+                "id": 90,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110186456,
+                "elapsedMs": 517.5999999046326
+              },
+              {
+                "id": 92,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110186456,
+                "startMs": 1143602.799999714
+              },
+              {
+                "id": 93,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110186459,
+                "startMs": 1143606.3999996185
+              },
+              {
+                "id": 89,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110187074,
+                "elapsedMs": 1645.4000000953674
+              },
+              {
+                "id": 94,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110187074,
+                "startMs": 1144221.299999714
+              },
+              {
+                "id": 92,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110187078,
+                "elapsedMs": 622
+              },
+              {
+                "id": 95,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110187078,
+                "startMs": 1144224.8999996185
+              },
+              {
+                "id": 96,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110187079,
+                "startMs": 1144225.6999998093
+              },
+              {
+                "id": 91,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110187689,
+                "elapsedMs": 1749.3999996185303
+              },
+              {
+                "id": 97,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110187689,
+                "startMs": 1144836
+              },
+              {
+                "id": 98,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110187691,
+                "startMs": 1144837.8999996185
+              },
+              {
+                "id": 99,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110187696,
+                "startMs": 1144842.5999999046
+              },
+              {
+                "id": 95,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110187700,
+                "elapsedMs": 621.8000001907349
+              },
+              {
+                "id": 100,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110187700,
+                "startMs": 1144846.6999998093
+              },
+              {
+                "id": 101,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110187701,
+                "startMs": 1144848.3999996185
+              },
+              {
+                "id": 93,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110188348,
+                "elapsedMs": 1888.3000001907349
+              },
+              {
+                "id": 102,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110188348,
+                "startMs": 1145494.6999998093
+              },
+              {
+                "id": 103,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110188358,
+                "startMs": 1145505
+              },
+              {
+                "id": 104,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110188700,
+                "startMs": 1145847
+              },
+              {
+                "id": 94,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110189284,
+                "elapsedMs": 2209.5
+              },
+              {
+                "id": 100,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110189286,
+                "elapsedMs": 1586.1999998092651
+              },
+              {
+                "id": 105,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110189286,
+                "startMs": 1146432.8999996185
+              },
+              {
+                "id": 106,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110189286,
+                "startMs": 1146433.0999999046
+              },
+              {
+                "id": 96,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110189608,
+                "elapsedMs": 2529.5
+              },
+              {
+                "id": 97,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110190018,
+                "elapsedMs": 2328.699999809265
+              },
+              {
+                "id": 107,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110190024,
+                "startMs": 1147170.6999998093
+              },
+              {
+                "id": 98,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110190480,
+                "elapsedMs": 2788.6000003814697
+              },
+              {
+                "id": 99,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110190856,
+                "elapsedMs": 3159.7999997138977
+              },
+              {
+                "id": 105,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110190857,
+                "elapsedMs": 1571
+              },
+              {
+                "id": 108,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110190858,
+                "startMs": 1148005.299999714
+              },
+              {
+                "id": 109,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110190859,
+                "startMs": 1148005.3999996185
+              },
+              {
+                "id": 101,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110191224,
+                "elapsedMs": 3522.7000002861023
+              },
+              {
+                "id": 110,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110191224,
+                "startMs": 1148371.0999999046
+              },
+              {
+                "id": 102,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110191544,
+                "elapsedMs": 3196.300000190735
+              },
+              {
+                "id": 111,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110191546,
+                "startMs": 1148692.5999999046
+              },
+              {
+                "id": 103,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110191725,
+                "elapsedMs": 3366.5
+              },
+              {
+                "id": 104,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110191941,
+                "elapsedMs": 3240.699999809265
+              },
+              {
+                "id": 108,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110191942,
+                "elapsedMs": 1083.3000001907349
+              },
+              {
+                "id": 112,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110191942,
+                "startMs": 1149088.6999998093
+              },
+              {
+                "id": 113,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110191942,
+                "startMs": 1149088.799999714
+              },
+              {
+                "id": 106,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110192401,
+                "elapsedMs": 3114.9000000953674
+              },
+              {
+                "id": 114,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110192401,
+                "startMs": 1149548
+              },
+              {
+                "id": 107,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110192737,
+                "elapsedMs": 2713.4000000953674
+              },
+              {
+                "id": 112,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110192746,
+                "elapsedMs": 804.5999999046326
+              },
+              {
+                "id": 115,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110192746,
+                "startMs": 1149893.5
+              },
+              {
+                "id": 116,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110192747,
+                "startMs": 1149893.6999998093
+              },
+              {
+                "id": 109,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110193176,
+                "elapsedMs": 2317.300000190735
+              },
+              {
+                "id": 117,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110193176,
+                "startMs": 1150322.6999998093
+              },
+              {
+                "id": 110,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110193570,
+                "elapsedMs": 2345.7999997138977
+              },
+              {
+                "id": 111,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110194061,
+                "elapsedMs": 2515.699999809265
+              },
+              {
+                "id": 115,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110194067,
+                "elapsedMs": 1320.5
+              },
+              {
+                "id": 118,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110194067,
+                "startMs": 1151214.0999999046
+              },
+              {
+                "id": 119,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110194069,
+                "startMs": 1151216.299999714
+              },
+              {
+                "id": 116,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110194071,
+                "elapsedMs": 1324.5999999046326
+              },
+              {
+                "id": 120,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110194071,
+                "startMs": 1151218.299999714
+              },
+              {
+                "id": 113,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110194413,
+                "elapsedMs": 2471.300000190735
+              },
+              {
+                "id": 121,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110194413,
+                "startMs": 1151560.0999999046
+              },
+              {
+                "id": 114,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110194712,
+                "elapsedMs": 2310.7999997138977
+              },
+              {
+                "id": 118,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110194717,
+                "elapsedMs": 649.4000000953674
+              },
+              {
+                "id": 122,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110194717,
+                "startMs": 1151863.6999998093
+              },
+              {
+                "id": 123,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110194717,
+                "startMs": 1151863.799999714
+              },
+              {
+                "id": 117,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110195135,
+                "elapsedMs": 1959.3000001907349
+              },
+              {
+                "id": 122,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110195147,
+                "elapsedMs": 430.19999980926514
+              },
+              {
+                "id": 124,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110195147,
+                "startMs": 1152293.8999996185
+              },
+              {
+                "id": 125,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110195147,
+                "startMs": 1152294.0999999046
+              },
+              {
+                "id": 123,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110195152,
+                "elapsedMs": 434.80000019073486
+              },
+              {
+                "id": 119,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110195478,
+                "elapsedMs": 1408.2000002861023
+              },
+              {
+                "id": 120,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110195794,
+                "elapsedMs": 1722.3000001907349
+              },
+              {
+                "id": 126,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110195794,
+                "startMs": 1152940.6999998093
+              },
+              {
+                "id": 121,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110196028,
+                "elapsedMs": 1614.7999997138977
+              },
+              {
+                "id": 124,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110196037,
+                "elapsedMs": 890.1000003814697
+              },
+              {
+                "id": 127,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110196037,
+                "startMs": 1153184
+              },
+              {
+                "id": 128,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110196046,
+                "startMs": 1153193.3999996185
+              },
+              {
+                "id": 125,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110196053,
+                "elapsedMs": 905.5
+              },
+              {
+                "id": 127,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110196063,
+                "elapsedMs": 26.09999990463257
+              },
+              {
+                "id": 129,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110196067,
+                "startMs": 1153214
+              },
+              {
+                "id": 130,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110196068,
+                "startMs": 1153214.799999714
+              },
+              {
+                "id": 128,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110196095,
+                "elapsedMs": 48.40000009536743
+              },
+              {
+                "id": 126,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110196371,
+                "elapsedMs": 576.6999998092651
+              },
+              {
+                "id": 131,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110196371,
+                "startMs": 1153517.5
+              },
+              {
+                "id": 129,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110196373,
+                "elapsedMs": 305.5
+              },
+              {
+                "id": 132,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110196373,
+                "startMs": 1153519.5999999046
+              },
+              {
+                "id": 133,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110196373,
+                "startMs": 1153520.3999996185
+              },
+              {
+                "id": 132,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110196380,
+                "elapsedMs": 7.400000095367432
+              },
+              {
+                "id": 134,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110196380,
+                "startMs": 1153527
+              },
+              {
+                "id": 135,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110196382,
+                "startMs": 1153529.0999999046
+              },
+              {
+                "id": 133,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110196384,
+                "elapsedMs": 10.100000381469727
+              },
+              {
+                "id": 130,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110196653,
+                "elapsedMs": 585.2000002861023
+              },
+              {
+                "id": 136,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110196653,
+                "startMs": 1153800
+              },
+              {
+                "id": 131,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110196916,
+                "elapsedMs": 545.2999997138977
+              },
+              {
+                "id": 137,
+                "method": "Host.verifyPreparation",
+                "event": "start",
+                "at": 1792110196916,
+                "startMs": 1154062.8999996185
+              },
+              {
+                "id": 134,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110196917,
+                "elapsedMs": 536.8999996185303
+              },
+              {
+                "id": 138,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110196917,
+                "startMs": 1154064
+              },
+              {
+                "id": 139,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110196917,
+                "startMs": 1154064.0999999046
+              },
+              {
+                "id": 137,
+                "method": "Host.verifyPreparation",
+                "event": "resolve",
+                "at": 1792110197066,
+                "elapsedMs": 150.2000002861023
+              },
+              {
+                "id": 140,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110197071,
+                "startMs": 1154217.6999998093
+              },
+              {
+                "id": 138,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110197100,
+                "elapsedMs": 183.09999990463257
+              },
+              {
+                "id": 141,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110197100,
+                "startMs": 1154247.1999998093
+              },
+              {
+                "id": 142,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110197106,
+                "startMs": 1154252.799999714
+              },
+              {
+                "id": 135,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110197684,
+                "elapsedMs": 1302.2999997138977
+              },
+              {
+                "id": 136,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110197995,
+                "elapsedMs": 1341.5999999046326
+              },
+              {
+                "id": 141,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110198002,
+                "elapsedMs": 901.6999998092651
+              },
+              {
+                "id": 143,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110198002,
+                "startMs": 1155149.0999999046
+              },
+              {
+                "id": 144,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110198005,
+                "startMs": 1155152
+              },
+              {
+                "id": 142,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110198006,
+                "elapsedMs": 900.0999999046326
+              },
+              {
+                "id": 139,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110198420,
+                "elapsedMs": 1502.4000000953674
+              },
+              {
+                "id": 140,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110198708,
+                "elapsedMs": 1637.0999999046326
+              },
+              {
+                "id": 143,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110198748,
+                "elapsedMs": 746
+              },
+              {
+                "id": 145,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110198751,
+                "startMs": 1155898.1999998093
+              },
+              {
+                "id": 146,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110198752,
+                "startMs": 1155899.0999999046
+              },
+              {
+                "id": 145,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110198766,
+                "elapsedMs": 14.900000095367432
+              },
+              {
+                "id": 147,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110198766,
+                "startMs": 1155913.0999999046
+              },
+              {
+                "id": 148,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110198767,
+                "startMs": 1155913.5999999046
+              },
+              {
+                "id": 144,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110199227,
+                "elapsedMs": 1222.0999999046326
+              },
+              {
+                "id": 149,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110199244,
+                "startMs": 1156390.8999996185
+              },
+              {
+                "id": 147,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110199258,
+                "elapsedMs": 492.09999990463257
+              },
+              {
+                "id": 150,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110199268,
+                "startMs": 1156415.299999714
+              },
+              {
+                "id": 151,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110199269,
+                "startMs": 1156416.299999714
+              },
+              {
+                "id": 146,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110199705,
+                "elapsedMs": 952.5999999046326
+              },
+              {
+                "id": 150,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110199720,
+                "elapsedMs": 452
+              },
+              {
+                "id": 152,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110199721,
+                "startMs": 1156867.5
+              },
+              {
+                "id": 153,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110199721,
+                "startMs": 1156867.5999999046
+              },
+              {
+                "id": 151,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110199724,
+                "elapsedMs": 455.09999990463257
+              },
+              {
+                "id": 148,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110199907,
+                "elapsedMs": 1139.7999997138977
+              },
+              {
+                "id": 149,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110200106,
+                "elapsedMs": 861.5
+              },
+              {
+                "id": 154,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110200128,
+                "startMs": 1157274.6999998093
+              },
+              {
+                "id": 152,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110200277,
+                "elapsedMs": 555.8999996185303
+              },
+              {
+                "id": 155,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110200277,
+                "startMs": 1157423.5
+              },
+              {
+                "id": 156,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110200279,
+                "startMs": 1157425.799999714
+              },
+              {
+                "id": 155,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110200307,
+                "elapsedMs": 30
+              },
+              {
+                "id": 157,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110200307,
+                "startMs": 1157453.5
+              },
+              {
+                "id": 158,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110200307,
+                "startMs": 1157454.0999999046
+              },
+              {
+                "id": 156,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110200313,
+                "elapsedMs": 33.700000286102295
+              },
+              {
+                "id": 153,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110200666,
+                "elapsedMs": 945.7999997138977
+              },
+              {
+                "id": 154,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110200963,
+                "elapsedMs": 835.1999998092651
+              },
+              {
+                "id": 159,
+                "method": "Host.verifyPreparation",
+                "event": "start",
+                "at": 1792110200963,
+                "startMs": 1158110
+              },
+              {
+                "id": 157,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110200976,
+                "elapsedMs": 669.5
+              },
+              {
+                "id": 160,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110200976,
+                "startMs": 1158123
+              },
+              {
+                "id": 161,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110200984,
+                "startMs": 1158130.5999999046
+              },
+              {
+                "id": 159,
+                "method": "Host.verifyPreparation",
+                "event": "resolve",
+                "at": 1792110200986,
+                "elapsedMs": 22.799999713897705
+              },
+              {
+                "id": 162,
+                "method": "Host.ownerDiscover",
+                "event": "start",
+                "at": 1792110200986,
+                "startMs": 1158132.8999996185
+              },
+              {
+                "id": 158,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110200987,
+                "elapsedMs": 679.5999999046326
+              },
+              {
+                "id": 160,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110200997,
+                "elapsedMs": 20.5
+              },
+              {
+                "id": 163,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110200997,
+                "startMs": 1158143.5
+              },
+              {
+                "id": 164,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110200998,
+                "startMs": 1158144.799999714
+              },
+              {
+                "id": 163,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110201010,
+                "elapsedMs": 13.099999904632568
+              },
+              {
+                "id": 165,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110201010,
+                "startMs": 1158156.6999998093
+              },
+              {
+                "id": 166,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201010,
+                "startMs": 1158157.0999999046
+              },
+              {
+                "id": 164,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110201014,
+                "elapsedMs": 13.400000095367432
+              },
+              {
+                "id": 161,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110201412,
+                "elapsedMs": 427.90000009536743
+              },
+              {
+                "id": 167,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201412,
+                "startMs": 1158558.5999999046
+              },
+              {
+                "id": 165,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110201415,
+                "elapsedMs": 405.30000019073486
+              },
+              {
+                "id": 168,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110201415,
+                "startMs": 1158562.1999998093
+              },
+              {
+                "id": 169,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110201416,
+                "startMs": 1158562.5999999046
+              },
+              {
+                "id": 170,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201417,
+                "startMs": 1158563.3999996185
+              },
+              {
+                "id": 171,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201417,
+                "startMs": 1158563.6999998093
+              },
+              {
+                "id": 172,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201417,
+                "startMs": 1158564.0999999046
+              },
+              {
+                "id": 168,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110201426,
+                "elapsedMs": 10.900000095367432
+              },
+              {
+                "id": 173,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110201426,
+                "startMs": 1158573.0999999046
+              },
+              {
+                "id": 174,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201428,
+                "startMs": 1158574.5
+              },
+              {
+                "id": 169,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110201428,
+                "elapsedMs": 12.599999904632568
+              },
+              {
+                "id": 166,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110201626,
+                "elapsedMs": 615.9000000953674
+              },
+              {
+                "id": 175,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201626,
+                "startMs": 1158773.0999999046
+              },
+              {
+                "id": 167,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110201976,
+                "elapsedMs": 564.4000000953674
+              },
+              {
+                "id": 173,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110201980,
+                "elapsedMs": 553.7999997138977
+              },
+              {
+                "id": 176,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110201980,
+                "startMs": 1159127.0999999046
+              },
+              {
+                "id": 177,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110201985,
+                "startMs": 1159131.5999999046
+              },
+              {
+                "id": 170,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110202509,
+                "elapsedMs": 1092.7000002861023
+              },
+              {
+                "id": 171,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110202968,
+                "elapsedMs": 1551.3000001907349
+              },
+              {
+                "id": 172,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110203175,
+                "elapsedMs": 1757.7999997138977
+              },
+              {
+                "id": 178,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203177,
+                "startMs": 1160323.5999999046
+              },
+              {
+                "id": 176,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110203178,
+                "elapsedMs": 1198
+              },
+              {
+                "id": 179,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110203178,
+                "startMs": 1160325.1999998093
+              },
+              {
+                "id": 180,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203179,
+                "startMs": 1160325.8999996185
+              },
+              {
+                "id": 174,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110203448,
+                "elapsedMs": 2020.5999999046326
+              },
+              {
+                "id": 181,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203448,
+                "startMs": 1160595.1999998093
+              },
+              {
+                "id": 175,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110203667,
+                "elapsedMs": 2040.6999998092651
+              },
+              {
+                "id": 162,
+                "method": "Host.ownerDiscover",
+                "event": "resolve",
+                "at": 1792110203669,
+                "elapsedMs": 2682.9000000953674
+              },
+              {
+                "id": 182,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203671,
+                "startMs": 1160817.799999714
+              },
+              {
+                "id": 179,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110203672,
+                "elapsedMs": 493.5
+              },
+              {
+                "id": 183,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110203672,
+                "startMs": 1160818.6999998093
+              },
+              {
+                "id": 184,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203672,
+                "startMs": 1160819.299999714
+              },
+              {
+                "id": 177,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110203897,
+                "elapsedMs": 1912
+              },
+              {
+                "id": 185,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203897,
+                "startMs": 1161043.5999999046
+              },
+              {
+                "id": 186,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110203900,
+                "startMs": 1161046.6999998093
+              },
+              {
+                "id": 178,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110204304,
+                "elapsedMs": 1127
+              },
+              {
+                "id": 183,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110204306,
+                "elapsedMs": 634.0999999046326
+              },
+              {
+                "id": 187,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110204306,
+                "startMs": 1161452.799999714
+              },
+              {
+                "id": 188,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110204306,
+                "startMs": 1161453
+              },
+              {
+                "id": 180,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110204599,
+                "elapsedMs": 1420.4000000953674
+              },
+              {
+                "id": 189,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110204599,
+                "startMs": 1161746.299999714
+              },
+              {
+                "id": 181,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110204916,
+                "elapsedMs": 1467.4000000953674
+              },
+              {
+                "id": 182,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110205173,
+                "elapsedMs": 1502.5999999046326
+              },
+              {
+                "id": 190,
+                "method": "Host.verifyPreparation",
+                "event": "start",
+                "at": 1792110205173,
+                "startMs": 1162320.3999996185
+              },
+              {
+                "id": 187,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110205179,
+                "elapsedMs": 872.9000000953674
+              },
+              {
+                "id": 191,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110205179,
+                "startMs": 1162325.799999714
+              },
+              {
+                "id": 192,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110205179,
+                "startMs": 1162326
+              },
+              {
+                "id": 184,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110205500,
+                "elapsedMs": 1828.0999999046326
+              },
+              {
+                "id": 193,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110205501,
+                "startMs": 1162647.3999996185
+              },
+              {
+                "id": 185,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110206001,
+                "elapsedMs": 2104
+              },
+              {
+                "id": 190,
+                "method": "Host.verifyPreparation",
+                "event": "resolve",
+                "at": 1792110206004,
+                "elapsedMs": 830.4000000953674
+              },
+              {
+                "id": 194,
+                "method": "Host.ownerSubmitSealed",
+                "event": "start",
+                "at": 1792110206004,
+                "startMs": 1163150.799999714
+              },
+              {
+                "id": 195,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110206005,
+                "startMs": 1163151.8999996185
+              },
+              {
+                "id": 196,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110206008,
+                "startMs": 1163155.299999714
+              },
+              {
+                "id": 186,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110206239,
+                "elapsedMs": 2339.0999999046326
+              },
+              {
+                "id": 197,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110206239,
+                "startMs": 1163386.0999999046
+              },
+              {
+                "id": 191,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110206240,
+                "elapsedMs": 1061.2000002861023
+              },
+              {
+                "id": 198,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110206240,
+                "startMs": 1163387
+              },
+              {
+                "id": 199,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110206240,
+                "startMs": 1163387.1999998093
+              },
+              {
+                "id": 192,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110206241,
+                "elapsedMs": 1061.7999997138977
+              },
+              {
+                "id": 188,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110206577,
+                "elapsedMs": 2271.2999997138977
+              },
+              {
+                "id": 200,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110206577,
+                "startMs": 1163724.3999996185
+              },
+              {
+                "id": 194,
+                "method": "Host.ownerSubmitSealed",
+                "event": "resolve",
+                "at": 1792110206582,
+                "elapsedMs": 578
+              },
+              {
+                "id": 201,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110206582,
+                "startMs": 1163728.799999714
+              },
+              {
+                "id": 189,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110207045,
+                "elapsedMs": 2446
+              },
+              {
+                "id": 202,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110207046,
+                "startMs": 1164193
+              },
+              {
+                "id": 203,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110207054,
+                "startMs": 1164201.3999996185
+              },
+              {
+                "id": 198,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110207082,
+                "elapsedMs": 841.5
+              },
+              {
+                "id": 204,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110207085,
+                "startMs": 1164232.299999714
+              },
+              {
+                "id": 205,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110207086,
+                "startMs": 1164232.5
+              },
+              {
+                "id": 193,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110207349,
+                "elapsedMs": 1848.3000001907349
+              },
+              {
+                "id": 195,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110207922,
+                "elapsedMs": 1917.2000002861023
+              },
+              {
+                "id": 196,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110208336,
+                "elapsedMs": 2327.5
+              },
+              {
+                "id": 197,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110208712,
+                "elapsedMs": 2472.7999997138977
+              },
+              {
+                "id": 204,
+                "method": "SessionStore.load",
+                "event": "resolve",
+                "at": 1792110208714,
+                "elapsedMs": 1628.7000002861023
+              },
+              {
+                "id": 206,
+                "method": "SessionStore.load",
+                "event": "start",
+                "at": 1792110208714,
+                "startMs": 1165861.0999999046
+              },
+              {
+                "id": 207,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "start",
+                "at": 1792110208717,
+                "startMs": 1165863.8999996185
+              },
+              {
+                "id": 199,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110208988,
+                "elapsedMs": 2748
+              },
+              {
+                "id": 200,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110209181,
+                "elapsedMs": 2603.6000003814697
+              },
+              {
+                "id": 201,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110209395,
+                "elapsedMs": 2813.0999999046326
+              },
+              {
+                "id": 202,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110209757,
+                "elapsedMs": 2710.699999809265
+              },
+              {
+                "id": 203,
+                "method": "RouteJournal.readRouteSnapshot",
+                "event": "resolve",
+                "at": 1792110210083,
+                "elapsedMs": 3028.9000000953674
+              }
+            ],
+            "totals": [
+              {
+                "method": "SessionStore.load",
+                "calls": 96,
+                "resolved": 95,
+                "rejected": 0,
+                "totalMs": 57767.99999856949,
+                "maxMs": 1880.8000001907349
+              },
+              {
+                "method": "RouteJournal.readRouteSnapshot",
+                "calls": 106,
+                "resolved": 104,
+                "rejected": 0,
+                "totalMs": 204652.99999713898,
+                "maxMs": 3615.699999809265
+              },
+              {
+                "method": "Host.verifyPreparation",
+                "calls": 3,
+                "resolved": 3,
+                "rejected": 0,
+                "totalMs": 1003.4000000953674,
+                "maxMs": 830.4000000953674
+              },
+              {
+                "method": "Host.ownerDiscover",
+                "calls": 1,
+                "resolved": 1,
+                "rejected": 0,
+                "totalMs": 2682.9000000953674,
+                "maxMs": 2682.9000000953674
+              },
+              {
+                "method": "Host.ownerSubmitSealed",
+                "calls": 1,
+                "resolved": 1,
+                "rejected": 0,
+                "totalMs": 578,
+                "maxMs": 578
+              }
+            ],
+            "inFlight": [
+              {
+                "id": 205,
+                "method": "RouteJournal.readRouteSnapshot",
+                "startMs": 1164232.5,
+                "at": 1792110207086,
+                "elapsedMs": 2999.8999996185303
+              },
+              {
+                "id": 206,
+                "method": "SessionStore.load",
+                "startMs": 1165861.0999999046,
+                "at": 1792110208714,
+                "elapsedMs": 1371.2999997138977
+              },
+              {
+                "id": 207,
+                "method": "RouteJournal.readRouteSnapshot",
+                "startMs": 1165863.8999996185,
+                "at": 1792110208717,
+                "elapsedMs": 1368.5
+              }
+            ],
+            "skipped": []
+          }
+        ]
+      }
+    ],
+    "finishedAt": "2026-10-16T00:23:30.229Z"
+  },
+  "limits": [
+    "Five-second CPU samples, selected existing retained synthetic pair only",
+    "Method elapsed times include scheduling and nested overlapping calls; sums are not wall-clock totals",
+    "No exact PoW/network/encryption latency attribution from old process average CPU",
+    "No arguments/results/keys/IDs captured by method tracer",
+    "Original UI failures remain FAIL; no timeout/difficulty/storage relaxation"
+  ],
+  "finding": "Main-thread repeated authenticated route validation is a measured hotspot; product fix assigned to node_sol in isolated worktree, not yet accepted or deployed"
+}

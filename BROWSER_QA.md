@@ -61,6 +61,28 @@ UI gate на canonical9748 через proxy без DNS override, CDP9485.
 [Fresh scoped PASS](docs/evidence/2026-10-15/qa-n4-control-utf8-browser.json),
 [previous source gate](docs/evidence/2026-10-15/qa-n4-control-encoding-source-gate.json).
 
+**Ordinary PRIVATE Node UI baseline (16 октября):** exact canonical9748,
+explicit managed-v4/source overlay, SW BLOCKED, real proxyTLS без DNSoverride.
+Два synthetic root/Account setup и Nodeconnect PASS; actual PRIVATE QR visibleIMG,
+copy→inspect correctAccountID→request→повторные Confirm/Refresh clicks PASS.
+Original hidden-first canvas locator и premature PUBLIC_SESSION_REQUIRED getter
+harnessFAILs сохранены, не product bugs. Captured264appresponses byte-exact.
+**N3-PRIVATE-KEY-LATENCY-01 FAIL:** bilateralkey gate244.777s >240s;
+позднее оба ESTABLISHED/gen1, оба authenticated bootstrap receipts имеются.
+Это eventual recovery, не ретроактивный latencyPASS и не permanentdeadlock.
+**N3-COMPOSER-LATENCY-01 FAIL:** после visible keysconfirmed/closepanel/sidebar
+select composerhidden >20s; позднее первый composer visible. Точная причина
+ещё исследуется; не приписывать её шифрованию без измерений.
+**N3-LOCAL-SEND-LATENCY-01 FAIL:** actual SEND не показал senderrow за5s;
+позднее одна localrow PENDING, у receiver0rows (00:20:47Z). OriginalFAIL
+не переименован. Owner node_sol: assigned bounded authenticated validation-reuse fix after profiling;
+mainpage NaCl hotfunctions77–81% samples, Workers96–98%idle;
+RouteJournal100/104completedreads average~1.95s (overlap, не суммировать какwalltime).
+Fresh coherentDB/AESauth/CAS/owner/expiry/root checks должны сохраняться.
+[Diagnostic and limits](docs/evidence/2026-10-15/qa-node-main-thread-validation-diagnostic.json).
+Recipient delivery/reload/no-chat ещё NOT RUN. SAME identities/root/Node сохранены, browser9485/keeper77016 live.
+[Baseline and limits](docs/evidence/2026-10-15/qa-private-node-ui-baseline.json).
+
 **Актуальная инфраструктура API (15 октября):** пользователь назначил
 `proxy.d-mash.ru` на прежнем EMS `85.198.64.183`; прежние stage/API hostnames
 удалены/не использовать. Root применил проверенные tools из published

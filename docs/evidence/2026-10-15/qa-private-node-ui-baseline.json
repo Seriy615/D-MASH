@@ -1,0 +1,153 @@
+{
+  "productSha": "9748e95ab54d48987efb8822ed3ad0db6fb32398",
+  "scope": "BROWSER source overlay with explicit managed-v4; two synthetic Accounts, actual public proxy.d-mash.ru TLS transport, SW blocked; not DEPLOYED or full N3/N4",
+  "sourceEvidence": {
+    "capturedAppResponses": 264,
+    "allCapturedByteExact": true,
+    "scopeLimit": "Captured source responses; not a claim to cover all Worker scripts or full deployed page/SW"
+  },
+  "steps": [
+    {
+      "id": "root-only-start-0",
+      "status": "PASS",
+      "at": "2026-10-16T00:04:14.155Z"
+    },
+    {
+      "id": "account-create-0",
+      "status": "PASS",
+      "at": "2026-10-16T00:04:16.170Z"
+    },
+    {
+      "id": "ordinary-node-panel-0",
+      "status": "PASS",
+      "at": "2026-10-16T00:04:26.066Z"
+    },
+    {
+      "id": "root-only-start-1",
+      "status": "PASS",
+      "at": "2026-10-16T00:04:41.479Z"
+    },
+    {
+      "id": "account-create-1",
+      "status": "PASS",
+      "at": "2026-10-16T00:04:43.630Z"
+    },
+    {
+      "id": "ordinary-node-panel-1",
+      "status": "PASS",
+      "at": "2026-10-16T00:05:33.936Z"
+    },
+    {
+      "id": "private-signed-qr-copy",
+      "status": "FAIL",
+      "at": "2026-10-16T00:05:56.150Z",
+      "error": "locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-node-private-qr] canvas,[data-node-private-qr] img').first() to be visible\u001b[22m\n\u001b[2m    41 × locator resolved to hidden <canvas width=\"320\" height=\"320\"></canvas>\u001b[22m\n"
+    }
+  ],
+  "originalHarnessFailure": "QRCode creates a hidden canvas then visible IMG; original first() selected hidden canvas. Visible IMG and copy were subsequently verified on SAME profiles; original FAIL preserved.",
+  "sameProfileContinuation": [
+    {
+      "id": "both-visible-confirm-and-key-establishment",
+      "status": "FAIL",
+      "seconds": 244.777,
+      "error": "Bounded observation deadline"
+    }
+  ],
+  "eventualEstablishment": {
+    "productSha": "9748e95ab54d48987efb8822ed3ad0db6fb32398",
+    "at": "2026-10-16T00:12:24.395Z",
+    "scope": "Read-only diagnostics after actual PRIVATE buttons reached bounded UI FAIL; not substitute for UI",
+    "profiles": [
+      {
+        "status": {
+          "phase": "ESTABLISHED",
+          "sessionEstablished": true,
+          "generation": 1
+        },
+        "offers": [
+          {
+            "pending": false,
+            "requests": [
+              {
+                "direction": "INBOUND",
+                "state": "SELECTED",
+                "hasACCEPT": true,
+                "hasCONFIRM": true
+              }
+            ]
+          }
+        ],
+        "host": {
+          "closed": false,
+          "pending": []
+        },
+        "visible": "Ключи подтверждены\n\nПубличный адрес NodeВаше имя для запросаСообщение для знакомстваPRIVATE адрес NodeПроверенный ID собеседника\nСОЗДАТЬ PRIVATE QRКОПИРОВАТЬ PRIVATE АДРЕСПРОВЕРИТЬ PRIVATE АДРЕСОТПРАВИТЬ PRIVATE ЗАПРОСОБНОВИТЬ PRIVATE ЗАПРОСЫСОЗДАТЬ / ПОКАЗАТЬ ПУБЛИЧНЫЙ АДРЕСКОПИРОВАТЬ ПУБЛИЧНЫЙ АДРЕСОТПРАВИТЬ ЗАПРОСОБНОВИТЬ ЗАПРОСЫ\n\nPRIVATE предложение\n\nПОКАЗАТЬ PRIVATE QR\n\nAccount [id] · SELECTED\n\nПОДТВЕРДИТЬ PRIVATE КОНТАКТ\n\nEMS staging · Node v4\n\nNode подключена\n\nПодключить Node"
+      },
+      {
+        "status": {
+          "phase": "ESTABLISHED",
+          "sessionEstablished": true,
+          "generation": 1
+        },
+        "offers": [
+          {
+            "pending": false,
+            "requests": [
+              {
+                "direction": "OUTBOUND",
+                "state": "SELECTED",
+                "hasACCEPT": true,
+                "hasCONFIRM": true
+              }
+            ]
+          }
+        ],
+        "host": {
+          "closed": false,
+          "pending": []
+        },
+        "visible": "Ключи подтверждены\n\nПубличный адрес NodeВаше имя для запросаСообщение для знакомстваPRIVATE адрес NodeПроверенный ID собеседника\nСОЗДАТЬ PRIVATE QRКОПИРОВАТЬ PRIVATE АДРЕСПРОВЕРИТЬ PRIVATE АДРЕСОТПРАВИТЬ PRIVATE ЗАПРОСОБНОВИТЬ PRIVATE ЗАПРОСЫСОЗДАТЬ / ПОКАЗАТЬ ПУБЛИЧНЫЙ АДРЕСКОПИРОВАТЬ ПУБЛИЧНЫЙ АДРЕСОТПРАВИТЬ ЗАПРОСОБНОВИТЬ ЗАПРОСЫ\n\nPRIVATE предложение\n\nПОКАЗАТЬ PRIVATE QR\n\nAccount [id] · SELECTED\n\nПОВТОРИТЬ PRIVATE ЗАПРОСПОДТВЕРДИТЬ PRIVATE КОНТАКТ\n\nEMS staging · Node v4\n\nNode подключена\n\nПодключить Node"
+      }
+    ]
+  },
+  "composerLatency": [
+    {
+      "id": "eventual-ready-visible-and-open-ordinary-chat",
+      "status": "FAIL",
+      "seconds": 43.108,
+      "error": "locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#msgInput') to be visible\u001b[22m\n\u001b[2m    9 × locator resolved to hidden <textarea rows=\"1\" id=\"msgInput\" spellcheck=\"false\" placeholder=\"Сообщение...\"></textarea>\u001b[22m\n"
+    }
+  ],
+  "identityRootAndNodePreserved": true,
+  "storageReset": false,
+  "timeoutsOrDifficultyRelaxed": false,
+  "notAccepted": [
+    "PRIVATE setup/key latency240s",
+    "ordinary composer loading20s",
+    "local SEND visibility5s",
+    "recipient text delivery",
+    "reload/no-chat delivery",
+    "full N4/migration/media/production"
+  ],
+  "liveState": "Root retains SAME synthetic browser CDP9485 keeper77016; no browser restart or real data mutation. Diagnostic continuation ongoing; protected snapshots outside Git.",
+  "ordinarySend": [
+    {
+      "id": "eventual-composers-visible",
+      "status": "PASS",
+      "seconds": 4.28
+    },
+    {
+      "id": "ordinary-SEND-visible-both-0",
+      "status": "FAIL",
+      "seconds": 16.531,
+      "error": "locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#log .m-txt').filter({ hasText: 'PRIVATE ordinary actual UI 0' }) to be visible\u001b[22m\n"
+    }
+  ],
+  "eventualLocalMessage": {
+    "senderRows": 1,
+    "recipientRows": 0,
+    "senderStatus": "PENDING",
+    "observedAt": "2026-10-16T00:20:47.339Z",
+    "note": "Original 5-second FAIL preserved; exact elapsed local persistence time not measured by continuous observer"
+  }
+}
