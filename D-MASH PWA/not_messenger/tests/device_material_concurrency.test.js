@@ -38,12 +38,14 @@ function setup() {
     const pending = DeviceRoot.deviceMaterial('stale', async () => { entered.resolve(); await release.promise; return stale; });
     const rejection = assert.rejects(pending, error => error.code === 'DEVICE_LOCKED');
     let queuedCalled = false;
-    const queued = DeviceRoot.deviceMaterial('queued', async () => { queuedCalled = true; return new Uint8Array([1]); });
+    const queuedBytes = new Uint8Array([1]);
+    const queued = DeviceRoot.deviceMaterial('queued', async () => { queuedCalled = true; return queuedBytes; });
     const queuedRejection = assert.rejects(queued, error => error.code === 'DEVICE_LOCKED');
     await entered.promise;
     const nextStore = setup();
     release.resolve(); await Promise.all([rejection, queuedRejection]);
-    assert.equal(queuedCalled, false);
+    assert.equal(queuedCalled, true, "independent creators may start before another name completes");
+    assert.deepEqual([...queuedBytes], [0], "lock still clears independent creator bytes");
     assert.deepEqual([...stale], [0,0]);
     assert.deepEqual(store.record.materials, {});
     assert.deepEqual(nextStore.record.materials, {});
