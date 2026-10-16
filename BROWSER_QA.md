@@ -190,6 +190,16 @@ Protectedcustomrawexports291803/268694B7DBeachbeforegate, restoreNOTRUN.
 [Logout source/flow/limits](docs/evidence/2026-10-16/qa-account-logout6ff.json),
 [Original harnessFAIL](docs/evidence/2026-10-16/qa-account-logout6ff-initial-harness-fail.json).
 
+**Exact6ff A→B→A ordinaryUI scopedPASS:** root47356logoutgate followedby
+46653switchgate, actualnewsyntheticB viaNewLogin+registrycheckbox; Bidentitydiffers
+A/sender, sameNode/root. WhileBactiveSavedempty, noAplaintext and NOauthACKfor
+uniqueSENDtoA30s. LogoutB→loginA→Saved autostart authenticatesnewACK BEFORE
+contactopen; newtextonce+all13priorvisibletexts eachside retained.6stepsPASS,
+Bstillregistered/no deletion/reset. Full rootlock/unlock NOTRUN; nodealive isnot
+foreigntransitproof. Freshcustomrawexports306069/281589B7DB beforeBcreation,
+restoreNOTRUN; rootwillpreservepostBstate beforeclosingkeepers.
+[Switch isolation/source/limits](docs/evidence/2026-10-16/qa-account-switchB6ff.json).
+
 **LocalSEND25.827s whenpriorreceiver-inactive retriesqueued remainsOPEN**, despite
 cleanerretainedUI1.4–1.9s PASS; do notclaimall latencyfixed. FullUNIT endedbefore
 this correctedrun; stale copiedconcurrentlimit notcurrentevidence.

@@ -1,0 +1,94 @@
+{
+  "startedAt": "2026-10-16T01:41:53.213Z",
+  "harnessSha256": "caeb757ad5feec41c45bcc0a0c464f60942e2bc79355a5aabe13761db1c840fd",
+  "scope": "Existing synthetic managed-v4 pair: A logout, new synthetic B creation via UI, message to A while B active, return A/Saved and authenticated receipt before peer chat opens. B remains registered; no delete/reset. Full local root lock remains NOT RUN.",
+  "timingLimit": "Diagnostic bounded observations; concurrent test/CPU load means timings are not performance acceptance.",
+  "otherAccountObservationMs": 30000,
+  "deliveryBoundMs": 180000,
+  "snapshots": "Owning keeper must export fresh encrypted raw state separately; secondary CDP storageState is not a backup.",
+  "steps": [
+    {
+      "id": "baseline-paired-Account-root-Node-and-visible-history",
+      "startedAt": "2026-10-16T01:41:54.314Z",
+      "status": "PASS",
+      "elapsedMs": 3203,
+      "finishedAt": "2026-10-16T01:41:57.517Z"
+    },
+    {
+      "id": "receiver-AccountA-logout-keeps-same-Node",
+      "startedAt": "2026-10-16T01:41:57.522Z",
+      "status": "PASS",
+      "elapsedMs": 225,
+      "finishedAt": "2026-10-16T01:41:57.747Z"
+    },
+    {
+      "id": "create-synthetic-B-through-new-login-and-registry-checkbox",
+      "startedAt": "2026-10-16T01:41:57.747Z",
+      "status": "PASS",
+      "elapsedMs": 6287,
+      "finishedAt": "2026-10-16T01:42:04.034Z"
+    },
+    {
+      "id": "unique-new-SEND-to-A-has-no-ACK-while-B-active",
+      "startedAt": "2026-10-16T01:42:04.035Z",
+      "status": "PASS",
+      "elapsedMs": 31769,
+      "finishedAt": "2026-10-16T01:42:35.804Z"
+    },
+    {
+      "id": "logout-B-login-A-receives-while-Saved-before-peer-open",
+      "startedAt": "2026-10-16T01:42:35.805Z",
+      "status": "PASS",
+      "elapsedMs": 15775,
+      "finishedAt": "2026-10-16T01:42:51.580Z"
+    },
+    {
+      "id": "open-recipient-after-ACK-new-message-once-old-history-retained",
+      "startedAt": "2026-10-16T01:42:51.583Z",
+      "status": "PASS",
+      "elapsedMs": 1973,
+      "finishedAt": "2026-10-16T01:42:53.556Z"
+    }
+  ],
+  "before": {
+    "senderAccountSha256": "4adf7ca315ad1e3e0f470e7bf4f53193d32c3425d14feb2550528881f1c2507d",
+    "receiverAccountSha256": "89519055e8ec940ae8fd5f63fe218cfca1fd11186bd4c84d716fd49a063fa07b",
+    "senderRootSha256": "201aa6266330eb2ebd6da7a3056ed0dd891e724a045ea9d7dec42ce925b2c01a",
+    "receiverRootSha256": "f7fd9c4ff80cb3483c4fd0fc7077ee9423358e5df6c07c688368a208dd3bf718",
+    "senderNodeSha256": "3c39f9c94a6bb4d758f0d0c6256958118f93fbaeb1a914929f0dc3acf4c621ef",
+    "receiverNodeSha256": "9c659932120b58e90b51c5462c9f7e9ecdf5094db9792e9d15524eea84b189bc",
+    "senderVisibleHistoryRows": 13,
+    "receiverVisibleHistoryRows": 13,
+    "releases": [
+      "transport-v3-node-preparation-20261008.37",
+      "transport-v3-node-preparation-20261008.37"
+    ],
+    "compiledRuntimeSha256": [
+      "c43be9d498cd44faaf5c8b78877aa6f33c1735d78fa4b029f003630aae643dc9",
+      "c43be9d498cd44faaf5c8b78877aa6f33c1735d78fa4b029f003630aae643dc9"
+    ]
+  },
+  "accountB": {
+    "accountSha256": "a075ea05d8005506e882ab077c4c8d95d40764b32eafab59a0481a54645f85dd",
+    "registryNameSha256": "7e0efca75d24219ed7dc1f62673e5c0c6dfc78354883f18e8aecb3e6f2e8a3db",
+    "retainedInRegistry": true
+  },
+  "messageSha256": "0d96c41fe8f516c8434a58dda22a2880cedb29cc4af4c48f671a3414e8828b51",
+  "sentAt": "2026-10-16T01:42:04.087Z",
+  "noAckWindowCompletedAt": "2026-10-16T01:42:35.804Z",
+  "loggedBackInAt": "2026-10-16T01:42:42.563Z",
+  "authenticatedDeliveredAt": "2026-10-16T01:42:51.580Z",
+  "receiverPeerOpenedAt": "2026-10-16T01:42:53.407Z",
+  "result": "PASS scoped synthetic Account A→new B→A isolation and new authenticated delivery before peer opening; B retained, full root lock NOT RUN",
+  "finishedAt": "2026-10-16T01:42:53.556Z",
+  "productSha": "6ff5515fa253a3f177ebce41cd7b12d5d06dffd0",
+  "toolSha": "0ad3b8d3e7cc6b821ce7350c810c45992f53eec5",
+  "actualLoad": "Full UNIT and timing observations completed before this gate; this is lifecycle acceptance, not performance benchmark",
+  "limits": [
+    "Managedoptin/sourceoverlay/SWblocked, NOTDEPLOYED/fullN3/N4/fullgoal",
+    "Nodecurrent/liveness observed, not foreigntransit gate whileBactive",
+    "New syntheticB remainsregistered; no realuserAccounts touched, no deletion/reset",
+    "Fresh customrawexports306069/281589B7DB eachbeforeBcreation; live-separate captures, restoreNOTRUN",
+    "Full rootlock/unlock remainsNOTRUN"
+  ]
+}
