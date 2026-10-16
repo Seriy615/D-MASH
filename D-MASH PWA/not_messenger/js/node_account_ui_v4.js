@@ -19,10 +19,39 @@
   const task=(refreshes.get(core)||Promise.resolve()).catch(()=>{}).then(async()=>{session.assertCurrent();if(core.activePeerId!==peer)return;core.historyPrefetch?.delete(peer+':0');await core.loadChat(false);session.assertCurrent();});
   refreshes.set(core,task);return task.finally(()=>{if(refreshes.get(core)===task)refreshes.delete(core);});
  }
- function watch(core,adapter){
-  if(watchers.has(adapter))return;const session=core.captureAccountSessionV4();let busy=false;
-  const timer=setInterval(async()=>{if(busy)return;busy=true;try{session.assertCurrent();const result=await adapter.pollSessions();session.assertCurrent();view?.onStatus?.(result.statuses);if(result.processed){await core.renderPeers();session.assertCurrent();if(core.activePeerId)await refreshChat(core,session);}}catch(_){try{session.assertCurrent();}catch(_){clearInterval(timer);watchers.delete(adapter);}}finally{busy=false;}},1500);
-  watchers.set(adapter,timer);session.signal.addEventListener('abort',()=>{clearInterval(timer);watchers.delete(adapter);},{once:true});
+ function watch(core,adapter,session=core.captureAccountSessionV4(),immediate=false){
+  if(watchers.has(adapter))return;let busy=false;const entry={timer:null};
+  const stop=()=>{if(watchers.get(adapter)!==entry)return;clearInterval(entry.timer);watchers.delete(adapter);};
+  const tick=async()=>{if(busy)return;busy=true;try{session.assertCurrent();const result=await adapter.pollSessions();session.assertCurrent();view?.onStatus?.(result.statuses);if(result.processed){await core.renderPeers();session.assertCurrent();if(core.activePeerId)await refreshChat(core,session);}}catch(_){try{session.assertCurrent();}catch(_){stop();}}finally{busy=false;}};
+  entry.timer=setInterval(tick,1500);watchers.set(adapter,entry);
+  session.signal.addEventListener('abort',stop,{once:true});
+  if(immediate)void tick();
+ }
+ function receiveOnAccount(core){
+  if(typeof core.subscribeAccountSessionV4!=='function')return;
+  let current=null;
+  core.subscribeAccountSessionV4(session=>{
+   if(g.DMASH_NODE_PROFILE!=='managed-v4'||current?.session===session)return;
+   const root=g.DeviceRoot,job={session,retry:null,delay:5000};current=job;
+   const check=()=>{session.assertCurrent();if(current!==job||g.DMASH_NODE_PROFILE!=='managed-v4'||root!==g.DeviceRoot||root.state!==session.rootState)throw Error('ACCOUNT_SESSION_CHANGED');};
+   const stop=()=>{if(job.retry!==null)clearTimeout(job.retry);job.retry=null;if(current===job)current=null;};
+   session.signal.addEventListener('abort',stop,{once:true});
+   const start=async()=>{
+    try{
+     check();if(!g.DmashNodeRootLifecycleV4?.attach||!g.DmashManagedNodeCatalogV4?.coordinator)throw Error('NODE_RUNTIME_UNAVAILABLE');
+     const node=await g.DmashNodeRootLifecycleV4.attach(root).start();check();if(!node.current())throw Error('NODE_SESSION_CHANGED');
+     const adapter=await core.openPublicAccountNodeV4(g.DmashManagedNodeCatalogV4.coordinator(root));check();if(!node.current())throw Error('NODE_SESSION_CHANGED');
+     await adapter.rehydrate();check();if(!node.current())throw Error('NODE_SESSION_CHANGED');
+     watch(core,adapter,session,true);
+    }catch(_){
+     try{check();}catch(_){stop();return;}
+     // Node readiness can fail before a later explicit Connect succeeds. Retry
+     // this Account's startup only, with one bounded-backoff task at a time.
+     job.retry=setTimeout(()=>{job.retry=null;void start();},job.delay);job.delay=Math.min(job.delay*2,30000);
+    }
+   };
+   void Promise.resolve().then(start);
+  });
  }
  function open(core){if(g.DMASH_NODE_PROFILE!=='managed-v4')throw Error('NODE_REVIEW_OPT_IN_REQUIRED');
   view?.close();core.openModal('КОНТАКТЫ NODE','<div data-node-account-panel></div><button type="button" class="sys-modal-btn" data-node-account-close>ЗАКРЫТЬ</button>');
@@ -91,6 +120,7 @@
    const capture=this.captureAccountSessionV4(),field=document.getElementById('msgInput'),text=content??field?.value?.trim();if(!text)return false;if(pending.has(peer))return pending.get(peer);
    const task=(async()=>{try{const coordinator=g.DmashManagedNodeCatalogV4.coordinator(g.DeviceRoot),adapter=await this.openPublicAccountNodeV4(coordinator);await adapter.rehydrate();capture.assertCurrent();const result=await adapter.sendApplication(peer,{operationId:random(),plaintext:text,contentType:'text/plain;charset=utf-8'});capture.assertCurrent();if(result.durable===true){if(!content&&field?.value.trim()===text)field.value='';await this.renderPeers();capture.assertCurrent();if(this.activePeerId===peer)await refreshChat(this,capture);return true;}return false;}catch(error){try{capture.assertCurrent();this.openModal('СООБЩЕНИЕ НЕ ОТПРАВЛЕНО','<p data-node-send-error></p><button class="sys-modal-btn" onclick="Core.closeModal()">OK</button>');document.querySelector('[data-node-send-error]').textContent=errorText(error);}catch(_){}return false;}})();pending.set(peer,task);try{return await task;}finally{if(pending.get(peer)===task)pending.delete(peer);}
   };
+  if(g.DMASH_NODE_PROFILE==='managed-v4')receiveOnAccount(core);
   core.__nodeAccountUiV4=true;return true;
  }
  g.DmashNodeAccountUiV4=Object.freeze({open,install});if(!install()){const timer=setInterval(()=>{if(install())clearInterval(timer);},250);}

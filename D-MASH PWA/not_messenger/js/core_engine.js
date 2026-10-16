@@ -194,6 +194,15 @@ const Core = {
         // A failed unwrap is not authorization to replace an existing identity.
         throw Object.assign(new Error('Не удалось открыть сохранённые данные устройства. Данные и ключи не удалены; требуется восстановление доступа.'), {code: 'RECOVERY_REQUIRED'});
     },
+    subscribeAccountSessionV4(listener) {
+        if (typeof listener !== 'function') throw new TypeError('ACCOUNT_SESSION_LISTENER');
+        const observers = this._accountSessionObserversV4 ||= new Set();
+        const notify = session => { try { Promise.resolve(listener(session)).catch(() => {}); } catch (_) {} };
+        observers.add(notify);
+        const current = this._accountSessionV4?.capability;
+        if (current?.isCurrent()) notify(current);
+        return () => observers.delete(notify);
+    },
     _invalidateAccountSessionV4(reason = 'ACCOUNT_CHANGED') {
         const publicNode = this._publicAccountNodeV4;
         this._publicAccountNodeV4 = null;
@@ -227,6 +236,9 @@ const Core = {
         this._accountSessionV4 = session;
         session.offRoot = root.onLock(() => this._invalidateAccountSessionV4('ROOT_LOCKED'));
         captured.assertCurrent();
+        // Observers start Account work asynchronously; workspace login never waits
+        // for Node availability. The published capability owns cancellation.
+        for (const notify of [...(this._accountSessionObserversV4 || [])]) notify(session.capability);
         return session.capability;
     },
     captureAccountSessionV4() {
