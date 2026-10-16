@@ -136,6 +136,21 @@ NOT DEPLOYED. Root browser9485/originalkeeper77016 stilllive; persistent8330keep
 closed only itsCDPclient. Fresh protected raw syntheticexports229862/226360B7DB
 before source switch, live-separate captures, restoreNOTRUN, notvalidatedrollbackbackup.
 [Retained startup fix and remaining latency](docs/evidence/2026-10-16/qa-startup74f-retained-nochat.json).
+
+**N3-RETRY-TIMER-OVERLAP-01 OPEN, owner node_sol:** root numeric-only
+actual74f UI diagnostic observed Runtime.resume maxoverlap **65sender/34receiver**,
+376/380calls duringcapture; repeated SessionStore/journal reads inthousands.
+startRetries clears timerownership BEFORE awaitresume; UI polling canstartanother
+train, oldcompletion thenarmsanother unownedtimer. Independent actualscheduler
+fakeclock REDdb57a17 proves overlap2/futuretimers2/pendingafterclose1 vs1/1/0.
+Small timerownership fix assigned in /tmp/dmash-account-retry-timer-red, pending.
+Cadence5s/auth/backoff/difficulty unchanged; no broad queue removal/reset.
+Observed diagnosticSEND local11.169s/authACK25.915s hasobserveroverhead and doesNOT
+erase uninstrumented90.8s performanceFAIL. Perpageprototype totals aggregateinstances;
+onlyonecurrentAccount/adapterexpected; dropped rawring notfulltrace, totalsretained.
+Allwrappersrestored. Exact90s causality/afterfix latency acceptance stillOPEN.
+[Diagnostic and limits](docs/evidence/2026-10-16/qa-retry-timer-overlap74f-diagnostic.json).
+
 **LocalSEND25.827s whenpriorreceiver-inactive retriesqueued remainsOPEN**, despite
 cleanerretainedUI1.4–1.9s PASS; do notclaimall latencyfixed. FullUNIT endedbefore
 this correctedrun; stale copiedconcurrentlimit notcurrentevidence.

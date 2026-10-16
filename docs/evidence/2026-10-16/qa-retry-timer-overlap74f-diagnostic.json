@@ -1,0 +1,266 @@
+{
+  "productSha": "74f9449b535ba30f158920a3b10e89c6111f357b",
+  "diagnosticToolSha": "2c52e85e5e15012efb5b377c3f15f0b2f648144e",
+  "bug": "N3-RETRY-TIMER-OVERLAP-01",
+  "owner": "node_sol",
+  "status": "BROWSER diagnostic reproduction; scheduler UNIT RED; fix pending",
+  "scope": "Same retained two synthetic profiles; root actual UI SEND and recipient Saved; real public EMS; source overlay and SW blocked. Timings have observer overhead. Not performance acceptance or production.",
+  "uiSteps": [
+    {
+      "id": "composer-empty",
+      "seconds": 10.102
+    },
+    {
+      "id": "local-row",
+      "seconds": 11.169
+    },
+    {
+      "id": "authenticated-ACK-before-open",
+      "seconds": 25.915
+    }
+  ],
+  "pages": [
+    {
+      "page": 0,
+      "instrumentationRestored": true,
+      "rawEventsDropped": 8810,
+      "totals": [
+        {
+          "method": "SessionStore.load",
+          "calls": 1605,
+          "resolved": 1603,
+          "rejected": 0,
+          "totalMs": 72579.59999895096,
+          "maxMs": 626.5,
+          "inFlight": 2,
+          "maxInFlight": 3
+        },
+        {
+          "method": "RouteJournal.readRouteSnapshot",
+          "calls": 1558,
+          "resolved": 1551,
+          "rejected": 0,
+          "totalMs": 283813.4000082016,
+          "maxMs": 960.0999999046326,
+          "inFlight": 7,
+          "maxInFlight": 23
+        },
+        {
+          "method": "AppCipher.flushReceipts",
+          "calls": 364,
+          "resolved": 364,
+          "rejected": 0,
+          "totalMs": 9868.500000476837,
+          "maxMs": 639.5999999046326,
+          "inFlight": 0,
+          "maxInFlight": 2
+        },
+        {
+          "method": "Runtime.resume",
+          "calls": 376,
+          "resolved": 315,
+          "rejected": 0,
+          "totalMs": 2411941.800002575,
+          "maxMs": 18270.5,
+          "inFlight": 61,
+          "maxInFlight": 65
+        },
+        {
+          "method": "Runtime.startRetries",
+          "calls": 26,
+          "resolved": 26,
+          "rejected": 0,
+          "totalMs": 0.7999997138977051,
+          "maxMs": 0.2999997138977051,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Core.sendMessage",
+          "calls": 1,
+          "resolved": 1,
+          "rejected": 0,
+          "totalMs": 8895.699999809265,
+          "maxMs": 8895.699999809265,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Adapter.sendApplication",
+          "calls": 1,
+          "resolved": 1,
+          "rejected": 0,
+          "totalMs": 7108.900000095367,
+          "maxMs": 7108.900000095367,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Core.renderPeers",
+          "calls": 3,
+          "resolved": 3,
+          "rejected": 0,
+          "totalMs": 63.40000009536743,
+          "maxMs": 48.90000009536743,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Core.loadChat",
+          "calls": 3,
+          "resolved": 3,
+          "rejected": 0,
+          "totalMs": 4514.400000095367,
+          "maxMs": 2018.5,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Transport.prepareAndSubmitIntent",
+          "calls": 2,
+          "resolved": 2,
+          "rejected": 0,
+          "totalMs": 4677.299999713898,
+          "maxMs": 4216.599999904633,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "AppCipher.receiveReceipt",
+          "calls": 2,
+          "resolved": 2,
+          "rejected": 0,
+          "totalMs": 4515.099999904633,
+          "maxMs": 4341.699999809265,
+          "inFlight": 0,
+          "maxInFlight": 1
+        }
+      ]
+    },
+    {
+      "page": 1,
+      "instrumentationRestored": true,
+      "rawEventsDropped": 9188,
+      "totals": [
+        {
+          "method": "SessionStore.load",
+          "calls": 1545,
+          "resolved": 1544,
+          "rejected": 0,
+          "totalMs": 64993.10002660751,
+          "maxMs": 321.90000009536743,
+          "inFlight": 1,
+          "maxInFlight": 3
+        },
+        {
+          "method": "Runtime.resume",
+          "calls": 380,
+          "resolved": 357,
+          "rejected": 0,
+          "totalMs": 647773.9000082016,
+          "maxMs": 7128.400000095367,
+          "inFlight": 23,
+          "maxInFlight": 34
+        },
+        {
+          "method": "RouteJournal.readRouteSnapshot",
+          "calls": 1716,
+          "resolved": 1714,
+          "rejected": 0,
+          "totalMs": 200641.7000117302,
+          "maxMs": 608,
+          "inFlight": 2,
+          "maxInFlight": 12
+        },
+        {
+          "method": "AppCipher.flushReceipts",
+          "calls": 367,
+          "resolved": 366,
+          "rejected": 0,
+          "totalMs": 48037.59999513626,
+          "maxMs": 3918.2999997138977,
+          "inFlight": 1,
+          "maxInFlight": 14
+        },
+        {
+          "method": "Runtime.startRetries",
+          "calls": 40,
+          "resolved": 40,
+          "rejected": 0,
+          "totalMs": 0.6000003814697266,
+          "maxMs": 0.10000038146972656,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Core.renderPeers",
+          "calls": 4,
+          "resolved": 4,
+          "rejected": 0,
+          "totalMs": 345.8999996185303,
+          "maxMs": 215.5,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "AppCipher.receiveApplication",
+          "calls": 2,
+          "resolved": 2,
+          "rejected": 0,
+          "totalMs": 1504,
+          "maxMs": 1236.2000002861023,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Transport.prepareAndSubmitIntent",
+          "calls": 2,
+          "resolved": 2,
+          "rejected": 0,
+          "totalMs": 4992.700000286102,
+          "maxMs": 3307.300000190735,
+          "inFlight": 0,
+          "maxInFlight": 1
+        },
+        {
+          "method": "Core.loadChat",
+          "calls": 2,
+          "resolved": 2,
+          "rejected": 0,
+          "totalMs": 108.09999990463257,
+          "maxMs": 90.5,
+          "inFlight": 0,
+          "maxInFlight": 1
+        }
+      ]
+    }
+  ],
+  "red": {
+    "sha": "db57a178487212870a87ac32566edc86a4787d80",
+    "scope": "Actual runtime startRetries/close with deferred resume and fake timers; no crypto/network claim",
+    "observed": [
+      2,
+      2,
+      1
+    ],
+    "expected": [
+      1,
+      1,
+      0
+    ],
+    "metrics": [
+      "maxConcurrentResume",
+      "pendingAfterSettlement",
+      "pendingAfterClose"
+    ],
+    "independentReview": "ACCEPT meaningful RED"
+  },
+  "limits": [
+    "Prototype concurrency aggregates all instances in each page; only one current Account/adapter expected, no instance IDs recorded",
+    "Numeric timings/counts only; bounded raw event ring dropped older rows, totals retained",
+    "Overlapping summed elapsed must not be treated as wall time",
+    "Diagnostic UI run ~25.9s ACK does not erase uninstrumented ~90.8s baseline failure",
+    "Observed retry overlap and thousands of repeated reads support overload bug; exact contribution to 90.8s not yet proven",
+    "All diagnostic wrappers restored; in-flight counts captured at restore are historical snapshot, not active instrumentation"
+  ]
+}
