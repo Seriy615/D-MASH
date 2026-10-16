@@ -61,9 +61,11 @@ function fixture() {
         const action = refresh.listeners.click(); await settle(); gate.resolve(); await action;
         assert.equal(f.status(panel).textContent, explicit); assert.equal(panel.attributes['aria-busy'], 'false');
     }
-    const failure = deferred(); f.offers(() => failure.promise);
-    const failed = refresh.listeners.click(); await settle(); failure.reject(Object.assign(Error('unavailable'), {code: 'NODE_UNAVAILABLE'})); await failed;
-    assert.equal(f.status(panel).textContent, 'NODE_UNAVAILABLE'); assert.equal(panel.attributes['aria-busy'], 'false'); assert.equal(refresh.disabled, false);
+    for (const code of ['NODE_UNAVAILABLE', 'ACCOUNT_SESSION_CHANGED']) {
+        const failure = deferred(); f.offers(() => failure.promise);
+        const failed = refresh.listeners.click(); await settle(); failure.reject(Object.assign(Error('unavailable'), {code})); await failed;
+        assert.equal(f.status(panel).textContent, code); assert.equal(panel.attributes['aria-busy'], 'false'); assert.equal(refresh.disabled, false);
+    }
 
     // Exercise the actual pending-confirmation path, rather than equating a
     // completed click with a ready contact or confirmed cryptographic keys.
