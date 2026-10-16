@@ -83,6 +83,26 @@ Fresh coherentDB/AESauth/CAS/owner/expiry/root checks должны сохран�
 Recipient delivery/reload/no-chat ещё NOT RUN. SAME identities/root/Node сохранены, browser9485/keeper77016 live.
 [Baseline and limits](docs/evidence/2026-10-15/qa-private-node-ui-baseline.json).
 
+**Ordinary retained Node UI retest PASS (16 октября00:36–00:38UTC):** exact
+`8330be8eb89af5e5eb212c6ea6380495b4cb587a`, clean isolated
+`/tmp/dmash-account-journal-validation-reuse` from canonical37candidate40854a6.
+Small journal-only historical validation reuse; RED6ca2780→GREEN5d35830,
+expiryfollowup8330; independent security review ACCEPT, fivefocused suites PASS.
+Root actual SAME two synthetic profiles, normal reload/PIN/Accountlogin/NodeConnect/
+sidebar/contact/SEND; identities/root/Node/history preserved, no reset.
+Composer3.918/3.552s, localSEND1.398/1.876s, actualrecipient19.517/8.561s;
+visible texts exactlyonce bothways;266capturedappresponses exact, pageerrors0.
+N3-COMPOSER-LATENCY-01 / N3-LOCAL-SEND-LATENCY-01 closed ONLY for this retained
+sourceUI scope. OriginalFAILs remain recorded; coldPRIVATE key244s gate NOT retested.
+Source overlay/managedoptin/SW BLOCKED, **not DEPLOYED or full N3/N4 DONE**.
+Full UNIT8330 now livepublic_sol SAME43043, protected /tmp/dmash-8330-full-unit.log;
+DO NOT restart without verifying livehandle. Root no-chat recipientreload/login/
+Saved scenario now SAME80227/CDP9485; rootkeeper77016 remains live.
+New no-chat timing shares host withfullUNIT; not isolatedperformance evidence.
+Freshcustomrawstorageexports133303/140859B,7DBeach600 outsideGit; restoreNOTRUN,
+not validatedrollback backups. Originalowningsnapshots beforepair preserved.
+[Retained actual UI and exact source](docs/evidence/2026-10-16/qa-journal-validation-retained-ui.json).
+
 **Актуальная инфраструктура API (15 октября):** пользователь назначил
 `proxy.d-mash.ru` на прежнем EMS `85.198.64.183`; прежние stage/API hostnames
 удалены/не использовать. Root применил проверенные tools из published
