@@ -36,18 +36,25 @@
    const check=()=>{session.assertCurrent();if(current!==job||g.DMASH_NODE_PROFILE!=='managed-v4'||root!==g.DeviceRoot||root.state!==session.rootState)throw Error('ACCOUNT_SESSION_CHANGED');};
    const stop=()=>{if(job.retry!==null)clearTimeout(job.retry);job.retry=null;if(current===job)current=null;};
    session.signal.addEventListener('abort',stop,{once:true});
+   const retry=()=>{
+    if(job.retry!==null)return;
+    job.retry=setTimeout(()=>{job.retry=null;void start();},job.delay);job.delay=Math.min(job.delay*2,30000);
+   };
    const start=async()=>{
     try{
      check();if(!g.DmashNodeRootLifecycleV4?.attach||!g.DmashManagedNodeCatalogV4?.coordinator)throw Error('NODE_RUNTIME_UNAVAILABLE');
      const node=await g.DmashNodeRootLifecycleV4.attach(root).start();check();if(!node.current())throw Error('NODE_SESSION_CHANGED');
      const adapter=await core.openPublicAccountNodeV4(g.DmashManagedNodeCatalogV4.coordinator(root));check();if(!node.current())throw Error('NODE_SESSION_CHANGED');
-     await adapter.rehydrate();check();if(!node.current())throw Error('NODE_SESSION_CHANGED');
+     const restored=await adapter.rehydrate();check();if(!node.current())throw Error('NODE_SESSION_CHANGED');
      watch(core,adapter,session,true);
+     // Per-peer transient failures are fulfilled as pending, not thrown. Keep
+     // restored peers draining while retrying restoration for the remainder.
+     if(restored?.pending?.length)retry();
     }catch(_){
      try{check();}catch(_){stop();return;}
      // Node readiness can fail before a later explicit Connect succeeds. Retry
      // this Account's startup only, with one bounded-backoff task at a time.
-     job.retry=setTimeout(()=>{job.retry=null;void start();},job.delay);job.delay=Math.min(job.delay*2,30000);
+     retry();
     }
    };
    void Promise.resolve().then(start);
