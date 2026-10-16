@@ -1,0 +1,92 @@
+{
+  "result": "PASS",
+  "scope": "BROWSER two Chromium Workers through real Python Node; synthetic Account typed CONTROL successor and loss, no media bytes or ordinary UI/page/SW acceptance",
+  "productSha": "b6ad115e26179b154ac0d4825a760f07ad50157f",
+  "harnessSha": "829bfb2bbaf7f5cd55e2f426394b807684b0fb09",
+  "wrapperSha256": "03bc23b69968af68ad4962b0b14ee41959953b609d73fd8a0cdf300490db62d4",
+  "browser": "156.0.8078.4",
+  "transport": "Actual loopback WebSocket to separate Python Node; two real Chromium Workers; synthetic Accounts; real Ed25519/X25519/bundled Kyber/AES-GCM/IndexedDB; controlled packet loss only",
+  "checks": {
+    "lostInitialFinalRecovered": true,
+    "firstAuthenticatedControlAckFaulted": true,
+    "typedCommitAckValidated": true,
+    "tamperedControlRejectedBeforeDispatch": true,
+    "recipientControlDurableBeforeTransportAck": true,
+    "semanticActionAppliedOnceAcrossSuccessor": true,
+    "authenticatedSuccessorGeneration2": true,
+    "newRootFreshCiphertext": true,
+    "freshOuterTransportOperation": true,
+    "oldRootReplayRejected": true,
+    "authenticatedAckRetiredSenderOutbox": true,
+    "authenticatedControlAckObserved": true,
+    "nodeHasNoAccountKeys": true
+  },
+  "sourceEvidence": {
+    "inputFiles": 46,
+    "allInputsMatchGit": true,
+    "fetchedResponses": 136,
+    "allFetchedResponsesByteExact": true,
+    "captureErrors": 0
+  },
+  "stages": [
+    {
+      "stage": "python-hub-ready",
+      "at": "2026-10-15T23:54:34.603Z"
+    },
+    {
+      "stage": "managed-worker-0-ready",
+      "at": "2026-10-15T23:55:43.292Z"
+    },
+    {
+      "stage": "managed-worker-1-ready",
+      "at": "2026-10-15T23:57:14.979Z"
+    },
+    {
+      "stage": "initial-confirmed-after-lost-final",
+      "at": "2026-10-15T23:58:24.853Z"
+    },
+    {
+      "stage": "control-pending-sender-held",
+      "at": "2026-10-15T23:58:25.253Z"
+    },
+    {
+      "stage": "recipient-control-committed-first-transport-ack-lost",
+      "at": "2026-10-15T23:58:59.554Z"
+    },
+    {
+      "stage": "one-sided-active-state-lost-with-pending-outbox",
+      "at": "2026-10-15T23:59:12.864Z"
+    },
+    {
+      "stage": "authenticated-successor-session-established",
+      "at": "2026-10-16T00:01:00.617Z"
+    },
+    {
+      "stage": "control-successor-applied-once-and-authenticated-ack-retired",
+      "at": "2026-10-16T00:01:15.282Z"
+    }
+  ],
+  "timingSeconds": {
+    "bothWorkersReadyToInitialConfirmed": 69.874,
+    "oneSidedLossToGen2": 107.753,
+    "gen2ToAuthenticatedReceiptRetirement": 14.665
+  },
+  "notRun": [
+    "ordinary Account/contacts UI",
+    "production/page/SW acceptance",
+    "sender-offline receipt fixture",
+    "sender-terminal rekey browser",
+    "simultaneous-init loser replay browser",
+    "full N4 fault/crash matrix",
+    "N3 authenticated legacy/mailbox migration",
+    "real media bytes/TURN"
+  ],
+  "storageReset": false,
+  "timeoutOrDifficultyRelaxation": false,
+  "ownedBrowserHubRunnerClosed": true,
+  "priorFailuresPreserved": [
+    "original total-Inbox-count race",
+    "same-profile continuation natural expiry",
+    "non-UTF8 response source gate"
+  ]
+}

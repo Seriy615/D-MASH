@@ -86,15 +86,22 @@ FreshOWNINGsnapshot13577B/1origin/4DB protected, rootChrome9484 closed.
 [deployedprofile](docs/evidence/2026-10-15/qa-proxy37-deployed-profile.json),
 [genuineSWupdate](docs/evidence/2026-10-15/qa-sw37-local-update.json).
 
-**N4 на текущем Node candidate:** correctedb6/829UTF8 freshgate уnode_sol,
-SAME live28895/CDP9493, separatePythonNode; Rootне запускаетChrome параллельно.
-Предыдущий32182 дошёл до gen2, APPLIEDonce, freshciphertext/outeroperation,
-oldrootreplaydeny и verifiedCONTROLACK retirement, **но общийFAILsourcegate**:
-8/136responses четырёх nonASCIIJSfiles decodedWindows1252 vsGitUTF8.
-Fixturecharsetfix829 +fastHTTPcallbackRED→GREEN; freshbrowserverification идёт,
-не переобозначать старыйFAIL вPASS. Senderoffline/newterminal/collision matrix
-ещёNOTRUN/fullN4OPEN.
-[Encodinggate scope](docs/evidence/2026-10-15/qa-n4-control-encoding-source-gate.json).
+**N4 на текущем Node candidate:** fresh UTF8 CONTROL gate **BROWSER PASS**
+на exact `b6ad115e26179b154ac0d4825a760f07ad50157f`, harness
+`829bfb2bbaf7f5cd55e2f426394b807684b0fb09`: два настоящих Chromium Workers
+через отдельную Python Node, 13/13 mechanism checks, 136/136 fetched responses
+byte-exact, 46 source inputs match Git. Lost FINAL/CONTROL_ACK, tamper reject,
+durable typed commit/APPLIED once, one-sided loss→authenticated gen2 (107.753s),
+fresh ciphertext/outer operation с тем же logical op, old-root replay reject,
+verified receipt→sender outbox retirement PASS. Difficulty/timeouts не ослаблялись.
+Owning snapshots protected; browser9493/hub/runner закрыты, slot передан Root.
+Предыдущий32182 общий FAILsourcegate (8/136 nonASCII responses Windows1252)
+сохранён; fixture UTF8fix829 принят только после нового полного прогона.
+Senderoffline/newterminal/collision/fullN4 matrix, ordinary UI/production и media
+**NOT RUN/OPEN**; это не полный N4 DONE. Root начал отдельный ordinary PRIVATE
+UI gate на canonical9748 через proxy без DNS override, CDP9485.
+[Fresh scoped PASS](docs/evidence/2026-10-15/qa-n4-control-utf8-browser.json),
+[previous source gate](docs/evidence/2026-10-15/qa-n4-control-encoding-source-gate.json).
 
 **Актуальная инфраструктура API (15 октября):** пользователь назначил
 `proxy.d-mash.ru` на прежнем EMS `85.198.64.183`; прежние stage/API hostnames
@@ -124,7 +131,7 @@ FAIL из-за assert общего числа новыхretryrows вместо c
 Read-only proof:5outer retries/1innerop,1dispatch,errors0. Harness-onlyfix83c5ad3;
 Same-profile continuation закончилась по исходному300s expiry, без его продления;
 rekey/sender-offline NOT RUN. Protected snapshots сохранены, owned browser/hub
-закрыты. Исправленный83c5ad3 требует отдельного bounded rerun, FullN4 OPEN.
+закрыты. Новый UTF8 rerun829 выше PASS scoped CONTROL mechanism; FullN4 OPEN.
 [Границы N4 проверки](docs/evidence/2026-10-15/qa-n4-control-harness-race.json).
 
 **Проверенная база emergency endpoint PWA36:** minimal production6a→
