@@ -77,8 +77,9 @@ const person=n=>({n,sign:nacl.sign.keyPair.fromSeed(seed(n)),box:nacl.box.keyPai
  now+=100;await journal.readRouteSnapshot(peer);now--;const beforeRollback=verifies;
  await journal.readRouteSnapshot(peer);assert.equal(verifies,beforeRollback+1,'backward clock invalidates validation reuse');
  now=1800000601;const beforeOfferExpiry=verifies;await journal.readRouteSnapshot(peer);await journal.readRouteSnapshot(peer);
- assert.equal(verifies,beforeOfferExpiry+2,'expired signed binding is never cached');
- now=1800000900;assert.equal((await journal.readRouteSnapshot(peer)).readiness,'ROUTE_EXPIRED');
+ assert.equal(verifies,beforeOfferExpiry,'offer expiry does not invalidate historical verification at the committed epoch');
+ now=1800000900;const beforeCertExpiry=verifies;assert.equal((await journal.readRouteSnapshot(peer)).readiness,'ROUTE_EXPIRED');
+ assert.equal((await journal.readRouteSnapshot(peer)).readiness,'ROUTE_EXPIRED');assert.equal(verifies,beforeCertExpiry+2,'expired current certificate is never cached');
  // Fresh journal/reload never inherits a prior instance's verification decision.
  now=1800000100;journal.close();journal=await Journal.open(options);const beforeReopen=verifies;
  await journal.readRouteSnapshot(peer);assert.equal(verifies,beforeReopen+1);

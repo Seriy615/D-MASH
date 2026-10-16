@@ -255,14 +255,16 @@
      // codec that changed while it ran. This is a read barrier, not a write.
      const current=await this.wait(this.readCoherent(peer));
      if(this.codec!==codec||codec.verifyCommitted!==verify||!current||!sameDependencies(dependencies,current.dependencies))fail('CAS_CONFLICT');
-     validated={codec,verify,dependencies,expiresAt};
+     validated={codec,verify,dependencies};
     }
     const bundles=journal.bundles.map(serialized=>JSON.parse(serialized));
     const local=bundles.find(bundle=>bundle.account_keys.signing===this.s.account),remote=bundles.find(bundle=>bundle.account_keys.signing===peer);
     if(!local||!remote||JSON.stringify(local.inbound_certificate)!==JSON.stringify(journal.inbound.certificate)||JSON.stringify(remote.inbound_certificate)!==JSON.stringify(journal.outbound.certificate))fail('CORRUPT_COMMIT');
     const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
     present=observeClock();
-    const expiresAt=Math.min(validated.expiresAt,local.inbound_certificate.expires_at,remote.inbound_certificate.expires_at);
+    // Offer expiry was checked at the durable commit epoch by verifyCommitted.
+    // Current route validity depends on fresh certificate expiry, not offer age.
+    const expiresAt=Math.min(local.inbound_certificate.expires_at,remote.inbound_certificate.expires_at);
     if(expiresAt<=present)this.#validatedRoutes.delete(peer);
     else if(miss){
      if(this.#validatedRoutes.size>=32)this.#validatedRoutes.delete(this.#validatedRoutes.keys().next().value);
