@@ -219,6 +219,19 @@ logSHA d42027b21c2cd97b504df784bfb4261bfb4605e673678abfbf9876a930c061a0.
 [Full UNIT scope](docs/evidence/2026-10-16/timer6ff-full-unit-summary.json).
 [Corrected browser source/flow/limits](docs/evidence/2026-10-16/qa-timer6ff-retained-nochat.json).
 
+**Exact6ff Accountlogout/relogin ordinaryUI scopedPASS:** sameexistingprofiles,
+actualSaved→Accountlogout keeps sameNode/current/root; uniqueSENDtoA hasNOauthACK
+for30s whileAloggedout. LoginA→Saved autostart receivesauthenticatedACK BEFORE
+contactopen; newtextonce/all12previousvisibletexts retained eachside, samekeys/root/Node.
+RootcompiledRuntimeclassSHA c43be9d4… matchesfrozen6ff bothpages. FiveactualUIsteps
+PASS (47356exit0); UNITcompletedbeforegate. Nodealive isNOTnewforeigntransitproof.
+Initial89101harnessbaselinefailedBEFORElogout/SEND (readhistorybeforeasyncpaint);
+sameDOMlater12rowseach, originalFAILpreserved; correctedtoolaa1 waitsrealvisibletext,
+no storage/network shortcuts or timeoutincrease. Bswitch/fullrootlock NOTRUNnext.
+Protectedcustomrawexports291803/268694B7DBeachbeforegate, restoreNOTRUN.
+[Logout source/flow/limits](docs/evidence/2026-10-16/qa-account-logout6ff.json),
+[Original harnessFAIL](docs/evidence/2026-10-16/qa-account-logout6ff-initial-harness-fail.json).
+
 **LocalSEND25.827s whenpriorreceiver-inactive retriesqueued remainsOPEN**, despite
 cleanerretainedUI1.4–1.9s PASS; do notclaimall latencyfixed. FullUNIT endedbefore
 this correctedrun; stale copiedconcurrentlimit notcurrentevidence.

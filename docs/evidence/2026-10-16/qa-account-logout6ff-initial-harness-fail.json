@@ -1,0 +1,23 @@
+{
+  "startedAt": "2026-10-16T01:34:10.666Z",
+  "harnessSha256": "786f54f5b8379b20de53fb7e8b332d3bad605876e3d8f4f8ce5fc697e3b8ad2d",
+  "scope": "Existing synthetic managed-v4 profiles; Account logout only. New authenticated receipt before recipient peer chat opens. Account switch/B creation/full local lock remain NOT RUN.",
+  "timingLimit": "Diagnostic bounded observations; concurrent test/CPU load means timings are not performance acceptance.",
+  "loggedOutObservationMs": 30000,
+  "deliveryBoundMs": 180000,
+  "snapshots": "Owning keeper must export fresh encrypted raw state separately; secondary CDP storageState is not a backup.",
+  "steps": [
+    {
+      "id": "baseline-paired-Account-root-Node-and-visible-history",
+      "startedAt": "2026-10-16T01:34:11.752Z",
+      "status": "FAIL",
+      "error": "Retained synthetic history must be visible before testing",
+      "elapsedMs": 3576,
+      "finishedAt": "2026-10-16T01:34:15.336Z"
+    }
+  ],
+  "result": "FAIL_RETAINED",
+  "fatal": "Retained synthetic history must be visible before testing",
+  "finishedAt": "2026-10-16T01:34:15.336Z",
+  "disposition": "Harness baseline race before logout/SEND; allTextContents returned before managed wrapper finished history render. Later same-profile DOM12rows each, no product/data change; new corrected tool/gate distinct."
+}

@@ -1,0 +1,86 @@
+{
+  "startedAt": "2026-10-16T01:36:06.863Z",
+  "harnessSha256": "3b83804e2c54fc3a5b5350beefbd7ede0adb4f15f5ce7e3d37be0e55ca99d12e",
+  "scope": "Existing synthetic managed-v4 profiles; Account logout only. New authenticated receipt before recipient peer chat opens. Account switch/B creation/full local lock remain NOT RUN.",
+  "timingLimit": "Diagnostic bounded observations; concurrent test/CPU load means timings are not performance acceptance.",
+  "loggedOutObservationMs": 30000,
+  "deliveryBoundMs": 180000,
+  "snapshots": "Owning keeper must export fresh encrypted raw state separately; secondary CDP storageState is not a backup.",
+  "steps": [
+    {
+      "id": "baseline-paired-Account-root-Node-and-visible-history",
+      "startedAt": "2026-10-16T01:36:07.446Z",
+      "status": "PASS",
+      "elapsedMs": 3223,
+      "finishedAt": "2026-10-16T01:36:10.669Z"
+    },
+    {
+      "id": "receiver-Account-logout-keeps-same-Node",
+      "startedAt": "2026-10-16T01:36:10.677Z",
+      "status": "PASS",
+      "elapsedMs": 471,
+      "finishedAt": "2026-10-16T01:36:11.147Z"
+    },
+    {
+      "id": "unique-new-SEND-has-no-ACK-during-logged-out-window",
+      "startedAt": "2026-10-16T01:36:11.148Z",
+      "status": "PASS",
+      "elapsedMs": 31287,
+      "finishedAt": "2026-10-16T01:36:42.435Z"
+    },
+    {
+      "id": "login-same-Account-receives-while-Saved-before-peer-open",
+      "startedAt": "2026-10-16T01:36:42.439Z",
+      "status": "PASS",
+      "elapsedMs": 12188,
+      "finishedAt": "2026-10-16T01:36:54.628Z"
+    },
+    {
+      "id": "open-recipient-after-ACK-new-message-once-old-history-retained",
+      "startedAt": "2026-10-16T01:36:54.629Z",
+      "status": "PASS",
+      "elapsedMs": 2102,
+      "finishedAt": "2026-10-16T01:36:56.731Z"
+    }
+  ],
+  "before": {
+    "senderAccountSha256": "4adf7ca315ad1e3e0f470e7bf4f53193d32c3425d14feb2550528881f1c2507d",
+    "receiverAccountSha256": "89519055e8ec940ae8fd5f63fe218cfca1fd11186bd4c84d716fd49a063fa07b",
+    "senderRootSha256": "201aa6266330eb2ebd6da7a3056ed0dd891e724a045ea9d7dec42ce925b2c01a",
+    "receiverRootSha256": "f7fd9c4ff80cb3483c4fd0fc7077ee9423358e5df6c07c688368a208dd3bf718",
+    "senderNodeSha256": "3c39f9c94a6bb4d758f0d0c6256958118f93fbaeb1a914929f0dc3acf4c621ef",
+    "receiverNodeSha256": "9c659932120b58e90b51c5462c9f7e9ecdf5094db9792e9d15524eea84b189bc",
+    "senderVisibleHistoryRows": 12,
+    "receiverVisibleHistoryRows": 12,
+    "releases": [
+      "transport-v3-node-preparation-20261008.37",
+      "transport-v3-node-preparation-20261008.37"
+    ],
+    "compiledRuntimeSha256": [
+      "c43be9d498cd44faaf5c8b78877aa6f33c1735d78fa4b029f003630aae643dc9",
+      "c43be9d498cd44faaf5c8b78877aa6f33c1735d78fa4b029f003630aae643dc9"
+    ]
+  },
+  "messageSha256": "50b06c9cd86527f5512d85e567465fd00bc2be8212ae68d2cfc91fa7ea6bc458",
+  "sentAt": "2026-10-16T01:36:11.168Z",
+  "noAckWindowCompletedAt": "2026-10-16T01:36:42.435Z",
+  "loggedBackInAt": "2026-10-16T01:36:48.365Z",
+  "authenticatedDeliveredAt": "2026-10-16T01:36:54.628Z",
+  "receiverPeerOpenedAt": "2026-10-16T01:36:56.490Z",
+  "result": "PASS scoped Account logout/relogin and new authenticated delivery before peer opening; switch/B/full lock NOT RUN",
+  "finishedAt": "2026-10-16T01:36:56.736Z",
+  "productSha": "6ff5515fa253a3f177ebce41cd7b12d5d06dffd0",
+  "toolSha": "aa1ccaf00646fc42b5f738f810c8a3e391caf8d9",
+  "actualLoad": "Full UNIT had already completed before this gate; no concurrent heavy unit suite. Timing not performance benchmark.",
+  "compiledRuntimeSourceVerified": {
+    "expected": "c43be9d498cd44faaf5c8b78877aa6f33c1735d78fa4b029f003630aae643dc9",
+    "bothMatch": true
+  },
+  "limits": [
+    "Managedoptin/sourceoverlay/SWblocked; not deployed/fullN3/N4/fullgoal",
+    "Nodecurrent/alive observed, not independent foreign transit gate during logout",
+    "SameAccount logout/login only; Bswitch/fullRootlock not run yet",
+    "Fresh raw custom live-separate exports291803/268694bytes7DB beforegate, restoreNOTRUN; no reset",
+    "Original harness89101 failed beforelogout/SEND due prematurehistoryread. LaterDOM12rows each; correctedtool waits actualvisiblemessage. OriginalFAIL notretroactivelyPASS"
+  ]
+}
