@@ -104,7 +104,7 @@ fell back to originalkeeper9748/.35. Retained8330gate above remainedgenuine
 266hashPASS whilethatclientheldroutes. Originalmixedsourcefailurespreserved.
 [Disposition](docs/evidence/2026-10-16/qa-nochat-prior-source-gate-invalid.json).
 Correctednochat SAME93360 completed genuineFAIL/manualrecoveryPASS below;
-PERSISTENT8330overlaykeeper42369(pid1743110) remainslive,
+Original8330overlaykeeper42369 waslive atthatgate; nowreleased, see74fbelow,
 originalbrowserkeeper77016/CDP9485stilllive. Compilejournalfunctionhash+release
 checkedonbothpages beforefreshuniqueauthenticatedACK-before-chatopengate.
 Do NOT restart/close anykeeper before freshprotectedexports and root handback.
@@ -120,11 +120,22 @@ UniqueNEWoperation authenticatedsenderACK absent180.041s; SAMEprofiles actual
 manualcontactopen then newmessageonce +authenticatedsenderDELIVERED PASS.
 Identities/root/Node preserved. Earliergenericunread/mixedsource runs INVALID
 remainseparate; this is fresh exactsource failure, notretroactive acceptance.
-Ownernode_sol NEWworktree /tmp/dmash-account-receiver-startup from8330;
-REDbd663a9 reproducesmissingAccountsessionstartupconsumer. Minimalmanaged-only
-subscription→rootlifecycle→rehydrate→onewatch implementation/reviewpending;
-no NodeHost/keys/wire/legacyfallback changes. Root browser9485/originalkeeper77016
-and persistentoverlay42369(pid1743110) remainlive;93360closedrunneronly.
+Ownernode_sol candidate **74f9449b535ba30f158920a3b10e89c6111f357b**, clean
+/tmp/dmash-account-receiver-startup; REDbd663a9→41446c2, review found fulfilled
+rehydrate.pending liveness gap; REDfa76ab5→GREEN74f9449, independent ACCEPT.
+Seven focused UNIT suites PASS; root independently startup suite PASS.
+Root same-profile actual reload/login/NodeConnect/Saved→uniqueSEND→authenticated
+NEWsenderACK BEFORE receivercontactopen **PASS**, thencontentonce.266/266appresponses
+exact incl changedCore/UI bothpages; compiledjournalhash/release37/subscription
+checkedbothpages. IDs/root/Node preserved, no reset. LocalSEND2.845s, composerclear
+2.402s, ACK87.923s afterlocalrow (~90.8s afterSEND) **performance FAIL remainsOPEN**.
+Functional startup closed ONLY retainedsourceUI scope; cold/private/public/multiAccount/
+locked/reconnect/migration/fullN3 NOT DONE. Sourceoverlay/managedoptin/SW BLOCKED,
+NOT DEPLOYED. Root browser9485/originalkeeper77016 stilllive; persistent8330keeper
+42369 gracefullyreleased and replaced by **74fkeeper4617(pid1770187)**; new runner73731
+closed only itsCDPclient. Fresh protected raw syntheticexports229862/226360B7DB
+before source switch, live-separate captures, restoreNOTRUN, notvalidatedrollbackbackup.
+[Retained startup fix and remaining latency](docs/evidence/2026-10-16/qa-startup74f-retained-nochat.json).
 **LocalSEND25.827s whenpriorreceiver-inactive retriesqueued remainsOPEN**, despite
 cleanerretainedUI1.4–1.9s PASS; do notclaimall latencyfixed. FullUNIT endedbefore
 this correctedrun; stale copiedconcurrentlimit notcurrentevidence.

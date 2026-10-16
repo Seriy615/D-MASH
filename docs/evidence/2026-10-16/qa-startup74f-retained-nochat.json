@@ -1,0 +1,138 @@
+{
+  "productSha": "74f9449b535ba30f158920a3b10e89c6111f357b",
+  "scope": "Actual retained recipient reload/login + Node-connect UI + Saved selected; sender actual SEND; no adapter/Core network calls before unread observation; source overlay/SW blocked, real public EMS",
+  "limits": [
+    "No concurrent full UNIT; retained retry backlog remains; preexisting unread ignored; unique new-operation ACK required before receiver opens chat",
+    "Managed review opt-in, SW blocked; NOT DEPLOYED, not full N3/N4 or goal DONE",
+    "Functional startup fixed only for retained synthetic scope. Authenticated ACK ~90.8s after click remains performance FAIL",
+    "Sender reload also preserved identity/root/Node through actual UI assertions; recipient preserved boolean in report",
+    "Manual contact open occurs AFTER authenticated ACK; content once check, not required delivery recovery",
+    "Browser collector checked source bytes; this runner did not collect all console/page errors"
+  ],
+  "steps": [
+    {
+      "id": "sender-reload-login-contact-preserved",
+      "at": "2026-10-16T01:11:22.349Z",
+      "status": "PASS",
+      "seconds": 27.162
+    },
+    {
+      "id": "recipient-reload-login-preserved",
+      "at": "2026-10-16T01:11:49.518Z",
+      "status": "PASS",
+      "seconds": 22.014
+    },
+    {
+      "id": "recipient-node-connect-without-contact-open",
+      "at": "2026-10-16T01:12:11.532Z",
+      "status": "PASS",
+      "seconds": 32.782
+    },
+    {
+      "id": "receiver-started-while-Saved",
+      "at": "2026-10-16T01:12:44.315Z",
+      "status": "PASS",
+      "seconds": 0.385
+    },
+    {
+      "id": "sender-SEND-durable-local-row",
+      "at": "2026-10-16T01:12:44.788Z",
+      "status": "PASS",
+      "seconds": 2.845
+    },
+    {
+      "id": "new-operation-authenticated-ACK-before-recipient-open",
+      "at": "2026-10-16T01:12:47.633Z",
+      "status": "PASS",
+      "seconds": 87.923
+    },
+    {
+      "id": "manual-contact-open-delivers-once",
+      "at": "2026-10-16T01:14:15.558Z",
+      "status": "PASS",
+      "seconds": 1.095
+    },
+    {
+      "id": "sender-authenticated-DELIVERED",
+      "at": "2026-10-16T01:14:16.655Z",
+      "status": "PASS",
+      "seconds": 0.009
+    }
+  ],
+  "sourceFingerprints": [
+    {
+      "release": "transport-v3-node-preparation-20261008.37",
+      "sessionSubscription": true,
+      "journalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7",
+      "expectedJournalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7"
+    },
+    {
+      "release": "transport-v3-node-preparation-20261008.37",
+      "sessionSubscription": true,
+      "journalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7",
+      "expectedJournalSha": "7159acc3cbeb809ff8cc7c72ed504b4b3fbe5d720be6d6c21350a2444dd9b7c7"
+    }
+  ],
+  "recipientBeforeSend": {
+    "accountAdapterOpened": true,
+    "rootNodeAlive": true,
+    "selectedSaved": true
+  },
+  "composerClearedSeconds": 2.402,
+  "result": "PASS scoped new-operation authenticated ACK while recipient Saved; later content once",
+  "recipientIdentityRootNodePreserved": true,
+  "sourceGate": {
+    "responses": 266,
+    "allExact": true,
+    "errors": 0,
+    "changedSources": [
+      {
+        "profile": 0,
+        "path": "js/node_account_ui_v4.js",
+        "status": 200,
+        "actual": "7ed27aca90b8489faaf067ec52eecfa7224775774229a12b7083693ae191d40c",
+        "expected": "7ed27aca90b8489faaf067ec52eecfa7224775774229a12b7083693ae191d40c",
+        "match": true,
+        "at": "2026-10-16T01:11:30.814Z"
+      },
+      {
+        "profile": 0,
+        "path": "js/core_engine.js",
+        "status": 200,
+        "actual": "2d1a897c80a9fe83e731c8e3c9b8381224fc2886e8278a0120c4f45b2457d920",
+        "expected": "2d1a897c80a9fe83e731c8e3c9b8381224fc2886e8278a0120c4f45b2457d920",
+        "match": true,
+        "at": "2026-10-16T01:11:38.108Z"
+      },
+      {
+        "profile": 1,
+        "path": "js/node_account_ui_v4.js",
+        "status": 200,
+        "actual": "7ed27aca90b8489faaf067ec52eecfa7224775774229a12b7083693ae191d40c",
+        "expected": "7ed27aca90b8489faaf067ec52eecfa7224775774229a12b7083693ae191d40c",
+        "match": true,
+        "at": "2026-10-16T01:11:57.469Z"
+      },
+      {
+        "profile": 1,
+        "path": "js/core_engine.js",
+        "status": 200,
+        "actual": "2d1a897c80a9fe83e731c8e3c9b8381224fc2886e8278a0120c4f45b2457d920",
+        "expected": "2d1a897c80a9fe83e731c8e3c9b8381224fc2886e8278a0120c4f45b2457d920",
+        "match": true,
+        "at": "2026-10-16T01:12:05.727Z"
+      }
+    ]
+  },
+  "review": {
+    "independent": "ACCEPT",
+    "redGreen": [
+      "bd663a9",
+      "41446c2",
+      "fa76ab5",
+      "74f9449"
+    ],
+    "focusedSuites": 7,
+    "rootStartupSuite": "PASS"
+  }
+}
