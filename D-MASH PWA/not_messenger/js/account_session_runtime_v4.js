@@ -7,7 +7,7 @@
  // Trusted integration facade; no mutable Storage helpers, Node identity, selected
  // chat, legacy Core.encrypt or automatic legacy fallback enters this module.
  class AccountSessionRuntimeV4 {
-  #peers=new Map();#proofs=new WeakMap();#closed=false;#timer=null;
+  #peers=new Map();#proofs=new WeakMap();#closed=false;#retryJob=null;
   get durableApplicationEnqueue(){return !!(this.App&&this.Outbox?.prototype?.enqueueApplication&&typeof this.persistAuthenticated==='function'&&typeof this.persistOutgoing==='function');}
   constructor({core,transport,profile=global.DmashAccountHandshakeV4,Session=global.DmashAccountSessionV4,Store=global.DmashAccountSessionStoreV4,App=global.DmashAccountAppCipherV4,Outbox=global.DmashAccountAppOutboxV4,persistAuthenticated=null,persistOutgoing=null,persistOutgoingAck=null,persistControl=null,persistExpiredControl=null,controlSchema=global.DmashAccountMediaControlV4,migrateOutgoing=null,outgoingDeliveryStatus=null,verifyOutgoingDeliveryStatus=null,nacl=global.nacl,kem=global.DmashKyberWasm,discovery=global.DmashRouteDiscoveryV4,crypto=global.crypto,clock=()=>Math.floor(Date.now()/1000),onStatus=()=>{}}){
    if(!core?.captureAccountSessionV4||!transport?.readRouteSnapshot||!transport?.prepareAndSubmitIntent||!profile||!Session||!Store||!nacl||!kem||!discovery||typeof onStatus!=='function')fail('DEPENDENCY');
@@ -61,8 +61,22 @@
   async resumeApplications(peer){const e=await this._entry(peer);if(!e.outbox)fail('APP_OUTBOX_REQUIRED');return this.wait(e.outbox.resumeApplications());}
   async status(peer){return this._notify(await this._entry(peer,true),true);}
   async resume(){this.check();const results=[];for(const peer of this.#peers.keys()){try{await this.flush(peer);const status=await this.status(peer),entry=this.#peers.get(peer),application=entry?.outbox&&status.phase==='ESTABLISHED'?await this.resumeApplications(peer):null;if(entry?.app?.flushReceipts&&status.phase==='ESTABLISHED')entry.app.flushReceipts().catch(()=>{});results.push({peer,status,application});}catch(error){this.check();results.push({peer,error:error.code||'SESSION_RETRY_FAILED'});}}return results;}
-  startRetries(){this.check();if(this.#timer!==null)return;const tick=async()=>{this.#timer=null;if(this.#closed)return;try{await this.resume();}catch(_){/* Closed/invalidated owner is checked before any subsequent work. */}if(!this.#closed&&!this.capture.signal.aborted)this.#timer=setTimeout(tick,5000);};this.#timer=setTimeout(tick,5000);}
-  close(){if(this.#closed)return;this.#closed=true;if(this.#timer!==null)clearTimeout(this.#timer);this.#timer=null;this.capture.signal.removeEventListener('abort',this.abort);for(const e of this.#peers.values()){e.closed=true;e.outbox?.close();e.app?.close();e.store?.close();}this.#peers.clear();}
+  startRetries(){
+   this.check();if(this.#retryJob!==null)return;
+   // Keep ownership while resume awaits. Polling and enqueue can request
+   // retries during that await, but must not create another timer train.
+   const job={timer:null};this.#retryJob=job;
+   const current=()=>this.#retryJob===job&&!this.#closed&&!this.capture.signal.aborted;
+   const tick=async()=>{
+    if(!current())return;job.timer=null;
+    try{this.check();await this.resume();}catch(_){/* Retry errors retain the same cadence and owner. */}
+    if(!current())return;
+    try{this.check();}catch(_){return;}
+    job.timer=setTimeout(tick,5000);
+   };
+   job.timer=setTimeout(tick,5000);
+  }
+  close(){if(this.#closed)return;this.#closed=true;const retry=this.#retryJob;this.#retryJob=null;if(retry?.timer!=null)clearTimeout(retry.timer);this.capture.signal.removeEventListener('abort',this.abort);for(const e of this.#peers.values()){e.closed=true;e.outbox?.close();e.app?.close();e.store?.close();}this.#peers.clear();}
  }
  global.DmashAccountSessionRuntimeV4=AccountSessionRuntimeV4;if(typeof module!=='undefined')module.exports=AccountSessionRuntimeV4;
 })(typeof window!=='undefined'?window:globalThis);
