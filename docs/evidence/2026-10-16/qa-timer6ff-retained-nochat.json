@@ -7,8 +7,8 @@
     "~20.5s authenticated ACK after SEND remains slow; does not close all latency requirements",
     "Managed review opt-in / source overlay / SW blocked, NOT DEPLOYED or full goal DONE",
     "All served source response hashes exact; compiled runtime+journal fingerprints checked on both pages",
-    "Full exact6ff UNIT not yet run; separate focused suites only",
-    "Original 79455 harness FAIL preserved; eventual DOM confirmation and corrected continuation do not retroactively turn it into PASS"
+    "Original 79455 harness FAIL preserved; eventual DOM confirmation and corrected continuation do not retroactively turn it into PASS",
+    "Full UNIT completed PASS later; began only after latency and runtime diagnostics finished, see separate evidence"
   ],
   "steps": [
     {

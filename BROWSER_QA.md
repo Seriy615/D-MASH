@@ -170,8 +170,11 @@ captures/restoreNOTRUN, notvalidatedrollbackbackups. Short60sRuntimeobserver **P
 42/40startRetries requests; zero rawevents dropped, automaticexpiry/restored both.
 Actualdiagnostic UI local0.996s/authACK16.213s, observeroverhead/notperformancePASS.
 [Browser retry ownership](docs/evidence/2026-10-16/qa-timer6ff-browser-overlap.json).
-Full exact6ff UNIT STARTED onlyafterall latency/diagnostics ended, agentpublic_sol
-handle12693; referencePython3.12.14/Node24.19.0,145JSsuitesexpected, NOTfinalPASSyet.
+Full exact6ff UNIT **PASS exit0:293Python/11Origin/145JS**, clean source;
+started onlyafterall latency/diagnostics ended. Agentpublic_sol samehandle12693
+completed, rootlogSHA/tail/source reviewed. Python3.12.14/Node24.19.0;
+logSHA d42027b21c2cd97b504df784bfb4261bfb4605e673678abfbf9876a930c061a0.
+[Full UNIT scope](docs/evidence/2026-10-16/timer6ff-full-unit-summary.json).
 [Corrected browser source/flow/limits](docs/evidence/2026-10-16/qa-timer6ff-retained-nochat.json).
 
 **LocalSEND25.827s whenpriorreceiver-inactive retriesqueued remainsOPEN**, despite

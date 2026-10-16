@@ -1,0 +1,16 @@
+{
+  "sha": "6ff5515fa253a3f177ebce41cd7b12d5d06dffd0",
+  "worktree_clean": true,
+  "scope": "UNIT only; not browser/deployed/full goal",
+  "python": "3.12.14",
+  "node": "24.19.0",
+  "exit_code": 0,
+  "backend_tests": 293,
+  "origin_tests": 11,
+  "js_suites_passed": 145,
+  "failed_suites": [],
+  "log_sha256": "d42027b21c2cd97b504df784bfb4261bfb4605e673678abfbf9876a930c061a0",
+  "raw_log": "/tmp/dmash-6ff5515-full-unit.log",
+  "started_after_root_perf_release": true,
+  "root_review": "Log SHA independently matched; final test tail and clean source verified"
+}
