@@ -1,0 +1,30 @@
+{
+  "kind": "BROWSER",
+  "status": "PASS scoped owning backup restore",
+  "source": "ac54dbe3092bf36aebf8b5fc0160e73f76cbda72",
+  "profile": "same persistent synthetic root profile; raw owning storageState outside Git",
+  "backup": {
+    "bytes": 15522,
+    "sha256": "963002aad6b7c7822fe78686d92850a76b090494aa1a8fdecc2f1d729ec91d14",
+    "mode": "0o600",
+    "origins": 1,
+    "indexedDBs": 3
+  },
+  "restore_steps": [
+    "New isolated BrowserContext loaded owning IndexedDB+localStorage export",
+    "Normal calculator master unlock and remembered Account login",
+    "One original Saved message visible",
+    "Account logout then Global Quick Names: original encrypted label and value visible",
+    "Public Routes: original active route visible",
+    "Restored isolated context closed; owning profile kept"
+  ],
+  "material_comparison": {
+    "device_id_sha256": "707cee2ee126d46f7115a4ff05f2f74b47f19696472c89358c10af036392a0dc",
+    "wrapped_root_sha256": "1e6d4c2c606cf40b89d5bae16692bd5507efe48de518b1f25b82159b78871e72"
+  },
+  "network": "only own loopback HTTP; all other HTTP and all WebSockets blocked; SW blocked",
+  "limits": [
+    "Pre-S01 migration checkpoint, not S01 acceptance.",
+    "No reset of owning profile or production data."
+  ]
+}

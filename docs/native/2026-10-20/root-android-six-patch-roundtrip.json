@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "scope": "ROOT independent six-patch reconstruction from exact upstream; no new compilation/runtime claim",
+  "recipeCommit": "cd7cc30",
+  "forkSourceCommit": "e89d37695a2a3c3743fa6a7f8904b3a0ea214b19",
+  "upstreamCommit": "0aae959806c57be8ad457980f2a5c6277ff18635",
+  "manifestSha256": "0023b6dcd0c9cdad156c5115c16137387e413e7a462d38e208444ac139fac94c",
+  "patches": [
+    {
+      "path": "patches/0001-dmash-credential-ui.patch",
+      "sha256": "5d9a4a4b157330cc889f4ea67eb1fc3525fcf985ddaf0daab265821cba3447d2"
+    },
+    {
+      "path": "patches/0002-android-toolchain-service-base-and-send-state.patch",
+      "sha256": "61a9d01bf176ab6d524e1428ef70d1460fe5de0f9f135dd38a682ba6e9c6a23c"
+    },
+    {
+      "path": "patches/0003-retain-uncertain-sends-and-block-backend-entrypoints.patch",
+      "sha256": "bf292342673b6f8c5ccdcee1fe4a0e9c8da853b71fbb3975f1bb67cdb3f79380"
+    },
+    {
+      "path": "patches/0004-disable-upstream-firebase-and-proxy-setup.patch",
+      "sha256": "e8c7676bf376eb53a635ac09c82dc2a6690c94401cd19a6cae4ee25e52332cd3"
+    },
+    {
+      "path": "patches/0005-block-explicit-push-initializers-and-localize-proxy-feedback.patch",
+      "sha256": "52a0aa4c33a86a13cbdcc42b0e0748e5ed9ea7345377c573b08cff71e475ad7e"
+    },
+    {
+      "path": "patches/0006-build-original-ndk-cpu-features-with-portable-cmake.patch",
+      "sha256": "5cd842aed883820990679c1943f894b27e0be192e3a3b5abdb7b43b25ff6a045"
+    }
+  ],
+  "patchedSourceFilesVerified": 30,
+  "method": "Read exact upstream blobs with git show, apply each hash-verified patch sequentially in new private scratch directory, compare every declared resulting source hash",
+  "limits": [
+    "Actual APK83912 client terminated with exit143 after346 JNI entries, exact Gradle/Ninja exit verified; no APK produced",
+    "Native core139795 predates Account client binding; final UI acceptance needs coherent updated core and frontend guards",
+    "No service/UI/no-egress, Windows or Linux app acceptance"
+  ]
+}

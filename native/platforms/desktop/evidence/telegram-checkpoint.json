@@ -1,0 +1,39 @@
+{
+  "kind": "Telegram-reference Desktop layout and actual native UI controls",
+  "sourceRoot": "/home/jcode/.cache/dmash-native-20261020/checkpoints/desktop-telegram-source",
+  "sourceManifest": "source-sha256.json",
+  "artifacts": {
+    "dmash-credential-host": "99f324e0c5341cd5810a1d58b0dcc320f16c69e3a43740576dc4e9659615cd1c",
+    "dmash_desktop_ui_test": "b1c6791e77e92e388c93d65021451572779f54e45ee4d76b8de3a29d681acaef",
+    "desktop-telegram-controls.log": "27f7db098295484da8b821fc82f5be1484b93ca856675e0ed9e44a5b909de426",
+    "source-sha256.json": "2e9dec668eb97ba6c26de0e236cb2338ba517955f8caa47f070a3601acf86fd6",
+    "desktop-telegram-build.log": "c2a8610132c2968e40101f464c500ae965c452caab0dd39168be64db0ee132d6",
+    "dmash-desktop": "7bfc3863420be7767f4d8081cdd22cea92a5866ca908f0f01e8db6700b667b8b",
+    "desktop-telegram-incremental.log": "6a6acd25c95369df3b76b76c7920a8e79bf7f2ab9e307db3ffa2a3bf281a59a5",
+    "desktop-telegram.png": "91a9b46d86d7bb8d4547b5cc5acbd5f1709876d4e62006e53fb62d02790b9079"
+  },
+  "runtimeLibraries": {
+    "/home/jcode/.cache/dmash-native-20261020/Qt/6.12.0/gcc_64/lib/libQt6Widgets.so.6": "ae894c4a328a883311faf7449dcdd1ec70e6be25784e5676cb9977fe437d01c4",
+    "/home/jcode/.cache/dmash-native-20261020/Qt/6.12.0/gcc_64/lib/libQt6Gui.so.6": "392cf5a2fed77ca7b861484ae0f25a2f7f54789024e79518c6c28e1ddf5b4b1a",
+    "/home/jcode/.cache/dmash-native-20261020/platform-sysroot/usr/lib/x86_64-linux-gnu/libOpenGL.so.0": "9a0a6024499300f918ef1b42d581427cdb20bbc17a7d8239a4b7434833a98d4a",
+    "/home/jcode/.cache/dmash-native-20261020/Qt/6.12.0/gcc_64/lib/libQt6Network.so.6": "973d87ea5fc92dafb82aac307c32b7646cbd6640d06bc3f7d8b6c1771077603f",
+    "/home/jcode/.cache/dmash-native-20261020/Qt/6.12.0/gcc_64/lib/libQt6Core.so.6": "26341368e3f2017ab9e33a3faa8806ae87fd59f2f8491f4c5aa7e8c1053b8a05",
+    "/home/jcode/.cache/dmash-native-20261020/Qt/6.12.0/gcc_64/lib/libQt6DBus.so.6": "678d0bf82548e35680a93615d476d79405f1d4beec4ce405236e04bc64ea14eb",
+    "/home/jcode/.cache/dmash-native-20261020/Qt/6.12.0/gcc_64/lib/libicui18n.so.73": "a18e48266e59efff3ec872d9dc5cc99b776e180b8ede57269d354e6bc6595778",
+    "/home/jcode/.cache/dmash-native-20261020/Qt/6.12.0/gcc_64/lib/libicuuc.so.73": "b76380b2c15c8ff8b3c94576ac98b40d34fc0a091db4a89324d72e271c7699f0",
+    "/home/jcode/.cache/dmash-native-20261020/Qt/6.12.0/gcc_64/lib/libicudata.so.73": "4f182a855296cf96d39f75c9028b12765a78fe6afff3d3781d633110525b7a8b"
+  },
+  "checks": {
+    "compile": "PASS71targets +incremental owned UI rebuild",
+    "actualQtControls": "PASS7passed0failed1skipped9289ms",
+    "navigation": "PASS menu open/close and actual sidebar search filter; fresh/import/Account/Saved flows retained",
+    "screenshot": "inspected desktop-telegram.png"
+  },
+  "earlierFailure": "Initial layout test5pass2fail: Signout retained menu, hiding Signin. Fixed product returns conversation page after signout; full same suite passed.",
+  "limits": [
+    "Qt offscreen; independent xcb/display review separate",
+    "Reference-derived own UI code; no Telegram source/assets copied",
+    "No Nodeenable/mesh/remotechat/Windowsruntime in this UI gate",
+    "Pre-pause credential host compiled; node.disable still means full Rootlock"
+  ]
+}

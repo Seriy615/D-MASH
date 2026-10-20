@@ -1,0 +1,23 @@
+{
+  "kind": "ROOT_INDEPENDENT_UNIT",
+  "source": "ce3f83d9108319dc598c98bc1639e82b91d81568",
+  "ctest": {
+    "passed": 3,
+    "failed": 0,
+    "elapsedSeconds": 53.8
+  },
+  "sourceConsistency": {
+    "files": 17,
+    "mismatches": []
+  },
+  "binarySha256": {
+    "dmash_broker_codec_test": "c4ef470846d8dfa322255d55c68e506afa87843ab15addb8b698dfa3dbdf890e",
+    "dmash_broker_service_test": "b7221940579a603af3ed65d30c7ac818289fc418ae715969588d5b53fce302ef",
+    "dmash_broker_control_test": "96c2a254601d7bb3c6c0dacf42181b22ae336ae4dff6b19397574d9f7c21455e"
+  },
+  "limits": [
+    "Executable tests, not platform UI or real profile migration.",
+    "Actual JS/WASM cross-open is author proof, not independently repeated in this run.",
+    "Windows/Android runtime and authenticated daemon lifecycle integration remain separate."
+  ]
+}

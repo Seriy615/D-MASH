@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "scope": "ROOT immutable production projection unit and source/artifact hashes; no actual full Telegram app/UI result",
+  "sourceCommit": "0917d37",
+  "manifestSha256": "6a4d4941a46de9e3a08e923cfd5adbbb8cf3485404e72899a4e96ed4460e93d8",
+  "verifiedFiles": 38,
+  "sourceFiles": 32,
+  "artifactFiles": 6,
+  "exitCode": 0,
+  "unitOutput": "PASS actual upstream ID contract=c42d5712e56343e627d5721c05b0ba695ad65ccaf4f4b80b560e33937591c2da pendingMsgId=-288230376151711742 stable pending/final, chronological unique rows",
+  "limits": [
+    "Unit uses extracted unchanged public MsgId/ClientMsg definitions from exact upstream header, not a complete application PCH build",
+    "Production source includes full original data_msg_id.h",
+    "Source patches independently reconstructed previously; standalone projection does not prove chat renders",
+    "Actual Linux/Windows compile, account switch, paging and UI controls remain open"
+  ]
+}

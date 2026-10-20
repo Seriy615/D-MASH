@@ -1,0 +1,56 @@
+{
+  "kind": "C02_ATOMIC_INBOX_APP_COMMIT_SOURCE_CHECKPOINT_NOT_ACCEPTANCE",
+  "date": "2026-10-20",
+  "sourceSha256": {
+    "native/js/runtime_entry.js": "6f7ebd19f4f3f008a4179304dd26b0723adba2b20b04c77ffe93815f12cfcad9",
+    "native/src/main.cpp": "2c66d004832db2854f00e63341e730c835ca300f0f13974e5bcad67bd62ae993",
+    "native/tests/inbox_commit_test.js": "bf3e8bb854a633ad84d8264e857e8008ffede9f26dc0847560481f37ac5f4737",
+    "native/tests/ipc_delivery_test.py": "42a2426936dfbeac0e50110c0ebd8ad0b5233ad232942a0247bf4f62e55b7951"
+  },
+  "focusedUnit": "PASS: failed CAS leaves pending; same token returns same completion; conflicting token and changed binding generation rejected",
+  "design": "Account application commits own durable state before inbox.commitConsumption. Existing single encrypted Inbox CAS stores seen tombstone plus applicationCommitToken, owner route/authority/generation atomically; no separate pending-intent database. Pre-call/pre-CAS crash can redeliver, Account must dedupe. Post-CAS/reply-loss same token is idempotent after restart.",
+  "api": {
+    "method": "inbox.commitConsumption",
+    "params": [
+      "recordHandle",
+      "applicationCommitToken"
+    ],
+    "token": "1..128 ASCII letters digits dot underscore colon hyphen"
+  },
+  "platformHost": "dmashRunNodeHost(existing QCoreApplication,argc,argv), thin CLI main disabled by DMASH_HOST_EXTERNAL_APP; processes explicitly passed argv for Android service bootstrap",
+  "executableAcceptance": {
+    "status": "FAIL_BEFORE_CONSUMPTION",
+    "cause": "Existing5s owner.activate RPC deadline exceeded under concurrent builds",
+    "diagnostic": {
+      "errorType": "TimeoutError",
+      "rpcTimings": [
+        {
+          "method": "owner.challenge",
+          "elapsedMs": 2031
+        },
+        {
+          "method": "owner.register",
+          "elapsedMs": 1010
+        },
+        {
+          "method": "owner.prepare",
+          "elapsedMs": 4188
+        },
+        {
+          "method": "owner.activate",
+          "elapsedMs": 5019
+        }
+      ],
+      "actorLogSha256": {
+        "recipient.log": "734bab26f0bd0cdf510615b9a04f8f036a517bc7ecb98871f2aa13006fe67f58",
+        "sender.log": "fc07b5410d3334340447304563d764bde534547e2e58d0e27f02939e562787e7"
+      }
+    }
+  },
+  "limits": [
+    "Source checkpoint; executable consume/reopen acceptance pending responsiveness correction",
+    "Previous reconnect delayed-peer PASS does not cover new consumption path",
+    "Android/Windows app runtime NOT_RUN",
+    "No new wire fields or remote receipts"
+  ]
+}

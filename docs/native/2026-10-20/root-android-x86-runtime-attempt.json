@@ -1,0 +1,135 @@
+{
+  "kind": "ROOT_INDEPENDENT_ANDROID_X86_PACKAGE_AND_RUNTIME_ATTEMPT",
+  "sourceCheckpoint": "b553586a",
+  "packageInspection": {
+    "kind": "Actual Gradle APK package inspection; no device runtime",
+    "status": "PASS",
+    "apkSha256": "7b91ce2a239e10f5f8e74e676f55ad6ffc8c69b42553e9c467edc8bf3ada9fdf",
+    "apkBytes": 38285413,
+    "package": "package: name='org.dmash.client' versionCode='1' versionName='0.1.0-dev' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+    "nativeCode": "native-code: 'x86_64'",
+    "libraries": [
+      {
+        "entry": "lib/x86_64/libQt6Core_x86_64.so",
+        "sha256": "71ad60130def0d930e114a42b1a4142a30afd950a83d424ad51baa20501c787c",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libQt6Gui_x86_64.so",
+        "sha256": "e59a2ecd1ba76a8922b54ce81678f7978a1703b75732b6db0a71f264604533a7",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libQt6Network_x86_64.so",
+        "sha256": "5f0ada5e5f26c0d2491bd2ce005aefecc65cbdd8455434a71ba29e38bed30df0",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libQt6Sql_x86_64.so",
+        "sha256": "7140252478e64682ba694e3f476e58712feb8f1057ac0aab365ef1eabcfa27a1",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libQt6WebSockets_x86_64.so",
+        "sha256": "73f2c4c41dc261dffa3c42beb6c01bfce50352cb5de07c2fbdd32211b27f54d0",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libc++_shared.so",
+        "sha256": "db9609240e60ca18b816a5e95a6bbc784e799261efbd5b30c8e2e03b540b3fa8",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libcrypto_3.so",
+        "sha256": "ae65932619ea1d0b6f944a69fc38b61f879aec83998bade853d1ac1cf4a4ff6c",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libdmash_node_service_x86_64.so",
+        "sha256": "f9ca25e35145b982ef9c38ae28112dc7322035567daefd03914ec0eb2935ed39",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libplugins_imageformats_qgif_x86_64.so",
+        "sha256": "da798051caf1baba8fb1521d0006ac6371dc37b7e054b0b8abaaa2b51d294026",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libplugins_imageformats_qico_x86_64.so",
+        "sha256": "eb54ca7badf82e60fe0fbdbd5bbea3a6b528f95849ae206d1f053df6532331d2",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libplugins_imageformats_qjpeg_x86_64.so",
+        "sha256": "19ae1bae7cf920a17e245320c07b965219d00253c8b29d17505bb8c13c18a35f",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libplugins_networkinformation_qandroidnetworkinformation_x86_64.so",
+        "sha256": "38609fd8c8155ef889492c87b6b7042f5603d786e4f435f0898ce9d3f6952212",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libplugins_platforms_qoffscreen_x86_64.so",
+        "sha256": "bc98b363415cd9aaa2c6e0d77029b1cd705541c2e5f2d563a67c5dd862502d39",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libplugins_platforms_qtforandroid_x86_64.so",
+        "sha256": "81cfb92505c82a3cb858f927425610577b8aa28c62a1cbbf19d605f2ae21e458",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libplugins_sqldrivers_qsqlite_x86_64.so",
+        "sha256": "15844ee8ff0f3550477fcc4ab61750c1505d52664c5fb80bb59d9e04ce1b8f6c",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libplugins_tls_qopensslbackend_x86_64.so",
+        "sha256": "40dac382b1a653d30fcbd4549de1a45f6bf10384331c57818f8642a5b9849560",
+        "loadAlignmentMin": 16384
+      },
+      {
+        "entry": "lib/x86_64/libssl_3.so",
+        "sha256": "1bfd257959131d77e8d1fb206114805118c8757db21d479f32b79999b346ebc2",
+        "loadAlignmentMin": 16384
+      }
+    ],
+    "checks": [
+      "APK signature",
+      "ZIP16K alignment",
+      "all bundledELF16K alignment",
+      "Views Activity launcher",
+      "separate :node service",
+      "specialUse permission/subtype",
+      "real Qt deployment resources",
+      "packaged dependency notices"
+    ],
+    "deviceRuntime": "NOT RUN",
+    "AccountMessaging": "NOT RUN"
+  },
+  "install": {
+    "status": "NOT_RUN_APP",
+    "processExit": 1,
+    "reason": "adb streamed install: cannot find package service after system_server watchdog termination"
+  },
+  "emulator": {
+    "version": "37.2.12.0 build16428233",
+    "image": "API35 AOSP x86_64 image_r02",
+    "acceleration": "software TCG; host has no KVM",
+    "observedFailure": "WATCHDOG KILLING SYSTEM PROCESS: Blocked in handler on main thread for81s during OS boot",
+    "applicationWasLaunched": false,
+    "intentionalStop": {
+      "pid": 620628,
+      "execSession": 74134,
+      "exitCode": 143,
+      "reason": "preserve diagnostic and AVD; free resources after verified guest watchdog crash; move runtime check to KVM CI",
+      "storageReset": false
+    }
+  },
+  "limits": [
+    "ZIP/signature/ELF/manifest inspection PASS does not prove installation or runtime",
+    "Watchdog was in Android OS startup before app launch; no app bug inferred",
+    "Android Account/daemon/service/UI lifecycle acceptance remains NOT RUN"
+  ]
+}

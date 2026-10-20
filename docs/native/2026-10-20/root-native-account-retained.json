@@ -1,0 +1,28 @@
+{
+  "kind": "ROOT_INDEPENDENT_NATIVE_ACCOUNT_RETAINED_PROFILE",
+  "source": "aa2cc63cd134fd0f1289a25022393a36ae089fb8",
+  "verification": {
+    "sourceFiles": 160,
+    "artifacts": 8,
+    "runtimeLibraries": 3,
+    "mismatches": []
+  },
+  "binarySha256": "69ce36ef8773192e6c13f82016bac836a774d1a61be32dca5e8cd9c589aa646c",
+  "processExit": 0,
+  "result": {
+    "ok": true,
+    "originalSavedRowsRetained": 1,
+    "registryMode": "SECURE",
+    "sameAccountPublicId": true,
+    "savedRowsAfterNativeWriteAndRelogin": 2,
+    "scope": "native isolated actual retained profile import; no browser/daemon delivery claim",
+    "sourceSHA256": "7f35126664d3f4828b9ed5e93e55eb27da70e5d5dc7f38cfd9af7448609ce9b6",
+    "sourceUnchanged": true
+  },
+  "limits": [
+    "Actual owning synthetic browser export converted without resetting source; native target is a new isolated copy.",
+    "Account/Root PINs and full encrypted exports stay private0600 outside Git.",
+    "Library/executable acceptance, not actual desktop/Android UI or remote Account messaging.",
+    "Crash between broker commit and Account DB publication remains separate recovery work."
+  ]
+}

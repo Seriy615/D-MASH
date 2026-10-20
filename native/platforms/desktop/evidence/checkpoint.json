@@ -1,0 +1,48 @@
+{
+  "kind": "Linux native Qt Widgets/offscreen actual UI clicks; not browser/deployed",
+  "utc": "2026-10-20",
+  "baseCommit": "bca447aee3fc2db1705bca94b5426e1a95e16c8f",
+  "sourceSha256": {
+    "native/platforms/desktop/CMakeLists.txt": "0736a65848c2675acfa15165d80ea88b1c1f2ff77560b5fe62dfca701bffe4a4",
+    "native/platforms/desktop/QA.md": "29ca227e6c35530a974d23c75518147c20b3ff02f2fb263e7a433ab7e3486491",
+    "native/platforms/desktop/README.md": "201894186a89eaf663e6273a6c8dece3cb288ad12f79522cd3d1a7e364f69dff",
+    "native/platforms/desktop/main.cpp": "6c4dc94a6a2bbf6919f81b376f7f157e63ce95ed449e46bcd731e48320009913",
+    "native/platforms/desktop/messenger_window.cpp": "8f4c26ac63e76d90e9a16e9b40bdd96461008173a0890aeb85452e07566b6b35",
+    "native/platforms/desktop/messenger_window.h": "367502f76865877334f76e673f1ce7d7a37b540e75fa7de0d043a5bf3421f69b",
+    "native/platforms/desktop/session_client.cpp": "8f80d7b0c4b2d32317827ea057649603021534162fba25ea1cb443c47d151673",
+    "native/platforms/desktop/session_client.h": "dbf8dd7ec6fd52f277ca730dd38cb09e9dfb3c74f131280a742724c520e0ff9f",
+    "native/platforms/desktop/tests/live_ui.py": "5f260a4ed194d178c54c9164c1f1ba5ae2ec5befd28d4ed8656d1df4d2cf34e2",
+    "native/platforms/desktop/tests/ui_test.cpp": "005b2f269bb2ef53aa55dbb5e62111b05a42afd83e6291bf2edf9590dea1108a",
+    "native/platforms/scripts/build-desktop.sh": "0977d08350b815ddae97246cba17c85aa1cc5c981a0c8681646961ef2896ae13"
+  },
+  "binarySha256": {
+    "dmash_desktop_ui_test": "edfb0c987bf0f78eccd4a1d90ab3ddf1b2a386653ba7eb7b2df4cb61eb66d5cc",
+    "dmash-desktop": "26f50628841e854999794f4fa168197e0316a020bd53dffdf4439a1609ceae9f",
+    "dmash-node-host-bca447a": "ad806878e23d8fb7b71429c924981babf78b7113e75cfc9fa371988a2f144fd3"
+  },
+  "compiler": "GCC13.3.0",
+  "qt": "6.12.0",
+  "results": {
+    "detached-and-error-controls": "PASS (4 QtTest cases including init/cleanup)",
+    "actual-host-ui-controls": "PASS",
+    "account-contact-chat": "NOT RUN",
+    "mesh-delivery": "NOT RUN",
+    "windows-runtime": "NOT RUN",
+    "android-device": "NOT RUN"
+  },
+  "liveChecks": [
+    "same-UID private handoff",
+    "owner capability authentication",
+    "visible node.status",
+    "Refresh click",
+    "Detach click",
+    "UI close leaves service alive",
+    "broker EOF stops service"
+  ],
+  "limits": [
+    "synthetic private Node profile; no mesh endpoints",
+    "Account controls disabled pending facade",
+    "offscreen actual widgets, not X11/Wayland screen acceptance",
+    "no service worker"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "kind": "ROOT_INSPECTED_ANDROID_KVM_INSTALL_AND_LAUNCHER_FAILURE",
+  "githubRun": 39437324295,
+  "job": 118677696883,
+  "artifact": 12272812725,
+  "artifactZipSha256": "222a3f3f8b0ef4f4389f5be4a2814d977c744a958e8f48c0813ef7a66fe95833",
+  "sourceCommit": "8c43c065d9e97b92b71579314d73ecd1d117af19",
+  "sourceEquivalentLocalCheckpoint": "4d7f81a",
+  "sourceFilesVerified": 306,
+  "apkSha256": "bcf30976cbaa6bcfcc43bde584096be4aa2fd7e158b7c8ed28db564110664eea",
+  "acceleration": "accel:\n0\nKVM (version 12) is installed and usable.\naccel",
+  "runtime": {
+    "kind": "ANDROID_API35_ACTUAL_UI_AND_SCOPED_SERVICE",
+    "status": "FAIL",
+    "checks": [
+      "actual APK installed and package path verified"
+    ],
+    "limits": [
+      "No Account import/login/history/contacts/remote chat acceptance",
+      "No mesh peers, transit/delivery, Doze, reboot or physical device acceptance",
+      "Synthetic same-UID instrumentation grant; resident credential owner not tested"
+    ],
+    "apkSha256": "bcf30976cbaa6bcfcc43bde584096be4aa2fd7e158b7c8ed28db564110664eea",
+    "api": "35",
+    "abi": "x86_64",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "failureClass": "AssertionError"
+  },
+  "launcherControls": [
+    {
+      "text": "Node is off",
+      "enabled": "true",
+      "clickable": "false"
+    },
+    {
+      "text": "STOP NODE",
+      "enabled": "true",
+      "clickable": "true"
+    },
+    {
+      "text": "SEND",
+      "enabled": "false",
+      "clickable": "true"
+    }
+  ],
+  "bug": {
+    "id": "ANDROID-STOP-STATE-01",
+    "severity": "UI functional blocker",
+    "actual": "Node is off while Stop Node is enabled",
+    "owner": "native_platforms_sol",
+    "fix": "2b293db",
+    "fixDescription": "Do not infer running Node from bindService accepted return; enable only after actual connected running status",
+    "retest": "NOT RUN pending new actual KVM CI; strict expected disabled assertion unchanged"
+  },
+  "limits": [
+    "Build/package inspection, actual installation and Activity launch established; whole runtime gate FAIL",
+    "Details controls, scoped Node service instrumentation and lifetime checks not reached in this run",
+    "No native Account/contacts/remote chat, Doze, reboot or physical-device acceptance"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "kind": "ROOT actual Android run8 source/package/runtime inspection",
+  "status": "FAIL_SERVICE",
+  "runId": 39446127764,
+  "jobId": 118708398804,
+  "artifactId": 12276592426,
+  "zipSha256": "21e6d6c159b14a6753de9e2140c02940726937ecc65936528d18eeffe5181e16",
+  "publishedHead": "4edab65caa3d0d7d2c4a27f827c5e167887babbe",
+  "localExactTreeCommit": "4bdf1da6693adacfb18cd975d7ce1645f54c79fc",
+  "actualCiSourceCommit": "ed7e751e4033092be8877d98dbbcac036ec3022b",
+  "verifiedSourceFiles": 325,
+  "runtime": {
+    "kind": "ANDROID_API35_ACTUAL_UI_AND_SCOPED_SERVICE",
+    "status": "FAIL",
+    "checks": [
+      "actual APK installed and package path verified",
+      "actual details open/Close/reopen/Back taps",
+      "disabled Stop Node/compose/Send",
+      "Activity background/resume preserves honest off state"
+    ],
+    "limits": [
+      "No Account import/login/history/contacts/remote chat acceptance",
+      "No mesh peers, transit/delivery, Doze, reboot or physical device acceptance",
+      "Synthetic same-UID instrumentation grant; resident credential owner not tested"
+    ],
+    "apkSha256": "a271dc87b06c2165f2eb0c87ed8952693949f57f6f99c042d1adbb345d9447da",
+    "api": "35",
+    "abi": "x86_64",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "instrumentation": "FAIL first-install-bootstrap-read TimeoutException",
+    "serviceDiagnostic": {
+      "binderAlive": true,
+      "nativeExited": false,
+      "serviceState": "STARTING"
+    },
+    "failureClass": "AssertionError",
+    "nativeStartupStages": []
+  },
+  "assessment": "All325 archived source hashes match local4bdf1da; APK hash independently verified. No ENTRY milestone observed; cause not established. Event-loop source fix has not solved runtime startup.",
+  "owner": "native_platforms_sol",
+  "limits": [
+    "Empty stage collection is an observation, not proof of a specific loader cause",
+    "No Account UI, Node service lifecycle, messaging or final app acceptance",
+    "No raw credential frames or logcat published"
+  ]
+}

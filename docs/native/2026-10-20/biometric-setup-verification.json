@@ -1,0 +1,28 @@
+{
+  "recorded_utc": "2026-10-20T08:22:15.833490+00:00",
+  "fixture_baseline_sha": "44606714cb68608f37cda964035b4e65bba008b8",
+  "overlay": "ui_logic.js only",
+  "tested_candidate_sha256": {
+    "D-MASH PWA/not_messenger/js/ui_logic.js": "0439cff7590dbd171da36f9c257aa1c45ba2aa5b7f70605d66bc96d66a402bc5",
+    "D-MASH PWA/not_messenger/tests/biometric_setup_cancel.test.js": "fc456809762deaee45549e64ce253d36c0d4dfe96adcc853485d2efc780d9a7c",
+    "D-MASH PWA/not_messenger/tests/global_settings_ui.test.js": "5c299eed9e6f852a6697845f32987522e37435bf651c875032951a0c0e9841c0",
+    "tools/test_biometric_setup_browser.cjs": "c69e3278b11a77d24a33c3e0990080116544d195503b865de34d879ef6cc41f5"
+  },
+  "red": "FAIL mode6 remains6 after actual source enrollment false",
+  "unit": {
+    "biometric_setup_cancel": "PASS",
+    "global_settings_ui": "PASS",
+    "calculator_secret_gate": "PASS",
+    "historical_webauthn_release": "PASS",
+    "ui_runtime_readiness": "PASS"
+  },
+  "browser": "PASS6 actual UI steps; public DeviceID/encrypted root record/state unchanged on cancel/refusal",
+  "browser_report_sha256": "19e9639269233eb8ca5a95dc2e615518e5355d70f2262d3890135034f9532a31",
+  "verified_served_files": 90,
+  "limits": [
+    "Concurrent credential foundation not part of fixture",
+    "No positive physical/PRF enrollment",
+    "UI cancellation does not abort or roll back a completed OS credential operation",
+    "No full-suite or all-controls PASS claimed"
+  ]
+}

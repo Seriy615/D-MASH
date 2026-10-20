@@ -1,3 +1,47 @@
+**2026-10-20 Android actual KVM API35 launcher — FAIL, install/launch PASS:**
+Run39437324295 APKbuilt/signed/installed and Activitylaunched; actualXML shows
+Nodeisoff but STOPNODE enabled. ANDROID-STOP-STATE-01 assignedplatform, fix2b293db
+compiled; actualunchangedCIassert retest NOT RUN. Sendfielddisabledobserved;
+Details/service lifecycle checks not reached. Root independently verified306source
+hashes andactualAPKhash in downloadedartifact12272812725.
+[RED evidence](docs/native/2026-10-20/root-android-kvm-launcher-red.json).
+
+**2026-10-20 native resident Desktop ROOT PASS (cab8fa6 stablepin):**
+Actual retained owning package/import/RootPIN/Account/login error/cancel/Saved/send/
+signout/hostrestart/relogin:6PASS/0FAIL/1liveServiceSKIP,4.757s,103sources/11artifacts/
+8runtime hashes exact. Same UI binary SIGKILL leaves actual host/Node alive;
+Rootlock stops Node. Nodeenable/Rootlock here are harnessIPC, not UIbuttonflow.
+[Evidence](docs/native/2026-10-20/root-desktop-resident-ui.json).
+Remotechat/freshsetup/visibleNodecontrols/Android/Windows NOT RUN. Earlier
+resident candidate invalidated for shared dependency WIP; stablepin rebuilt.
+
+**2026-10-20 MEDIA-07/08 negative branches scoped PASS (.43):** actual
+microphone/camera permission denial configured in Chromium, actual buttons/visible
+alerts/OK, controls restored, original history retained,0pageerrors/195source
+responses exact. Positive capture/send/playback and remote media NOT RUN.
+[Evidence](docs/native/2026-10-20/root-browser-media-denied.json).
+
+**2026-10-20 root local history .43 / HOST cancellation checkpoint:**
+Actual browser rename cancel/empty-name, chat-password cancel/set/confirmation
+mismatch/wrong-password/correct-password/remove, Back/reopen with original Saved1.
+195source responses exact,0errors; blocked SW/externalnetwork. CHAT-03/05/01
+remain PARTIAL, CHAT-04 scoped PASS only. Operator emergency-wipe mistake on
+synthetic profile was recovered from verified owning export: entire origin exact,
+then UI unlock/login/history; no user/production data. Final Root/registry same.
+[Evidence and exact cases](docs/native/2026-10-20/root-browser-history-controls.json).
+Native host cancellation bug assigned broker, fixed1139dd3, independent process
+retest PASS; visible resident UI retest remains pending.
+
+<!-- Native UI checkpoint; historical browser matrix below remains scoped. -->
+**2026-10-20 native Desktop27a28e7 ROOT PASS (Linux offscreen Qt clicks):**
+actual retained owning-profile copy, import/RootPIN/login choice/cancel/wrong/
+busy cancel/correct password/Saved compose-send/signout/window reopen.6PASS,
+0FAIL,1liveServiceSKIP;82source/7artifact hashes exact.
+[Evidence](docs/native/2026-10-20/root-desktop-account-ui.json).
+Remote chat/fresh setup/contacts/native policies/Android/Windows UI NOT RUN;
+resident credential host not yet integrated. Historical178class inventory below
+is not full current native or browser acceptance.
+
 # Browser-first QA — текущий аудит Forge
 
 Требование пользователя от 8 октября 2026: всё тестировать браузером; перед
@@ -5,6 +49,27 @@
 исправить и провести повторную приёмку. Тимлид/оркестратор сам отвечает за
 интегрированный результат. Этот файл — журнал и начальная матрица, не утверждение,
 что полный обход UI уже выполнен.
+
+**Текущий native/browser checkpoint — 20 октября, после e749234:**
+Root independently verified native desktop7589b92: 11 source/3 binary hashes
+match, actual offscreen Widgets About/Close, error/disabled, authenticated
+Node status/Refresh/Detach and UI-close preserving separate daemon PASS.
+Account/contact/chat native, Android/Windows runtime NOT RUN.
+[Evidence](docs/native/2026-10-20/root-desktop-controls.json).
+
+**UI-CHAT-DELEGATION-01 — FIXED004fa12/.43, root BROWSER PASS:** same retained
+profile upgraded through actual unlock/Account login to e749234/release.42,
+SW blocked. Saved original row1 remains; compose/SEND adds test row1. Clicking
+its × does nothing: no confirmation, no page error. The .chat-main bubble
+stopPropagation prevents the new document delegated data-action handler from
+receiving chat controls. Root keeps both rows for same-data fix/retest.109
+captured source responses exact,0errors.
+[Reproduction](docs/native/2026-10-20/root-chat-delegation-red.json).
+Root same-data upgrade/retest: × opens modal; НЕТ preserves original1/test1;
+ДА deletes only test; Back/reopen Saved original1/test0. Device/Account hashes
+unchanged,107source responses exact,0errors.
+[GREEN](docs/native/2026-10-20/root-chat-delegation-green.json).
+Synthetic retained profile, external traffic/SWblocked; no native chat claim.
 
 **Fresh deployed `.38` ordinary PRIVATE UI — scoped PASS, 20 October 2026:** exact
 `51b35ff2de810af5ccdf9ebac0839b812f1de38c`; normal production HTTPS and
@@ -827,3 +892,93 @@ Account; production vault ради QA не удалять.
 Старый exact verifier и независимая deployed gate дополняют это наблюдение.
 Обычная переписка через NodeRuntimeHostV4, полный N4 recovery/migration и
 общий inventory UI01–UI14 остаются **NOT RUN** как целостные матрицы.
+
+
+## 20 October 2026 — native platform follow-up
+
+- Android actual API35 KVM run39439689745: ANDROID-STOP-STATE-01 fix2b293db
+  retest PASS; disabled Stop/compose/Send, Details open/Close/reopen/Back and
+  background/resume visible controls checked. Root306source hashes and APK exact.
+  Overall FAIL at first scoped service install TimeoutException; owner runtime +
+  platforms, retest NOT RUN. [Evidence](docs/native/2026-10-20/root-android-kvm-launcher-retest.json).
+- Desktop cf41678 immutable visible Node control candidate: root FAIL43987
+  before import, QFileDialog selectedFiles canonical path mismatch after keyboard
+  typing+Tab; assertion inside modal callback left dialog open until240s timeout.
+  Actual process terminal1, no remaining owned child found. Owner platforms: fix
+  test input/cleanup, preserve initial failure and retest real actions. Snapshot
+  hashes307/11artifacts/8libs exact; four snapshot entries differ from committed
+  cf41678 (three Android WIP files + QA metadata), Desktop/common tested files
+  match. No broad tracked307source or visibleNode root PASS claimed.
+- Native Account E2EE root component PASS is separate from UI acceptance:
+  [proof](docs/native/2026-10-20/root-native-remote-account.json). Ordinary pairing,
+  contacts and remote conversation UI remain NOT RUN.
+
+Root follow-up: selector33a6273 immutable test binary044dd7fc... independently
+PASS3/0/22.644s, actual same retained owning Account wrapper, clipboard paste/Open,
+PIN/Account/cancel/wrong/busy/Saved/reopen. [Evidence](docs/native/2026-10-20/root-desktop-chooser-retest.json).
+This closes the import selector test failure only. Full optional Node-controls
+gate still timed out240s after selector; its owner is adding fail-fast stage
+diagnostics. No root visible Node-controls PASS is inferred from Account-only.
+
+Android actual KVM39443522111 on9988c73 event-loop correction: launcher/Details/
+background-resume still PASS, first scoped service bootstrap still FAIL. Fixed
+state diagnostic Binder alive, nativeExited=false, STARTING; no accepted Node
+service runtime. Owner platforms; next stage diagnosis/retest pending. Root exact
+source/APK inspection: [evidence](docs/native/2026-10-20/root-android-service-bootstrap-retest.json).
+
+Windows actual39443521913 compiled/linked all75Desktop targets, including UI test,
+but desktop-controls failed0.06s with no QtTest banner. UI actions NOT RUN; owner
+platforms collecting startup exit/DLL/plugin diagnostics10c5743. [Exact merge-tree
+compile/launch evidence](docs/native/2026-10-20/root-windows-compile-launch-attempt.json).
+
+Desktop fresh setup sourceeea5c69: root actual Qt UI PASS offscreen87643 (3/0,
+3035ms), XCB/Xvfb71212 (3/0,4076ms). Createprofile Cancel/empty/mismatch/valid,
+optionalAccount Cancel/Root-only, Accountcreate validation/signin, Saved Send,
+visible history/windowreopen/signout.241source/8artifacts exact, screenshot
+visually inspected. Initial XCB environment lacked dependencies and exited134
+before QtTest; same binary passed with existing XCB dependencies appended to
+library path. Nodebutton option OFF; remotechat/full UI/Windows NOT RUN.
+[Root scoped proof](docs/native/2026-10-20/root-desktop-fresh-ui.json).
+
+Android run39446127764: launcher/Details/resume scoped controls remain PASS;
+first-install scoped service FAIL, Binder alive/STARTING/nativeExited=false and
+nativeStartupStages empty.325source/APK hashes exact. No loader cause established.
+[Root evidence](docs/native/2026-10-20/root-android-empty-entry-retest.json).
+
+User design correction: «я просил дизайн из тг взять». Current Desktop fresh
+functional controls PASS does NOT accept the shown arbitrary layout. Telegram
+Desktop/Android reference fidelity is NOT RUN; owner native_platforms_sol.
+Required next checks: Telegram-style chatlist/search/menu, header/bubbles/compact
+composer/settings on both clients, existing flows retained, real UI screenshots
+compared with pinned upstream references. No fake enabled unimplemented actions.
+
+Telegram Desktop7aaccb3 first layout: root97893 actual XCB/Xvfb UI PASS4/0/5609ms,
+242source/8artifacts/runtime hashes exact. Real menu/searchfilter/freshProfile/
+optionalAccount/Saved/windowreopen/signout controls; screenshot visually inspected.
+Design PARTIAL: known header-label inherited border assigned platforms, Android
+actual package/runtime and other Telegram flows NOT RUN. Pre-pause host; no
+visible Nodepause or remotechat acceptance. [Proof](docs/native/2026-10-20/root-desktop-telegram-ui.json),
+[actual synthetic screenshot](docs/native/2026-10-20/desktop-telegram-preview.png).
+
+Authoritative user correction: actual Telegram clone required, not a similar
+layout. Old Widgets/Views rendering and its scoped functional PASS do not accept
+the final frontend. Actual Telegram Desktop/Android fork UI acceptance NOT RUN.
+Owners: native_platforms_sol Desktop, broker_store_sol Android; root integration/
+actual UI acceptance. Preserve old WIP/evidence, no fallback to imitation UI.
+
+
+Actual-fork integration review, 20 October 2026 (source review; no rendered
+fork page/APK or SW version yet):
+
+| ID | Finding / required visible retest | Owner | Source state | Actual UI retest |
+| --- | --- | --- | --- | --- |
+| TG-ANDROID-SEND-01 | IPC disconnect/unknown reply can drop local operation ID/text before reconciliation. Send once, interrupt reply, reconnect same Account, verify one row and usable retry without duplicate. Definite rejection must retain text or error row. | broker_store_sol | Correction ca2c128/root unit11493 PASS; Java04 author compile PASS. Actual composer/connection UI retest remains open | NOT RUN |
+| TG-DESKTOP-IDLE-01 | Idle host disconnect did not invalidate plaintext presentation. Kill synthetic owner while no RPC is pending; visible session must clear, stale callbacks must not restore it. | native_platforms_sol | Confirmed initial LocalClient gap; author correction compiled standalone84864 | NOT RUN |
+| TG-ANDROID-BACKEND-01 | Fallback DNS/proxy/custom-update entrypoints lack explicit D-MASH guards. Native init/socket guards exist, so active egress is not established by this source finding. Exercise startup/settings/update/proxy with captured network attempts. | broker_store_sol | Additional guards assigned | NOT RUN |
+| TG-DESKTOP-FRESH-01 | Draft original Intro currently unlocks existing Root/login only. A fresh synthetic installation needs profile.create with PIN confirmation and optional Account creation/chooser. | native_platforms_sol | Missing fresh flow assigned | NOT RUN |
+| TG-ACCOUNT-CONTEXT-01 | Two local UIs share a globally selected Account; old connection can read/send after another connection switches Account. Bind sensitive RPCs to exact Account/session epoch and check inside worker; status-before-send alone races. | native_runtime_sol common host; both frontend owners consume contract | Common host fix integrated0288bff; root42502 two actual IPC connections and root45778 queued worker regression PASS, retained histories preserved. [Evidence](docs/native/2026-10-20/root-account-client-binding.json). Actual frontend attach/queue fences still pending | COMPONENT PASS; actual UI NOT RUN |
+
+These source findings do not change historical 178-control PASS counts. The
+actual selected forks must have their own rendered control inventory, package
+versions/source hashes, screenshots and error/loading/disabled/cancel/reopen
+acceptance. Component adapter compilation is not a substitute for those actions.

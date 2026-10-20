@@ -1,0 +1,1717 @@
+{
+  "provenance": "Reconstructed semantic evidence from conversation tool outputs; original raw logs, JSON/screenshot bytes and profile lost in host reboot",
+  "historical_session": "dmash-security-baseline",
+  "product_baseline": "9446c22f27309131456942870971d477f6f2358f",
+  "release": "transport-v3-node-preparation-20261020.38",
+  "viewport": {
+    "width": 430,
+    "height": 932
+  },
+  "service_workers": "blocked",
+  "network": "Nonlocal HTTP and all WSS blocked; no positive network claims",
+  "raw_artifacts_available": false,
+  "owning_exports_available": false,
+  "backup_restore_verified": false,
+  "control_counts_scoped": {
+    "PASS": 67,
+    "FAIL": 4,
+    "NOT RUN": 107
+  },
+  "control_classes": [
+    {
+      "id": "CALC-01",
+      "members_or_label": "0,1,2,3,4,5,6,7,8,9",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root clicked all ten digits; input-length bounds NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-02",
+      "members_or_label": "decimal point",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root decimal 1.2; repeated decimal/secret decimal NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-03",
+      "members_or_label": "AC",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "AC used in arithmetic and credential flow; in-flight cancel NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-04",
+      "members_or_label": "±",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root 5±=-5; repeat toggle NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-05",
+      "members_or_label": "%",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root 100%=1",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-06",
+      "members_or_label": "÷,×,−,+",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root all four operators observed",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-07",
+      "members_or_label": "=",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual arithmetic and master unlock; repeat-submit matrix NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-08",
+      "members_or_label": "long-hold configured key / pointer release",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Trusted 1.3s hold enrollment denial only; configured unlock NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-09",
+      "members_or_label": "fresh master setup",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root short master reject and valid setup",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-10",
+      "members_or_label": "fresh wipe-code setup",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root valid wipe setup; collisions NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-11",
+      "members_or_label": "master unlock / loading",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Old PIN refused gate/new PIN opened same account list",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-12",
+      "members_or_label": "master + wipe reconfiguration",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual rewrap completed after 5s harness timeout; same device/account hashes and history reopened",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CALC-13",
+      "members_or_label": "wipe PIN + equals",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Correct destructive path requires disposable profile; wrong emergency sequence deferred; historical retained profile lost before candidate",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CALC-14",
+      "members_or_label": "0010<master>= emergency",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Correct destructive path requires disposable profile; wrong emergency sequence deferred; historical retained profile lost before candidate",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CALC-15",
+      "members_or_label": "1020<master>= compatibility emergency",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Correct destructive path requires disposable profile; wrong emergency sequence deferred; historical retained profile lost before candidate",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "GATE-01",
+      "members_or_label": "identity / access-key fields",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Real synthetic Account credentials filled",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GATE-02",
+      "members_or_label": "ВОЙТИ В СИСТЕМУ / Enter",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Empty login error and real login; Enter alternative NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GATE-03",
+      "members_or_label": "saved-account row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Saved main account row selected",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GATE-04",
+      "members_or_label": "+ НОВЫЙ ВХОД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Fresh new-login alternative not independently clicked after setup",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "GATE-05",
+      "members_or_label": "К СПИСКУ / НАЗАД К АККАУНТАМ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root empty-list return and later Back-to-Accounts",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GATE-06",
+      "members_or_label": "save-in-registry checkbox",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root save-in-registry checked",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GATE-07",
+      "members_or_label": "Account BIOMETRY row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "No account biometric credential; conditional row absent",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "GATE-08",
+      "members_or_label": "global settings gear",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Global gear opened",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GLOBAL-01",
+      "members_or_label": "PUBLIC ROUTES",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Global Public Routes reached/local controls exercised",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GLOBAL-02",
+      "members_or_label": "УЗЛЫ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Distinct global entry/conditional control not clicked; related stock account controls do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "GLOBAL-03",
+      "members_or_label": "БЫСТРЫЕ ИМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "FAIL",
+      "scope": "After logout global Quick Names demands master despite root unlocked; UI-BOOT-CONVERGENCE-01 child",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GLOBAL-04",
+      "members_or_label": "РЕЕСТР АККАУНТОВ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Registry control absent from observed delayed global settings; requires repaired chain",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "GLOBAL-05",
+      "members_or_label": "ЗАПРОСЫ В КОНТАКТЫ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Distinct global entry/conditional control not clicked; related stock account controls do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "GLOBAL-06",
+      "members_or_label": "ТЕЛЕГРАМ-МАЯК",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Distinct global entry/conditional control not clicked; related stock account controls do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "GLOBAL-07",
+      "members_or_label": "ЭКСТРЕННЫЙ ФЛИП-ЛОК toggle",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "FAIL",
+      "scope": "Global toggle stale label and wrong stock modal; policy later restored OFF",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GLOBAL-08",
+      "members_or_label": "СМЕНИТЬ MASTER-КОД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Master change entry clicked",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GLOBAL-09",
+      "members_or_label": "БИОМЕТРИЯ УСТРОЙСТВА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Distinct global entry/conditional control not clicked; related stock account controls do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "GLOBAL-10",
+      "members_or_label": "УПРАВЛЕНИЕ БИОМЕТРИЕЙ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Empty biometric manager opened",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GLOBAL-11",
+      "members_or_label": "ПОЛНОЕ УДАЛЕНИЕ ДАННЫХ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Both confirmation stages CANCELLED; success destructive path NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GLOBAL-12",
+      "members_or_label": "КОНТАКТЫ NODE",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Distinct global entry/conditional control not clicked; related stock account controls do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "QUICK-01",
+      "members_or_label": "ДОБАВИТЬ БЫСТРОЕ ИМЯ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Account add prompt Cancel only; persisted add NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "QUICK-02",
+      "members_or_label": "УДАЛИТЬ row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "No nonempty quick-name entry created; deletion not rendered",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "QUICK-03",
+      "members_or_label": "НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Account Quick Names Back",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "ROUTE-01",
+      "members_or_label": "CREATE / СОЗДАТЬ PUBLIC ROUTE",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Local create; no connected Node registration",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "ROUTE-02",
+      "members_or_label": "ACTIVATE / DEACTIVATE",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Both activate/deactivate states; remote revoke NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "ROUTE-03",
+      "members_or_label": "REISSUE current",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Local current reissue and previous/current states",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "ROUTE-04",
+      "members_or_label": "CONTACT LINK / copy",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "FAIL",
+      "scope": "Click raises missing Core.copyPublicContactLink; UI-BOOT-CONVERGENCE-01",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "ROUTE-05",
+      "members_or_label": "НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Back to global settings",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "GNODE-01",
+      "members_or_label": "ДОБАВИТЬ NODE",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Distinct global Node control not independently exercised; stock Node panel cases do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-02",
+      "members_or_label": "ПОДКЛЮЧИТЬ / ОТКЛЮЧИТЬ Node",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Distinct global Node control not independently exercised; stock Node panel cases do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-03",
+      "members_or_label": "СДЕЛАТЬ ОСНОВНЫМ / ОСНОВНОЙ",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Distinct global Node control not independently exercised; stock Node panel cases do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-04",
+      "members_or_label": "УДАЛИТЬ Node",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Distinct global Node control not independently exercised; stock Node panel cases do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-05",
+      "members_or_label": "Node address input / OK / Cancel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Distinct global Node control not independently exercised; stock Node panel cases do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-06",
+      "members_or_label": "НАЗАД к global settings",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Distinct global Node control not independently exercised; stock Node panel cases do not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "BIO-01",
+      "members_or_label": "НАЧАТЬ ПРИВЯЗКУ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Separate BEGIN entry not clicked; manager ADD KEY observed separately",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "BIO-02",
+      "members_or_label": "ДОБАВИТЬ КЛЮЧ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Add Key -> calculator -> actual headless enrollment denial; successful PRF NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "BIO-03",
+      "members_or_label": "УДАЛИТЬ КЛЮЧ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "No enrolled device credential; delete not rendered",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "BIO-04",
+      "members_or_label": "НАЗАД / ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Manager Back/Cancel not independently clicked; separate mode6 missing-cancel defect UI-BIO-CANCEL-01 is in bug backlog",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "BIO-05",
+      "members_or_label": "stock Account settings БИОМЕТРИЯ УСТРОЙСТВА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Stock direct enrollment button distinct from manager hold flow; not separately clicked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "ACCOUNT-01",
+      "members_or_label": "settings gear",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual delayed stock account settings shown",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "ACCOUNT-02",
+      "members_or_label": "КОПИРОВАТЬ ID АККАУНТА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Required repaired/conditional account or registry/biometric UI not reached in delayed wrapper profile; retest after readiness candidate",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "ACCOUNT-03",
+      "members_or_label": "БИОМЕТРИЯ АККАУНТА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Required repaired/conditional account or registry/biometric UI not reached in delayed wrapper profile; retest after readiness candidate",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "ACCOUNT-04",
+      "members_or_label": "ПРОВЕРИТЬ КЛЮЧ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Required repaired/conditional account or registry/biometric UI not reached in delayed wrapper profile; retest after readiness candidate",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "ACCOUNT-05",
+      "members_or_label": "ПРИВЯЗАТЬ БИОМЕТРИЮ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Required repaired/conditional account or registry/biometric UI not reached in delayed wrapper profile; retest after readiness candidate",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "ACCOUNT-06",
+      "members_or_label": "БЕСПАРОЛЬНЫЙ ВХОД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Retired passwordless option denied",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "ACCOUNT-07",
+      "members_or_label": "Account registry remove biometric",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Required repaired/conditional account or registry/biometric UI not reached in delayed wrapper profile; retest after readiness candidate",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "ACCOUNT-08",
+      "members_or_label": "inactive Account УДАЛИТЬ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Required repaired/conditional account or registry/biometric UI not reached in delayed wrapper profile; retest after readiness candidate",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "ACCOUNT-09",
+      "members_or_label": "ЗАКРЫТЬ / НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Account settings close/back",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "WORK-01",
+      "members_or_label": "my-ID card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "My-ID card opened stock Pairing V1 QR",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "WORK-02",
+      "members_or_label": "network card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Dedicated network-card click not executed; related stock Node panel menu does not substitute",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "WORK-03",
+      "members_or_label": "[ QR ] scanner",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Contact scanner camera denial",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "WORK-04",
+      "members_or_label": "[ + ] add contact",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Add contact cancel/invalid ID/manual synthetic peer",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "WORK-05",
+      "members_or_label": "[ ВЫХОД ]",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual logout root=true/account=false",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "WORK-06",
+      "members_or_label": "peer/Saved Messages row; Enter/Space",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Saved and synthetic peer clicked; keyboard alternative NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "WORK-07",
+      "members_or_label": "chat delete ×",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "New empty synthetic peer delete cancelled then confirmed; retained peer/history untouched",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "WORK-08",
+      "members_or_label": "contact progress row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires contact progress/confirmation fixture; unavailable after missing bootstrap handler",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "WORK-09",
+      "members_or_label": "progress sync/refresh",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires contact progress/confirmation fixture; unavailable after missing bootstrap handler",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "SHARE-01",
+      "members_or_label": "PRIVATE / PUBLIC tabs",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Repaired PRIVATE/PUBLIC UI unavailable in delayed Core; stock Pairing V1 copy is separate scope",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "SHARE-02",
+      "members_or_label": "public route dropdown",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Repaired PRIVATE/PUBLIC UI unavailable in delayed Core; stock Pairing V1 copy is separate scope",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "SHARE-03",
+      "members_or_label": "copy current payload",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Repaired PRIVATE/PUBLIC UI unavailable in delayed Core; stock Pairing V1 copy is separate scope",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "SHARE-04",
+      "members_or_label": "СОЗДАТЬ PUBLIC ROUTE empty state",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Repaired PRIVATE/PUBLIC UI unavailable in delayed Core; stock Pairing V1 copy is separate scope",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "SHARE-05",
+      "members_or_label": "stock QR КОПИРОВАТЬ / ЗАКРЫТЬ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Async QR image/canvas then copy Pairing V1 verified by clipboard shape; no contribution published",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "SCAN-01",
+      "members_or_label": "contact scanner ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CONTACT-01",
+      "members_or_label": "manual input OK / alias OK",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Invalid ID and local synthetic ID+alias accepted",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CONTACT-02",
+      "members_or_label": "name chooser quick-name row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires confirmed contact/requests/route fixture; delayed key-exchange handler missing, so descendant blocked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CONTACT-03",
+      "members_or_label": "ВВЕСТИ ДРУГОЕ ИМЯ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires confirmed contact/requests/route fixture; delayed key-exchange handler missing, so descendant blocked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CONTACT-04",
+      "members_or_label": "preparation ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires confirmed contact/requests/route fixture; delayed key-exchange handler missing, so descendant blocked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CONTACT-05",
+      "members_or_label": "pending request card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires confirmed contact/requests/route fixture; delayed key-exchange handler missing, so descendant blocked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CONTACT-06",
+      "members_or_label": "ПРИНЯТЬ / продолжить accept",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires confirmed contact/requests/route fixture; delayed key-exchange handler missing, so descendant blocked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CONTACT-07",
+      "members_or_label": "ВЫЙТИ И ВЫБРАТЬ АККАУНТ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires confirmed contact/requests/route fixture; delayed key-exchange handler missing, so descendant blocked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CONTACT-08",
+      "members_or_label": "ОТКЛОНИТЬ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires confirmed contact/requests/route fixture; delayed key-exchange handler missing, so descendant blocked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CONTACT-09",
+      "members_or_label": "quick-name accept list / new quick-name",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires confirmed contact/requests/route fixture; delayed key-exchange handler missing, so descendant blocked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CONTACT-10",
+      "members_or_label": "ЗАКРЫТЬ / НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Empty pending contacts Back only",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CONTACT-11",
+      "members_or_label": "НАЧАТЬ ОБМЕН КЛЮЧАМИ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "FAIL",
+      "scope": "Click raises missing Core.beginKeyExchange; UI-BOOT-CONVERGENCE-01",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CONTACT-12",
+      "members_or_label": "explicit Legacy Relay fallback ДА / НЕТ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Requires confirmed contact/requests/route fixture; delayed key-exchange handler missing, so descendant blocked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CHAT-01",
+      "members_or_label": "back arrow + browser/mobile Back",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual arrow Back; browser/system Back NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CHAT-02",
+      "members_or_label": "header peer ID click",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Contact header ID copy not separately clicked",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CHAT-03",
+      "members_or_label": "rename pencil",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Pencil -> cancel only",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CHAT-04",
+      "members_or_label": "chat password lock",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Set and confirm local history password",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CHAT-05",
+      "members_or_label": "locked-history password OK / cancel",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Wrong pass error then correct original history reopen; removal NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CHAT-06",
+      "members_or_label": "composer text field",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root local text entered",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CHAT-07",
+      "members_or_label": "SEND / Enter / Shift+Enter",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Root empty SEND then one Saved row; Enter/Shift+Enter NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "CHAT-08",
+      "members_or_label": "message delete ×",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Original row delete cancelled; success deletion NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-01",
+      "members_or_label": "ДОБАВИТЬ УЗЕЛ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Invalid scheme error and localhost test endpoint added",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-02",
+      "members_or_label": "ДОБАВИТЬ ПО QR",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual Node camera denial",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-03",
+      "members_or_label": "ЗАПРОСИТЬ УЗЕЛ empty list",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Local catalog requested then endpoint removed; egress blocked",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-04",
+      "members_or_label": "row ON / OFF",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "ON produced blocked reconnect; authenticated OFF/resume NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-05",
+      "members_or_label": "row QR",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "No-NodeID QR error only; positive canonical QR NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-06",
+      "members_or_label": "row gear",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Endpoint settings opened",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-07",
+      "members_or_label": "АВТОПОДКЛЮЧЕНИЕ checkbox",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Active auto-connect disabled state observed; toggle NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-08",
+      "members_or_label": "РАЗРЕШИТЬ / ВЫКЛЮЧИТЬ УВЕДОМЛЕНИЯ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Enable without beacon denied; disable/delivery NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-09",
+      "members_or_label": "СДЕЛАТЬ ОСНОВНЫМ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Only one primary test Node present; nonprimary selection not rendered",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "NODE-10",
+      "members_or_label": "УДАЛИТЬ УЗЕЛ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Native cancel then delete only synthetic endpoint",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-11",
+      "members_or_label": "КОПИРОВАТЬ ССЫЛКУ / НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive canonical Node sharing unavailable for missing NodeID test entry",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "NODE-12",
+      "members_or_label": "ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Node scanner Cancel after camera denial",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "NODE-13",
+      "members_or_label": "НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Back from Node panel",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "MANAGED-01",
+      "members_or_label": "Подключить Node",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-02",
+      "members_or_label": "Публичный адрес Node field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-03",
+      "members_or_label": "Ваше имя для запроса field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-04",
+      "members_or_label": "Сообщение для знакомства field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-05",
+      "members_or_label": "Создать / показать публичный адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-06",
+      "members_or_label": "Копировать публичный адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-07",
+      "members_or_label": "Отправить запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-08",
+      "members_or_label": "Обновить запросы",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-09",
+      "members_or_label": "Выбрать аккаунт для принятия",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-10",
+      "members_or_label": "Принять в текущий аккаунт",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-11",
+      "members_or_label": "Подтвердить собеседника",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-12",
+      "members_or_label": "Завершить обмен ключами",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-13",
+      "members_or_label": "Повторить запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-14",
+      "members_or_label": "Отклонить запрос / ДА, ОТКЛОНИТЬ / НЕТ",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-15",
+      "members_or_label": "PRIVATE адрес Node field / Проверенный ID собеседника field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-16",
+      "members_or_label": "Создать PRIVATE QR",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-17",
+      "members_or_label": "Копировать PRIVATE адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-18",
+      "members_or_label": "Проверить PRIVATE адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-19",
+      "members_or_label": "Отправить PRIVATE запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-20",
+      "members_or_label": "Обновить PRIVATE запросы",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-21",
+      "members_or_label": "Показать PRIVATE QR / Повторить PRIVATE запрос / Подтвердить PRIVATE контакт / Отклонить PRIVATE запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-22",
+      "members_or_label": "Перевести существующий контакт на Node / confirm / cancel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-23",
+      "members_or_label": "ЗАКРЫТЬ managed panel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires explicit managed-v4 opt-in and isolated authenticated Node/contact fixture; not selected in historical legacy profile",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MEDIA-01",
+      "members_or_label": "paperclip + hidden file input",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual chooser and Saved unsupported-file alert; OS chooser cancel/network transfer NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "MEDIA-02",
+      "members_or_label": "file card ОТКРЫТЬ ФАЙЛ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-03",
+      "members_or_label": "ОТМЕНИТЬ ОТПРАВКУ stored card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-04",
+      "members_or_label": "incoming automatic receive status + cancel (NO separate YES/NO file consent)",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-05",
+      "members_or_label": "progress Отмена / Закрыть",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-06",
+      "members_or_label": "Сохранить файл link",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-07",
+      "members_or_label": "microphone start",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual microphone denial/error UI only",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "MEDIA-08",
+      "members_or_label": "circle video start",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual circle capture camera failure only",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "MEDIA-09",
+      "members_or_label": "camera-choice row / ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-10",
+      "members_or_label": "recording × cancel (voice/circle)",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-11",
+      "members_or_label": "SEND recording",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-12",
+      "members_or_label": "cancel outbound / retry cancelled",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-13",
+      "members_or_label": "incoming Принять / Отклонить",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-14",
+      "members_or_label": "РАСШИФРОВАТЬ / КРУЖОК",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-15",
+      "members_or_label": "ПОВТОРИТЬ decrypt",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-16",
+      "members_or_label": "native audio/video playback controls",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-17",
+      "members_or_label": "circle tap play/pause",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MEDIA-18",
+      "members_or_label": "image open / download link",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Positive recording/file/playback control requires media device or confirmed contact + isolated real TURN/file fixture; not rendered in tested denial/local-only states",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "CALL-01",
+      "members_or_label": "VoIP call button / outbound cancel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires two confirmed contacts, isolated signaling/TURN and permitted media; blocked legacy bootstrap/no hardware",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-02",
+      "members_or_label": "incoming call accept / decline",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires two confirmed contacts, isolated signaling/TURN and permitted media; blocked legacy bootstrap/no hardware",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-03",
+      "members_or_label": "microphone mute / unmute",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires two confirmed contacts, isolated signaling/TURN and permitted media; blocked legacy bootstrap/no hardware",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-04",
+      "members_or_label": "camera enable / disable",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires two confirmed contacts, isolated signaling/TURN and permitted media; blocked legacy bootstrap/no hardware",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-05",
+      "members_or_label": "switch camera",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires two confirmed contacts, isolated signaling/TURN and permitted media; blocked legacy bootstrap/no hardware",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-06",
+      "members_or_label": "share screen",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires two confirmed contacts, isolated signaling/TURN and permitted media; blocked legacy bootstrap/no hardware",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-07",
+      "members_or_label": "speaker toggle",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires two confirmed contacts, isolated signaling/TURN and permitted media; blocked legacy bootstrap/no hardware",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-08",
+      "members_or_label": "end call",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Requires two confirmed contacts, isolated signaling/TURN and permitted media; blocked legacy bootstrap/no hardware",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "NOTIFY-01",
+      "members_or_label": "ОТКРЫТЬ БОТА external link",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "No Telegram account/bot messaging authorized; no external link navigation/beacon delivery tested",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "NOTIFY-02",
+      "members_or_label": "ОТКЛЮЧИТЬ МАЯК",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "No Telegram account/bot messaging authorized; no external link navigation/beacon delivery tested",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "MODAL-01",
+      "members_or_label": "alert OK / modal close/back",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual alerts OK and modal close/back",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "MODAL-02",
+      "members_or_label": "prompt field / OK / Enter",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual prompt fields+OK; Enter NOT RUN",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "MODAL-03",
+      "members_or_label": "prompt ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Actual prompt Cancel",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "MODAL-04",
+      "members_or_label": "confirm ДА / НЕТ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Synthetic peer yes/no and retained message no",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "MODAL-05",
+      "members_or_label": "native confirm/prompt",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "PASS",
+      "scope": "Node native confirm, wipe confirm and phrase cancellations only",
+      "provenance": "Historical pre-reboot tool observation"
+    },
+    {
+      "id": "MODAL-06",
+      "members_or_label": "backdrop / sidebar / chat-main click",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Backdrop/mobile sidebar empty-space dismiss contract not independently exercised",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "LOCK-01",
+      "members_or_label": "flipper orientation gesture",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "CDP emulation produced no numeric beta; no physical phone sensor/root-lock acceptance",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "LOCK-02",
+      "members_or_label": "reload/window close/reopen",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Original page deliberately not reloaded before candidate; host reboot destroyed profile; retained-update proof unavailable",
+      "provenance": "Explicit unexecuted descendant or alternative"
+    },
+    {
+      "id": "ABSENT-01",
+      "members_or_label": "Full installation backup / export / import UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Not exposed in current UI per source-backed inventory; no runtime execution claim",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-02",
+      "members_or_label": "Public Route DELETE UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Not exposed in current UI per source-backed inventory; no runtime execution claim",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-03",
+      "members_or_label": "Generic Node password UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Not exposed in current UI per source-backed inventory; no runtime execution claim",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-04",
+      "members_or_label": "Personal Telegram bot configuration UI (unloaded app_shell only)",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Not exposed in current UI per source-backed inventory; no runtime execution claim",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-05",
+      "members_or_label": "Custom ringtone UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Not exposed in current UI per source-backed inventory; no runtime execution claim",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-06",
+      "members_or_label": "Diagnostics launcher UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Not exposed in current UI per source-backed inventory; no runtime execution claim",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-07",
+      "members_or_label": "Per-file affirmative YES / NO consent UI (trusted files auto-receive)",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Not exposed in current UI per source-backed inventory; no runtime execution claim",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-08",
+      "members_or_label": "Master reconfiguration explicit Back / Cancel control",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Not exposed in current UI per source-backed inventory; no runtime execution claim",
+      "provenance": "Explicit unexecuted descendant or alternative",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "case": "identity-history-before-after",
+      "status": "PASS",
+      "device_id_sha256": "07c514e1244744f68c2ca05528784bd815d991733ae51cc1f28900a59f07d4a7",
+      "account_id_sha256": "242b1111a0ee3e02e4ae8890c376d165d933d2553438050703a8500b297d8806",
+      "original_saved_rows": 1,
+      "scope": "Actual master rewrap and same Account/chat-password reopen; not candidate reload"
+    },
+    {
+      "case": "account-logout",
+      "status": "PASS",
+      "rootUnlocked": true,
+      "accountUnlocked": false,
+      "activeIdentity": null,
+      "mode": 0
+    },
+    {
+      "case": "biometric-enrollment-denied",
+      "status": "PASS",
+      "visible": "Platform WebAuthn enrollment did not complete.",
+      "rootUnlocked": true,
+      "credentialTriggerSet": false,
+      "mode_after_denial": 6,
+      "cancel_flow_status": "FAIL"
+    },
+    {
+      "case": "headless-camera-mic",
+      "status": "PASS",
+      "camera": "Не удалось запустить камеру.",
+      "microphone": "ОТКАЗАНО",
+      "scope": "Error handling only; successful media NOT RUN"
+    },
+    {
+      "case": "contact-key-exchange",
+      "status": "FAIL",
+      "error": "TypeError: Core.beginKeyExchange is not a function",
+      "page_elapsed_ms": 1880158
+    },
+    {
+      "case": "public-contact-copy",
+      "status": "FAIL",
+      "error": "TypeError: Core.copyPublicContactLink is not a function",
+      "page_elapsed_ms": 2187632
+    },
+    {
+      "case": "post-logout-global-quicknames",
+      "status": "FAIL",
+      "rootUnlocked": true,
+      "visible": "СНАЧАЛА РАЗБЛОКИРУЙТЕ УСТРОЙСТВО"
+    },
+    {
+      "case": "full-wipe-two-cancels",
+      "status": "PASS",
+      "rootUnlocked": true,
+      "hasRootRecord": true,
+      "configured": true,
+      "destructive_success_executed": false
+    },
+    {
+      "case": "orientation-root-lock",
+      "status": "NOT RUN",
+      "sensor_numeric_event_received": false,
+      "rootUnlocked_after_attempt": true,
+      "scope": "Unsupported CDP/headless sensor; not physical device acceptance"
+    },
+    {
+      "case": "candidate-retained-reload",
+      "status": "NOT RUN",
+      "reason": "Host reboot lost original browser profile and temporary exports before candidate reload"
+    }
+  ],
+  "scope_notice": "PASS is only the recorded member/scenario in scope; remaining alternatives in that family are NOT RUN, not an all-minimum-cases PASS"
+}

@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "scope": "ROOT artifact/source inspection of coherent Android service build, no independent NDK rebuild or runtime claim",
+  "sourceCommit": "139795fb18b24c1b75a484c62775ec8d71b27147",
+  "manifestSha256": "da330bbc8ff48ae9d254d7299d5bd0841a55e64cc74be7f6bd5b0106ea00f1df",
+  "sourceManifestSha256": "85626d147ee5c9d5fc842f1fb3438123d0d5d40599c19dc330a8bc6761d631cb",
+  "sourceFilesVerified": 359,
+  "artifactsVerified": 40,
+  "accountResourcesPresent": [
+    "native/account/js/pending_sends.js",
+    "native/account/js/pairing_host.js"
+  ],
+  "serviceFormat": "ELF64 x86_64",
+  "serviceHashes": {
+    "libdmash_credential_service_x86_64.so": "4d730d10a9a1bbc89c73218a73edf3ae01223080ec10a21c37f11960a60a1706",
+    "libdmash_node_service_x86_64.so": "320ae359ab52e165a4b5050b2d0711efa4cc72a863a03f8ab02e0702ba8f67d8"
+  },
+  "authorBuildExitCode": 0,
+  "authorDeploymentExitCode": 0,
+  "minSdk": 28,
+  "limits": [
+    "No APK from this build",
+    "No service startup/UI/remote chat acceptance",
+    "Qt loader failure in earlier legacy APK remains unresolved; QtServiceBase change is compile compatibility only"
+  ]
+}

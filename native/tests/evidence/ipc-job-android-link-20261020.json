@@ -1,0 +1,46 @@
+{
+  "kind": "C02_ANDROID_COMMON_ACTOR_IPC_JOB_LINK_ONLY_NOT_RUNTIME",
+  "source_commit": "dd977fd",
+  "date": "2026-10-20",
+  "library_sha256": "574c8ecc6e50a83fa093b195936620be6d5d136f5e86ec2677bc20a6aa91698e",
+  "machine": "AArch64",
+  "load_segments": [
+    "LOAD           0x000000 0x0000000000000000 0x0000000000000000 0x1f4610 0x1f4610 R E 0x4000",
+    "LOAD           0x1f4610 0x00000000001f8610 0x00000000001f8610 0x00aa90 0x00b9f0 RW  0x4000",
+    "LOAD           0x1ff0a0 0x00000000002070a0 0x00000000002070a0 0x000218 0x000b18 RW  0x4000"
+  ],
+  "needed": [
+    "libQt6WebSockets_arm64-v8a.so",
+    "libQt6Network_arm64-v8a.so",
+    "libQt6Sql_arm64-v8a.so",
+    "libQt6Core_arm64-v8a.so",
+    "liblog.so",
+    "libcrypto_3.so",
+    "libm.so",
+    "libc++_shared.so",
+    "libdl.so",
+    "libc.so"
+  ],
+  "limits": [
+    "Actual compile/link only",
+    "No JNI invocation, Qt service/APK start or on-device delivery",
+    "Library source snapshot dd977fd; Linux liveness corrections are a later slice"
+  ],
+  "later_liveness_correction": {
+    "source_sha256": {
+      "native/src/job_ledger.cpp": "7a48109453bac2d50d30583224bfdafd339a8c8d8d64dc5dec43673b1345773d",
+      "native/src/job_ledger.h": "4345d3951fbfafc9f4394dafacd0a828650ca98409b7aa6d1841d73e2ec04cdb",
+      "native/src/js_actor.cpp": "89e13b085477e97361394e4b8a342385d7311e5b8d08e3b614981cb160a1ef44",
+      "native/src/local_ipc.cpp": "aeaaf400857bf2b70a2095d3e36298a596f020665159b41f0d74b46793172456",
+      "native/src/local_ipc.h": "c939ae90919a7b45ee75325f8d00fd15fdc0fb1c9dfd627bcd16217a8fc95a45",
+      "native/js/job_runtime.js": "e5d7ad2ecdad5cf738a1916dc4526b135d465971994ced26f64327c2c642bd84"
+    },
+    "library_sha256": "3b481a65a23ef09dd348e4c73a357388763ef2816586ca5cf924f5ffeaff785f",
+    "load_segments": [
+      "LOAD           0x000000 0x0000000000000000 0x0000000000000000 0x1f4d60 0x1f4d60 R E 0x4000",
+      "LOAD           0x1f4d60 0x00000000001f8d60 0x00000000001f8d60 0x00aaa0 0x00b2a0 RW  0x4000",
+      "LOAD           0x1ff800 0x0000000000207800 0x0000000000207800 0x000218 0x000b18 RW  0x4000"
+    ],
+    "status": "AArch64 compile+link PASS; no JNI invocation/service/runtime"
+  }
+}

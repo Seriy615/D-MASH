@@ -1,0 +1,38 @@
+{
+  "kind": "ROOT_INDEPENDENT_NATIVE_DESKTOP_ACCOUNT_UI",
+  "source": "27a28e7",
+  "verification": {
+    "sourceFiles": 82,
+    "artifacts": 7,
+    "mismatches": []
+  },
+  "uiTestSha256": "846c3917fb32c9ec05d47168d57ac2ff734a26ae03f767fbb3aaf2d4c67615ac",
+  "platform": "Linux Qt6.12 Widgets offscreen actual QTest clicks",
+  "result": {
+    "passed": 6,
+    "failed": 0,
+    "skipped": 1,
+    "elapsedMs": 14800,
+    "owningProfileSourceUnchanged": true,
+    "owningProfileSha256": "7f35126664d3f4828b9ed5e93e55eb27da70e5d5dc7f38cfd9af7448609ce9b6",
+    "flows": [
+      "file chooser cancel/import",
+      "existing Root PIN unlock",
+      "Account selection/login cancel",
+      "wrong password rejection",
+      "busy login cancellation",
+      "correct login",
+      "existing Saved history displayed",
+      "actual compose/send retained after signout/window reopen",
+      "disconnected controls and About close",
+      "missing app-local key recovery refusal preserves DB"
+    ]
+  },
+  "limits": [
+    "liveService test skipped without service fixture; previous independent Node control test is separate",
+    "Account and Broker currently run inside UI process; UI process death daemon integration remains open",
+    "No remote conversation, contacts, fresh setup or Android/Windows runtime acceptance",
+    "N4 recovery integrated later as a8f8dbf; this binary tests pre-N4 Account code",
+    "Raw retained profile/credentials/test log private outside Git; original source unchanged"
+  ]
+}

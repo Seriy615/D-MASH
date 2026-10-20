@@ -1,0 +1,27 @@
+'use strict';
+const assert=require('node:assert/strict'),{IDBFactory}=require('fake-indexeddb');
+const {DeviceRoot,IndexedDbDeviceRootStore}=require('../js/device_root.js');
+const {LocalCredentialService}=require('../js/local_credentials.js');
+global.nacl=require('../js/vendor/nacl-fast.min.js');
+global.argon2={ArgonType:{Argon2id:2},hash:async p=>({hash:new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('TEST|'+p.type+'|'+p.pass+'|'+p.salt)))})};
+Object.defineProperty(global,'isSecureContext',{value:true,configurable:true});
+const lock={request:async(_n,_o,run)=>run()},kdf={derive:async p=>(await argon2.hash(p)).hash};
+const root=new Uint8Array(32).fill(7),prf=new Uint8Array(32).fill(9),credentialId=new Uint8Array([1,2,3]);
+let assertionGate=null,requests=0;
+const assertion=()=>({rawId:credentialId.slice().buffer,getClientExtensionResults:()=>({prf:{results:{first:prf.slice().buffer}}})});
+Object.defineProperty(global,'navigator',{value:{credentials:{create:async()=>{},get:options=>{requests++;assert.equal(options.publicKey.userVerification,'required');return assertionGate||Promise.resolve(assertion());}}},configurable:true});
+const b64=bytes=>Buffer.from(bytes).toString('base64');
+(async()=>{
+ const store=new IndexedDbDeviceRootStore(new IDBFactory());DeviceRoot.setStoreForTests(store);
+ const salt=new Uint8Array(16).fill(3),wrap=await DeviceRoot._encryptRoot(root,'482619',salt),iv=new Uint8Array(12).fill(4),key=await crypto.subtle.importKey('raw',prf,'AES-GCM',false,['encrypt']);
+ const encrypted=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:new TextEncoder().encode('dmash/device-root-webauthn-prf-wrap/v1')},key,root);
+ const record={id:'root',version:1,materials:{saved:{ciphertext:'retained'}},wrapSalt:b64(salt),...wrap,biometricWrap:{wrap:'webauthn-prf-aes-256-gcm-v1',credentialId:b64(credentialId),prfSalt:b64(new Uint8Array(32).fill(5)),iv:b64(iv),wrappedRoot:b64(new Uint8Array(encrypted))}};await store.put(record);
+ const storage={getItem:()=>null,removeItem(){}},service=new LocalCredentialService({root:DeviceRoot,kdf,lock,storage});
+ const ordinary=await DeviceRoot.prepareUnlock('482619');await assert.rejects(service.repairFromBiometric(ordinary,'594827','730158'),e=>e.code==='FRESH_OS_AUTH_REQUIRED');assert.deepEqual(await store.get(),record);
+ const corrupt={...record,iv:'broken-master-iv'};await store.compareAndSwap(record,{iv:corrupt.iv,credentialRevision:1});
+ const cached=await store.get();const promise=DeviceRoot.prepareWebAuthnUnlock({record:cached});assert.equal(requests,1,'OS get starts synchronously before any IDB await');const proof=await promise;assert.equal(DeviceRoot.state,null,'fresh proof must not publish root or start Node');
+ await service.repairFromBiometric(proof,'594827','730158');const recovered=await DeviceRoot.prepareUnlock('594827');assert.equal(recovered.identity.deviceId,(await DeviceRoot.deviceIdentity(root)).deviceId);recovered.dispose();assert.deepEqual((await store.get()).materials,record.materials);assert.deepEqual((await store.get()).biometricWrap,record.biometricWrap);
+ const currentRecord=await store.get(),revokedProof=await DeviceRoot.prepareWebAuthnUnlock({record:currentRecord});const withoutBio={...currentRecord};delete withoutBio.biometricWrap;await store.put(withoutBio,{expected:currentRecord});await assert.rejects(service.repairFromBiometric(revokedProof,'683916','845269'),e=>e.code==='CREDENTIAL_CONFLICT');await store.put(currentRecord,{expected:withoutBio});
+ let release;assertionGate=new Promise(r=>release=r);const pending=DeviceRoot.prepareWebAuthnUnlock({record:await store.get()});DeviceRoot.lock();release(assertion());await assert.rejects(pending,e=>e.code==='DEVICE_LOCKED');assert.equal(DeviceRoot.state,null);
+ service.dispose();store.close();console.log('PASS explicit fresh OS-auth repair proves existing root, preserves identity/materials, rejects master-only proof, starts trusted request synchronously and cancels late assertion');
+})().catch(e=>{console.error(e);process.exitCode=1;});

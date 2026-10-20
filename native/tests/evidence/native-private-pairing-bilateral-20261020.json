@@ -1,0 +1,49 @@
+{
+  "scope": "AUTHOR_COMPONENT_PASS actual directed private pairing with concurrent normal API activation and bilateral E2EE chat",
+  "candidate": "private-pairing-candidate03",
+  "manifestSha256": "2b03d79bec60764be84f2b4e90895d0810b0c69ebf77d9d09a3911e0556e4805",
+  "runtimeHandle": 27744,
+  "exitCode": 0,
+  "production": "same exact accepted candidate02b host/Node bytes, no new product code",
+  "hostSha256": "da90ca9b4c8e0b598e69b280d3264af0f12bb5fd6d1ceba291e6218ff8654381",
+  "nodeSha256": "9e31b8c9ac0ea3d5f2119e12829e476d72253a7f9dbfbb30933a4a67104b0598",
+  "checks": {
+    "freshRoots": 2,
+    "freshAccounts": 2,
+    "preinjectedContacts": 0,
+    "preinjectedRoutes": 0,
+    "concurrentNormalApiActivation": true,
+    "activationElapsedMs": [
+      36636,
+      57440
+    ],
+    "immediateSendStates": [
+      "HANDSHAKE_PENDING",
+      "HANDSHAKE_PENDING"
+    ],
+    "sameOperationRetriedAfterHandshake": true,
+    "actualSignedRequestAcceptConfirm": true,
+    "actualNativeKyber": true,
+    "bothContactsPublished": true,
+    "backendForwarded": 33,
+    "exactBilateralHistoryRowsEach": 2,
+    "bothAccountReopenHistory": 2,
+    "plaintextDigests": [
+      "94c88ad328e74e0f72f75af1d47eebab65a246dddc72dba367b4bbc7a396d75c",
+      "fad4adaff344a6e1e84b47c3e08d173200746ec965a3d16961f59575a2c43e56"
+    ]
+  },
+  "verification": {
+    "pinFiles": 1177,
+    "runtimeLibraryHashes": 30,
+    "changedProductionFilesEqualCommittedSource": 12
+  },
+  "limits": [
+    "Linux component API; UI/browser pairing NOT_RUN",
+    "configured WS loopback Python transit default22; NAT/self-organization NOT_RUN",
+    "handshake-pending immediate send is not accepted application durability; caller retries after establishment",
+    "ACK-free mesh baseline unchanged; no physical resend/custody ACK patch",
+    "original candidate01 parser failure and candidate02 harness failures retained separately",
+    "no production/PWA deployment"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "kind": "Desktop fresh profile and optional Account actual Qt clicks",
+  "sourceRoot": "/home/jcode/.cache/dmash-native-20261020/checkpoints/desktop-fresh-source-v2",
+  "sourceManifest": "source-sha256.json",
+  "artifacts": {
+    "LastTest.log": "631d2c02f2299cf24825cd8ec05f3cde4763c6aef30344b92ce0ee8c27d1e877",
+    "dmash-credential-host": "335c6e9a37768c804526885c5883957b8a75771637581bd67e8da8783c694f4f",
+    "dmash_desktop_ui_test": "aaba9f9db6a4dd3497f222f6fa01f215b8675ad56fefecd1b5272293411fc5fa",
+    "source-sha256.json": "31ba1b87db7513b90a61dd13da2cbb6d6b8b3e8b1ff658450687c30199ada491",
+    "dmash-desktop": "7020b04b2b2f3f3dad3882abed03059125f0a3266657ad7e8f242098b8fa6d20",
+    "desktop-fresh-build-v2.log": "d04d389fd07695bd3c5e05a487fbab3edcd2134ef44543cd26789eb4777a4f2d",
+    "desktop-fresh.png": "59577e422706d7093e06171b613d29dffa24651e8296d0f03b6709446818db6d",
+    "desktop-fresh-only.log": "608bc9368ab722a5d5b258d9fbe385743041aa22ca4583b4445b335e813d5b77"
+  },
+  "checks": {
+    "build": "PASS71targets",
+    "desktop-controls": "PASS7passed0failed1skipped10562ms",
+    "freshProfile": "PASS actual Createprofile Cancel/empty/mismatch/valid, optional Account Cancel, zeroAccounts UI, CreateAccount/signin/Saved/send/windowclose/reopen/signout"
+  },
+  "limits": [
+    "Offscreen Qt Widgets actual controls; no physical display acceptance",
+    "Fresh Node option not enabled; no Nodeenable/mesh/remotechat claim",
+    "Windows and Android runtime not covered"
+  ]
+}

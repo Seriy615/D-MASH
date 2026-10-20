@@ -1,0 +1,81 @@
+{
+  "source": "f3a3dee0a50d79601c905b366d2a61bf816b08b6",
+  "kind": "ROOT_INDEPENDENT_NATIVE_INTEROP",
+  "binary_sha256": "a12fb9eeb4c139e379988e3081876654e9c0c9e19695923a1e29cd6e7480d8fb",
+  "scope": "Same retained synthetic profile and existing default22 Python peer; no reset; Account absent",
+  "runs": [
+    {
+      "run": 1,
+      "events": [
+        {
+          "accountsLoaded": false,
+          "event": "ready",
+          "role": "NODE",
+          "node_id_sha256": "dbe0746539b32c7796b2a5f8acb4e7e1ff65c1a9a926ea221a2a1e512388ec0a"
+        },
+        {
+          "event": "connected",
+          "role": "NODE",
+          "version": 4
+        },
+        {
+          "authenticated": true,
+          "event": "service-unavailable"
+        }
+      ],
+      "close_signal": "SIGTERM",
+      "second_owner": {
+        "exit_code": 1,
+        "refused": true
+      },
+      "exit_code": 0,
+      "authenticated_request_pass": true,
+      "seconds": 55.863,
+      "private_log_sha256": "8a8d5bb65f53f39276aef8b4b7957049f137b46b0bcbdd947391eb8d6badee44"
+    },
+    {
+      "run": 2,
+      "events": [
+        {
+          "accountsLoaded": false,
+          "event": "ready",
+          "role": "NODE",
+          "node_id_sha256": "dbe0746539b32c7796b2a5f8acb4e7e1ff65c1a9a926ea221a2a1e512388ec0a"
+        },
+        {
+          "event": "connected",
+          "role": "NODE",
+          "version": 4
+        },
+        {
+          "authenticated": true,
+          "event": "service-unavailable"
+        }
+      ],
+      "close_signal": "SIGINT",
+      "second_owner": {
+        "exit_code": 1,
+        "refused": true
+      },
+      "exit_code": 0,
+      "authenticated_request_pass": true,
+      "seconds": 15.708,
+      "private_log_sha256": "8a8d5bb65f53f39276aef8b4b7957049f137b46b0bcbdd947391eb8d6badee44"
+    }
+  ],
+  "limits": [
+    "Loopback WS plus actual encrypted pinned NODE v4; actual WSS interop and platform clients remain separate.",
+    "SDK post-close callback/method defect separately identified by reviewer; correction pending.",
+    "Earlier direct PTY Ctrl-C observation returned1; this driver records actual subprocess signal return codes separately."
+  ],
+  "status": "PASS scoped",
+  "independent_ctest": {
+    "passed": 4,
+    "failed": 0
+  },
+  "source_consistency": {
+    "actor_inputs": 14,
+    "protocol_modules": 17,
+    "mismatches": 0
+  }
+}

@@ -3,9 +3,9 @@
  const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join(''),decode=s=>{if(typeof s!=='string'||!/^[0-9a-f]{64}$/.test(s))throw Error('Bootstrap key encoding');return Uint8Array.from(s.match(/../g),x=>parseInt(x,16));};
  class BootstrapRuntime{
   #roots=new Map();#routes=new Map();
-  static async open(storageKey,nodeId,{runtime,ownership,local,isCurrent}){
+  static async open(storageKey,nodeId,{runtime,ownership,local,isCurrent,store=undefined}){
    const base=await crypto.subtle.importKey('raw',storageKey,{name:'HMAC',hash:'SHA-256'},false,['sign']),key=new Uint8Array(await crypto.subtle.sign('HMAC',base,new TextEncoder().encode('D-MASH|NODE-BOOTSTRAP|V4|STORAGE')));
-   let inbox;try{inbox=await g.DmashNodeInboxV4.open(key,nodeId,{databaseName:'dmash_node_bootstrap_v4',maxRecords:96,maxBytes:1024*1024,isCurrent});}finally{key.fill(0);}
+   let inbox;try{inbox=await g.DmashNodeInboxV4.open(key,nodeId,{databaseName:'dmash_node_bootstrap_v4',maxRecords:96,maxBytes:1024*1024,isCurrent,store});}finally{key.fill(0);}
    const result=new BootstrapRuntime();Object.assign(result,{runtime,ownership,local,inbox,isCurrent,closed:false});
    const pairing=g.DmashAccountPairingV2.createCodec({nacl,discovery:g.DmashRouteDiscoveryV4}),binding=g.DmashAccountRouteBindingV2.createBindingCodec({nacl,discovery:g.DmashRouteDiscoveryV4,pairing});
    result.codec=g.DmashNodeBootstrapControlV4.createCodec({pairing,binding});

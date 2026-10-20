@@ -1,0 +1,45 @@
+{
+  "kind": "C01_C02_INBOX_LINUX_INTEGRATION_NOT_RELEASE",
+  "date": "2026-10-20",
+  "parent_actor": "f3a3dee",
+  "inbox_port": "d81d356",
+  "sources": {
+    "native/CMakeLists.txt": "2fa72c4388416c0a13f08bc96fd9cb2cc7076bfbebc661abc25af5743eea0343",
+    "native/src/js_actor.cpp": "369d399c6706ad4f0e3c7934bad333821369951b0c607072e8418c9f5c79488a",
+    "native/src/main.cpp": "0f3ada28fa684c94f7ee63f7aa9566c475863a7591ab4c4f17388a53e240e44b",
+    "native/js/runtime_entry.js": "6ac9212634d08ad29685037a2a55e6f08ca22894ae37b731501faeeba1dabf25",
+    "native/tests/actor_lifecycle_test.cpp": "e76722acf90ce013a9cfd8e42295a3e0eddd73895bb9a390c7a91a1c03bc2217",
+    "native/tests/cli_boundary_test.py": "8289ca5a14d6b88270cf50eb67e06c7c6ddca325f5a6ee5f81335bb4dc52b348",
+    "native/tests/endpoint_scheduler_test.js": "42836514010977eb53d734ab46dd5db1f4a6a2b1532117d99741bb64cf76b8f3"
+  },
+  "checks": {
+    "native_ctest": "6/6PASS including lifecycle+Inbox faulttests",
+    "lifecycle": "duplicateinitialize/postcloseallfourentrypoints/repeatedclose/queuedreportgeneration PASS",
+    "CLI": "fstatdescriptor/nofollow/FIFO/nonprivatepermissions/65537bytecap/invalidJSON all reject beforeprofilecreation",
+    "existing_JS_scheduler": "PASS after Inbox init integration",
+    "actual_default22_python_exchange": "PASS on newown syntheticfixture",
+    "same_profile_reopen_exchange": "PASS",
+    "SQL_Inbox_owner": "encryptedowner revision1 IV12 ciphertext121bytes after reopen",
+    "Account_loaded": false
+  },
+  "transcripts": {
+    "actor-inbox-interop.log": [
+      "{\"accountsLoaded\":false,\"event\":\"ready\",\"nodeId\":\"a2937e3e63b9dc8be46b8e2a53f64680158a4978e1d8d51e3402dcdd7c7acbfa\",\"role\":\"NODE\"}",
+      "{\"event\":\"connected\",\"index\":0,\"role\":\"NODE\",\"version\":4}",
+      "{\"authenticated\":true,\"event\":\"service-unavailable\",\"index\":0}"
+    ],
+    "actor-inbox-reopen.log": [
+      "{\"accountsLoaded\":false,\"event\":\"ready\",\"nodeId\":\"a2937e3e63b9dc8be46b8e2a53f64680158a4978e1d8d51e3402dcdd7c7acbfa\",\"role\":\"NODE\"}",
+      "{\"event\":\"connected\",\"index\":0,\"role\":\"NODE\",\"version\":4}",
+      "{\"authenticated\":true,\"event\":\"service-unavailable\",\"index\":0}"
+    ]
+  },
+  "limits": [
+    "128MiB limit is perJSengine, not processRAM; Qt/native/upto2computeengines addmemory",
+    "No Account/legacykey restoration; full route-to-Inbox/IPC delivery acceptance open",
+    "Passwordprotectedpeers failclosed unsupported",
+    "Androidcommonactor crosscompile pending separateevidence; no Androidruntime",
+    "WindowsACL/runtime notimplemented/NOTRUN",
+    "No physicalpowerloss acceptance"
+  ]
+}

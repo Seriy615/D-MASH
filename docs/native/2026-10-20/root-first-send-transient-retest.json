@@ -1,0 +1,22 @@
+{
+  "kind": "ROOT first-send transient handoff and retained Account regression",
+  "status": "PASS_FOCUSED_AND_RETAINED",
+  "sourceCommit": "b91617f",
+  "manifestSha256": "fbf35d8123b217f8dc961a9f3d9785c9599330ff1f54cbdbdbc06b5faba93f5b",
+  "verifiedFiles": 1187,
+  "verifiedRuntimeEntries": 30,
+  "hostSha256": "5606c6301e9220dbcdaf1ac4af02e481bda28ffdec1a95be8e8f0e9d7ca48bdc",
+  "checks": [
+    "Real crypto/IDB pending queue unavailable-handoff preserves accepted pending; reopen/autoflush sameop",
+    "Conflicting operation/binding/corruption errors still reject",
+    "Actual native Account service original Argon2d identity + original Saved/write/idempotence/logout/cancel/restart"
+  ],
+  "retainedTest": {
+    "handle": 62090,
+    "exitCode": 0
+  },
+  "limits": [
+    "Followup local handoff/retained test; no repeated mesh claim",
+    "Earlier first-send actual mesh proof is separate immutable01pin"
+  ]
+}

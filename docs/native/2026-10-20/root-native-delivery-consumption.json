@@ -1,0 +1,39 @@
+{
+  "kind": "ROOT_INDEPENDENT_EXECUTABLE_INTEGRATION",
+  "source": "b62304dcbd19306be4c90944ec2b4e8b25408c0f",
+  "binarySha256": "06c8485b7f73f3295f53a89a66b83e4f027b3ba98b3bf11f4ee994b2d1d7119a",
+  "sourceConsistency": {
+    "source": "b62304d",
+    "sourceFiles": 320,
+    "binaryMatched": true,
+    "mismatches": []
+  },
+  "processExit": 0,
+  "result": "PASS scoped",
+  "admissionDifficulty": 22,
+  "wireRole": "NODE",
+  "socketDeadlineSeconds": 5,
+  "peerStartupDelaySeconds": 0,
+  "backendForwarded": 4,
+  "payloadDigest": "1048b6647ed1d534ffb8d07ab80a83429cc377af7370e4ac554384aac6b6faad",
+  "checks": [
+    "Durable acceptance before submitter UI SIGKILL",
+    "Sender SIGKILL before send; same profile/job survives",
+    "Actual existing discovery/Python transit/batching",
+    "Recipient durable Inbox exact payload",
+    "Identical submit dedupe and changed bytes refusal",
+    "Sender post-send reopen preserves sent job",
+    "Recipient SIGKILL/reopen same Inbox record handle",
+    "Atomic app-token consumption",
+    "Same-token idempotence and changed-token conflict",
+    "Second recipient SIGKILL/reopen preserves consumption and empty Inbox"
+  ],
+  "earlierFailure": "root-bd1290c-checkpoint.json remains FAIL; current run is a separate candidate",
+  "limits": [
+    "Synthetic opaque Account payload; ordinary native Account E2EE/chat integration remains unaccepted.",
+    "Application DB must commit before consumption and dedupe redelivery.",
+    "Existing ACK-free recipient crash window unchanged.",
+    "Linux executable integration; browser/UI/Windows/Android runtime separate.",
+    "No full NAT/direct/self-organization/file acceptance."
+  ]
+}

@@ -268,8 +268,8 @@
                     <div class="dmash-route-state">${route.current ? "CURRENT" : "PREVIOUS"} · ${route.active ? "ACTIVE" : "INACTIVE"}</div>
                     <div class="dmash-route-id">${esc(route.routeId)}</div>
                     <div class="dmash-route-actions">
-                        <button class="gate-btn" onclick="Core.copyPublicContactLink('${route.routeId}')">CONTACT LINK</button>
-                        <button class="gate-btn secondary" onclick="ui.togglePublicRoute('${route.routeId}')">${route.active ? "DEACTIVATE" : "ACTIVATE"}</button>
+                        <button class="gate-btn" ${global.Core.dataActionAttributes("copyPublicContactLink", [route.routeId])}>CONTACT LINK</button>
+                        <button class="gate-btn secondary" ${global.Core.dataActionAttributes("togglePublicRoute", [route.routeId])}>${route.active ? "DEACTIVATE" : "ACTIVATE"}</button>
                         ${route.current ? '<button class="gate-btn secondary" onclick="ui.reissuePublicRoute()">REISSUE</button>' : ""}
                     </div>
                 </div>`).join("") || '<div class="dmash-settings-note">Public Routes ещё не созданы.</div>';
@@ -281,7 +281,7 @@
                 <button class="dmash-settings-action" onclick="ui.createPublicRoute()">СОЗДАТЬ PUBLIC ROUTE</button>
                 <button class="gate-btn dmash-settings-back" onclick="${global.Core?.activeIdentity ? 'Core.showMyQR()' : 'ui.renderGlobalSettings()'}">НАЗАД</button>`;
             if (global.Core?.activeIdentity) global.Core.openModal("PUBLIC ROUTES", html);
-            else gateBox.innerHTML = html;
+            else { gateBox.innerHTML = html; global.Core.bindDataActions(gateBox); }
         };
 
         ui.createPublicRoute = async function createPublicRouteAcceptance() {
@@ -339,21 +339,20 @@
             try { if (!manager.originNodes?.length) await manager.loadOriginList("nodes.json"); } catch (_) {}
 
             const endpoints = (manager.endpoints || []).filter(endpoint => !manager.isExcludedNode?.(endpoint.url));
-            const rows = endpoints.map(endpoint => {
+            const rows = endpoints.map((endpoint, index) => {
                 const info = nodeState(manager, endpoint);
                 const primary = manager.active?.url === endpoint.url;
                 const connected = info.state === "connected";
-                const encoded = encodeURIComponent(endpoint.url);
                 return `
                     <div class="dmash-node-card">
                         <div class="dmash-node-head"><b>${esc(endpoint.label || new URL(endpoint.url).host)}</b><span class="dmash-node-state ${connected ? "ok" : ""}">${connected ? "● CONNECTED" : "○ " + esc(info.state.toUpperCase())}</span></div>
                         <div class="dmash-node-url">${esc(endpoint.url)}</div>
                         ${info.nodeId ? `<div class="dmash-node-meta">NodeID ${esc(info.nodeId)}</div>` : '<div class="dmash-node-meta">NodeID появится после DEVICE_AUTH</div>'}
-                        <div class="dmash-node-meta">${info.latency != null ? `${info.latency} ms · ` : ""}${info.capabilities.length ? esc(info.capabilities.join(" · ")) : "capabilities пока не получены"}</div>
+                        <div class="dmash-node-meta">${info.latency != null ? `${esc(info.latency)} ms · ` : ""}${info.capabilities.length ? esc(info.capabilities.join(" · ")) : "capabilities пока не получены"}</div>
                         <div class="dmash-node-actions">
-                            <button class="gate-btn secondary" onclick="ui.toggleGlobalNodeConnection(decodeURIComponent('${encoded}'))">${connected ? "ОТКЛЮЧИТЬ" : "ПОДКЛЮЧИТЬ"}</button>
-                            <button class="gate-btn secondary" onclick="ui.selectGlobalNode(decodeURIComponent('${encoded}'))">${primary ? "ОСНОВНОЙ" : "СДЕЛАТЬ ОСНОВНЫМ"}</button>
-                            <button class="gate-btn danger" onclick="ui.removeGlobalNode(decodeURIComponent('${encoded}'))">УДАЛИТЬ</button>
+                            <button class="gate-btn secondary" data-node-action="connect" data-node-index="${index}">${connected ? "ОТКЛЮЧИТЬ" : "ПОДКЛЮЧИТЬ"}</button>
+                            <button class="gate-btn secondary" data-node-action="select" data-node-index="${index}">${primary ? "ОСНОВНОЙ" : "СДЕЛАТЬ ОСНОВНЫМ"}</button>
+                            <button class="gate-btn danger" data-node-action="remove" data-node-index="${index}">УДАЛИТЬ</button>
                         </div>
                     </div>`;
             }).join("") || '<div class="dmash-settings-note">На устройстве пока нет добавленных Node.</div>';
@@ -367,6 +366,14 @@
                     <button class="dmash-settings-action" onclick="ui.addGlobalNode()">ДОБАВИТЬ ПО WSS</button>
                 </div>
                 <button class="gate-btn dmash-settings-back" onclick="ui.renderGlobalSettings()">НАЗАД</button>`;
+            // Endpoint URLs are data, never JavaScript source. In particular,
+            // encodeURIComponent does not escape apostrophes in URL paths.
+            const handlers = { connect: "toggleGlobalNodeConnection", select: "selectGlobalNode", remove: "removeGlobalNode" };
+            for (const button of gateBox.querySelectorAll("[data-node-action]")) {
+                const endpoint = endpoints[Number(button.dataset.nodeIndex)];
+                const method = handlers[button.dataset.nodeAction];
+                if (endpoint && method) button.addEventListener("click", () => this[method](endpoint.url));
+            }
         };
 
         ui.requestGlobalNode = async function requestGlobalNode() {
@@ -421,7 +428,7 @@
             if (!gateBox) return false;
             gateBox.innerHTML = `
                 <div class="dmash-settings-title">БИОМЕТРИЯ УСТРОЙСТВА</div>
-                <div class="dmash-settings-note">Привязка относится к DeviceRoot, а не к Account. После старта выберите любую кнопку калькулятора и удерживайте её 3 секунды. WebAuthn откроется на отпускании кнопки.</div>
+                <div class="dmash-settings-note">Привязка относится к DeviceRoot, а не к Account. После старта выберите цифру или + − × ÷ % , и удерживайте ${this.biometricHoldMs / 1000} сек. WebAuthn откроется на отпускании кнопки.</div>
                 <button class="dmash-settings-action" onclick="ui.enterBiometricTriggerSetup()">НАЧАТЬ ПРИВЯЗКУ</button>
                 <button class="gate-btn dmash-settings-back" onclick="ui.renderGlobalSettings()">НАЗАД</button>`;
             return true;
@@ -440,7 +447,7 @@
             this.curr = "0";
             this.op = null;
             this.leftOperand = null;
-            this.hist = "УДЕРЖИВАЙТЕ ЛЮБУЮ КНОПКУ 3 СЕК.";
+            this.hist = `УДЕРЖИВАЙТЕ ЦИФРУ ИЛИ + − × ÷ % , ${this.biometricHoldMs / 1000} СЕК.`;
             this.update?.();
             return true;
         };
@@ -457,6 +464,11 @@
         return !!core[PATCH] && !!ui[PATCH];
     }
 
+    if (global.DmashRuntimeReadiness) {
+        global.DmashRuntimeReadiness.register("acceptance-ui", 40, () => { if (global.ui) patchUi(global.ui); }, () => !!global.ui?.[PATCH], ["ui-bridge"]);
+        global.DmashRuntimeReadiness.register("acceptance-core", 40, install, () => !!global.Core?.[PATCH], ["public-contact"]);
+        return;
+    }
     let attempts = 0;
     const timer = setInterval(() => {
         attempts += 1;

@@ -1,0 +1,92 @@
+{
+  "kind": "ROOT_RETAINED_BROWSER_EXPORT_INVENTORY",
+  "source": "004fa12",
+  "rawSnapshotSha256": "a16c7e8035f276af91c91b2fd926866223a59c35595d0f73363a327de79d7c9b",
+  "packageSha256": "7f35126664d3f4828b9ed5e93e55eb27da70e5d5dc7f38cfd9af7448609ce9b6",
+  "databaseInventory": [
+    {
+      "name": "dm_gamma_vault",
+      "stores": [
+        {
+          "name": "blind_file_owners",
+          "keyPath": "alias",
+          "records": 0
+        },
+        {
+          "name": "blind_files",
+          "keyPath": "alias",
+          "records": 0
+        },
+        {
+          "name": "blind_messages",
+          "keyPath": "alias",
+          "records": 1
+        },
+        {
+          "name": "blind_outbox",
+          "keyPath": "alias",
+          "records": 0
+        },
+        {
+          "name": "blind_peers",
+          "keyPath": "alias",
+          "records": 1
+        },
+        {
+          "name": "blind_secrets",
+          "keyPath": "alias",
+          "records": 1
+        },
+        {
+          "name": "pairing_material",
+          "keyPath": "alias",
+          "records": 0
+        }
+      ]
+    },
+    {
+      "name": "dm_registry_secure_v1",
+      "stores": [
+        {
+          "name": "accounts",
+          "keyPath": "alias",
+          "records": 1
+        },
+        {
+          "name": "meta",
+          "keyPath": "key",
+          "records": 1
+        }
+      ]
+    },
+    {
+      "name": "dmash_device_root_v1",
+      "stores": [
+        {
+          "name": "device_root",
+          "keyPath": "id",
+          "records": 1
+        }
+      ]
+    },
+    {
+      "name": "dmash_local_credentials_control_v1",
+      "stores": [
+        {
+          "name": "operations",
+          "keyPath": "id",
+          "records": 0
+        }
+      ]
+    }
+  ],
+  "rootRecordVersion": 1,
+  "credentialRevision": 4,
+  "secretValuesPublished": false,
+  "nativeAcceptance": "NOT RUN: actual profile uses dm_registry_secure_v1; authenticated broker registry reader integration pending",
+  "limits": [
+    "Synthetic owning browser context, same profile used for previous retained migration/UI checks",
+    "Private full export/package/passwords stay outside Git0600",
+    "Complete package transformation preserves all4databases/11stores/6records and explicit keys; no native import PASS implied"
+  ]
+}

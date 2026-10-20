@@ -1,0 +1,135 @@
+{
+  "repository": "https://github.com/DrKLO/Telegram.git",
+  "commit": "0aae959806c57be8ad457980f2a5c6277ff18635",
+  "version": "13.0.3 (7183)",
+  "upstreamLicense": "GPL-2.0; Telegram source headers specify GPL-2.0-or-later; third-party licenses remain in pinned source",
+  "licenseSha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+  "forkSourceCheckpoint": "bae44a7079bbaf2437114fca65324868fdc4abe8",
+  "status": "APK_BUILD_PENDING",
+  "applicationId": "org.dmash.telegram.beta",
+  "submodules": {
+    "TMessagesProj/jni/td": "022d60202e446ad1287b9fb68e687c8a0760788b",
+    "TMessagesProj/jni/tgcalls": "03d7b8662512af7528f476c02094862c1a37177d",
+    "TMessagesProj/jni/third_party/absl": "54fac219c4ef0bc379dfffb0b8098725d77ac81b",
+    "TMessagesProj/jni/third_party/boost-regex": "4cbcd3078e6ae10d05124379623a1bf03fcb9350",
+    "TMessagesProj/jni/third_party/boringssl": "2b44a3701a4788e1ef866ddc7f143060a3d196c9",
+    "TMessagesProj/jni/third_party/dav1d": "54706fc6bc0cdecab7e9593974a4039cc038fca7",
+    "TMessagesProj/jni/third_party/ffmpeg": "45f1910444f34b02621f9f0426ea1a538a613c41",
+    "TMessagesProj/jni/third_party/libprisma": "31a5d6fbbef8136e4a2b3adaf7b95e2ccaa7436d",
+    "TMessagesProj/jni/third_party/libvpx": "1024874c5919305883187e2953de8fcb4c3d7fa6",
+    "TMessagesProj/jni/third_party/libyuv": "28ce69c2744a6aafdb58564e7b884aec3f66be5f",
+    "TMessagesProj/jni/third_party/openh264": "652bdb7719f30b52b08e506645a7322ff1b2cc6f",
+    "TMessagesProj/jni/third_party/wamr": "25bd7eb63e828e4bd242cc9b38d260b4b31c6605",
+    "TMessagesProj/jni/third_party/xiph/ogg": "be05b13e98b048f0b5a0f5fa8ce514d56db5f822",
+    "TMessagesProj/jni/third_party/xiph/opus": "22244de5a79bd1d6d623c32e72bf1954b56235be",
+    "TMessagesProj/jni/third_party/xiph/opusfile": "a55c164e9891a9326188b7d4d216ec9a88373739",
+    "TMessagesProj/jni/tlottie": "31f1b542f88e7b4be9a01e749920d857535fc715",
+    "TMessagesProj/jni/wallet-engine": "5c65e47cb8d68727c20d89382d0bc51292486b9a",
+    "TMessagesProj/lib/jlatexmath": "919e50b2f6f64b04b712cdb13d558ff9ecf9c8ed",
+    "TMessagesProj_Modules/media": "09b6c97c0d691c50cd4541e1573995d4066d6f5c"
+  },
+  "requiredSubmodules": [
+    "TMessagesProj/jni/td",
+    "TMessagesProj/jni/tgcalls",
+    "TMessagesProj/jni/third_party/absl",
+    "TMessagesProj/jni/third_party/boost-regex",
+    "TMessagesProj/jni/third_party/boringssl",
+    "TMessagesProj/jni/third_party/dav1d",
+    "TMessagesProj/jni/third_party/ffmpeg",
+    "TMessagesProj/jni/third_party/libprisma",
+    "TMessagesProj/jni/third_party/libvpx",
+    "TMessagesProj/jni/third_party/libyuv",
+    "TMessagesProj/jni/third_party/openh264",
+    "TMessagesProj/jni/third_party/wamr",
+    "TMessagesProj/jni/third_party/xiph/ogg",
+    "TMessagesProj/jni/third_party/xiph/opus",
+    "TMessagesProj/jni/third_party/xiph/opusfile",
+    "TMessagesProj/jni/tlottie",
+    "TMessagesProj/lib/jlatexmath",
+    "TMessagesProj_Modules/media"
+  ],
+  "patches": [
+    {
+      "path": "patches/0001-dmash-credential-ui.patch",
+      "sha256": "5d9a4a4b157330cc889f4ea67eb1fc3525fcf985ddaf0daab265821cba3447d2"
+    },
+    {
+      "path": "patches/0002-android-toolchain-service-base-and-send-state.patch",
+      "sha256": "61a9d01bf176ab6d524e1428ef70d1460fe5de0f9f135dd38a682ba6e9c6a23c"
+    },
+    {
+      "path": "patches/0003-retain-uncertain-sends-and-block-backend-entrypoints.patch",
+      "sha256": "bf292342673b6f8c5ccdcee1fe4a0e9c8da853b71fbb3975f1bb67cdb3f79380"
+    },
+    {
+      "path": "patches/0004-disable-upstream-firebase-and-proxy-setup.patch",
+      "sha256": "e8c7676bf376eb53a635ac09c82dc2a6690c94401cd19a6cae4ee25e52332cd3"
+    },
+    {
+      "path": "patches/0005-block-explicit-push-initializers-and-localize-proxy-feedback.patch",
+      "sha256": "52a0aa4c33a86a13cbdcc42b0e0748e5ed9ea7345377c573b08cff71e475ad7e"
+    },
+    {
+      "path": "patches/0006-build-original-ndk-cpu-features-with-portable-cmake.patch",
+      "sha256": "5cd842aed883820990679c1943f894b27e0be192e3a3b5abdb7b43b25ff6a045"
+    },
+    {
+      "path": "patches/0007-bind-ui-requests-to-explicit-account-session.patch",
+      "sha256": "66bc22ddb642ecf16ce6729b91283640ce10ba64eeb4c587568c80a60e91c517"
+    },
+    {
+      "path": "patches/0008-fence-local-account-generation-and-context-refusal.patch",
+      "sha256": "0c9b3770fcb866f846ad38c80572fe3f0d52ff46de51388376d012a4c2554618"
+    }
+  ],
+  "toolchain": {
+    "gradle": "8.13",
+    "androidGradlePlugin": "8.13.2",
+    "ndk": "27.2.12479018",
+    "sdk": 36,
+    "buildTools": "36.0.0",
+    "java": 21,
+    "minSdk": 28,
+    "cmake": "3.22.1",
+    "nasm": "2.16.01"
+  },
+  "boundaries": {
+    "ui": "Original LaunchActivity, DialogsActivity, ChatActivity, Cells and ActionBar",
+    "account": "Independent D-MASH credential service via framed local IPC; actual encrypted history authoritative",
+    "transport": "Independent NodeService; Telegram MTProto init/requests/socket disabled",
+    "projection": "Telegram SQLite wrapper memory-only; UserConfig save disabled; public IDs mapped with collision checks",
+    "coreLicense": "Independent D-MASH core declared MIT in repository README; not a blanket license for the GPL fork"
+  },
+  "patchedFiles": {
+    "TMessagesProj/build.gradle": "62481fa38b9a7743bb59731b59309e3e79dd1be4672222663de987c3fbd96212",
+    "TMessagesProj/jni/CMakeLists.txt": "ad772377f59d7e117681f1e294a886d95934cb341d341cbf4e12321f9cee6b12",
+    "TMessagesProj/jni/tgnet/ConnectionSocket.cpp": "8cfa99f89aeb5e2acbd6053230bb98b3f1b96070fbbd62b66a55e15c238c01e4",
+    "TMessagesProj/src/main/AndroidManifest.xml": "6a17c2743881215b094a21a4c8f351086e8e9b4c85ae5e0280e61f1e020cb29b",
+    "TMessagesProj/src/main/java/org/dmash/client/CredentialConnection.java": "09be48a8ea7f9d942602f73aa73747aeb01499bd855bb059ebaee504feb855fd",
+    "TMessagesProj/src/main/java/org/dmash/client/CredentialService.java": "966f715afd3fdc8fcc032f13b086218da9bc554a0e46d45aeef3e19ac23d021f",
+    "TMessagesProj/src/main/java/org/dmash/client/MainActivity.java": "3de4e67d9d6e0860d8f840987262d565da3b0ea00660e53b8cbdce765560c724",
+    "TMessagesProj/src/main/java/org/dmash/client/NodeService.java": "5ab7afcd4440b3e5a41e74342c598c771e8f037fbea0002c58bf44d1e537d57c",
+    "TMessagesProj/src/main/java/org/dmash/client/ServiceStatus.java": "8a9db74661b818623bdd2ddd2ff8995ba380a7383138ce041de911f82b5ac008",
+    "TMessagesProj/src/main/java/org/telegram/SQLite/SQLiteDatabase.java": "9fc686381acfb40fc90a1f3904d4d0e27c39c1cf1cdf0c750ef6bbc6ecca0126",
+    "TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java": "fc183c8a2f13e0582d87ce77c43196cfd12916b4885720eb8aae1d10820a9f88",
+    "TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java": "ac402841cf54a2b78a4071983473678af495e3baad0a82a23eb65d30c811e71e",
+    "TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java": "8e707f14a7054479b750f7f81ab15f4b178ee4ae9e1b73d38627d9fd99ce0afd",
+    "TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java": "8f9144ccf71920578208c5d86330251814ff070e552d475b8ed21f8173654618",
+    "TMessagesProj/src/main/java/org/telegram/messenger/PushListenerController.java": "b1ca9d8bed5d290e9e3ecc6eec8160b9abccf3f195b8dd59696703c7715f6723",
+    "TMessagesProj/src/main/java/org/telegram/messenger/SendMessagesHelper.java": "8b84b22d278818b6660b76a931981b622045a6424174f01885eda7805bbdc1c0",
+    "TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java": "5972874ddff10879554faa1f87ccdef915197ec182123b97e0555366a72c53ed",
+    "TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java": "36c07a7a3542686ac59ca933255658a49be7b9266b2c570083833fdeb1a8f269",
+    "TMessagesProj/src/main/java/org/telegram/messenger/dmash/MemoryPreferences.java": "2a8e0da96835b589f81a182babcaefb5e23e9910c207a7dd0c0cfa0bd7f188cc",
+    "TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java": "dbee75819153da53308afbbd2003c87afde5e883f6294f2fff61d0a4d1983c39",
+    "TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java": "65a08a740c6bb15a849008bd090a2eee3bd5618cd8f2e19abc4fc44d40b38581",
+    "TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java": "19c6657c10988609a9e0d6a91a4390821147bce4e3b7ae5eabf5f5f54598fe91",
+    "TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java": "e56d6795d051c47a27665223deff45629b51250a5e4515cfff2bdaa8b70bacf1",
+    "TMessagesProj/src/main/java/org/telegram/ui/dmash/DmashLoginActivity.java": "5657d88f34367c18c0c3481bb659e19d1d9e06d2ed2c621a953a3d2805bdd7c4",
+    "TMessagesProj/src/main/res/values/dmash.xml": "0e9865b4bfceff410e53260634bb640a8ef81db7672e2215c211b9e1f4c24999",
+    "TMessagesProj_App/build.gradle": "3a6420f2026b80200ecf4a51c6c19e07f57aa622dd38c363dec85c87d650c3b7",
+    "TMessagesProj_App/src/main/AndroidManifest.xml": "de93b00656d29c33c954f4e099c7bca0e3828aba917b4bf9f7a467bad16931d4",
+    "TMessagesProj_App/src/main/res/values/dmash.xml": "94ea175dff091e7f3cc173d76b0afa37ca430af87d2c3488e0f0602a649e8838",
+    "build.gradle": "9dd03b8282239716a66b9a1295a946d2d49a10840380805b8a28071acd84bae8",
+    "gradle.properties": "4942b50ea6043fe63a8fc23bcdf4b243cf46ac2e003303660cfb15a4485959d0"
+  }
+}

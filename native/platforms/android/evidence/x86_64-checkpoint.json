@@ -1,0 +1,16 @@
+{
+  "kind": "Immutable x86_64 Android Views plus QtService package checkpoint",
+  "sourceMap": "x86_64-source-sha256.json",
+  "sourceMapSha256": "14ae44b8a72b3bee1c2c3370fa58db042757e45d594262c9c741a181e6465f91",
+  "snapshotFiles": 269,
+  "packageReport": "x86_64-package.json",
+  "buildResult": "PASS actual NDK27c/Qt6.12/Gradle9.5.1 APK",
+  "buildObservation": "Initial Gradle packaging ended SIGTERM143 without diagnostic; same frozen build was confirmed stopped, then resumed incrementally and reached BUILD SUCCESSFUL. No emulator restart.",
+  "worker": "Native nonce batching matches aff6a0b accepted common worker; snapshot predates release-only page/SW44 metadata.",
+  "runtime": "NOT RUN at package checkpoint; prepared for independent API35 software-emulator install/click/lifecycle",
+  "limits": [
+    "No Account UI or resident credential host connection in Activity yet",
+    "No mesh-ready claim from running service/foreground notification",
+    "Android operating system may stop app; force-stop survival not promised"
+  ]
+}

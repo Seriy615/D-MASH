@@ -1,0 +1,29 @@
+{
+  "kind": "BROWSER",
+  "issue": "NODE-URL-XSS-01",
+  "status": "FAIL confirmed and assigned",
+  "source": "3541458da5ff433aa705e3e329e6d148a3fa1445",
+  "surface": "effective repairedGlobalNodes in acceptance_fixes.js",
+  "owner": "files_policy_correction",
+  "network": "only own loopback HTTP; external HTTP and all WebSockets blocked; SW blocked",
+  "profile": "existing retained synthetic profile; Account logged out; no reset",
+  "steps": [
+    "Global Settings → Nodes → Add WSS",
+    "Paste benign apostrophe URL and confirm",
+    "Click primary Node button",
+    "Console sentinel executes before Unknown node endpoint alert"
+  ],
+  "benign_payload": "wss://example.invalid/x'-console.log(987654321)-'",
+  "actual_inline_handler": "ui.selectGlobalNode(decodeURIComponent('wss%3A%2F%2Fexample.invalid%2Fx'-console.log(987654321)-''))",
+  "console_sentinel": [
+    "987654321"
+  ],
+  "source_responses": 107,
+  "source_mismatches": [],
+  "page_errors": [],
+  "limits": [
+    "No secret access or exfiltration attempted; only constant console marker.",
+    "Trigger requires supplied/stored URL and a Node action click; not asserted as zero-click network exploit.",
+    "Positive regression must preserve apostrophe URL and existing profile, not reset/reject data for PASS."
+  ]
+}

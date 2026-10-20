@@ -1,0 +1,142 @@
+From 16b2cbf65469d963d3d190cda2b3897c1ce23c74 Mon Sep 17 00:00:00 2001
+From: D-MASH development <development@dmash.local>
+Date: Tue, 20 Oct 2026 16:32:09 +0000
+Subject: [PATCH] Pin Android core API level and retain truthful pending
+ message clocks
+
+---
+ TMessagesProj/build.gradle                           |  3 ++-
+ .../java/org/dmash/client/CredentialService.java     |  4 ++--
+ .../src/main/java/org/dmash/client/NodeService.java  |  4 ++--
+ .../java/org/telegram/messenger/MessageObject.java   |  2 +-
+ .../org/telegram/messenger/dmash/DmashClient.java    |  6 +++++-
+ TMessagesProj_App/build.gradle                       |  2 +-
+ build.gradle                                         | 12 +++++++++++-
+ 7 files changed, 24 insertions(+), 9 deletions(-)
+
+diff --git a/TMessagesProj/build.gradle b/TMessagesProj/build.gradle
+index 5208f1d..cb226ea 100644
+--- a/TMessagesProj/build.gradle
++++ b/TMessagesProj/build.gradle
+@@ -9,6 +9,7 @@ if (!dmashCoreBuild) throw new GradleException('D-MASH requires -PdmashCoreBuild
+ dependencies { implementation fileTree(dir: "${dmashCoreBuild}/libs", include: ['*.jar']) }
+ android.sourceSets.main.jniLibs.srcDirs += ["${dmashCoreBuild}/libs"]
+ android.sourceSets.main.assets.srcDirs += ["${dmashCoreBuild}/assets"]
++android.sourceSets.main.res.srcDirs += ["${buildDir}/generated/dmashQt/res"]
+ 
+ 
+ idea {
+@@ -142,7 +143,7 @@ android {
+     }
+ 
+     defaultConfig {
+-        minSdkVersion 23
++        minSdkVersion 28
+         targetSdkVersion 36
+ 
+         vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
+diff --git a/TMessagesProj/src/main/java/org/dmash/client/CredentialService.java b/TMessagesProj/src/main/java/org/dmash/client/CredentialService.java
+index 4654938..0b2af2c 100644
+--- a/TMessagesProj/src/main/java/org/dmash/client/CredentialService.java
++++ b/TMessagesProj/src/main/java/org/dmash/client/CredentialService.java
+@@ -7,14 +7,14 @@ import android.content.pm.ServiceInfo;
+ import android.os.*;
+ import java.util.concurrent.*;
+ import java.util.concurrent.atomic.AtomicBoolean;
+-import org.qtproject.qt.android.bindings.QtService;
++import org.qtproject.qt.android.QtServiceBase;
+ import org.json.*;
+ import java.io.*;
+ import android.system.*;
+ import android.util.AtomicFile;
+ 
+ /** Owns local credentials/Account in :credentials; :node receives only a transport FD. */
+-public final class CredentialService extends QtService {
++public final class CredentialService extends QtServiceBase {
+  private static volatile CredentialService active;
+  private static volatile IBinder node;
+  private static ServiceConnection nodeConnection;
+diff --git a/TMessagesProj/src/main/java/org/dmash/client/NodeService.java b/TMessagesProj/src/main/java/org/dmash/client/NodeService.java
+index 05d741f..b52a509 100644
+--- a/TMessagesProj/src/main/java/org/dmash/client/NodeService.java
++++ b/TMessagesProj/src/main/java/org/dmash/client/NodeService.java
+@@ -5,10 +5,10 @@ import android.app.*;
+ import android.content.Intent;
+ import android.content.pm.ServiceInfo;
+ import android.os.*;
+-import org.qtproject.qt.android.bindings.QtService;
++import org.qtproject.qt.android.QtServiceBase;
+ 
+ /** Separate :node process. The broker owns the duplex lease, never this Activity. */
+-public final class NodeService extends QtService {
++public final class NodeService extends QtServiceBase {
+  private final Handler handler=new Handler(Looper.getMainLooper());
+  static final String ACTION_STOP="org.dmash.client.STOP_NODE";
+  private static volatile NodeService active;
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+index ec503d9..5a11417 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+@@ -10186,7 +10186,7 @@ public class MessageObject {
+     }
+ 
+     public boolean isSending() {
+-        return messageOwner.send_state == MESSAGE_SEND_STATE_SENDING && messageOwner.id < 0;
++        return messageOwner.send_state == MESSAGE_SEND_STATE_SENDING && (messageOwner.id < 0 || org.telegram.messenger.dmash.DmashClient.ENABLED);
+     }
+ 
+     public boolean isEditing() {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java b/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
+index 17b8c9b..2979ef6 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
+@@ -118,7 +118,11 @@ public final class DmashClient {
+         m.message=row.optString("text");m.date=(int)(row.optLong("time")/1000);m.out=!row.optString("direction").equals("in");m.dialog_id=dialog;
+         m.peer_id=new TLRPC.TL_peerUser();m.peer_id.user_id=dialog;m.from_id=new TLRPC.TL_peerUser();m.from_id.user_id=m.out?UserConfig.getInstance(0).getClientUserId():dialog;
+         m.unread=m.out; m.flags|=256; m.media=new TLRPC.TL_messageMediaEmpty();
+-        m.send_state=sequence>0?MessageObject.MESSAGE_SEND_STATE_SENT:MessageObject.MESSAGE_SEND_STATE_SENDING;return m;
++        String state=row.optString("state");
++        boolean local=peer(dialog).equals(SAVED), nodeAccepted=state.equals("NODE_ACCEPTED")||state.equals("DELIVERED")||state.equals("RECIPIENT_ACK");
++        m.send_state=!m.out||local||nodeAccepted?MessageObject.MESSAGE_SEND_STATE_SENT:MessageObject.MESSAGE_SEND_STATE_SENDING;
++        if(m.out&&(state.equals("FAILED")||state.equals("EXPIRED")||state.equals("CANCELLED")))m.send_state=MessageObject.MESSAGE_SEND_STATE_SEND_ERROR;
++        return m;
+     }
+     public static void loadHistory(MessagesController controller,long dialog,int count,int before,int guid,int loadType,int loadIndex,int mode) {
+         if(!accountActive)return;
+diff --git a/TMessagesProj_App/build.gradle b/TMessagesProj_App/build.gradle
+index fbba955..d490cee 100644
+--- a/TMessagesProj_App/build.gradle
++++ b/TMessagesProj_App/build.gradle
+@@ -166,7 +166,7 @@ android {
+     }
+ 
+     defaultConfig {
+-        minSdkVersion 23
++        minSdkVersion 28
+         targetSdkVersion 36
+         versionName APP_VERSION_NAME
+         ndkVersion "27.2.12479018"
+diff --git a/build.gradle b/build.gradle
+index f7c8fcb..bdcf6b4 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -52,4 +52,14 @@ subprojects {
+             }
+         }
+     }
+-}
+\ No newline at end of file
++}
++// The D-MASH fork uses the same installed SDK/build tools for every upstream
++// media/UI module; no second SDK download or multi-ABI native build is implied.
++subprojects {
++    plugins.withId('com.android.library') {
++        extensions.getByName('androidComponents').finalizeDsl { dsl ->
++            dsl.compileSdk = 36
++            dsl.buildToolsVersion = '36.0.0'
++        }
++    }
++}
+-- 
+2.43.0
+

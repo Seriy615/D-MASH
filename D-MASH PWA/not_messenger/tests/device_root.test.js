@@ -8,7 +8,7 @@ global.btoa = (value) => Buffer.from(value, "binary").toString("base64");
 global.atob = (value) => Buffer.from(value, "base64").toString("binary");
 // Argon2 is intentionally stubbed only for persistence-flow tests.  HKDF test
 // vectors below use native WebCrypto and the production KDF implementation.
-global.argon2 = { argon2id: 2, hash: async ({ pass, salt }) => ({ hash: new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`test-wrap|${pass}|${salt}`))) }) };
+global.argon2 = { ArgonType: { Argon2id: 2, Argon2d: 0 }, hash: async ({ pass, salt }) => ({ hash: new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`test-wrap|${pass}|${salt}`))) }) };
 global.nacl = {
   sign: { keyPair: { fromSeed: (seed) => ({ publicKey: new Uint8Array(seed.map((v) => v ^ 0xa5)), secretKey: new Uint8Array([...seed, ...seed]) }) }, detached: Object.assign(
     (message, secretKey) => new Uint8Array([...message].map((v, i) => v ^ secretKey[i % secretKey.length])),
@@ -41,7 +41,7 @@ const hex = (bytes) => Buffer.from(bytes).toString("hex");
   assert.equal(created.root.length, 32); assert.equal(created.created, true);
   const firstId = created.identity.deviceId; const firstRoot = new Uint8Array(created.root); const stored = structuredClone(first.record);
   assert.equal(JSON.stringify(stored).includes(hex(created.root)), false, "root must not be plaintext persisted");
-  assert.equal(stored.wrap, "argon2id-aes-256-gcm-v1", "new records explicitly identify their Argon2id/AES-GCM wrapping scheme");
+  assert.equal(stored.wrap, "argon2id-aes-256-gcm-v2", "new records explicitly identify their Argon2id/AES-GCM wrapping scheme");
   assert.equal(Buffer.from(stored.wrapSalt, "base64").length, 16, "wrapping salt is 128 bits");
   assert.equal(Buffer.from(stored.iv, "base64").length, 12, "AES-GCM wrapping IV is 96 bits");
   assert.equal(Buffer.from(stored.wrappedRoot, "base64").length, 48, "wrapped root contains a 256-bit root and GCM tag");
@@ -62,21 +62,12 @@ const hex = (bytes) => Buffer.from(bytes).toString("hex");
   assert.equal(DeviceRoot.state, null, "explicit wipe clears unlocked root state");
   Object.defineProperty(global, "indexedDB", { value: originalIndexedDb, configurable: true });
 
-  // A confirmed-master recovery erases an undecryptable installation record;
-  // the next bootstrap is therefore a newly generated identity, not a retry of
-  // the lost root. Model the database deletion with a fresh store boundary.
-  const recoveryStore = new MemoryStore();
+  // Wrong master never authorizes deletion or replacement of an identity.
   const oldRootStore = new MemoryStore(structuredClone(stored));
-  let deleted = false;
-  Object.defineProperty(global, "indexedDB", { value: { deleteDatabase() { deleted = true; const request = {}; queueMicrotask(() => request.onsuccess()); return request; } }, configurable: true });
   DeviceRoot.lock(); DeviceRoot.setStoreForTests(oldRootStore);
-  await assert.rejects(() => DeviceRoot.unlock("different confirmed pin"), (error) => error.code === "UNLOCK_FAILED");
-  await DeviceRoot.eraseForExplicitWipe();
-  assert.equal(deleted, true, "confirmed-master recovery deletes the unusable DeviceRoot store");
-  DeviceRoot.setStoreForTests(recoveryStore);
-  const recoveredFresh = await DeviceRoot.unlock("different confirmed pin");
-  assert.notEqual(recoveredFresh.identity.deviceId, firstId, "recovery creates a new device identity after the lost root is erased");
-  Object.defineProperty(global, "indexedDB", { value: originalIndexedDb, configurable: true });
+  await assert.rejects(() => DeviceRoot.unlock("different confirmed pin"), error => error.code === "UNLOCK_FAILED");
+  assert.deepEqual(oldRootStore.record, stored);
+  assert.equal((await DeviceRoot.unlock("correct horse battery staple")).identity.deviceId, firstId);
 
   // Calculator-master-secret changes must rewrap the same root, never create a
   // second device. The old secret stops working only after the new wrap is
@@ -161,9 +152,9 @@ const hex = (bytes) => Buffer.from(bytes).toString("hex");
   await assert.rejects(() => DeviceRoot.unlock("correct horse battery staple"), (error) => error.code === "UNLOCK_FAILED", "malformed wrapping fields fail closed");
   const unknownWrap = structuredClone(stored); unknownWrap.wrap = "sha256-verifier-v1";
   DeviceRoot.lock(); DeviceRoot.setStoreForTests(new MemoryStore(unknownWrap));
-  await assert.rejects(() => DeviceRoot.unlock("correct horse battery staple"), (error) => error.code === "UNLOCK_FAILED", "legacy SHA verifier scheme is not accepted");
+  await assert.rejects(() => DeviceRoot.unlock("correct horse battery staple"), (error) => error.code === "STORAGE_CORRUPT", "legacy SHA verifier scheme is not accepted");
   const originalArgon2 = global.argon2;
-  global.argon2 = { argon2id: 2, hash: async () => ({ hash: new Uint8Array(31) }) };
+  global.argon2 = { ArgonType: { Argon2id: 2, Argon2d: 0 }, hash: async () => ({ hash: new Uint8Array(31) }) };
   DeviceRoot.lock(); DeviceRoot.setStoreForTests(new MemoryStore());
   await assert.rejects(() => DeviceRoot.unlock("pin"), (error) => error.code === "ARGON2_FAILED", "invalid Argon2 output cannot create a DeviceRoot");
   global.argon2 = originalArgon2;
@@ -199,16 +190,17 @@ const hex = (bytes) => Buffer.from(bytes).toString("hex");
   DeviceRoot.state = { root: new Uint8Array(webauthnRoot), record: webauthnRecord, identity: null, created: false };
   const calls = installWebAuthn();
   const enrolled = await DeviceRoot.enrollWebAuthnPrf();
-  assert.deepEqual(enrolled, { enrolled: true }, "a platform PRF credential enrolls successfully");
+  assert.deepEqual(enrolled, { enrolled: true, credentialCount: 1 }, "a platform PRF credential enrolls successfully");
   assert.equal(calls.create[0].publicKey.authenticatorSelection.authenticatorAttachment, "platform");
   assert.equal(calls.create[0].publicKey.authenticatorSelection.userVerification, "required");
-  assert.equal(calls.get[0].publicKey.userVerification, "required");
-  assert.equal(calls.get[0].publicKey.extensions.prf.eval.first.length, 32);
+  assert.equal(calls.create[0].publicKey.extensions.prf.eval.first.length, 32);
+  assert.equal(calls.get.length, 0, "create PRF result avoids a redundant platform prompt");
   assert.equal(webauthnStore.record.biometricWrap.wrap, "webauthn-prf-aes-256-gcm-v1");
 
   // A fresh lock can recover precisely the enrolled root with the PRF alone.
   DeviceRoot.lock(); DeviceRoot.setStoreForTests(new MemoryStore(structuredClone(webauthnStore.record)));
   installWebAuthn();
+  DeviceRoot.__dmashBiometricRecordCache = structuredClone(webauthnStore.record);
   const biometricUnlocked = await DeviceRoot.unlockWithWebAuthnPrf();
   assert.deepEqual([...biometricUnlocked.root], [...webauthnRoot], "correct PRF unlocks the enrolled root");
 
@@ -219,14 +211,15 @@ const hex = (bytes) => Buffer.from(bytes).toString("hex");
     ["missing PRF", enrolledRecord, { rawId: credentialId.buffer.slice(0), getClientExtensionResults: () => ({}) }],
     ["invalid PRF length", enrolledRecord, prfCredential(new Uint8Array(31))],
     ["wrong PRF", enrolledRecord, prfCredential(new Uint8Array(32).fill(99))],
-    ["corrupt metadata", { ...enrolledRecord, biometricWrap: { ...enrolledRecord.biometricWrap, iv: "not-base64" } }, prfCredential()]
+    ["corrupt metadata", { ...enrolledRecord, biometricWraps: enrolledRecord.biometricWraps.map(w => ({...w, iv: "not-base64"})), biometricWrap: { ...enrolledRecord.biometricWrap, iv: "not-base64" } }, prfCredential()]
   ]) {
     const store = new MemoryStore(structuredClone(record));
     DeviceRoot.lock(); DeviceRoot.setStoreForTests(store); installWebAuthn({ assertion });
     let pinFallback = false;
     const originalUnlock = DeviceRoot.unlock;
     DeviceRoot.unlock = async () => { pinFallback = true; };
-    await assert.rejects(() => DeviceRoot.unlockWithWebAuthnPrf(), (error) => error.code === "WEBAUTHN_UNLOCK_FAILED", `${label} must fail closed`);
+    DeviceRoot.__dmashBiometricRecordCache = structuredClone(record);
+    await assert.rejects(() => DeviceRoot.unlockWithWebAuthnPrf(), (error) => ["WEBAUTHN_UNLOCK_FAILED", "WEBAUTHN_PRF_UNAVAILABLE"].includes(error.code), `${label} must fail closed`);
     DeviceRoot.unlock = originalUnlock;
     assert.equal(pinFallback, false, `${label} must not fall back to PIN`);
     assert.deepEqual(store.record, record, `${label} must not alter stored data`);

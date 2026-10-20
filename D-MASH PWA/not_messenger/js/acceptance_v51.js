@@ -296,6 +296,7 @@
                 await Promise.all([
                     loadScript(`js/vendor/argon2-bundled.min.js?v=${ver}`),
                     loadScript(`js/device_root.js?v=${ver}`),
+                    loadScript(`js/local_credentials.js?v=${ver}`),
                     loadScript(`js/storage.js?v=${ver}`),
                     loadScript(`js/call_signaling.js?v=${ver}`),
                     loadScript(`js/call_runtime.js?v=${ver}`),
@@ -314,10 +315,14 @@
                     loadScript(`js/vendor/nacl-fast.min.js?v=${ver}`)
                 ]);
 
-                patchStorage(appStorage());
+                await system.ensureCredentials();
+                if (global.DmashRuntimeReadiness) await global.DmashRuntimeReadiness.compose();
+                else {
+                    patchStorage(appStorage());
+                    patchNodeManager(global.NodeManager);
+                    patchCore(global.Core);
+                }
                 global.DmashChatPassword?.install(appStorage());
-                patchNodeManager(global.NodeManager);
-                patchCore(global.Core);
                 void global.NodeManager?.loadOriginList?.("nodes.json").catch(() => {});
                 return true;
             } catch (error) {
@@ -350,30 +355,12 @@
         } catch (_) { return false; }
     }
 
-    async function deleteDatabase(name) {
-        if (!name) return;
-        await new Promise(resolve => {
-            const request = indexedDB.deleteDatabase(name);
-            request.onsuccess = request.onerror = request.onblocked = () => resolve();
-        });
-    }
-
     async function totalRecoveryWipe() {
-        try { global.DMashStorage?.db?.close?.(); } catch (_) {}
-        try { global.DMashStorage?.registry_instance?.close?.(); } catch (_) {}
-        try { global.DeviceRoot?.lock?.(); } catch (_) {}
-
-        const names = new Set(["dm_gamma_vault", LEGACY_DB, SECURE_DB, "dmash_device_root_v1"]);
-        try {
-            for (const item of await indexedDB.databases?.() || []) if (item?.name) names.add(item.name);
-        } catch (_) {}
-        await Promise.all(Array.from(names, deleteDatabase));
-
-        try { localStorage.clear(); } catch (_) {}
-        try { sessionStorage.clear(); } catch (_) {}
-        try { for (const key of await caches.keys()) await caches.delete(key); } catch (_) {}
-        try { for (const reg of await navigator.serviceWorker?.getRegistrations?.() || []) await reg.unregister(); } catch (_) {}
-        global.location.reload();
+        const service = await appSys().ensureCredentials();
+        const coordinator = service.wipeCoordinator;
+        const result = await coordinator.pending() ? await coordinator.resume({ authorize: async () => true }) : await coordinator.wipe();
+        if (result?.complete) global.location.replace("about:blank");
+        return result;
     }
 
     /* ---------------- CORE/UI ACCEPTANCE ---------------- */
@@ -423,6 +410,7 @@
                     <div class="dmash-settings-note">Удаление всегда убирает ключ из D-MASH. Если ОС поддерживает WebAuthn credential signals, ей также передаётся сигнал удалить устаревший credential.</div>
                     <div class="dmash-registry-list">${rows}</div>
                     <button class="dmash-settings-action" onclick="Core.closeModal(); ui.beginBiometricTriggerSetup()">ДОБАВИТЬ КЛЮЧ</button>
+                    ${wraps.length ? '<button class="dmash-settings-action" onclick="Core.repairMasterWithBiometrics()">ВОССТАНОВИТЬ MASTER ЧЕРЕЗ БИОМЕТРИЮ</button>' : ''}
                     <button class="dmash-settings-action primary" onclick="Core.closeModal()">НАЗАД</button>`);
             } catch (error) { this.customAlert("БИОМЕТРИЯ УСТРОЙСТВА", error.message); }
         };
@@ -430,7 +418,10 @@
         core.removeDeviceBiometric = async function removeDeviceBiometricV51(index) {
             const store = global.DeviceRoot?._store?.();
             if (!store) return;
-            const record = await store.get();
+            const session = global.DeviceRoot.state, epoch = global.DeviceRoot._epoch;
+            if (!session?.root) throw new global.DeviceRootError("DEVICE_LOCKED", "Сначала разблокируйте устройство.");
+            const current = () => { if (global.DeviceRoot.state !== session || global.DeviceRoot._epoch !== epoch) throw new global.DeviceRootError("DEVICE_LOCKED", "Операция отменена."); };
+            const record = await store.get(); current();
             const wraps = Array.isArray(record?.biometricWraps) && record.biometricWraps.length
                 ? [...record.biometricWraps] : (record?.biometricWrap ? [record.biometricWrap] : []);
             if (!wraps[index]) return;
@@ -444,7 +435,9 @@
                 delete next.biometricWrap;
                 try { localStorage.removeItem("cfg_biometric_trigger"); } catch (_) {}
             }
-            await store.put(next);
+            const abort = new AbortController(), off = global.DeviceRoot.onLock(() => abort.abort());
+            try { current(); await store.put(next, { expected: record, assertCurrent: current, signal: abort.signal }); current(); }
+            finally { off(); }
             if (global.DeviceRoot.state) global.DeviceRoot.state.record = next;
             await signalUnknownCredential(removed.credentialId);
             global.location.reload();
@@ -465,12 +458,11 @@
             try {
                 const accounts = await storage.getAllRegistryAccounts();
                 const rows = accounts.map(account => {
-                    const id = encodeURIComponent(account.id);
                     return `<div class="dmash-registry-row">
                         <div class="dmash-registry-id">${esc(account.id)}</div>
                         <div class="dmash-registry-state">${account.accountBiometric ? "BIOMETRIC · " : ""}${account.id === this.activeIdentity ? "ACTIVE" : "LOCAL"}</div>
-                        ${account.accountBiometric ? `<button class="gate-btn" onclick="Core.removeAccountBiometric(decodeURIComponent('${id}'))">УДАЛИТЬ БИОМЕТРИЮ</button>` : ""}
-                        ${account.id !== this.activeIdentity ? `<button class="gate-btn danger" onclick="Core.removeAccountFlow(decodeURIComponent('${id}'))">УДАЛИТЬ АККАУНТ</button>` : ""}
+                        ${account.accountBiometric ? `<button class="gate-btn" ${global.Core.dataActionAttributes("removeAccountBiometric", [account.id])}>УДАЛИТЬ БИОМЕТРИЮ</button>` : ""}
+                        ${account.id !== this.activeIdentity ? `<button class="gate-btn danger" ${global.Core.dataActionAttributes("removeAccountFlow", [account.id])}>УДАЛИТЬ АККАУНТ</button>` : ""}
                     </div>`;
                 }).join("") || '<div class="dmash-settings-note">Реестр аккаунтов пуст.</div>';
                 this.openModal("РЕЕСТР АККАУНТОВ", `<div class="dmash-registry-list">${rows}</div><button class="dmash-settings-action primary" onclick="Core.closeModal()">НАЗАД</button>`);
@@ -481,7 +473,8 @@
             if (!global.confirm("Удалить ВСЕ локальные данные D-MASH на этом устройстве? Аккаунты, DeviceRoot, Routes, чаты, Node-настройки и биометрические привязки будут удалены.")) return;
             const phrase = global.prompt("Для полного recovery wipe введите: УДАЛИТЬ ВСЁ");
             if (phrase !== "УДАЛИТЬ ВСЁ") return;
-            await totalRecoveryWipe();
+            try { return await totalRecoveryWipe(); }
+            catch (error) { this.customAlert("ОЧИСТКА НЕ ЗАВЕРШЕНА", error.message); return false; }
         };
 
         Object.defineProperty(core, PATCH, { value: true });
@@ -561,6 +554,12 @@
         patchUi(appUi());
     }
 
+    if (global.DmashRuntimeReadiness) {
+        global.DmashRuntimeReadiness.register("foundation-loader", 10, () => patchSystem(appSys()), () => !!appSys()?.[SYS_PATCH], ["ui-bridge"]);
+        global.DmashRuntimeReadiness.register("acceptance-v51-ui", 60, () => patchUi(appUi()), () => !!appUi()?.[UI_PATCH], ["acceptance-v50-ui"]);
+        global.DmashRuntimeReadiness.register("acceptance-v51", 60, install, () => !!(global.Core?.[PATCH] && global.NodeManager?.[NODE_PATCH]), ["acceptance-v50"]);
+        return;
+    }
     install();
     const timer = setInterval(() => {
         install();

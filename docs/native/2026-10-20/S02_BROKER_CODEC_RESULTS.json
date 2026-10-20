@@ -1,0 +1,65 @@
+{
+  "source_commit": "3e72b3a",
+  "scope": "S02 isolated compatibility codec foundation, not full credential service/native app acceptance",
+  "linux": {
+    "compile": "PASS",
+    "compiler": "GNU13.3.0",
+    "qt": "6.12.0",
+    "openssl": "3.5.9 EXACT owned prefix",
+    "ctest": {
+      "passed": 1,
+      "failed": 0,
+      "seconds": 8.06
+    },
+    "covered": [
+      "actual JS legacy Argon2d/explicit-id v1 and v2 encrypted wraps",
+      "same DeviceID Ed25519/X25519/HKDF canonical derivations",
+      "new native v2 independently reopened and compared before return",
+      "opaque encrypted materials/metadata/revision preserved",
+      "missingRoot/wrongPIN/unknownschema/currentguard failure",
+      "legacy/pending/cleanup-required bundle denied",
+      "fixed existing Node slots only; missing material fails without new identity"
+    ]
+  },
+  "native_to_js": {
+    "status": "PASS",
+    "kind": "actual shipped WASM/DeviceRoot opens native-generated v2 candidate",
+    "device_id_and_materials_unchanged": true,
+    "synthetic_only": true
+  },
+  "android": {
+    "compile_static_library": "PASS",
+    "compiler": "NDK27.2.12479018 Clang18.0.3",
+    "target": "android28 arm64-v8a",
+    "object_elf_machine": "AArch64",
+    "runtime": "NOT RUN",
+    "apk_ui_service": "NOT RUN"
+  },
+  "windows": {
+    "compile": "NOT RUN",
+    "runtime": "NOT RUN"
+  },
+  "public_source_sha256": {
+    "native/broker/CMakeLists.txt": "1aeb12a4e46f4ae03316b689d9cfaa1fd36c886df931aaba32869ab3dbda6b7b",
+    "native/broker/README.md": "c1fcf8da4bce14c89bc54e3a943013deb44dfa9475b07ac3bc55480a6aa226bb",
+    "native/broker/root_codec.cpp": "4787d7b8f0c4bebf4542987fbd45c21a2622ab90bba93f7adbd719d5a3c6df26",
+    "native/broker/root_codec.h": "73fc764c5b03936590e45c0e42ecfda763f0de35908cc0df88e8ace4580501aa",
+    "native/broker/tests/compatibility.json": "091da06edb932f5cb82b619baccb058c2c572adfe33466b8e7673cd5d2e280b9",
+    "native/broker/tests/generate_compatibility.cjs": "69b77aa0694d9f6b1d128bba9f70d30d64b96d39471ef4736e848cc5040674e7",
+    "native/broker/tests/reopen_native_wrap.cjs": "54e1a9d837c2e895527190410e5dd5b5a769504d21cf834d6e2ab01561a5b8d3",
+    "native/broker/tests/root_codec_test.cpp": "eff95cd54b04f5d94344f54c0a03615f17bb5151f7e5418933c10b01bd12cb22"
+  },
+  "reference_js_sha256": {
+    "D-MASH PWA/not_messenger/js/device_root.js": "b52b75f04d8a5a8d838e5e4b7700746c5b527f7acf96f1a6433c1407e9e61f54",
+    "D-MASH PWA/not_messenger/js/vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "D-MASH PWA/not_messenger/js/vendor/argon2-bundled.min.js": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b"
+  },
+  "limits": [
+    "Codec does not commit/publish credentials, advance revision, migrate wipe verifier or remove legacy DBs",
+    "No persistent canonical CAS, complete-profile import journal, worker service, OS-auth IPC or native UI implemented by this checkpoint",
+    "Current-operation guard required; owning service must provide monotonic epoch and serialization; standard Argon cannot abort mid-call",
+    "No Root/PIN/Account in network bundle; transport secrets can have Qt string copies, must be retired by owner",
+    "Fixture Node seed deliberately unmined; no Node authorization or production network proof",
+    "No deployment/physical erasure/hardware result"
+  ]
+}

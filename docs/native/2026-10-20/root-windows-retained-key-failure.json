@@ -1,0 +1,24 @@
+{
+  "status": "FAIL",
+  "scope": "ROOT artifact inspection of historical Windows component harness; not actual Telegram Windows fork",
+  "workflowRun": 39460137863,
+  "job": 118757157412,
+  "artifactId": 12282556614,
+  "workflowHeadCommit": "aa30fb2cafa8198665f41f406af58c01c29d3022",
+  "artifactSha256": "37210b5c9c01556f603775a902503a8e3195dbc76d53f904db2e3b3afaa72ae8",
+  "files": {
+    "diagnostics/desktop/direct.qtest.txt": "e0c958fd7dbc154476cf12b8df44bb150d2e20aeff6e357a1d135e313c079dfd",
+    "diagnostics/desktop/startup.json": "6f096b3853e6c844bf060896c2497aeea036db9155fe152d6f2eaf735c75700b",
+    "desktop/Testing/Temporary/LastTest.log": "42f769595a3a58a927240ab8b0b8db98979a4486cc3d3079bbb42e36ed5632ed",
+    "diagnostics/desktop/dmash_desktop_ui_test.exe": "2dccab40e0114266add4b558d7172e9a7d7a04f890e1d3b3b5a20ec3706f8657"
+  },
+  "observation": "Full-suite direct QtTest logger reports initTestCase PASS then retainedAppLocalKey unhandled exception; totals1PASS1FAIL4ms. CTest fails0.05s with empty stdout.",
+  "cause": "Exact exception stage/code unknown. No Qt loader cause established.",
+  "owner": "broker_store_sol: bounded retained-key diagnostics, no old UI implementation restart",
+  "limits": [
+    "Artifact/output inspection, no independent Windows runtime",
+    "Workflow head is reported metadata; compiled merge tree not independently reverified in this artifact inspection",
+    "Earlier disconnected-only3PASS does not cover retained key test",
+    "No actual Telegram Windows fork build or package acceptance"
+  ]
+}

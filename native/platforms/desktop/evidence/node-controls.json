@@ -1,0 +1,18 @@
+{
+  "kind": "Actual Linux Qt mouse/key Node control acceptance",
+  "status": "PASS",
+  "seconds": 27.696,
+  "fixture": "Fresh synthetic Node; same synthetic Account and original Saved history",
+  "checks": [
+    "Connections Add/invalid Start/error/Remove/direct checkbox/Cancel",
+    "Visible Start Node button creates actual scoped native Node child",
+    "Actual host.status refresh shows zero connected peers",
+    "Account sign out leaves actual Node running",
+    "Visible Stop Node & lock confirms Node stopped and Device unlock required",
+    "Root unlock/relogin retains Saved write"
+  ],
+  "limits": [
+    "No mesh endpoint configured; no remote chat proof",
+    "No Android or Windows runtime claim"
+  ]
+}

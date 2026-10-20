@@ -1,0 +1,2 @@
+PASS ARGON2D matches exact real-WASM public master fixture; textual UTF8 base64 salt
+PASS ARGON2ID matches exact real-WASM public master fixture; textual UTF8 base64 salt

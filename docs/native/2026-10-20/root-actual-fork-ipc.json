@@ -1,0 +1,25 @@
+{
+  "status": "PASS_LOCAL_IPC_ONLY",
+  "hostSha256": "5606c6301e9220dbcdaf1ac4af02e481bda28ffdec1a95be8e8f0e9d7ca48bdc",
+  "probeSha256": "5da90319ebcf74ee4d74a3e0d2244c39bc58e1daccbeb1c7ec7646c015c9718e",
+  "files": {
+    "CMakeLists.txt": "7d6a8a735ea42a78631cd6bbf16ba8bad741d9279975e6386bd778738caec7ba",
+    "local_client.cpp": "03b34b213c7f5873fb07e0846fe7aa9afe1564b6115c44b7548befd0a88a12e9",
+    "local_client.h": "2fdbf8e00ca755bfac93e343e8b0a52f6897a8ca8c6531faf7eefc034a645926"
+  },
+  "checks": [
+    "Actual fork LocalClient framed protocol to real native host",
+    "Fresh Root zeroAccounts create/login Saved/history/logout/fullRootlock"
+  ],
+  "limits": [
+    "QtCore local client probe, no full upstream fork application render/build acceptance",
+    "Synthetic owning profile retained outsideGit",
+    "No Nodeenable/remote/AndroidWindows claim"
+  ],
+  "kind": "ROOT real Telegram Desktop fork LocalClient to native core IPC",
+  "sourceCommit": "39b5f02",
+  "compileHandle": 15103,
+  "compileExitCode": 0,
+  "probeHandle": 59223,
+  "probeExitCode": 0
+}

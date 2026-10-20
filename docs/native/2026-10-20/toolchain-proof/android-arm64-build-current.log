@@ -1,0 +1,13 @@
+[0/1] Re-running CMake...
+-- Android toolchain file within NDK detected: /home/jcode/.cache/dmash-native-20261020/sdk/ndk/27.2.12479018/build/cmake/android.toolchain.cmake
+-- Configuring done (0.3s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/jcode/.cache/dmash-native-20261020/build-android-arm64-probe
+[1/9] Building C object CMakeFiles/qjs.dir/home/jcode/.cache/dmash-native-20261020/build/quickjs-2026-06-04/quickjs.c.o
+[2/9] Building C object CMakeFiles/qjs.dir/home/jcode/.cache/dmash-native-20261020/build/quickjs-2026-06-04/cutils.c.o
+[3/9] Building C object CMakeFiles/qjs.dir/home/jcode/.cache/dmash-native-20261020/build/quickjs-2026-06-04/libregexp.c.o
+[4/9] Building C object CMakeFiles/qjs.dir/home/jcode/.cache/dmash-native-20261020/build/quickjs-2026-06-04/libunicode.c.o
+[5/9] Building C object CMakeFiles/qjs.dir/home/jcode/.cache/dmash-native-20261020/build/quickjs-2026-06-04/dtoa.c.o
+[6/9] Linking C static library libqjs.a
+[7/9] Building CXX object CMakeFiles/dmash_toolchain_service.dir/android_main.cpp.o
+[8/9] Linking CXX shared library libdmash_toolchain_service_arm64-v8a.so

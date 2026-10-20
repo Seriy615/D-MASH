@@ -1,0 +1,190 @@
+{
+  "kind": "ACTUAL_PHP_LOOPBACK_SECURITY_REGRESSION",
+  "date_utc": "2026-10-20",
+  "status": "PASS_SCOPED_NOT_DEPLOYED",
+  "source_base_commit": "e2036df0794f792235a14418771f8c24da51a729",
+  "source_sha256": {
+    "D-MASH PWA/api/pidorskiy_api.php": "c50342e1309e3c60168ae87ff7636e034f11b2b69445565418a33f723f26ec03",
+    "D-MASH PWA/api/tg_webhook.php": "820871ddb0d46f80976f6baed156c4b290a00e2c454a7b2a9e355683a6d3f0dd",
+    "tools/test_legacy_php_boundary.py": "cb99f0091b28e9e30cc89b26ad4fb6a68fd0c98287c716e133b0550ef3927596"
+  },
+  "reachability_source_commit": "a22b2dbf5e947c06f063e871a47aeaf30714ca37",
+  "callers_and_unchanged_signed_service_sha256": {
+    "D-MASH PWA/not_messenger/js/core_engine.js": "646737e74de5dfa0e02f5078917089f9d3a59cff5487856bc53e843f8d659048",
+    "D-MASH PWA/not_messenger/js/node_manager.js": "fbd505265d829f21e1919447b28b7aa785a9ce76567e62387b13fd5a2da230bb",
+    "origin/notification_service.py": "95f1d9a6b61f4fd9e94a83e275d3e5dfd5d25c2a359d6f498d0cbb6acf52bbc0",
+    "origin/personal_bot_vault.py": "9da4112a8cfa8274ef58dceebfb72ea9fb1b6e5ed6099a64316170882e2a1cea"
+  },
+  "baseline_source": "9446c22f27309131456942870971d477f6f2358f",
+  "baseline": {
+    "source_sha256": {
+      "pidorskiy_api.php": "af54300c526056951e21d84cedf4ad5f5a77091ed7acfeba5bbd879a256a1e80",
+      "tg_webhook.php": "7ee6dacd84518a1c1d1a6274896dd723ae3bc4929e0b96715d12d4d020f9d1f6"
+    },
+    "tests": 8,
+    "failures": 43,
+    "errors": 0,
+    "observations": [
+      {
+        "case": "missing table log",
+        "status": 200,
+        "exception_log_created": true,
+        "exception_log_publicly_readable_in_fixture": true
+      },
+      {
+        "case": "valid attacker signature wrong alias",
+        "status": 200,
+        "body_bytes": 234,
+        "db_changed": true,
+        "victim_rows_remaining": 0,
+        "binding_rows": 0,
+        "returned_rows": 1,
+        "application_body_read": false,
+        "exception_log_created": false
+      },
+      {
+        "case": "body trap pidorskiy_api.php",
+        "status": 500,
+        "body_bytes": 36,
+        "db_changed": false,
+        "victim_rows_remaining": 1,
+        "binding_rows": 0,
+        "returned_rows": null,
+        "application_body_read": true,
+        "exception_log_created": false
+      },
+      {
+        "case": "body trap tg_webhook.php",
+        "status": 500,
+        "body_bytes": 0,
+        "db_changed": false,
+        "victim_rows_remaining": 1,
+        "binding_rows": 0,
+        "returned_rows": null,
+        "application_body_read": true,
+        "exception_log_created": false
+      },
+      {
+        "case": "unsigned relay binding",
+        "status": 200,
+        "body_bytes": 15,
+        "db_changed": true,
+        "victim_rows_remaining": 1,
+        "binding_rows": 1,
+        "returned_rows": null,
+        "application_body_read": false,
+        "exception_log_created": false
+      },
+      {
+        "case": "unsigned webhook binding",
+        "status": 200,
+        "body_bytes": 0,
+        "db_changed": true,
+        "victim_rows_remaining": 1,
+        "binding_rows": 1,
+        "returned_rows": null,
+        "application_body_read": false,
+        "exception_log_created": false
+      }
+    ]
+  },
+  "candidate": {
+    "source_sha256": {
+      "pidorskiy_api.php": "c50342e1309e3c60168ae87ff7636e034f11b2b69445565418a33f723f26ec03",
+      "tg_webhook.php": "820871ddb0d46f80976f6baed156c4b290a00e2c454a7b2a9e355683a6d3f0dd"
+    },
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "observations": [
+      {
+        "case": "missing table log",
+        "status": 410,
+        "exception_log_created": false,
+        "exception_log_publicly_readable_in_fixture": false
+      },
+      {
+        "case": "valid attacker signature wrong alias",
+        "status": 410,
+        "body_bytes": 81,
+        "db_changed": false,
+        "victim_rows_remaining": 1,
+        "binding_rows": 0,
+        "returned_rows": null,
+        "application_body_read": false,
+        "exception_log_created": false
+      },
+      {
+        "case": "body trap pidorskiy_api.php",
+        "status": 410,
+        "body_bytes": 81,
+        "db_changed": false,
+        "victim_rows_remaining": 1,
+        "binding_rows": 0,
+        "returned_rows": null,
+        "application_body_read": false,
+        "exception_log_created": false
+      },
+      {
+        "case": "body trap tg_webhook.php",
+        "status": 410,
+        "body_bytes": 81,
+        "db_changed": false,
+        "victim_rows_remaining": 1,
+        "binding_rows": 0,
+        "returned_rows": null,
+        "application_body_read": false,
+        "exception_log_created": false
+      },
+      {
+        "case": "unsigned relay binding",
+        "status": 410,
+        "body_bytes": 81,
+        "db_changed": false,
+        "victim_rows_remaining": 1,
+        "binding_rows": 0,
+        "returned_rows": null,
+        "application_body_read": false,
+        "exception_log_created": false
+      },
+      {
+        "case": "unsigned webhook binding",
+        "status": 410,
+        "body_bytes": 81,
+        "db_changed": false,
+        "victim_rows_remaining": 1,
+        "binding_rows": 0,
+        "returned_rows": null,
+        "application_body_read": false,
+        "exception_log_created": false
+      }
+    ]
+  },
+  "syntax": "both actual PHP files php -n -l PASS",
+  "fixture": {
+    "interpreter": "Verified official Ubuntu owned prefix PHP8.3.6 revision8.3.6-0ubuntu0.24.04.12",
+    "source_transform": "Only historical placeholder DB_PATH redirected to private temporary SQLite fixture; handler/auth logic unchanged",
+    "signature": "Real PyNaCl Ed25519 signer to actual PHP sodium verifier",
+    "egress": "allow_url_fopen/include off; cURL/mail/process/socket functions disabled; open_basedir fixture; no credentials; loopback only",
+    "body_read_test": "Auto-prepend installs throwing php://input wrapper only for selected requests; candidate never invokes it; does not test SAPI pre-script buffering"
+  },
+  "commands": {
+    "test": "<S03 Python> tools/test_legacy_php_boundary.py --php <owned prefix>/usr/bin/php8.3 --extensions <owned prefix>/usr/lib/php/20230831 --fixture-parent <private cache> --report <private cache>/final-green.json",
+    "baseline": "same command with --source-root archive9446 containing D-MASH PWA/api files",
+    "lint": "<owned PHP> -n -l <each endpoint>"
+  },
+  "log_sha256": {
+    "baseline-red.log": "098d50c6365c96fd095bd9fb6bc7de52964481361301b2c393dc9d5a7fb1b2f6",
+    "baseline-public-log-red.log": "71151f9f1e394f2cfdd83d8bc152f32a69716c089c625c5cfafebad30dcab7df",
+    "current-green.log": "9ca7b6fa15ba577046bec0153a990a94418286dd4ffe5aac527b86405ac1af5a",
+    "final-green.log": "6004f6a5c88c08b788d5409c72a111f13dcbd088e71bf6457c748a10c6b71394"
+  },
+  "limits": [
+    "No production/deployment/external operator publication inventory or live third-party messaging.",
+    "No application body reads/parsing, not zero transport/SAPI buffering; upstream limits/deadlines/concurrency/logging still needed.",
+    "Own valid-key wrong-alias attack read/deleted synthetic ciphertext metadata, not Account plaintext decryption.",
+    "No demonstrated real bot-token/private-key leak; synthetic raw exception log was HTTP-readable.",
+    "Explicit legacy JS caller HTTP-status/SENT handling assigned separately to UI owner; no PHP-only claim it is fixed.",
+    "Signed Node/Origin/Python implementations unchanged; no new shared-header authorization or new wire ACK/custody protocol."
+  ]
+}

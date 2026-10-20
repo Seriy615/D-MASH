@@ -1,0 +1,57 @@
+{
+  "status": "PASS",
+  "scope": "ROOT actual Chromium Worker/native Account API interoperability through separate real Python Node; not ordinary UI",
+  "runtimeHandle": 53677,
+  "exitCode": 0,
+  "manifestSha256": "6e96b8e1a2a82025ebc52a0a72fc085fdfa5ef6a671464fe9c031001ba463ef9",
+  "sourceCommit": "92a4459a769e91c035a837a7bbf338f1ce94a0b4",
+  "hostSha256": "5606c6301e9220dbcdaf1ac4af02e481bda28ffdec1a95be8e8f0e9d7ca48bdc",
+  "nodeSha256": "9e31b8c9ac0ea3d5f2119e12829e476d72253a7f9dbfbb30933a4a67104b0598",
+  "logSha256": "19e054a9c01a022955061156551e76baa9b6a945b5de6e620805c1c2f55b8320",
+  "verification": {
+    "archivedFiles": 1188,
+    "runtimeLibraries": 30,
+    "browserFiles": 2,
+    "servedModulesAndWasm": 48,
+    "allDigestsMatchBeforeAndAfter": true,
+    "servedModuleHashesMatchIntegratedSource": true
+  },
+  "python": "3.12.3",
+  "node": "24.19.0",
+  "playwright": "1.64.0-alpha-1790635538000",
+  "result": {
+    "suite": "actual-browser-native-private-pairing",
+    "status": "PASS",
+    "offerFrom": "native",
+    "actualBrowserWorker": true,
+    "actualNativeAccount": true,
+    "browserVersion": "156.0.8078.4",
+    "pageKind": "component HTML with production modules",
+    "serviceWorkerRegistrations": 0,
+    "wireRole": "NODE",
+    "activationDifficulty": 22,
+    "preinjectedContacts": 0,
+    "preinjectedRoutes": 0,
+    "actualSignedRequestAcceptConfirm": true,
+    "actualOriginalKyberWasm": true,
+    "activationElapsedMs": [
+      38449,
+      24267
+    ],
+    "backendForwarded": 26,
+    "exactBilateralHistoryRowsEach": 2,
+    "browserRetainedAccount": true,
+    "limits": [
+      "API component with Core.launchWorkspace presentation stub; ordinary UI NOT_RUN",
+      "configured WS loopback peers default22; NAT/self-organization NOT_RUN",
+      "ACK-free mesh unchanged; no production/PWA deployment"
+    ]
+  },
+  "dataHandling": "Fresh synthetic profiles retained privately; no reset, production or real user data",
+  "limits": [
+    "Core.launchWorkspace presentation stub; real browser Worker/Core/IndexedDB/Kyber otherwise",
+    "Page/SW .45 not loaded or deployed; SW registrations zero",
+    "Configured loopback WS peers, NAT/selforganization/physical platform lifecycle NOT_RUN",
+    "Reverse direction has separate author evidence, not independent root rerun"
+  ]
+}

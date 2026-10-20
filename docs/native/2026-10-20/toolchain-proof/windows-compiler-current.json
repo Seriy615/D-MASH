@@ -1,0 +1,14 @@
+{
+  "metadata_url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310/Updates.xml",
+  "sha256": "b51bca7c10ebda2b6522b9cad00dbda4edb11735189f09136208e6f85df037b7",
+  "packages": [
+    {
+      "Name": "qt.tools.win64_mingw1310",
+      "Version": "13.1.0-202407240918",
+      "DisplayName": "MinGW 13.1.0 64-bit",
+      "DownloadableArchives": "mingw1310.7z",
+      "SHA1": "8b59fc610e4bbd584bbd0ebc53f6c7fa95b5a9e4"
+    }
+  ],
+  "execution": "NOT RUN"
+}

@@ -1,0 +1,48 @@
+{
+  "suite": "fresh-zero-Account-native-foreign-transit",
+  "status": "AUTHOR_COMPONENT_PASS",
+  "observationHandle": 40832,
+  "terminalExit": 0,
+  "credentialHostSourceCommit": "ca849fd",
+  "credentialHostSha256": "d9add01b5219827b022fe6f4e734ebecfcbd3f3282a246cebd152c5a52796e3b",
+  "nodeSourceCommit": "64e6933",
+  "nodeSha256": "2b31d6aa69ff214d090a87df6d03924a380f703933ab37417e6b63a477008802",
+  "verifiedFrozenManifest": {
+    "artifacts": 27,
+    "archivedSources": 187,
+    "runtimeLibraries": 7
+  },
+  "admissionDifficulty": 22,
+  "wireRole": "NODE",
+  "accountRows": 0,
+  "accountSessionActive": false,
+  "profileImported": false,
+  "accountCreated": false,
+  "accountLogin": false,
+  "sourcePackets": 2,
+  "recipientWirePackets": 1,
+  "recipientHandlerCalls": 1,
+  "probeTtlBefore": 14,
+  "probeTtlAfter": 13,
+  "probeNcrhChanged": true,
+  "expiredPacketForwarded": false,
+  "hopLabelChanged": true,
+  "replyOfferChanged": true,
+  "uiDetachPreservesNode": true,
+  "rootLockStopsNode": true,
+  "payloadDigest": "2f4a34a23262d48b8629f7a353d37361d44b34d0f68ac0b883d1d923908f5ab3",
+  "checks": [
+    "actual normal host profile.create and node.enable before any Account",
+    "same public Node identity on both actual default22 Python channels",
+    "actual mapped credential host and Node binaries verified",
+    "ordinary foreign discovery and encrypted foreign payload transit",
+    "unchanged500ms batch duplicate suppression and expiry",
+    "client detach retains Node; full Root lock confirms stopped Node"
+  ],
+  "limits": [
+    "Linux component only; actual GUI creation separate",
+    "configured WS loopback peers; self-organization/NAT NOT_RUN",
+    "host retains unused owner capability; no Account owner registered",
+    "ACK-free loss window unchanged"
+  ]
+}

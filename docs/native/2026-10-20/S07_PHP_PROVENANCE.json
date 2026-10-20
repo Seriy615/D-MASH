@@ -1,0 +1,36 @@
+{
+  "source": "Ubuntu noble-security signed InRelease and Packages",
+  "release_sha256": "4ec8164eff59d6eefde78b829360b89a37e86adeb73e221511ca0863b57fde6a",
+  "packages_sha256": "c51949f690972b8da8e4f635d0b59bbbd809480019af542c2416051de073869e",
+  "packages_size": 6232891,
+  "artifacts": [
+    {
+      "package": "php8.3-cli",
+      "version": "8.3.6-0ubuntu0.24.04.12",
+      "url": "https://security.ubuntu.com/ubuntu/pool/main/p/php8.3/php8.3-cli_8.3.6-0ubuntu0.24.04.12_amd64.deb",
+      "sha256": "92057bad122a53f81ad00219d6c0d9c3b1e0aba0e5551da27853b7a89f72df0a",
+      "size": 1915852
+    },
+    {
+      "package": "php8.3-common",
+      "version": "8.3.6-0ubuntu0.24.04.12",
+      "url": "https://security.ubuntu.com/ubuntu/pool/main/p/php8.3/php8.3-common_8.3.6-0ubuntu0.24.04.12_amd64.deb",
+      "sha256": "85e4fc03ff84fef7dfed923c99d1a2e0e6f49147a50bcd5eaca4e7cd05a835fa",
+      "size": 743426
+    },
+    {
+      "package": "php8.3-sqlite3",
+      "version": "8.3.6-0ubuntu0.24.04.12",
+      "url": "https://security.ubuntu.com/ubuntu/pool/main/p/php8.3/php8.3-sqlite3_8.3.6-0ubuntu0.24.04.12_amd64.deb",
+      "sha256": "90df4b04e7fb73d4251732e29fbe8fa39e0cab6d5d7ded43bd13bfecf30e12f1",
+      "size": 34214
+    }
+  ],
+  "system_packages_changed": false,
+  "signing_key_fingerprint": "F6ECB3762474EDA9D21B7022871920D1991BC93C",
+  "signature_log_sha256": "9de53960ec4edc64e63265b43b9e03112d85d3b612cfe2138d45e55e5fd2aecc",
+  "php_version": [
+    "PHP 8.3.6 (cli) (built: Oct  7 2026 18:06:38) (NTS)",
+    "Copyright (c) The PHP Group"
+  ]
+}

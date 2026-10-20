@@ -1,0 +1,44 @@
+{
+  "kind": "ROOT actual first-send durable queue and automatic bilateral delivery",
+  "status": "PASS_PROCESS_MESH",
+  "sourceCommit": "562941a",
+  "manifestSha256": "04124b9d229e8daf9c40ad95db828738b2d878514a81c152cc23d8c3937f9625",
+  "verifiedFiles": 1183,
+  "verifiedRuntimeEntries": 30,
+  "hostSha256": "ae7b770cd81e0747162684d1ac5ad834c3b6266f6d7349b06bdc26636e83ec05",
+  "nodeSha256": "9e31b8c9ac0ea3d5f2119e12829e476d72253a7f9dbfbb30933a4a67104b0598",
+  "handle": 56828,
+  "exitCode": 0,
+  "result": {
+    "freshRoots": 2,
+    "freshAccounts": 2,
+    "preinjectedContacts": 0,
+    "preinjectedRoutes": 0,
+    "actualSignedRequestAcceptConfirm": true,
+    "actualNativeKyber": true,
+    "backendForwarded": 38,
+    "recipientHistory": 2,
+    "bothAccountReopenHistory": 2,
+    "firstSendBeforeOtherReady": true,
+    "accountLogoutReopenPending": true,
+    "ownerSigkillReopenPending": true,
+    "sameAccountAndNodeIdentity": true,
+    "activationElapsedMs": [
+      146050,
+      72420
+    ],
+    "immediateSendStates": [
+      "HANDSHAKE_PENDING",
+      "HANDSHAKE_PENDING"
+    ],
+    "callerManualRetry": false,
+    "originalSendCalls": 2
+  },
+  "limits": [
+    "Linux component API simulates one click; actual Telegram fork UI NOT RUN",
+    "Configured WS loopback/default22 transit, not NAT/selforganization",
+    "Read-only intermediate observation of one peer disconnected did not establish initial-admission failure; run terminal PASS",
+    "No mesh ACK policy change or fake DELIVERED",
+    "Source integration does not imply full shared-HEAD app build"
+  ]
+}

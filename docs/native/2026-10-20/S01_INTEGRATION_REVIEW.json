@@ -1,0 +1,64 @@
+{
+  "kind": "INDEPENDENT_READ_ONLY_SOURCE_AND_UNIT",
+  "source": "d8eff7d064b63423b53898cad902ee95c13b5a25",
+  "date_utc": "2026-10-20",
+  "status": "PASS_SCOPED_WITH_DOCUMENTED_LIMITS",
+  "source_sha256": {
+    "D-MASH PWA/not_messenger/js/acceptance_fixes.js": "197203b35297d7b18aaedcc8f23bf17697f501b44a19c00b6af3fa96d38965d4",
+    "D-MASH PWA/not_messenger/js/acceptance_v50.js": "927f7564aa55cb087d716001379906be4e22cbb4fd4174a4c3d0e16ad54c3f43",
+    "D-MASH PWA/not_messenger/js/acceptance_v51.js": "f415c1753dd6981c36a8e2ca0033ba31430c2d7c39d1a2580de479ef1130835c",
+    "D-MASH PWA/not_messenger/js/acceptance_v54.js": "8088582f94a46280d0574ea4d40c45c6684ca9e3b76f1d0203b4097e2a8ee122",
+    "D-MASH PWA/not_messenger/js/core_engine.js": "fafd34f6d1b2405a8d87538c086def6508a8f29d2530f3adc2ed1e9991192d3d",
+    "D-MASH PWA/not_messenger/js/device_root.js": "b52b75f04d8a5a8d838e5e4b7700746c5b527f7acf96f1a6433c1407e9e61f54",
+    "D-MASH PWA/not_messenger/js/local_credentials.js": "36975b2bdb15b002b4e1d1004656acac1e40f2470302d3ba16cd2ef52fc6ad0f",
+    "D-MASH PWA/not_messenger/js/local_credentials_bootstrap.js": "7060865e1dff9e124ee50df69d5c60dd4e09a5b9a11c47890702537c3a7fe0db",
+    "D-MASH PWA/not_messenger/js/local_credentials_worker.js": "0c4e31073785c226300a53d865e5b8964fa57398bed510e08b8ea042367d2f21",
+    "D-MASH PWA/not_messenger/js/release.js": "ace375792ec151d09508c2d9759498f40359658b421757b39d4bd33230702fbf",
+    "D-MASH PWA/not_messenger/js/runtime_fixes.js": "1942b49a51f6d46f36ce9295a1e422002a9623010d5120cac3505fb6bac66428",
+    "D-MASH PWA/not_messenger/js/ui_logic.js": "7463b7ffc13e29877875363acdfccac810f645ec4c157150f41bc474e8affe74",
+    "D-MASH PWA/not_messenger/sw.js": "602cec26dda0fed65b76f6d06c3a86c1e38979b5e814a1dff449bb7ce8de8c15",
+    "D-MASH PWA/not_messenger/tests/biometric_setup_cancel.test.js": "c6c02e7382f80c1d12cce3eaf06c2bd302a81b636af44c6c9f6d72ecd49c6451",
+    "D-MASH PWA/not_messenger/tests/calculator_secret_gate.test.js": "2281f0fef80256ba3dc47b349e9c5b6063e910956b431c9059c4ea38831c7795",
+    "D-MASH PWA/not_messenger/tests/core_lifecycle_acceptance.test.js": "614818a1e24173df30eb36c9b2908935cb7e4f403bce0114d4ff0ede8f0954ad",
+    "D-MASH PWA/not_messenger/tests/device_biometric_unlock_integration.test.js": "bda8000e0e81e3a8bbed91329af66e190137a7514a4b60e7595ca9cb0d344a5e",
+    "D-MASH PWA/not_messenger/tests/device_root.test.js": "bc5906cef702f8e6c7ce445ec404a8b1458f2d5f849eb2a4451b9d51248996fb",
+    "D-MASH PWA/not_messenger/tests/global_settings_ui.test.js": "2637f39745da163890956f5edd895c4325c84f960f515ef44c0e43fd346e173f",
+    "D-MASH PWA/not_messenger/tests/historical_webauthn_release.test.js": "35657bbb4050937ac4a8b1367d61b5c05b915458bca5d2a0aa971ca1104d6e9a",
+    "D-MASH PWA/not_messenger/tests/historical_webauthn_source_regression.test.js": "50585484d76655927e593ad4bdbca30872ff22ef68b5f2496173d47e9412ba6f",
+    "D-MASH PWA/not_messenger/tests/local_credential_biometric_repair.test.js": "1338166e4833992b50dc3eaa9b3089ce2e8f579536c94938a77882cc96af6126",
+    "D-MASH PWA/not_messenger/tests/local_credential_foundation.test.js": "660f3499ee61706ed2aeef4a23da2a2efe35e04c310021a8816e2a5cae8e6ffc",
+    "D-MASH PWA/not_messenger/tests/local_credential_integration_contract.test.js": "50ebff0f18efe79343e5fe75d8326dfd2fbf4e4edeb5a63d66bf7a30ef67ef12",
+    "D-MASH PWA/not_messenger/tests/ui_runtime_readiness.test.js": "e150cee78c1c203098592b13a547e961621531e196eae6ef91c96beab3fd5b18"
+  },
+  "tests": {
+    "suites": 11,
+    "passed": 11,
+    "node": "v24.19.0",
+    "immutable_archive": true,
+    "log_sha256": "59deab7fc2b3ff321cc6023785eacf94cc2a7b99fa6ce68f6a47acd8c0596869",
+    "names": [
+      "local_credential_integration_contract",
+      "local_credential_foundation",
+      "local_credential_cross_context",
+      "local_credential_schema",
+      "local_credential_wipe",
+      "local_credential_biometric_repair",
+      "historical_webauthn_release",
+      "calculator_secret_gate",
+      "device_biometric_unlock_integration",
+      "core_lifecycle_acceptance",
+      "ui_runtime_readiness"
+    ]
+  },
+  "finding": {
+    "id": "BIO-INSTRUCTION-01",
+    "codepath": "acceptance_v54.js beginBiometricTriggerSetupV54 overwrites effective instruction with any-button wording",
+    "fixed_by": "3541458",
+    "verification": "Read source delta; root retained-profile instruction retest PASS in root-biometric-instruction-retest.json, committed2f42022. No independent reviewer browser execution claimed."
+  },
+  "limits": [
+    "Independent browser execution not repeated for this integration review; root retained-profile evidence is separate.",
+    "SW client-count check is cooperative and non-atomic against new tabs or arbitrary legacy JavaScript; no sandbox claim.",
+    "Real authenticator hardware, SW-enabled migration/offline upgrade and crash/power-loss acceptance remain separate gates."
+  ]
+}

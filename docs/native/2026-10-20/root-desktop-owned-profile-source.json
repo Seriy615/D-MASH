@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "scope": "ROOT independent two-patch Desktop source reconstruction; no full app compile/UI claim",
+  "recipeCommit": "e740454",
+  "upstreamCommit": "86262333a457f62709726ee4ab9c48fa58824da4",
+  "patchedFiles": 33,
+  "patches": [
+    {
+      "path": "patches/0001-local-core-boundary.patch",
+      "sha256": "f4841c74dee4099182acea0ead7788ba91cae3b0ac893122e94733af89e4766e",
+      "status": "DRAFT full app integration: standalone IPC/projection built and CTest1/1 passed; full original app configured and UI-object build active, not linked/rendered"
+    },
+    {
+      "path": "patches/0002-owned-profile-launcher.patch",
+      "sha256": "a4687bc4c87653de0ba8fab7b03b71e83774d138d855835e79603f05f5008d31",
+      "status": "SOURCE; force owned namespace before logs/platform legacy lookup, full app compile/runtime acceptance pending"
+    }
+  ],
+  "limits": [
+    "Local live build13001 retains earlier32file source; new launcher patch not applied to it",
+    "CI source path, license packaging and owned UI directory fixed; clean runner execution pending",
+    "No full application link, chat UI, no-egress or cross-platform acceptance"
+  ]
+}

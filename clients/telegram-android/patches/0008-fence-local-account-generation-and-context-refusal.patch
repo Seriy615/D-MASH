@@ -1,0 +1,51 @@
+From bae44a7079bbaf2437114fca65324868fdc4abe8 Mon Sep 17 00:00:00 2001
+From: Codex <codex@d-mash.ru>
+Date: Tue, 20 Oct 2026 17:45:38 +0000
+Subject: [PATCH] Fence queued UI requests with local Account generation
+
+---
+ .../java/org/telegram/messenger/dmash/DmashClient.java | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java b/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
+index f1a5f06..9a78689 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
+@@ -24,10 +24,10 @@ public final class DmashClient {
+     private static final ArrayList<Observer> observers = new ArrayList<>();
+     private static final class Request {
+         final String method; final JSONObject params; final Reply callback;
+-        final String expectedAccount; final long expectedEpoch;
++        final String expectedAccount; final long expectedEpoch, expectedLocalEpoch;
+         Request(String m, JSONObject p, Reply c) {
+             method=m;params=p;callback=c;
+-            expectedAccount=scoped(m)?self:null;expectedEpoch=scoped(m)?sessionEpoch:0;
++            expectedAccount=scoped(m)?self:null;expectedEpoch=scoped(m)?sessionEpoch:0;expectedLocalEpoch=accountEpoch;
+         }
+     }
+     private static final ArrayDeque<Request> requests = new ArrayDeque<>();
+@@ -84,18 +84,18 @@ public final class DmashClient {
+     private static void drain() {
+         if(!ready||busy||requests.isEmpty()||connection==null)return;
+         Request job=requests.removeFirst();
+-        if(scoped(job.method)&&(!bound||!Objects.equals(job.expectedAccount,self)||job.expectedEpoch!=sessionEpoch)) {
++        if(scoped(job.method)&&(!bound||!Objects.equals(job.expectedAccount,self)||job.expectedEpoch!=sessionEpoch||job.expectedLocalEpoch!=accountEpoch)) {
+             job.callback.done(false,"ACCOUNT_SESSION_CHANGED",object());drain();return;
+         }
+         connection.request(job.method,job.params,(ok,code,result)->{
+-            if(scoped(job.method)&&(!bound||!Objects.equals(job.expectedAccount,self)||job.expectedEpoch!=sessionEpoch)) {
++            if(scoped(job.method)&&(!bound||!Objects.equals(job.expectedAccount,self)||job.expectedEpoch!=sessionEpoch||job.expectedLocalEpoch!=accountEpoch)) {
+                 job.callback.done(false,"ACCOUNT_SESSION_CHANGED",object());drain();return;
+             }
+             if(ok&&(job.method.equals("account.login")||job.method.equals("account.attach"))) {
+                 JSONObject identity=result.optJSONObject("value");
+                 if((job.method.equals("account.attach")&&(identity==null||!job.params.optString("accountPublicId").equals(identity.optString("accountPublicId"))))||!bind(identity)) {job.callback.done(false,"ACCOUNT_BINDING_UNAVAILABLE",object());drain();return;}
+             }
+-            if(code.equals("ACCOUNT_SESSION_CHANGED")&&Objects.equals(job.expectedAccount,self)&&job.expectedEpoch==sessionEpoch) {
++            if((code.equals("ACCOUNT_SESSION_CHANGED")||code.equals("ACCOUNT_CONTEXT_REQUIRED"))&&scoped(job.method)&&Objects.equals(job.expectedAccount,self)&&job.expectedEpoch==sessionEpoch&&job.expectedLocalEpoch==accountEpoch) {
+                 accountActive=false;clearProjection();
+             }
+             if(ok&&(job.method.equals("account.logout")||job.method.equals("root.lock"))) {
+-- 
+2.43.0
+

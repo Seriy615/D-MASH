@@ -1,0 +1,199 @@
+{
+  "kind": "BROWSER",
+  "status": "PASS",
+  "clock": "Playwright clock.runFor executes all installer deadlines; accelerated elapsed time, not wall time",
+  "network": "loopback HTTP only; external HTTP and all WebSockets blocked; ServiceWorkers blocked",
+  "profiles": [
+    {
+      "label": "early",
+      "delay_ms": 1000,
+      "steps": [
+        "elapsed before Core lazy load",
+        "actual calculator setup and DeviceRoot unlock",
+        "actual Account login",
+        "effective Account settings",
+        "PRIVATE QR and PUBLIC empty-state actions",
+        "Saved Messages persisted once",
+        "beginKeyExchange missing-pairing error and re-enabled action",
+        "same-context reload retains identity and history"
+      ],
+      "page_errors": [],
+      "markers": {
+        "functional": true,
+        "public": true,
+        "acceptance": true,
+        "v50": true,
+        "v51": true,
+        "node": true,
+        "v52": true
+      },
+      "handlers": {
+        "beginKeyExchange": {
+          "name": "beginKeyExchange",
+          "sha256": "3f723635927c5cb7c574417e7ebf45530437aebcea3493a6c84ecb664d1ebe2a"
+        },
+        "openSettings": {
+          "name": "accountSettingsV50",
+          "sha256": "54ee5db38cf8c89771278af97287da3d787ca603892e37eb472026ee106977b4"
+        },
+        "showMyQR": {
+          "name": "repairedShareQr",
+          "sha256": "b4d1635c34a2254c5b18cfe01c6a7ad41bd1d4bb94e9b1319fa1250c2e9ef1fb"
+        },
+        "addPeerFlow": {
+          "name": "repairedAddPeerFlow",
+          "sha256": "071ef14601763dc296869ee98b58d10616c42bcc13d3fb329c90c8b4c6a1e13d"
+        }
+      },
+      "public_identity_sha256": {
+        "account": "b26885c2524ed87bca565908877893b61a8e8e5016c4be930c3505bc064c8212",
+        "device": "962a476c4cb1a81d929dbe628e3eb768dd3d5c6d484b0ad183eb8b8f23d1a77e"
+      },
+      "status": "PASS"
+    },
+    {
+      "label": "late",
+      "delay_ms": 180000,
+      "steps": [
+        "elapsed before Core lazy load",
+        "actual calculator setup and DeviceRoot unlock",
+        "actual Account login",
+        "effective Account settings",
+        "PRIVATE QR and PUBLIC empty-state actions",
+        "Saved Messages persisted once",
+        "beginKeyExchange missing-pairing error and re-enabled action",
+        "same-context reload retains identity and history"
+      ],
+      "page_errors": [],
+      "markers": {
+        "functional": true,
+        "public": true,
+        "acceptance": true,
+        "v50": true,
+        "v51": true,
+        "node": true,
+        "v52": true
+      },
+      "handlers": {
+        "beginKeyExchange": {
+          "name": "beginKeyExchange",
+          "sha256": "3f723635927c5cb7c574417e7ebf45530437aebcea3493a6c84ecb664d1ebe2a"
+        },
+        "openSettings": {
+          "name": "accountSettingsV50",
+          "sha256": "54ee5db38cf8c89771278af97287da3d787ca603892e37eb472026ee106977b4"
+        },
+        "showMyQR": {
+          "name": "repairedShareQr",
+          "sha256": "b4d1635c34a2254c5b18cfe01c6a7ad41bd1d4bb94e9b1319fa1250c2e9ef1fb"
+        },
+        "addPeerFlow": {
+          "name": "repairedAddPeerFlow",
+          "sha256": "071ef14601763dc296869ee98b58d10616c42bcc13d3fb329c90c8b4c6a1e13d"
+        }
+      },
+      "public_identity_sha256": {
+        "account": "a2e9d82f28fbec931225cb056d3d9c54a30720abcc6a0a608c4355237feba6c2",
+        "device": "b0bc4734e61491fc5452420adfcb6f49df59ada5bf81464e90335272aadbb96c"
+      },
+      "status": "PASS"
+    }
+  ],
+  "source_sha256": {
+    "index.html": "5e892e1d49790745214c519828b5e858e85eda5258eca58695445277e20847cb",
+    "js/release.js": "3d6c8c515c42fc154e13b201c2eac1461a23e656f7be6572a6ef64e40c2638dc",
+    "js/device_routes.js": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+    "js/dmash_links.js": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+    "js/quick_name_registry.js": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+    "css/runtime_fixes.css": "8890a358595136854d2491cb5ab689f2bce0baeaf10605332133086084ad84cd",
+    "js/ui_logic.js": "216e565e05064c78ecda5bd43073bd827684a5b6e89dff98f18f57d3c224b8c6",
+    "js/call_session.js": "b85f6bbbf8aebc9a4864101852eb205fe59900bde6b8c2ddf69f73acc7cab1b6",
+    "js/secure_session.js": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+    "js/device_client_v3.js": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+    "js/device_authority_v3.js": "5644ecf21dd35f4e755983a5afc06d7f08d4482d2e0519caa9e58891197de6d9",
+    "js/device_envelope.js": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+    "js/device_inbox.js": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+    "js/account_node_inbox_v4.js": "4e55b612c6a305299999271cc89b609ae1326fbc0522f92d4a239773d5db904c",
+    "js/route_discovery_v4.js": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+    "js/account_node_transport_v4.js": "ca515765bf88db317c2bb0eab49562e0e60ec119ce7f3a4819f47abe24ec2b17",
+    "js/private_routes_v3.js": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+    "js/contact_bootstrap_v3.js": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+    "js/contact_flow_v3.js": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+    "js/contact_payloads.js": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+    "js/contact_transport.js": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+    "js/pending_contact_requests.js": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+    "js/resource_pow.js": "89a85384c71581d716c051fa5475ed01c7e3a761033e2cbd4fb7b6bd794ab81b",
+    "js/ui_global_bridge.js": "449f2fd2fabbe6c0a933a667a5632bfdfa1fd509988a4543c0dd4bde09f913a7",
+    "js/runtime_fixes.js": "e3b93582d11fe727b8c480fa6d7662be6ff0199c8c4ed9bb0956c07e960f8a80",
+    "js/public_contact_runtime.js": "a548f3defd239bfeb777d7867b47ef3b16c661bc1a975300393ced8a22f3f759",
+    "js/acceptance_fixes.js": "e3d22992726aead01f233a03cb3fd6958bcc05108bc62f434526848b8efcd79d",
+    "js/acceptance_v50.js": "fd1b78390ea850c8c3986191339bc04bc5c3e2724cccb958fd27d8a5b226e1d8",
+    "js/acceptance_v51.js": "32094829a3412156f77e481af9bffb43dce342d88aa2aef64116ea484095eac8",
+    "js/call_signaling.js": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+    "js/node_service_descriptor_v4.js": "e69d5c118de8c0b5bedda6b71b3ba2568d0b3b03aca4431b9f18fad54fabe68d",
+    "js/node_sturn_service_v4.js": "a79100996a95698ed302b577d4d58e6b7a42cbad238cbe4f80fc77e839fdbfa6",
+    "js/call_runtime.js": "2e59a5804d2167487ab443dcf9481c99dbbd91cb066a8525cdc63df055f7487a",
+    "js/account_ratchet.js": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+    "js/saved_messages.js": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+    "js/chat_cipher.js": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+    "js/chat_password.js": "5d850716a4b5e3316061961088ba718d453e587eb5eccf8bc8611e95f87f545c",
+    "js/account_ratchet_runtime.js": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+    "js/account_recorded_media.js": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+    "js/file_channel.js": "02f650c74455b2e4c7f043a2546b401040ab172ce07d31fa277d0f3f21081b6f",
+    "js/file_vault.js": "212deabf54c951e4fd80b80a4b7a06701b10e02f68dfa5ef20aa34ed6fc883de",
+    "js/file_session.js": "81f2a4fd1a0ba573250bc4946da26397cfd36131937ab32764b7efecfd1b1d28",
+    "js/file_runtime.js": "f8c391d672362ce786617609fcfd4a1c891808a7ac06772393211cd24114ea8a",
+    "js/recorded_note_turn.js": "38d26537f1611d650c61924e4289bda6f95c1e6dde4e0e43456ad2f7b0d9275c",
+    "js/acceptance_v52.js": "af0dc809e7a65649b07c31f004d87b38471c3cc2ee51878580dffb510d30860b",
+    "js/acceptance_v54.js": "d3a2e5d662f26b96dfef5726ef85e60946a5bee2764ad9f638594ed06e6c056d",
+    "js/acceptance_v55.js": "8b597692a8ef3b8a3e8eb26cfb9e0e375ad52558caf33b37f6cb08f36d538afd",
+    "js/account_pairing_v2.js": "49692f34da52870e90d9f447ce8252afff40d82d972b238af3b5040e2a213a63",
+    "js/account_route_binding_v2.js": "209f83e06cd6aa5439b23b627dcf534acb7abf1bd820334cf09bd737e58f312b",
+    "js/account_static_kem_v1.js": "12008dbfe62f6f5c539767f3dad707d90e544376534b91de4c285d468bba9b33",
+    "js/account_route_journal_v2.js": "53a08e62eb095563e926d458d764833df3a88226e68691c52727f0e980a9d8a6",
+    "js/recipient_payload_v4.js": "8167b736b6a8e29c50ef8ffb146b0a712e3369cfa9895bdef171ff24b95e6a6a",
+    "js/vendor/blake3.min.js": "8071ab35cb39002f3ba58c0b3ed48ce1be876d1c93a06a27572fe59d62afca0c",
+    "js/node_identity.js": "47a18f80fd7e76b3bde39e0680830c8f317ab03eb0e282dddd32e26256560f43",
+    "js/node_runtime_host_v4.js": "ae62fc05079655a25e61edd1af6802ef3564437986c3cf722c42234cb6f8a7e5",
+    "js/node_runtime_coordinator_v4.js": "203aace2938f92b22a46943d24ea14fc6f90f6a499e979e1962a6899ac444ae7",
+    "js/node_public_bootstrap_control_v4.js": "91f7cbef5df02e3449c8fbee99425afe68f4b4e8bb584c6d3e80a39f352387ad",
+    "js/node_bootstrap_control_v4.js": "c2f04dafebc3f93df8262edbb4c9e9a8bef665b1aa7f538ed651d7f63eee56f2",
+    "js/account_private_pairing_link_v4.js": "943d4894839357320fa44055c56b090bcf0db00abc295c9700fa944c53981547",
+    "js/account_sealed_operation_v4.js": "f01ef000b15fe13ac503c24e0241871e5af6fa7861468c8b7790092f86844f13",
+    "js/account_inbox_progress_v4.js": "851e6b2cdd067f09317a96e9276e51b0e08ed488d7b8c8d7d0bb4480422aa25f",
+    "js/account_managed_inbox_v4.js": "f3532f537542ff3dd2c7b58b8a7c4c5b4e22f790efaa1c445cc8c678ffa046c3",
+    "js/account_handshake_v4.js": "d34819c870e0d2aa923f78cebee43b986e2ddaa5e3d94123402c3805a707fc52",
+    "js/account_session_store_v4.js": "68592c93ac40c4f340100932183a8347cf9f4d8ecee48cd86274e169e94b3f80",
+    "js/account_session_v4.js": "709c777aff3f5101dd25672ea3dc5cacb635f2d2ad57f0a8414d6b3850f568cf",
+    "js/account_app_cipher_v4.js": "cbf1a950305c324cf848156cb7f5cbc31572711899443eec7ad596aa2b3c714b",
+    "js/account_app_outbox_v4.js": "a5fb5b8b51b439944647b96b04cc9d44c569e94b6d07331132e7343aaab6a9ae",
+    "js/account_session_runtime_v4.js": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+    "js/account_authenticated_history_v4.js": "90c7263dccfbbda2ad332c44d4fe9580121e6debbf017122fee653c87b64000e",
+    "js/account_media_control_v4.js": "0e54c0fb4ef3e2d54ad66db15aa729ad523571a50c834a7af3267474df8dac9d",
+    "js/account_media_bridge_v4.js": "f62cf27061a38f65d12fb4475af4738b3cb50d7d476c60a21ec476c38957dc61",
+    "js/account_media_dispatch_v4.js": "c0e13b3c2bdeabf6f94b8c33dd88696b7a34901a141a1a031064e216a4f76886",
+    "js/account_media_authority_v4.js": "0b75cb2f4e6f33656e733d74a1fe0f6210b877287c1f88f69158658b95cdd1bd",
+    "js/public_account_orchestrator_v4.js": "e7ffffd6f16f4d33c4a430e904891e4ba625e557ce09383bd4415f0412046cdb",
+    "js/managed_node_catalog_v4.js": "afbc54e6970cacc922eaf02bf8b66bb1161b33db1f00f41da97045fd6ef91329",
+    "js/node_account_ui_v4.js": "718f68acb9d2667c771fd95992523aaac5b83f83c8b37a3adced8a4ad0c58687",
+    "js/node_root_lifecycle_v4.js": "3ccba9ccd65c930c95dc6b4f56a3a07233645e1ea2e4f8260132e43bc29d3ae6",
+    "calc_icon.png": "e2edfaf28b60df71725c0a96fab4c6c80b135415c2913614ac497064b023f4da",
+    "js/vendor/kyber768.js": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+    "js/vendor/html5-qrcode.min.js": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+    "js/vendor/qrcode.min.js": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+    "js/vendor/nacl-util.min.js": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+    "js/vendor/argon2-bundled.min.js": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+    "js/device_root.js": "4e17177fa33414a7351d60567648ba0e0f4aabb2d1a10759a486feb7461170be",
+    "js/storage.js": "a9c925caf69bea63d56a0a54e0391eb804b78377c05d8b89b4a2a5074e71742d",
+    "js/vendor/kyber768.wasm": "e9b316e56f5d1eef1f44f28bca99bec16ec9cff69af4b17d318143512255b009",
+    "js/node_manager.js": "fbd505265d829f21e1919447b28b7aa785a9ce76567e62387b13fd5a2da230bb",
+    "js/core_engine.js": "2d1a897c80a9fe83e731c8e3c9b8381224fc2886e8278a0120c4f45b2457d920",
+    "js/vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "nodes.json": "ff4979797e9370c3c174a8156a378289787c953a63bee88319b06a8683b43c3c"
+  },
+  "limits": [
+    "Synthetic fresh profiles only; lost pre-reboot retained profiles cannot be retested.",
+    "No positive peer/network/media/native acceptance; not an all-controls PASS."
+  ],
+  "browser": "156.0.8078.4"
+}

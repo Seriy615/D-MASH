@@ -1,0 +1,69 @@
+{
+  "metadata": [
+    [
+      "qt6_6120/qt6_6120_mingw",
+      "da865f86f4e2ec62ba24bcab10efd187b7ba2426255a82943c6f1cfba4c6578a",
+      [
+        "qt.qt6.6120.win64_mingw",
+        "qt.qt6.6120.addons.qtwebsockets.win64_mingw"
+      ]
+    ],
+    [
+      "tools_mingw1310",
+      "b51bca7c10ebda2b6522b9cad00dbda4edb11735189f09136208e6f85df037b7",
+      [
+        "qt.tools.win64_mingw1310"
+      ]
+    ]
+  ],
+  "archives": [
+    {
+      "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_mingw/qt.qt6.6120.addons.qtwebsockets.win64_mingw/6.12.0-0-202609280346qtwebsockets-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z",
+      "sha256": "61abd2e1cdce57b9cd41afdf6be73e9621b1f402840a6c3b35947858daeb7de4",
+      "archive": "qtwebsockets-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z",
+      "component": "qt.qt6.6120.addons.qtwebsockets.win64_mingw",
+      "version": "6.12.0-0-202609280346",
+      "destination": "6.12.0/mingw_64"
+    },
+    {
+      "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_mingw/qt.qt6.6120.win64_mingw/6.12.0-0-202609280346qtbase-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z",
+      "sha256": "3356346505113242a4f7c0b09ba46188424ee7938232166655f794c28a3477fc",
+      "archive": "qtbase-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z",
+      "component": "qt.qt6.6120.win64_mingw",
+      "version": "6.12.0-0-202609280346",
+      "destination": "6.12.0/mingw_64"
+    },
+    {
+      "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_mingw/qt.qt6.6120.win64_mingw/6.12.0-0-202609280346MinGW-w64-x86_64-13.1.0-release-posix-seh-msvcrt-rt_v11-rev1-runtime.7z",
+      "sha256": "d8629a02e4edaf6015709532ddfbb074616dd42b90484e69448bcc88cfefe9e4",
+      "archive": "MinGW-w64-x86_64-13.1.0-release-posix-seh-msvcrt-rt_v11-rev1-runtime.7z",
+      "component": "qt.qt6.6120.win64_mingw",
+      "version": "6.12.0-0-202609280346",
+      "destination": "6.12.0/mingw_64/bin"
+    },
+    {
+      "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_mingw/qt.qt6.6120.win64_mingw/6.12.0-0-202609280346d3dcompiler_47-x64.7z",
+      "sha256": "06adfc5bb5873b177d9019f29f9be06c1530830371819b95de6bab290ee2b8a0",
+      "archive": "d3dcompiler_47-x64.7z",
+      "component": "qt.qt6.6120.win64_mingw",
+      "version": "6.12.0-0-202609280346",
+      "destination": "6.12.0/mingw_64/bin"
+    },
+    {
+      "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_mingw/qt.qt6.6120.win64_mingw/6.12.0-0-202609280346opengl32sw-64-mesa_11_2_2-signed_sha256.7z",
+      "sha256": "f51918c465a229efb528e26ea4e74e433663fac99a9296accdfbb090e48ac3b8",
+      "archive": "opengl32sw-64-mesa_11_2_2-signed_sha256.7z",
+      "component": "qt.qt6.6120.win64_mingw",
+      "version": "6.12.0-0-202609280346",
+      "destination": "6.12.0/mingw_64/bin"
+    },
+    {
+      "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310/qt.tools.win64_mingw1310/13.1.0-202407240918mingw1310.7z",
+      "sha256": "a7b502294a903b64fccd4a41ba39f48d3f6c9a5ece167f0cfaeac920d15b344f",
+      "archive": "mingw1310.7z",
+      "component": "qt.tools.win64_mingw1310",
+      "version": "13.1.0-202407240918",
+      "destination": "."
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "suite": "native-remote-Account-E2EE",
+  "status": "AUTHOR_COMPONENT_PASS",
+  "observationHandle": 4412,
+  "terminalExit": 0,
+  "accountProbeSha256": "5d1b431d36b3b0fa58a5e706d175df993f101213fa262185cd25b66590dde1aa",
+  "nodeSourceCommit": "a0f54a9",
+  "nodeBinarySha256": "5a198531198010d5d90d6258d1f7c55d650b40d3f09ad00ec01b129533d9983a",
+  "admissionDifficulty": 22,
+  "wireRole": "NODE",
+  "backendForwarded": 16,
+  "recipientAccountExitBeforeConsumption": 73,
+  "recipientHistoryBeforeReplay": 1,
+  "recipientHistoryAfterReplay": 1,
+  "recipientHistoryAfterReopen": 1,
+  "senderHistoryAfterReopen": 1,
+  "applicationPlaintextDigest": "d1787a25946685e11536b60546f5fed3dba0ea0c7b8e92693bf26ff66dd51611",
+  "nodeContainsApplicationPlaintext": false,
+  "checks": [
+    "actual retained Argon2 Account identities",
+    "original Kyber WASM compatible E2EE handshake",
+    "signed bilateral journal commit with live Node preparation before activation",
+    "actual destination install and durable job submit",
+    "actual native Nodes and Python transit at default22",
+    "Account durable history before actual owner exit73 before Inbox consumption",
+    "replay dedupe and token consumption",
+    "both Account owners reopen retain history",
+    "HKDF deriveKey AES-GCM compared with independent WebCrypto"
+  ],
+  "earlierFailures": [
+    {
+      "handle": 31330,
+      "phase": "route preparation",
+      "cause": "QuickJS missing structuredClone"
+    },
+    {
+      "handle": 30300,
+      "phase": "app submit after handshake",
+      "cause": "native WebCrypto missing HKDF deriveKey"
+    },
+    {
+      "handle": 77209,
+      "phase": "recipient receipt scheduling after durable history",
+      "cause": "QuickJS missing queueMicrotask"
+    }
+  ],
+  "limits": [
+    "preselected synthetic signed contact pairs; UI pairing NOT_RUN",
+    "synthetic scoped daemon grants; resident host export separate",
+    "recipient Account owner crash proven; recipient Node crash not covered by this fixture",
+    "ACK-free mesh baseline; no custody or delivered transport claim",
+    "Linux component runtime only; browser Android Windows separate",
+    "Node binary intentionally pinned to a0f54a9; added actor HKDF port consistency change not exercised by that binary",
+    "bounded failure stack diagnostic remains inside private Account sync API; raw private fixture and logs excluded"
+  ]
+}

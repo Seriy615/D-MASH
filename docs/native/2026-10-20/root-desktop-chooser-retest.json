@@ -1,0 +1,28 @@
+{
+  "kind": "ROOT actual retained Qt file chooser and Account controls retest",
+  "status": "PASS_ACCOUNT_UI",
+  "testSourceCommit": "33a6273",
+  "uiTestSha256": "044dd7fcf67fa760215c34b78a6ffd745436263dc22c7222f5b8528d9c34db67",
+  "productPin": "desktop-node-controls",
+  "owningFixture": "same private retained Account wrapper; separate fresh target profile",
+  "terminalExit": 0,
+  "observationHandle": 20183,
+  "qtTotals": {
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 22644
+  },
+  "actions": [
+    "Actual chooser cancel then clipboard paste/Open",
+    "Root PIN unlock",
+    "Account selector/cancel/wrong-password/busy-cancel/correct login",
+    "Saved original row plus native UI send",
+    "Logout/host restart/relogin retains native write"
+  ],
+  "limits": [
+    "No DMASH_UI_NODE_CONTROLS option; visible Node buttons not accepted by this gate",
+    "Initial43987 chooserFAIL retained; full optional Node gate240s timeout remains open",
+    "No remote messaging, Android or Windows runtime acceptance"
+  ]
+}

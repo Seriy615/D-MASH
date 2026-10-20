@@ -1,0 +1,74 @@
+{
+  "kind": "BROWSER",
+  "status": "PASS scoped same-profile update",
+  "baseline_source": "9446c22f27309131456942870971d477f6f2358f",
+  "baseline_tree": "0b2324b5ff0378bbae8ff6ed5be5e960f69b1baa",
+  "page": "http://127.0.0.1:9181/",
+  "browser": "156.0.8078.4",
+  "network": "only own loopback HTTP; all other HTTP and all WebSockets blocked",
+  "service_workers": "blocked",
+  "profile": "new persistent synthetic profile after reboot; unrelated to lost original profile",
+  "unlock_submitted_performance_ms": 128657.9,
+  "baseline": {
+    "device_id_sha256": "707cee2ee126d46f7115a4ff05f2f74b47f19696472c89358c10af036392a0dc",
+    "account_id_sha256": "cb395d76522a2cca4127aea74b71ebd43138f6758a70619583b617bb4ef07bd6",
+    "wrapped_root_sha256": "1e6d4c2c606cf40b89d5bae16692bd5507efe48de518b1f25b82159b78871e72",
+    "effective_flags": {
+      "functional": false,
+      "public": false,
+      "v50": false,
+      "v51": true
+    },
+    "handlers": {
+      "beginKeyExchange": "undefined",
+      "copyPublicContactLink": "undefined"
+    },
+    "saved_message": "Retained baseline history 20261020 after recovery",
+    "visible_message_rows": 1,
+    "visible_message_assertion": "Fresh accessibility snapshot showed one message; exact getByText initially timed out because delete × is inside text container. Test selector issue, not missing history."
+  },
+  "owning_export": {
+    "durable": true,
+    "mode": "0600",
+    "bytes": 13603,
+    "sha256": "3eb827a4a2c7011a18db8c3e62789ac66a270017f27584e7a301c8330f0e3d5f",
+    "origins": 1,
+    "indexedDBs": 3,
+    "restore_verified": true,
+    "restore_scope": "Actual new isolated context loaded owning storageState with IndexedDB, normal master unlock and remembered Account login, same public identity and wrappedRoot hashes, one visible original Saved message; restored context then closed."
+  },
+  "candidate": {
+    "source": "591b93e796fa41de0eff25cd7d1f759669a6070d",
+    "unlock_submitted_performance_ms": 103034.4,
+    "device_id_sha256": "707cee2ee126d46f7115a4ff05f2f74b47f19696472c89358c10af036392a0dc",
+    "account_id_sha256": "cb395d76522a2cca4127aea74b71ebd43138f6758a70619583b617bb4ef07bd6",
+    "wrapped_root_sha256": "1e6d4c2c606cf40b89d5bae16692bd5507efe48de518b1f25b82159b78871e72",
+    "visible_original_message_rows": 1,
+    "flags": {
+      "functional": true,
+      "public": true,
+      "v50": true,
+      "v51": true
+    },
+    "handlers": {
+      "beginKeyExchange": "function",
+      "copyPublicContactLink": "function"
+    },
+    "source_responses": 105,
+    "source_mismatches": 0,
+    "page_errors": [],
+    "source_evidence": "root-retained-source-responses.json",
+    "additional_ui_steps": [
+      "Account logout retained unlocked Root and cleared Account keys",
+      "Global Quick Names opened without false unlock alert",
+      "Native prompts created Retained route note / synthetic-local-route-note and visible row",
+      "Global Flip-Lock changed OFF→ON with global surface refreshed, then restored OFF",
+      "Public Routes created active route; CONTACT LINK showed copied success; OK and Back returned to settings"
+    ]
+  },
+  "limits": [
+    "No production, positive transport or native acceptance.",
+    "Baseline natural wall-clock delayed unlock128657.9ms; candidate retained unlock103034.4ms. Separate readiness browser harness covers180000ms delay.",
+    "This gate uses591 source before BIO and credential-foundation changes, which require separate integration acceptance."
+  ]
+}

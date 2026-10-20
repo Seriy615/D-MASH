@@ -1,0 +1,107 @@
+{
+  "kind": "Actual Gradle APK package inspection; no device runtime",
+  "status": "PASS",
+  "apkSha256": "9ea4f02311f8f12266ece1520b4e36c1b65264ecc463ca64a34c230968b55d65",
+  "apkBytes": 37040630,
+  "package": "package: name='org.dmash.client' versionCode='1' versionName='0.1.0-dev' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+  "nativeCode": "native-code: 'arm64-v8a'",
+  "libraries": [
+    {
+      "entry": "lib/arm64-v8a/libQt6Core_arm64-v8a.so",
+      "sha256": "cc21256f62e350d9e66ca729d71ca96ea72498f0379f808dc8a981e02fb2e248",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libQt6Gui_arm64-v8a.so",
+      "sha256": "c59dfde0ca82658fb3794ad977b7c9a55a8c1062c681beef8e9015fa7d60ddcc",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libQt6Network_arm64-v8a.so",
+      "sha256": "03575784f903ad44df899735c02fecad5a11709b45cb41ed0402ac29f4ba8455",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libQt6Sql_arm64-v8a.so",
+      "sha256": "e53f7fecf42778cd95cf8594db9f9621fec988064788d8f584f856fba2fc28bb",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libQt6WebSockets_arm64-v8a.so",
+      "sha256": "c316d52c36aaee4691c190f21147ed5e3a3b70ec57e22a5897360dcd13290f2a",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libc++_shared.so",
+      "sha256": "4397241b4bd20a8e579bfb41d21107857e12985f6a01ca0c2a5f83380d1270b4",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libcrypto_3.so",
+      "sha256": "29f73efb33d3eab0136c71d4fc35600cd06aa0009bbc9c5fb1b9e66b9edf602b",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libdmash_node_service_arm64-v8a.so",
+      "sha256": "2c6de26b8a6c48f3ce5f5debb584f88a6a00ee950434593e5cd0c0c4efe0e876",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_imageformats_qgif_arm64-v8a.so",
+      "sha256": "512e9034ab02dc6927f81a7758f14a481e84c76dce720c63e3b28f571462f4a9",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_imageformats_qico_arm64-v8a.so",
+      "sha256": "e0d78fdef82611612f8a405676123f7aca2f93d66575cba722adc2c714560d31",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_imageformats_qjpeg_arm64-v8a.so",
+      "sha256": "9a2fa37e98cd7fe6d8c7b45185444590e323ad2b689e2faad80418eb3fead884",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_networkinformation_qandroidnetworkinformation_arm64-v8a.so",
+      "sha256": "24a613cdb4648afd74e310d2a54e35b46bb56038857a0bbd0e2bfc4068f2d0e7",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_platforms_qoffscreen_arm64-v8a.so",
+      "sha256": "707c6d3a504509a52719002ea4746c062c2c6f5367db880e61de4fa65b2bcab7",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_platforms_qtforandroid_arm64-v8a.so",
+      "sha256": "1da7e7826dfc6fb534c7448fec3abd85f8806199eae1c2acf31cd1149ca1ce37",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_sqldrivers_qsqlite_arm64-v8a.so",
+      "sha256": "670c1e8be4a85e1541298630f7b246b22c656824d6509571cbefe110dc24cff4",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_tls_qopensslbackend_arm64-v8a.so",
+      "sha256": "5d075ca3b22dabed3c7e7ab322a503f7b384597c2e714ad7a832b50f2886375d",
+      "loadAlignmentMin": 16384
+    },
+    {
+      "entry": "lib/arm64-v8a/libssl_3.so",
+      "sha256": "e0cd1c8cd7729633078e359cd988278662cdcb8b3e8b60f4315250c6ab006a5a",
+      "loadAlignmentMin": 16384
+    }
+  ],
+  "checks": [
+    "APK signature",
+    "ZIP16K alignment",
+    "all bundledELF16K alignment",
+    "Views Activity launcher",
+    "separate :node service",
+    "specialUse permission/subtype",
+    "real Qt deployment resources",
+    "packaged dependency notices"
+  ],
+  "deviceRuntime": "NOT RUN",
+  "AccountMessaging": "NOT RUN"
+}

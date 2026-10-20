@@ -1,0 +1,25 @@
+{
+  "kind": "ROOT actual Windows bounded startup artifact inspection",
+  "status": "FAIL_UI_NOT_STARTED",
+  "runId": 39447632824,
+  "jobId": 118713657263,
+  "artifactId": 12278555896,
+  "zipSha256": "5366b11655bf6c063ff3bd50112371fe45745df195ba45d5040a868f97b2785a",
+  "publishedHead": "22a15d8672322ad250fda6a693cdbf45806c4de4",
+  "localTreeCommit": "ec18520a090244f926668aeb2adfcc3da7b94085",
+  "observations": [
+    "Actual logs show all75 Desktop targets compile/link",
+    "CTest desktop-controls FAIL0.05s with no output",
+    "Direct disconnectedInventory diagnosis reports EXITED0, empty stdout/stderr, no QtTest banner",
+    "Owned DLL imports resolve in diagnostic search; one Windows APIset name unresolved by filesystem scan"
+  ],
+  "directReportedExitCode": 0,
+  "directReportedExitHex": "0x00000000",
+  "assessment": "No UI/runtime acceptance; empty direct exit0 does not prove test ran. Specific loader or harness cause unresolved.",
+  "owner": "broker_store_sol",
+  "limits": [
+    "APIset filesystem absence does not establish a missing runtime dependency",
+    "No standalone Account/Node tests or Windows package acceptance",
+    "No raw logs or credentials published"
+  ]
+}

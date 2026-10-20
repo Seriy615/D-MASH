@@ -1,0 +1,54 @@
+{
+  "kind": "C02_LINUX_RECONNECT_CRASH_REOPEN_CHECKPOINT_NOT_RELEASE",
+  "date": "2026-10-20",
+  "baseCommit": "bd1290c",
+  "sourceSha256": {
+    "native/js/runtime_entry.js": "336844cbb24b55c447a72442d681d03cf395b76c85e939f8c21d2ed4dc9f6de3",
+    "native/tests/endpoint_scheduler_test.js": "5058884e3b15220dd36e9834b85a7a85c8339a2e5ef5041f2f27f2cfd517b39a",
+    "native/tests/local_ipc_test.py": "207ebe864e3bc1749a0daab58fc19c6d9f3d8fdbe1cc396022d45b4d05119b9c",
+    "native/tests/ipc_delivery_test.py": "a5852408875c8c90b3fe05e081ccea495ab30ecc6b732389bf86677c42334cf1"
+  },
+  "binarySha256": "b77ca70519be3c2f04008e6c8548ddd4c92fd15e769f5c8b9413f55cd7ae252a",
+  "ctest": "8/8 PASS",
+  "focusedJs": "endpoint persistent capped reconnect/max2/identity dedupe/policy pause-resume/close PASS; job scheduler PASS",
+  "regressionRed": "New endpoint scheduler test against bd1290c exits1: no retained retry timer after repeated outages",
+  "localIpc": "PASS including authenticated node.status exact shape and owner/broker separation",
+  "realDelivery": {
+    "status": "PASS",
+    "peerStartupDelaySeconds": 65,
+    "admissionDifficulty": 22,
+    "wireRole": "NODE",
+    "backendForwarded": 4,
+    "checks": [
+      "UI SIGKILL after durable blocked acceptance",
+      "sender SIGKILL before transport resume",
+      "newer authorized boot policy required for restart",
+      "same accepted job and identical submit retry retained",
+      "more than3 endpoint failures then actual peer reconnection",
+      "recipient Inbox received through unchanged Python transit",
+      "only TRANSPORT_SENT claimed",
+      "identical packet second job deduped",
+      "sender post-send reopen retains job",
+      "recipient SIGKILL/reopen retains exact Inbox handle"
+    ],
+    "payloadDigest": "fe300198caa4265754397a41fa6665940f89550b57d7057cda2f6aebbd9693c4"
+  },
+  "observations": [
+    {
+      "status": "FAIL",
+      "cause": "Initial strengthened fixture attempted restart at same disabled policy revision; correctly rejected, fixture now grants newer policy revision"
+    },
+    {
+      "status": "UNRESOLVED",
+      "cause": "One earlier fixture run timed out binding recipient at existing5s socket deadline. Root separately observed immutable bd1290c bind timeout15s. Subsequent delayed-peer run passed without deadline increase. Failed initial raw actor logs were removed by old fixture cleanup; no cause claimed."
+    }
+  ],
+  "diagnostics": "Fixture now labels RPC timeout phase and persists bounded timing/loghash metadata plus raw0600 logs in private failure directory before cleanup. Final fixture-only diagnostic changes postdate delayed-peer successful execution; fast rerun ongoing.",
+  "limits": [
+    "Linux executable integration only; no browser or native GUI acceptance",
+    "ACK-free recipient crash loss window unchanged",
+    "No NAT/direct carrier or self-organization discovery beyond configured pinned peers",
+    "Windows/Android runtime NOT_RUN",
+    "Consumption commit path and full Account/contact/app integration remain open"
+  ]
+}

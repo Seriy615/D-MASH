@@ -1,0 +1,15 @@
+{
+  "kind": "UNIT",
+  "source": "32ace49",
+  "reviewer": "root independent execution",
+  "command": "ctest --test-dir permanent build-native-linux --output-on-failure",
+  "results": {
+    "native-storage": "PASS",
+    "native-crypto": "PASS",
+    "native-bundle": "PASS"
+  },
+  "limits": [
+    "Compiled common Linux ports only; Qt actor/QuickJS integration and actual Node interop pending.",
+    "Android packaging is separate evidence; Windows and physical Android runtime not verified."
+  ]
+}

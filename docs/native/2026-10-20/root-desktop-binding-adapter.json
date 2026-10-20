@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "scope": "ROOT exact Desktop three-patch reconstruction and production adapter component with synthetic IPC; actual UI NOT_RUN",
+  "recipeCommit": "bc76ed0",
+  "manifestSha256": "d8383a1932a48f07272ea93c9922cbebaef406d36039a37d18ccdf6e7520ac57",
+  "verifiedPinFiles": 11,
+  "reconstructedSourceFiles": 34,
+  "patchCount": 3,
+  "tests": [
+    {
+      "name": "dmash_session_binding_test",
+      "exitCode": 0,
+      "output": "PASS inventory cannot bind; login/explicit exact attach; wrong attach; deferred old history/callback fenced; idle disconnect clears RAM"
+    },
+    {
+      "name": "dmash_projection_test",
+      "exitCode": 0,
+      "output": "PASS actual upstream ID contract=c42d5712e56343e627d5721c05b0ba695ad65ccaf4f4b80b560e33937591c2da pendingMsgId=-288230376151711742 stable pending/final, chronological unique rows"
+    }
+  ],
+  "limits": [
+    "Synthetic scoped IPC peer, not real credential Account service or two application windows",
+    "Actual root two-client credential process accepted separately",
+    "No full original app compile/render/ordinary chat or Windows acceptance",
+    "Local old32file compilation terminated on missing jconfig.h before full app objects; retains exact failure"
+  ]
+}

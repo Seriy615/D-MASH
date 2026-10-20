@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "scope": "ROOT independent process IPC and actual Account worker; no frontend UI or mesh acceptance",
+  "sourceCommit": "717a73493fa1d442050a123804435cda482441b1",
+  "integratedCommit": "0288bff",
+  "manifestSha256": "66f2e92e04c51a3c91820eb0e966999be4d814897876d8101ec370d077fa4f1e",
+  "verifiedManifestFiles": 1260,
+  "hostSha256": "ea49c53ea265f8cb5dc730d9d9e341bac9d71535b603a9876f9a4040bde6f36c",
+  "workerTestSha256": "acb282b124d5e8ac1e21a3413a5aebe8ad8f3d6a05ebb567b6b6e54059eb00f9",
+  "rootProcess": {
+    "handle": 42502,
+    "exitCode": 0,
+    "checks": [
+      "unbound selected-Account RPC rejected",
+      "worker binding rejects old Account read/write/logout/sync/pairing",
+      "stale pending Cancel cannot cancel new Account",
+      "explicit exact expected Account attach",
+      "same Account relogin invalidates old epoch",
+      "foreign window cannot cancel pending login",
+      "logout invalidates other attached client",
+      "separate Saved histories retained after owner restart",
+      "source fixture unchanged"
+    ]
+  },
+  "rootWorker": {
+    "handle": 45778,
+    "exitCode": 0,
+    "checks": [
+      "original Argon2d identity/import/login/Saved/idempotence/logout/cancel/restart",
+      "wrong Account with current epoch rejected",
+      "queued old epoch write rejected with empty outcome and unchanged Saved"
+    ]
+  },
+  "logs": {
+    "root-account-client-binding01.log": "fceac48f0454e50ecec55a07b6772dd113a9b95f94096ef147b31ba4261691ea",
+    "root-account-binding-worker01.log": "4cd722eac12b9e10f1ea0f7000cf4f8ec44fd3c059f6c9b84ab063ad4d7eb817"
+  },
+  "limits": [
+    "Actual Android/Desktop frontend attachment and enqueue/callback epoch fencing still require integration and UI acceptance",
+    "Same socket queued old-Account intent requires frontend guard before dispatch; server connection binding alone cannot infer original intent",
+    "Initial author fixture failure retained; subsequent fixture ordering correction is not proof of its cause",
+    "No full N4, network, Windows or Android acceptance"
+  ]
+}

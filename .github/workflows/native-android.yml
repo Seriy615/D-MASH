@@ -1,0 +1,68 @@
+# Development runtime check only. No deployment, release signing or publishing.
+name: Native Android runtime
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'native/**'
+      - '!native/platforms/windows/**'
+      - '!native/platforms/desktop/**'
+      - 'D-MASH PWA/not_messenger/js/**'
+      - '.github/workflows/native-android.yml'
+permissions:
+  contents: read
+jobs:
+  api35-x86-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Prepare isolated paths and Linux tools
+        shell: bash
+        run: |
+          echo "DMASH_TOOLCHAIN_CACHE=$RUNNER_TEMP/dmash-android-tools" >> "$GITHUB_ENV"
+          echo "DMASH_ANDROID_BUILD=$RUNNER_TEMP/dmash-android-build" >> "$GITHUB_ENV"
+          echo "DMASH_ANDROID_EVIDENCE=$RUNNER_TEMP/dmash-android-evidence" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/dmash-android-evidence"
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends p7zip-full patchelf libgl1 libegl1 libopengl0 libxkbcommon-x11-0 libxcb-cursor0
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;27.2.12479018' 'emulator' 'system-images;android-35;google_apis;x86_64'
+      - name: Build actual x86 APK and same-UID instrumentation
+        shell: bash
+        run: |
+          bash native/platforms/android/ci-prepare.sh
+          bash native/platforms/android/ci-build-instrumentation.sh
+      - name: KVM emulator install, actual UI actions and scoped service lifecycle
+        shell: bash
+        run: |
+          test -c /dev/kvm
+          sudo chmod 666 /dev/kvm
+          bash native/platforms/android/ci-run.sh
+      - name: Record pipeline outcome even if SDK setup failed
+        if: always()
+        shell: bash
+        env:
+          DMASH_JOB_STATUS: ${{ job.status }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/dmash-android-evidence"
+          python3 - <<'PY'
+          import json,os,pathlib
+          out=pathlib.Path(os.environ['RUNNER_TEMP'])/'dmash-android-evidence'
+          (out/'pipeline.json').write_text(json.dumps({'jobStatus':os.environ['DMASH_JOB_STATUS'],'runtimeReportExists':(out/'runtime.json').exists(),'note':'Only runtime.json PASS establishes the scoped Android runtime checks; setup/build alone does not.'},indent=2)+'\n')
+          PY
+      - name: Preserve package and bounded public evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmash-android-api35-development
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/dmash-android-evidence
+            ${{ runner.temp }}/dmash-android-build/dmash-x86_64-debug.apk

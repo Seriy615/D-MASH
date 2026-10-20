@@ -1,0 +1,60 @@
+{
+  "scope": "AUTHOR_COMPONENT_PASS durable first send before other owner ready, actual Account logout/owner SIGKILL/reopen and automatic bilateral delivery without caller retry",
+  "candidate": "private-pending-send-candidate01",
+  "manifestSha256": "04124b9d229e8daf9c40ad95db828738b2d878514a81c152cc23d8c3937f9625",
+  "sourceCommit": "562941a",
+  "runtimeHandle": 7158,
+  "exitCode": 0,
+  "hostSha256": "ae7b770cd81e0747162684d1ac5ad834c3b6266f6d7349b06bdc26636e83ec05",
+  "nodeSha256": "9e31b8c9ac0ea3d5f2119e12829e476d72253a7f9dbfbb30933a4a67104b0598",
+  "checks": {
+    "freshRoots": 2,
+    "freshAccounts": 2,
+    "preinjectedContacts": 0,
+    "preinjectedRoutes": 0,
+    "actualSignedRequestAcceptConfirm": true,
+    "actualNativeKyber": true,
+    "firstSendBeforeOtherReady": true,
+    "acceptedTrueDurablePendingHistory": true,
+    "accountLogoutReopenPending": true,
+    "ownerSigkillReopenPending": true,
+    "oldNodeActualLeaseEofExit": true,
+    "sameAccountAndNodeIdentity": true,
+    "transportGenerationsAfterReopen": [
+      3,
+      1
+    ],
+    "activationElapsedMs": [
+      48303,
+      111479
+    ],
+    "immediateSendStates": [
+      "HANDSHAKE_PENDING",
+      "HANDSHAKE_PENDING"
+    ],
+    "callerManualRetry": false,
+    "originalSendCalls": 2,
+    "backendForwarded": 27,
+    "exactBilateralHistoryRowsEach": 2,
+    "bothAccountReopenHistory": 2,
+    "plaintextDigests": [
+      "b9a60355deba99beda0c80ffaf350f9d968f3af0359bece7164bdfdc9038fe3c",
+      "397a999dccf790d564bbdd9a3dcc52623f8118f161cc902a5107ce4ea227fac7"
+    ]
+  },
+  "unitChecks": [
+    "actual AESGCM/HMAC and IDB transactions: no plaintext/peer/op identifiers in raw rows",
+    "duplicate same operation accepted, conflicting text rejected",
+    "binding change cannot hand off a pending message to a different binding",
+    "crash after durable outbox handoff but before queue marker replays same logical operation",
+    "logout/closed-owner fencing and wrong storage-key rejection"
+  ],
+  "limits": [
+    "Linux component API simulates one send click per owner; ordinary Telegram frontend actions NOT_RUN",
+    "configured WS loopback Python transit default22; NAT/self-organization NOT_RUN",
+    "Saved path unchanged; this network fixture does not separately accept retained Saved",
+    "Account ciphertext queue stays outside Node; ACK-free mesh baseline unchanged",
+    "source/binary/pin03 remains immutable historical accepted caller-retry flow",
+    "no production/PWA deployment"
+  ]
+}

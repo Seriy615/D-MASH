@@ -1,0 +1,69 @@
+{
+  "observed_utc": "2026-10-20T08:48:07.892529+00:00",
+  "scope": "C01 first production-library slice only; actor/QuickJS/network/Inbox/real Node interop pending",
+  "platform": "Linux x86_64",
+  "toolchain": "Qt6.12.0, OpenSSL3.5.9, GCC13.3, Node24.19.0",
+  "native_ctest": "3/3 PASS",
+  "js_backend_test": "PASS",
+  "android_runtime": "NOT RUN",
+  "windows_runtime": "NOT RUN",
+  "sources": [
+    {
+      "path": "D-MASH PWA/not_messenger/js/node_relationships_v4.js",
+      "sha256": "d08c79c4950166a42f922758851f8e26ff4c7a4e72042be548fae1b317872a50"
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/tests/node_relationships_backend.test.js",
+      "sha256": "757008ed0bf37fa6d379ca3279cd9e49ea4e367467d32d4ce41ec98a2ab8cc51"
+    },
+    {
+      "path": "native/.clang-format",
+      "sha256": "f31c9a4b57c20dcf5a47b2edbaca91e5da9c3bb6af1f89674e1471cd890afd20"
+    },
+    {
+      "path": "native/CMakeLists.txt",
+      "sha256": "100b3352a5567151e37635fccae3e3a02f29c52d9f4f5fb4f7514df8a8742cbb"
+    },
+    {
+      "path": "native/README.md",
+      "sha256": "9113f270cc075a919a41895f5246cc33907f21676ce533edd9e27b6178675f36"
+    },
+    {
+      "path": "native/src/crypto_port.cpp",
+      "sha256": "9b400bde89ce3d9d7531a0ebff44faf5aeb36fd79a38708feabb488f689625b7"
+    },
+    {
+      "path": "native/src/crypto_port.h",
+      "sha256": "9319986afd6149abdbce4786158a290b581cd01b218ac3b4cec6d343654cc7a5"
+    },
+    {
+      "path": "native/src/storage_port.cpp",
+      "sha256": "b31051c69c2c016da38b8cbf2895c496156cfdf647f47b421204ebaf55f670a0"
+    },
+    {
+      "path": "native/src/storage_port.h",
+      "sha256": "dd8fb540c4c7ff507fcb139da9fa9d2f0a90e5e7153b8e5cf5e094f5df433ebe"
+    },
+    {
+      "path": "native/src/transport_bundle.cpp",
+      "sha256": "1a82b33c8288535dfd399d368e9ff6b69286d28a97a0609ce94cf51ccc06de64"
+    },
+    {
+      "path": "native/src/transport_bundle.h",
+      "sha256": "9ba6ff62a5ed24293f78e3cab6ba81c4c010e4b6e9b53d7ca14be6f5a5919c75"
+    },
+    {
+      "path": "native/tests/crypto_port_test.cpp",
+      "sha256": "c76d8da2ff461b60576771d2945321b8637ce103d7de2ebe4c78631b117e6e42"
+    },
+    {
+      "path": "native/tests/storage_port_test.cpp",
+      "sha256": "fbd8f254a8241fc3a107a75c261177f3320ce732866b728a1ac40191d1a60343"
+    },
+    {
+      "path": "native/tests/transport_bundle_test.cpp",
+      "sha256": "7589126c8f721db67d2ccac209b8414bb3a27daa13f8255580b4ea794b2f71f1"
+    }
+  ],
+  "review_hardening": "All temporary crypto output failure paths wiped; AES256-GCM known vector and tag rejection added; caller-owned JSON/string copies outside Bundle.clear scope documented"
+}

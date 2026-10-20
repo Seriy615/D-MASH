@@ -1,0 +1,78 @@
+{
+  "kind": "ANDROID_ARM64_COMMON_ACTOR_JNI_LINK_ONLY_NOT_APPLICATION",
+  "date": "2026-10-20",
+  "common_actor": "8bc67f0",
+  "toolchain": {
+    "qt": "6.12.0",
+    "ndk": "27.2.12479018",
+    "api": 28,
+    "abi": "arm64-v8a",
+    "openssl": "3.5.9 renamed_3 SONAME",
+    "quickjs": "2026-06-04 cachedarm64O1"
+  },
+  "sources_sha256": {
+    "native/CMakeLists.txt": "bfeaafb371c71ea6965d38825c6edfa16adb9efe957f35ad83fe52a335365c65",
+    "native/tests/android_link_probe.cpp": "8c572d10cc0d69744473e9aa353e47dc0c143c2dfce71a7528f08d1d77dd3738",
+    "native/src/js_actor.cpp": "369d399c6706ad4f0e3c7934bad333821369951b0c607072e8418c9f5c79488a",
+    "native/js/runtime_entry.js": "6ac9212634d08ad29685037a2a55e6f08ca22894ae37b731501faeeba1dabf25"
+  },
+  "library_sha256": "c0dd83e30e2bf5f82ad17af521dcf1623e21f4efd8543faa7fee551b8b018892",
+  "library_bytes": 10144584,
+  "jni_export": "Java_org_dmash_probe_LinkProbe_nativeLink",
+  "needed": [
+    "libcrypto_3.so",
+    "libQt6Sql_arm64-v8a.so",
+    "libQt6WebSockets_arm64-v8a.so",
+    "libQt6Network_arm64-v8a.so",
+    "libQt6Core_arm64-v8a.so",
+    "liblog.so",
+    "libm.so",
+    "libc++_shared.so",
+    "libdl.so",
+    "libc.so"
+  ],
+  "loads": [
+    {
+      "offset": 0,
+      "virtual": 0,
+      "align": 16384
+    },
+    {
+      "offset": 1778080,
+      "virtual": 1794464,
+      "align": 16384
+    },
+    {
+      "offset": 1817904,
+      "virtual": 1850672,
+      "align": 16384
+    }
+  ],
+  "configure_build": "15commonobjects/staticarchive +2JNIlinksteps PASS",
+  "build_stdout": [
+    "[1/15] Building CXX object CMakeFiles/dmash_native_ports.dir/src/storage_port.cpp.o",
+    "[2/15] Building CXX object CMakeFiles/dmash_native_ports.dir/src/transport_bundle.cpp.o",
+    "[3/15] Building CXX object CMakeFiles/dmash_native_ports.dir/src/crypto_port.cpp.o",
+    "[4/15] Building CXX object CMakeFiles/dmash_native_ports.dir/src/nonce_hash.cpp.o",
+    "[5/15] Building CXX object persistence/CMakeFiles/dmash_native_inbox.dir/inbox_sql_store.cpp.o",
+    "[6/15] Linking CXX static library libdmash_native_ports.a",
+    "[7/15] Linking CXX static library persistence/libdmash_native_inbox.a",
+    "[8/15] Running rcc for resource dmash_protocol",
+    "[9/15] Running rcc for resource dmash_platform",
+    "[10/15] Building CXX object CMakeFiles/dmash_native_actor.dir/src/js_actor.cpp.o",
+    "[11/15] Building CXX object CMakeFiles/dmash_native_actor.dir/.qt/rcc/qrc_dmash_protocol.cpp.o",
+    "[12/15] Building CXX object CMakeFiles/dmash_native_actor.dir/.qt/rcc/qrc_dmash_platform.cpp.o",
+    "[13/15] Linking CXX static library libdmash_native_actor.a",
+    "[14/15] Building CXX object CMakeFiles/dmash_native_actor_resources_1.dir/.qt/rcc/qrc_dmash_protocol_init.cpp.o",
+    "[15/15] Building CXX object CMakeFiles/dmash_native_actor_resources_2.dir/.qt/rcc/qrc_dmash_platform_init.cpp.o",
+    "[1/2] Building CXX object CMakeFiles/dmash_actor_android_link_probe.dir/tests/android_link_probe.cpp.o",
+    "[2/2] Linking CXX shared library libdmash_actor_android_link_probe.so"
+  ],
+  "limits": [
+    "Optional test target defaultOFF, no service/credential API",
+    "No JNI invocation, Qtloader/APK, Androidinstall/runtime orpeerinterop",
+    "No Windowscompile/runtime",
+    "LOADalignment/linkingdoesnot establishinstalledpackagingpagealignment",
+    "OpenSSL/Qt plugin transitive runtime dependencies untested ondevice"
+  ]
+}

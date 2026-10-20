@@ -1,0 +1,107 @@
+# Actual GPL Telegram Android fork; independent D-MASH services via local IPC.
+# Development artifacts only. No release publishing, old Activity harness or MTProto.
+name: Actual Telegram Android fork
+on:
+  pull_request:
+    paths:
+      - 'clients/telegram-android/**'
+      - 'native/**'
+      - '!native/platforms/desktop/**'
+      - '!native/platforms/windows/**'
+      - 'D-MASH PWA/not_messenger/js/**'
+      - '.github/workflows/telegram-android.yml'
+  workflow_dispatch:
+    inputs:
+      runtime_gate:
+        description: 'Observed scope; full intentionally fails until remaining Node/remote UI gates exist'
+        type: choice
+        options: [build, loader, fresh-account, full]
+        default: loader
+permissions:
+  contents: read
+concurrency:
+  group: actual-telegram-android-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  original-telegram-client:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Establish owned build and evidence paths
+        shell: bash
+        run: |
+          echo "DMASH_TOOLCHAIN_CACHE=$RUNNER_TEMP/dmash-fork-tools" >> "$GITHUB_ENV"
+          echo "DMASH_ANDROID_BUILD=$RUNNER_TEMP/dmash-fork-core" >> "$GITHUB_ENV"
+          echo "DMASH_TELEGRAM_CHECKOUT=$RUNNER_TEMP/dmash-fork-source" >> "$GITHUB_ENV"
+          echo "DMASH_CI_EVIDENCE=$RUNNER_TEMP/dmash-fork-evidence" >> "$GITHUB_ENV"
+          echo "DMASH_UI_GATE=${{ inputs.runtime_gate || 'loader' }}" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/dmash-fork-evidence"
+          df -h > "$RUNNER_TEMP/dmash-fork-evidence/disk-start.txt"
+      - name: Record sources before build
+        run: python3 clients/telegram-android/ci/evidence.py
+      - name: Install pinned SDK components and host tools
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends p7zip-full patchelf nasm libgl1 libegl1 libopengl0 libxkbcommon-x11-0 libxcb-cursor0
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;27.2.12479018' 'cmake;3.22.1' 'emulator' 'system-images;android-35;google_apis;x86_64'
+      - name: Restore only pinned dependency outputs
+        id: dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/Qt
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/openssl-android-x86_64
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/build/quickjs-2026-06-04
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/archives
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/qt-ci-manifest.json
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/telegram-dependency-receipt.json
+          key: tg-android-deps-v1-${{ runner.os }}-${{ hashFiles('native/platforms/android/ci-qt.py', 'native/platforms/scripts/build-android-openssl.sh', 'clients/telegram-android/ci/dependencies.py') }}
+      - name: Prepare and verify exact dependencies
+        run: bash clients/telegram-android/ci/prepare.sh > "$DMASH_CI_EVIDENCE/dependencies.log" 2>&1
+      - uses: actions/cache/save@v4
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/Qt
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/openssl-android-x86_64
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/build/quickjs-2026-06-04
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/archives
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/qt-ci-manifest.json
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/telegram-dependency-receipt.json
+          key: ${{ steps.dependencies.outputs.cache-primary-key }}
+      - name: Build actual fork and matching independent services
+        id: build
+        run: bash clients/telegram-android/ci/build.sh > "$DMASH_CI_EVIDENCE/build.log" 2>&1
+      - name: Verify APK signature, source, original classes and bundled core ELFs
+        if: always() && steps.build.outcome == 'success'
+        run: python3 clients/telegram-android/ci/verify-package.py
+      - name: KVM actual LaunchActivity and selected normal UI flow
+        if: always() && steps.build.outcome == 'success' && inputs.runtime_gate != 'build'
+        shell: bash
+        run: |
+          test -c /dev/kvm
+          sudo chmod 666 /dev/kvm
+          bash clients/telegram-android/ci/run.sh
+      - name: Preserve exact stage outcomes and bounded public artifacts
+        if: always()
+        env:
+          DMASH_JOB_STATUS: ${{ job.status }}
+        run: |
+          python3 clients/telegram-android/ci/evidence.py
+          df -h > "$DMASH_CI_EVIDENCE/disk-end.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-telegram-android-${{ github.run_id }}
+          path: ${{ env.DMASH_CI_EVIDENCE }}
+          if-no-files-found: error
+          retention-days: 7

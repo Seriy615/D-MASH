@@ -1,0 +1,7 @@
+PASS UTF8 synthetic adapter
+PASS unchanged TweetNaCl Ed25519
+PASS unchanged resource SHA256 vector
+PASS unchanged BLAKE3 vector
+PASS unchanged recipient payload seal/open
+PASS routing and ownership loaded
+Loaded 25 unchanged source modules; NO transport/storage/Android PASS

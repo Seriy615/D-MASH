@@ -1,0 +1,23 @@
+{
+  "kind": "Linux real native process lifetime proof after actual Qt UI actions",
+  "status": "PASS",
+  "fixture": "Fresh synthetic Node provisioned before first enable; same synthetic Account/history retained",
+  "nodeEnableAction": "Harness authenticated local IPC, not a UI button in this checkpoint",
+  "checks": [
+    "Actual Qt Account import/login/Saved send clicks reached resident host",
+    "Actual scoped Node child started; no mesh endpoint configured",
+    "Actual UI process killed with SIGKILL",
+    "Resident credential host and real Node remain running after UI process death",
+    "Explicit Root lock confirms owned Node stopped"
+  ],
+  "limits": [
+    "Synthetic imported Account only",
+    "No configured mesh endpoints or remote message delivery in this gate",
+    "Does not prove Android or Windows runtime"
+  ],
+  "uiTestBinarySha256": "b31f2fa8f47c751473fae9d4d6d6dbf4f8b40ad1addf1393aef7923432aaf3fc",
+  "credentialHostSha256": "91c8dde5f9593c6bf450b81249d394fdc8d5d257bf812801b2998940b02270d3",
+  "nodeHostSha256": "5a198531198010d5d90d6258d1f7c55d650b40d3f09ad00ec01b129533d9983a",
+  "uiTestSourceCommit": "1bb115d",
+  "note": "Lifetime gate preceded test-only host selector/completer handling; product Widgets UI binary is unchanged."
+}

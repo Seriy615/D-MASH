@@ -1,0 +1,23 @@
+{
+  "source_head": "9446c22f27309131456942870971d477f6f2358f",
+  "sha256": {
+    "MASTER_SECRET_FIX_DESIGN.md": "74ddce99461856e81a71b07e85cfee218e01b50ea439108de0cd7dac0b7fc884",
+    "MASTER_SECRET_REPRO.json": "89de115b67db0b32b4f8484a44541365f174849c1e24362d08f5679cc5e4b258",
+    "NATIVE_HOST_FEASIBILITY.md": "7298e9efe8b207c722a8319656965f9dabab35a42aca685ee40fe3c9aeffbec5",
+    "README.md": "3c48638a86a1238f5afc6a4e197b58675187e6a9e56f7a05cf1d2bb634e59a76",
+    "actual-argon2-results.json": "90203c8fd3be137e42ac5248bf7a1da8c8ec6166cb24c16b3fd06d2581f101b0",
+    "actual-crypto-results.json": "fbd70cc9c52eb16c0a12c9ab4473a2cfc63f1a0877e55da0056b1c07ee60e2ad",
+    "check_actual_argon2.cjs": "8530470ef89f319c54116e31ce6a0288d905d8ec73eec0dc2beede8d368d06df",
+    "check_actual_crypto.cjs": "ce2ea1b73c20f7289b98e2f76be736bf36926610441197d0277ded74eeb5f253",
+    "check_master_secret_repro.cjs": "91d1fce44166f5055d01b92bd4b52fa35c7c21f84e8f11c2bf77a38cf22ca816",
+    "focused-suite-results.json": "13e020225e65be874d458fc873db8d9bae583859c319fb54b9aaffd0260cdbcb",
+    "independent-review-checks.json": "f3c0dd02bed4f92898f86323c3ca6fc71fa92c74cee2d68274799ec2577b4b81",
+    "native-proof/README.md": "57497cabfc0f490be2e99c23a7357cc94ebce0707852aeb92ea7304c2ed58e82",
+    "native-proof/embed.c": "69ac81e5170bc0596008a3f321c5a26a2c090f456bfcbd3437672be6593b3ec9",
+    "native-proof/proof-output.txt": "5208f16b72a55a8fcbc9d875b2ea0488e4cec429b9b9fe9c34c8c961577bd8a9",
+    "native-proof/source-load.js": "02a3d52e9a18f8c9f970a498e56c71e2723e40d5c4affa34fc8dd0e89c18c932",
+    "review-input-manifest.json": "e40b3a8ee758929bdb728e6d7ae245274778b2ec8e5c78b852d356a9dd697dca",
+    "spec-model-results.json": "02638d5b68291472be20c497b495afbd1bf03836d77397d1f60103029981ae06",
+    "spec_fault_model.py": "1f8e5d58b2847441b70846004b63211cdc7e5662fa572df70766556a49d56a3f"
+  }
+}

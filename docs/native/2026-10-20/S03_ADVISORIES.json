@@ -1,0 +1,268 @@
+[
+  {
+    "id": "GHSA-qf9m-vfgh-m389",
+    "summary": "Duplicate Advisory: FastAPI Content-Type Header ReDoS",
+    "url": "https://github.com/advisories/GHSA-qf9m-vfgh-m389",
+    "updated_at": "2026-03-20T05:02:58Z",
+    "withdrawn_at": "2024-02-16T23:37:39Z",
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "fastapi"
+        },
+        "vulnerable_version_range": "<= 0.109.0",
+        "first_patched_version": "0.109.1",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "2ebeb44b722c975fb29b03b170e16f15cbdd9fe6ab88d4817454eb68b5431f40"
+  },
+  {
+    "id": "GHSA-wp53-j4wj-2cfg",
+    "summary": "Python-Multipart has Arbitrary File Write via Non-Default Configuration",
+    "url": "https://github.com/advisories/GHSA-wp53-j4wj-2cfg",
+    "updated_at": "2026-01-29T03:24:54Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "python-multipart"
+        },
+        "vulnerable_version_range": "< 0.0.22",
+        "first_patched_version": "0.0.22",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "05217e49335c28c6e53b7b99eee2e043b358b760e6cc8bf0bd27a9c32ce40cae"
+  },
+  {
+    "id": "GHSA-mj87-hwqh-73pj",
+    "summary": "python-multipart affected by Denial of Service via large multipart preamble or epilogue data",
+    "url": "https://github.com/advisories/GHSA-mj87-hwqh-73pj",
+    "updated_at": "2026-04-24T20:51:12Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "python-multipart"
+        },
+        "vulnerable_version_range": "< 0.0.26",
+        "first_patched_version": "0.0.26",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "a748b088f81737beaad349de4d2ca484b99824e7c25719ff3d0a4566c1194ef0"
+  },
+  {
+    "id": "GHSA-pp6c-gr5w-3c5g",
+    "summary": "python-multipart has Denial of Service via unbounded multipart part headers",
+    "url": "https://github.com/advisories/GHSA-pp6c-gr5w-3c5g",
+    "updated_at": "2026-05-14T20:42:20Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "python-multipart"
+        },
+        "vulnerable_version_range": "< 0.0.27",
+        "first_patched_version": "0.0.27",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "00845b453ae6dc58a4aef4fa839799bd07f486c24d0c6dfd7ddfaf0ae5b89f24"
+  },
+  {
+    "id": "GHSA-v9pg-7xvm-68hf",
+    "summary": "python-multipart: Negative Content-Length in parse_form buffers the entire body in memory",
+    "url": "https://github.com/advisories/GHSA-v9pg-7xvm-68hf",
+    "updated_at": "2026-06-15T20:23:45Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "python-multipart"
+        },
+        "vulnerable_version_range": "< 0.0.31",
+        "first_patched_version": "0.0.31",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "a9b988b8668397dadbc18fd266be46b7ad33f218465778531ac947e711a3a996"
+  },
+  {
+    "id": "GHSA-5rvq-cxj2-64vf",
+    "summary": "python-multipart: Quadratic-time querystring parsing with semicolon separators causes CPU denial of service",
+    "url": "https://github.com/advisories/GHSA-5rvq-cxj2-64vf",
+    "updated_at": "2026-06-15T20:24:10Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "python-multipart"
+        },
+        "vulnerable_version_range": "< 0.0.30",
+        "first_patched_version": "0.0.30",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "738debafe7c2b1bb7fb3113dec490054a9f6253f4cd070b2280109ef354477ca"
+  },
+  {
+    "id": "GHSA-6jv3-5f52-599m",
+    "summary": "python-multipart: Semicolon treated as querystring field separator enables parameter smuggling",
+    "url": "https://github.com/advisories/GHSA-6jv3-5f52-599m",
+    "updated_at": "2026-06-15T20:22:27Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "python-multipart"
+        },
+        "vulnerable_version_range": "< 0.0.30",
+        "first_patched_version": "0.0.30",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "85a9ee24898cf52c86220857d5f788e05b0456c7612294494c9a2f2e4ba5a866"
+  },
+  {
+    "id": "GHSA-f96h-pmfr-66vw",
+    "summary": "Starlette Denial of service (DoS) via multipart/form-data",
+    "url": "https://github.com/advisories/GHSA-f96h-pmfr-66vw",
+    "updated_at": "2024-10-15T19:56:07Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "starlette"
+        },
+        "vulnerable_version_range": "< 0.40.0",
+        "first_patched_version": "0.40.0",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "efd6a0c095f379df1e9e50897a3554521144e8861a492476f3a2e643c5c0dedf"
+  },
+  {
+    "id": "GHSA-2c2j-9gv5-cj73",
+    "summary": "Starlette has possible denial-of-service vector when parsing large files in multipart forms",
+    "url": "https://github.com/advisories/GHSA-2c2j-9gv5-cj73",
+    "updated_at": "2025-07-21T22:21:06Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "starlette"
+        },
+        "vulnerable_version_range": "< 0.47.2",
+        "first_patched_version": "0.47.2",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "a82a3a54e596262db25567001e37d595e8b1a240a70cad7d4dbf23162cd742a9"
+  },
+  {
+    "id": "GHSA-86qp-5c8j-p5mr",
+    "summary": "Starlette has missing Host header validation that poisons request.url.path, bypassing path-based security checks",
+    "url": "https://github.com/advisories/GHSA-86qp-5c8j-p5mr",
+    "updated_at": "2026-08-28T18:31:00Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "starlette"
+        },
+        "vulnerable_version_range": "<= 1.0.0",
+        "first_patched_version": "1.0.1",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "5945d01f1f920c46e218b2c23627c641e31d7db44b75dcfbf65cbaa34055c96f"
+  },
+  {
+    "id": "GHSA-wqp7-x3pw-xc5r",
+    "summary": "Starlette: SSRF and NTLM credential theft via UNC paths in StaticFiles on Windows",
+    "url": "https://github.com/advisories/GHSA-wqp7-x3pw-xc5r",
+    "updated_at": "2026-06-15T20:16:31Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "starlette"
+        },
+        "vulnerable_version_range": "< 1.1.0",
+        "first_patched_version": "1.1.0",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "39509b881b24e81dbd1e6ad9bd7a04dc2660aee94f7d408c6058cc90e3e46751"
+  },
+  {
+    "id": "GHSA-x746-7m8f-x49c",
+    "summary": "Starlette: Arbitrary HTTP method dispatched to `HTTPEndpoint` attributes via `getattr`",
+    "url": "https://github.com/advisories/GHSA-x746-7m8f-x49c",
+    "updated_at": "2026-07-09T21:05:47Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "starlette"
+        },
+        "vulnerable_version_range": "< 1.1.0",
+        "first_patched_version": "1.1.0",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "ef853627e169bd6dd9377848da15daf5ac3f425fde596efa95dd2e23f22a2415"
+  },
+  {
+    "id": "GHSA-82w8-qh3p-5jfq",
+    "summary": "Starlette: request.form() limits silently ignored for application/x-www-form-urlencoded enable DoS",
+    "url": "https://github.com/advisories/GHSA-82w8-qh3p-5jfq",
+    "updated_at": "2026-06-15T20:39:54Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "starlette"
+        },
+        "vulnerable_version_range": ">= 0.4.1, < 1.3.1",
+        "first_patched_version": "1.3.1",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "da4b4879e2a048531fdef1f785b53b8dc3ac342dac8e389ef98af030b772c17f"
+  },
+  {
+    "id": "GHSA-jp82-jpqv-5vv3",
+    "summary": "Starlette: Unvalidated request path concatenated into authority poisons request.url.hostname",
+    "url": "https://github.com/advisories/GHSA-jp82-jpqv-5vv3",
+    "updated_at": "2026-07-15T22:07:17Z",
+    "withdrawn_at": null,
+    "vulnerabilities": [
+      {
+        "package": {
+          "ecosystem": "pip",
+          "name": "Starlette"
+        },
+        "vulnerable_version_range": "< 1.3.0",
+        "first_patched_version": "1.3.0",
+        "vulnerable_functions": []
+      }
+    ],
+    "sha256": "f0fb07a66dbc4ea0afe691d033e592157b6e6395f3cdf80f2515e42e3f99d08f"
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "suite": "native-remote-Account-E2EE",
+  "status": "FAIL",
+  "phase": "native-authorize",
+  "errorClass": "AssertionError",
+  "kind": "ROOT independent long-certificate accepted-job retry attempt",
+  "accountSourceCommit": "3cf41d9",
+  "manifestSha256": "8061c51562a8d3251509d401646d02810b9bc81a4e1e3a792db5a49b4d144235",
+  "verifiedArchivedFiles": 2246,
+  "verifiedRuntimeLibraries": 19,
+  "terminalExit": 1,
+  "observationHandle": 12040,
+  "admissionDeadlineSeconds": 180,
+  "accountPhaseReached": false,
+  "actualNodeEvents": {
+    "node0": [
+      "ready NODE accountsLoaded=false",
+      "endpoint-failed PEER_UNAVAILABLE"
+    ],
+    "node1": [
+      "ready NODE accountsLoaded=false",
+      "connected NODE"
+    ]
+  },
+  "owner": "native_runtime_sol",
+  "limits": [
+    "Failure is at native peer admission before Account import/login, not proof of retry algorithm failure",
+    "Author idempotent retry PASS exists separately; independent retry acceptance NOT_RUN",
+    "Concurrent author Node-restart fixture was running; cause of admission failure not established",
+    "No reset of accepted user data; synthetic failure profile preserved privately"
+  ]
+}

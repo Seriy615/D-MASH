@@ -1,0 +1,29 @@
+{
+  "kind": "ROOT inspected actual Windows native Desktop compile and UI launch failure",
+  "status": "COMPILE_PASS_UI_LAUNCH_FAIL",
+  "runId": 39443521913,
+  "jobId": 118699296005,
+  "publishedHead": "6a8de2038911ff389633f159038663ca5ee4df76",
+  "actualMergeCommit": "67e9d3e2c125b4abab400a840c5b2c82676ac5bb",
+  "verifiedExactTree": "53833da23b565a5d62450f059f88bfa4cb49accc",
+  "localExactTreeCommit": "9988c73",
+  "checks": [
+    "Actual MinGW13.1 Qt6.12 OpenSSL3.5.9 Desktop build75/75",
+    "dmash-desktop.exe linked",
+    "dmash-credential-host.exe linked",
+    "dmash_desktop_ui_test.exe linked"
+  ],
+  "failure": {
+    "test": "desktop-controls",
+    "elapsedSeconds": 0.06,
+    "output": "empty; no QtTest banner",
+    "phase": "test process launch before UI actions",
+    "cause": "unknown; owner collecting loader/exit diagnostics",
+    "owner": "native_platforms_sol"
+  },
+  "limits": [
+    "No Windows UI/runtime PASS",
+    "Account standalone and Node build suites not reached after first desktop test failure",
+    "Development packaging not reached; no installable Windows package accepted"
+  ]
+}

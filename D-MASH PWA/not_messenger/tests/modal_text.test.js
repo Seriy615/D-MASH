@@ -1,0 +1,35 @@
+"use strict";
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const input={style:{},value:''},ok={},yes={};
+const modal={style:{},innerHTML:''};
+const document={getElementById:id=>({'sys-modal':modal,'p-in':input,'p-ok':ok,'confirm-yes':yes}[id]||null)};
+const window={addEventListener(){}};
+const ctx={window,document,console,TextEncoder,Uint8Array,setInterval(){},clearInterval(){},localStorage:{getItem(){return null}}};
+vm.runInNewContext(fs.readFileSync(require.resolve('../js/core_engine.js'),'utf8'),ctx);
+const Core=window.Core;
+const hostile='Alias <img src=x onerror="globalThis.SENTINEL=1"> & \' "\nUnicode é';
+const escaped=Core.escapeAttribute(hostile);
+for(const render of [()=>Core.customAlert(hostile,hostile),()=>Core.customPrompt(hostile,hostile,()=>{}, {value:hostile}),()=>Core.customConfirm(hostile,hostile,()=>{})]){
+ render();assert.ok(modal.innerHTML.includes('<h4>'+escaped+'</h4>'),'title is text');
+ assert.ok(modal.innerHTML.includes(escaped),'message is escaped');
+ assert.ok(!modal.innerHTML.includes('<img'),'alias/error text cannot insert elements');
+ assert.equal(ctx.SENTINEL,undefined);
+}
+let submitted=null;
+Core.customPrompt('plain','plain',v=>{submitted=v},{value:hostile,readOnly:true});
+assert.equal(input.value,hostile,'prefill is assigned as DOM value without filtering');
+assert.equal(input.readOnly,true);input.value=hostile;ok.onclick();assert.equal(submitted,hostile);
+let cancelled=0;Core.customPrompt('plain','plain',()=>cancelled++,{value:hostile});Core.closeModal();assert.equal(cancelled,0);
+let confirmed=0;Core.customConfirm('plain',hostile,()=>confirmed++);Core.closeModal();assert.equal(confirmed,0);
+Core.customConfirm('plain',hostile,()=>confirmed++);yes.onclick();assert.equal(confirmed,1);
+Core.customPrompt('copy','copy',()=>{},hostile);assert.equal(input.value,hostile,'legacy copy fallback string remains literal');assert.equal(input.readOnly,true);
+Core.customPrompt('secret','secret',()=>{},{inputType:'password',passwordManagerSafe:true});assert.equal(input.style.webkitTextSecurity,'disc','chat password protection preserved');
+Core.openModal(hostile,'<button id="trusted-template">intentional body control</button>');assert.ok(modal.innerHTML.includes('<button id="trusted-template">'),'explicit HTML body contract preserved');assert.ok(modal.innerHTML.includes('<h4>'+escaped+'</h4>'));
+const coreSource=fs.readFileSync(require.resolve('../js/core_engine.js'),'utf8');
+const runtimeSource=fs.readFileSync(require.resolve('../js/runtime_fixes.js'),'utf8');
+assert.doesNotMatch(coreSource,/Quick Name «\$\{Core\.escapeHtml\(quickName\)/,'plain message caller is not double escaped');
+assert.doesNotMatch(runtimeSource,/\$\{this\.escapeHtml\(request\.sender_display_name\)\} отправил запрос/,'plain request notification is not double escaped');
+assert.doesNotMatch(coreSource,/\$\{message\}<br><br>Переключить режим/,'multiline legacy confirmation uses plain message contract');
+console.log('Modal plain-text titles/messages/DOM values: hostile alias/error, submit/cancel/confirm, explicit HTML body PASS; incoming call browser NOT RUN');

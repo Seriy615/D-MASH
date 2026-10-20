@@ -130,5 +130,5 @@
   if(g.DMASH_NODE_PROFILE==='managed-v4')receiveOnAccount(core);
   core.__nodeAccountUiV4=true;return true;
  }
- g.DmashNodeAccountUiV4=Object.freeze({open,install});if(!install()){const timer=setInterval(()=>{if(install())clearInterval(timer);},250);}
+ g.DmashNodeAccountUiV4=Object.freeze({open,install});if(g.DmashRuntimeReadiness){g.DmashRuntimeReadiness.register('node-account-ui',80,install,()=>!!g.Core?.__nodeAccountUiV4,['acceptance-v51','acceptance-v52-storage']);return;}if(!install()){const timer=setInterval(()=>{if(install())clearInterval(timer);},250);}
 })(globalThis);

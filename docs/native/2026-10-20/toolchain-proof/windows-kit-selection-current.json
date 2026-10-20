@@ -1,0 +1,25 @@
+{
+  "kind": "fresh post-reboot official metadata fetch; not Windows build",
+  "metadata_url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_mingw/Updates.xml",
+  "metadata_sha256": "da865f86f4e2ec62ba24bcab10efd187b7ba2426255a82943c6f1cfba4c6578a",
+  "packages": [
+    {
+      "Name": "qt.qt6.6120.addons.qtwebsockets.win64_mingw",
+      "Version": "6.12.0-0-202609280346",
+      "DisplayName": "Qt WebSockets for MinGW 13.1.0 64-bit",
+      "Dependencies": "qt.qt6.6120.win64_mingw",
+      "DownloadableArchives": "qtwebsockets-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z",
+      "SHA1": "216ac7605626fc032ee01fd50766f6b94c657193"
+    },
+    {
+      "Name": "qt.qt6.6120.win64_mingw",
+      "Version": "6.12.0-0-202609280346",
+      "DisplayName": "MinGW 13.1.0 64-bit",
+      "Dependencies": "qt.tools.qtcreator, qt.tools.win64_mingw1310, qt.qt6.6120.doc, qt.qt6.6120.examples",
+      "DownloadableArchives": "qtbase-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z, qtsvg-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z, qtdeclarative-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z, qtdoc-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z, qttools-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z, qttranslations-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z, MinGW-w64-x86_64-13.1.0-release-posix-seh-msvcrt-rt_v11-rev1-runtime.7z, d3dcompiler_47-x64.7z, opengl32sw-64-mesa_11_2_2-signed_sha256.7z",
+      "SHA1": "7288d0b80667a32e9389ed71ee86c4854002a142"
+    }
+  ],
+  "local_compiler_or_wine": "not found in inspected PATH",
+  "runtime_status": "NOT RUN"
+}

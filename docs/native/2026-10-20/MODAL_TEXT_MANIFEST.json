@@ -1,0 +1,10 @@
+{
+  "source_commit": "a22b2db",
+  "public_sha256": {
+    "MODAL_TEXT_RETEST.json": "093fe36e164da382432083dc6059af674fe68ddec25265b2158a5786adaa1807",
+    "MODAL_TEXT_RETEST.md": "3993717059a1dbf10263fccb008738dac74cee81a83bf49d66a3bfa6d10c1903",
+    "MODAL_TEXT_ALL_JS.json": "5dc1e86a2c9a0f485b36ea7cd6f826467539169bb29298a11fe110eb96175aaa"
+  },
+  "private_raw_stdout_sha256": "dab60dc9778af7720d6405ca026b8cf5b2657949bfcd22f687445c42a9892b9f",
+  "raw_stdout_in_git": false
+}

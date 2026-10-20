@@ -1,0 +1,51 @@
+{
+  "status": "PASS",
+  "scope": "ROOT artifact inspection of author actual full Telegram Java module compile; no independent Gradle rerun or APK/runtime claim",
+  "sourceCommit": "16b2cbf65469d963d3d190cda2b3897c1ce23c74",
+  "sourceTree": "bff48404aed24a53a7ae94e8506c151e58ce9717",
+  "manifestSha256": "c30fb935e6da5c07e8cde9f6363b6559ca5c88d5acfcd8fe7fcc0a191b3a7d7f",
+  "filesVerified": 13,
+  "compilerOnlyQtJarsVerified": 3,
+  "compiledClassCount": 14037,
+  "patchedSourceFilesVerified": 21,
+  "authorResult": {
+    "exitCode": 0,
+    "tasks": 137,
+    "executed": 4,
+    "upToDate": 133,
+    "duration": "8m42s"
+  },
+  "compiledClassesChecked": [
+    {
+      "class": "org/telegram/ui/LaunchActivity.class",
+      "sha256": "e305b00cc4bc450e3be2340f27703410426ca17d9fa907b9855bbceabac3d583"
+    },
+    {
+      "class": "org/telegram/ui/DialogsActivity.class",
+      "sha256": "75a8382db81be8aa5aaede8d737db60eb9f60614491110291ca25e4eedaee08f"
+    },
+    {
+      "class": "org/telegram/ui/ChatActivity.class",
+      "sha256": "429cd2ee9dcddf050dc56c2f92f32db0bdb51a4422ef7fa541454e23fa9e9424"
+    },
+    {
+      "class": "org/telegram/messenger/dmash/DmashClient.class",
+      "sha256": "69a1a22d8daf7799e7f9b4c316eb8cb79d807160edb6c8858e38fa03b54d06b0"
+    },
+    {
+      "class": "org/dmash/client/CredentialService.class",
+      "sha256": "e74d54296875814b848e8e28197844ba1e2bf03e979b4a7080d175fe68a6ca3e"
+    },
+    {
+      "class": "org/dmash/client/NodeService.class",
+      "sha256": "03aba5ee96c7330047319346c5aeba00f8d9f9ea13f3f3c9f5393efe79e4bb58"
+    }
+  ],
+  "limits": [
+    "No APK built",
+    "No native service startup or actual UI/chat result",
+    "Old v6 Qt jars were used only as compiler dependencies; coherent native components must be rebuilt",
+    "Unknown-send retention and explicit legacy DNS/proxy/updater guards remain follow-up work"
+  ],
+  "inspectionCorrection": "Initial archive lookup matched nested build.gradle basenames; exact normalized archive paths fixed the inspector without changing product/artifacts."
+}

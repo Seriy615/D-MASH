@@ -1,0 +1,34 @@
+{
+  "kind": "UNIT",
+  "source": "d123325",
+  "scope": "root independent HTTP boundary/dependency regression execution and evidence consistency",
+  "environment": "Python3.12.3 patched S03 environment; Node24.19.0 PATH",
+  "results": {
+    "retired_http_boundary": {
+      "tests": 3,
+      "status": "PASS"
+    },
+    "dependency_behavior": {
+      "tests": 9,
+      "status": "PASS"
+    },
+    "origin_http_body_boundary": {
+      "tests": 11,
+      "status": "PASS"
+    },
+    "pip_check": "PASS",
+    "source_manifest": {
+      "inputs": 114,
+      "mismatches": 0
+    },
+    "audit_evidence_consistency": {
+      "components": 29,
+      "known_findings": 0
+    }
+  },
+  "limits": [
+    "Full303 backend+22Origin run belongs to separate agent evidence, not independently repeated here.",
+    "Audit evidence consistency checks existing report; independent root did not repeat remote advisory lookup.",
+    "No deployed/live reverse proxy, Windows parser exploitation or HTTP slow-peer deadline acceptance."
+  ]
+}

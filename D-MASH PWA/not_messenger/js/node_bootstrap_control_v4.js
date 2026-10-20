@@ -16,7 +16,10 @@
    const now=clock();if(request.type!=='NODE_BOOTSTRAP_REQUEST_V4'||request.version!==4||!Number.isSafeInteger(request.expires_at)||request.expires_at<=now||request.expires_at>now+86400)throw Error('Bootstrap REQUEST expiry/profile');
    unhex(request.exchange_id);unhex(request.target_bundle_digest);
    if(await hash(localBundle)!==request.target_bundle_digest)throw Error('Wrong bootstrap target');
-   const local=pairing.parse(localBundle,{now}),localAccount=local.bundle.account_keys.signing;
+   // The target may pin its requester. Parse against the sender key named in
+   // the bundle, then authenticate that exact sender bundle below.
+   const senderAccount=JSON.parse(request.bundle)?.account_keys?.signing;
+   const local=pairing.parse(localBundle,{now,localAccount:senderAccount}),localAccount=local.bundle.account_keys.signing;
    const remote=pairing.parse(request.bundle,{now,localAccount}),remoteAccount=remote.bundle.account_keys.signing;
    if(request.expires_at>Math.min(local.bundle.expires_at,remote.bundle.expires_at))throw Error('Bootstrap request outlives offer');
    if(local.bundle.generation!==1||remote.bundle.generation!==1)throw Error('Existing-contact recovery requires separate authority');
@@ -30,7 +33,8 @@
    verified.set(result,{request,candidate,localBundle});return result;
   }
   async function request(localTargetBundle,senderBundle,exchangeId,secretKey,{acceptReceipt=null,expiresAt}={}){
-   const target=pairing.parse(localTargetBundle,{now:clock()}),sender=pairing.parse(senderBundle,{now:clock(),localAccount:target.bundle.account_keys.signing});
+   const senderAccount=JSON.parse(senderBundle)?.account_keys?.signing;
+   const target=pairing.parse(localTargetBundle,{now:clock(),localAccount:senderAccount}),sender=pairing.parse(senderBundle,{now:clock(),localAccount:target.bundle.account_keys.signing});
    const signer=g.nacl.sign.keyPair.fromSecretKey(secretKey);try{if(hex(signer.publicKey)!==sender.bundle.account_keys.signing)throw Error('Request signer mismatch');}finally{signer.secretKey.fill(0);}
    const body={type:'NODE_BOOTSTRAP_REQUEST_V4',version:4,exchange_id:exchangeId,target_bundle_digest:await hash(localTargetBundle),bundle:senderBundle,accept_receipt:acceptReceipt,expires_at:expiresAt??Math.min(target.bundle.expires_at,sender.bundle.expires_at)};
    const wire=fits(canonical({...body,signature:hex(g.nacl.sign.detached(signedBytes(body),secretKey))}));await inspect(localTargetBundle,wire);return wire;

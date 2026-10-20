@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "scope": "ROOT UNIT: original public bootstrap IDB vs actual native SQLite, in-process routing only",
+  "sourceCommit": "947faffbc71a1fc7dc6cbe0bbaa2bf302a38ad1e",
+  "sourceIntegration": "Not yet integrated; typed native public API implementation remains in isolated worktree",
+  "frozenSourceFiles": 116,
+  "bridgeSha256": "181aef90eed4e208358470314c06057a2041ad56c10b7cb5ea9e1de4efcd26cc",
+  "runtimeHandle": 36191,
+  "exitCode": 0,
+  "originalSignedJournalTestHandle": 30441,
+  "node": "24.19.0",
+  "checks": [
+    "original default IndexedDB backend unchanged",
+    "injected actual SQLite backend opens no IndexedDB",
+    "neutral request with no Account owner or Account keys",
+    "exact sealed retry and changed-context rejection",
+    "forged capability rejection",
+    "encrypted config and request",
+    "same route certificate and bootstrap public key after reopen",
+    "old capability invalid on reopened runtime",
+    "decline durable under request replay",
+    "public domain key incompatible with main Inbox",
+    "existing original signed owner claim/accept/confirm/receipts regression PASS"
+  ],
+  "limits": [
+    "public native daemon/profile/credential APIs are not wired yet",
+    "no mesh, browser or frontend UI acceptance",
+    "synthetic temporary fixture only; accepted runtime profiles untouched"
+  ],
+  "inspectionCorrection": "Initial parity test also passed with older build-inbox bridge; its digest differed from author bridge. Repeated same source against frozen exact author bridge181aef with PASS; no product change."
+}

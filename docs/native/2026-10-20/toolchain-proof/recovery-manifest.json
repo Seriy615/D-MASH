@@ -1,0 +1,64 @@
+{
+  "kind": "host-reboot recovery manifest; original temporary build tree lost",
+  "persistent_prefix": "/home/jcode/.cache/dmash-native-20261020",
+  "historical_only": [
+    "Qt6.12.0 Linux/Android kits installed before reboot; original archives/binaries/logs lost",
+    "Linux Qt/QuickJS/SQLite/WSS six-check run observed PASS with owned OpenSSL3.5.9 before reboot",
+    "EVP ARGON2D and ARGON2ID exact public real-WASM master fixture comparisons observed PASS before reboot",
+    "Android AArch64 Qt+QuickJS JNI link and Java/D8/aapt2/zipalign/synthetic signature observed PASS before reboot",
+    "Android OpenSSL shared-library build was last observed live; completion was never observed; raw build tree lost"
+  ],
+  "recoverable_evidence": [
+    {
+      "path": "/home/jcode/Documents/Codex/D-MASH-audit-20261020/verification/native-proof/README.md",
+      "sha256": "57497cabfc0f490be2e99c23a7357cc94ebce0707852aeb92ea7304c2ed58e82",
+      "type": "surviving original audit artifact, byte hash matches pre-reboot transcript"
+    },
+    {
+      "path": "/home/jcode/Documents/Codex/D-MASH-audit-20261020/verification/native-proof/embed.c",
+      "sha256": "69ac81e5170bc0596008a3f321c5a26a2c090f456bfcbd3437672be6593b3ec9",
+      "type": "surviving original audit artifact, byte hash matches pre-reboot transcript"
+    },
+    {
+      "path": "/home/jcode/Documents/Codex/D-MASH-audit-20261020/verification/native-proof/source-load.js",
+      "sha256": "02a3d52e9a18f8c9f970a498e56c71e2723e40d5c4affa34fc8dd0e89c18c932",
+      "type": "surviving original audit artifact, byte hash matches pre-reboot transcript"
+    },
+    {
+      "path": "/home/jcode/Documents/Codex/D-MASH-audit-20261020/verification/native-proof/proof-output.txt",
+      "sha256": "5208f16b72a55a8fcbc9d875b2ea0488e4cec429b9b9fe9c34c8c961577bd8a9",
+      "type": "surviving original audit artifact, byte hash matches pre-reboot transcript"
+    }
+  ],
+  "lost_original_artifacts": [
+    "/tmp/dmash-native-toolchain-20261020",
+    "/tmp/dmash-native-feasibility-20261020",
+    "original uncommitted docs/native/2026-10-20 and probe outputs"
+  ],
+  "persistent_inventory": {
+    "present": [
+      "gcc/g++13.3.0",
+      "make",
+      "system JDK17",
+      "system OpenSSL3.0.13",
+      "cached Gradle8.13",
+      "other project SDK35 runtime read-only; not used or modified"
+    ],
+    "absent_in_inspected_paths": [
+      "Qt6.12 kits",
+      "NDKr27c",
+      "JDK21",
+      "original owned CMake/Ninja/aqt venv",
+      "original Qt/OpenSSL archives"
+    ]
+  },
+  "required_restore_order": [
+    "shared Node24.19.0 (now restored/verified)",
+    "isolated aqt3.3.0/CMake4.4.4/Ninja1.13.2/patchelf",
+    "Qt6.12 Linux qtbase+qtwebsockets+ICU",
+    "QuickJS2026-06-04 and OpenSSL3.5.9",
+    "Linux fresh build/run",
+    "JDK21 + owned NDK/API36 + Android kit",
+    "Android shared .so/package checks; device runtime remains separate"
+  ]
+}

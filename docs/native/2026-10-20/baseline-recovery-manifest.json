@@ -1,0 +1,12 @@
+{
+  "kind": "historical-baseline-context-recovery",
+  "raw_profile_and_temporary_evidence_lost": true,
+  "not_backup_restore_or_candidate_retest": true,
+  "files": {
+    "BROWSER_QA.md": "1262b5fef952cbc7399d9b66bbbdf917b9528fd69cc7399ae61e7b809e12872f",
+    "BROWSER_QA_RESULTS.json": "9081f0b00e8cb5b380c8ad73e2a11d0c8d6142e3b581614279119e748d8e097e",
+    "BROWSER_QA_MATRIX.md": "e868eb01f13706ff09462301fe45aa5dec55ad287ff27545de67deb7d824c1ae",
+    "runtime-delayed-boot.json": "6bb81a70d68e2bcdc0633012b7eef9f3ace73f093d124f3eb8393c161cc22627",
+    "RECOVERED_CONTROL_IDS.json": "e3d7306cd6039ea12de01556914af29c29888adce8abd05d4c11b0d76a93eae1"
+  }
+}

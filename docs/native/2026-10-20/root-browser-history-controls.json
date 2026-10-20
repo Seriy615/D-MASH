@@ -1,0 +1,91 @@
+{
+  "kind": "ROOT_BROWSER_LOCAL_HISTORY_CONTROLS_AND_RESTORE",
+  "source": "004fa12",
+  "release": "transport-v3-node-preparation-20261020.43",
+  "viewport": {
+    "width": 430,
+    "height": 932
+  },
+  "serviceWorker": "blocked; controller false",
+  "network": "local9181 only; all WebSockets blocked",
+  "result": {
+    "confirmationMismatchRejected": true,
+    "historyReopensWithoutPassword": true,
+    "originalMessageCount": 1,
+    "responseCount": 195,
+    "sourceMismatches": [],
+    "errors": [],
+    "sourceFailures": [],
+    "serviceWorkerController": false
+  },
+  "controls": {
+    "CHAT-03": {
+      "status": "PARTIAL",
+      "passedCases": [
+        "rename opens",
+        "typed alias cancel preserves name/history",
+        "empty alias OK leaves name intact"
+      ],
+      "notRun": [
+        "valid rename and return to original name"
+      ]
+    },
+    "CHAT-04": {
+      "status": "SCOPED PASS",
+      "passedCases": [
+        "new password modal cancel",
+        "masked input via computed webkitTextSecurity disc",
+        "matching confirmation commits protection",
+        "mismatching confirmation rejected",
+        "current password and empty new password remove protection"
+      ],
+      "notRun": [
+        "concurrent credential changes during rewrap"
+      ]
+    },
+    "CHAT-05": {
+      "status": "PARTIAL",
+      "passedCases": [
+        "locked history wrong password rejected with original hidden",
+        "correct password restores original history",
+        "after protection removal original reopens without prompt"
+      ],
+      "notRun": [
+        "locked-history prompt cancel"
+      ]
+    },
+    "CHAT-01": {
+      "status": "PARTIAL",
+      "passedCases": [
+        "Back button and reopening Saved retain original row"
+      ],
+      "notRun": [
+        "browser/mobile Back gestures"
+      ]
+    }
+  },
+  "operatorRecovery": {
+    "event": "Operator mistakenly entered emergency-wipe combination in synthetic retained test profile",
+    "productionOrUserProfilesAffected": false,
+    "backup": "owning Playwright storageState with indexedDB, SHA verified against prior private receipt",
+    "restore": "actual setStorageState then actual master unlock/Account login",
+    "restoredOriginExactlyMatchesBackup": true,
+    "restoredIndexedDBStores": 11,
+    "restoredRecords": 6,
+    "restoredLocalStorageExact": true,
+    "sourceExportUnchanged": true,
+    "scope": "Unplanned operator event recorded explicitly; restoration is not resetting state to make an application test PASS"
+  },
+  "finalState": {
+    "rootRecordUnchanged": true,
+    "secureAccountRegistryAndMetaUnchanged": true,
+    "originalHistoryVisibleRows": 1,
+    "historyProtectionRemovedThroughUI": true,
+    "newOwningBackupRetainedOutsideGit": true
+  },
+  "limits": [
+    "Synthetic local Saved only; no remote chat/media/calls/NAT acceptance",
+    "Historical178class matrix remains incomplete; scoped cases do not mark every class PASS",
+    "Private full exports, raw credentials and scripts remain outside Git"
+  ]
+}

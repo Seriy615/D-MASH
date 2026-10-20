@@ -382,6 +382,11 @@
         patchUi(appUi());
     }
 
+    if (global.DmashRuntimeReadiness) {
+        global.DmashRuntimeReadiness.register("acceptance-v52-ui", 65, () => patchUi(appUi()), () => !!appUi()?.[UI_PATCH], ["acceptance-v51-ui"]);
+        global.DmashRuntimeReadiness.register("acceptance-v52-storage", 65, () => patchStorage(appStorage()), () => !!appStorage()?.[PATCH], ["acceptance-v51"]);
+        return;
+    }
     install();
     // v51 also has a lazy installer. Keep v52 alive slightly longer so the
     // secure implementation always wins regardless of which timer observes

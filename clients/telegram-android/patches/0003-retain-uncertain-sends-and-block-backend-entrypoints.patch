@@ -1,0 +1,519 @@
+From c6dfe2fdfb7eecb706d069a321a424aa1e988943 Mon Sep 17 00:00:00 2001
+From: Codex <codex@d-mash.ru>
+Date: Tue, 20 Oct 2026 16:51:22 +0000
+Subject: [PATCH] Retain uncertain D-MASH sends and fence original Telegram
+ backend paths
+
+---
+ .../messenger/MediaDataController.java        |   4 +-
+ .../org/telegram/messenger/MessageObject.java |   2 +
+ .../messenger/MessagesController.java         |  14 ++
+ .../org/telegram/messenger/UserConfig.java    |   4 +
+ .../telegram/messenger/dmash/DmashClient.java | 154 +++++++++++++++---
+ .../messenger/dmash/MemoryPreferences.java    |  56 +++++++
+ .../telegram/tgnet/ConnectionsManager.java    |  13 ++
+ .../java/org/telegram/ui/ChatActivity.java    |   6 +
+ .../ui/Components/ChatActivityEnterView.java  |  17 ++
+ .../java/org/telegram/ui/LaunchActivity.java  |   5 +
+ .../telegram/ui/dmash/DmashLoginActivity.java |   6 +-
+ 11 files changed, 256 insertions(+), 25 deletions(-)
+ create mode 100644 TMessagesProj/src/main/java/org/telegram/messenger/dmash/MemoryPreferences.java
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java
+index 0563ab7..f775790 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java
+@@ -159,7 +159,9 @@ public class MediaDataController extends BaseController {
+     public MediaDataController(int num) {
+         super(num);
+ 
+-        if (currentAccount == 0) {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) {
++            draftPreferences = org.telegram.messenger.dmash.MemoryPreferences.create();
++        } else if (currentAccount == 0) {
+             draftPreferences = ApplicationLoader.applicationContext.getSharedPreferences("drafts", Activity.MODE_PRIVATE);
+         } else {
+             draftPreferences = ApplicationLoader.applicationContext.getSharedPreferences("drafts" + currentAccount, Activity.MODE_PRIVATE);
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+index 5a11417..a4df5df 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessageObject.java
+@@ -10203,10 +10203,12 @@ public class MessageObject {
+     }
+ 
+     public boolean isSendError() {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) return messageOwner.send_state == MESSAGE_SEND_STATE_SEND_ERROR;
+         return messageOwner.send_state == MESSAGE_SEND_STATE_SEND_ERROR && messageOwner.id < 0 || scheduled && messageOwner.id > 0 && messageOwner.date < ConnectionsManager.getInstance(currentAccount).getCurrentTime() - (messageOwner.video_processing_pending ? 5 * 60 : 60);
+     }
+ 
+     public boolean isSent() {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) return messageOwner.send_state == MESSAGE_SEND_STATE_SENT;
+         return messageOwner.send_state == MESSAGE_SEND_STATE_SENT || messageOwner.id > 0;
+     }
+ 
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+index 9fec794..e3dcdf9 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java
+@@ -13290,6 +13290,20 @@ public class MessagesController extends BaseController implements NotificationCe
+     private int DIALOGS_LOAD_TYPE_CHANNEL = 2;
+     private int DIALOGS_LOAD_TYPE_UNKNOWN = 3;
+ 
++    /** Account-authoritative, main-thread projection; never schedules Telegram storage/network work. */
++    public void dmashReplaceDialogs(TLRPC.messages_Dialogs data) {
++        putUsers(data.users, false);
++        dialogs_dict.clear();
++        allDialogs.clear();
++        for (TLRPC.Dialog dialog : data.dialogs) { dialogs_dict.put(dialog.id, dialog); allDialogs.add(dialog); }
++        dialogsLoaded = true;
++        loadingDialogs.put(0, false);
++        dialogsEndReached.put(0, true);
++        serverDialogsEndReached.put(0, true);
++        sortDialogs(null);
++        getNotificationCenter().postNotificationName(NotificationCenter.dialogsNeedReload);
++    }
++
+     public void processLoadedDialogs(final TLRPC.messages_Dialogs dialogsRes, ArrayList<TLRPC.EncryptedChat> encChats, ArrayList<TLRPC.UserFull> fullUsers, int folderId, int offset, int count, int loadType, boolean resetEnd, boolean migrate, boolean fromCache) {
+         Utilities.stageQueue.postRunnable(() -> {
+             if (!firstGettingTask) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java b/TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java
+index 53f4cb0..179b6e2 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/UserConfig.java
+@@ -260,6 +260,10 @@ public class UserConfig extends BaseController {
+         }
+     }
+ 
++    public void clearDmashCurrentUser() {
++        synchronized (sync) { currentUser = null; clientUserId = 0; }
++    }
++
+     public void setCurrentUser(TLRPC.User user) {
+         synchronized (sync) {
+             TLRPC.User oldUser = currentUser;
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java b/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
+index 2979ef6..a930cb3 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
+@@ -22,7 +22,21 @@ public final class DmashClient {
+     public interface Observer { void changed(JSONObject status, String error); }
+     public interface Reply { void done(boolean ok, String code, JSONObject result); }
+     private static final ArrayList<Observer> observers = new ArrayList<>();
+-    private static final ArrayDeque<Runnable> requests = new ArrayDeque<>();
++    private static final class Request {
++        final String method; final JSONObject params; final Reply callback;
++        Request(String m, JSONObject p, Reply c) { method=m;params=p;callback=c; }
++    }
++    private static final ArrayDeque<Request> requests = new ArrayDeque<>();
++    // Volatile presentation state only. The credential owner remains the sole durable outbox.
++    private static final class UiIntent {
++        String operation, peer, text, state="UI_PENDING";
++        long time; boolean inFlight, accepted, composerUncertain;
++        final ArrayList<Reply> callbacks=new ArrayList<>();
++    }
++    private static final LinkedHashMap<String,UiIntent> intents=new LinkedHashMap<>();
++    private static final HashMap<Long,ArrayList<JSONObject>> historyRows=new HashMap<>();
++    private static long accountEpoch;
++    private static Context appContext;
+     private static final HashMap<Long,String> peers = new HashMap<>();
+     private static final HashMap<Integer,String> pendingIds = new HashMap<>();
+     private static CredentialConnection connection;
+@@ -32,10 +46,12 @@ public final class DmashClient {
+     private static final HashMap<Long,int[]> histories=new HashMap<>();
+     private static final android.os.Handler main=new android.os.Handler(android.os.Looper.getMainLooper());
+     private static boolean foreground;
+-    private static final Runnable poll=new Runnable(){public void run(){if(!foreground)return;if(ready&&!busy&&requests.isEmpty()){refresh();if(accountActive)request("account.sync",object(),(ok,code,result)->{if(ok){loadDialogs(MessagesController.getInstance(0));for(Map.Entry<Long,int[]> entry:new HashMap<>(histories).entrySet()){int[] h=entry.getValue();loadHistory(MessagesController.getInstance(0),entry.getKey(),h[0],0,h[1],2,h[2],h[3]);}}});}main.postDelayed(this,2000);}};
+-    public static void foreground(boolean value){foreground=value;main.removeCallbacks(poll);if(value&&connection!=null)main.post(poll);}
++    private static final Runnable poll=new Runnable(){public void run(){if(!foreground)return;if(connection==null&&appContext!=null)connect(appContext);if(ready&&!busy&&requests.isEmpty()){refresh();if(accountActive)request("account.sync",object(),(ok,code,result)->{if(ok){loadDialogs(MessagesController.getInstance(0));for(Map.Entry<Long,int[]> entry:new HashMap<>(histories).entrySet()){int[] h=entry.getValue();loadHistory(MessagesController.getInstance(0),entry.getKey(),h[0],0,h[1],2,h[2],h[3]);}}});}main.postDelayed(this,2000);}};
++    public static void foreground(boolean value){foreground=value;main.removeCallbacks(poll);if(value)main.post(poll);}
+     private DmashClient() {}
+     public static boolean active() { return accountActive; }
++    public static boolean isReady() { return ready; }
++    public static boolean isBusy() { return busy; }
+     public static JSONObject status() { return status; }
+     public static void observe(Observer observer) { observers.add(observer); observer.changed(status, ""); }
+     public static void unobserve(Observer observer) { observers.remove(observer); }
+@@ -44,22 +60,36 @@ public final class DmashClient {
+         JSONObject o=new JSONObject(); try { for(int i=0;i<pairs.length;i+=2)o.put((String)pairs[i],pairs[i+1]); } catch(JSONException e) { throw new IllegalArgumentException(e); } return o;
+     }
+     public static void connect(Context context) {
++        appContext=context.getApplicationContext();
+         if(connection!=null)return;
+         Intent service=new Intent(context, CredentialService.class);
+         if(Build.VERSION.SDK_INT>=26)context.startForegroundService(service);else context.startService(service);
+         connection=new CredentialConnection(context,new CredentialConnection.Listener(){
+             public void ready(JSONObject initial) { ready=true; applyStatus(initial); drain(); }
+-            public void busy(boolean value) { busy=value; }
+-            public void disconnected(String code) { ready=false;accountActive=false;requests.clear();connection=null;clearProjection();publish(code); }
++            public void busy(boolean value) { busy=value;publish(""); }
++            public void disconnected(String code) {
++                ready=false;busy=false;connection=null;
++                // EOF is not an Account logout or a negative durability acknowledgement.
++                ArrayList<Request> unsent=new ArrayList<>(requests);requests.clear();
++                for(Request request:unsent)request.callback.done(false,"CREDENTIAL_HOST_NOT_SENT",object());
++                publish(code);
++            }
++        });
++    }
++    private static void drain() {
++        if(!ready||busy||requests.isEmpty()||connection==null)return;
++        Request job=requests.removeFirst();
++        connection.request(job.method,job.params,(ok,code,result)->{
++            if(ok&&job.method.equals("account.login"))bind(result.optJSONObject("value"));
++            if(ok&&(job.method.equals("account.logout")||job.method.equals("root.lock"))) {
++                accountActive=false;clearProjection();
++            }
++            job.callback.done(ok,code,result);drain();
+         });
+     }
+-    private static void drain() { if(ready&&!busy&&!requests.isEmpty()) requests.removeFirst().run(); }
+     public static void request(String method, JSONObject params, Reply callback) {
+-        requests.add(()->connection.request(method,params,(ok,code,result)->{
+-            if(ok&&method.equals("account.login")) { bind(result.optJSONObject("value")); }
+-            if(ok&&(method.equals("account.logout")||method.equals("root.lock"))) { accountActive=false;clearProjection(); }
+-            callback.done(ok,code,result); drain();
+-        })); drain();
++        if(!ready) { callback.done(false,"CREDENTIAL_HOST_UNAVAILABLE",object());return; }
++        requests.add(new Request(method,params,callback));drain();
+     }
+     public static void cancel() { if(connection!=null)connection.cancel(); }
+     public static void refresh() { request("host.status",object(),(ok,code,result)->{if(ok)applyStatus(result.optJSONObject("value"));else publish(code);}); }
+@@ -82,12 +112,17 @@ public final class DmashClient {
+     }
+     private static void bind(JSONObject account) {
+         if(account==null||account.optString("accountPublicId").isEmpty())return;
+-        self=account.optString("accountPublicId");accountActive=true;
++        String incoming=account.optString("accountPublicId");
++        if(self!=null&&!self.equals(incoming))clearProjection();
++        self=incoming;accountActive=true;
+         TLRPC.User u=user(self,account.optString("displayName"),true);
+         UserConfig.getInstance(0).setCurrentUser(u);MessagesController.getInstance(0).putUser(u,false);
+     }
+     public static void clearProjection() {
+-        self=null;peers.clear();pendingIds.clear();histories.clear();
++        accountEpoch++;
++        self=null;peers.clear();pendingIds.clear();histories.clear();historyRows.clear();intents.clear();
++        MemoryPreferences.clearAll();
++        UserConfig.getInstance(0).clearDmashCurrentUser();
+         MessagesController.getInstance(0).cleanup();MessagesStorage.getInstance(0).cleanup(false);
+         NotificationCenter.getInstance(0).postNotificationName(NotificationCenter.closeChats);
+         NotificationCenter.getInstance(0).postNotificationName(NotificationCenter.appDidLogout);
+@@ -95,7 +130,9 @@ public final class DmashClient {
+     private static String peer(long id) { String p=peers.get(id);if(p==null)throw new IllegalStateException("DMASH_UNKNOWN_PEER");return p.equals(self)?SAVED:p; }
+     public static void loadDialogs(MessagesController controller) {
+         if(!accountActive)return;
++        final long epoch=accountEpoch;
+         request("account.contacts",object(),(ok,code,result)->{
++            if(epoch!=accountEpoch||!accountActive)return;
+             if(!ok){publish(code);return;}
+             TLRPC.TL_messages_dialogs dialogs=new TLRPC.TL_messages_dialogs();
+             JSONArray rows=result.optJSONArray("rows");
+@@ -105,7 +142,7 @@ public final class DmashClient {
+                 boolean saved=id.equals(SAVED);TLRPC.User u=user(saved?self:id,row.optString("name"),saved);dialogs.users.add(u);
+                 TLRPC.TL_dialog d=new TLRPC.TL_dialog();d.id=u.id;d.peer=new TLRPC.TL_peerUser();d.peer.user_id=u.id;d.notify_settings=new TLRPC.TL_peerNotifySettings();dialogs.dialogs.add(d);
+             }
+-            controller.processLoadedDialogs(dialogs,null,null,0,0,dialogs.dialogs.size(),0,false,false,false);
++            controller.dmashReplaceDialogs(dialogs);
+         });
+     }
+     private static TLRPC.Message message(long dialog,JSONObject row) {
+@@ -124,21 +161,94 @@ public final class DmashClient {
+         if(m.out&&(state.equals("FAILED")||state.equals("EXPIRED")||state.equals("CANCELLED")))m.send_state=MessageObject.MESSAGE_SEND_STATE_SEND_ERROR;
+         return m;
+     }
++    private static void projectHistory(long dialog,int count,int before,int guid,int loadType,int loadIndex,int mode) {
++        ArrayList<JSONObject> rows=new ArrayList<>(historyRows.getOrDefault(dialog,new ArrayList<>()));
++        HashSet<String> operations=new HashSet<>();
++        for(JSONObject row:rows)operations.add(row.optString("operationId"));
++        if(before==0)for(UiIntent intent:intents.values()) {
++            if(intent.peer.equals(peer(dialog))&&!operations.contains(intent.operation))
++                rows.add(object("operationId",intent.operation,"sequence",0,"text",intent.text,"time",intent.time,"direction","out","state",intent.state));
++        }
++        rows.sort((left,right)->Long.compare(right.optLong("time"),left.optLong("time")));
++        ArrayList<MessageObject> messages=new ArrayList<>();
++        for(JSONObject row:rows)messages.add(new MessageObject(0,message(dialog,row),true,false));
++        // The normal Telegram ChatActivity consumes its original MessageObjects and notification.
++        // No async Telegram DB stage can resurrect a projection after an Account fence.
++        NotificationCenter.getInstance(0).postNotificationName(NotificationCenter.messagesDidLoad,
++                dialog,count,messages,false,0,0,0,0,loadType,rows.size()<count,guid,loadIndex,before,0,mode,before==0);
++    }
++    private static void projectWatchedHistory(long dialog) {
++        int[] h=histories.get(dialog);
++        if(h!=null)projectHistory(dialog,h[0],0,h[1],2,h[2],h[3]);
++    }
+     public static void loadHistory(MessagesController controller,long dialog,int count,int before,int guid,int loadType,int loadIndex,int mode) {
+         if(!accountActive)return;
+         histories.put(dialog,new int[]{count,guid,loadIndex,mode});
++        final long epoch=accountEpoch;
+         request("account.history",object("peer",peer(dialog),"before",Math.max(0,before),"limit",Math.min(100,Math.max(1,count))),(ok,code,result)->{
+-            if(!ok){publish(code);return;}TLRPC.TL_messages_messages data=new TLRPC.TL_messages_messages();JSONArray rows=result.optJSONArray("rows");if(rows==null)return;
+-            for(int i=0;i<rows.length();i++)data.messages.add(message(dialog,rows.optJSONObject(i)));
+-            controller.processLoadedMessages(data,data.messages.size(),dialog,0,count,before,0,false,guid,0,0,0,0,loadType,true,mode,0,loadIndex,false,0,true,false,null);
++            if(epoch!=accountEpoch||!accountActive)return;
++            if(!ok){publish(code);projectWatchedHistory(dialog);return;}
++            JSONArray rows=result.optJSONArray("rows");if(rows==null)return;
++            ArrayList<JSONObject> loaded=new ArrayList<>();
++            for(int i=0;i<rows.length();i++) {
++                JSONObject row=rows.optJSONObject(i);if(row==null)continue;loaded.add(row);
++                UiIntent intent=intents.get(row.optString("operationId"));
++                if(intent!=null&&intent.peer.equals(peer(dialog))&&intent.text.equals(row.optString("text"))) {
++                    intent.accepted=true;intent.state=row.optString("state");
++                    if(!intent.composerUncertain)intents.remove(intent.operation);
++                }
++            }
++            historyRows.put(dialog,loaded);
++            projectHistory(dialog,count,before,guid,loadType,loadIndex,mode);
+         });
+     }
+     public static void sendText(long dialog,String text,String retainedOperation) {
+-        byte[] nonce=new byte[32];new java.security.SecureRandom().nextBytes(nonce);StringBuilder hex=new StringBuilder();for(byte b:nonce)hex.append(String.format(java.util.Locale.ROOT,"%02x",b&255));String operation=retainedOperation==null?hex.toString():retainedOperation;
+-        request("account.sendText",object("peer",peer(dialog),"operationId",operation,"text",text),(ok,code,result)->{
+-            if(!ok||result.optJSONObject("value")==null||!result.optJSONObject("value").optBoolean("accepted"))publish(ok?"MESSAGE_NOT_ACCEPTED":code);
+-            loadDialogs(MessagesController.getInstance(0));
+-            int[] h=histories.get(dialog);if(h!=null)loadHistory(MessagesController.getInstance(0),dialog,h[0],0,h[1],2,h[2],h[3]);
++        sendText(dialog,text,retainedOperation,(ok,code,result)->{});
++    }
++    public static void sendText(long dialog,String text,String retainedOperation,Reply reply) {
++        if(!accountActive) { reply.done(false,"ACCOUNT_LOGIN_REQUIRED",object());return; }
++        String target=peer(dialog);
++        UiIntent intent=retainedOperation==null?null:intents.get(retainedOperation);
++        // Repressing Send after an unknown reply reuses the original logical intent.
++        if(intent==null&&retainedOperation==null)for(UiIntent candidate:intents.values()) {
++            if(candidate.composerUncertain&&candidate.peer.equals(target)&&candidate.text.equals(text)) { intent=candidate;break; }
++        }
++        if(intent!=null&&(!intent.peer.equals(target)||!intent.text.equals(text))) {
++            reply.done(false,"OPERATION_ID_CONFLICT",object());return;
++        }
++        if(intent==null) {
++            intent=new UiIntent();intent.peer=target;intent.text=text;intent.time=System.currentTimeMillis();
++            if(retainedOperation==null) {
++                byte[] nonce=new byte[32];new java.security.SecureRandom().nextBytes(nonce);
++                StringBuilder hex=new StringBuilder();for(byte b:nonce)hex.append(String.format(Locale.ROOT,"%02x",b&255));
++                intent.operation=hex.toString();
++            } else intent.operation=retainedOperation;
++            intents.put(intent.operation,intent);
++        }
++        if(intent.accepted) {
++            intents.remove(intent.operation);reply.done(true,"",object("value",object("accepted",true,"operationId",intent.operation)));return;
++        }
++        intent.composerUncertain=true;intent.callbacks.add(reply);
++        if(intent.inFlight)return;
++        intent.inFlight=true;intent.state="UI_PENDING";
++        projectWatchedHistory(dialog);
++        final UiIntent sent=intent;final long epoch=accountEpoch;
++        request("account.sendText",object("peer",sent.peer,"operationId",sent.operation,"text",sent.text),(ok,code,result)->{
++            if(epoch!=accountEpoch||!accountActive)return;
++            sent.inFlight=false;
++            JSONObject value=result.optJSONObject("value");
++            boolean accepted=ok&&value!=null&&value.optBoolean("accepted");
++            sent.accepted=accepted;
++            sent.composerUncertain=!accepted;
++            boolean unknown=code.startsWith("CREDENTIAL_HOST_");
++            sent.state=accepted?value.optString("transportState","APPLICATION_PENDING"):unknown?"UI_UNCERTAIN":"FAILED";
++            if(!accepted)publish(ok?"MESSAGE_NOT_ACCEPTED":code);
++            ArrayList<Reply> callbacks=new ArrayList<>(sent.callbacks);sent.callbacks.clear();
++            for(Reply callback:callbacks)callback.done(accepted,code,result);
++            if(ready) {
++                loadDialogs(MessagesController.getInstance(0));
++                int[] h=histories.get(dialog);if(h!=null)loadHistory(MessagesController.getInstance(0),dialog,h[0],0,h[1],2,h[2],h[3]);
++            } else projectWatchedHistory(dialog);
+         });
+     }
+ }
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/dmash/MemoryPreferences.java b/TMessagesProj/src/main/java/org/telegram/messenger/dmash/MemoryPreferences.java
+new file mode 100644
+index 0000000..b8f7cae
+--- /dev/null
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/dmash/MemoryPreferences.java
+@@ -0,0 +1,56 @@
++/* D-MASH adaptation of the Telegram client. GPL-2.0-or-later; see LICENSE. */
++package org.telegram.messenger.dmash;
++
++import android.content.SharedPreferences;
++import java.util.*;
++
++/** Original Telegram draft API, with Account plaintext kept exclusively in process memory. */
++public final class MemoryPreferences implements SharedPreferences {
++    private static final ArrayList<MemoryPreferences> instances=new ArrayList<>();
++    private final HashMap<String,Object> values=new HashMap<>();
++    private final HashSet<OnSharedPreferenceChangeListener> listeners=new HashSet<>();
++    public static synchronized MemoryPreferences create() {
++        MemoryPreferences preferences=new MemoryPreferences();instances.add(preferences);return preferences;
++    }
++    public static synchronized void clearAll() {
++        for(MemoryPreferences preferences:instances)preferences.edit().clear().commit();
++    }
++    public synchronized Map<String,?> getAll(){return new HashMap<>(values);}
++    public synchronized String getString(String key,String fallback){return (String)values.getOrDefault(key,fallback);}
++    @SuppressWarnings("unchecked") public synchronized Set<String> getStringSet(String key,Set<String> fallback){
++        Set<String> value=(Set<String>)values.get(key);return value==null?fallback:new HashSet<>(value);
++    }
++    public synchronized int getInt(String key,int fallback){return (Integer)values.getOrDefault(key,fallback);}
++    public synchronized long getLong(String key,long fallback){return (Long)values.getOrDefault(key,fallback);}
++    public synchronized float getFloat(String key,float fallback){return (Float)values.getOrDefault(key,fallback);}
++    public synchronized boolean getBoolean(String key,boolean fallback){return (Boolean)values.getOrDefault(key,fallback);}
++    public synchronized boolean contains(String key){return values.containsKey(key);}
++    public synchronized void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener){listeners.add(listener);}
++    public synchronized void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener){listeners.remove(listener);}
++    public Editor edit(){return new Changes();}
++    private final class Changes implements Editor {
++        final HashMap<String,Object> pending=new HashMap<>();boolean clear;
++        public Editor putString(String key,String value){pending.put(key,value);return this;}
++        public Editor putStringSet(String key,Set<String> value){pending.put(key,value==null?null:new HashSet<>(value));return this;}
++        public Editor putInt(String key,int value){pending.put(key,value);return this;}
++        public Editor putLong(String key,long value){pending.put(key,value);return this;}
++        public Editor putFloat(String key,float value){pending.put(key,value);return this;}
++        public Editor putBoolean(String key,boolean value){pending.put(key,value);return this;}
++        public Editor remove(String key){pending.put(key,null);return this;}
++        public Editor clear(){clear=true;return this;}
++        public void apply(){commit();}
++        public boolean commit(){
++            ArrayList<OnSharedPreferenceChangeListener> notify;
++            HashSet<String> changed=new HashSet<>(pending.keySet());
++            synchronized(MemoryPreferences.this){
++                if(clear){changed.addAll(values.keySet());values.clear();}
++                for(Map.Entry<String,Object> change:pending.entrySet()){
++                    if(change.getValue()==null)values.remove(change.getKey());else values.put(change.getKey(),change.getValue());
++                }
++                notify=new ArrayList<>(listeners);
++            }
++            for(String key:changed)for(OnSharedPreferenceChangeListener listener:notify)listener.onSharedPreferenceChanged(MemoryPreferences.this,key);
++            return true;
++        }
++    }
++}
+diff --git a/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java b/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
+index 012c63b..eb23111 100644
+--- a/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
++++ b/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
+@@ -757,6 +757,10 @@ public class ConnectionsManager extends BaseController {
+     }
+ 
+     public long checkProxy(ProxySettings settings, RequestTimeDelegate requestTimeDelegate) {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) {
++            if (requestTimeDelegate != null) AndroidUtilities.runOnUIThread(() -> requestTimeDelegate.run(-1));
++            return 0;
++        }
+         if (settings == null || !settings.isValid()) {
+             return 0;
+         }
+@@ -769,6 +773,10 @@ public class ConnectionsManager extends BaseController {
+     }
+ 
+     private void checkWebProxyInternal(ProxySettings settings, int port, RequestTimeDelegate requestTimeDelegate) {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) {
++            if (requestTimeDelegate != null) requestTimeDelegate.run(-1);
++            return;
++        }
+         native_checkProxy(currentAccount, "127.0.0.1", port, "", "", settings.getSecret(), requestTimeDelegate);
+     }
+ 
+@@ -881,6 +889,7 @@ public class ConnectionsManager extends BaseController {
+     }
+ 
+     public static void onRequestNewServerIpAndPort(final int second, final int currentAccount) {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) return;
+         Utilities.globalQueue.postRunnable(() -> {
+             boolean networkOnline = ApplicationLoader.isNetworkOnline();
+             Utilities.stageQueue.postRunnable(() -> {
+@@ -918,6 +927,10 @@ public class ConnectionsManager extends BaseController {
+     }
+ 
+     public static void getHostByName(String hostName, long address) {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) {
++            native_onHostNameResolved(hostName, address, "");
++            return;
++        }
+         AndroidUtilities.runOnUIThread(() -> {
+             ResolvedDomain resolvedDomain = dnsCache.get(hostName);
+             if (resolvedDomain != null && SystemClock.elapsedRealtime() - resolvedDomain.ttl < 5 * 60 * 1000) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+index 9dff553..f68b98a 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/ChatActivity.java
+@@ -20645,6 +20645,12 @@ public class ChatActivity extends BaseFragment implements
+                 getNotificationCenter().updateAllowedNotifications(transitionAnimationIndex, alowedNotifications);
+             }
+         }
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED && args.length > 15 && Boolean.TRUE.equals(args[15]) && (Long) args[0] == dialog_id) {
++            // Account history replaces this volatile page. Sequence-zero -> positive sequence
++            // is one operation, not an extra Telegram message or a fabricated server ACK.
++            clearOnLoad = true;
++            if (!waitingForLoad.contains(queryLoadIndex)) waitingForLoad.add(queryLoadIndex);
++        }
+         int index = waitingForLoad.indexOf(queryLoadIndex);
+         long currentUserId = getUserConfig().getClientUserId();
+         int mode = (Integer) args[14];
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
+index 52b511d..22e4b7c 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/Components/ChatActivityEnterView.java
+@@ -7274,6 +7274,23 @@ public class ChatActivityEnterView extends FrameLayout implements
+     }
+ 
+     protected boolean sendMessageInternal(boolean notify, int scheduleDate, int scheduleRepeatPeriod, long payStars, boolean allowConfirm) {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) {
++            final String text = messageEditText == null ? "" : messageEditText.getTextToUse().toString();
++            if (text.isEmpty()) return false;
++            if (scheduleDate != 0 || audioToSend != null || videoToSendMessageObject != null || richDraftActive) {
++                android.widget.Toast.makeText(getContext(), "D-MASH currently supports plain text messages.", android.widget.Toast.LENGTH_LONG).show();
++                return false;
++            }
++            org.telegram.messenger.dmash.DmashClient.sendText(dialog_id, text, null, (ok, code, result) -> {
++                // Lost replies retain the exact composer text and operation ID; only durable acceptance clears it.
++                if (ok && messageEditText != null && text.contentEquals(messageEditText.getTextToUse())) {
++                    messageEditText.setText("");
++                    if (delegate != null) delegate.onMessageSend(text, notify, 0, 0, 0);
++                }
++            });
++            return true;
++        }
++
+         final boolean allowConfirmFinal = allowConfirm && !animatorEphemeralMessageVisibility.getValue();
+ 
+         final Runnable send = () -> {
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+index 9f00a6b..2399aad 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java
+@@ -5960,6 +5960,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
+ 
+     private boolean firstAppUpdateCheck = true;
+     public void checkAppUpdate(boolean force, Browser.Progress progress) {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) {
++            if (progress != null) progress.end();
++            if (force) new AlertDialog.Builder(this).setTitle("D-MASH").setMessage("Telegram updates are unavailable in this D-MASH client fork.").setPositiveButton(LocaleController.getString(R.string.OK), null).show();
++            return;
++        }
+         if (!ApplicationLoader.isStandaloneBuild() && !ApplicationLoader.isBetaBuild()) {
+             return;
+         }
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/dmash/DmashLoginActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/dmash/DmashLoginActivity.java
+index a10ecc9..76d4ece 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/dmash/DmashLoginActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/dmash/DmashLoginActivity.java
+@@ -26,7 +26,7 @@ public final class DmashLoginActivity extends BaseFragment implements DmashClien
+     private EditTextBoldCursor pin,identity,password,name;
+     private TextView notice;
+     private LinearLayout content;
+-    private boolean navigating;
++    private boolean navigating, requestBusy;
+     private TextSettingsCell unlock,login,createRoot,createAccount,importProfile;
+     @Override public View createView(Context context) {
+         actionBar.setTitle("D-MASH");
+@@ -60,9 +60,11 @@ public final class DmashLoginActivity extends BaseFragment implements DmashClien
+             notice.setText("Ready");if(DmashClient.active())openDialogs();else DmashClient.refresh();
+         });
+     }
+-    private void setBusy(boolean value){for(TextSettingsCell cell:new TextSettingsCell[]{unlock,login,createRoot,createAccount,importProfile})cell.setEnabled(!value);}
++    private void setBusy(boolean value){requestBusy=value;for(TextSettingsCell cell:new TextSettingsCell[]{unlock,login,createRoot,createAccount,importProfile})cell.setEnabled(!value&&DmashClient.isReady());}
+     public void changed(JSONObject status,String error){
+         if(notice==null)return;if(!error.isEmpty()){notice.setText(error);return;}
++        for(TextSettingsCell cell:new TextSettingsCell[]{unlock,login,createRoot,createAccount,importProfile})cell.setEnabled(!requestBusy&&!DmashClient.isBusy()&&DmashClient.isReady());
++        if(!DmashClient.isReady()){notice.setText("Connecting to the messages service…");return;}
+         boolean exists=status.optBoolean("profileExists"),locked=status.optBoolean("rootLocked",true);
+         createRoot.setVisibility(exists?View.GONE:View.VISIBLE);unlock.setVisibility(exists&&locked?View.VISIBLE:View.GONE);login.setVisibility(exists&&!locked?View.VISIBLE:View.GONE);createAccount.setVisibility(exists&&!locked?View.VISIBLE:View.GONE);
+         if(DmashClient.active())openDialogs();else notice.setText(!exists?"Create a device Root or import your complete profile.":locked?"Unlock your device Root.":"Sign in to your Account. Node can run independently.");
+-- 
+2.43.0
+

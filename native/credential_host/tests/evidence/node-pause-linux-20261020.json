@@ -1,0 +1,75 @@
+{
+  "status": "PASS",
+  "scope": "Linux native component; existing signed synthetic contacts, not UI pairing",
+  "testedSourceSHA": "968f446e39d349ca14258995b7f0875a31c407f7",
+  "credentialHostSHA256": "2e9e13767475352b4d969be829e14ec048ec2799e0063675cb353a2ed9568578",
+  "nodeHostSHA256": "2b31d6aa69ff214d090a87df6d03924a380f703933ab37417e6b63a477008802",
+  "focusedChecks": {
+    "actualPauseProcess": "PASS7.67s",
+    "brokerTransportEpochAndRootKeyReuse": "PASS14.27s"
+  },
+  "actualMesh": {
+    "admissionDifficulty": 22,
+    "wireRole": "NODE",
+    "residentCredentialOwners": 2,
+    "nativeNodes": 2,
+    "pythonTransitRestartedWithSameKeyProfileAndEndpoint": true,
+    "actualAccountE2EE": true,
+    "acceptedNativeJobs": 1,
+    "sameOriginalNativeJobId": true,
+    "sameAuthenticatedOpaquePacketCiphertextAndExpiry": true,
+    "recipientAccountHistoryExactlyOnce": 1,
+    "pausedSavedRows": 2,
+    "resumeWithoutPinOrAccountLogin": true,
+    "pausedCredentialOwnerSigkillRecovery": true,
+    "transportGenerations": [
+      1,
+      3,
+      5
+    ],
+    "sameRootAndNodeIdentities": true,
+    "sourceFixturesUnchanged": true,
+    "nodeContainsApplicationPlaintext": false
+  },
+  "stages": [
+    {
+      "stage": "synthetic-identities",
+      "elapsedSeconds": 0.0
+    },
+    {
+      "stage": "owners-start",
+      "elapsedSeconds": 16.925
+    },
+    {
+      "stage": "existing-Account-E2EE-handshake",
+      "elapsedSeconds": 44.161
+    },
+    {
+      "stage": "offline-accepted-native-job",
+      "elapsedSeconds": 95.15
+    },
+    {
+      "stage": "pause-preserves-owner-and-job",
+      "elapsedSeconds": 97.454
+    },
+    {
+      "stage": "resume-without-PIN-or-Account-login",
+      "elapsedSeconds": 97.89
+    },
+    {
+      "stage": "paused-owner-SIGKILL",
+      "elapsedSeconds": 100.383
+    },
+    {
+      "stage": "same-transit-restart-original-job-delivery",
+      "elapsedSeconds": 107.376
+    }
+  ],
+  "fixtureCorrection": "Initial attempt failed before pause: Account durable intent was incorrectly treated as accepted Node job; corrected fixture waits for actual native row and checks its authenticated packet. Initial failure state preserved privately.",
+  "limits": [
+    "Existing node.disable and root.lock remain full lock; only explicit node.pause retains Root/Account",
+    "SIGKILL of the credential owner erases its memory; Root and Account credentials are supplied again only after that real process restart",
+    "Encrypted SQLite row changes with attempt metadata; the verified unchanged ciphertext is the opaque transport body, along with original job ID and expiry",
+    "Browser, visible native UI pairing, Android/Windows runtime and full N4 remain separate gates"
+  ]
+}

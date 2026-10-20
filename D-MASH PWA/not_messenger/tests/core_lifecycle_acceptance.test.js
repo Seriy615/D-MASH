@@ -158,11 +158,11 @@ Core.closeModal = () => { Core.modalWasClosed = true; };
   };
   calculatorContext.window.crypto = webcrypto;
   vm.runInNewContext(
-    `${fs.readFileSync(require.resolve("../js/ui_logic.js"), "utf8")}; globalThis.__ui = ui; globalThis.__sys = sys;`,
+    `${fs.readFileSync(require.resolve("../js/ui_logic.js"), "utf8").replace("ui.init();", "")}; globalThis.__ui = ui; globalThis.__sys = sys;`,
     calculatorContext,
     { filename: "ui_logic.js" }
   );
-  calculatorContext.__sys.fastHash = async () => "master";
+  calculatorContext.__sys.ensureCredentials = async () => ({});
   calculatorContext.__sys.loadAllLibs = async () => true;
   let selectorState;
   calculatorContext.__ui.show_gate = async function() {

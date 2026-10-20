@@ -1,0 +1,9 @@
+PASS QuickJS private field/typed native engine
+PASS OpenSSL CSPRNG and SHA256 vector
+PASS OpenSSL AES128-GCM NIST vector
+PASS SQLite transaction CAS/stale reject/reopen
+Qt 6.12.0 TLS OpenSSL 3.5.9 29 Sep 2026 backend openssl
+PASS Qt OpenSSL TLS backend
+PASS WSS verified localhost TLS echo
+PASS ARGON2D matches exact real-WASM public master fixture; textual UTF8 base64 salt
+PASS ARGON2ID matches exact real-WASM public master fixture; textual UTF8 base64 salt

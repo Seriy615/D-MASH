@@ -1,0 +1,18 @@
+{
+  "kind": "BROWSER",
+  "source": "3541458da5ff433aa705e3e329e6d148a3fa1445",
+  "issue": "BIO-INSTRUCTION-01",
+  "status": "PASS root independent real UI retest",
+  "intro": "БИОМЕТРИЯ УСТРОЙСТВА\nПривязка относится к DeviceRoot, а не к Account. После старта выберите цифру или + − × ÷ % , и удерживайте 1 сек. WebAuthn откроется на отпускании кнопки.\nНАЧАТЬ ПРИВЯЗКУ НАЗАД\nD-MASH build transport-v3-node-preparation-20261020.39\nD-MASH update check failed. Network features may be unavailable.",
+  "selection": "УДЕРЖИВАЙТЕ ЦИФРУ ИЛИ + − × ÷ % , 1 СЕК.\n0\nAC\n±\n%\n÷\n7\n8\n9\n×\n4\n5\n6\n−\n1\n2\n3\n+\n0\n,\n=\nОТМЕНА ПРИВЯЗКИ КНОПКИ\nD-MASH build transport-v3-node-preparation-20261020.39\nD-MASH update check failed. Network features may be unavailable.",
+  "cancelReturnedToSettings": true,
+  "sourceResponses": 107,
+  "sourceMismatches": [],
+  "sourceFailures": [],
+  "pageErrors": [],
+  "limits": [
+    "Same retained synthetic profile after S01 migration; SWblocked/positive transport nottested.",
+    "Cancelled before OS enrollment; physical WebAuthn notverified."
+  ],
+  "source_evidence": "root-biometric-instruction-sources.json"
+}

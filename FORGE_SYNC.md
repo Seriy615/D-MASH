@@ -1,94 +1,55 @@
-# Forge source/context checkpoints
+# Forge source/context sync
 
-**15 октября 2026, UTC — текущий рабочий срез.** Работа ACTIVE, full goal НЕ DONE.
-Исходный shared checkout `/home/jcode/D-MASH` остаётся HEAD62f97d7 на
-`transport-v3` с ценным agentWIP; reset/clean/pull поверх него не выполняются.
-Root интеграция/context `/tmp/dmash-oct15-integration`, `codex/oct15-integration`;
-PWA product release3a784714060f5645d1b6317c87c59285e1f95b39 pushed через
-transport-v3; currentbranchhead может включать более новые docs/harness-onlycommits.
-Ниже8Oct source-sync — historical baseline, не утверждение currentcleanHEAD.
-Контекст синхронизируется отдельно с protected backup; sourceWIP сохраняется.
-User explicitly назначил API proxy.d-mash.ru на прежнем EMS85.198.64.183;
-это отдельная авторизованная infraоперация, Nodeidentities/keys/DB сохранены.
-PWA37 exact216PWA/264combinedsource PASS, normalSW/page37/canonicalcatalog/
-preservedroot+pairing+SavedUI scopedPASS. Original36catalogFAIL закрыт37retest.
-Только делегированные gpt-6.1-sol/gpt-6-luna; прежниеunknownagents не возобновлять.
+**20 октября 2026 UTC — текущая проверенная сводка. Цель ACTIVE, не DONE.**
 
-Дата: 8 октября 2026, Europe/Moscow. Пользователь назначил forge-vps для
-синхронизации source/context и дальнейшей разработки.
-
-| Поле | Проверенный результат |
+| Поле | Фактическое состояние |
 |---|---|
-| SSH alias / actual host | forge-vps / forgeai.isgood.host |
-| SSH / Git owner | codex / codex:codex |
-| Checkout | /home/jcode/D-MASH |
-| Branch | transport-v3 |
-| Проверенный базовый handoff commit | c14b0b07f9229988f8bbb83f88b3b73504784272 |
-| Git tree базового handoff | 0b9aa4e3238f40e813717e7e244c5cd7531c1dfb |
-| Runtime baseline | ed200730dab2e64fc8446e344ce54dbd37cfeec5, .24 |
-| Обновление | fetch + merge --ff-only, без force/reset всего checkout |
-| Проверка | HEAD/tree совпали с local pushed snapshot; 6 context/evidence file SHA256 совпали; clean working tree |
-| Fetch origin | https://github.com/Seriy615/D-MASH.git |
-| Push origin | git@github.com:Seriy615/D-MASH.git; direct Forge SSH denied; verified EMS temporary publisher workflow available |
+| Actual host | forgeai.isgood.host (`hostname` проверен) |
+| Checkout | `/home/jcode/D-MASH` |
+| Branch | `codex/native-clients-20261020` |
+| Последний опубликованный local checkpoint | `e00db0abb1baddc4c18bfd2ec6dd757c398f3d5e` |
+| Его Git tree | `5ec547e905de8c901645ce6eab4be278f2525188` |
+| GitHub CI snapshot | `0783fd0440767e76433c2902b5c8c80a918f0883` |
+| Remote branch | `codex/native-clients-ci-20261020` |
+| Draft PR | https://github.com/Seriy615/D-MASH/pull/8 |
+| Source sync | Exact tracked tree uploaded through connected GitHub app; create_tree SHA exactly matches local tree; remote head independently checked with `git ls-remote` |
+| Worktree | Agent WIP preserved; not clean, not a release tree |
+| Direct Git push | HTTPS credentials absent; SSH publickey denied. No credentials copied or global auth altered |
 
-До обновления на Forge было только локальное изменение CURRENT_HANDOFF.md:
-старый .24 checkpoint, 36 добавленных строк. Полный файл, binary diff и SHA256SUMS
-сохранены с owner-only permissions вне checkout:
-`/home/jcode/dmash-handoff-backups/20261008-before-context-sync`.
-Затем восстановлен только этот tracked файл из HEAD для безопасного fast-forward.
-Другие локальные данные/ignored runtime state не удалялись.
+GitHub snapshot commits have different commit SHAs because the connector creates
+commits; the compared **file tree** is exact. Source/context checkpoints do not
+back up runtime DBs, keys, identities, or accepted queues. Private profiles,
+owning backups and frozen executable checkpoints remain outside Git under
+`/home/jcode/.cache`; public bounded evidence is linked from CURRENT_HANDOFF.md.
 
-Первый fetch через существующий SSH GitHub URL получил Permission denied
-(publickey). Уже pushed commit получен по публичному HTTPS; origin fetch URL
-исправлен на HTTPS, существующий SSH push URL сохранён. Частные SSH keys с Mac
-не копировались. Перед первым remote push необходимо настроить разрешённый
-GitHub write access на Forge либо использовать установленный пользователем
-аутентифицированный workflow. Source sync уже завершён; отсутствие write key
-не мешает читать репозиторий или работать локально с ним.
+Current app direction is actual Telegram forks, per explicit user correction.
+The earlier custom Widgets/Views UI work is stopped and preserved; its scoped
+PASS is not final frontend acceptance. Actual source checkouts independently
+verified by root:
 
-Файл фиксирует проверку базового handoff snapshot выше; этот отчёт добавлен
-следующим documentation commit, который также синхронизируется на Forge.
-Актуальный полный handoff SHA всегда получать через `git rev-parse HEAD` и
-сверять с `git rev-parse origin/transport-v3`, без самоссылки SHA в содержимом
-его собственного commit. После последнего sync обе ревизии должны совпадать,
-рабочая директория должна быть чистой.
+| Client | Checkout | Pinned upstream | License file SHA256 |
+|---|---|---|---|
+| Telegram Desktop | `/home/jcode/.cache/dmash-native-20261020/telegram-desktop-fork` | `86262333a457f62709726ee4ab9c48fa58824da4` | `30e52a0e4d8207c631458d98be89adcadf5b60e2608fe9c9a3eff1cde1877c8e` (GPLv3 + OpenSSL exception) |
+| Telegram Android | `/home/jcode/.cache/dmash-native-20261020/worktrees/telegram-android` | `0aae959806c57be8ad457980f2a5c6277ff18635` | `8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643` (GPLv2) |
 
-Это **source/context sync**. Messenger PWA, EMS production backend, его
-identities/DB/TURN secrets и домены этим действием на Forge не переносились.
-На момент первоначального sync runtime был .24; актуальная публикация ниже. Другие Forge apps не менялись. Checklist реальной
-runtime migration есть в CURRENT_HANDOFF.md.
+Publishede00db0a includes actual Desktop full-application Linux CI c8b393c,
+Desktop projection/storage fencing0917d37, Android six-patch recipe cd7cc30,
+Account connection/worker binding0288bff and root independent process acceptance.
+Root reconstructed all30Android patched files from exact upstream+six patches.
+Existing native Android/Windows workflows remain intermediate component harnesses;
+new Linux workflow builds the selected actual Telegram application. Owned launch paths/MIT notices/cache-location correction e740454, exact pool
+URLs02250ac and actual Android KVM workflow e00db0a are included. Root confirmed
+all131 Linux package versions/hashes unchanged and downloaded failing protobuf
+archive with matching pinned hash. Actual Android39467452315/Linux39467452496
+CI runs are in progress; no runtime/screenshot PASS yet. A workflow being published does not imply its build/runtime passed.
 
-Первое действие следующего сеанса: прочитать CURRENT_HANDOFF.md, AGENTS.md,
-BROWSER_QA.md и полный план; организовать делегированные агенты; проверить в
-браузере каждую кнопку и сценарий, исправить FAIL и выполнить browser retest.
-Принятое требование единой Node-модели сохраняется: v3 gateway временный,
-ordinary Account/contact UI → Node v4 cutover остаётся главным этапом.
+Root create_tree equals tracked local tree5ec547e9... and git ls-remote independently
+confirms0783fd04...; PR8 remains draft. This source snapshot excludes unstaged old
+UI WIP. Actual fork render/ordinary messaging/three-platform acceptance remain
+open. No production, release or runtime-state backup follows from publication.
 
-## Текущая разработка и публикация
-
-На 8 октября 2026 product commit `6a01feb252c1b94772a2b19503c9e1576a8c6356`
-в `/tmp/dmash-n7-integration` и `origin/transport-v3` совпали после обычного
-fast-forward push. Shared `/home/jcode/D-MASH` содержит WIP агентов и не
-используется как release tree; он не reset/clean. Последующие docs-only commits
-проверять через Git отдельно от deployed product SHA.
-
-Production PWA `.35` штатный EMS `get_commit.sh` извлёк из exact6a:
-214/214files exact,missing/changed/extras0,HTTPS index/SW/release exact.
-Backup `/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T133221Z`.
-Root existing synthetic `.34` profile обновился до active controllingSW/page35,
-6/6UI PASS, сохранены DeviceRoot/Account identities и encrypted history rows.
-Source mobile19/video21/expandedfile21/BUSY23 scopes PASS. Deployed `.35`
-file-after-call120s FAIL остаётся intermittent OPEN; retained same-pair six
-files22/22 PASS не отменяет FAIL. Детали/limits в CURRENT_HANDOFF.md и BROWSER_QA.md.
-
-Прямой Forge SSH push denied(publickey); existing EMS GitHub key публикует
-incremental Git bundle через temporary bare publisher, обычный fast-forward
-без force. Scoped safe.directory только для штатного deploy; никаких secret
-копий/глобальных настроек. Production Node backend, identities, DB/keys/TURN
-secrets не переносились и `.35` PWA deploy их не менял. Ordinary Node UI/N4/N7
-CONTROL/full N0–N8 НЕ DONE; PUBLIC waiting bug OPEN. Пользователь попросил
-остановиться на сегодня: цель поставлена на паузу после handoff.
-Сохранённые isolated source candidates: NODE/file `c42f036` (combined tests/browser
-NOT RUN), PUBLIC corrected authority `bb7b5e7` (targeted UNIT only), `.36`
-`cf02d94` HOLD до root review/integration/browser. Эти candidates не pushed/deployed.
-Подробные полные SHAs, worktrees, evidence и порядок resume — CURRENT_HANDOFF.md.
+[CURRENT_HANDOFF.md](CURRENT_HANDOFF.md) is the current implementation/acceptance
+authority, with original FAIL and scoped retests. CI snapshots are development
+source, not release or deployment acceptance. Historical8/15October sync and
+production records remain in Git history; their branches/SHAs/statuses are not
+current source-sync instructions.

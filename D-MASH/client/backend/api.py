@@ -5,7 +5,8 @@ import uuid
 import time
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.routing import APIRoute
 from pydantic import BaseModel
 from typing import Optional
 from nacl.public import PrivateKey
@@ -20,7 +21,22 @@ async def deny_retired_http():
     raise HTTPException(410, "Legacy HTTP control API unavailable; use authenticated DMP-C or the host peer CLI.")
 
 
-router = APIRouter(dependencies=[Depends(deny_retired_http)])
+class RetiredHttpRoute(APIRoute):
+    """Refuse at the ASGI route boundary, before FastAPI reads any body.
+
+    A dependency alone runs after body/JSON/Pydantic parsing. Keep this route
+    class on the retired router so include_router consumers get the boundary
+    as well; WebSocket routes and authenticated wire handlers are separate.
+    """
+
+    async def handle(self, scope, receive, send):
+        await JSONResponse(
+            {"detail": "Legacy HTTP control API unavailable; use authenticated DMP-C or the host peer CLI."},
+            status_code=410,
+        )(scope, receive, send)
+
+
+router = APIRouter(route_class=RetiredHttpRoute, dependencies=[Depends(deny_retired_http)])
 
 if __package__:
     from .core import state

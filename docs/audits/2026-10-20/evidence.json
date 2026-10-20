@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-20",
+  "user_timezone": "Europe/Moscow",
+  "repository": "https://github.com/Seriy615/D-MASH",
+  "branch": "transport-v3",
+  "sha": "9446c22f27309131456942870971d477f6f2358f",
+  "git_tree": "0b2324b5ff0378bbae8ff6ed5be5e960f69b1baa",
+  "tracked_files": 766,
+  "tracked_product_source_unchanged": true,
+  "audit_checkout": "/tmp/dmash-repository-audit-20261020",
+  "durable_report_copy": "/home/jcode/Documents/Codex/D-MASH-audit-20261020",
+  "test_environment": {
+    "python": "3.12.3",
+    "node": "24.19.0",
+    "fake-indexeddb": "6.2.6",
+    "playwright": "1.64.0",
+    "chrome": "156.0.8078.4"
+  },
+  "full_runner": {
+    "result": "PASS",
+    "exit_code": 0,
+    "backend_tests": 293,
+    "origin_tests": 11,
+    "javascript_suites": 148,
+    "runner_groups": 150,
+    "command": "PATH=/tmp/dmash-browser-tools/node-v24.19.0-linux-x64/bin:/usr/local/bin:/usr/bin:/bin NODE_PATH=/tmp/dmash-audit-js-tools/node_modules /tmp/dmash-audit-venv-20261020/bin/python tools/test_all.py",
+    "summary": "test-summary.txt"
+  },
+  "initial_runner": {
+    "result": "FAIL: missing undeclared test dependency",
+    "exit_code": 1,
+    "failed_groups": [
+      "account_control_receipt_retention.test.js",
+      "account_media_dispatch_v4.test.js",
+      "account_media_task_v4.test.js",
+      "account_private_orchestrator_v4.test.js",
+      "account_route_journal_validation_reuse.test.js",
+      "device_material_liveness.test.js"
+    ],
+    "reason": "Cannot find module fake-indexeddb",
+    "source_changes_between_runs": false
+  },
+  "worker_transit": {
+    "result": "PASS",
+    "exit_code": 0,
+    "script": "tools/test_node_transit_browser.cjs",
+    "DMASH_TRANSIT_WORKER": "1",
+    "evidence": "worker-transit-browser.txt",
+    "scope": [
+      "two isolated Python Nodes with only path through browser Worker",
+      "no Account runtime or transit recipient keys at browser",
+      "hop label rewriting",
+      "late route binding",
+      "encrypted local Inbox and deferred keys",
+      "slot isolation",
+      "root-lock cancellation",
+      "disconnect unavailable"
+    ],
+    "not_proven": [
+      "continuous peer supervisor",
+      "alternate path recovery",
+      "production or native battery/background behavior"
+    ]
+  },
+  "ui_smoke": "ui-smoke.json",
+  "dependencies": "dependency-advisories.json",
+  "upstream_telegram_source_pins": {
+    "android": "68c6775ac373f4bdb30ae9986282dd5ec0407756",
+    "desktop": "351204f3695b4a39bc3f4d2f230c061b9a01fe2a"
+  },
+  "raw_logs_outside_git": {
+    "initial_full_runner": {
+      "path": "/tmp/dmash-audit-full-tests.log",
+      "sha256": "4f0f6e4a2503b55b9459a6c766746a1d8c381cd948f98ba94a71ae1c045ab26d"
+    },
+    "final_full_runner": {
+      "path": "/tmp/dmash-audit-full-tests-final.log",
+      "sha256": "c24ddd367ed1d0412d680a02c4298a2b5bd4913e960a14974a341fd22be41399"
+    },
+    "worker_transit_browser": {
+      "path": "/tmp/dmash-audit-worker-transit-browser.log",
+      "sha256": "dcfa00d9a574650dca62b7794ef6ade0dff9611e543ce4e9b85b1d805b139da7"
+    },
+    "dependency_audit": {
+      "path": "/tmp/dmash-audit-python-advisories.json",
+      "sha256": "828076c408bbf3d1a684407d8b85d5be38fc06f6a17251576f81865517257cc9"
+    }
+  },
+  "limits": [
+    "Repository-wide architecture/source review with detailed review of critical paths, not every line independently audited.",
+    "No deployment, installer execution, production account changes, key rotation, storage reset, push or PR.",
+    "No fresh complete N0-N8, crypto compromise matrix, production exposure inventory or full secret scan.",
+    "No native SDK or Telegram client implementation/build completed.",
+    "Implementation documentation and formal threat model remain the separately requested next phase."
+  ],
+  "plan_revision": {
+    "date": "2026-10-20",
+    "user_timezone": "Europe/Moscow",
+    "trigger": "User clarified native application is primarily intended to host autonomous Node daemon and address networking lifecycle limits.",
+    "priority": "Android and Desktop in parallel: common Node contract, native daemon/service first, normal UI with selected Telegram components afterwards.",
+    "source_and_test_evidence": "Unchanged from original audit; documentation-only revision. No daemon implementation or new background acceptance claimed.",
+    "lifecycle": "UI close/screen off differs from explicit D-MASH root lock; Account logout preserves unlocked Node; root lock stops protected runtime.",
+    "latest_user_scope": "User expects working applications and remediation of identified vulnerabilities; both clients concurrently. Current planning snapshot is preparation, not app completion.",
+    "boundary": "Account plaintext/E2EE and full DeviceRoot stay outside network daemon; scoped transport bundle via credential broker; legacy root-backed KEM authority explicitly limited.",
+    "code_corrections": "PRIVATE/PUBLIC QR profiles and directional routes traced from actual loaded code; actual vendor JS/WASM confirms implicit Argon2d despite Argon2id label; no silent Account KDF change.",
+    "verification": "verification/README.md; actual-source route/envelope and Argon2 checks, master mechanism repro, bounded local/remote handoff models, native C embedding/module-load proof. No native app/NAT/lifecycle implementation acceptance."
+  },
+  "planning_additional_evidence": {
+    "actual_crypto": "verification/actual-crypto-results.json",
+    "actual_argon2": "verification/actual-argon2-results.json",
+    "master_mechanisms": "verification/MASTER_SECRET_REPRO.json",
+    "fault_model": "verification/spec-model-results.json",
+    "native_embedding_proof": "verification/native-proof/README.md",
+    "independent_review": "INDEPENDENT_REVIEW.md",
+    "implementation_backlog": "IMPLEMENTATION_BACKLOG.md"
+  }
+}

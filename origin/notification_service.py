@@ -18,6 +18,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from nacl.exceptions import BadSignatureError
 from nacl.signing import VerifyKey
 
+from http_boundary import OriginBodyLimit
 from personal_bot_enrollment import EnrollmentStore
 from personal_bot_vault import PersonalBotVault
 
@@ -39,6 +40,7 @@ NOTIFICATION_LABELS = {
 }
 
 app = FastAPI(title="D-MASH Origin Notifications", docs_url=None, redoc_url=None)
+app.add_middleware(OriginBodyLimit)
 
 
 def connect_db():

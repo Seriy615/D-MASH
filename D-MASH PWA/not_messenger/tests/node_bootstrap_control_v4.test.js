@@ -10,6 +10,11 @@ function bundle(p,target=null){const certificate=discovery.issueCertificate(p.ro
  const wire=await codec.request(ab,bb,'a'.repeat(64),b.account.secretKey,{acceptReceipt:people[0]===b?accept:null}),verified=await codec.inspect(ab,wire);
  const reverseLocal=bundle(b),reverseSender=bundle(a,hex(b.account.publicKey)),reverseCandidate=await binding.prepare([reverseLocal,reverseSender],{expectedParticipants:people.map(p=>hex(p.account.publicKey)),committed:null}),reverseAccept=binding.signReceipt(reverseCandidate,'ACCEPT',people[0].account.secretKey);
  const reverseWire=await codec.request(reverseLocal,reverseSender,'e'.repeat(64),a.account.secretKey,{acceptReceipt:people[0]===a?reverseAccept:null});assert.equal((await codec.inspect(reverseLocal,reverseWire)).bindingDigest,reverseCandidate.digest);
+ const directedTarget=bundle(a,hex(b.account.publicKey)),directedCandidate=await binding.prepare([directedTarget,bb],{expectedParticipants:people.map(p=>hex(p.account.publicKey)),committed:null}),directedAccept=binding.signReceipt(directedCandidate,'ACCEPT',people[0].account.secretKey);
+ const directedWire=await codec.request(directedTarget,bb,'f'.repeat(64),b.account.secretKey,{acceptReceipt:people[0]===b?directedAccept:null});
+ assert.equal((await codec.inspect(directedTarget,directedWire)).bindingDigest,directedCandidate.digest,'directed A offer accepts signed requester B');
+ const c=person(3),cb=bundle(c,hex(a.account.publicKey));await assert.rejects(()=>codec.request(directedTarget,cb,'1'.repeat(64),c.account.secretKey),/TARGET_MISMATCH/,'directed A offer refuses actual signed requester C');
+ const tampered=JSON.parse(directedWire),damaged=JSON.parse(bb);damaged.contribution='0'.repeat(64);tampered.bundle=DmashSecureSession.canonical(damaged);await assert.rejects(()=>codec.inspect(directedTarget,DmashSecureSession.canonical(tampered)),'requester identity remains signed after target context selection');
  assert.equal(verified.identityStatus,'UNSELECTED_CANDIDATE');assert.equal(verified.bindingDigest,candidate.digest);assert.equal(codec.receipt(verified,accept).phase,'ACCEPT');assert.equal(codec.receipt(verified,confirm).phase,'CONFIRM');
  await assert.rejects(codec.inspect(bb,wire));await assert.rejects(codec.inspect(ab,' '+wire));await assert.rejects(codec.inspect(ab,JSON.stringify({...JSON.parse(wire),exchange_id:'b'.repeat(64)})));
  assert.throws(()=>codec.receipt({...verified},accept));assert.throws(()=>codec.receipt(verified,'user-message'));assert.throws(()=>codec.fits('"'.repeat(10000)));
@@ -27,5 +32,5 @@ function bundle(p,target=null){const certificate=discovery.issueCertificate(p.ro
  await assert.rejects(dispatcher.request('unregistered-owner',wire));assert(!JSON.stringify([...records.values()]).includes(bb));
  const expired=new Dispatcher({ownership,inbox:await open(),codec,clock:()=>now+2000});assert.equal((await expired.list(owner.token))[0].state,'EXPIRED_SELECTED');expired.close();
  dispatcher.close();ownership.close();local.close();authorityInbox.close();
- console.log('PASS bootstrap REQUEST authenticates second bundle before receipts, target/signer/canonical binding, no implicit selection, bounded recipient-envelope expansion');
+ console.log('PASS directed A→B and original untargeted bootstrap REQUEST, wrong C/tamper rejection, authenticates second bundle before receipts, target/signer/canonical binding, no implicit selection, bounded recipient-envelope expansion');
 })().catch(e=>{console.error(e);process.exitCode=1;});

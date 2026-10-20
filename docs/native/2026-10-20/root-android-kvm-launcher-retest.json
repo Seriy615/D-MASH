@@ -1,0 +1,50 @@
+{
+  "kind": "ROOT inspected actual KVM CI Android launcher retest and next service failure",
+  "status": "PARTIAL_FAIL",
+  "runId": 39439689745,
+  "jobId": 118685960880,
+  "artifactId": 12274165901,
+  "zipSha256": "ef9131e48346d79676d5d8bb790baf5068cda1925cd0737b7bf4e0b5b87d66f9",
+  "publishedHead": "0ae16ea92aa2bd888b9c1bc8350f55095850c168",
+  "localExactTreeCommit": "ec858a8",
+  "actualCiSourceCommit": "bd5bb672c0189068a342723a414758b7f98a09a3",
+  "verifiedSourceFiles": 306,
+  "apkSha256": "fcf753c34de9f2c62273aa4ecae407f8154e7f9bdc1a3ab6356d1d1292e86c06",
+  "runtime": {
+    "kind": "ANDROID_API35_ACTUAL_UI_AND_SCOPED_SERVICE",
+    "status": "FAIL",
+    "checks": [
+      "actual APK installed and package path verified",
+      "actual details open/Close/reopen/Back taps",
+      "disabled Stop Node/compose/Send",
+      "Activity background/resume preserves honest off state"
+    ],
+    "limits": [
+      "No Account import/login/history/contacts/remote chat acceptance",
+      "No mesh peers, transit/delivery, Doze, reboot or physical device acceptance",
+      "Synthetic same-UID instrumentation grant; resident credential owner not tested"
+    ],
+    "apkSha256": "fcf753c34de9f2c62273aa4ecae407f8154e7f9bdc1a3ab6356d1d1292e86c06",
+    "api": "35",
+    "abi": "x86_64",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "instrumentation": "FAIL first-install TimeoutException",
+    "failureClass": "AssertionError"
+  },
+  "closedBug": {
+    "id": "ANDROID-STOP-STATE-01",
+    "fixCommit": "2b293db",
+    "retest": "Actual disabled Stop/compose/Send, Details open/Close/reopen/Back, background/resume PASS"
+  },
+  "openBug": {
+    "id": "ANDROID-SERVICE-INSTALL-01",
+    "observed": "Same-UID scoped service first-install TimeoutException",
+    "owner": "native_runtime_sol + native_platforms_sol",
+    "retest": "NOT_RUN"
+  },
+  "limits": [
+    "Overall runtime report FAIL; no Node service acceptance",
+    "No Account UI or remote messaging acceptance",
+    "Raw instrumentation outcome/logcat missing from artifact; assigned collection improvement"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "kind": "ROOT_BROWSER_REAL_PERMISSION_DENIAL",
+  "source": "004fa12",
+  "release": "transport-v3-node-preparation-20261020.43",
+  "permissionSetup": "Real Chromium Browser.setPermission microphone/camera denied; navigator.permissions confirmed denied. No getUserMedia mock.",
+  "actions": [
+    "Actual microphone button click; visible denial alert and OK",
+    "Actual circle button click; visible camera startup failure alert and OK"
+  ],
+  "result": {
+    "microphoneDenialMessageObserved": true,
+    "cameraDenialMessageObserved": true,
+    "originalSavedVisible": true,
+    "recordingButtonRestored": true,
+    "circleButtonRestored": true,
+    "responseCount": 195,
+    "sourceMismatches": [],
+    "errors": []
+  },
+  "scope": "Synthetic Saved conversation only; permission-denial branches, not positive recording/send/playback or remote media acceptance",
+  "limits": [
+    "MEDIA-07/08 scoped negative checks only; other media cases remain NOT RUN",
+    "Initial camera assertion incorrectly expected microphone wording; corrected to actual camera failure message without changing application",
+    "SW and nonlocal HTTP/WebSockets blocked; no network/media claims"
+  ]
+}

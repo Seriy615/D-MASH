@@ -1,0 +1,72 @@
+{
+  "scope": "Actual upstream prepare.py dependency revisions; build result tracked separately",
+  "sources": [
+    {
+      "name": "ada",
+      "repository": "https://github.com/ada-url/ada.git",
+      "commit": "010f7c45aeaff1205452e7da2df8702cf725fb3e",
+      "licenses": {
+        "LICENSE-APACHE": "508d4676d4083e874df706f302d9d42e5e7f9aed3f5a7ea614dc6d2b2252a22f",
+        "LICENSE-MIT": "af0d7d2cef91fc243cf4ad98570b03d1f26f5e0227cad0f5f4a7376e2feb3160"
+      },
+      "submodules": []
+    },
+    {
+      "name": "rnnoise",
+      "repository": "https://github.com/desktop-app/rnnoise.git",
+      "commit": "d8ea2b0ec6a88f8a68d6904d75e33b4f09cb2987",
+      "licenses": {
+        "COPYING": "e2f59ff41d9d03adc3dcf3deff170f8c8cf4a6eb4a9b174762a7656d23200ffa",
+        "AUTHORS": "348b0956050157b718a11e1464633619b709b19b45172f336cef2205aa0cec63"
+      },
+      "submodules": []
+    },
+    {
+      "name": "tde2e",
+      "repository": "https://github.com/tdlib/td.git",
+      "commit": "51743dfd01dff6179e2d8f7095729caa4e2222e9",
+      "licenses": {
+        "LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+      },
+      "submodules": []
+    },
+    {
+      "name": "tg-owt",
+      "repository": "https://github.com/desktop-app/tg_owt.git",
+      "commit": "62321fd7128ab2650b459d4195781af8185e46b5",
+      "licenses": {
+        "LICENSE": "ab00a482b6a3902e40211b43c5d0441962ea99b6cc7c25c0f243fa270b78d482"
+      },
+      "submodules": [
+        {
+          "path": "src/third_party/abseil-cpp",
+          "commit": "d7aaad83b488fd62bd51c81ecf16cd938532cc0a"
+        },
+        {
+          "path": "src/third_party/crc32c/src",
+          "commit": "21fc8ef30415a635e7351ffa0e5d5367943d4a94"
+        },
+        {
+          "path": "src/third_party/crc32c/src/third_party/benchmark",
+          "commit": "e991355c02b93fe17713efe04cbc2e278e00fdbd"
+        },
+        {
+          "path": "src/third_party/crc32c/src/third_party/glog",
+          "commit": "56523194b3ce1212414c93d55f31832e94677f55"
+        },
+        {
+          "path": "src/third_party/crc32c/src/third_party/googletest",
+          "commit": "3b49be074d5c1340eeb447e6a8e78427051e675a"
+        },
+        {
+          "path": "src/third_party/libsrtp",
+          "commit": "a566a9cfcd619e8327784aa7cff4a1276dc1e895"
+        },
+        {
+          "path": "src/third_party/libyuv",
+          "commit": "04821d1e7d60845525e8db55c7bcd41ef5be9406"
+        }
+      ]
+    }
+  ]
+}

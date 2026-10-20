@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cache=${DMASH_TOOLCHAIN_CACHE:-"$HOME/.cache/dmash-native-20261020"}
+export LD_LIBRARY_PATH="$cache/telegram-dependencies/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+exec "$cache/telegram-dependencies/usr/bin/pkgconf" "$@"

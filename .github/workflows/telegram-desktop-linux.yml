@@ -1,0 +1,85 @@
+name: Actual Telegram Desktop Linux fork
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'clients/telegram-desktop/**'
+      - 'native/**'
+      - '!native/platforms/**'
+      - 'D-MASH PWA/not_messenger/js/**'
+      - '.github/workflows/telegram-desktop-linux.yml'
+permissions:
+  contents: read
+jobs:
+  original-telegram-client:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    env:
+      CC: gcc-13
+      CXX: g++-13
+      DMASH_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Establish owned paths and compiler identity
+        id: compiler
+        shell: bash
+        run: |
+          echo "DMASH_TOOLCHAIN_CACHE=$RUNNER_TEMP/dmash-telegram" >> "$GITHUB_ENV"
+          echo "DMASH_CI_EVIDENCE=$RUNNER_TEMP/dmash-telegram-evidence" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/dmash-telegram-evidence"
+          compiler_hash=$(g++-13 --version | sha256sum | cut -c1-16)
+          echo "identity=$compiler_hash-$(uname -m)" >> "$GITHUB_OUTPUT"
+          df -h > "$RUNNER_TEMP/dmash-telegram-evidence/disk-start.txt"
+          g++-13 --version > "$RUNNER_TEMP/dmash-telegram-evidence/compiler.txt"
+      - name: Restore only pinned dependency outputs
+        id: dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/Qt
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/openssl-desktop
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/telegram-dependencies
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/archives
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/dependency-receipt.json
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/qt-ci-manifest.json
+          key: td-linux-deps-v1-${{ steps.compiler.outputs.identity }}-${{ hashFiles('clients/telegram-desktop/LINUX_DEPENDENCIES.json', 'clients/telegram-desktop/SOURCE_DEPENDENCIES.json', 'clients/telegram-desktop/scripts/ci-receipt.py', 'clients/telegram-desktop/scripts/ci-qt.py', 'clients/telegram-desktop/scripts/ci-prepare.sh', 'clients/telegram-desktop/scripts/prepare-*', 'clients/telegram-desktop/scripts/pkg-config') }}
+      - name: Build exact dependencies in owned prefix
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        run: |
+          bash clients/telegram-desktop/scripts/ci-prepare.sh > "$DMASH_CI_EVIDENCE/dependencies.log" 2>&1
+          python3 clients/telegram-desktop/scripts/ci-receipt.py write
+      - name: Verify restored dependency outputs
+        run: |
+          python3 clients/telegram-desktop/scripts/ci-receipt.py verify
+          python3 -m venv "$DMASH_TOOLCHAIN_CACHE/venv"
+          "$DMASH_TOOLCHAIN_CACHE/venv/bin/python" -m pip install cmake==4.4.4 ninja==1.13.2 py7zr==1.1.4 pillow==12.0.0
+          cp "$DMASH_TOOLCHAIN_CACHE/qt-ci-manifest.json" "$DMASH_CI_EVIDENCE/qt-toolchain.json"
+      - name: Save dependency cache before project compilation
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/Qt
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/openssl-desktop
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/telegram-dependencies
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/archives
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/dependency-receipt.json
+            ${{ env.DMASH_TOOLCHAIN_CACHE }}/qt-ci-manifest.json
+          key: ${{ steps.dependencies.outputs.cache-primary-key }}
+      - name: Pin and build the full original application and matching core
+        run: bash clients/telegram-desktop/scripts/ci-build.sh
+      - name: Launch the actual original Intro and capture its window
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' "$DMASH_TOOLCHAIN_CACHE/venv/bin/python" clients/telegram-desktop/scripts/ci-smoke.py
+      - name: Collect bounded build diagnostics
+        if: always()
+        run: |
+          df -h > "$DMASH_CI_EVIDENCE/disk-end.txt"
+          python3 clients/telegram-desktop/scripts/ci-evidence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-telegram-desktop-linux-${{ github.run_id }}
+          path: ${{ env.DMASH_CI_EVIDENCE }}
+          if-no-files-found: error
+          retention-days: 7

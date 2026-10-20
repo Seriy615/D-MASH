@@ -1,0 +1,13 @@
+{
+  "kind": "UNIT",
+  "source": "44606714cb68608f37cda964035b4e65bba008b8",
+  "independent_root_results": {
+    "historical_webauthn_release.test.js": "PASS",
+    "ui_runtime_readiness.test.js": "PASS"
+  },
+  "test_sha256": "484f24d7b6a5f92e8e9ed9f82f21f3bb93abbe5c373f389719e582e85c29de49",
+  "limits": [
+    "Test-only delta over the earlier full-run151 groups; original full-runFAIL is preserved.",
+    "No full-runPASS for concurrent credential foundation/BIO/native sources."
+  ]
+}

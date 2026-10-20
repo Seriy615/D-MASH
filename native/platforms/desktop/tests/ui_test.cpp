@@ -1,0 +1,103 @@
+#include "messenger_window.h"
+#include "profile_key.h"
+#include <QtTest>
+#include <QPushButton>
+#include <QLabel>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QTextEdit>
+#include <QLineEdit>
+#include <QComboBox>
+#include <QFileDialog>
+#include <QTemporaryDir>
+#include <QJsonDocument>
+#include <QFile>
+#include <QFileInfo>
+#include <QProcess>
+#include <QScopeGuard>
+#include <QTableWidget>
+#include <QCheckBox>
+#include <QListWidget>
+#include <QDir>
+#include <QClipboard>
+#include <QCompleter>
+static void clickControl(MessengerWindow& window,const char* name){auto* button=window.findChild<QPushButton*>(name);QVERIFY(button);if(!button->isVisible()){auto* menu=window.findChild<QPushButton*>("menu");QVERIFY(menu);QTest::mouseClick(menu,Qt::LeftButton);}QVERIFY(button->isVisible());QTest::mouseClick(button,Qt::LeftButton);}
+class Controls:public QObject{
+ Q_OBJECT
+private slots:
+ void initTestCase(){QApplication::setAttribute(Qt::AA_DontUseNativeDialogs);}
+ void retainedAppLocalKey(){
+  const char* stage="temporary-profile";
+  try {
+   QTemporaryDir dir(QDir::homePath()+"/.cache/dmash-native-20261020/ui-key-XXXXXX");
+   QVERIFY(dir.isValid());
+   const auto directory=dir.filePath("profile");
+   const auto path=directory+"/custom-account.db";
+   stage="first-key-open";
+   const auto original=openAppLocalKey(directory,path);
+   QCOMPARE(original.size(),32);
+   stage="retained-key-reopen";
+   QCOMPARE(openAppLocalKey(directory,path),original);
+   stage="synthetic-retained-db";
+   QFile db(path);QVERIFY(db.open(QIODevice::WriteOnly));
+   db.write("synthetic retained ciphertext");db.close();
+   stage="remove-owned-test-key";
+   QVERIFY(QFile::remove(directory+"/app-local.key"));
+   stage="missing-key-refusal";
+   bool refused=false;
+   try{openAppLocalKey(directory,path);}
+   catch(const std::exception& e){refused=QString::fromUtf8(e.what())=="PROFILE_KEY_RECOVERY_REQUIRED";}
+   QVERIFY(refused);
+   QVERIFY(!QFile::exists(directory+"/app-local.key"));
+   stage="retained-db-unchanged";
+   QVERIFY(db.open(QIODevice::ReadOnly));
+   QCOMPARE(db.readAll(),QByteArray("synthetic retained ciphertext"));
+  } catch(const std::exception& e) {
+   const auto message=QString("retainedAppLocalKey stage=%1 error=%2").arg(QString::fromLatin1(stage),QString::fromUtf8(e.what()).left(160));
+   QTest::qFail(qPrintable(message),__FILE__,__LINE__);
+  }
+ }
+
+ void disconnectedInventory(){MessengerWindow w;w.show();QTest::qWait(30);QVERIFY(!w.findChild<QPushButton*>("refresh")->isEnabled());QVERIFY(!w.findChild<QPushButton*>("detach")->isEnabled());QVERIFY(!w.findChild<QPushButton*>("send")->isEnabled());QVERIFY(!w.findChild<QTextEdit*>("compose")->isEnabled());QVERIFY(w.findChild<MessageHistory*>("history")->editTriggers()==QAbstractItemView::NoEditTriggers);QTimer::singleShot(50,[&]{auto* dialog=w.findChild<QDialog*>("aboutDialog");QVERIFY(dialog);auto* b=dialog->findChild<QDialogButtonBox*>();QVERIFY(b);QTest::mouseClick(b->button(QDialogButtonBox::Close),Qt::LeftButton);});clickControl(w,"about");QVERIFY(w.isVisible());if(!qEnvironmentVariable("DMASH_UI_SCREENSHOT").isEmpty())QVERIFY(w.grab().save(qEnvironmentVariable("DMASH_UI_SCREENSHOT")));w.close();}
+ void accountRoundtrip(){
+  QFile fixture(qEnvironmentVariable("DMASH_ACCOUNT_UI_FIXTURE",QString::fromUtf8(ACCOUNT_UI_FIXTURE)));QVERIFY(fixture.open(QIODevice::ReadOnly));const auto f=QJsonDocument::fromJson(fixture.readAll()).object();QTemporaryDir dir(QDir::homePath()+"/.cache/dmash-native-20261020/ui-account-XXXXXX");QVERIFY(dir.isValid());const auto profile=dir.filePath("profile/account.sqlite");const auto exportPath=dir.filePath("complete-profile.json");QFile output(exportPath);QVERIFY(output.open(QIODevice::WriteOnly));output.write(QJsonDocument(f.value("profile").toObject()).toJson());output.close();
+  QProcess host;host.setProgram(qEnvironmentVariable("DMASH_UI_CREDENTIAL_HOST",QString::fromUtf8(CREDENTIAL_HOST_BINARY)));host.setArguments({"--profile",QFileInfo(profile).absolutePath(),"--node-host",qEnvironmentVariable("DMASH_UI_NODE_HOST",QDir(QCoreApplication::applicationDirPath()).filePath("dmash-node-host"))});
+  auto startHost=[&]{QFile::remove(QFileInfo(profile).absolutePath()+"/credential-endpoint.json");host.start();QVERIFY(host.waitForStarted(5000));QTRY_VERIFY_WITH_TIMEOUT(QFile::exists(QFileInfo(profile).absolutePath()+"/credential-endpoint.json"),10000);};
+  auto stopHost=[&]{host.terminate();if(!host.waitForFinished(5000)){host.kill();QVERIFY(host.waitForFinished(5000));}};auto ownedHost=qScopeGuard([&]{if(host.state()!=QProcess::NotRunning)stopHost();});startHost();
+  auto signIn=[&](MessengerWindow& w,QString password,bool cancel=false){QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("login")->isEnabled(),30000);if(w.findChild<QPushButton*>("login")->text()=="Unlock device"){QTimer::singleShot(50,[&]{auto* dialog=w.findChild<QDialog*>("rootUnlockDialog");QVERIFY(dialog);auto* input=dialog->findChild<QLineEdit*>("rootPin");QTest::keyClicks(input,f.value("rootPin").toString());auto* box=dialog->findChild<QDialogButtonBox*>();QTest::mouseClick(box->button(QDialogButtonBox::Ok),Qt::LeftButton);});clickControl(w,"login");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("login")->isEnabled()&&w.findChild<QPushButton*>("login")->text()=="Sign in",30000);}QTimer::singleShot(50,[&w,password,cancel]{auto* dialog=w.findChild<QDialog*>("loginDialog");QVERIFY(dialog);auto* box=dialog->findChild<QDialogButtonBox*>();QVERIFY(box);if(cancel){QTest::mouseClick(box->button(QDialogButtonBox::Cancel),Qt::LeftButton);return;}auto* choice=dialog->findChild<QComboBox*>("accountChoice");QVERIFY(choice);QTest::mouseClick(choice,Qt::LeftButton);QTest::keyClick(choice->view(),Qt::Key_Return);auto* input=dialog->findChild<QLineEdit*>("accountPassword");QVERIFY(input);QTest::keyClicks(input,password);QTest::mouseClick(box->button(QDialogButtonBox::Ok),Qt::LeftButton);});clickControl(w,"login");};
+  {MessengerWindow w;w.openAccountProfile(profile);w.show();QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("import")->isEnabled(),10000);QTimer::singleShot(50,[&]{auto* dialog=qobject_cast<QFileDialog*>(QApplication::activeModalWidget());QVERIFY(dialog);auto* box=dialog->findChild<QDialogButtonBox*>();QVERIFY(box);QTest::mouseClick(box->button(QDialogButtonBox::Cancel),Qt::LeftButton);});clickControl(w,"import");QVERIFY(!w.findChild<QPushButton*>("login")->isEnabled());
+   QTimer rootFill;rootFill.setInterval(50);connect(&rootFill,&QTimer::timeout,&w,[&]{auto* dialog=w.findChild<QDialog*>("rootUnlockDialog");if(!dialog)return;rootFill.stop();auto* input=dialog->findChild<QLineEdit*>("rootPin");QTest::keyClicks(input,f.value("rootPin").toString());auto* box=dialog->findChild<QDialogButtonBox*>();QTest::mouseClick(box->button(QDialogButtonBox::Ok),Qt::LeftButton);});rootFill.start();
+   QTimer::singleShot(50,[&]{auto* dialog=qobject_cast<QFileDialog*>(QApplication::activeModalWidget());QVERIFY(dialog);auto closeOnFailure=qScopeGuard([&]{if(dialog->isVisible())dialog->reject();});auto* filename=dialog->findChild<QLineEdit*>("fileNameEdit");QVERIFY(filename);filename->setFocus();QTest::keyClick(filename,Qt::Key_A,Qt::ControlModifier);QApplication::clipboard()->setText(exportPath);QTest::keyClick(filename,Qt::Key_V,Qt::ControlModifier);if(filename->completer()&&filename->completer()->popup()->isVisible())QTest::keyClick(filename,Qt::Key_Escape);QTest::keyClick(filename,Qt::Key_Tab);QTRY_VERIFY_WITH_TIMEOUT(dialog->selectedFiles().size()==1&&QFileInfo(dialog->selectedFiles().first()).canonicalFilePath()==QFileInfo(exportPath).canonicalFilePath(),10000);auto* box=dialog->findChild<QDialogButtonBox*>();QVERIFY(box);QTRY_VERIFY_WITH_TIMEOUT(box->button(QDialogButtonBox::Open)->isEnabled(),10000);QTest::mouseClick(box->button(QDialogButtonBox::Open),Qt::LeftButton);});clickControl(w,"import");
+   QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("login")->isEnabled(),30000);signIn(w,{},true);QVERIFY(!w.findChild<QTextEdit*>("compose")->isEnabled());
+   signIn(w,"incorrect synthetic password");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>("notice")->text().contains("password"),30000);QVERIFY(!w.findChild<QTextEdit*>("compose")->isEnabled());
+   signIn(w,f.value("password").toString());QVERIFY(w.findChild<QPushButton*>("cancelWork")->isVisible());clickControl(w,"cancelWork");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>("notice")->text().contains("cancelled"),30000);QVERIFY(!w.findChild<QTextEdit*>("compose")->isEnabled());signIn(w,f.value("password").toString());QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QTextEdit*>("compose")->isEnabled(),30000);QTRY_VERIFY_WITH_TIMEOUT(!w.findChild<MessageHistory*>("history")->textContent().isEmpty(),10000);const auto before=w.findChild<MessageHistory*>("history")->textContent();
+   QTest::keyClicks(w.findChild<QTextEdit*>("compose"),"Message from the actual native UI");clickControl(w,"send");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<MessageHistory*>("history")->textContent().contains("Message from the actual native UI"),10000);QVERIFY(w.findChild<MessageHistory*>("history")->textContent().startsWith(before.trimmed()));
+   if(!qEnvironmentVariable("DMASH_ACCOUNT_SCREENSHOT").isEmpty())QVERIFY(w.grab().save(qEnvironmentVariable("DMASH_ACCOUNT_SCREENSHOT")));
+   if(qEnvironmentVariableIsSet("DMASH_UI_NODE_CONTROLS")){
+    QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("nodeSettings")->isEnabled(),10000);QTimer::singleShot(50,[&]{auto* dialog=w.findChild<QDialog*>("nodeSettingsDialog");QVERIFY(dialog);auto* table=dialog->findChild<QTableWidget*>("nodeConnections");QVERIFY(table);QTest::mouseClick(dialog->findChild<QPushButton*>("addConnection"),Qt::LeftButton);QCOMPARE(table->rowCount(),1);auto* box=dialog->findChild<QDialogButtonBox*>();QTest::mouseClick(box->button(QDialogButtonBox::Ok),Qt::LeftButton);QVERIFY(!dialog->findChild<QLabel*>("connectionError")->text().isEmpty());QTest::mouseClick(dialog->findChild<QPushButton*>("removeConnection"),Qt::LeftButton);QCOMPARE(table->rowCount(),0);QTest::mouseClick(dialog->findChild<QCheckBox*>("directConnections"),Qt::LeftButton);QTest::mouseClick(box->button(QDialogButtonBox::Cancel),Qt::LeftButton);});clickControl(w,"nodeSettings");
+    clickControl(w,"nodeToggle");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>("nodeStatus")->text().contains("no peers connected"),180000);QVERIFY(!w.findChild<QPushButton*>("nodeSettings")->isEnabled());clickControl(w,"logout");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("login")->isVisible(),10000);clickControl(w,"refresh");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>("nodeStatus")->text().contains("no peers connected"),10000);QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("nodeToggle")->isEnabled(),10000);clickControl(w,"nodeToggle");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>("nodeStatus")->text()=="Node is off",10000);QCOMPARE(w.findChild<QPushButton*>("login")->text(),QString("Unlock device"));signIn(w,f.value("password").toString());QTRY_VERIFY_WITH_TIMEOUT(w.findChild<MessageHistory*>("history")->textContent().contains("Message from the actual native UI"),30000);
+   }
+   const auto pause=qEnvironmentVariable("DMASH_UI_LIFETIME_READY");if(!pause.isEmpty()){QFile readyFile(pause);QVERIFY(readyFile.open(QIODevice::WriteOnly));QVERIFY(readyFile.setPermissions(QFileDevice::ReadOwner|QFileDevice::WriteOwner));readyFile.write(QJsonDocument(QJsonObject{{"profileDirectory",QFileInfo(profile).absolutePath()},{"hostPid",double(host.processId())},{"uiPid",double(QCoreApplication::applicationPid())}}).toJson());readyFile.close();for(;;)QTest::qWait(1000);}
+   clickControl(w,"logout");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("login")->isVisible(),10000);QVERIFY(!w.findChild<QTextEdit*>("compose")->isEnabled());w.close();}
+  QVERIFY(host.state()!=QProcess::NotRunning);stopHost();startHost();
+  {MessengerWindow w;w.openAccountProfile(profile);w.show();QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("login")->isEnabled(),10000);signIn(w,f.value("password").toString());QTRY_VERIFY_WITH_TIMEOUT(w.findChild<MessageHistory*>("history")->textContent().contains("Message from the actual native UI"),30000);clickControl(w,"logout");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("login")->isVisible(),10000);w.close();}
+  stopHost();
+ }
+ void freshProfile(){
+  QTemporaryDir dir(QDir::homePath()+"/.cache/dmash-native-20261020/ui-fresh-XXXXXX");QVERIFY(dir.isValid());auto profile=dir.filePath("profile/account.sqlite");QProcess host;host.setProgram(qEnvironmentVariable("DMASH_UI_CREDENTIAL_HOST",QString::fromUtf8(CREDENTIAL_HOST_BINARY)));host.setArguments({"--profile",QFileInfo(profile).absolutePath(),"--node-host",qEnvironmentVariable("DMASH_UI_NODE_HOST",QDir(QCoreApplication::applicationDirPath()).filePath("dmash-node-host"))});host.start();QVERIFY(host.waitForStarted(5000));auto stop=qScopeGuard([&]{host.terminate();if(!host.waitForFinished(5000)){host.kill();host.waitForFinished(5000);}});
+  auto press=[](QDialog* dialog,QDialogButtonBox::StandardButton which){auto* box=dialog->findChild<QDialogButtonBox*>();QVERIFY(box);QTest::mouseClick(box->button(which),Qt::LeftButton);};
+  const QString pin="773411",identity="desktop-new-ui",password="desktop-profile-password",message="Saved from a newly created desktop Account";
+  {MessengerWindow w;w.openAccountProfile(profile);w.show();QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("create")->isEnabled(),10000);QCOMPARE(w.findChild<QPushButton*>("create")->text(),QString("Create profile"));QVERIFY(!w.findChild<QPushButton*>("login")->isEnabled());QVERIFY(!w.findChild<QPushButton*>("nodeToggle")->isEnabled());
+   QTimer::singleShot(50,[&]{auto* dialog=w.findChild<QDialog*>("createProfileDialog");QVERIFY(dialog);press(dialog,QDialogButtonBox::Cancel);});clickControl(w,"create");QCOMPARE(w.findChild<QPushButton*>("create")->text(),QString("Create profile"));
+   bool cancelledAccount=false;QTimer optionalAccount;optionalAccount.setInterval(50);connect(&optionalAccount,&QTimer::timeout,&w,[&]{auto* dialog=w.findChild<QDialog*>("createAccountDialog");if(!dialog)return;optionalAccount.stop();press(dialog,QDialogButtonBox::Cancel);cancelledAccount=true;});optionalAccount.start();
+   QTimer::singleShot(50,[&]{auto* dialog=w.findChild<QDialog*>("createProfileDialog");QVERIFY(dialog);auto close=qScopeGuard([&]{if(dialog->isVisible())dialog->reject();});press(dialog,QDialogButtonBox::Ok);QVERIFY(!dialog->findChild<QLabel*>("createProfileError")->text().isEmpty());QTest::keyClicks(dialog->findChild<QLineEdit*>("newRootPin"),pin);auto* confirm=dialog->findChild<QLineEdit*>("confirmRootPin");QTest::keyClicks(confirm,"mismatch");press(dialog,QDialogButtonBox::Ok);QVERIFY(dialog->isVisible());confirm->selectAll();QTest::keyClicks(confirm,pin);press(dialog,QDialogButtonBox::Ok);});clickControl(w,"create");QTRY_VERIFY_WITH_TIMEOUT(cancelledAccount,30000);QCOMPARE(w.findChild<QPushButton*>("create")->text(),QString("Create Account"));QVERIFY(!w.findChild<QPushButton*>("login")->isEnabled());QVERIFY(w.findChild<QPushButton*>("nodeToggle")->isEnabled());QVERIFY(!w.findChild<QTextEdit*>("compose")->isEnabled());
+   if(qEnvironmentVariableIsSet("DMASH_UI_FRESH_NODE")){clickControl(w,"nodeToggle");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>("nodeStatus")->text().contains("no peers connected")||w.findChild<QLabel*>("notice")->text().startsWith("Could not complete"),180000);QVERIFY2(w.findChild<QLabel*>("nodeStatus")->text().contains("no peers connected"),qPrintable(w.findChild<QLabel*>("notice")->text()));QVERIFY(!w.findChild<QTextEdit*>("compose")->isEnabled());clickControl(w,"nodeToggle");QTRY_COMPARE_WITH_TIMEOUT(w.findChild<QLabel*>("nodeStatus")->text(),QString("Node is off"),10000);}
+   QTimer unlock;unlock.setInterval(50);connect(&unlock,&QTimer::timeout,&w,[&]{auto* dialog=w.findChild<QDialog*>("rootUnlockDialog");if(!dialog)return;unlock.stop();QTest::keyClicks(dialog->findChild<QLineEdit*>("rootPin"),pin);press(dialog,QDialogButtonBox::Ok);});unlock.start();
+   QTimer accountForm;accountForm.setInterval(50);connect(&accountForm,&QTimer::timeout,&w,[&]{auto* dialog=w.findChild<QDialog*>("createAccountDialog");if(!dialog)return;accountForm.stop();unlock.stop();auto close=qScopeGuard([&]{if(dialog->isVisible())dialog->reject();});press(dialog,QDialogButtonBox::Ok);QVERIFY(!dialog->findChild<QLabel*>("createAccountError")->text().isEmpty());QTest::keyClicks(dialog->findChild<QLineEdit*>("newIdentity"),identity);QTest::keyClicks(dialog->findChild<QLineEdit*>("newDisplayName"),"Desktop new profile");QTest::keyClicks(dialog->findChild<QLineEdit*>("newAccountPassword"),password);auto* confirm=dialog->findChild<QLineEdit*>("confirmAccountPassword");QTest::keyClicks(confirm,"mismatch");press(dialog,QDialogButtonBox::Ok);QVERIFY(dialog->isVisible());confirm->selectAll();QTest::keyClicks(confirm,password);press(dialog,QDialogButtonBox::Ok);});accountForm.start();clickControl(w,"create");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QTextEdit*>("compose")->isEnabled(),30000);QCOMPARE(w.findChild<QLabel*>("accountName")->text(),QString("Desktop new profile"));QTest::keyClicks(w.findChild<QTextEdit*>("compose"),message);clickControl(w,"send");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<MessageHistory*>("history")->textContent().contains(message),10000);auto* search=w.findChild<QLineEdit*>("chatSearch");QVERIFY(search);QTest::keyClicks(search,"missing-conversation");QVERIFY(w.findChild<QListWidget*>("chats")->item(0)->isHidden());search->selectAll();QTest::keyClick(search,Qt::Key_Backspace);QVERIFY(!w.findChild<QListWidget*>("chats")->item(0)->isHidden());clickControl(w,"menu");QVERIFY(w.findChild<QPushButton*>("nodeToggle")->isVisible());clickControl(w,"menu");QVERIFY(!w.findChild<QPushButton*>("nodeToggle")->isVisible());if(!qEnvironmentVariable("DMASH_FRESH_SCREENSHOT").isEmpty())QVERIFY(w.grab().save(qEnvironmentVariable("DMASH_FRESH_SCREENSHOT")));w.close();}
+  {MessengerWindow reopened;reopened.openAccountProfile(profile);reopened.show();QTRY_VERIFY_WITH_TIMEOUT(reopened.findChild<MessageHistory*>("history")->textContent().contains(message),30000);QCOMPARE(reopened.findChild<QLabel*>("accountName")->text(),QString("Desktop new profile"));clickControl(reopened,"logout");QTRY_VERIFY_WITH_TIMEOUT(reopened.findChild<QPushButton*>("login")->isVisible()&&reopened.findChild<QPushButton*>("login")->isEnabled(),10000);QVERIFY(!reopened.findChild<QTextEdit*>("compose")->isEnabled());reopened.close();}
+ }
+ void liveService(){bool present=false;int fd=qEnvironmentVariableIntValue("DMASH_UI_SESSION_FD",&present);if(!present)QSKIP("No live service fixture supplied");MessengerWindow w;w.show();QVERIFY(w.session()->attachDescriptor(fd));QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QPushButton*>("refresh")->isEnabled(),6000);QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>("nodeStatus")->text().contains("connected peers"),6000);clickControl(w,"refresh");QTRY_VERIFY_WITH_TIMEOUT(w.findChild<QLabel*>("nodeStatus")->text().contains("connected peers"),6000);if(!qEnvironmentVariable("DMASH_UI_SCREENSHOT").isEmpty())QVERIFY(w.grab().save(qEnvironmentVariable("DMASH_UI_SCREENSHOT")));clickControl(w,"detach");QVERIFY(!w.findChild<QPushButton*>("refresh")->isEnabled());QVERIFY(!w.session()->authenticated());w.close();}
+ void rejectedHandoff(){MessengerWindow w;w.show();QVERIFY(!w.session()->attachDescriptor(-1));QVERIFY(w.findChild<QLabel*>("nodeStatus")->text().contains("Private broker"));QVERIFY(!w.findChild<QPushButton*>("refresh")->isEnabled());}
+};
+QTEST_MAIN(Controls)
+#include "ui_test.moc"

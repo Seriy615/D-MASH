@@ -1,0 +1,239 @@
+{
+  "repository": "https://github.com/telegramdesktop/tdesktop.git",
+  "commit": "86262333a457f62709726ee4ab9c48fa58824da4",
+  "license": "GPL-3.0 with upstream OpenSSL linking exception; preserve LICENSE and LEGAL",
+  "licenseSha256": "30e52a0e4d8207c631458d98be89adcadf5b60e2608fe9c9a3eff1cde1877c8e",
+  "submodules": [
+    {
+      "commit": "87f9d768866548b5b86e72be66c60c5abd4d9b37",
+      "path": "Telegram/ThirdParty/GSL",
+      "initialized": true
+    },
+    {
+      "commit": "720f62bddb7226106071d4728c292cb1df519ceb",
+      "path": "Telegram/ThirdParty/QR",
+      "initialized": true
+    },
+    {
+      "commit": "b48dc46512566f5a2d41118c8c1116c4f96dc661",
+      "path": "Telegram/ThirdParty/cld3",
+      "initialized": true
+    },
+    {
+      "commit": "886ca22f659c53dae66a40ee8266c7aae9bb97cd",
+      "path": "Telegram/ThirdParty/dispatch",
+      "initialized": true
+    },
+    {
+      "commit": "292eff8bd8ee230a7df1d6a1c00c4ea0eb2f0362",
+      "path": "Telegram/ThirdParty/expected",
+      "initialized": true
+    },
+    {
+      "commit": "c743b12e6780edf1dcfe9071531c80f050cacb95",
+      "path": "Telegram/ThirdParty/fcitx5-qt",
+      "initialized": true
+    },
+    {
+      "commit": "9b3e6f9ab59d1fe4d9de73d3bf0fed7789f921c5",
+      "path": "Telegram/ThirdParty/hime",
+      "initialized": true
+    },
+    {
+      "commit": "22c3381e2066bed616250d373fc5c935598b564a",
+      "path": "Telegram/ThirdParty/hunspell",
+      "initialized": true
+    },
+    {
+      "commit": "fd84da51b554eac25e35b1e3f373edaab3029b15",
+      "path": "Telegram/ThirdParty/kcoreaddons",
+      "initialized": true
+    },
+    {
+      "commit": "df82311a1081e576c4ac020204578bb8a81b21ec",
+      "path": "Telegram/ThirdParty/kimageformats",
+      "initialized": true
+    },
+    {
+      "commit": "23b0d70f9709da9b38561d5706891a134d18df76",
+      "path": "Telegram/ThirdParty/libprisma",
+      "initialized": true
+    },
+    {
+      "commit": "5ff839680134437dbf4678f3d0c7b371d84f4964",
+      "path": "Telegram/ThirdParty/lz4",
+      "initialized": true
+    },
+    {
+      "commit": "498ec7ffab3ac140c2469638a14451788f03e798",
+      "path": "Telegram/ThirdParty/nimf",
+      "initialized": true
+    },
+    {
+      "commit": "a81477931a8aa2ad025c6bda0609f38e09e4d7ec",
+      "path": "Telegram/ThirdParty/range-v3",
+      "initialized": true
+    },
+    {
+      "commit": "2dae74bb693e42d850fb0adcc9045c5b71fbdeae",
+      "path": "Telegram/ThirdParty/range-v3/doc/gh-pages",
+      "initialized": true
+    },
+    {
+      "commit": "8c69fc20cf2e150db304311f1233a4b55a8892d7",
+      "path": "Telegram/ThirdParty/rlottie",
+      "initialized": true
+    },
+    {
+      "commit": "24694f64b03e301ec2c90792566046e61a2c4967",
+      "path": "Telegram/ThirdParty/tgcalls",
+      "initialized": true
+    },
+    {
+      "commit": "11c8a96b147aeae70e3f770313f93b367d53fedd",
+      "path": "Telegram/ThirdParty/xdg-desktop-portal",
+      "initialized": true
+    },
+    {
+      "commit": "bbb27a5efb85b92a0486cf361a8635715a53f6ba",
+      "path": "Telegram/ThirdParty/xxHash",
+      "initialized": true
+    },
+    {
+      "commit": "0d0d71af1058f0c4e9d9c9971f5c66331e6055af",
+      "path": "Telegram/codegen",
+      "initialized": true
+    },
+    {
+      "commit": "eb8564e08735533b996780946fd819f24c333ac5",
+      "path": "Telegram/lib_base",
+      "initialized": true
+    },
+    {
+      "commit": "c1d6b0273653095b10b4d0f4f7c30b614b690fd5",
+      "path": "Telegram/lib_crl",
+      "initialized": true
+    },
+    {
+      "commit": "4fc3ac0ea52f271cc9b108481f83d56fd76ab0ed",
+      "path": "Telegram/lib_lottie",
+      "initialized": true
+    },
+    {
+      "commit": "6fdf60461444ba150e13ac36009c0ffce72c4c83",
+      "path": "Telegram/lib_qr",
+      "initialized": true
+    },
+    {
+      "commit": "9a3ce435f4054e6cbd45e1c6e3e27cfff515c829",
+      "path": "Telegram/lib_rpl",
+      "initialized": true
+    },
+    {
+      "commit": "81297706b32a6ec829a7dff5461ff458f82fb602",
+      "path": "Telegram/lib_spellcheck",
+      "initialized": true
+    },
+    {
+      "commit": "ccdc72548a5065b5991b4e06e610d76bc4f6023e",
+      "path": "Telegram/lib_storage",
+      "initialized": true
+    },
+    {
+      "commit": "783052514ea6bd9ed0b7ddb4e5adb8c0077e5b9a",
+      "path": "Telegram/lib_tl",
+      "initialized": true
+    },
+    {
+      "commit": "114fd95c7511f6de1091b21bb23e51b8ecdc50ab",
+      "path": "Telegram/lib_ui",
+      "initialized": true
+    },
+    {
+      "commit": "792c7a5b4846c489753deb5b87f67b3d11b399cf",
+      "path": "Telegram/lib_webrtc",
+      "initialized": true
+    },
+    {
+      "commit": "55af106a525cfe9e1001ab36cbe09bf487fa2545",
+      "path": "Telegram/lib_webview",
+      "initialized": true
+    },
+    {
+      "commit": "483a10954b0fafa7f759a82847b066c44466074c",
+      "path": "cmake",
+      "initialized": true
+    },
+    {
+      "commit": "33ee935b39efd03bb7ab8f62ad02f7f2cd018dc8",
+      "path": "cmake/external/glib/cppgir",
+      "initialized": true
+    },
+    {
+      "commit": "95b9cb015fa17baa749c2b396b335906e1596a9e",
+      "path": "cmake/external/glib/cppgir/expected-lite",
+      "initialized": true
+    }
+  ],
+  "implementation": "Actual upstream fork; owned patches and build scripts, no copied imitation UI",
+  "status": "SOURCE_CHECKED_OUT; actual build/integration in progress; no application acceptance",
+  "patches": [
+    {
+      "path": "patches/0001-local-core-boundary.patch",
+      "sha256": "f4841c74dee4099182acea0ead7788ba91cae3b0ac893122e94733af89e4766e",
+      "status": "DRAFT full app integration: standalone IPC/projection built and CTest1/1 passed; full original app configured and UI-object build active, not linked/rendered"
+    },
+    {
+      "path": "patches/0002-owned-profile-launcher.patch",
+      "sha256": "a4687bc4c87653de0ba8fab7b03b71e83774d138d855835e79603f05f5008d31",
+      "status": "SOURCE; force owned namespace before logs/platform legacy lookup, full app compile/runtime acceptance pending"
+    },
+    {
+      "path": "patches/0003-selected-account-binding.patch",
+      "sha256": "6780a94570448f847cef1115cea799c9c9275080f022a3b16545452834437e53",
+      "scope": "Explicit expected-Account attachment, no inventory activation, local epoch fences and IPC component regression; full UI runtime NOT_RUN"
+    },
+    {
+      "path": "patches/0004-owned-jpeg-multiarch-header.patch",
+      "sha256": "d5e4e65e9fa93aa2ebd1bb86201fb5ce640ad1e8d1362a4eede008d022bdc107",
+      "scope": "Original JPEG target uses real architecture header from owned Debian prefix"
+    }
+  ],
+  "patchedFiles": {
+    "CMakeLists.txt": "43d9eec13111499e63d9b04e5feeff3cd64c477f2843fde8bd13a4c35f454c79",
+    "Telegram/CMakeLists.txt": "b0869543b90a02fd13e11710330dfa77220fca2315ea49c2a24c3ed1d588604b",
+    "Telegram/SourceFiles/apiwrap.cpp": "c5b33064193c60cfa018f9adbcea7707ef65695e6e16f3017f353957bb2300a8",
+    "Telegram/SourceFiles/core/launcher.cpp": "297cb62f2cf5eca842d4a8f9bab1f4e20688fc374c664a684048cfee6e0c7229",
+    "Telegram/SourceFiles/history/history_item.cpp": "19e588943b016cebc7813c5ef191dbab67f4399225d91de1de78ad8a2de5a5d9",
+    "Telegram/SourceFiles/history/history_item.h": "81e757a4880127148e2ba79d0bf79984f371444030ff2ceef147af281113c1f3",
+    "Telegram/SourceFiles/history/history_widget.cpp": "85c1fe5f8a6e8ad9329f21d5a1c1e0ace1fbc2b9166d33938f51414ef5de61cc",
+    "Telegram/SourceFiles/intro/intro_start.cpp": "2a86829454a34fc68b773288fdf143093ebc455a26470a05172dc47d45034b7e",
+    "Telegram/SourceFiles/main/main_account.cpp": "6e02497de9c04a5441303e10f6a700b0b31f253dfc59e01252f7779b75ab0ac7",
+    "Telegram/SourceFiles/main/main_account.h": "633515685a034bba620649358b3a1c94b7419d36a9cc8fb62e3c741dc4d11a3a",
+    "Telegram/SourceFiles/mtproto/connection_http.cpp": "313f7789acd9c383168e069787e2275e56d0741438256a9fa529beba96f3a9c8",
+    "Telegram/SourceFiles/mtproto/connection_resolving.cpp": "8042957a4fa84d150f9e047e57c6131dca4e5032d227a30396ba3e962b17e167",
+    "Telegram/SourceFiles/mtproto/connection_tcp.cpp": "b06f1fdc021063b5529f6406dc78be239966aeb08e61b34c9da3cbd55c0d8301",
+    "Telegram/SourceFiles/mtproto/mtp_instance.cpp": "b644fbd8e57b71f03bdd1f0c9d4d7dc32827e0afd07438b4b90d63d8b95841ec",
+    "Telegram/SourceFiles/storage/storage_account.cpp": "8021308ea16e087292c7255baa87b4941b37395fb61b92c77d55478a3344c0ad",
+    "Telegram/cmake/telegram_options.cmake": "25a0d782864e602c193278e94e60b6dff3205d20c6e75a0b558ea1249ca3e792",
+    "dmash/CMakeLists.txt": "52d8ab8bf9d41c85d2d69e4838a973ab8baecd07991d935e8f91189de1145e9d",
+    "dmash/bootstrap_root.cpp": "e92f6fa834867cb694e4d6e699f339dc99772e466f7368212e527c0027db56a5",
+    "dmash/history_projection.cpp": "d8ed6ff60e9a0a90f2be61cdbe07099bb0355aec115a433ef3d20f3fe0a53eb7",
+    "dmash/history_projection.h": "b3e65b923475776aa8caf0a65402dbb68d94960afcf89e7f3654a96fabfa7df0",
+    "dmash/intro_step.cpp": "c3187c6e3b607e506c2494ba19f0bb183d360f6c366e8643abe8841c4268fb91",
+    "dmash/intro_step.h": "3f70048a1527a6f2fdc11163383b9033c1efecc1c4ebdf5c40f5485c003f9234",
+    "dmash/local_client.cpp": "db0bb95b1e2ce6dc5327ab76d89431c6c414b70ab45f838f0a4afc9b63ebf21b",
+    "dmash/local_client.h": "15e14b976c134baeeb2f4074839fa4e82c3b46e9896c5a2a7ede3fb8069d7bb1",
+    "dmash/model_bridge.cpp": "f9d944e31384b033b3105d8966b826773e8da3304e7b015104ab9073635815b4",
+    "dmash/model_bridge.h": "9265fce3e10803d839dab55db6fc125ee95639ff734d00722b045ef481f0fb94",
+    "dmash/os_windows.cpp": "03c082ac3cb698478d03f158b12a4ebba2021563a68f8abc5b6dc66ec9477811",
+    "dmash/os_windows.h": "73e6b542027009598bdb8762c30b8051fe222492da1d8509d33756ffc3dbb537",
+    "dmash/session_adapter.cpp": "aca270e4978969dcba0c46f7fa7f6b904d82bb97843228f665438b1a2857f4a6",
+    "dmash/session_adapter.h": "c204dbe26542862ded6b9cf4bc110c936c15e8ded1e5cab7dae09a567b5a08d4",
+    "dmash/tests/generate_id_contract.py": "d2da307f2ef2c775bfd535d75a4a69674a1285713e69adb6d5d1e7da89a7d74d",
+    "dmash/tests/projection_test.cpp": "6838b4e8177551e523a01b99ec6c17951c73fd495bf7389fd22ba08042d2765f",
+    "Telegram/SourceFiles/platform/linux/specific_linux.cpp": "7109d6f978b5f371c3f484825ffdbea38ed8ec604498b52039e8a01022b3a260",
+    "dmash/tests/session_binding_test.cpp": "c6947ce2673faf668e5b108ef03fd944977de3b3961437d8dda84679fc4d28f8"
+  },
+  "legalSha256": "d99f86f0c2b7f2057f2d6c2122a303af2171d778210b47159090ff9501511bea"
+}

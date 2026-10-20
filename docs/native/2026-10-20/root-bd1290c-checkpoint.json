@@ -1,0 +1,28 @@
+{
+  "kind": "ROOT_INDEPENDENT_NATIVE_CHECKPOINT",
+  "source": "bd1290c4bc2aa648a9ad1ff729386d078d97e2fc",
+  "binary_sha256": "e4dba8c9c50f0a368ab40f9e950cadf423ef81aa0385de88ab8fa04f2f61f46b",
+  "ctest": {
+    "passed": 8,
+    "failed": 0,
+    "status": "PASS scoped"
+  },
+  "delivery_fixture": {
+    "status": "FAIL",
+    "phase": "recipient binding before delivery",
+    "exception": "TimeoutError: timed out",
+    "call": "bind(recipient); socket deadline 5 seconds",
+    "script": "native/tests/ipc_delivery_test.py",
+    "source": "immutable bd1290c archive",
+    "process_exit": 1,
+    "limits": [
+      "Fixture finally terminated its synthetic processes and removed temporary diagnostics.",
+      "No attribution of cause yet; current author reconnect proof is separate.",
+      "No original user identities or storage were used or reset."
+    ]
+  },
+  "acceptance_limits": [
+    "CTest is UNIT, not browser, Windows or Android runtime.",
+    "This root run does not independently prove actual end-to-end delivery."
+  ]
+}

@@ -1,0 +1,72 @@
+From 2e74ff7224998580fc1de6c7e1e76e1498e20942 Mon Sep 17 00:00:00 2001
+From: Codex <codex@d-mash.ru>
+Date: Tue, 20 Oct 2026 17:07:17 +0000
+Subject: [PATCH] Guard explicit push initialization and explain unsupported
+ proxy settings
+
+---
+ .../main/java/org/telegram/messenger/ApplicationLoader.java   | 1 +
+ .../java/org/telegram/messenger/PushListenerController.java   | 1 +
+ .../src/main/java/org/telegram/tgnet/ConnectionsManager.java  | 3 ++-
+ TMessagesProj/src/main/res/values/dmash.xml                   | 4 ++++
+ 4 files changed, 8 insertions(+), 1 deletion(-)
+ create mode 100644 TMessagesProj/src/main/res/values/dmash.xml
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java b/TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java
+index 43697b6..07e0a57 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/ApplicationLoader.java
+@@ -401,6 +401,7 @@ public class ApplicationLoader extends Application {
+     }
+ 
+     private void initPushServices() {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) return;
+         AndroidUtilities.runOnUIThread(() -> {
+             if (getPushProvider().hasServices()) {
+                 getPushProvider().onRequestPushToken();
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/PushListenerController.java b/TMessagesProj/src/main/java/org/telegram/messenger/PushListenerController.java
+index d63cdf5..b0f7949 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/PushListenerController.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/PushListenerController.java
+@@ -1801,6 +1801,7 @@ public class PushListenerController {
+ 
+         @Override
+         public void onRequestPushToken() {
++            if (org.telegram.messenger.dmash.DmashClient.ENABLED) return;
+             String currentPushString = SharedConfig.pushString;
+             if (!TextUtils.isEmpty(currentPushString)) {
+                 if (BuildVars.DEBUG_PRIVATE_VERSION && BuildVars.LOGS_ENABLED) {
+diff --git a/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java b/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
+index ab16c90..65499a5 100644
+--- a/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
++++ b/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
+@@ -38,6 +38,7 @@ import org.telegram.messenger.FileLog;
+ import org.telegram.messenger.FileUploadOperation;
+ import org.telegram.messenger.KeepAliveJob;
+ import org.telegram.messenger.LocaleController;
++import org.telegram.messenger.R;
+ import org.telegram.messenger.MessagesController;
+ import org.telegram.messenger.NotificationCenter;
+ import org.telegram.messenger.PushListenerController;
+@@ -982,7 +983,7 @@ public class ConnectionsManager extends BaseController {
+         if (org.telegram.messenger.dmash.DmashClient.ENABLED) {
+             WebProxyTransport.stop();
+             MessagesController.getGlobalMainSettings().edit().putBoolean("proxy_enabled", false).apply();
+-            if (enabled) AndroidUtilities.runOnUIThread(() -> android.widget.Toast.makeText(ApplicationLoader.applicationContext, "DMASH_TELEGRAM_PROXY_UNSUPPORTED: configure the D-MASH Node instead.", android.widget.Toast.LENGTH_LONG).show());
++            if (enabled) AndroidUtilities.runOnUIThread(() -> android.widget.Toast.makeText(ApplicationLoader.applicationContext, LocaleController.getString(R.string.DmashProxyUnsupported), android.widget.Toast.LENGTH_LONG).show());
+             return;
+         }
+         String address = "";
+diff --git a/TMessagesProj/src/main/res/values/dmash.xml b/TMessagesProj/src/main/res/values/dmash.xml
+new file mode 100644
+index 0000000..a08bfda
+--- /dev/null
++++ b/TMessagesProj/src/main/res/values/dmash.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="DmashProxyUnsupported">Telegram proxies are unavailable in D-MASH. Configure the D-MASH Node connection instead.</string>
++</resources>
+-- 
+2.43.0
+

@@ -1,0 +1,21 @@
+{
+  "suite": "native-capability-lease-real-expiry",
+  "status": "PASS",
+  "checks": [
+    "short-initial-TTL10",
+    "real-clock-past-original-expiry",
+    "same-token-principal-generation",
+    "same-authenticated-registered-owner-context",
+    "initialized-Node",
+    "fresh-authentication-after-original-expiry",
+    "broker-EOF-exit"
+  ],
+  "evidence": "ROOT_INDEPENDENT_COMPONENT",
+  "testSourceCommit": "875c679",
+  "nodeSourceCommit": "64e6933",
+  "binarySha256": "2b31d6aa69ff214d090a87df6d03924a380f703933ab37417e6b63a477008802",
+  "verifiedArchivedSourceFiles": 191,
+  "limits": [
+    "Linux local IPC only; resident host renewal and actual mesh delivery require separate acceptance"
+  ]
+}

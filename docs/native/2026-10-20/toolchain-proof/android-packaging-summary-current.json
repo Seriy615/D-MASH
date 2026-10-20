@@ -1,0 +1,223 @@
+{
+  "scope": "manual compilation/link/DEX/manifest/signature/ZIP alignment evidence only; no Qt loader resources, Android install or runtime acceptance",
+  "dex_sha256": "bc86bd1962af8a54a046b59f9d7765ea968c5695f47490072b77ef6aa98583ae",
+  "dex_bytes": 246668,
+  "apk_sha256": "26bc3643ceca6fe5963ed35b9d1ac90327c3b1ab23805f831fde5ebadc0d6de3",
+  "apk_bytes": 26035677,
+  "entries": [
+    {
+      "entry": "lib/arm64-v8a/libdmash_toolchain_service_arm64-v8a.so",
+      "sha256": "86a077e1028194bdce0f480074dd467a4f27799d38fe47e0d84157ba02499701"
+    },
+    {
+      "entry": "lib/arm64-v8a/libc++_shared.so",
+      "sha256": "f9992c4ba6b7c5a716e3a202fceb1ce029d6a2b0605838ac6b3219f489dd7970"
+    },
+    {
+      "entry": "lib/arm64-v8a/libQt6Core_arm64-v8a.so",
+      "sha256": "cc21256f62e350d9e66ca729d71ca96ea72498f0379f808dc8a981e02fb2e248"
+    },
+    {
+      "entry": "lib/arm64-v8a/libQt6Network_arm64-v8a.so",
+      "sha256": "03575784f903ad44df899735c02fecad5a11709b45cb41ed0402ac29f4ba8455"
+    },
+    {
+      "entry": "lib/arm64-v8a/libQt6WebSockets_arm64-v8a.so",
+      "sha256": "c316d52c36aaee4691c190f21147ed5e3a3b70ec57e22a5897360dcd13290f2a"
+    },
+    {
+      "entry": "lib/arm64-v8a/libQt6Sql_arm64-v8a.so",
+      "sha256": "e53f7fecf42778cd95cf8594db9f9621fec988064788d8f584f856fba2fc28bb"
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_sqldrivers_qsqlite_arm64-v8a.so",
+      "sha256": "670c1e8be4a85e1541298630f7b246b22c656824d6509571cbefe110dc24cff4"
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_tls_qcertonlybackend_arm64-v8a.so",
+      "sha256": "40128af1d652ee5754299f08fe74a62a2a8cb0dd55ae6afe7e9f3128b7360d45"
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_tls_qopensslbackend_arm64-v8a.so",
+      "sha256": "5d075ca3b22dabed3c7e7ab322a503f7b384597c2e714ad7a832b50f2886375d"
+    },
+    {
+      "entry": "lib/arm64-v8a/libplugins_networkinformation_qandroidnetworkinformation_arm64-v8a.so",
+      "sha256": "24a613cdb4648afd74e310d2a54e35b46bb56038857a0bbd0e2bfc4068f2d0e7"
+    },
+    {
+      "entry": "lib/arm64-v8a/libcrypto_3.so",
+      "sha256": "95eda383e0b83fd99f3877a37defd11ce96d79e97ece9435d87d6ab4a8f52b64"
+    },
+    {
+      "entry": "lib/arm64-v8a/libssl_3.so",
+      "sha256": "6bb97c0b43b89a5244bbc0155115bb1e44cca954d8c643eea96e3913e527dc02"
+    }
+  ],
+  "elf": [
+    {
+      "file": "libdmash_toolchain_service_arm64-v8a.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6WebSockets_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Sql_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Network_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Core_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]",
+        "0x000000000000000e (SONAME)       Library soname: [libdmash_toolchain_service_arm64-v8a.so]"
+      ]
+    },
+    {
+      "file": "libc++_shared.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)          Shared library: [libc.so]",
+        "0x0000000000000001 (NEEDED)          Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)          Shared library: [libdl.so]",
+        "0x000000000000000e (SONAME)          Library soname: [libc++_shared.so]"
+      ]
+    },
+    {
+      "file": "libQt6Core_arm64-v8a.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libz.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]",
+        "0x000000000000000e (SONAME)       Library soname: [libQt6Core_arm64-v8a.so]"
+      ]
+    },
+    {
+      "file": "libQt6Network_arm64-v8a.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Core_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libz.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]",
+        "0x000000000000000e (SONAME)       Library soname: [libQt6Network_arm64-v8a.so]"
+      ]
+    },
+    {
+      "file": "libQt6WebSockets_arm64-v8a.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Network_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Core_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]",
+        "0x000000000000000e (SONAME)       Library soname: [libQt6WebSockets_arm64-v8a.so]"
+      ]
+    },
+    {
+      "file": "libQt6Sql_arm64-v8a.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Core_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]",
+        "0x000000000000000e (SONAME)       Library soname: [libQt6Sql_arm64-v8a.so]"
+      ]
+    },
+    {
+      "file": "libplugins_sqldrivers_qsqlite_arm64-v8a.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Sql_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Core_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]"
+      ]
+    },
+    {
+      "file": "libplugins_tls_qcertonlybackend_arm64-v8a.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Network_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Core_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]"
+      ]
+    },
+    {
+      "file": "libplugins_tls_qopensslbackend_arm64-v8a.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Network_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Core_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]"
+      ]
+    },
+    {
+      "file": "libplugins_networkinformation_qandroidnetworkinformation_arm64-v8a.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Network_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libQt6Core_arm64-v8a.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]"
+      ]
+    },
+    {
+      "file": "libcrypto_3.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]",
+        "0x000000000000000e (SONAME)       Library soname: [libcrypto_3.so]"
+      ]
+    },
+    {
+      "file": "libssl_3.so",
+      "machine": "AArch64",
+      "load_alignment_min": 16384,
+      "dynamic_lines": [
+        "0x0000000000000001 (NEEDED)       Shared library: [libcrypto_3.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]",
+        "0x000000000000000e (SONAME)       Library soname: [libssl_3.so]"
+      ]
+    }
+  ],
+  "android_runtime": "NOT RUN"
+}

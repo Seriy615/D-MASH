@@ -1,0 +1,57 @@
+{
+  "kind": "ROOT independent actual private pairing and bilateral E2EE chat",
+  "status": "PASS_COMPONENT_PROCESS_MESH",
+  "manifestSha256": "2b03d79bec60764be84f2b4e90895d0810b0c69ebf77d9d09a3911e0556e4805",
+  "verifiedFiles": 1177,
+  "verifiedRuntimeEntries": 30,
+  "hostSha256": "da90ca9b4c8e0b598e69b280d3264af0f12bb5fd6d1ceba291e6218ff8654381",
+  "nodeSha256": "9e31b8c9ac0ea3d5f2119e12829e476d72253a7f9dbfbb30933a4a67104b0598",
+  "handle": 62234,
+  "exitCode": 0,
+  "result": {
+    "freshRoots": 2,
+    "freshAccounts": 2,
+    "preinjectedContacts": 0,
+    "preinjectedRoutes": 0,
+    "actualSignedRequestAcceptConfirm": true,
+    "actualNativeKyber": true,
+    "bothContactsPublished": true,
+    "backendForwarded": 37,
+    "recipientHistory": 2,
+    "bothAccountReopenHistory": 2,
+    "concurrentNormalApiActivation": true,
+    "activationElapsedMs": [
+      58933,
+      41580
+    ],
+    "immediateSendStates": [
+      "HANDSHAKE_PENDING",
+      "HANDSHAKE_PENDING"
+    ],
+    "sameOperationRetriedAfterHandshake": true
+  },
+  "integratedCommits": [
+    "006814a",
+    "775244a",
+    "33f99e5",
+    "03fe1ad",
+    "7e62b42",
+    "e017a37",
+    "354cd69",
+    "a1bc16c"
+  ],
+  "focusedParentChecks": [
+    "Default/private trustedKEM and original encryptedindex persistence PASS",
+    "Publicorchestratorguard seam PASS",
+    "DirectedA-to-B and originaluntargeted plus wrongC/tamper refusal PASS",
+    "OriginalIDB vs actualC++SQLiteBootstrapRuntime, signedowner/offer restore and separatedomain key PASS"
+  ],
+  "limits": [
+    "Actual Linux component API, ordinary nativeUI pairing NOT RUN",
+    "Configured WS loopback Python transit; NAT/selforganization NOT RUN",
+    "Original caller retries sameoperation after E2EE handshake; firstsend durableautomaticqueue remains a confirmed product gap assigned runtime",
+    "No publiccontact profile support implied",
+    "Immutable actor/host predates integratedpause; no freshfull shared-HEAD app build claim",
+    "No anonymity/PFS/PCS/PQ claim"
+  ]
+}

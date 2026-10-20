@@ -1,0 +1,56 @@
+{
+  "issue": "NODE-URL-XSS-01",
+  "candidate_commit": "690cb1b",
+  "release": "transport-v3-node-preparation-20261020.40",
+  "red": {
+    "source_commit": "3541458",
+    "owner": "root",
+    "observed": "Actual Global Nodes select executed console sentinel from apostrophe URL; root evidence recorded separately",
+    "synthetic_url": "wss://example.invalid/x'-console.log(987654321)-'",
+    "evidence": "root-node-url-xss-red.json"
+  },
+  "green": {
+    "kind": "Actual Chromium Playwright CLI, real UI clicks, independent synthetic retained profile",
+    "session": "dmash-credential-sw",
+    "origin": "http://127.0.0.1:9182",
+    "network": "all nonlocal HTTP and all WebSockets blocked",
+    "steps": [
+      "Keep previously added synthetic apostrophe URL in local Node list",
+      "Reload candidate and actual master unlock; Global\u2192Nodes",
+      "Click \u041e\u0421\u041d\u041e\u0412\u041d\u041e\u0419; row remains primary, no Unknown endpoint modal, no console sentinel",
+      "Click \u041f\u041e\u0414\u041a\u041b\u042e\u0427\u0418\u0422\u042c; isolated blocked-network/reconnecting state, no console sentinel",
+      "Click \u0423\u0414\u0410\u041b\u0418\u0422\u042c and dismiss native confirmation; row remains",
+      "Click \u0423\u0414\u0410\u041b\u0418\u0422\u042c and accept native confirmation; empty Node list, no console sentinel"
+    ],
+    "status": "PASS",
+    "endpoint_unchanged_across_reload": true,
+    "sentinel_console_count": 0,
+    "final_endpoint_count": 0,
+    "canonical_record_before_after_sha256": "555e77860717a3bf174dcccf5ff186a4ca2d7d27b975f0a588f8caa15fe61763",
+    "device_id_sha256": "8638bdb6a98e2c640b769a6484486910708020fdd2544ae50b8d2f2fd7b797b3",
+    "loaded_response_hashes_exact": {
+      "js/core_engine.js": "13c22152714f47d5b76a2fc8fd59049245e765ace9c7a68f8a235fe2067f1367",
+      "js/acceptance_fixes.js": "a6c2b5f3f7ca8206a94fe34e4a306e4cf7bfe73a7fa176241d2285e5848dd8fc",
+      "js/ui_logic.js": "9a658f7c250a3a203bb4596255c05c0b2161ffb022d2407fd9d6cb794273695f",
+      "js/acceptance_v50.js": "4f4d4c678cdccfb99a6f77db802a6ef9d9408c798b981d0e71d661aef5a5cdc0",
+      "js/acceptance_v51.js": "e0b4a9e5603bd8ab0ef8c9f679c6063d1cd265979fc4608b4831f660ac8cb7d1"
+    },
+    "fixture_limits": [
+      "Own preliminary candidate SW/cache cleared to load exact snapshot; IDB/localStorage and encrypted Root were preserved",
+      "This fixture is not an additional SW upgrade claim; true354 old-tab upgrade is in S01_BROWSER_UPGRADE_WIPE.json",
+      "Connect is isolated blocked-network behavior, not production Node connectivity",
+      "Root independent same-stored-data retest is separate",
+      "No physical media/hardware acceptance inferred from UNIT command dispatch"
+    ]
+  },
+  "unit": {
+    "test": "ui_data_actions.test.js",
+    "scope": "Actual Core delegated binder and actual Node render function with bounded DOM port; hostile quotes/markup/newline/Unicode preserved, unknown/inherited commands rejected, all3 Node actions receive exact URL; no dynamic URI-decoded inline sinks; historical loaders guarded"
+  },
+  "fix_scope": [
+    "acceptance_fixes Node DOM closures; URL/label rendered escaped text",
+    "Allowlisted delegated Core DOM commands with attribute-escaped JSON arguments",
+    "Effective UI/Core/v50/v51 Account/QuickName/pending-contact/route/media/file/camera/message arguments",
+    "Release and SW generation40; legacy unloaded stability/v53 not edited, loader exclusion guarded"
+  ]
+}

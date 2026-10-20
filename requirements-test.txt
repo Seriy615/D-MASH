@@ -1,4 +1,5 @@
 # Python 3.12 reference environment; includes the ASGI test client.
+-c constraints-python312.txt
 -r D-MASH/client/requirements.txt
 -r origin/requirements.txt
 httpx==0.27.2

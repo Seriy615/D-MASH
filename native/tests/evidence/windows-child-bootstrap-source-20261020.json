@@ -1,0 +1,55 @@
+{
+  "kind": "WINDOWS_PRIVATE_CHILD_BOOTSTRAP_SOURCE_AND_CROSS_COMPILE_NOT_RUNTIME_ACCEPTANCE",
+  "date": "2026-10-20",
+  "baseCommit": "b553586a9aba1be9524c998995c94a62cb59dbc4",
+  "sourceSha256": {
+    "native/src/os_windows.cpp": "45280c2c6e8ef3583fb5a518acda4a393dd390bbd21469f217d5af863ae9af61",
+    "native/src/os_windows.h": "0c1fe026e66dfb1ead139be33ceafc810b4f373746313be4bb7f61ead5473183",
+    "native/tests/windows_local_test.cpp": "c4ac5bea82d727a21a2b9995f46e5bdc96a7804f5a2c3c88a562a95bec43e8da"
+  },
+  "api": "windowsLocal::spawnDaemon(wstring executable, vector<wstring> arguments) -> move-only ChildProcess{process,parentPipe,pid}; releaseParentPipe transfers lease to QLocalSocket",
+  "implementation": [
+    "Current-user/SYSTEM protected namedpipe DACL;128bit random name; duplex overlapped byte stream; remote clients rejected",
+    "CreateProcessW STARTUPINFOEX PROC_THREAD_ATTRIBUTE_HANDLE_LIST contains only childpipe, parentpipe noninheritable; childcopy and threadhandle close immediately",
+    "Pointer-width child handle argv only; no credentials in argv; quotes/backslashes preserved; reserved bootstrap arguments rejected",
+    "RAII closes remaining parent lease/processhandle, does not terminate child; supervisor retains ownedprocess for actual exit check and bounded fallback termination after scoped revoke",
+    "TransportBundle and existing authenticated private bootstrap protocol unchanged; no Root/PIN/Account state enters helper or Node"
+  ],
+  "crossCompile": {
+    "status": "PASS",
+    "compiler": "x86_64-w64-mingw32-g++-posix GCC13-posix",
+    "flags": [
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ladvapi32"
+    ],
+    "output": "PE32+ x86-64",
+    "binarySha256": "0326b4b43e3e6a5b8bf8f6de0183a86500546f63aac2e997f88ff58844cc819d"
+  },
+  "windowsRuntime": {
+    "status": "NOT_RUN",
+    "preparedTestChecks": [
+      "private namedpipe same-user/DACL",
+      "childpipe inherited, unrelated inheritable sentinel excluded",
+      "spaces/quotes/trailing slash argument roundtrip",
+      "actual child\u2194parent duplex bytes",
+      "actual ownedchild exitcode42",
+      "childendpoint closure yields brokenpipe after drain",
+      "move ownership and releaseParentPipe",
+      "duplicate bootstrap arguments rejected",
+      "existing retainedprofile ACL checks"
+    ]
+  },
+  "limits": [
+    "Cross-linked test is not runtime evidence; actual Windows runner required",
+    "Credential-host supervisor integration separately owned by broker agent",
+    "No Linux runtime code changed; pinned a0f54a9 independent transit/delivery fixtures untouched",
+    "No production or existing profile state changed"
+  ],
+  "references": [
+    "https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute",
+    "https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw"
+  ]
+}

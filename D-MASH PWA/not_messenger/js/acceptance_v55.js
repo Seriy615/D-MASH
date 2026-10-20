@@ -26,6 +26,10 @@
         return true;
     }
 
+    if (global.DmashRuntimeReadiness) {
+        global.DmashRuntimeReadiness.register("acceptance-v55-ui", 71, () => patch(appUi()), () => !!appUi()?.[PATCH], ["acceptance-v54-ui"]);
+        return;
+    }
     patch(appUi());
     const timer = setInterval(() => {
         if (patch(appUi())) clearInterval(timer);

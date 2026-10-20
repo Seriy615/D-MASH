@@ -1,0 +1,35 @@
+{
+  "result": "PASS, scoped local UI smoke",
+  "source_release": "transport-v3-node-preparation-20261020.38",
+  "browser": "Google Chrome for Testing 156.0.8078.4",
+  "playwright": "1.64.0",
+  "viewport": {
+    "width": 430,
+    "height": 932
+  },
+  "service_workers": "BLOCKED",
+  "scope": [
+    "fresh synthetic calculator master/wipe setup",
+    "real unlock",
+    "synthetic Account login",
+    "Saved Messages visible send",
+    "page reload",
+    "same Account unlock/login",
+    "same visible Account identity prefix",
+    "Saved Messages retained exactly once"
+  ],
+  "crypto_or_storage_stubs": false,
+  "production_network_or_accounts": false,
+  "page_console_errors": 0,
+  "expected_warning": "Update check unavailable with service workers blocked",
+  "instrumentation_note": "An exact-text locator included the message delete child and waited; corrected non-exact locator and actual snapshot confirmed one visible row. No product change.",
+  "not_covered": [
+    "full control inventory",
+    "active service worker",
+    "new PUBLIC/PRIVATE two-account browser flow",
+    "media",
+    "physical Android",
+    "WebAuthn hardware",
+    "production acceptance"
+  ]
+}

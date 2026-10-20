@@ -1,0 +1,58 @@
+{
+  "kind": "ROOT_INDEPENDENT_VISIBLE_DESKTOP_RESIDENT_OWNER",
+  "sourceCheckpoint": "cab8fa6",
+  "pinSourceBase": "07899d53e044961a6902b12ca70a95cd94afea0d plus test-only pinned-host selector/completer handling",
+  "verification": {
+    "sources": 103,
+    "artifacts": 12,
+    "runtimeLibraries": 8,
+    "mismatches": []
+  },
+  "artifacts": {
+    "dmash-desktop": "d2b2ca495943f0e8616e8922091d2eedc78d89b0f080cb117b49ca342f5be5e4",
+    "dmash_desktop_ui_test": "48674c36f9ab4e58ffa0f91f6d46183e6e566b43a21a2f442c3843e193055bd9",
+    "dmash-credential-host": "91c8dde5f9593c6bf450b81249d394fdc8d5d257bf812801b2998940b02270d3",
+    "dmash-node-host": "5a198531198010d5d90d6258d1f7c55d650b40d3f09ad00ec01b129533d9983a"
+  },
+  "controls": {
+    "passed": 6,
+    "failed": 0,
+    "skipped": 1,
+    "elapsedMs": 4757,
+    "liveService": "SKIP without inherited control fixture",
+    "fixture": "Actual retained owning package from earlier browser, same Root/Account/history; fresh native target",
+    "flows": [
+      "actual file chooser import/cancel",
+      "Root unlock",
+      "Account choice/login cancel/wrong/busy cancel/correct login",
+      "original Saved retained and new text through actual compose/Send",
+      "signout, clean host restart, relogin with retained history"
+    ]
+  },
+  "lifetime": {
+    "kind": "Linux real native process lifetime proof after actual Qt UI actions",
+    "status": "PASS",
+    "fixture": "Caller-provided complete profile; no identity changes",
+    "nodeEnableAction": "Harness authenticated local IPC, not a UI button in this checkpoint",
+    "checks": [
+      "Actual Qt Account import/login/Saved send clicks reached resident host",
+      "Actual scoped Node child started; no mesh endpoint configured",
+      "Actual UI process killed with SIGKILL",
+      "Resident credential host and real Node remain running after UI process death",
+      "Explicit Root lock confirms owned Node stopped"
+    ],
+    "limits": [
+      "Synthetic imported Account only",
+      "No configured mesh endpoints or remote message delivery in this gate",
+      "Does not prove Android or Windows runtime"
+    ]
+  },
+  "sourceProfileUnchangedSha256": "7f35126664d3f4828b9ed5e93e55eb27da70e5d5dc7f38cfd9af7448609ce9b6",
+  "limits": [
+    "Node enable and Root lock in lifetime gate are explicit harness IPC calls, not visible Node buttons",
+    "UI is actual offscreen Qt click test; no remote chat or native contact creation acceptance",
+    "Root/Account credentials and full profile remain private outside Git",
+    "Pinned host predates bf77a5a capability renewal; unclean crash/fresh setup not established here",
+    "Android/Windows acceptance remains separate"
+  ]
+}

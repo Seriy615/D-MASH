@@ -94,6 +94,10 @@
         return true;
     }
 
+    if (global.DmashRuntimeReadiness) {
+        global.DmashRuntimeReadiness.register("public-contact", 30, install, () => !!global.Core?.__dmashPublicContactRuntimeV1, ["functional-repair"]);
+        return;
+    }
     let attempts = 0;
     const timer = setInterval(() => {
         attempts++;

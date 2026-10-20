@@ -1,0 +1,21 @@
+// Bound actual upstream JNI compilation/linking on the local four-GiB host.
+// One shared Ninja pool covers compilation and linking, independent of Gradle workers.
+allprojects { project ->
+    ["com.android.application", "com.android.library"].each { pluginId ->
+        project.plugins.withId(pluginId) {
+            if (pluginId == "com.android.application") {
+                project.android.sourceSets.main.assets.srcDir(project.layout.buildDirectory.dir("generated/dmashNotices/assets"))
+            }
+            project.androidComponents.finalizeDsl { android ->
+                // Library native tasks otherwise configure every ABI even when the app filters one.
+                android.defaultConfig.ndk.abiFilters.clear()
+                android.defaultConfig.ndk.abiFilters.add(project.findProperty("dmashAbi") ?: "arm64-v8a")
+                android.defaultConfig.externalNativeBuild.cmake.arguments.addAll([
+                    "-DCMAKE_JOB_POOLS=dmash_native=1",
+                    "-DCMAKE_JOB_POOL_COMPILE=dmash_native",
+                    "-DCMAKE_JOB_POOL_LINK=dmash_native"
+                ])
+            }
+        }
+    }
+}
