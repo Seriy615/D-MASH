@@ -8,7 +8,7 @@ struct Pin {
     explicit Pin(QByteArray b) : bytes(std::move(b)) { bytes.detach(); }
     ~Pin() { OPENSSL_cleanse(bytes.data(), bytes.size()); }
 };
-BrokerResult success(const CredentialSnapshot &s) {
+BrokerResult success(const CredentialSnapshot& s) {
     BrokerResult r;
     r.ok = true;
     r.revision = s.revision;
@@ -18,7 +18,7 @@ BrokerResult success(const CredentialSnapshot &s) {
     r.accountDatabasePath = s.accountDatabasePath;
     return r;
 }
-void need(bool b, const char *c) {
+void need(bool b, const char* c) {
     if (!b)
         throw Error(c);
 }
@@ -63,7 +63,7 @@ std::future<BrokerResult> BrokerService::enqueue(std::function<BrokerResult()> f
     auto task = std::make_shared<std::packaged_task<BrokerResult()>>([f = std::move(f)] {
         try {
             return f();
-        } catch (const Error &e) {
+        } catch (const Error& e) {
             BrokerResult r;
             r.code = QString::fromLatin1(e.what());
             return r;
@@ -93,7 +93,7 @@ void BrokerService::cancel() {
     eraseRequested_ = true;
     ready_.notify_one();
 }
-bool BrokerService::isCurrentTransportResult(const BrokerResult &result) const {
+bool BrokerService::isCurrentTransportResult(const BrokerResult& result) const {
     return result.ok && result.control.phase == "ACTIVE" && result.operationEpoch == epoch_ &&
            !stopping_;
 }
@@ -183,7 +183,7 @@ std::future<BrokerResult> BrokerService::change(QByteArray oldPin, QByteArray ne
                 result.ok = false;
                 result.code = "CREDENTIAL_CANCELLED";
             }
-        } catch (const Error &e) {
+        } catch (const Error& e) {
             result.ok = false;
             result.code = QString::fromLatin1(e.what());
         } catch (...) {
@@ -229,7 +229,7 @@ std::future<BrokerResult> BrokerService::resumeCleanup(QByteArray pin,
                 result.ok = false;
                 result.code = "CREDENTIAL_CANCELLED";
             }
-        } catch (const Error &e) {
+        } catch (const Error& e) {
             result.ok = false;
             result.code = QString::fromLatin1(e.what());
         } catch (...) {
@@ -273,6 +273,30 @@ std::future<BrokerResult> BrokerService::readAccountRegistry(QJsonArray rows) {
         BrokerResult result = success(snapshot);
         result.accountRegistry = RootCodec::readAccountRegistry(*root_, rows);
         need(token == epoch_, "CREDENTIAL_CANCELLED");
+        return result;
+    });
+}
+std::future<BrokerResult> BrokerService::enableNode(RootCodec::NodeSeedFactory factory) {
+    const auto token = epoch_.load();
+    return enqueue([this, token, factory] {
+        auto current = [this, token] { return token == epoch_ && !stopping_; };
+        need(current() && bool(root_), "ROOT_UNLOCK_REQUIRED");
+        auto before = store_->read();
+        need(root_->matchesRecord(before.root), "CREDENTIAL_CONFLICT");
+        auto candidate = RootCodec::prepareNodeEnable(*root_, factory);
+        if (before.root.contains("credentialRevision"))
+            candidate.second["credentialRevision"] = before.root.value("credentialRevision");
+        if (candidate.second == before.root)
+            return success(before);
+        auto after = store_->commitNodeEnable(before, candidate.second, candidate.first, current);
+        auto result = success(after);
+        result.committed = true;
+        root_ = std::make_unique<PreparedRoot>(std::move(candidate.first));
+        if (!current()) {
+            root_.reset();
+            result.ok = false;
+            result.code = "CREDENTIAL_CANCELLED";
+        }
         return result;
     });
 }

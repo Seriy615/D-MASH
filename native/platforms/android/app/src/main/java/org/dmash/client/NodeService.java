@@ -11,7 +11,8 @@ public final class NodeService extends QtService {
  private final Handler handler=new Handler(Looper.getMainLooper());
  private static final String ACTION_STOP="org.dmash.client.STOP_NODE";
  private static volatile NodeService active;
- private String state="Starting Node…";
+ private volatile String state="Starting Node…";
+ private static volatile boolean processNativeExited=false;
  private boolean installed=false;
  private ParcelFileDescriptor pending;
  private String profile;
@@ -27,6 +28,7 @@ public final class NodeService extends QtService {
     install(fd,path);output.writeNoException();return true;
    }
    if(code==FIRST_CALL_TRANSACTION+1){input.enforceInterface("org.dmash.client.NodeBroker.v1");if(Binder.getCallingUid()!=android.os.Process.myUid())throw new SecurityException("caller");output.writeNoException();output.writeString(state);return true;}
+   if(code==FIRST_CALL_TRANSACTION+2){input.enforceInterface("org.dmash.client.NodeBroker.v1");if(Binder.getCallingUid()!=android.os.Process.myUid())throw new SecurityException("caller");if(input.dataAvail()!=0)throw new IllegalArgumentException("trailing data");output.writeNoException();output.writeInt(android.os.Process.myPid());output.writeInt(processNativeExited?1:0);output.writeString(state);return true;}
    return super.onTransact(code,input,output,flags);
   }
   // Only a local, same-app credential owner can supply a transport-only bootstrap.
@@ -45,9 +47,9 @@ public final class NodeService extends QtService {
  }};
  private static native boolean nativeInstall(int fd,String privateProfile);
  private void updateState(String value){state=value;ServiceStatus.write(this,value);}
- private static void nativeStopped(int code){NodeService service=active;if(service!=null)service.handler.post(()->{service.updateState(code==0?"Node stopped":"Node could not start");service.stopSelf();});}
+ private static void nativeStopped(int code){processNativeExited=true;NodeService service=active;if(service!=null)service.handler.post(()->{service.updateState(code==0?"Node stopped":"Node could not start");service.stopSelf();});}
  @Override public void onCreate(){
-  active=this;updateState("Starting Node…");
+  processNativeExited=false;active=this;updateState("Starting Node…");
   NotificationManager manager=getSystemService(NotificationManager.class);
   manager.createNotificationChannel(new NotificationChannel("node","Node transport",NotificationManager.IMPORTANCE_LOW));
   PendingIntent stop=PendingIntent.getService(this,0,new Intent(this,NodeService.class).setAction(ACTION_STOP),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);

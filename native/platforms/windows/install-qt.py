@@ -27,7 +27,8 @@ for item in manifest['archives']:
     temporary.unlink(missing_ok=True)
     if attempt==2:raise
     time.sleep(2)
- subprocess.run([extractor,'x','-y','-o'+str(prefix),str(target)],check=True,stdout=subprocess.DEVNULL)
+ destination=prefix/item['destination'];destination.mkdir(parents=True,exist_ok=True)
+ subprocess.run([extractor,'x','-y','-o'+str(destination),str(target)],check=True,stdout=subprocess.DEVNULL)
 qt=prefix/'6.12.0/mingw_64';compiler=prefix/'Tools/mingw1310_64'
 # Validate the layout used by CMake and the package script before any compilation.
 for name in ['lib/cmake/Qt6Core/Qt6CoreConfig.cmake','lib/cmake/Qt6Widgets/Qt6WidgetsConfig.cmake','lib/cmake/Qt6WebSockets/Qt6WebSocketsConfig.cmake','bin/windeployqt.exe']:

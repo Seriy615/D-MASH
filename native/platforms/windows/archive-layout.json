@@ -1,0 +1,71 @@
+{
+  "kind": "Actual6officialarchives downloaded, SHA256verified and7zmemberlists inspected; Windows execution NOT_RUN",
+  "requiredMergedLayout": "PASS QtCore/Widgets/WebSockets CMake/windeployqt/MinGWg++/runtimeDLL",
+  "archives": [
+    {
+      "archive": "qtwebsockets-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z",
+      "sha256": "61abd2e1cdce57b9cd41afdf6be73e9621b1f402840a6c3b35947858daeb7de4",
+      "firstEntries": [
+        "bin/Qt6WebSockets.dll",
+        "include/QtWebSockets/QMaskGenerator",
+        "include/QtWebSockets/QWebSocket",
+        "include/QtWebSockets/QWebSocketCorsAuthenticator"
+      ],
+      "entryCount": 96,
+      "extractionDestination": "6.12.0/mingw_64"
+    },
+    {
+      "archive": "qtbase-Windows-Windows_11_24H2-Mingw-Windows-Windows_11_24H2-X86_64.7z",
+      "sha256": "3356346505113242a4f7c0b09ba46188424ee7938232166655f794c28a3477fc",
+      "firstEntries": [
+        "bin/check_qt_module_json_schemas.py",
+        "bin/ensure_pro_file.cmake",
+        "bin/qt-android-runner.py",
+        "bin/qt-cmake-create.bat"
+      ],
+      "entryCount": 4677,
+      "extractionDestination": "6.12.0/mingw_64"
+    },
+    {
+      "archive": "MinGW-w64-x86_64-13.1.0-release-posix-seh-msvcrt-rt_v11-rev1-runtime.7z",
+      "sha256": "d8629a02e4edaf6015709532ddfbb074616dd42b90484e69448bcc88cfefe9e4",
+      "firstEntries": [
+        "libgcc_s_seh-1.dll",
+        "libstdc++-6.dll",
+        "libwinpthread-1.dll"
+      ],
+      "entryCount": 3,
+      "extractionDestination": "6.12.0/mingw_64/bin"
+    },
+    {
+      "archive": "d3dcompiler_47-x64.7z",
+      "sha256": "06adfc5bb5873b177d9019f29f9be06c1530830371819b95de6bab290ee2b8a0",
+      "firstEntries": [
+        "d3dcompiler_47.dll"
+      ],
+      "entryCount": 1,
+      "extractionDestination": "6.12.0/mingw_64/bin"
+    },
+    {
+      "archive": "opengl32sw-64-mesa_11_2_2-signed_sha256.7z",
+      "sha256": "f51918c465a229efb528e26ea4e74e433663fac99a9296accdfbb090e48ac3b8",
+      "firstEntries": [
+        "opengl32sw.dll"
+      ],
+      "entryCount": 1,
+      "extractionDestination": "6.12.0/mingw_64/bin"
+    },
+    {
+      "archive": "mingw1310.7z",
+      "sha256": "a7b502294a903b64fccd4a41ba39f48d3f6c9a5ece167f0cfaeac920d15b344f",
+      "firstEntries": [
+        "Tools/mingw1310_64/build-info.txt",
+        "Tools/mingw1310_64/share/gcc-13.1.0/python/libstdcxx/__init__.py",
+        "Tools/mingw1310_64/share/gcc-13.1.0/python/libstdcxx/v6/__init__.py",
+        "Tools/mingw1310_64/share/gcc-13.1.0/python/libstdcxx/v6/xmethods.py"
+      ],
+      "entryCount": 19137,
+      "extractionDestination": "."
+    }
+  ]
+}

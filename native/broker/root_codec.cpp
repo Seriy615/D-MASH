@@ -90,7 +90,8 @@ void validate(const QJsonObject& record) {
     decode(obj.value("salt"), 16);
     decode(obj.value("digest"), 32);
 }
-QByteArray argon(const QByteArray& pin, const QByteArray& rawSalt, bool id, bool literalSalt = false) {
+QByteArray argon(const QByteArray& pin, const QByteArray& rawSalt, bool id,
+                 bool literalSalt = false) {
     require(!pin.isEmpty() && pin.size() <= 4096, "MASTER_PIN_REQUIRED");
     // The deployed JS passes UTF8(base64(random16)); raw salt bytes are NOT used.
     auto salt = literalSalt ? rawSalt : rawSalt.toBase64();
@@ -285,9 +286,12 @@ QString PreparedRoot::deviceId() const {
     return state_->id;
 }
 bool PreparedRoot::matchesRecord(const QJsonObject& record) const {
-    require(bool(state_), "CREDENTIAL_CANCELLED"); state_->check();
-    auto a=state_->record,b=record;a.remove("credentialRevision");b.remove("credentialRevision");
-    return a==b;
+    require(bool(state_), "CREDENTIAL_CANCELLED");
+    state_->check();
+    auto a = state_->record, b = record;
+    a.remove("credentialRevision");
+    b.remove("credentialRevision");
+    return a == b;
 }
 void PreparedRoot::dispose() { state_.reset(); }
 PreparedRoot RootCodec::openExisting(const QJsonObject& record, const QByteArray& pin,
@@ -323,36 +327,69 @@ QJsonObject RootCodec::prepareRewrap(PreparedRoot& prepared, const QByteArray& p
 }
 QJsonArray RootCodec::readAccountRegistry(PreparedRoot& prepared, const QJsonArray& rows) {
     require(bool(prepared.state_), "CREDENTIAL_CANCELLED");
-    auto& s=*prepared.state_;s.check();require(rows.size()<=1024,"ACCOUNT_REGISTRY_LIMIT");
-    const QString name="account-registry-v1";
-    const auto slot=s.record.value("materials").toObject().value(name);
-    require(slot.isObject(),"ACCOUNT_REGISTRY_MATERIAL_MISSING");
-    const auto material=slot.toObject();
-    Secret wrapping(derive(s.root.bytes,"dmash/device-mlkem-seed-root",1,name.toUtf8()));
-    Secret registry(gcm(false,wrapping.bytes,decode(material.value("iv"),12),
-                        "dmash/device-material/v1|"+name.toUtf8(),decode(material.value("ciphertext"),48)));
+    auto& s = *prepared.state_;
+    s.check();
+    require(rows.size() <= 1024, "ACCOUNT_REGISTRY_LIMIT");
+    const QString name = "account-registry-v1";
+    const auto slot = s.record.value("materials").toObject().value(name);
+    require(slot.isObject(), "ACCOUNT_REGISTRY_MATERIAL_MISSING");
+    const auto material = slot.toObject();
+    Secret wrapping(derive(s.root.bytes, "dmash/device-mlkem-seed-root", 1, name.toUtf8()));
+    Secret registry(gcm(false, wrapping.bytes, decode(material.value("iv"), 12),
+                        "dmash/device-material/v1|" + name.toUtf8(),
+                        decode(material.value("ciphertext"), 48)));
     QJsonArray result;
     QSet<QString> aliases;
-    for(const auto& value:rows) {
-        s.check();require(value.isObject(),"ACCOUNT_REGISTRY_CORRUPT");const auto row=value.toObject();
-        require(row.value("alias").isString()&&row.value("blob").isString()&&row.value("blob").toString().size()<=131072,"ACCOUNT_REGISTRY_CORRUPT");
-        const auto encoded=row.value("blob").toString().toLatin1();
-        const auto packed=QByteArray::fromBase64(encoded,QByteArray::AbortOnBase64DecodingErrors);
-        require(packed.size()>=28&&packed.toBase64()==encoded,"ACCOUNT_REGISTRY_CORRUPT");
-        Secret plain(gcm(false,registry.bytes,packed.left(12),"dmash/account-registry/v1",packed.mid(12)));
-        QJsonParseError error;auto doc=QJsonDocument::fromJson(plain.bytes,&error);
-        require(error.error==QJsonParseError::NoError&&doc.isObject(),"ACCOUNT_REGISTRY_CORRUPT");
-        const auto account=doc.object();require(account.value("id").isString()&&!account.value("id").toString().isEmpty(),"ACCOUNT_REGISTRY_CORRUPT");
-        auto id=account.value("id").toString().toUtf8();
-        std::unique_ptr<EVP_MAC,decltype(&EVP_MAC_free)> mac(EVP_MAC_fetch(nullptr,"HMAC",nullptr),EVP_MAC_free);
-        require(bool(mac),"CRYPTO_FAILED");std::unique_ptr<EVP_MAC_CTX,decltype(&EVP_MAC_CTX_free)> ctx(EVP_MAC_CTX_new(mac.get()),EVP_MAC_CTX_free);
-        char digest[]="SHA256";OSSL_PARAM params[]={OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,digest,0),OSSL_PARAM_END};
-        QByteArray hash(32,Qt::Uninitialized);size_t length=0;
-        require(bool(ctx)&&EVP_MAC_init(ctx.get(),reinterpret_cast<const unsigned char*>(registry.bytes.constData()),32,params)==1&&EVP_MAC_update(ctx.get(),reinterpret_cast<const unsigned char*>(id.constData()),id.size())==1&&EVP_MAC_final(ctx.get(),reinterpret_cast<unsigned char*>(hash.data()),&length,32)==1&&length==32,"CRYPTO_FAILED");
-        const auto expected=QString::fromLatin1(hash.toBase64());
-        require(row.value("alias").toString()==expected&&!aliases.contains(expected),"ACCOUNT_REGISTRY_CORRUPT");aliases.insert(expected);result.append(account);
+    for (const auto& value : rows) {
+        s.check();
+        require(value.isObject(), "ACCOUNT_REGISTRY_CORRUPT");
+        const auto row = value.toObject();
+        require(row.value("alias").isString() && row.value("blob").isString() &&
+                    row.value("blob").toString().size() <= 131072,
+                "ACCOUNT_REGISTRY_CORRUPT");
+        const auto encoded = row.value("blob").toString().toLatin1();
+        const auto packed =
+            QByteArray::fromBase64(encoded, QByteArray::AbortOnBase64DecodingErrors);
+        require(packed.size() >= 28 && packed.toBase64() == encoded, "ACCOUNT_REGISTRY_CORRUPT");
+        Secret plain(gcm(false, registry.bytes, packed.left(12), "dmash/account-registry/v1",
+                         packed.mid(12)));
+        QJsonParseError error;
+        auto doc = QJsonDocument::fromJson(plain.bytes, &error);
+        require(error.error == QJsonParseError::NoError && doc.isObject(),
+                "ACCOUNT_REGISTRY_CORRUPT");
+        const auto account = doc.object();
+        require(account.value("id").isString() && !account.value("id").toString().isEmpty(),
+                "ACCOUNT_REGISTRY_CORRUPT");
+        auto id = account.value("id").toString().toUtf8();
+        std::unique_ptr<EVP_MAC, decltype(&EVP_MAC_free)> mac(
+            EVP_MAC_fetch(nullptr, "HMAC", nullptr), EVP_MAC_free);
+        require(bool(mac), "CRYPTO_FAILED");
+        std::unique_ptr<EVP_MAC_CTX, decltype(&EVP_MAC_CTX_free)> ctx(EVP_MAC_CTX_new(mac.get()),
+                                                                      EVP_MAC_CTX_free);
+        char digest[] = "SHA256";
+        OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, digest, 0),
+                               OSSL_PARAM_END};
+        QByteArray hash(32, Qt::Uninitialized);
+        size_t length = 0;
+        require(bool(ctx) &&
+                    EVP_MAC_init(ctx.get(),
+                                 reinterpret_cast<const unsigned char*>(registry.bytes.constData()),
+                                 32, params) == 1 &&
+                    EVP_MAC_update(ctx.get(),
+                                   reinterpret_cast<const unsigned char*>(id.constData()),
+                                   id.size()) == 1 &&
+                    EVP_MAC_final(ctx.get(), reinterpret_cast<unsigned char*>(hash.data()), &length,
+                                  32) == 1 &&
+                    length == 32,
+                "CRYPTO_FAILED");
+        const auto expected = QString::fromLatin1(hash.toBase64());
+        require(row.value("alias").toString() == expected && !aliases.contains(expected),
+                "ACCOUNT_REGISTRY_CORRUPT");
+        aliases.insert(expected);
+        result.append(account);
     }
-    s.check();return result;
+    s.check();
+    return result;
 }
 QJsonObject RootCodec::wipeVerifier(const QByteArray& pin, Current current) {
     require(current && current(), "CREDENTIAL_CANCELLED");
@@ -364,6 +401,52 @@ QJsonObject RootCodec::wipeVerifier(const QByteArray& pin, Current current) {
     return {{"profile", "sha256-prehash-argon2id-v1"},
             {"salt", QString::fromLatin1(salt)},
             {"digest", QString::fromLatin1(digest.bytes.toBase64())}};
+}
+std::pair<PreparedRoot, QJsonObject> RootCodec::prepareNodeEnable(PreparedRoot& prepared,
+                                                                  NodeSeedFactory factory) {
+    require(bool(prepared.state_) && bool(factory), "ROOT_UNLOCK_REQUIRED");
+    auto& s = *prepared.state_;
+    s.check();
+    auto record = s.record;
+    auto materials = record.value("materials").toObject();
+    auto read = [&](const QString& name) {
+        const auto item = materials.value(name);
+        if (item.isUndefined())
+            return QByteArray{};
+        require(item.isObject(), "NODE_MATERIAL_CORRUPT");
+        Secret key(derive(s.root.bytes, "dmash/device-mlkem-seed-root", 1, name.toUtf8()));
+        const auto slot = item.toObject();
+        return gcm(false, key.bytes, decode(slot.value("iv"), 12),
+                   "dmash/device-material/v1|" + name.toUtf8(),
+                   decode(slot.value("ciphertext"), 48));
+    };
+    Secret existing(read("node-ed25519-pow-v4"));
+    Secret seed(factory(existing.bytes, s.current));
+    s.check();
+    require(seed.bytes.size() == 32 && (existing.bytes.isEmpty() || existing.bytes == seed.bytes),
+            "NODE_IDENTITY_REPLACEMENT_REFUSED");
+    Secret ncrh(read("node-base-ncrh-v4"));
+    if (ncrh.bytes.isEmpty())
+        ncrh.bytes = random(32);
+    auto append = [&](const QString& name, const QByteArray& bytes) {
+        if (materials.contains(name))
+            return;
+        Secret key(derive(s.root.bytes, "dmash/device-mlkem-seed-root", 1, name.toUtf8()));
+        const auto iv = random(12);
+        materials[name] =
+            QJsonObject{{"iv", QString::fromLatin1(iv.toBase64())},
+                        {"ciphertext",
+                         QString::fromLatin1(gcm(true, key.bytes, iv,
+                                                 "dmash/device-material/v1|" + name.toUtf8(), bytes)
+                                                 .toBase64())}};
+    };
+    append("node-ed25519-pow-v4", seed.bytes);
+    append("node-base-ncrh-v4", ncrh.bytes);
+    record["materials"] = materials;
+    s.check();
+    PreparedRoot proof(std::make_unique<PreparedRoot::State>(s.root.bytes, record, s.current));
+    require(proof.deviceId() == s.id, "CREDENTIAL_BINDING_INVALID");
+    return {std::move(proof), record};
 }
 QJsonObject RootCodec::existingTransportBundle(PreparedRoot& prepared, const QJsonArray& endpoints,
                                                quint64 generation, bool direct) {

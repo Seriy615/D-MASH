@@ -20,15 +20,15 @@
 namespace dmash::broker {
 namespace {
 constexpr int MaxBlob = 64 * 1024 * 1024;
-void need(bool b, const char *code = "CREDENTIAL_STORE_CORRUPT") {
+void need(bool b, const char* code = "CREDENTIAL_STORE_CORRUPT") {
     if (!b)
         throw Error(code);
 }
-void sql(QSqlDatabase &db, const QString &s) {
+void sql(QSqlDatabase& db, const QString& s) {
     QSqlQuery q(db);
     need(q.exec(s), "CREDENTIAL_STORE_IO_FAILED");
 }
-void pathCheck(const QString &path) {
+void pathCheck(const QString& path) {
     QFileInfo f(path);
     need(f.isAbsolute() && !f.isSymLink() && f.dir().exists(), "CREDENTIAL_PATH_REJECTED");
 #ifndef Q_OS_WIN
@@ -39,7 +39,7 @@ void pathCheck(const QString &path) {
         need(!(f.permissions() & bad), "CREDENTIAL_PATH_REJECTED");
 #endif
 }
-void exclusiveFile(const QString &path, const QByteArray &bytes) {
+void exclusiveFile(const QString& path, const QByteArray& bytes) {
     pathCheck(path);
     QFile f(path);
     need(f.open(QIODevice::WriteOnly | QIODevice::NewOnly), "CREDENTIAL_FILE_EXISTS");
@@ -62,18 +62,18 @@ void exclusiveFile(const QString &path, const QByteArray &bytes) {
     need(synced == 0, "CREDENTIAL_BACKUP_FAILED");
 #endif
 }
-QByteArray json(const QJsonObject &o) {
+QByteArray json(const QJsonObject& o) {
     auto b = QJsonDocument(o).toJson(QJsonDocument::Compact);
     need(b.size() <= MaxBlob, "CREDENTIAL_QUOTA");
     return b;
 }
-QJsonObject object(const QByteArray &b) {
+QJsonObject object(const QByteArray& b) {
     QJsonParseError e;
     auto d = QJsonDocument::fromJson(b, &e);
     need(e.error == QJsonParseError::NoError && d.isObject());
     return d.object();
 }
-void inventory(const QJsonObject &p) {
+void inventory(const QJsonObject& p) {
     need(p.value("version") == 1 && p.value("inventoryComplete") == true &&
              p.value("databases").isArray() && p.value("ancillary").isObject(),
          "COMPLETE_PROFILE_REQUIRED");
@@ -103,7 +103,7 @@ void inventory(const QJsonObject &p) {
     json(p);
 }
 } // namespace
-CredentialStore::CredentialStore(const QString &path, const QByteArray &key, bool initialize)
+CredentialStore::CredentialStore(const QString& path, const QByteArray& key, bool initialize)
     : connection_("dmash-credential-" + QUuid::createUuid().toString()), key_(key) {
     need(key.size() == 32, "CREDENTIAL_STORAGE_KEY_REQUIRED");
     key_.detach();
@@ -163,27 +163,27 @@ CredentialStore::~CredentialStore() {
     QSqlDatabase::removeDatabase(connection_);
     OPENSSL_cleanse(key_.data(), key_.size());
 }
-static QByteArray sealBytes(const QByteArray &key, const QByteArray &plain,
-                            const QByteArray &domain) {
+static QByteArray sealBytes(const QByteArray& key, const QByteArray& plain,
+                            const QByteArray& domain) {
     need(plain.size() <= MaxBlob, "CREDENTIAL_QUOTA");
     QByteArray iv(12, Qt::Uninitialized);
-    need(RAND_bytes(reinterpret_cast<unsigned char *>(iv.data()), 12) == 1);
-    EVP_CIPHER_CTX *c = EVP_CIPHER_CTX_new();
+    need(RAND_bytes(reinterpret_cast<unsigned char*>(iv.data()), 12) == 1);
+    EVP_CIPHER_CTX* c = EVP_CIPHER_CTX_new();
     need(c);
     QByteArray out(plain.size() + 16, Qt::Uninitialized);
     int n = 0, total = 0;
     bool ok = EVP_EncryptInit_ex(c, EVP_aes_256_gcm(), nullptr,
-                                 reinterpret_cast<const unsigned char *>(key.constData()),
-                                 reinterpret_cast<const unsigned char *>(iv.constData())) == 1 &&
+                                 reinterpret_cast<const unsigned char*>(key.constData()),
+                                 reinterpret_cast<const unsigned char*>(iv.constData())) == 1 &&
               EVP_EncryptUpdate(c, nullptr, &n,
-                                reinterpret_cast<const unsigned char *>(domain.constData()),
+                                reinterpret_cast<const unsigned char*>(domain.constData()),
                                 domain.size()) == 1 &&
-              EVP_EncryptUpdate(c, reinterpret_cast<unsigned char *>(out.data()), &n,
-                                reinterpret_cast<const unsigned char *>(plain.constData()),
+              EVP_EncryptUpdate(c, reinterpret_cast<unsigned char*>(out.data()), &n,
+                                reinterpret_cast<const unsigned char*>(plain.constData()),
                                 plain.size()) == 1;
     total = n;
-    ok = ok &&
-         EVP_EncryptFinal_ex(c, reinterpret_cast<unsigned char *>(out.data()) + total, &n) == 1;
+    ok =
+        ok && EVP_EncryptFinal_ex(c, reinterpret_cast<unsigned char*>(out.data()) + total, &n) == 1;
     total += n;
     ok = ok && EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_GCM_GET_TAG, 16, out.data() + total) == 1;
     EVP_CIPHER_CTX_free(c);
@@ -191,38 +191,38 @@ static QByteArray sealBytes(const QByteArray &key, const QByteArray &plain,
     out.resize(total + 16);
     return iv + out;
 }
-static QByteArray unsealBytes(const QByteArray &key, const QByteArray &blob,
-                              const QByteArray &domain) {
+static QByteArray unsealBytes(const QByteArray& key, const QByteArray& blob,
+                              const QByteArray& domain) {
     need(blob.size() >= 28 && blob.size() <= MaxBlob + 28);
-    EVP_CIPHER_CTX *c = EVP_CIPHER_CTX_new();
+    EVP_CIPHER_CTX* c = EVP_CIPHER_CTX_new();
     need(c);
     QByteArray out(blob.size() - 28, Qt::Uninitialized);
     int n = 0, total = 0;
     bool ok = EVP_DecryptInit_ex(c, EVP_aes_256_gcm(), nullptr,
-                                 reinterpret_cast<const unsigned char *>(key.constData()),
-                                 reinterpret_cast<const unsigned char *>(blob.constData())) == 1 &&
+                                 reinterpret_cast<const unsigned char*>(key.constData()),
+                                 reinterpret_cast<const unsigned char*>(blob.constData())) == 1 &&
               EVP_DecryptUpdate(c, nullptr, &n,
-                                reinterpret_cast<const unsigned char *>(domain.constData()),
+                                reinterpret_cast<const unsigned char*>(domain.constData()),
                                 domain.size()) == 1 &&
-              EVP_DecryptUpdate(c, reinterpret_cast<unsigned char *>(out.data()), &n,
-                                reinterpret_cast<const unsigned char *>(blob.constData() + 12),
+              EVP_DecryptUpdate(c, reinterpret_cast<unsigned char*>(out.data()), &n,
+                                reinterpret_cast<const unsigned char*>(blob.constData() + 12),
                                 out.size()) == 1;
     total = n;
     ok = ok &&
          EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_GCM_SET_TAG, 16,
-                             const_cast<char *>(blob.constData() + blob.size() - 16)) == 1 &&
-         EVP_DecryptFinal_ex(c, reinterpret_cast<unsigned char *>(out.data()) + total, &n) == 1;
+                             const_cast<char*>(blob.constData() + blob.size() - 16)) == 1 &&
+         EVP_DecryptFinal_ex(c, reinterpret_cast<unsigned char*>(out.data()) + total, &n) == 1;
     EVP_CIPHER_CTX_free(c);
     need(ok, "CREDENTIAL_AUTH_FAILED");
     return out;
 }
-QByteArray CredentialStore::seal(const QByteArray &b, const QByteArray &domain) {
+QByteArray CredentialStore::seal(const QByteArray& b, const QByteArray& domain) {
     return sealBytes(key_, b, domain);
 }
-QByteArray CredentialStore::unseal(const QByteArray &b, const QByteArray &domain) {
+QByteArray CredentialStore::unseal(const QByteArray& b, const QByteArray& domain) {
     return unsealBytes(key_, b, domain);
 }
-QJsonObject CredentialStore::readProfileBackup(const QString &path, const QByteArray &key) {
+QJsonObject CredentialStore::readProfileBackup(const QString& path, const QByteArray& key) {
     need(key.size() == 32, "CREDENTIAL_STORAGE_KEY_REQUIRED");
     pathCheck(path);
     QFile f(path);
@@ -233,8 +233,8 @@ QJsonObject CredentialStore::readProfileBackup(const QString &path, const QByteA
     return p;
 }
 std::unique_ptr<CredentialStore>
-CredentialStore::importProfile(const QString &path, const QByteArray &key, const QJsonObject &p,
-                               PreparedRoot &proof, const QString &backup,
+CredentialStore::importProfile(const QString& path, const QByteArray& key, const QJsonObject& p,
+                               PreparedRoot& proof, const QString& backup,
                                RootCodec::Current current) {
     need(current && current(), "CREDENTIAL_CANCELLED");
     inventory(p);
@@ -271,8 +271,8 @@ CredentialStore::importProfile(const QString &path, const QByteArray &key, const
     }
     return s;
 }
-std::unique_ptr<CredentialStore> CredentialStore::openExisting(const QString &p,
-                                                               const QByteArray &k) {
+std::unique_ptr<CredentialStore> CredentialStore::openExisting(const QString& p,
+                                                               const QByteArray& k) {
     return std::unique_ptr<CredentialStore>(new CredentialStore(p, k, false));
 }
 CredentialSnapshot CredentialStore::readRow() {
@@ -306,7 +306,7 @@ QJsonObject CredentialStore::exportOriginalProfile() {
          readRow().importDigest);
     return object(bytes);
 }
-CredentialSnapshot CredentialStore::confirmAccountImport(const PublishedAccountImport &proof,
+CredentialSnapshot CredentialStore::confirmAccountImport(const PublishedAccountImport& proof,
                                                          RootCodec::Current current) {
     need(current && current(), "CREDENTIAL_CANCELLED");
     sql(db_, "BEGIN IMMEDIATE");
@@ -332,9 +332,21 @@ CredentialSnapshot CredentialStore::confirmAccountImport(const PublishedAccountI
         throw;
     }
 }
-CredentialSnapshot CredentialStore::commit(const CredentialSnapshot &expected,
-                                           const QJsonObject &candidate, PreparedRoot &proof,
+CredentialSnapshot CredentialStore::commit(const CredentialSnapshot& expected,
+                                           const QJsonObject& candidate, PreparedRoot& proof,
                                            bool cleanup, RootCodec::Current current) {
+    return commitInternal(expected, candidate, proof, cleanup, current, false);
+}
+CredentialSnapshot CredentialStore::commitNodeEnable(const CredentialSnapshot& expected,
+                                                     const QJsonObject& candidate,
+                                                     PreparedRoot& proof,
+                                                     RootCodec::Current current) {
+    return commitInternal(expected, candidate, proof, expected.cleanupPending, current, true);
+}
+CredentialSnapshot CredentialStore::commitInternal(const CredentialSnapshot& expected,
+                                                   const QJsonObject& candidate,
+                                                   PreparedRoot& proof, bool cleanup,
+                                                   RootCodec::Current current, bool nodeEnable) {
     need(current && current(), "CREDENTIAL_CANCELLED");
     need(proof.deviceId() == expected.deviceId && proof.matchesRecord(candidate),
          "CREDENTIAL_PROOF_MISMATCH");
@@ -344,12 +356,32 @@ CredentialSnapshot CredentialStore::commit(const CredentialSnapshot &expected,
     need(cleanup == (root.value("credentials").toObject().value("legacyCleanup") != "complete"));
     // Credential mutation cannot alter opaque Root material/history metadata.
     auto before = expected.root, after = root;
-    for (const auto &k : {"wrap", "wrapKdf", "wrapSalt", "iv", "wrappedRoot", "credentials",
+    for (const auto& k : {"wrap", "wrapKdf", "wrapSalt", "iv", "wrappedRoot", "credentials",
                           "credentialRevision"}) {
         before.remove(k);
         after.remove(k);
     }
-    need(before == after, "CREDENTIAL_MATERIAL_CHANGED");
+    if (nodeEnable) {
+        // Provisioning can only append these two independent Node slots. Every
+        // preexisting opaque entry and every credential/wrap field stays exact.
+        auto oldMaterials = expected.root.value("materials").toObject();
+        auto newMaterials = root.value("materials").toObject();
+        for (const auto& name : {QString("node-ed25519-pow-v4"), QString("node-base-ncrh-v4")})
+            if (!oldMaterials.contains(name)) {
+                need(newMaterials.value(name).isObject(), "NODE_MATERIAL_MISSING");
+                newMaterials.remove(name);
+            }
+        need(oldMaterials == newMaterials &&
+                 expected.root.value("credentials") == root.value("credentials"),
+             "CREDENTIAL_MATERIAL_CHANGED");
+        auto exactBefore = expected.root, exactAfter = root;
+        exactBefore.remove("materials");
+        exactAfter.remove("materials");
+        exactBefore.remove("credentialRevision");
+        exactAfter.remove("credentialRevision");
+        need(exactBefore == exactAfter, "CREDENTIAL_MATERIAL_CHANGED");
+    } else
+        need(before == after, "CREDENTIAL_MATERIAL_CHANGED");
     sql(db_, "BEGIN IMMEDIATE");
     try {
         auto actual = readRow();

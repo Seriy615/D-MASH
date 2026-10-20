@@ -6,6 +6,7 @@
 #include <functional>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 
 namespace dmash::broker {
 class Error final : public std::runtime_error {
@@ -48,6 +49,10 @@ class RootCodec final {
     // Only existing named Node slots can leave the broker. Missing slots fail;
     // this function cannot mint a replacement Node identity or arbitrary alias.
     // Actor must still verify Node work/authentication and endpoint grants.
+    using NodeSeedFactory = std::function<QByteArray(const QByteArray& existingSeed, Current)>;
+    // Explicit owner enable only. Factory verifies/reuses existing seed or mines a new one.
+    // Existing authenticated Node slots are never replaced, including partial provisioning.
+    static std::pair<PreparedRoot, QJsonObject> prepareNodeEnable(PreparedRoot&, NodeSeedFactory);
     static QJsonObject existingTransportBundle(PreparedRoot&, const QJsonArray& endpointGrants,
                                                quint64 generation, bool directEnabled);
 };

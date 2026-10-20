@@ -35,11 +35,12 @@ class BrokerService final {
     std::future<BrokerResult> accountImportInventory();
     std::future<BrokerResult> confirmAccountImport(PublishedAccountImport proof);
     std::future<BrokerResult> readAccountRegistry(QJsonArray encryptedRows);
+    std::future<BrokerResult> enableNode(RootCodec::NodeSeedFactory);
     std::future<BrokerResult> transport(QJsonArray endpoints, bool directEnabled);
     // Immediate epoch fence; accepted COMMIT is reported as committed even on later cancel.
     void cancel();
     // Recheck immediately before authenticated handoff; false results must never be installed.
-    bool isCurrentTransportResult(const BrokerResult &result) const;
+    bool isCurrentTransportResult(const BrokerResult& result) const;
     // Account logout/window close do not call fullRootLock/cancel; transport survives.
     std::future<BrokerResult> fullRootLock();
     // Invoke only with authenticated exact-floor daemon acknowledgement/owned-child exit proof.
