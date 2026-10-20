@@ -128,9 +128,18 @@ Current stable host keeps bounded existing TTL; automatic renewal is not accepte
 Runtime explicit lease-extension64e6933 independently accepted by root using875c679
 real-clock test: TTL10→30, past original expiry same token/socket/ACTIVE tuple,
 initialized Node and fresh authentication PASS. [Proof](docs/native/2026-10-20/root-native-capability-lease.json).
-Resident host corrected renewal/recovery remains pending coherent integration. Also crash recovery found bootstrap owner epoch differs from transport
+Resident host corrected renewal/recovery a52e9f5 independently accepted by root,
+integrated f8b17d2/1a5f179/87fc172:183source/19artifact/7libs exact, actual
+hostSIGKILL/NodeleaseEOF, sameNode/Root, generations1/3/5/7, Saved2, authenticated
+floor merge/retry and cancellation stops verified suspended oldchild; process
+logout/Rootlock/cancel/reopen and ACTIVE grants/lease PASS, terminal44213 exit0.
+[Proof](docs/native/2026-10-20/root-resident-host-recovery.json).
+Prior405 root first-enable NODE_BOOTSTRAP_FAILED remains unexplained responsiveness
+observation; diagnostic-only successor passes, no claimed causal product fix.
+Pinned host Account resources predate3e3e845 remote Account; coherent final
+application rebuild/runtime remains separate. Also crash recovery found bootstrap owner epoch differs from transport
 generation, previously equal by chance. Unclean floors, Root-only fresh setup,
-optional Account create and visible Node controls remain open.
+optional Account create and independently accepted visible Node controls remain open.
 
 Android1cbc3f0: final ARM64 APK Gradle/package author PASS; root независимо
 APK SHA/signaturev2/ZIP16K/all17 AArch64 ELF16K/manifest SDK28–36/specialUse/
@@ -163,7 +172,9 @@ FAIL: scoped native service first-install TimeoutException (ANDROID-SERVICE-INST
 Root verified306 source hashes vs ec858a8 and actualAPKfcf753c34de9... from
 artifact12274165901. [Retest](docs/native/2026-10-20/root-android-kvm-launcher-retest.json). [RED](docs/native/2026-10-20/root-android-kvm-launcher-red.json).
 Remote0ae16ea exactlocalec858a8 tree publishesfix+evidence; no assertion weakened.
-Public current snapshot branch remainsdraftPR8, no deployment.
+Latest published83709da exact local3728b20 tree8605797 includes nativeAccount
+3e3e845 and both QuickJS include fixes; newCI pending, no deployment.
+Public current snapshot branch remainsdraftPR8.
 Root retained Chromium reopened only on synthetic profile. Operator accidentally
 entered emergency wipe combination; actual owning backup SHA verified and
 setStorageState restoration yielded exact same entire origin/11stores/6records/
@@ -179,7 +190,11 @@ standard C++ <version>. Top-native fix069c360 verified Linux build; Account targ
 fix and actual Windows rerun pending. Desktop visible Node controls cf41678 author
 PASS, root attempt43987 FAIL at file chooser canonical-path check before import,
 then callback modal remained open until harness240s timeout. No actualNode-button
-root acceptance claimed; test-only selector/cleanup correction assigned platform.
+root acceptance claimed; test-only selector/cleanup correction33a6273 root actual retained Account gate
+PASS3/0/22.644s on same owning wrapper and unchanged pinned product;
+[proof](docs/native/2026-10-20/root-desktop-chooser-retest.json). Full optionalNode
+gate still240s timeout with no accepted root Node-button result; platform adding
+stage diagnostics before another run.
 
 Runtime foreign-transit fixture initially FAIL: second peer not admitted180s.
 aff6a0b/a0f54a9 native nonce batch preserves default22, author actual foreign

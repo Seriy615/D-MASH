@@ -4,6 +4,7 @@
 #include "node_miner.h"
 #include <QCryptographicHash>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -96,6 +97,8 @@ struct CredentialHost::State {
     QLockFile lock;
     QLocalServer server;
     QTimer poll;
+    QElapsedTimer renewalClock;
+    int renewalDelayMs = 30 * 60 * 1000;
     std::shared_ptr<NodeSupervisor> supervisor;
     std::shared_ptr<DaemonRpc> daemon = std::make_shared<DaemonRpc>();
     std::unique_ptr<broker::BrokerService> broker;
@@ -173,15 +176,7 @@ struct CredentialHost::State {
         account->cancel();
         if (pending.valid())
             pending.wait();
-        try {
-            auto stopped = broker->fullRootLock().get();
-            daemon->clear();
-            if (supervisor)
-                supervisor->stop();
-            if (stopped.ok && stopped.control.phase == "REVOKING")
-                broker->confirmTransportStopped(stopped.control).get();
-        } catch (...) {
-        }
+        (void)lockAndStop();
         server.close();
         QFile::remove(QDir(profile).filePath("credential-endpoint.json"));
     }
@@ -322,6 +317,31 @@ struct CredentialHost::State {
         rows.value["accountImportPhase"] = "COMMITTED";
         return rows;
     }
+    account::AccountResult renewNodeCapabilities() {
+        try {
+            need(supervisor && supervisor->running(), "NODE_HOST_UNAVAILABLE");
+            daemon->call("_renewal-check", "node.status", {}, false);
+            auto renewed = daemon->refreshCapabilities([this] {
+                auto rows = supervisor->renewCapabilities();
+                need(!rows.isEmpty(), "NODE_CAPABILITY_RENEWAL_UNAVAILABLE");
+                return rows;
+            });
+            // Prove this existing owner connection survived the lease extension.
+            daemon->call("_renewal-check", "node.status", {}, false);
+            daemon->closeScope("_renewal-check");
+            renewalDelayMs = 30 * 60 * 1000;
+            renewalClock.restart();
+            account::AccountResult result;
+            result.ok = true;
+            result.value = {{"capabilitiesRenewed", renewed.size()}};
+            return result;
+        } catch (const std::exception& e) {
+            daemon->closeScope("_renewal-check");
+            renewalDelayMs = 5000;
+            renewalClock.restart();
+            return failure(e.what());
+        }
+    }
     account::AccountResult lockAndStop() {
         ++jobEpoch;
         account->cancel();
@@ -329,8 +349,12 @@ struct CredentialHost::State {
         try {
             auto stopped = broker->fullRootLock().get();
             daemon->clear();
-            if (supervisor)
+            if (supervisor) {
+                if (stopped.ok && stopped.control.phase == "REVOKING" && !supervisor->running())
+                    need(supervisor->provePreviousStopped(stopped.control, [] { return true; }),
+                         "NODE_PREVIOUS_EXIT_UNCONFIRMED");
                 supervisor->stop();
+            }
             if (!stopped.ok)
                 throw account::AccountError(stopped.code.toUtf8().constData());
             if (stopped.control.phase == "REVOKING") {
@@ -353,6 +377,10 @@ struct CredentialHost::State {
              "CREDENTIAL_REQUEST_INVALID");
         if (method == "host.status") {
             respond(socket, id, status());
+            return;
+        }
+        if (method == "node.renew") {
+            respond(socket, id, renewNodeCapabilities());
             return;
         }
         if (method == "account.cancel") {
@@ -394,7 +422,8 @@ struct CredentialHost::State {
         pendingId = id;
         pendingMethod = method;
         pendingEpoch = jobEpoch;
-        pending = std::async(std::launch::async, [this, method, params] {
+        const bool currentNodeRunning = supervisor && supervisor->running();
+        pending = std::async(std::launch::async, [this, method, params, currentNodeRunning] {
             JobResult out;
             try {
                 if (method == "profile.import") {
@@ -407,7 +436,22 @@ struct CredentialHost::State {
                     out.result = gate(opened);
                     out.unlocked = out.result.ok;
                 } else if (method == "root.unlock") {
-                    auto opened = broker->unlock(params.value("pin").toString().toUtf8()).get();
+                    const auto pin = params.value("pin").toString().toUtf8();
+                    auto opened = broker->unlock(pin).get();
+                    if (opened.ok && supervisor && !currentNodeRunning) {
+                        auto recovered =
+                            broker
+                                ->recoverStoppedTransport(
+                                    [this](const broker::ControlState& state,
+                                           broker::RootCodec::Current current) {
+                                        return supervisor->provePreviousStopped(state, current);
+                                    })
+                                .get();
+                        if (!recovered.ok)
+                            opened = recovered;
+                        else if (recovered.rootReunlockRequired)
+                            opened = broker->unlock(pin).get();
+                    }
                     out.result = gate(opened);
                     out.unlocked = out.result.ok;
                 } else if (method == "node.enable") {
@@ -460,6 +504,12 @@ struct CredentialHost::State {
         });
     }
     void complete() {
+        if (!pending.valid() && renewalClock.isValid() &&
+            renewalClock.elapsed() >= renewalDelayMs && supervisor && supervisor->running()) {
+            auto renewed = renewNodeCapabilities();
+            if (!renewed.ok)
+                renewalClock.restart(); // Bounded retry; public status still works.
+        }
         if (!pending.valid() ||
             pending.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
             return;
@@ -480,8 +530,44 @@ struct CredentialHost::State {
         if (finished.startNode) {
             try {
                 need(broker->isCurrentTransportResult(finished.transport), "CREDENTIAL_CANCELLED");
-                auto ready = supervisor->start(finished.transport);
+                QJsonObject ready;
+                for (int attempt = 0; attempt < 2; ++attempt) {
+                    try {
+                        ready = supervisor->start(finished.transport);
+                        break;
+                    } catch (...) {
+                        const auto floors = supervisor->takeStoppedFloors();
+                        if (attempt != 0 || floors.isEmpty())
+                            throw;
+                        const auto merged =
+                            broker
+                                ->mergeStoppedDaemonFloors(
+                                    finished.transport.control,
+                                    quint64(floors.value("minTransportGeneration").toInteger()),
+                                    quint64(floors.value("minPolicyRevision").toInteger()))
+                                .get();
+                        need(merged.ok, "NODE_FLOOR_RECONCILIATION_FAILED");
+                        finished.transport =
+                            broker
+                                ->transport(pendingPolicy.value("endpoints").toArray(),
+                                            pendingPolicy.value("directEnabled").toBool())
+                                .get();
+                        need(broker->isCurrentTransportResult(finished.transport),
+                             "NODE_FLOOR_RECONCILIATION_FAILED");
+                    }
+                }
                 daemon->install(ready);
+                const auto authenticatedStatus = daemon->call("status", "node.status", {}, true);
+                need(authenticatedStatus.value("initialized") == true &&
+                         authenticatedStatus.value("role") == "NODE" &&
+                         authenticatedStatus.value("ownerGeneration") ==
+                             ready.value("generation") &&
+                         authenticatedStatus.value("transportGeneration").toInteger() ==
+                             qint64(finished.transport.control.generation) &&
+                         authenticatedStatus.value("policyRevision").toInteger() ==
+                             qint64(finished.transport.control.policyRevision),
+                     "NODE_TRANSPORT_POLICY_MISMATCH");
+                renewalClock.start();
                 QSaveFile policyFile(QDir(profile).filePath("node-policy.json"));
                 need(policyFile.open(QIODevice::WriteOnly) && policyFile.setPermissions(ownerOnly),
                      "NODE_POLICY_STORE_FAILED");

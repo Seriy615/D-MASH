@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "scope": "Public test-only deterministic Node seed under synthetic Root=07x32; never production",
+  "nodeId": "481895001938dbbea2aac9695cf0829c028b682115ff818b00eddc6212050228",
+  "material": {
+    "iv": "ExMTExMTExMTExMT",
+    "ciphertext": "Y7JmKvDjTd7slWGCD8hliAUqrIUujsf0nctI0sWIMc/AWItrGVq27BBJ61kRJ8AI"
+  }
+}

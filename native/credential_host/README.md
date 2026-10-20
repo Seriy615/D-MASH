@@ -48,10 +48,36 @@ UI detach/reconnect, Account logout, Root lock, clean restart, accepted missing
 Account database and missing development-key refusal. This is not remote-chat
 or visible UI acceptance. Windows bootstrap helper has crosscompile evidence;
 actual Windows host execution and Android service integration are separate.
-Current owner capabilities use their existing bounded lifetime (one hour for
-Account owner, one day for broker); renewal is a remaining resident-service
-step. Crash recovery after an unclean host/daemon exit must reconcile existing
-durable floors before another session; it must not reset the Node profile.
+Owner capabilities retain their bounded lifetime (one hour for Account owner,
+one day for broker). The resident owner extends both leases every thirty minutes,
+with bounded five-second retries after failure, using the feature-advertised
+private `RenewCapabilityLease` command. Tokens and existing authenticated owner
+contexts/grants remain unchanged. Existing `MintCapability` keeps its distinct
+explicit rotation/context-invalidation behavior. `node.renew` exercises the same
+lease extension immediately. Android supervisor adapters implement the additive
+`renewCapabilities()` hook on their retained bootstrap FD.
+
+A private child receipt records public PID/OS process-start identity, Root
+DeviceID and counters before any scoped credential bytes are handed to a child.
+After an unclean host exit, Root unlock proves the prior owned child has exited,
+fences the broker counters and reopens the same Root internally with the entered
+PIN. It does not request another user credential or regenerate Node material.
+Only verified owned processes can be stopped through a PIDfd/Windows process
+handle. The bootstrap capability generation is the separate owner-acquisition
+epoch; authenticated `node.status` checks the actual transport generation and
+policy revision against the broker reservation.
+
+An authenticated private `STALE_FLOOR` response is bound to the current install
+request and the existing scoped Node/storage keys. Only after the just-started
+owned child has exited does the host merge those native ledger floors and retry
+once with newer counters. The actual recovery fixture kills the host, observes
+Node lease EOF, rolls back only its public broker counters, resumes the same
+Node/Root at generations 1/3/5, and preserves two native Saved rows. It also
+cancels Root unlock while a journaled old child is deliberately suspended and
+checks actual owned-child exit before reporting lock. This is an initial native
+process/counter recovery gate, not full N4 acceptance. Older unclean profiles
+that contain native databases but no child receipt require explicit recovery;
+their encrypted data is preserved and never reset.
 
 Account cancellation fences/logs out only Account work and preserves the unlocked
 Root and installed Node. Cancelling pending profile import, Root unlock or Node

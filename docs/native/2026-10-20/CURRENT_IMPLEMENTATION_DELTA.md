@@ -24,6 +24,27 @@ unless a bounded checkpoint below explicitly supplies new evidence.
 | HTTP and Python dependencies | `d123325`: patched compatible FastAPI/Starlette/multipart pins, exact transitive constraints and artifact-hashed Linux/Python3.12 lock; retired HTTP rejects before body receive; Origin POST bodies capped at 64 KiB before parsing/auth/state. | [S03 report](S03_DEPENDENCY_SECURITY.md): backend 303/Origin 22 PASS, root independently ran23 related tests, audit 29 components/0 known advisories. Transport deadlines, PHP, deployment and non-Linux packaging are separate. |
 | Native shared foundation | Committed C++ transport-bundle validation, crypto primitives and encrypted SQLite relationship adapter with CAS/ownership checks. | [Root CTest evidence](root-native-port-verification.json), [native README](../../../native/README.md). Compiling ports and Android disposable packaging do not establish a usable daemon/UI app. QuickJS actor/IPC/network/runtime integration is still in progress. |
 
+## Native application checkpoint after the frozen baseline
+
+The following is the current bounded native state, through integration
+`3e3e845`, lease protocol `64e6933`, Desktop controls `cf41678` and build fixes
+`069c360`/`3728b20`/`a551368`. Earlier table rows retain their original scope.
+
+| Component | Current behavior and direct evidence | Still open |
+| --- | --- | --- |
+| Node process | Qt/QuickJS daemon receives a scoped transport bundle, owns encrypted queues/Inbox and actual foreign transit without Account login. Root independently ran default22 Python/native transit and durable delivery/consume crash tests. [Transit](root-native-foreign-transit.json), [delivery](root-native-delivery-consumption.json). | NAT/direct mobility, multi-path failover, unattended OS restart, buffered files and full N8. |
+| Account process | Existing Account identity/KEM/history modules run outside Node. Imported retained identity and Saved history survive native writes/reopen. Remote signed journal prepares a live Node owner, commits its authenticated receipt, then activates the same tuple; encrypted payload is handed to Node. [Retained Account](root-native-account-retained.json). | Ordinary contact/QR creation and remote messaging through both application UIs. |
+| Real remote E2EE | Root verified2245 archived files/18 libraries and ran fresh synthetic signed pairs: two native Account owners through native Nodes/Python transit,20 forwarded packets. Recipient exits73 after durable history before Inbox consumption; history is1 before replay and stays1 after replay/reopen. Both owners retain history. [Independent proof](root-native-remote-account.json). | Preselected signed pairs, scoped test grants and old pinned a0f54a9 Node; this is Linux component acceptance, not app or UI pairing acceptance. |
+| Resident credential owner | Accepted stable host keeps Node alive after Account logout and UI death. Full Root lock stops Node. Scoped Account cancel preserves unlocked Node. [Host](root-resident-credential-host.json), [Widgets](root-desktop-resident-ui.json). | Corrected hosta52e9f5 root process/crash/ACTIVE-grant lease PASS, integrated87fc172; [proof](root-resident-host-recovery.json). Original405 bootstrap FAIL retained as unexplained. No full N4 recovery claim. |
+| Lease protocol | Explicit private renewal64e extends the same token/context rather than invoking rotating MintCapability. Root real-clock10→30s lease passes after original expiry, same authenticated socket/ACTIVE tuple and fresh authentication. [Proof](root-native-capability-lease.json). | Resident host timer integration and all-platform lifecycle remain separate. |
+| Desktop controls | Qt Widgets import/PIN/Account login/Saved/reopen accepted on retained owning copies. New visible Node/connection controls have author PASS; root initial attempt failed file-chooser selection before import; selector33a6273 Account-only root retest3/0 PASS22.644s. Full optionalNode gate times out. | No independent visible Node-control PASS yet; ordinary remote chats, fresh setup and Windows executable runtime. |
+| Android | Actual API35 KVM APK install/launch, disabled Stop/compose/Send, Details controls and background/resume pass after2b293db. [Retest](root-android-kvm-launcher-retest.json). | First native service installation times out. New Account Views/credential service are still WIP; physical ARM64, Doze and full app acceptance NOT RUN. |
+| Windows build | Actual CI now installs Qt/OpenSSL and reaches native C++ compilation. QuickJS VERSION shadowed standard C++ <version>; both target include paths corrected and Linux compile checked. | Fresh actual Windows compile/runtime CI is running; no Windows runtime PASS. |
+
+No new file provider, Account crypto suite, network custody ACK or global identity
+scheme is introduced by this checkpoint. The user-facing end state remains three
+usable applications; these component results do not replace that requirement.
+
 ## What the delta does not implement
 
 The default browser profile remains `legacy-migration`; managed-v4 remains

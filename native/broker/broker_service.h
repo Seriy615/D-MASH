@@ -9,7 +9,7 @@
 #include <thread>
 namespace dmash::broker {
 struct BrokerResult {
-    bool ok = false, committed = false, cleanupPending = false;
+    bool ok = false, committed = false, cleanupPending = false, rootReunlockRequired = false;
     quint64 revision = 0, operationEpoch = 0;
     QString code, deviceId, accountImportPhase, accountDatabasePath;
     QJsonObject transportBundle;
@@ -35,6 +35,8 @@ class BrokerService final {
     std::future<BrokerResult> accountImportInventory();
     std::future<BrokerResult> confirmAccountImport(PublishedAccountImport proof);
     std::future<BrokerResult> readAccountRegistry(QJsonArray encryptedRows);
+    using StoppedChildProof = std::function<bool(const ControlState&, RootCodec::Current)>;
+    std::future<BrokerResult> recoverStoppedTransport(StoppedChildProof);
     std::future<BrokerResult> enableNode(RootCodec::NodeSeedFactory);
     std::future<BrokerResult> transport(QJsonArray endpoints, bool directEnabled);
     // Immediate epoch fence; accepted COMMIT is reported as committed even on later cancel.

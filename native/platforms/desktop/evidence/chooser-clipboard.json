@@ -1,0 +1,18 @@
+{
+  "kind": "Test-only Qt file chooser clipboard entry, immutable product binaries unchanged",
+  "artifacts": {
+    "ui_test.cpp": "e692184a5a0ec2b8c27ec7a78e14f4f1dd219f10823bd1332b3364ebbc5c9128",
+    "dmash_desktop_ui_test": "044dd7fcf67fa760215c34b78a6ffd745436263dc22c7222f5b8528d9c34db67",
+    "account-only.log": "2bf9603ff96a480e9c24c348b1fa110b63b7bf7286045f1ca4aeaf30a3af5e7d"
+  },
+  "productPin": "desktop-node-controls/checkpoint.json",
+  "checks": {
+    "retainedAccountRoundtrip": "PASS3tests0failed4567ms; actualsameprivateprofilewrapperimport/PIN/password/Saved/relogin",
+    "retainedNodeControls": "FAIL outer240sTimeoutExpired afterselector; no proof ofNodeprovision result"
+  },
+  "limits": [
+    "Root initialchooserFAIL remainsrecorded",
+    "No Nodeenable PASS fromthisretainedprofilegate",
+    "Separate syntheticNodecontrols cf41678 PASS remainsboundedhistorical"
+  ]
+}

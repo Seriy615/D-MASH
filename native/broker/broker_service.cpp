@@ -276,6 +276,35 @@ std::future<BrokerResult> BrokerService::readAccountRegistry(QJsonArray rows) {
         return result;
     });
 }
+std::future<BrokerResult> BrokerService::recoverStoppedTransport(StoppedChildProof stopped) {
+    const auto token = epoch_.load();
+    return enqueue([this, token, stopped] {
+        auto current = [this, token] { return epoch_ == token && !stopping_; };
+        need(current() && bool(root_), "ROOT_UNLOCK_REQUIRED");
+        const auto snapshot = store_->read();
+        need(root_->matchesRecord(snapshot.root), "CREDENTIAL_CONFLICT");
+        if (!control_ && QFileInfo::exists(controlPath_))
+            control_ = ControlJournal::openExisting(controlPath_, snapshot.deviceId);
+        auto result = success(snapshot);
+        if (!control_)
+            return result;
+        const auto before = control_->read();
+        result.control = before;
+        if (before.phase == "LOCKED")
+            return result;
+        need(bool(stopped) && stopped(before, current), "NODE_PREVIOUS_EXIT_UNCONFIRMED");
+        need(current(), "CREDENTIAL_CANCELLED");
+        auto pending = control_->beginFullLock();
+        need(current(), "CREDENTIAL_CANCELLED");
+        result.control = control_->confirmStopped(pending);
+        // Every prior prepared transport result is now stale. The host reopens
+        // this same Root with the current user-entered PIN; no identity changes.
+        ++epoch_;
+        root_.reset();
+        result.rootReunlockRequired = true;
+        return result;
+    });
+}
 std::future<BrokerResult> BrokerService::enableNode(RootCodec::NodeSeedFactory factory) {
     const auto token = epoch_.load();
     return enqueue([this, token, factory] {

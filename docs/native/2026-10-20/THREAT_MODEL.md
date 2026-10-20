@@ -19,6 +19,43 @@ means a property has not received the stated environment/fault acceptance.
 None means every attack is prevented. Android/Windows/Linux apps and the full
 implementation goal remain open; no production deployment was performed.
 
+## Native checkpoint: implemented boundaries and current limits
+
+The original model below remains pinned to its stated source. Later native
+implementation through `3e3e845` has independently checked Linux process and
+transport behavior, described in the [current implementation delta](CURRENT_IMPLEMENTATION_DELTA.md#native-application-checkpoint-after-the-frozen-baseline).
+
+- The resident credential owner holds the unlocked local Root and Account worker.
+  Node receives only scoped Node seeds/storage/route transport material through a
+  private inherited channel. Account E2EE keys and plaintext are outside Node.
+  This is a practical process/lifetime boundary; same-user OS compromise is not
+  prevented. Android/Windows enforcement still requires actual platform acceptance.
+- Local owner authorization is distinct from Account payload authentication.
+  An Account signs a Node ownership challenge; route preparation is checked
+  against its signed journal, journal commit receipt precedes activation, and
+  only the matching live preparation becomes active. Route capabilities allow
+  their scoped transport actions; they are not the Account's message-decryption keys.
+- Node persists opaque queued packets independently of the Account. Account
+  decrypts/verifies and durably commits history before Inbox consumption. Root's
+  actual recipient crash at this boundary confirms one application row across
+  replay/reopen for the tested text operation. It does not prove every handshake,
+  ratchet, migration or file crash transition.
+- Account logout preserves unlocked Node; full Root lock currently stops it.
+  A transport-only pause with durable queued work retained is still separate
+  product work. Private lease extension keeps a live owner context; rotating
+  MintCapability deliberately revokes its old context and must not be substituted.
+- The plaintext check in the remote E2EE proof scans Node profile files only.
+  Metadata, ciphertext sizes, route availability and process memory have their
+  existing limits. It is not a proof of anonymity, PFS/PCS/PQ or complete erasure.
+
+Corrected unclean host recoverya52e9f5 now independently passes process/crash
+and ACTIVE grant renewal gates, with unchanged identities/history. Original405
+first-enable failure remains an unexplained responsiveness observation; the
+diagnostic-only successor PASS does not establish its cause. Android scoped
+service installation and full Desktop Node-control UI still time out. These
+availability blockers do not justify resetting accepted identities/history.
+No production runtime or user data was changed by these native checks.
+
 ## Assets, owners and trusted computing base
 
 | Asset | Current owner / protection | Main exposure or loss consequence |

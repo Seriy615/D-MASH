@@ -912,3 +912,10 @@ Account; production vault ради QA не удалять.
 - Native Account E2EE root component PASS is separate from UI acceptance:
   [proof](docs/native/2026-10-20/root-native-remote-account.json). Ordinary pairing,
   contacts and remote conversation UI remain NOT RUN.
+
+Root follow-up: selector33a6273 immutable test binary044dd7fc... independently
+PASS3/0/22.644s, actual same retained owning Account wrapper, clipboard paste/Open,
+PIN/Account/cancel/wrong/busy/Saved/reopen. [Evidence](docs/native/2026-10-20/root-desktop-chooser-retest.json).
+This closes the import selector test failure only. Full optional Node-controls
+gate still timed out240s after selector; its owner is adding fail-fast stage
+diagnostics. No root visible Node-controls PASS is inferred from Account-only.

@@ -10,8 +10,15 @@ if 'DMASH_ACCOUNT_UI_FIXTURE' not in env:
  fixture_path=private/'fresh-node-fixture.json';fixture_path.write_text(json.dumps(fixture));fixture_path.chmod(0o600);env['DMASH_ACCOUNT_UI_FIXTURE']=str(fixture_path);mode='Fresh synthetic Node; same synthetic Account and original Saved history'
 env.update(QT_QPA_PLATFORM='offscreen',DMASH_UI_NODE_CONTROLS='1',DMASH_UI_CREDENTIAL_HOST=str(a.credential_host.resolve()),DMASH_UI_NODE_HOST=str(a.node_host.resolve()))
 started=time.monotonic()
-with (private/'controls.log').open('wb') as log:run=subprocess.run([str(a.ui_test.resolve()),'accountRoundtrip'],env=env,stdout=log,stderr=subprocess.STDOUT,timeout=240)
-result={'kind':'Actual Linux Qt mouse/key Node control acceptance','status':'PASS' if run.returncode==0 else 'FAIL','seconds':round(time.monotonic()-started,3),'fixture':mode,'checks':['Connections Add/invalid Start/error/Remove/direct checkbox/Cancel','Visible Start Node button creates actual scoped native Node child','Actual host.status refresh shows zero connected peers','Account sign out leaves actual Node running','Visible Stop Node & lock confirms Node stopped and Device unlock required','Root unlock/relogin retains Saved write'],'limits':['No mesh endpoint configured; no remote chat proof','No Android or Windows runtime claim']}
+failure=None
+try:
+ with (private/'controls.log').open('wb') as log:run=subprocess.run([str(a.ui_test.resolve()),'accountRoundtrip'],env=env,stdout=log,stderr=subprocess.STDOUT,timeout=240)
+ code=run.returncode
+except subprocess.TimeoutExpired:
+ code=124;failure='TimeoutExpired'
+result={'kind':'Actual Linux Qt mouse/key Node control acceptance','status':'PASS' if code==0 else 'FAIL','seconds':round(time.monotonic()-started,3),'fixture':mode,'checks':['Connections Add/invalid Start/error/Remove/direct checkbox/Cancel','Visible Start Node button creates actual scoped native Node child','Actual host.status refresh shows zero connected peers','Account sign out leaves actual Node running','Visible Stop Node & lock confirms Node stopped and Device unlock required','Root unlock/relogin retains Saved write'],'limits':['No mesh endpoint configured; no remote chat proof','No Android or Windows runtime claim']}
+if code:result['intendedChecks']=result.pop('checks');result['checks']=[]
+if failure:result['failureClass']=failure
 if a.report:a.report.write_text(json.dumps(result,indent=2)+'\n')
 print(json.dumps(result))
-if run.returncode:raise SystemExit(run.returncode)
+if code:raise SystemExit(code)
