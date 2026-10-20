@@ -75,32 +75,6 @@ void Supervisor::stop() {
         child_.reset();
     }
 }
-QJsonArray Supervisor::renewCapabilities() {
-    need(running() && bool(lease_), "NODE_HOST_UNAVAILABLE");
-    QJsonArray renewed;
-    for (const auto& principal : {QString("credential-owner"), QString("account-owner")}) {
-        const auto requestId = principal + "-renew";
-        QJsonObject request{{"v", 1},
-                            {"type", "MintCapability"},
-                            {"request_id", requestId},
-                            {"principal", principal},
-                            {"ttl_seconds", principal == "credential-owner" ? 86400 : 3600}};
-        auto raw = QJsonDocument(request).toJson(QJsonDocument::Compact);
-        QByteArray frame(4, 0);
-        qToBigEndian<quint32>(quint32(raw.size()), frame.data());
-        frame += raw;
-        need(lease_->write(frame) == frame.size() && lease_->waitForBytesWritten(5000),
-             "NODE_CAPABILITY_RENEWAL_FAILED");
-        frame.fill(0);
-        raw.fill(0);
-        auto reply = receive(*lease_);
-        need(reply.value("type") == "CapabilityMinted" && reply.value("request_id") == requestId &&
-                 reply.value("id") == principal,
-             "NODE_CAPABILITY_RENEWAL_FAILED");
-        renewed.append(reply);
-    }
-    return renewed;
-}
 QJsonObject Supervisor::start(const broker::BrokerResult& session) {
     need(!running(), "NODE_ALREADY_RUNNING");
     need(QFileInfo(binary_).isExecutable(), "NODE_HOST_UNAVAILABLE");

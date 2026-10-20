@@ -4,7 +4,6 @@
 #include "node_miner.h"
 #include <QCryptographicHash>
 #include <QDir>
-#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -97,8 +96,6 @@ struct CredentialHost::State {
     QLockFile lock;
     QLocalServer server;
     QTimer poll;
-    QElapsedTimer renewalClock;
-    int renewalDelayMs = 30 * 60 * 1000;
     std::shared_ptr<NodeSupervisor> supervisor;
     std::shared_ptr<DaemonRpc> daemon = std::make_shared<DaemonRpc>();
     std::unique_ptr<broker::BrokerService> broker;
@@ -325,29 +322,6 @@ struct CredentialHost::State {
         rows.value["accountImportPhase"] = "COMMITTED";
         return rows;
     }
-    account::AccountResult renewNodeCapabilities() {
-        try {
-            need(supervisor && supervisor->running(), "NODE_HOST_UNAVAILABLE");
-            auto renewed = daemon->refreshCapabilities([this] {
-                auto rows = supervisor->renewCapabilities();
-                need(!rows.isEmpty(), "NODE_CAPABILITY_RENEWAL_UNAVAILABLE");
-                return rows;
-            });
-            // Verify a new owner connection authenticates with the new capability.
-            daemon->call("_renewal-check", "node.status", {}, false);
-            daemon->closeScope("_renewal-check");
-            renewalDelayMs = 30 * 60 * 1000;
-            renewalClock.restart();
-            account::AccountResult result;
-            result.ok = true;
-            result.value = {{"capabilitiesRenewed", renewed.size()}};
-            return result;
-        } catch (const std::exception& e) {
-            renewalDelayMs = 5000;
-            renewalClock.restart();
-            return failure(e.what());
-        }
-    }
     account::AccountResult lockAndStop() {
         ++jobEpoch;
         account->cancel();
@@ -379,10 +353,6 @@ struct CredentialHost::State {
              "CREDENTIAL_REQUEST_INVALID");
         if (method == "host.status") {
             respond(socket, id, status());
-            return;
-        }
-        if (method == "node.renew") {
-            respond(socket, id, renewNodeCapabilities());
             return;
         }
         if (method == "account.cancel") {
@@ -490,12 +460,6 @@ struct CredentialHost::State {
         });
     }
     void complete() {
-        if (!pending.valid() && renewalClock.isValid() &&
-            renewalClock.elapsed() >= renewalDelayMs && supervisor && supervisor->running()) {
-            auto renewed = renewNodeCapabilities();
-            if (!renewed.ok)
-                renewalClock.restart(); // Bounded retry; public status still works.
-        }
         if (!pending.valid() ||
             pending.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
             return;
@@ -518,7 +482,6 @@ struct CredentialHost::State {
                 need(broker->isCurrentTransportResult(finished.transport), "CREDENTIAL_CANCELLED");
                 auto ready = supervisor->start(finished.transport);
                 daemon->install(ready);
-                renewalClock.start();
                 QSaveFile policyFile(QDir(profile).filePath("node-policy.json"));
                 need(policyFile.open(QIODevice::WriteOnly) && policyFile.setPermissions(ownerOnly),
                      "NODE_POLICY_STORE_FAILED");

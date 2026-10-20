@@ -70,6 +70,11 @@ def main():
         time.sleep(.1);assert p.poll() is None
         ui=connect(r);assert recv(ui)['ok'];ui.close()
         old=r['capabilities'][0]['token']
+        assert r['features']['capabilityLeaseRenewal'] is True
+        ui=connect(r);assert recv(ui)['ok']
+        send(bootstrap,dict(v=1,type='RenewCapabilityLease',request_id='lease',principal='ui',ttl_seconds=120))
+        extended=recv(bootstrap);assert extended['type']=='CapabilityLeaseRenewed' and extended['token']==old and extended['generation']==r['generation']
+        assert request(ui,'node.status',{})['ok'];ui.close() # Existing authenticated socket survives.
         send(bootstrap,dict(v=1,type='MintCapability',request_id='renew',principal='ui',ttl_seconds=60))
         minted=recv(bootstrap);assert minted['type']=='CapabilityMinted'
         stale=connect(r,token=old);closed(stale)

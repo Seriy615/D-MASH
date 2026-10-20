@@ -113,9 +113,15 @@ Earlier desktop-resident-1139 pin invalidated because shared AccountJS WIP raced
 resource build; stablepin rebuilt after exact tracked restore. Remote Account work
 now isolated in `.cache/.../worktrees/native-remote-account`; first live test found
 missing structuredClone adapter in QuickJS, being fixed, not accepted remotechat.
-Renewal6a5b50a integrated bf77a5a after stable UI freeze release; author actual
-renewal PASS, independent root renewal check pending. Unclean host crash floors,
-fresh Root-only/optional Account setup and visible Node controls remain open.
+Renewal6a5b50a integrated bf77a5a then **REVERTED abf1c16**: author stronger
+check found MintCapability deliberately drops existing contexts; initial test only
+checked nodeRunning and was insufficient. No root renewal PASS was claimed.
+Current stable host keeps bounded existing TTL; automatic renewal is not accepted.
+Runtime adds explicit lease-extension command64e6933 retaining existing context;
+broker will combine corrected renewal/recovery only after actual grant/initialized
+checks. Also crash recovery found bootstrap owner epoch differs from transport
+generation, previously equal by chance. Unclean floors, Root-only fresh setup,
+optional Account create and visible Node controls remain open.
 
 Android1cbc3f0: final ARM64 APK Gradle/package author PASS; root независимо
 APK SHA/signaturev2/ZIP16K/all17 AArch64 ELF16K/manifest SDK28–36/specialUse/
@@ -133,7 +139,10 @@ first39434621456 fails obsolete setup-android default tools package before build
 39435151797 SDK/Qt/native28targets/GradleAPKbuild PASS; instrumentation failed
 missing default debug.keystore before runtime. d52567b owns disposableCI key,
 signs both APKs, verifies same cert and refreshes actual package hash; author
-actual private-copy fullscript PASS. Next CI publication/run pending.
+actual private-copy fullscript PASS. Remote84b63e2 matches local4d7f81a tree
+(e9a5037c...), actual git ls-remote and public REST PR8 head verified. New
+Android39437324295/Windows39437324143 started; these precede abf1c16 renewal
+revert and64e6933 lease-extension. No newer runtime PASS yet.
 Root retained Chromium reopened only on synthetic profile. Operator accidentally
 entered emergency wipe combination; actual owning backup SHA verified and
 setStorageState restoration yielded exact same entire origin/11stores/6records/
@@ -161,29 +170,39 @@ Platform fixed32e18be; remote210701cf exact local32e18be tree now includes
 Qt6.12 aqt3.3 metadata incompatibility fixed fdac612; run3 then failed archive
 layout before compiler. Actual6archive layout verified/fixed9ba9bd9. Remote
 d75ad01 exact local1139dd3 tree includes host and Android CI. Windowsrun4
-39434621318 actually installed Qt successfully and proceeds through owned OpenSSL
-build; no Windows compiler/runtime PASS yet. Remote ca5ec59 additionally98dc563
-changes Android workflow only; prior Windowsrun remains live, not restarted.
+39434621318 actually installed Qt and compiled/installed OpenSSL. It ended
+FAIL14:12 at Desktop CMake: FindOpenSSL exact3.5.9 found, missing Crypto library,
+despite log proving libcrypto.dll.a installed at requested path. GNU13.1 compiler
+correct. Platform diagnoses CMake4.2 MinGW variable handling. No native Windows
+C++ or runtime PASS. Repeated connector getjobs returned stale in_progress after
+terminal logs; use fresh public GitHub REST status/log timestamps to resolve
+conflicts. OlderWindowsrun5 also endedFAIL; new84run6 uses newerUI but no OpenSSL
+finder fix yet. Do not restart jobs on observation timeout.
 
 ## Текущая командная работа и основной остаток
 
 Все новые исполнители созданы явно как `gpt-6.1-sol`; старых неизвестной модели
 не возобновлять. Владение файлами разделено:
 
-- `broker_store_sol`: `native/broker/` — encrypted canonical SQLite credentials,
-  полный legacy profile import/inventory/source backup, revision CAS/cleanup,
-  async unlock/change/cancel, scoped bundle/fullRootLock. Checkpoint ce3f83d committed; CTest3/3 и actual bundledJS/WASM
-  cross-open PASS. Следующий участок — native/account/ exact legacy WASM adapter. Не выдавать
-  import/backend за готовую пользовательскую миграцию.
-- `native_runtime_sol`: `native/src/`, `native/js/`, top CMake/runtime tests.
-  e749234 committed; следующий минимальный app consumption token CAS в Inbox.
-  Account сначала сохраняет собственный message/E2EE state; повторная доставка
-  до commitConsumption требует Account dedupe. Не вводить скрытый wire ACK.
-- `native_platforms_sol`: `native/platforms/` — Desktop Qt Widgets и Android
-  Views + foreground отдельный Node service/JNI. Desktop UI/build выполняется;
-  Account/contacts/chat facade ещё предстоит. Status screen не готовое приложение. Desktop7589b92 принят root в указанном scope.
-  Web fix UI-CHAT-DELEGATION-01 завершён с root browser retest.
-- Root — интеграция, независимые тесты, реальные UI действия и checkpoints.
+- `broker_store_sol`: isolated credential-host worktree. Root/component import and
+  resident host/cancel accepted in bounded scope. Now correct context-preserving
+  renewal, old-child exit/STALE_FLOOR recovery, then fresh Root-only setup with
+  independent Node enable and optional Account create. No reset of accepted state.
+- `native_runtime_sol`: native ports/localIPC, isolated remote Account worktree.
+  Real two-Account handshake crossed actual default22 nativeNodes/Python transit;
+  text delivery not accepted: structuredClone missing then HKDF deriveKey absent
+  in native Crypto facade. Implementing correct bounded clone/HKDF→AES-GCM port
+  with parity tests, then actual durable Account history/consumption/crash retest.
+  Also scoped Android KVM CI and explicit capability lease extension64e6933.
+- `native_platforms_sol`: resident Desktop accepted stablepin cab8fa6; now actual
+  visible Node controls and connections policy on frozen305file candidate. That
+  candidate captured reverted renewal; pair only with stable bb host unless
+  corrected shared protocol is accepted. Android bound-service Stop fixedfe05d15,
+  actual runtime still NOT RUN; Android Account/credential service UI next.
+  Windows actual compiler/CI fixes owned here. No WIP source mixing in pins.
+- Root: integrate/review, independent process/UI/browser gates, publish bounded
+  evidence, manage draftPR8 and current handoff. Initial host/renewal claims
+  invalidated by stronger evidence stay marked withdrawn; fullgoal ACTIVE.
 
 Нужны обычные Account/contacts/chat flows в обоих клиентах, реальная упаковка/
 запуск Android и Windows, полное N4 recovery, самоорганизация/NAT/direct/relay,

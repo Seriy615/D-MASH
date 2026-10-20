@@ -8,7 +8,8 @@ $ErrorActionPreference='Stop'
 $Repo=(Resolve-Path "$PSScriptRoot/../../..").Path
 $env:PATH="$MingwRoot/bin;$QtRoot/bin;$OpenSSLRoot/bin;$env:PATH"
 if (-not (Test-Path "$QtRoot/lib/cmake/Qt6Widgets/Qt6WidgetsConfig.cmake")) { throw 'Qt6.12 Widgets kit required' }
-$Common=@("-DCMAKE_PREFIX_PATH=$QtRoot", "-DOPENSSL_INCLUDE_DIR=$OpenSSLRoot/include", "-DOPENSSL_CRYPTO_LIBRARY=$OpenSSLRoot/lib/libcrypto.dll.a", '-DBUILD_TESTING=ON')
+# FindOpenSSL4.2 MinGW assigns OPENSSL_CRYPTO_LIBRARY from its LIB_EAY cache.
+$Common=@("-DCMAKE_PREFIX_PATH=$QtRoot", "-DOPENSSL_ROOT_DIR=$OpenSSLRoot", "-DOPENSSL_INCLUDE_DIR=$OpenSSLRoot/include", "-DLIB_EAY:FILEPATH=$OpenSSLRoot/lib/libcrypto.dll.a", "-DSSL_EAY:FILEPATH=$OpenSSLRoot/lib/libssl.dll.a", "-DOPENSSL_CRYPTO_LIBRARY=$OpenSSLRoot/lib/libcrypto.dll.a", '-DBUILD_TESTING=ON')
 cmake -S "$Repo/native/platforms/desktop" -B "$BuildRoot/desktop" -G Ninja @Common "-DDMASH_ACCOUNT_QUICKJS_DIR=$QuickJSSource"
 if ($LASTEXITCODE) { throw 'Desktop configure failed' }
 cmake --build "$BuildRoot/desktop" --target dmash-desktop dmash_desktop_ui_test --parallel 2

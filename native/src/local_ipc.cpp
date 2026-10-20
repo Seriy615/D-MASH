@@ -339,7 +339,8 @@ class LocalIpc::Impl {
                 {"type", "TransportSessionReady"},
                 {"endpoint", endpoint},
                 {"generation", generation},
-                {"capabilities", out}};
+                {"capabilities", out},
+                {"features", QJsonObject{{"capabilityLeaseRenewal", true}}}};
     }
     QJsonObject renewCapability(const QString& principal, qint64 ttl) {
         need(!closed);
@@ -360,6 +361,18 @@ class LocalIpc::Impl {
                 {"token", cap.token},
                 {"expiresAt", cap.expiry},
                 {"generation", generation}};
+    }
+    QJsonObject extendCapabilityLease(const QString& principal, qint64 ttl) {
+        need(!closed);
+        int index = -1;
+        for (int i = 0; i < caps.size(); ++i)
+            if (caps[i].principal == principal)
+                index = i;
+        need(index >= 0 && ttl >= 1 && ttl <= (caps[index].role == "broker" ? 86400 : 3600));
+        auto& cap = caps[index];
+        cap.expiry = qMax(cap.expiry, QDateTime::currentMSecsSinceEpoch() + ttl * 1000);
+        return {{"id", cap.principal}, {"role", cap.role}, {"token", cap.token},
+                {"expiresAt", cap.expiry}, {"generation", generation}};
     }
     void close() {
         if (closed)
@@ -382,6 +395,9 @@ LocalIpc::~LocalIpc() { close(); }
 QJsonObject LocalIpc::bootstrapReply() const { return impl_->bootstrapReply(); }
 QJsonObject LocalIpc::renewCapability(const QString& principal, qint64 ttl) {
     return impl_->renewCapability(principal, ttl);
+}
+QJsonObject LocalIpc::extendCapabilityLease(const QString& principal, qint64 ttl) {
+    return impl_->extendCapabilityLease(principal, ttl);
 }
 void LocalIpc::close() {
     if (impl_)

@@ -200,7 +200,8 @@ int dmashRunNodeHost(QCoreApplication& app, int argc, char** argv) {
                         wanted.sort();
                         const auto ttl = command.value("ttl_seconds").toDouble(-1);
                         if (keys != wanted || command.value("v") != 1 ||
-                            command.value("type") != "MintCapability" ||
+                            (command.value("type") != "MintCapability" &&
+                             command.value("type") != "RenewCapabilityLease") ||
                             !QRegularExpression("^[A-Za-z0-9_.-]{1,64}$")
                                  .match(command.value("request_id").toString())
                                  .hasMatch() ||
@@ -208,10 +209,12 @@ int dmashRunNodeHost(QCoreApplication& app, int argc, char** argv) {
                             !command.value("ttl_seconds").isDouble() || ttl < 1 || ttl > 86400 ||
                             ttl != qint64(ttl))
                             throw std::runtime_error("bootstrap control rejected");
-                        auto response = ipc->renewCapability(command.value("principal").toString(),
-                                                             qint64(ttl));
+                        const bool extend = command.value("type") == "RenewCapabilityLease";
+                        auto response = extend
+                            ? ipc->extendCapabilityLease(command.value("principal").toString(), qint64(ttl))
+                            : ipc->renewCapability(command.value("principal").toString(), qint64(ttl));
                         response.insert("v", 1);
-                        response.insert("type", "CapabilityMinted");
+                        response.insert("type", extend ? "CapabilityLeaseRenewed" : "CapabilityMinted");
                         response.insert("request_id", command.value("request_id"));
                         sendBootstrap(response);
                     }

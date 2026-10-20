@@ -12,6 +12,7 @@ class LocalIpc final : public QObject {
     ~LocalIpc();
     QJsonObject bootstrapReply() const;
     QJsonObject renewCapability(const QString& principal, qint64 ttlSeconds);
+    QJsonObject extendCapabilityLease(const QString& principal, qint64 ttlSeconds);
     void close();
 
   private:
