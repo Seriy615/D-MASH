@@ -23,6 +23,26 @@ BUILD = pathlib.Path(os.environ['DMASH_ANDROID_BUILD'])
 SERIAL = os.environ.get('ANDROID_SERIAL', 'emulator-5582')
 
 
+def classify_loader(text):
+    known = {
+        'Use local Qt libs is false': 'QT_LIBS_DISABLED',
+        'Failed to resolve the APK native libraries directory': 'APK_DIRECTORY_UNAVAILABLE',
+        'The native libraries directory is null or empty': 'NATIVE_DIRECTORY_UNAVAILABLE',
+        'The main library name is null or empty': 'MAIN_NAME_MISSING',
+        'Loading main library failed': 'MAIN_LOAD_FAILED',
+        'failed to load Qt libraries': 'QT_LIBRARY_LOAD_FAILED',
+        "Can't load '": 'NATIVE_LIBRARY_LOAD_FAILED',
+        'cannot locate symbol': 'NATIVE_SYMBOL_UNAVAILABLE',
+        'is 32-bit instead of 64-bit': 'NATIVE_ABI_MISMATCH',
+        'No ComponentInfo found for given Context': 'COMPONENT_METADATA_UNAVAILABLE',
+        'Context is not an instance of Activity or Service': 'CONTEXT_UNSUPPORTED',
+    }
+    return {
+        'events': [code for message, code in known.items() if message in text],
+        'missingLibraries': sorted(set(re.findall(r'library "([A-Za-z0-9_.+\-]+\.so)" not found', text))),
+    }
+
+
 def adb(*args, data=None, timeout=30):
     return subprocess.check_output(['adb', '-s', SERIAL, *args], input=data, timeout=timeout)
 
@@ -133,6 +153,11 @@ def main():
             result['nativeStartupStages'] = [line.strip() for line in raw.splitlines() if line.strip() in stages]
         except BaseException as error:
             result['nativeStageCollectionFailureClass'] = type(error).__name__
+        try:
+            raw = adb('logcat', '-d', '-v', 'raw', '-s', 'QtLoader:W', 'Qt JAVA:W', '*:S', timeout=10).decode()
+            result['qtLoaderDiagnostic'] = classify_loader(raw)
+        except BaseException as error:
+            result['qtLoaderCollectionFailureClass'] = type(error).__name__
         (OUT / 'runtime.json').write_text(json.dumps(result, indent=2) + '\n')
 
 

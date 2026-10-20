@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'native/**'
+      - '!native/platforms/windows/**'
+      - '!native/platforms/desktop/**'
       - 'D-MASH PWA/not_messenger/js/**'
       - '.github/workflows/native-android.yml'
 permissions:
