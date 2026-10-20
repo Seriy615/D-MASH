@@ -16,7 +16,10 @@ cmake --build "$BuildRoot/desktop" --target dmash-desktop dmash_desktop_ui_test 
 if ($LASTEXITCODE) { throw 'Desktop build failed' }
 New-Item -Force -ItemType Directory "$HOME/.cache/dmash-native-20261020" | Out-Null
 ctest --test-dir "$BuildRoot/desktop" -R desktop-controls --output-on-failure
-if ($LASTEXITCODE) { throw 'Windows UI tests failed' }
+if ($LASTEXITCODE) {
+ & "$PSScriptRoot/diagnose-startup.ps1" -Executable "$BuildRoot/desktop/dmash_desktop_ui_test.exe" -QtRoot $QtRoot -MingwRoot $MingwRoot -OpenSSLRoot $OpenSSLRoot -OutputDirectory "$BuildRoot/diagnostics/desktop"
+ throw 'Windows UI tests failed; direct exit/dependency/plugin diagnostics captured'
+}
 cmake -S "$Repo/native/account" -B "$BuildRoot/account" -G Ninja @Common "-DDMASH_ACCOUNT_QUICKJS_DIR=$QuickJSSource"
 if ($LASTEXITCODE) { throw 'Account/broker configure failed' }
 cmake --build "$BuildRoot/account" --parallel 2

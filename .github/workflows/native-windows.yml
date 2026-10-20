@@ -20,6 +20,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/cache/restore@v4
+        id: native-deps-cache
+        with:
+          path: |
+            ${{ runner.temp }}/dmash-qt
+            ${{ runner.temp }}/dmash-windows/openssl
+            ${{ runner.temp }}/dmash-windows/downloads
+          key: windows2025-qt6120-mingw1310-openssl359-quickjs20260604-${{ hashFiles('native/platforms/windows/qt6120-archives.json', 'native/platforms/windows/prepare-dependencies.sh', 'native/platforms/windows/install-qt.py') }}
       - shell: pwsh
         run: |
           python -m venv "$env:RUNNER_TEMP/dmash-tools"
@@ -31,11 +39,29 @@ jobs:
           install: make perl tar curl
       - shell: msys2 {0}
         run: bash native/platforms/windows/prepare-dependencies.sh
+      - uses: actions/cache/save@v4
+        if: steps.native-deps-cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ${{ runner.temp }}/dmash-qt
+            ${{ runner.temp }}/dmash-windows/openssl
+            ${{ runner.temp }}/dmash-windows/downloads
+          key: ${{ steps.native-deps-cache.outputs.cache-primary-key }}
       - shell: pwsh
         run: |
           $env:PATH="$env:RUNNER_TEMP/dmash-tools/Scripts;$env:PATH"
           ./native/platforms/windows/build.ps1 -QtRoot "$env:RUNNER_TEMP/dmash-qt/6.12.0/mingw_64" -MingwRoot "$env:DMASH_MINGW" -BuildRoot "$env:DMASH_WINDOWS_BUILD" -OpenSSLRoot "$env:DMASH_WINDOWS_BUILD/openssl" -QuickJSSource "$env:DMASH_WINDOWS_BUILD/sources/quickjs-2026-06-04"
       - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dmash-windows-test-diagnostics
+          path: |
+            ${{ runner.temp }}/dmash-windows/diagnostics
+            ${{ runner.temp }}/dmash-windows/desktop/Testing/Temporary
+            ${{ runner.temp }}/dmash-windows/account/Testing/Temporary
+            ${{ runner.temp }}/dmash-windows/node/Testing/Temporary
+      - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: dmash-windows-development-apps
           path: ${{ runner.temp }}/dmash-windows/package

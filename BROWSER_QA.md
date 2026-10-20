@@ -925,3 +925,8 @@ background-resume still PASS, first scoped service bootstrap still FAIL. Fixed
 state diagnostic Binder alive, nativeExited=false, STARTING; no accepted Node
 service runtime. Owner platforms; next stage diagnosis/retest pending. Root exact
 source/APK inspection: [evidence](docs/native/2026-10-20/root-android-service-bootstrap-retest.json).
+
+Windows actual39443521913 compiled/linked all75Desktop targets, including UI test,
+but desktop-controls failed0.06s with no QtTest banner. UI actions NOT RUN; owner
+platforms collecting startup exit/DLL/plugin diagnostics10c5743. [Exact merge-tree
+compile/launch evidence](docs/native/2026-10-20/root-windows-compile-launch-attempt.json).

@@ -58,6 +58,15 @@ state; Saved survives reopen. [Proof](root-fresh-root-account.json). This proces
 fixture contains no Node; actual fresh foreign transit before Account and normal
 Create buttons require separate acceptance.
 
+Fresh zero-Account foreign transit independently passes root53718 using the
+normal resident profile.create/node.enable APIs, without Account creation/login
+or profile import. Two actual default22 Python peers connect only through the
+native child; discovery and opaque DATA hop rewrite/duplicate2→1/expiry pass,
+client detach preserves Node and Rootlock stops it. [Proof](root-fresh-zero-account-transit.json).
+This is configured loopback transit, not NAT/self-organization or mobile service
+acceptance. Fresh host uses its own older Account resources; no remote Account
+behavior is inferred from this zero-Account gate.
+
 No new file provider, Account crypto suite, network custody ACK or global identity
 scheme is introduced by this checkpoint. The user-facing end state remains three
 usable applications; these component results do not replace that requirement.

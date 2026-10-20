@@ -44,13 +44,14 @@
 | Native Node | Qt/QuickJS actor, actual default22 Python interop, NodeID retained, second owner refused, SIGTERM/SIGINT exit0 | [Actor](docs/native/2026-10-20/root-native-actor-interop.json). |
 | Inbox/queues | Encrypted SQLite Inbox/CAS/quota/recovery, unchanged JS consumer/70 IDB differential ops; real opaque delivery, recipient SIGKILL/reopen, atomic app consumption/idempotence | [Inbox](docs/native/2026-10-20/root-native-inbox-verification.json), [delivery](docs/native/2026-10-20/root-native-delivery-consumption.json). Не новый network custody ACK. |
 | Foreign transit | Actual two Python peers only through native middle, no Account/owner registration, hop rewrite/duplicate/expiry; immutable a0f54a9 Node | [Transit](docs/native/2026-10-20/root-native-foreign-transit.json). NAT/alternate-route failover отдельно. |
+| Fresh zero-Account transit | Root53718 PASS: profile.create + node.enable, zeroAccounts/no import/login, two actual default22 Python peers only through native child; foreign discovery/DATA2→1/hop rewrite/expiry; client detach preserves Node, Rootlock stops | [Proof](docs/native/2026-10-20/root-fresh-zero-account-transit.json). Immutableb300a25 fixture/ca849host/64eNode,1145files/7libs exact. Configured WS loopback peers; NAT/self-organization NOT RUN. |
 | Account retained data | Secure-only registry, тот же Account public ID, original Saved1→native write2, logout/relogin, source owning export unchanged | [Account](docs/native/2026-10-20/root-native-account-retained.json). |
 | Initial import recovery | Atomic staged publish/retry, crash before/after stage/publish, concurrent publisher, no overwrite of accepted DB/keys | [Import](docs/native/2026-10-20/root-account-import-recovery.json). Это initial import, не full N4. |
 | Resident host | Separate credential/Account process, UI death/Account logout preserve Node; Root lock stops Node; Account cancel preserves unlocked Root/Node | [Host](docs/native/2026-10-20/root-resident-credential-host.json), [resident UI](docs/native/2026-10-20/root-desktop-resident-ui.json). |
 | Actual remote E2EE | Immutable283ba51 integrated3e3e845:2245 archived files/18 libs exact, fresh signed pairs, nativeNodes→Python transit20forwards. Recipient Account exit73 after durable history before consume; before/replay/reopen1, both identities/history retained | [Remote Account](docs/native/2026-10-20/root-native-remote-account.json). Known synthetic signed pair/scoped grants; ordinary UI pairing NOT RUN. Node binary explicitly older a0f54a9. |
 | Local capability lease | Runtime64e6933 + test875c679: real TTL10→30, past original expiry same token/socket/ACTIVE tuple, initialized Node, fresh auth | [Lease](docs/native/2026-10-20/root-native-capability-lease.json). Mint deliberately rotates/drops old contexts; не использовать вместо lease extension. |
 | Host crash/recovery | Immutablea52e9f5, root44213 exit0:183source/19artifact/7libs exact; SIGKILL host/Node lease EOF; sameRoot/Node/gens1,3,5,7/Saved2; authenticated floor merge; cancel stops verified suspended oldchild. Process/cancel/logout/reopen/ACTIVE grant lease PASS | [Recovery](docs/native/2026-10-20/root-resident-host-recovery.json). Integrated f8b17d2/1a5f179/87fc172. Не full N4; pin Account resources older remote integration. |
-| Fresh setup | Immutableca849fd root65965/54456 PASS:187source/27artifact/7libs exact; Root-only/zeroAccounts, optional compatible Account, cancellation, duplicates refuse overwrite, Saved/reopen/missing-key refusal; original JS/WASM Root+registry interop | [Fresh](docs/native/2026-10-20/root-fresh-root-account.json). Integrated1930b80; Node-before-Account foreign transit and fresh UI separate. |
+| Fresh setup | Immutableca849fd root65965/54456 PASS:187source/27artifact/7libs exact; Root-only/zeroAccounts, optional compatible Account, cancellation, duplicates refuse overwrite, Saved/reopen/missing-key refusal; original JS/WASM Root+registry interop | [Fresh](docs/native/2026-10-20/root-fresh-root-account.json). Integrated1930b80; Root fresh transit accepted separately above; fresh UI still open. |
 | Desktop Account controls | Actual Widgets chooser/import/PIN/Account cancel/wrong/busy/correct/Saved/reopen on owning copy. Clipboard test-only correction33a6273 root20183 PASS3/0/22.644s, unchanged pinned product | [Chooser retest](docs/native/2026-10-20/root-desktop-chooser-retest.json). Visible Node controls ещё не root PASS. |
 | Android package/UI | ARM64 package/signature/16K ELF inspection; actual x86 API35 KVM install/launch, Stop/compose/Send disabled when off, Details Close/Back, background/resume | [Package](docs/native/2026-10-20/root-android-package-inspection.json), [actual UI retest](docs/native/2026-10-20/root-android-kvm-launcher-retest.json). Node service/Account/UI/full app acceptance ещё нет. |
 
@@ -81,12 +82,15 @@
  nativeExited=false, serviceState STARTING. [Retest](docs/native/2026-10-20/root-android-service-bootstrap-retest.json).
  Timer fix is not runtime-accepted; platform investigates pre-JNI startup stage.
   Diagnostic471ca1c distinguishes activity/binder/bootstrap phases and fixed states.
-- **Windows:** actual OpenSSL finder fixed d0d41d9; QuickJS VERSION shadowing
-  C++ <version> fixed069c360/3728b20. Actual run39442027820 compiled58/75 then
-  failed credential_host.cpp openssl/crypto.h missing. Direct dependencya551368
-  already included in newer published6a8de203; next actual run must prove it.
-  Windows runtime NOT RUN. c145656 adds fixed native startup stage markers for
-  Android next diagnosis; capture/actual CI pending, not a product-fix claim.
+ c145656/5d1d2ce fixed native startup markers now in published4ed snapshot; actual
+ next stage evidence pending.
+- **Windows:** actual run39443521913 source9988c73 exact merge tree confirmed:
+  all75 Desktop/host/UI-test targets compiled and linked. desktop-controls then
+  failed0.06s with empty output before QtTest banner. Cause unknown; no UI action
+  or package acceptance. [Attempt](docs/native/2026-10-20/root-windows-compile-launch-attempt.json).
+ 10c5743 adds bounded direct exitcode/DLL/plugin diagnostics +always-upload logs;
+ next actual runner required. Standalone Account/Node suites and Windows package
+ not reached. Earlier compiler/OpenSSL/include fixes have passed this boundary.
 - **Long certificate retry/recipient Node restart accepted:**3cf41d9 stable expiresAt
   +9e23a60 fixture independently passed root54951 exit0,31forwards, lost accepted
   submit reply→samejobID/expiry; Account73→NodeSIGKILL→same profile/key/bundle,
@@ -102,18 +106,18 @@
 
 ## 4. Source publication, environments и активные проверки
 
-Latest published GitHub snapshot **6a8de2038911ff389633f159038663ca5ee4df76** is
-exact local **9988c737b88871e81ebbd5dfa5ec2fede0a02159** tree
-**53833da23b565a5d62450f059f88bfa4cb49accc**. create_tree exact + git ls-remote
+Latest published GitHub snapshot **4edab65caa3d0d7d2c4a27f827c5e167887babbe** is
+exact local **4bdf1da6693adacfb18cd975d7ce1645f54c79fc** tree
+**5b6c9a4cc725b615bd04bd4d10ebc51db7c5b395**. create_tree exact + git ls-remote
 verified. Branch `codex/native-clients-ci-20261020`, draft
 [PR8](https://github.com/Seriy615/D-MASH/pull/8), attached to task.
 Later root docs/source not automatically published; see Git and FORGE_SYNC.
 Git direct HTTPS/SSH write unavailable; connector writes exact tracked tree only.
 No force/reset, private cache, keys, DB or credential logs in Git.
 
-Actual CI: Android39443522111/job118699296943 terminal FAIL as above;
-Windows39443521913/job118699296005 on6a8de203 confirmed live at last check. Prior Android39442027952 also
-live at last check (older entry); prior Windows39442027820 terminal FAIL above.
+Actual live CI last checked on4ed snapshot: Android39446127764/job118708398804
+(build APK/instrumentation) and Windows39446127350/job118708396974 (dependencies).
+Prior Android39443522111 and Windows39443521913 terminal FAIL as recorded above.
 GitHub connector status can be stale: use fresh public REST Cache-Control:no-cache
 and terminal job timestamps to resolve contradictions. 404 job log/transient poll
 failure does not prove job stopped. Do not restart observation-timeout jobs.
@@ -150,13 +154,17 @@ normal unlock/login recorded in BROWSER_QA. No user/production data touched.
   current node.disable=fullRootlock unchanged until coherent UI migration.
 - **native_runtime_sol:** native actor/localIPC, isolated remote Account worktree,
   Android CI diagnostics. 3cf/9e independent parent54951 PASS, source integratedf187474/9308218. Diagnose
-  admission failure using retained metadata, no cause guess. Prepare actual fresh
-  foreign transit fixture through profile.create + node.enable with accounts0/
-  sessionfalse, no Account creation. After that implement ordinary Account
-  pairing/contact DTOs using existing orchestrators; platform owns UI.
+  admission failure using retained metadata, no cause guess. Fresh foreign transit fixture accepted independently, integrated05dd2cc. Now
+  ordinary private pairing/contact DTOs + existing bootstrap runtime/dispatcher
+  via separate encrypted SQLite; optional trusted store/KEM +private-v1 seams
+  isolated f50e82c UNIT only, not shared yet; actual native pairing pending.
+  Platform now owns Android CI UI/instrumentation files.
 - **native_platforms_sol:** Desktop Node-control stage diagnostics, Android normal
   Views/credential service and Windows compile/runtime fixes.9988 entry published.
-  Next coherent Android freeze must include current Account/host, distinct owner
+  Coherent Androidv5 frozen on4bdf1da includes fresh1930/f187/host87 +ownedUIWIP;
+  actualnative build running4448, no app runtime claim. Next CI must exercise
+  ordinary Createprofile/optionalAccount/Saved UI, technical Node checks via
+  explicit NodeTools screen. Preserve strict assertions. Next freeze includes distinct owner
   epoch vs transport generation, real child-exit recovery and lease-extension
   hooks. Do not package unaccepted captured WIP as final app.
 - **Root:** inspect current CI actual outcomes/artifacts, independently
