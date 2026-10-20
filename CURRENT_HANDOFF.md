@@ -20,6 +20,18 @@ ways, logout preserving Node, and reload preserving identity/history. All
 verified through the active Cache API. Separate read-only cache check: 182/182
 cached PWA files match source, only `.38` cache present; page errors 0.
 This is scoped private UI acceptance, not media/public-route/full-plan DONE.
+
+**WebSocket route hotfix — 20 October 2026:** reproduced browser URL
+`wss://proxy.d-mash.ru/dmash-client/v3` returning nginx404; backend direct
+`/dmp-c/v3` returned 101/WELCOME. Added the exact alias on EMS to the existing
+backend route, preserved the other nginx locations, made a protected config
+backup, passed `nginx -t`, and reloaded nginx. Fresh real Chromium with deployed
+`.38` active SW used the actual `DeviceClientV3`: pinned WELCOME/CHALLENGE/AUTH,
+`connected`, encrypted `STATUS` response with matching Node pin and S-TURN true,
+page errors 0. Regression: `python3 tools/test_ems_domain_migration.py` 5/5 PASS;
+config generator now manages this fifth exact API path. PWA/backend source remains
+exact `.38`. [Route repair evidence](docs/evidence/2026-10-20/qa-proxy-v3-websocket-route-fix.md).
+
 Deployment backups are recorded in the evidence note. Raw reports and protected
 synthetic profile snapshots remain outside Git under `/tmp/dmash-deploy-qa/`.
 The full unit rerun in this transient checkout was blocked by missing local test
@@ -421,7 +433,7 @@ HEAD; production SHA всегда сверять отдельно.
 Ordinary Node v4 media CONTROL ещё не включён; этот release не закрывает N3/N7.
 Exact source full UNIT Python286/Origin11/все JS PASS; root real EMS/S-TURN
 source-overlay mobile **19/19** и video **21/21**, 134/134 loaded source responses
-в каждом, page errors0; expanded file **21/21**, Saved **6/6** и concurrent
+в каждом, page errors 0; expanded file **21/21**, Saved **6/6** и concurrent
 receiver **23/23** scoped agent gates PASS.
 [Root source evidence](docs/evidence/2026-10-08/qa-media35-root-source.json).
 

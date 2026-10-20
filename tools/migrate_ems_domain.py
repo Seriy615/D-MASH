@@ -6,7 +6,7 @@ Default is read-only: validate an existing 443 TLS vhost and calculate changes.
 After DNS A=85.198.64.183, HTTPS certificate verification and a protected
 consistent SQLite/runtime identities+keys backup, use --apply.
 Backups include the selected nginx file, node.env and turnserver.conf (0700/0600)
-under /root/dmash-domain-backups. Only four exact API locations are added; the
+under /root/dmash-domain-backups. Only five exact API locations are managed; the
 existing PWA, other vhosts, global coturn:3478, flags and secrets are preserved.
 nginx -t precedes every reload. Restart dedicated coturn:3479 and dmash-node
 using their existing units/code; this is not a backend upgrade. Verify pinned
@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import tempfile
 
-PATHS = ('/mesh/v4', '/dmp-c/v3', '/dmash-client/v1', '/signal/v1')
+PATHS = ('/mesh/v4', '/dmp-c/v3', '/dmash-client/v1', '/dmash-client/v3', '/signal/v1')
 START = '    # BEGIN D-MASH canonical exact endpoints\n'
 END = '    # END D-MASH canonical exact endpoints\n'
 
@@ -56,7 +56,7 @@ def replace_settings(text, values, separator='='):
 
 def endpoint_block():
     return START + ''.join('    location = ' + route + ' {\n'
-        '        proxy_pass http://127.0.0.1:18080' + ('/dmp-c/v3' if route == '/dmash-client/v1' else route) + ';\n'
+        '        proxy_pass http://127.0.0.1:18080' + ('/dmp-c/v3' if route in ('/dmash-client/v1', '/dmash-client/v3') else route) + ';\n'
         '        proxy_http_version 1.1;\n'
         '        proxy_set_header Host $host;\n'
         '        proxy_set_header X-Real-IP $remote_addr;\n'

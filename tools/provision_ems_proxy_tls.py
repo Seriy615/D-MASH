@@ -4,7 +4,7 @@
 First run without --apply. Root then reviews the host DNS A=85.198.64.183,
 empty AAAA, existing ACME account/webroot, and free target nginx conf.d filename.
 Run --apply only after approval; other vhosts and backend code remain unchanged.
-The HTTP server serves ACME files only; HTTPS serves four exact API paths only.
+The HTTP server serves ACME files only; HTTPS serves five exact API paths only.
 Next run migrate_ems_domain.py --host HOST --site SITE (read-only), review its
 changed count, then --apply to change existing signaling/TURN endpoint settings.
 Dedicated coturn port/realm/secret, Node identities and flags remain intact.

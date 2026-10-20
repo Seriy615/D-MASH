@@ -18,6 +18,15 @@ API); active cache `dmash-static-transport-v3-node-preparation-20261020.38`,
 [`.38 deployed gate`](docs/evidence/2026-10-20/qa-private-ui38-deployed-summary.md).
 Media, public-route, physical Android, full N0–N8/A–M/E6 remain open.
 
+**DEVICE-V3-WS-ALIAS-01 — FIXED on EMS:** browser URL
+`wss://proxy.d-mash.ru/dmash-client/v3` failed because proxy nginx returned 404;
+backend direct DMP-C handshake succeeded. Added exact proxy alias to existing
+`/dmp-c/v3`, protected backup, `nginx -t` PASS and nginx reload. Post-fix normal
+production Chromium `.38`/active SW: actual DeviceClientV3 authenticated to the
+pinned Node, encrypted STATUS returned with matching node pin, S-TURN true,
+page errors 0. Five migration/generator tests PASS. No PWA/backend redeploy was
+needed. [Reproduction, repair and evidence](docs/evidence/2026-10-20/qa-proxy-v3-websocket-route-fix.md).
+
 **Возобновление: 15 октября 2026, UTC. Цель ACTIVE, НЕ DONE.**
 Проверены Forge hostname/path, сохранённые isolated candidates и remote
 `transport-v3=38a67a56b7db3878197e4aafaf1b878e2a1f8765`; source refs fetched.

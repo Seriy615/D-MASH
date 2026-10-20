@@ -33,10 +33,11 @@ class DomainMigrationTests(unittest.TestCase):
         self.assertEqual(nginx_site(migrated,'proxy.d-mash.ru'),migrated)
         for route in PATHS:
             self.assertEqual(migrated.count('location = '+route+' {'),1)
+        self.assertIn('location = /dmash-client/v3 {\n        proxy_pass http://127.0.0.1:18080/dmp-c/v3;', migrated)
         self.assertIn('location / { return 404; }',migrated)
         self.assertNotIn('stage-api-ems',migrated)
         self.assertNotIn('proxy_pass http://127.0.0.1:18080/dmash-client/v1;',migrated)
-        self.assertEqual(migrated.count('proxy_pass http://127.0.0.1:18080/dmp-c/v3;'),2)
+        self.assertEqual(migrated.count('proxy_pass http://127.0.0.1:18080/dmp-c/v3;'),3)
 
     def test_refuses_wrong_vhost_or_conflicting_unmanaged_locations(self):
         site=tls_server('proxy.d-mash.ru')
