@@ -80,20 +80,80 @@
                 request.onerror = () => reject(new DeviceRootError("STORAGE_CORRUPT", "Device identity storage cannot be read."));
             });
         }
-        async put(record) {
-            const db = await this.open();
+        async put(record, { assertCurrent = () => {}, signal } = {}) {
+            assertCurrent(); const db = await this.open(); assertCurrent();
+            if (signal?.aborted) throw new DeviceRootError("DEVICE_LOCKED", "Device identity session changed before storage commit.");
             return new Promise((resolve, reject) => {
                 const tx = db.transaction(STORE, "readwrite");
-                tx.objectStore(STORE).put(record);
-                tx.oncomplete = resolve;
-                tx.onerror = () => reject(new DeviceRootError("STORAGE_WRITE_FAILED", "Device identity storage could not be saved."));
-                tx.onabort = () => reject(new DeviceRootError("STORAGE_WRITE_FAILED", "Device identity storage write was aborted."));
+                const cancel = () => { try { tx.abort(); } catch (_) {} };
+                const cleanup = () => signal?.removeEventListener('abort', cancel);
+                signal?.addEventListener('abort', cancel, { once: true });
+                tx.oncomplete = () => { cleanup(); try { assertCurrent(); resolve(); } catch (error) { reject(error); } };
+                tx.onerror = () => { cleanup(); reject(new DeviceRootError(signal?.aborted ? "DEVICE_LOCKED" : "STORAGE_WRITE_FAILED", "Device identity storage could not be saved.")); };
+                tx.onabort = () => { cleanup(); reject(new DeviceRootError(signal?.aborted ? "DEVICE_LOCKED" : "STORAGE_WRITE_FAILED", "Device identity storage write was aborted.")); };
+                try { assertCurrent(); tx.objectStore(STORE).put(record); }
+                catch (error) { cancel(); cleanup(); reject(error); }
             });
         }
         close() {
             try { this.db?.close(); } catch (_) {}
             this.db = null;
         }
+    }
+
+    // Preparation may be expensive (Node PoW); only complete record commits
+    // share this queue. A rejected write cannot poison the next writer.
+    const recordWrites = new WeakMap(), materialJobs = new WeakMap(), materialSecrets = new WeakMap();
+    const queueRecordWrite = (store, run) => {
+        const operation = (recordWrites.get(store) || Promise.resolve()).then(run);
+        recordWrites.set(store, operation.catch(() => {}));
+        return operation;
+    };
+    const putCurrentRecord = async (root, store, record, current) => {
+        current(); const abort = new AbortController(), off = root.onLock(() => abort.abort());
+        try { current(); await store.put(record, { assertCurrent: current, signal: abort.signal }); current(); }
+        finally { off(); }
+    };
+    const sessionGuard = (root, session, store, unlocked = true) => () => {
+        if (root.state !== session || root._store() !== store || (unlocked && !session?.root) || (session && !session.root)) {
+            throw new DeviceRootError("DEVICE_LOCKED", "Device identity session changed during key material access.");
+        }
+    };
+    const trackSecret = (session, bytes) => {
+        let secrets = materialSecrets.get(session);
+        if (!secrets) materialSecrets.set(session, secrets = new Set());
+        secrets.add(bytes); return bytes;
+    };
+    const wipeSecret = (session, bytes) => { bytes?.fill(0); materialSecrets.get(session)?.delete(bytes); };
+    const hasMaterial = (record, name) => Object.prototype.hasOwnProperty.call(record.materials || {}, name);
+    async function rewriteRootWrap(root, oldSecret, nextSecret, migration = false) {
+        root._requireCrypto();
+        const session = root.state, store = root._store(), current = sessionGuard(root, session, store, false);
+        current(); const record = await store.get(); current();
+        if (!record || record.version !== VERSION || !record.wrapSalt || !record.iv || !record.wrappedRoot) {
+            throw new DeviceRootError("STORAGE_CORRUPT", "Device identity record is corrupt or unsupported. It was not changed.");
+        }
+        let bytes;
+        try {
+            bytes = await root._decryptRoot(record, oldSecret);
+            if (session) trackSecret(session, bytes);
+            current();
+            const wrapSalt = root._crypto.getRandomValues(new Uint8Array(WRAP_SALT_BYTES));
+            const wrapped = await root._encryptRoot(bytes, nextSecret, wrapSalt); current();
+            await queueRecordWrite(store, async () => {
+                current(); const latest = session?.record || await store.get(); current();
+                // Do not let a concurrent credential change replace the proof
+                // used above. Material/biometric updates may safely be merged.
+                if (!latest || ['iv', 'wrapSalt', 'wrappedRoot'].some(name => latest[name] !== record[name])) {
+                    throw new DeviceRootError("DEVICE_LOCKED", "Device wrapping changed during credential update.");
+                }
+                const updated = { ...latest, wrapSalt: b64(wrapSalt), ...wrapped };
+                if (migration) updated.migration = { ...(latest.migration || {}), credentialDomain: "calculator-master-v1", migratedAt: Date.now() };
+                await putCurrentRecord(root, store, updated, current);
+                if (session) session.record = updated;
+            });
+            return Object.freeze(migration ? { migrated: true } : { rewrapped: true });
+        } finally { if (session) wipeSecret(session, bytes); else bytes?.fill(0); }
     }
 
     const DeviceRoot = {
@@ -111,6 +171,7 @@
         store: null,
         state: null,
         _lockObservers: new Set(),
+        _unlockObservers: new Set(),
         _crypto: global.crypto,
 
         setStoreForTests(store) { this.store = store; },
@@ -235,6 +296,7 @@
             this._requireWebAuthn();
             if (!this.state?.root || !this.state?.record) throw new DeviceRootError("DEVICE_LOCKED", "Unlock the device with the calculator master secret before enrolling biometrics.");
             if (this.state.record.biometricWrap) throw new DeviceRootError("WEBAUTHN_ALREADY_ENROLLED", "Device biometric authentication is already enrolled.");
+            const session = this.state, store = this._store(), current = sessionGuard(this, session, store);
             let credential;
             try {
                 const userId = this._crypto.getRandomValues(new Uint8Array(32));
@@ -250,23 +312,27 @@
             } catch (_) {
                 throw new DeviceRootError("WEBAUTHN_ENROLLMENT_FAILED", "Platform WebAuthn enrollment did not complete.");
             }
+            current();
             const credentialId = decodeB64(this._credentialId(credential));
             const prfSalt = this._crypto.getRandomValues(new Uint8Array(PRF_SALT_BYTES));
             let prfOutput;
             try {
-                prfOutput = await this._getPrfAssertion(credentialId, prfSalt);
-                const key = await this._prfWrapKey(prfOutput);
+                current(); prfOutput = trackSecret(session, await this._getPrfAssertion(credentialId, prfSalt)); current();
+                const key = await this._prfWrapKey(prfOutput); current();
                 const iv = this._crypto.getRandomValues(new Uint8Array(WRAP_IV_BYTES));
-                const ciphertext = await this._crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: PRF_AAD }, key, this.state.root);
+                const ciphertext = await this._crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: PRF_AAD }, key, session.root); current();
                 const biometricWrap = { wrap: PRF_WRAP, credentialId: b64(credentialId), prfSalt: b64(prfSalt), iv: b64(iv), wrappedRoot: b64(new Uint8Array(ciphertext)) };
-                const record = { ...this.state.record, biometricWrap };
-                await this._store().put(record);
-                this.state.record = record;
+                await queueRecordWrite(store, async () => {
+                    current();
+                    if (session.record.biometricWrap) throw new DeviceRootError("WEBAUTHN_ALREADY_ENROLLED", "Device biometric authentication is already enrolled.");
+                    const record = { ...session.record, biometricWrap };
+                    await putCurrentRecord(this, store, record, current); session.record = record;
+                });
                 return Object.freeze({ enrolled: true });
             } catch (error) {
                 if (error instanceof DeviceRootError) throw error;
                 throw new DeviceRootError("WEBAUTHN_ENROLLMENT_FAILED", "Device biometric wrapping was not saved.");
-            } finally { prfOutput?.fill(0); }
+            } finally { wipeSecret(session, prfOutput); }
         },
         // This path is intentionally PRF-only: cancellation, unsupported PRF,
         // malformed metadata, or decrypt failure never fall back to PIN or any
@@ -409,61 +475,68 @@
             return databases.some((database) => database.name === "dm_gamma_vault");
         },
         async deviceMaterial(name, create) {
-            const session = this.state;
-            const store = this._store();
-            const current = () => {
-                if (!session?.root || this.state !== session || this._store() !== store) {
-                    throw new DeviceRootError("DEVICE_LOCKED", "Device identity session changed during key material access.");
-                }
-            };
+            const session = this.state, store = this._store(), current = sessionGuard(this, session, store);
             current();
             if (typeof name !== "string" || !name || typeof create !== "function") {
                 throw new DeviceRootError("INVALID_KDF_INPUT", "Invalid device material request.");
             }
-            // Serialize all material names: concurrent whole-record writes must
-            // preserve each other's ciphertext. A failed operation cannot poison
-            // the queue. The queue belongs to this unlocked session only.
-            const operation = (session.materialQueue || Promise.resolve()).then(async () => {
-                current();
-                let domainRoot, bytes;
-                let returned = false;
+            const materialAad = utf8("dmash/device-material/v1|" + name);
+            const materialKey = async () => {
+                let domainRoot;
                 try {
-                    domainRoot = await this.derive(session.root, this.domains.mlKemSeedRoot, VERSION, name);
-                    current();
-                    const key = await this._crypto.subtle.importKey("raw", domainRoot, "AES-GCM", false, ["encrypt", "decrypt"]);
-                    domainRoot.fill(0);
-                    current();
-                    const materialAad = utf8("dmash/device-material/v1|" + name);
-                    const existing = session.record.materials?.[name];
-                    if (existing) {
+                    current(); domainRoot = trackSecret(session, await this.derive(session.root, this.domains.mlKemSeedRoot, VERSION, name)); current();
+                    const key = await this._crypto.subtle.importKey("raw", domainRoot, "AES-GCM", false, ["encrypt", "decrypt"]); current();
+                    return key;
+                } finally { wipeSecret(session, domainRoot); }
+            };
+            if (!hasMaterial(session.record, name)) {
+                let jobs = materialJobs.get(session);
+                if (!jobs) materialJobs.set(session, jobs = new Map());
+                let entry = jobs.get(name);
+                if (!entry) {
+                    entry = { promise: null };
+                    // No plaintext promise result is shared. Each caller will
+                    // decrypt its own independent copy after this commit.
+                    entry.promise = Promise.resolve().then(async () => {
+                        let bytes;
                         try {
-                            bytes = new Uint8Array(await this._crypto.subtle.decrypt({ name: "AES-GCM", iv: decodeB64(existing.iv, 12), additionalData: materialAad }, key, decodeB64(existing.ciphertext)));
-                        } catch (_) {
-                            throw new DeviceRootError("STORAGE_CORRUPT", "Device key material is corrupt. It was not regenerated.");
+                            current(); const created = await create();
+                            bytes = trackSecret(session, created instanceof Uint8Array ? created : new Uint8Array(created)); current();
+                            const key = await materialKey(); current();
+                            const iv = this._crypto.getRandomValues(new Uint8Array(12));
+                            const ciphertext = await this._crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: materialAad }, key, bytes); current();
+                            const encrypted = { iv: b64(iv), ciphertext: b64(new Uint8Array(ciphertext)) };
+                            await queueRecordWrite(store, async () => {
+                                current();
+                                if (hasMaterial(session.record, name)) return;
+                                const record = { ...session.record, materials: { ...session.record.materials, [name]: encrypted } };
+                                await putCurrentRecord(this, store, record, current); session.record = record;
+                            });
+                        } finally {
+                            wipeSecret(session, bytes);
+                            if (jobs.get(name) === entry) jobs.delete(name);
                         }
-                    } else {
-                        const created = await create();
-                        bytes = created instanceof Uint8Array ? created : new Uint8Array(created);
-                        current();
-                        const iv = this._crypto.getRandomValues(new Uint8Array(12));
-                        const ciphertext = await this._crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: materialAad }, key, bytes);
-                        current();
-                        const record = { ...session.record, materials: { ...session.record.materials,
-                            [name]: { iv: b64(iv), ciphertext: b64(new Uint8Array(ciphertext)) } } };
-                        await store.put(record);
-                        current();
-                        session.record = record;
-                    }
-                    current();
-                    returned = true;
-                    return bytes;
-                } finally {
-                    domainRoot?.fill(0);
-                    if (!returned) bytes?.fill(0);
+                    });
+                    jobs.set(name, entry);
                 }
-            });
-            session.materialQueue = operation.catch(() => {});
-            return operation;
+                await entry.promise; current();
+            }
+            // Existing malformed ciphertext is never treated as missing and
+            // must never trigger creation of a replacement identity.
+            let bytes, returned = false;
+            try {
+                const key = await materialKey(); current();
+                const existing = session.record.materials[name];
+                try {
+                    bytes = trackSecret(session, new Uint8Array(await this._crypto.subtle.decrypt({ name: "AES-GCM", iv: decodeB64(existing.iv, 12), additionalData: materialAad }, key, decodeB64(existing.ciphertext))));
+                } catch (_) {
+                    current(); throw new DeviceRootError("STORAGE_CORRUPT", "Device key material is corrupt. It was not regenerated.");
+                }
+                current(); returned = true; return bytes;
+            } finally {
+                if (!returned) wipeSecret(session, bytes);
+                else materialSecrets.get(session)?.delete(bytes);
+            }
         },
         async unlock(masterPin) {
             this._requireCrypto();
@@ -504,22 +577,7 @@
             if (typeof nextMasterPin !== "string" || !nextMasterPin) {
                 throw new DeviceRootError("MASTER_PIN_REQUIRED", "A new calculator master PIN is required.");
             }
-            const store = this._store();
-            const record = await store.get();
-            if (!record || record.version !== VERSION || !record.wrapSalt || !record.iv || !record.wrappedRoot) {
-                throw new DeviceRootError("STORAGE_CORRUPT", "Device identity record is corrupt or unsupported. It was not changed.");
-            }
-            const root = await this._decryptRoot(record, currentMasterPin);
-            try {
-                const wrapSalt = this._crypto.getRandomValues(new Uint8Array(WRAP_SALT_BYTES));
-                const wrapped = await this._encryptRoot(root, nextMasterPin, wrapSalt);
-                const updated = { ...record, wrapSalt: b64(wrapSalt), ...wrapped };
-                await store.put(updated);
-                if (this.state?.root) this.state.record = updated;
-                return Object.freeze({ rewrapped: true });
-            } finally {
-                root.fill(0);
-            }
+            return rewriteRootWrap(this, currentMasterPin, nextMasterPin);
         },
         // Compatibility migration for records created before DeviceRoot moved
         // from the Account passphrase to the calculator master secret. The
@@ -528,24 +586,7 @@
         // cryptographic proof of the legacy credential; the same root is then
         // atomically rewrapped and annotated, never recreated or replaced.
         async migrateLegacyAccountPassphrase(accountPassphrase, calculatorMasterPin) {
-            this._requireCrypto();
-            const store = this._store();
-            const record = await store.get();
-            if (!record || record.version !== VERSION || !record.wrapSalt || !record.iv || !record.wrappedRoot) {
-                throw new DeviceRootError("STORAGE_CORRUPT", "Device identity record is corrupt or unsupported. It was not changed.");
-            }
-            const root = await this._decryptRoot(record, accountPassphrase);
-            try {
-                const wrapSalt = this._crypto.getRandomValues(new Uint8Array(WRAP_SALT_BYTES));
-                const wrapped = await this._encryptRoot(root, calculatorMasterPin, wrapSalt);
-                const migration = { ...(record.migration || {}), credentialDomain: "calculator-master-v1", migratedAt: Date.now() };
-                const updated = { ...record, wrapSalt: b64(wrapSalt), ...wrapped, migration };
-                await store.put(updated);
-                if (this.state?.root) this.state.record = updated;
-                return Object.freeze({ migrated: true });
-            } finally {
-                root.fill(0);
-            }
+            return rewriteRootWrap(this, accountPassphrase, calculatorMasterPin, true);
         },
         async bootstrap(masterPin) {
             try {
@@ -578,6 +619,11 @@
             });
             this.store = null;
         },
+        onUnlock(listener) {
+            if (typeof listener !== "function") throw new TypeError("Unlock listener must be a function");
+            this._unlockObservers.add(listener);
+            return () => this._unlockObservers.delete(listener);
+        },
         onLock(listener) {
             if (typeof listener !== "function") throw new TypeError("Lock listener must be a function");
             this._lockObservers.add(listener);
@@ -586,8 +632,12 @@
         _replaceState(state) {
             if (this.state) this.lock();
             this.state = state;
+            for (const listener of [...this._unlockObservers]) {
+                try { listener(); } catch (_) { /* Runtime failure cannot replace persisted root material. */ }
+            }
         },
         lock() {
+            for (const bytes of materialSecrets.get(this.state) || []) bytes.fill(0);
             const wasUnlocked = Boolean(this.state);
             for (const key of [this.state?.root, this.state?.identity?.signing?.secretKey, this.state?.identity?.agreement?.secretKey]) {
                 if (key instanceof Uint8Array && key.byteLength) key.fill(0);

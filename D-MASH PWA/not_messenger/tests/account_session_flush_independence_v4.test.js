@@ -1,0 +1,9 @@
+'use strict';
+const assert=require('node:assert/strict'),Session=require('../js/account_session_v4.js');
+const ID=n=>n.toString(16).padStart(2,'0').repeat(32),now=1800000000,old=JSON.stringify({kind:'CONFIRM_ACK',attempt_id:ID(1),expires_at:now+600}),fresh=JSON.stringify({kind:'FINAL',attempt_id:ID(2),expires_at:now+600});
+let state={version:4,ledger:{session_id:ID(3),generation:1},confirmed:{session_id:ID(3),generation:1,root:ID(4)},pending:{phase:'RESPONDER_PENDING',role:'responder',attempt:ID(2),generation:2,previous:ID(3),init:'{}',outbound:fresh},recovery:null,retired:[],superseded:[],intents:[{raw:old,attempts:0,next_at:now,expires_at:now+600},{raw:fresh,attempts:0,next_at:now,expires_at:now+600}]};
+const owner={assertCurrent(){},context(){return {requiredSuite:'test-suite',peer:ID(5),bindingDigest:ID(6),bindingGeneration:1};}},store={async load(){return {revision:1,value:structuredClone(state)};},async commit(_revision,value){state=structuredClone(value);}},codec={async frameDigest(raw){return raw===old?ID(7):ID(8);}},session=new Session({codec,profile:{SUITE:'test-suite'},nacl:{},kem:{generateKeys(){}},store,owner,clock:()=>now});
+(async()=>{const attempted=[];await assert.rejects(()=>session.flush({submitIntent:async intent=>{attempted.push(JSON.parse(intent.frame).kind);if(intent.frame===old)throw Error('old ACK Node duplicate refused');return {queued:true};}}),/old ACK Node duplicate refused/);
+ assert.deepEqual(attempted,['CONFIRM_ACK','FINAL'],'failed old control intent must not starve a newer recovery FINAL');assert.equal(state.intents[0].attempts,1);assert.equal(state.intents[1].attempts,1);
+ console.log('PASS N4 session flush: failed retained CONFIRM_ACK cannot starve later recovery FINAL; both retry reservations durable');
+})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -72,6 +72,8 @@
   async _init(s,f,raw,digest,authorized){
    const p=s.pending;if(!authorized&&['EXPIRED','REFUSED'].includes(p?.phase)&&p.initDigest===digest)fail(p.phase);
    if(p?.initDigest===digest&&p.role==='responder'){this._queue(s,p.outbound);return {phase:p.phase};}
+   // A delayed exact replay of a simultaneous losing INIT is not recovery.
+   if(!authorized&&s.superseded.includes(digest))return {phase:s.confirmed?'ESTABLISHED':p?.phase??'SUPERSEDED',ignored:true};
    if((s.ledger||(p&&(p.role==='responder'||['EXPIRED','REFUSED'].includes(p.phase))&&p.initDigest!==digest))&&!authorized){
     if(s.recovery?.role==='authority'&&s.recovery.challenge&&(!s.recovery.consumed||s.pending)&&JSON.parse(s.recovery.challenge).expires_at>this.clock()&&s.recovery.initDigest!==digest)fail('RECOVERY_BUSY');
     s.recovery={...(s.recovery||{}),role:s.recovery?.role||'authority',remoteInit:raw,remoteInitDigest:digest,...(s.recovery?.role==='requester'?{}:{initDigest:digest})};return {phase:'RECOVERY_REQUIRED'};
@@ -79,7 +81,7 @@
    this._authority(s,f);
    if(p&&p.initDigest!==digest){
     if(p.phase!=='INIT_PREPARED'&&!authorized)fail('PENDING_CONFLICT');const current=JSON.parse(p.init),localOrder=current.sender+current.attempt_id,remoteOrder=f.sender+f.attempt_id;
-    if(!authorized&&localOrder<remoteOrder){this._queue(s,p.outbound);return {phase:p.phase};}
+    if(!authorized&&localOrder<remoteOrder){s.superseded.push(digest);s.superseded=s.superseded.slice(-32);this._queue(s,p.outbound);return {phase:p.phase};}
     s.superseded.push(p.initDigest);s.superseded=s.superseded.slice(-32);this._retireIntents(s,p.attempt);
    }
    if(s.superseded.includes(digest))fail('SUPERSEDED');
@@ -116,7 +118,7 @@
   }
   // Reserve retry metadata durably before calling transport. Success is only
   // queue acceptance; no intent is removed until authenticated peer transition.
-  async flush({submitIntent}={}){if(typeof submitIntent!=='function')fail('DURABLE_SUBMIT_REQUIRED');const frames=await this._run(async s=>{const now=this.clock(),out=[];for(const i of s.intents){if(i.next_at>now||i.expires_at<=now||i.attempts>=32)continue;i.attempts++;i.next_at=now+Math.min(300,5*2**Math.min(i.attempts-1,6));out.push(i.raw);}return out;});for(const raw of frames){this.owner.assertCurrent();const operationId=await this._digest(raw),c=this._context();await submitIntent(Object.freeze({operationId,frame:raw,peer:c.peer,bindingDigest:c.bindingDigest,generation:c.bindingGeneration}));this.owner.assertCurrent();}return frames.length;}
+  async flush({submitIntent}={}){if(typeof submitIntent!=='function')fail('DURABLE_SUBMIT_REQUIRED');const frames=await this._run(async s=>{const now=this.clock(),out=[];for(const i of s.intents){if(i.next_at>now||i.expires_at<=now||i.attempts>=32)continue;i.attempts++;i.next_at=now+Math.min(300,5*2**Math.min(i.attempts-1,6));out.push(i.raw);}return out;});let firstError=null;for(const raw of frames){this.owner.assertCurrent();try{const operationId=await this._digest(raw),c=this._context();await submitIntent(Object.freeze({operationId,frame:raw,peer:c.peer,bindingDigest:c.bindingDigest,generation:c.bindingGeneration}));this.owner.assertCurrent();}catch(error){this.owner.assertCurrent();firstError ||= error;}}if(firstError)throw firstError;return frames.length;}
   async status(){return this._run(async s=>({phase:s.pending?.phase|| (s.confirmed?'ESTABLISHED':'NO_SESSION'),sessionId:s.confirmed?.session_id||null,generation:s.confirmed?.generation||null,retryAfter:s.pending?.retry_after??null,reason:s.pending?.refusal??null,confirmationAckPending:!!s.confirmed?.ack&&s.intents.some(i=>i.raw===s.confirmed.ack&&i.expires_at>this.clock()&&i.attempts<32)}));}
  }
  global.DmashAccountSessionV4=AccountSessionV4;if(typeof module!=='undefined')module.exports=AccountSessionV4;

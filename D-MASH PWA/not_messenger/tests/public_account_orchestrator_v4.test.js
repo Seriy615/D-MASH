@@ -1,0 +1,28 @@
+'use strict';
+const assert=require('node:assert/strict');global.nacl=require('../js/vendor/nacl-fast.min.js');global.DmashRouteDiscoveryV4=require('../js/route_discovery_v4.js');global.DmashAccountPairingV2=require('../js/account_pairing_v2.js');global.DmashAccountRouteBindingV2=require('../js/account_route_binding_v2.js');global.DmashNodePublicBootstrapControlV4=require('../js/node_public_bootstrap_control_v4.js');
+global.DmashNodeBootstrapControlV4=require('../js/node_bootstrap_control_v4.js');
+const Orchestrator=require('../js/public_account_orchestrator_v4.js');
+(async()=>{
+ await assert.rejects(()=>Orchestrator.open({core:{}}),e=>e.code==='ACCOUNT_SESSION_REQUIRED');
+ const abort=new AbortController(),rootState={},db={objectStoreNames:{contains:name=>name==='pairing_material'}},masterKey=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']),keys={sign:nacl.sign.keyPair(),box:nacl.box.keyPair()},session={db,masterKey,keys,rootState,signal:abort.signal,blindSalt:crypto.getRandomValues(new Uint8Array(32)),assertCurrent(){if(abort.signal.aborted)throw Error('Account stale');}};
+ const core={captureAccountSessionV4:()=>session},storage={db,masterKey},deviceRoot={state:rootState};let started=0,commits=0,activations=0,unregistered=0,closed=0;
+ const host={localOwnership:'managed',identity:{bootstrapProfile:'public-v1'},verifyPreparation(){},activateLocalBinding(){activations++;},publicRequests:async()=>[{registration:'a'.repeat(64),requestId:'b'.repeat(64),requestDigest:'c'.repeat(64),request:'retained-control',expiresAt:Math.floor(Date.now()/1000)+60,direction:'INBOUND'}]};
+ const coordinator={start:async()=>{started++;},capture:()=>({host,current:()=>true}),registerAccountJournal:()=>({}),unregisterAccountJournal(){unregistered++;}};
+ await assert.rejects(()=>Orchestrator.open({core,storage:{db:{},masterKey},deviceRoot,coordinator}),e=>e.code==='ACCOUNT_VAULT_CONTEXT');assert.equal(started,0);
+ host.identity.bootstrapProfile='private-v1';await assert.rejects(()=>Orchestrator.open({core,storage,deviceRoot,coordinator}),e=>e.code==='PUBLIC_NODE_PROFILE_REQUIRED');host.identity.bootstrapProfile='public-v1';
+ global.DmashAccountStaticKemV1={open:async()=>({close(){closed++;}})};global.DmashAccountRouteJournalV2={open:async()=>({commit(){commits++;},close(){closed++;}})};
+ const instance=await Orchestrator.open({core,storage,deviceRoot,coordinator});assert.deepEqual(await instance.advance({id:'a'.repeat(64),capability:{}},'b'.repeat(64),'c'.repeat(64)),{state:'WAITING_PUBLIC_CONTROL',ready:false});assert.equal(commits,0);assert.equal(activations,0);
+ await assert.rejects(()=>instance.advance({id:'a'.repeat(64),capability:{}},'b'.repeat(64),'d'.repeat(64)),e=>e.code==='PUBLIC_REQUEST_CONTEXT');
+ await assert.rejects(()=>instance.establish('d'.repeat(64)),e=>e.code==='PUBLIC_ACTIVE_OWNER_REQUIRED');
+ assert.deepEqual(await instance.pollSessions(),{processed:0,statuses:[]});
+ let indexRow;
+ db.transaction=()=>{const tx={objectStore:()=>({get:()=>{const request={};queueMicrotask(()=>{request.result=indexRow;request.onsuccess();queueMicrotask(()=>tx.oncomplete());});return request;}})};return tx;};
+ assert.deepEqual(await instance.rehydrate(),{restored:0,pending:[]},'absent index cannot invent peers or activate routes');
+ const account=Buffer.from(keys.sign.publicKey).toString('hex'),hmac=await crypto.subtle.importKey('raw',session.blindSalt,{name:'HMAC',hash:'SHA-256'},false,['sign']);
+ const domain='D-MASH|PUBLIC-ACCOUNT-INTENT|V4\0',alias=Buffer.from(await crypto.subtle.sign('HMAC',hmac,new TextEncoder().encode(domain+account+'|'+'0'.repeat(64)+'|'+'0'.repeat(64)))).toString('hex'),iv=crypto.getRandomValues(new Uint8Array(12));
+ const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:new TextEncoder().encode(domain+alias)},masterKey,new TextEncoder().encode(JSON.stringify({type:'WRONG',account,peers:[]})));
+ indexRow={alias,blob:Buffer.concat([Buffer.from(iv),Buffer.from(cipher)]).toString('base64')};
+ await assert.rejects(()=>instance.rehydrate(),e=>e.code==='PUBLIC_PEER_INDEX_CORRUPT');assert.equal(activations,0);
+ abort.abort();await assert.rejects(()=>instance.advance({id:'a'.repeat(64),capability:{}},'b'.repeat(64),'c'.repeat(64)),e=>e.code==='PUBLIC_ACCOUNT_CLOSED');assert.equal(unregistered,1);assert.equal(closed,2);assert.equal(activations,0);
+ console.log('PASS Account orchestrator guard seam: genuine-capture requirement, vault/profile mismatch, incomplete bilateral controls cannot activate, logout cleanup; trusted dependency stubs only, not cryptographic integration');
+})().catch(error=>{console.error(error);process.exitCode=1;});

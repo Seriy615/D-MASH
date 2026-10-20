@@ -4,6 +4,7 @@
 Run as root on EMS. Secrets are generated/stored only on that host and are never
 printed. Existing global coturn/static users are preserved on port 3478.
 """
+import argparse
 import base64
 import datetime
 import os
@@ -11,9 +12,10 @@ from pathlib import Path
 import secrets
 import shutil
 import subprocess
+from migrate_ems_domain import hostname, replace_settings, nginx_site
 
 ROOT=Path('/etc/dmash-sturn')
-SITE=Path('/etc/nginx/sites-available/d-mash-ems-staging-tls')
+SITE=None
 DROP=Path('/etc/systemd/system/dmash-node.service.d/50-sturn.conf')
 SERVICE=Path('/etc/systemd/system/dmash-sturn.service')
 SNAPSHOTS=[]
@@ -29,7 +31,13 @@ def write(path,text,mode=0o600):
     os.chmod(temporary,mode);os.replace(temporary,path)
 
 def main():
-    global TURN_WAS_ACTIVE,TURN_WAS_ENABLED
+    global TURN_WAS_ACTIVE,TURN_WAS_ENABLED,SITE
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--host",type=hostname,default="proxy.d-mash.ru")
+    parser.add_argument("--site",type=Path,required=True,help="Existing canonical TLS vhost regular file")
+    args=parser.parse_args()
+    SITE=args.site
+    planned_site=nginx_site(SITE.read_text(),args.host)
     if os.geteuid()!=0:raise RuntimeError('Root required')
     stamp=datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     backup=Path('/root/dmash-sturn-backups')/stamp;backup.mkdir(parents=True,mode=0o700)
@@ -45,23 +53,28 @@ def main():
         secret=secret_path.read_text().strip()
         if len(secret)!=64 or any(c not in '0123456789abcdef' for c in secret):raise RuntimeError('Existing secret material invalid; not replaced')
     else:
+        if (ROOT/'turnserver.conf').exists() or (ROOT/'node.env').exists():raise RuntimeError('Existing runtime has no rest.secret; refusing credential replacement')
         secret=secrets.token_hex(32);write(secret_path,secret+'\n')
     config='\n'.join([
         'listening-port=3479','listening-ip=0.0.0.0','relay-ip=85.198.64.183','external-ip=85.198.64.183',
-        'realm=stage-api-ems.d-mash.ru','server-name=stage-api-ems.d-mash.ru',
+        'realm='+args.host,'server-name='+args.host,
         'use-auth-secret','static-auth-secret='+secret,'fingerprint','stale-nonce=600',
         'min-port=55000','max-port=55999','user-quota=8','total-quota=128',
         'max-bps=3000000','bps-capacity=64000000','relay-threads=2',
         'no-tls','no-dtls','no-cli','no-loopback-peers','no-multicast-peers',
         'no-stdout-log','syslog','userdb=/var/lib/dmash-sturn/turndb','pidfile=/run/dmash-sturn/turnserver.pid',''])
+    if (ROOT/'turnserver.conf').exists():
+        old=(ROOT/'turnserver.conf').read_text()
+        if 'listening-port=3479' not in old.splitlines():raise RuntimeError('Dedicated TURN port 3479 required')
+        config=replace_settings(old,{'server-name':args.host})
     write(ROOT/'turnserver.conf',config,0o640)
     shutil.chown(ROOT,group='turnserver');shutil.chown(ROOT/'turnserver.conf',group='turnserver')
-    write(ROOT/'node.env','\n'.join([
-        'DMASH_CAN_S_TURN=1','DMASH_SIGNALING_WSS=wss://stage-api-ems.d-mash.ru/signal/v1',
-        'DMASH_TURN_URLS=turn:stage-api-ems.d-mash.ru:3479?transport=udp,turn:stage-api-ems.d-mash.ru:3479?transport=tcp',
-        'DMASH_TURN_SHARED_SECRET_B64='+base64.b64encode(secret.encode()).decode(),''
-    ]))
-    write(SERVICE,'''[Unit]
+    settings={'DMASH_SIGNALING_WSS':'wss://'+args.host+'/signal/v1',
+        'DMASH_TURN_URLS':','.join('turn:'+args.host+':3479?transport='+t for t in ('udp','tcp'))}
+    existing=(ROOT/'node.env').read_text() if (ROOT/'node.env').exists() else ''
+    if not existing:settings.update({'DMASH_CAN_S_TURN':'1','DMASH_TURN_SHARED_SECRET_B64':base64.b64encode(secret.encode()).decode()})
+    write(ROOT/'node.env',replace_settings(existing,settings))
+    if not SERVICE.exists():write(SERVICE,'''[Unit]
 Description=D-MASH ephemeral TURN relay
 After=network-online.target
 Wants=network-online.target
@@ -83,18 +96,9 @@ LimitNOFILE=8192
 [Install]
 WantedBy=multi-user.target
 ''',0o644)
-    write(DROP,'[Service]\nEnvironmentFile=/etc/dmash-sturn/node.env\n',0o644)
-    site=SITE.read_text()
-    if 'location = /signal/v1' not in site:
-        marker='    location = /mesh/v4 {'
-        if marker not in site:raise RuntimeError('Known staging proxy anchor missing')
-        site=site.replace(marker,'''    location = /signal/v1 {
-        proxy_pass http://127.0.0.1:18080/signal/v1;
-        include /etc/nginx/snippets/d-mash-ems-staging-proxy.conf;
-        proxy_read_timeout 330s;
-    }
-'''+marker,1)
-        write(SITE,site,0o644)
+    if not DROP.exists():write(DROP,'[Service]\nEnvironmentFile=/etc/dmash-sturn/node.env\n',0o644)
+    elif 'EnvironmentFile=/etc/dmash-sturn/node.env' not in DROP.read_text().splitlines():raise RuntimeError('Existing S-TURN drop-in requires manual review')
+    if planned_site!=SITE.read_text():write(SITE,planned_site,0o644)
     subprocess.run(['nginx','-t'],check=True)
     subprocess.run(['systemctl','daemon-reload'],check=True)
     subprocess.run(['systemctl','enable','--now','dmash-sturn'],check=True)

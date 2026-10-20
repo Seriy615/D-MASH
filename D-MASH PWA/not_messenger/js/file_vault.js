@@ -4,6 +4,29 @@
     const ACCOUNT_QUOTA = 256 * 1024 * 1024, INBOUND_PEER_QUOTA = 128 * 1024 * 1024;
     const encoder = new TextEncoder(), decoder = new TextDecoder();
     const isId = value => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
+    const validMode = mode => mode === 'v3-private' || mode === 'node-v4';
+    const validOutcome = value => value && isId(value.peer) && isId(value.fileId) &&
+        isId(value.sha256) && isId(value.operationId) &&
+        Number.isSafeInteger(value.expiresAt) && value.expiresAt > 0 &&
+        Number.isSafeInteger(value.size) && value.size >= 1 && value.size <= MAX &&
+        (value.type === 'voip_file_complete' ? value.reason === null :
+            value.type === 'voip_file_reject' &&
+            ['RECEIVER_BUSY', 'RECEIVER_STORAGE_FULL', 'RECEIVER_DECLINED'].includes(value.reason)) &&
+        (value.reason === 'RECEIVER_BUSY' ? isId(value.transportId) :
+            value.transportId === null || isId(value.transportId)) &&
+        typeof value.queued === 'boolean' &&
+        (!value.queued || value.terminalUntil !== null) &&
+        (value.terminalUntil === null ? value.controlDigest === null :
+            Number.isSafeInteger(value.terminalUntil) && value.terminalUntil > 0 &&
+            isId(value.controlDigest) && isId(value.transportId) &&
+            (value.type === 'voip_file_complete' ||
+                ['RECEIVER_DECLINED','RECEIVER_STORAGE_FULL'].includes(value.reason)));
+    const sameOutcome = (a, b) => a.peer === b.peer && a.fileId === b.fileId &&
+        a.sha256 === b.sha256 && a.size === b.size && a.type === b.type && a.reason === b.reason &&
+        a.transportId === b.transportId && a.controlDigest === b.controlDigest;
+    // Existing authenticated v1 rows predate the authority tag and were
+    // created only by the private-v3 file path. Never infer Node authority.
+    const modeOf = value => value === undefined ? 'v3-private' : value;
     const hex = bytes => Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
     const currentError = () => Error('Account changed during file operation');
     const request = (db, storeName, alias) => new Promise((resolve, reject) => {
@@ -11,6 +34,17 @@
         const q = tx.objectStore(storeName).get(alias);
         q.onsuccess = () => resolve(q.result || null);
         q.onerror = () => reject(q.error || Error('File vault read failed'));
+        tx.onabort = () => reject(tx.error || Error('File vault read aborted'));
+    });
+    const requestWithOwner = (db, ownerAlias, fileAlias) => new Promise((resolve, reject) => {
+        const tx = db.transaction(['blind_file_owners', 'blind_files'], 'readonly');
+        let ownerRow = null, fileRow = null;
+        const owner = tx.objectStore('blind_file_owners').get(ownerAlias);
+        const file = tx.objectStore('blind_files').get(fileAlias);
+        owner.onsuccess = () => {ownerRow = owner.result || null;};
+        file.onsuccess = () => {fileRow = file.result || null;};
+        owner.onerror = file.onerror = () => reject(Error('File vault read failed'));
+        tx.oncomplete = () => resolve({ownerRow, fileRow});
         tx.onabort = () => reject(tx.error || Error('File vault read aborted'));
     });
 
@@ -69,8 +103,9 @@
             return JSON.parse(decoder.decode(plain));
         }
 
-        async owner(session, ownerAlias) {
-            const row = await request(session.db, 'blind_file_owners', ownerAlias);
+        async owner(session, ownerAlias, suppliedRow = undefined) {
+            const row = suppliedRow === undefined ?
+                await request(session.db, 'blind_file_owners', ownerAlias) : suppliedRow;
             session.check();
             const value = row ? await this.open(session, ownerAlias, 'owner', row) :
                 {schema: 'dmash_file_owner_v1', account: session.owner, entries: []};
@@ -79,6 +114,7 @@
                 value.entries.some(entry => !isId(entry.peer) || !isId(entry.fileId) || !isId(entry.alias) ||
                     !Number.isSafeInteger(entry.size) || entry.size < 1 || entry.size > MAX ||
                     typeof entry.inbound !== 'boolean' ||
+                    (entry.controlMode !== undefined && !validMode(entry.controlMode)) ||
                     !['waiting', 'connecting', 'sending', 'delivered', 'failed', 'cancelled'].includes(entry.status) ||
                     (entry.inbound && entry.status !== 'delivered')) ||
                 new Set(value.entries.map(entry => entry.alias)).size !== value.entries.length)
@@ -93,6 +129,7 @@
                 typeof meta.name === 'string' && meta.name.length >= 1 && meta.name.length <= 255 &&
                 typeof meta.mime === 'string' && meta.mime.length <= 128 &&
                 typeof meta.inbound === 'boolean' &&
+                (meta.controlMode === undefined || validMode(meta.controlMode)) &&
                 ['waiting', 'connecting', 'sending', 'delivered', 'failed', 'cancelled'].includes(meta.status) &&
                 (!meta.inbound || meta.status === 'delivered') &&
                 Number.isSafeInteger(meta.attempts) && meta.attempts >= 0 &&
@@ -110,6 +147,134 @@
                 if (peerBytes + size > INBOUND_PEER_QUOTA)
                     throw Error('Недостаточно места для файлов от этого контакта: лимит 128 МиБ. Удалите старые файлы.');
             }
+        }
+
+        outcomeAlias(session) {
+            if (!session.db.objectStoreNames.contains('pairing_material'))
+                throw Error('FILE_OUTCOME_JOURNAL_UNAVAILABLE');
+            return this.alias(session, 'file-outcomes-v1:' + session.owner, 'L2');
+        }
+
+        async _outcomes(session, alias) {
+            const row = await request(session.db, 'pairing_material', alias); session.check();
+            const value = row ? await this.open(session, alias, 'outcomes', row) :
+                {schema: 'dmash_file_outcomes_v1', account: session.owner, entries: []};
+            if (value?.schema !== 'dmash_file_outcomes_v1' || value.account !== session.owner ||
+                !Array.isArray(value.entries) || value.entries.length > 128 ||
+                value.entries.some(entry => !validOutcome(entry)) ||
+                new Set(value.entries.map(entry => entry.operationId)).size !== value.entries.length ||
+                new Set(value.entries.map(entry => [entry.peer, entry.fileId, entry.sha256,
+                    entry.size, entry.type, entry.reason, entry.transportId,
+                    entry.controlDigest].join(':'))).size !== value.entries.length)
+                throw Error('Corrupt file outcome journal');
+            return {row, value};
+        }
+
+        async _commitOutcomes(session, alias, before, value) {
+            const sealed = await this.seal(session, alias, 'outcomes', value);
+            return new Promise((resolve, reject) => {
+                session.check();
+                const tx = session.db.transaction('pairing_material', 'readwrite');
+                const q = tx.objectStore('pairing_material').get(alias);
+                q.onsuccess = () => {
+                    try {
+                        session.check();
+                        if ((q.result?.revision || 0) !== (before?.revision || 0))
+                            throw Error('File outcome journal changed');
+                        tx.objectStore('pairing_material').put({alias, ...sealed,
+                            revision: (before?.revision || 0) + 1});
+                    } catch (error) {try {tx.abort();} catch (_) {} reject(error);}
+                };
+                q.onerror = () => reject(q.error || Error('File outcome read failed'));
+                tx.oncomplete = () => {try {session.check(); resolve();} catch (error) {reject(error);}};
+                tx.onabort = () => reject(tx.error || Error('File outcome commit failed'));
+                tx.onerror = () => {};
+            });
+        }
+
+        async stageOutcome(details) {
+            const session = this.capture();
+            const now = Math.floor(Date.now() / 1000);
+            if (!validOutcome(details) || details.expiresAt <= now || details.expiresAt > now + 300)
+                throw Error('Invalid file outcome');
+            const alias = await this.outcomeAlias(session);
+            for (let attempt = 0; attempt < 8; attempt++) {
+                const {row, value} = await this._outcomes(session, alias);
+                const live = value.entries.filter(entry => !entry.queued ||
+                    entry.terminalUntil === null || entry.terminalUntil > Date.now());
+                const prior = live.find(entry => sameOutcome(entry, details));
+                if (prior) return {...prior};
+                if (live.length >= 128) throw Error('Очередь подтверждений файлов заполнена.');
+                const next = {...value, entries: [...live, {...details}]};
+                try {await this._commitOutcomes(session, alias, row, next);return {...details};}
+                catch (error) {
+                    if (error.message !== 'File outcome journal changed') throw error;
+                }
+            }
+            throw Error('File outcome journal changed; retry');
+        }
+
+        async listOutcomes() {
+            const session = this.capture(), alias = await this.outcomeAlias(session);
+            const {value} = await this._outcomes(session, alias);
+            return value.entries.filter(entry => !entry.queued)
+                .map(entry => ({...entry}));
+        }
+
+        async renewOutcome(operationId, replacementId, expiresAt) {
+            const now = Math.floor(Date.now() / 1000);
+            if (![operationId, replacementId].every(isId) || operationId === replacementId ||
+                !Number.isSafeInteger(expiresAt) || expiresAt <= now || expiresAt > now + 300)
+                throw Error('Invalid file outcome renewal');
+            const session = this.capture(), alias = await this.outcomeAlias(session);
+            for (let attempt = 0; attempt < 8; attempt++) {
+                const {row, value} = await this._outcomes(session, alias);
+                const index = value.entries.findIndex(entry => entry.operationId === operationId);
+                if (index < 0) return null;
+                const prior = value.entries[index];
+                if (prior.queued) return null;
+                if (prior.expiresAt > Math.floor(Date.now() / 1000)) return {...prior};
+                if (value.entries.some(entry => entry.operationId === replacementId))
+                    throw Error('File outcome operation collision');
+                const nextEntry = {...prior, operationId: replacementId, expiresAt};
+                const next = {...value, entries:value.entries.map((entry, i) => i === index ? nextEntry : entry)};
+                try {await this._commitOutcomes(session, alias, row, next);return {...nextEntry};}
+                catch (error) {
+                    if (error.message !== 'File outcome journal changed') throw error;
+                }
+            }
+            throw Error('File outcome journal changed; retry');
+        }
+
+        async terminalOutcome(peer, fileId, sha256, size, transportId, controlDigest) {
+            if (![peer,fileId,sha256,transportId,controlDigest].every(isId) ||
+                !Number.isSafeInteger(size) || size < 1 || size > MAX)
+                throw Error('Invalid file outcome');
+            const session = this.capture(), alias = await this.outcomeAlias(session);
+            const {value} = await this._outcomes(session, alias);
+            const found = value.entries.find(entry => entry.terminalUntil > Date.now() &&
+                entry.peer === peer && entry.fileId === fileId && entry.sha256 === sha256 &&
+                entry.size === size && entry.transportId === transportId &&
+                entry.controlDigest === controlDigest);
+            return found ? {...found} : null;
+        }
+
+        async retireOutcome(operationId) {
+            if (!isId(operationId)) throw Error('Invalid file outcome');
+            const session = this.capture(), alias = await this.outcomeAlias(session);
+            for (let attempt = 0; attempt < 8; attempt++) {
+                const {row, value} = await this._outcomes(session, alias);
+                const found = value.entries.find(entry => entry.operationId === operationId);
+                if (!found) return false;
+                const next = {...value, entries: value.entries.flatMap(entry =>
+                    entry.operationId !== operationId ? [entry] :
+                        entry.terminalUntil > Date.now() ? [{...entry, queued:true}] : [])};
+                try {await this._commitOutcomes(session, alias, row, next);return true;}
+                catch (error) {
+                    if (error.message !== 'File outcome journal changed') throw error;
+                }
+            }
+            throw Error('File outcome journal changed; retry');
         }
 
         async _encryptBody(session, alias, fileId, size, sha256, blob) {
@@ -154,17 +319,20 @@
                 !isId(details?.sha256) || !Number.isSafeInteger(details.size) || details.size !== blob.size ||
                 typeof details.name !== 'string' || !details.name || details.name.length > 255 ||
                 typeof details.mime !== 'string' || details.mime.length > 128 ||
-                typeof details.inbound !== 'boolean') throw Error('Invalid local file');
+                typeof details.inbound !== 'boolean' || !validMode(details.controlMode))
+                throw Error('Invalid local file');
+            const controlMode = details.controlMode;
             const alias = await this.fileAlias(session, peer, fileId), ownerAlias = await this.ownerAlias(session);
             const initialOwner = await this.owner(session, ownerAlias);
             const prior = initialOwner.value.entries.find(entry => entry.alias === alias);
             if (prior) {
                 if (prior.peer !== peer || prior.fileId !== fileId || prior.size !== blob.size ||
                     prior.inbound !== details.inbound) throw Error('File owner collision');
-                const existing = await this.meta(peer, fileId, session);
+                const existing = await this.meta(peer, fileId, session, prior);
                 if (existing?.sha256 !== details.sha256 || existing.name !== details.name ||
-                    existing.mime !== details.mime) throw Error('File identity collision');
-                return existing;
+                    existing.mime !== details.mime || modeOf(existing.controlMode) !== controlMode ||
+                    modeOf(prior.controlMode) !== controlMode) throw Error('File identity collision');
+                return {...existing, controlMode};
             }
             this.ensureCapacity(initialOwner.value.entries, peer, blob.size, details.inbound);
             // The sender computes this digest before queueing; the receiver's
@@ -173,7 +341,8 @@
             const digest = details.sha256;
             const meta = {schema: 'dmash_file_v1', account: session.owner, peer, fileId, size: blob.size,
                 sha256: digest, name: details.name, mime: details.mime, inbound: details.inbound,
-                status: details.inbound ? 'delivered' : 'waiting', attempts: 0, nextAttempt: 0, createdAt: Date.now()};
+                controlMode, status: details.inbound ? 'delivered' : 'waiting', attempts: 0,
+                nextAttempt: 0, createdAt: Date.now()};
             const sealedMeta = await this.seal(session, alias, 'meta', meta);
             const encrypted = await this._encryptBody(session, alias, fileId, blob.size, digest, blob);
             for (let attempt = 0; attempt < 3; attempt++) {
@@ -182,14 +351,16 @@
                 if (known) {
                     if (known.peer !== peer || known.fileId !== fileId || known.size !== blob.size ||
                         known.inbound !== details.inbound) throw Error('File owner collision');
-                    const existing = await this.meta(peer, fileId, session);
+                    const existing = await this.meta(peer, fileId, session, known);
                     if (existing?.sha256 !== digest || existing.name !== details.name ||
-                        existing.mime !== details.mime) throw Error('File identity collision');
-                    return existing;
+                        existing.mime !== details.mime || modeOf(existing.controlMode) !== controlMode ||
+                        modeOf(known.controlMode) !== controlMode) throw Error('File identity collision');
+                    return {...existing, controlMode};
                 }
                 this.ensureCapacity(owner.value.entries, peer, blob.size, details.inbound);
                 const next = {...owner.value, entries: [...owner.value.entries,
-                    {alias, peer, fileId, size: blob.size, inbound: details.inbound, status: meta.status}]};
+                    {alias, peer, fileId, size: blob.size, inbound: details.inbound,
+                        controlMode, status: meta.status}]};
                 if (next.entries.length > 4096) throw Error('Локальное хранилище файлов заполнено. Удалите старые файлы.');
                 const sealedOwner = await this.seal(session, ownerAlias, 'owner', next);
                 try {
@@ -222,21 +393,41 @@
             throw Error('File inventory changed; retry');
         }
 
-        async meta(peer, fileId, session = this.capture()) {
+        async meta(peer, fileId, session = this.capture(), ownerEntry = undefined) {
             const alias = await this.fileAlias(session, peer, fileId);
-            const row = await request(session.db, 'blind_files', alias); session.check();
-            if (!row) return null;
+            let row;
+            if (ownerEntry === undefined) {
+                const ownerAlias = await this.ownerAlias(session);
+                const pair = await requestWithOwner(session.db, ownerAlias, alias); session.check();
+                const owner = await this.owner(session, ownerAlias, pair.ownerRow);
+                ownerEntry = owner.value.entries.find(entry => entry.alias === alias);
+                row = pair.fileRow;
+            } else {
+                row = await request(session.db, 'blind_files', alias); session.check();
+            }
+            if (!row && !ownerEntry) return null;
+            if (!row || !ownerEntry || ownerEntry.alias !== alias ||
+                ownerEntry.peer !== peer || ownerEntry.fileId !== fileId)
+                throw Error('Corrupt file owner');
             const meta = await this.open(session, alias, 'meta', row);
-            if (!this.validMeta(session, peer, fileId, meta)) throw Error('Corrupt file owner');
-            return meta;
+            if (!this.validMeta(session, peer, fileId, meta) || meta.size !== ownerEntry.size ||
+                meta.inbound !== ownerEntry.inbound || meta.status !== ownerEntry.status ||
+                modeOf(meta.controlMode) !== modeOf(ownerEntry.controlMode))
+                throw Error('Corrupt file owner');
+            return {...meta, controlMode: modeOf(meta.controlMode)};
         }
 
         async get(peer, fileId) {
             const session = this.capture(), alias = await this.fileAlias(session, peer, fileId);
+            const meta = await this.meta(peer, fileId, session);
+            if (!meta) return null;
             const row = await request(session.db, 'blind_files', alias); session.check();
-            if (!row) return null;
-            const meta = await this.open(session, alias, 'meta', row);
-            if (!this.validMeta(session, peer, fileId, meta)) throw Error('Corrupt file owner');
+            if (!row) throw Error('Corrupt file owner');
+            const current = await this.open(session, alias, 'meta', row);
+            if (!this.validMeta(session, peer, fileId, current) ||
+                current.sha256 !== meta.sha256 || current.size !== meta.size ||
+                modeOf(current.controlMode) !== meta.controlMode)
+                throw Error('Corrupt file owner');
             return {meta, blob: await this._decryptBody(session, alias, meta, row)};
         }
 
@@ -257,11 +448,13 @@
                 const previous = await this.open(session, alias, 'meta', row);
                 if (!this.validMeta(session, peer, fileId, previous) ||
                     previous.size !== owner.value.entries[index].size ||
-                    previous.status !== owner.value.entries[index].status)
+                    previous.status !== owner.value.entries[index].status ||
+                    modeOf(previous.controlMode) !== modeOf(owner.value.entries[index].controlMode))
                     throw Error('Corrupt file owner');
                 if (previous.inbound && status !== 'delivered') throw Error('Inbound file is committed');
                 if ((previous.status === 'delivered' && status !== 'delivered') ||
-                    (previous.status === 'cancelled' && status !== 'delivered')) return previous;
+                    (previous.status === 'cancelled' && status !== 'delivered'))
+                    return {...previous, controlMode: modeOf(previous.controlMode)};
                 const next = {...previous, status, ...changes};
                 const nextOwner = {...owner.value, entries: owner.value.entries.map((entry, i) =>
                     i === index ? {...entry, status} : entry)};
@@ -292,7 +485,7 @@
                         tx.onabort = () => reject(tx.error || Error('File state update failed'));
                         tx.onerror = () => {};
                     });
-                    return next;
+                    return {...next, controlMode: modeOf(next.controlMode)};
                 } catch (error) {
                     if (error.message === 'File inventory changed') continue;
                     throw error;
@@ -310,9 +503,10 @@
             for (const entry of entries) {
                 if (entry.alias !== await this.fileAlias(session, entry.peer, entry.fileId))
                     throw Error('Corrupt file owner inventory');
-                const meta = await this.meta(entry.peer, entry.fileId, session);
+                const meta = await this.meta(entry.peer, entry.fileId, session, entry);
                 if (!meta || meta.size !== entry.size || meta.inbound !== entry.inbound ||
-                    meta.status !== entry.status) throw Error('Corrupt file inventory');
+                    meta.status !== entry.status || modeOf(meta.controlMode) !== modeOf(entry.controlMode))
+                    throw Error('Corrupt file inventory');
                 out.push(meta);
             }
             return out;
@@ -326,9 +520,9 @@
             for (const entry of entries) {
                 if (entry.alias !== await this.fileAlias(session, peer, entry.fileId))
                     throw Error('Corrupt file owner; chat deletion refused');
-                const meta = await this.meta(peer, entry.fileId, session);
+                const meta = await this.meta(peer, entry.fileId, session, entry);
                 if (!meta || meta.size !== entry.size || meta.inbound !== entry.inbound ||
-                    meta.status !== entry.status)
+                    meta.status !== entry.status || modeOf(meta.controlMode) !== modeOf(entry.controlMode))
                     throw Error('Corrupt file owner; chat deletion refused');
             }
             const next = {...owner.value, entries: owner.value.entries.filter(entry => entry.peer !== peer)};
@@ -343,9 +537,9 @@
             const owner = await this.owner(session, ownerAlias);
             const entry = owner.value.entries.find(item => item.alias === alias && item.peer === peer && item.fileId === fileId);
             if (!entry) throw Error('File owner missing; message deletion refused');
-            const meta = await this.meta(peer, fileId, session);
+            const meta = await this.meta(peer, fileId, session, entry);
             if (!meta || meta.size !== entry.size || meta.inbound !== entry.inbound ||
-                meta.status !== entry.status)
+                meta.status !== entry.status || modeOf(meta.controlMode) !== modeOf(entry.controlMode))
                 throw Error('Corrupt file owner; message deletion refused');
             const next = {...owner.value, entries: owner.value.entries.filter(item => item.alias !== alias)};
             const sealedOwner = await this.seal(session, ownerAlias, 'owner', next);

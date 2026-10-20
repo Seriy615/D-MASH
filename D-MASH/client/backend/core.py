@@ -218,6 +218,7 @@ async def lifespan(app: FastAPI):
             # service is present and its bounded health probe succeeds.
             app.state.s_turn_service = s_turn_service
             if s_turn_service:s_turn_service.start_health_monitor()
+        if node_v4:node_v4.configure_service(state.node_crypto.signing_key, s_turn_service, state.capabilities)
         print(f"🌐 [CORE] Node ID: {state.node_crypto.node_id}")
         state.process_pool = create_crypto_executor()
         # 2. Запускаем Системную БД

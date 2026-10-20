@@ -397,6 +397,10 @@ const NodeManager = {
         }
     },
     async onDeviceUnlocked() {
+        if (window.DMASH_NODE_PROFILE === "managed-v4") {
+            if (!window.DmashNodeRootLifecycleV4) throw new Error("NODE_ROOT_LIFECYCLE_UNAVAILABLE");
+            return window.DmashNodeRootLifecycleV4.attach(window.DeviceRoot).start();
+        }
         if (!window.Core?.device?.signing || !window.DeviceRoot?.state?.root) return;
         await this.autoConnect();
         // Existing authenticated connections do not pass through AUTH_OK a

@@ -18,6 +18,34 @@ Accept prompt. Rejection and limit errors remain visible, and the sender must
   Node v4 contacts need their own authenticated control adapter before this
   feature can be enabled for them. A missing v4 adapter must fail closed; it
   must not silently choose v3.
+- FileVault metadata and the Account-owned inventory carry an authenticated
+  `controlMode` (`v3-private` or `node-v4`). Existing sealed v1 rows without
+  this field are interpreted only as `v3-private`; Account transport changes
+  never upgrade them implicitly. A new write must state its mode, and an
+  inventory/metadata disagreement blocks reads, updates and deletion.
+- The ordinary Node adapter must obtain a current opaque confirmed-peer
+  authority from `Core.confirmedNodeMediaPeerV4(peer)`, select a signed
+  same-channel S-TURN service through `Core.selectNodeMediaServiceV4`, and
+  persist typed encrypted CONTROL through `Core.sendNodeMediaControlV4`.
+  Local offline attachment is a separate decision:
+  `Core.canQueueNodeMediaV4(peer)` checks the Account-owned confirmed Node
+  contact before FileVault stores a `node-v4` WAITING row. It grants no right
+  to submit a network control.
+  Incoming effects must first pass `Core.verifyNodeMediaControlV4` against
+  a private, durable N4 dispatcher row. No raw message, staticShared secret,
+  or legacy service selection is accepted as Node authority. These Core
+  seams and the real ordinary-Node browser gate remain separate work.
+- A Node INVITE is accepted only after `Core.beginNodeFileTransferV4` atomically
+  records the authenticated APPLIED control and exact accepted transfer task.
+  An in-progress transfer can finish after the INVITE expires only while fresh
+  private `phase:'commit'` verification finds the same task within its original
+  one-hour deadline. A cancelled or completed accepted task leaves a bounded
+  encrypted terminal outcome marker for replay suppression; pending semantic
+  COMMIT_ACK/DECLINE controls keep the same persisted operation ID and
+  five-minute `expiresAt` across uncertain enqueue retries. Only after that
+  deadline does one Account-encrypted journal CAS rotate both fields under the
+  same logical file/hash/reason; an expired control is never reported durable.
+  The marker never authorizes a new transfer start.
 - voip_file_request is an Account end-to-end encrypted typed control payload.
   Version 2 adds a stable random file_id distinct from the per-attempt
   S-TURN session_id. The request retains expires_at, signaling,

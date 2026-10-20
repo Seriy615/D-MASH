@@ -6,7 +6,7 @@ from websockets.client import connect
 from backend.s_turn_health import _proof,probe_relay,probe_signaling,parse_turn_url
 
 async def main():
-    url='wss://stage-api-ems.d-mash.ru/signal/v1'
+    url='wss://proxy.d-mash.ru/signal/v1'
     async with connect(url,compression=None,max_size=512*1024,close_timeout=1) as ws:
         call_id,verifier=secrets.token_hex(32),secrets.token_hex(32)
         await ws.send(json.dumps({'type':'CREATE','call_id':call_id,'secret_verifier':verifier}));challenge=json.loads(await ws.recv())

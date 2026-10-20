@@ -87,6 +87,20 @@ class DeviceRegistrationTests(unittest.TestCase):
                     grant=self.grant(auth) if kind == "PUBLIC" else None)
             self.assertFalse(self.registry.routes)
 
+    def test_identical_route_candidate_skips_work_but_changed_expiry_consumes_new_work(self):
+        rid, auth = self.authorization(kind="PRIVATE")
+        proof = self.work("PRIVATE_ROUTE", auth["route_id"])
+        self.registry.authorize_route(self.session, "REGISTER_ROUTE", rid, auth, proof=proof)
+        duplicate_id, duplicate = self.authorization(kind="PRIVATE")
+        self.registry.authorize_route(self.session, "REGISTER_ROUTE", duplicate_id, duplicate, proof=proof)
+        for field in ("expires_at", "generation"):
+            changed_id, changed = self.authorization(kind="PRIVATE")
+            changed[field] += 1
+            changed["signature"] = b64(self.route.sign(authority_transcript(
+                self.node, self.session, "REGISTER_ROUTE", changed_id, changed)).signature)
+            with self.assertRaisesRegex(RegistrationError, "REPLAYED_RESOURCE_POW"):
+                self.registry.authorize_route(self.session, "REGISTER_ROUTE", changed_id, changed, proof=proof)
+
     def test_wrong_grant_node_or_expiry(self):
         for mismatch in ("node", "expiry"):
             rid, auth = self.authorization()

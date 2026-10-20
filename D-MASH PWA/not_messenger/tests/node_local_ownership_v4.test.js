@@ -19,7 +19,7 @@ class Store{constructor(rows){this.rows=rows;}async open(){}async read(k){return
  const restored=await register();const q=await owner.query(restored.token,'b'.repeat(64));assert.deepEqual(q,prepared);
  const {state,...tuple}=q;const actualBind=local.bind.bind(local);local.bind=async()=>{throw Error('Injected dispatch installation failure');};await assert.rejects(owner.change(restored.token,tuple,'ACTIVE'));assert.equal((await owner.query(restored.token,'b'.repeat(64))).state,'ACTIVE');local.bind=actualBind;await owner.change(restored.token,tuple,'ACTIVE');assert.equal(runtime.owned.length,1);
  const certificateDigest=hex(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(DmashSecureSession.canonical(cert)))));
- local.routes.set('destination',{route:{peer:'peer',channel,expires_at:Date.now()/1000+120},certificate:cert});
+ local.routes.set('destination',{route:{peer:'peer',channel,expires_at:Date.now()/1000+120},certificate:cert,ownerToken:null});
  const sealed=DmashRecipientPayloadV4.sealPayload(recipient.publicKey,'stable recipient envelope');
  await local.sendSealed('destination',sealed,cert.route_id,certificateDigest);await local.sendSealed('destination',sealed,cert.route_id,certificateDigest);assert.deepEqual(sent,[sealed,sealed]);
  await assert.rejects(local.sendSealed('destination',sealed,cert.route_id,'0'.repeat(64)));let current=true;const pending=local.sendSealed('destination',sealed,cert.route_id,certificateDigest,{guard:()=>current});current=false;await assert.rejects(pending);assert.equal(sent.length,2);

@@ -1,0 +1,22 @@
+'use strict';
+const assert=require('node:assert/strict'),crypto=require('node:crypto').webcrypto,Runtime=require('../js/account_session_runtime_v4.js');
+const local='11'.repeat(32),peer='22'.repeat(32),oldSession='33'.repeat(32),newSession='44'.repeat(32),binding='55'.repeat(32),operationId='66'.repeat(32);
+const controller=new AbortController(),rows=new Map([['aa'.repeat(32),{alias:'aa'.repeat(32),blob:'binding-v1'}],['bb'.repeat(32),{alias:'bb'.repeat(32),blob:'ledger-v1'}],['cc'.repeat(32),{alias:'cc'.repeat(32),blob:'state-v1'}]]);
+let mutateOnLoad=false;
+const db={transaction(table,mode){assert.equal(table,'pairing_material');assert.equal(mode,'readonly');let pending=0;const tx={onabort:null,onerror:null,oncomplete:null,objectStore(name){assert.equal(name,'pairing_material');return{get(alias){pending++;const request={result:null,onsuccess:null};queueMicrotask(()=>{request.result=rows.get(alias)||null;request.onsuccess?.();if(!--pending)queueMicrotask(()=>tx.oncomplete?.());});return request;}};}};return tx;}};
+const snapshot={peer,digest:binding,generation:1,readiness:'NODE_PROOF_REQUIRED',localAccountKeys:{signing:local},remoteAccountKeys:{signing:peer},localCertificate:{route_id:'77'.repeat(32)},remoteCertificate:{route_id:'88'.repeat(32)}};
+const core={captureAccountSessionV4:()=>({signal:controller.signal,keys:{sign:{publicKey:new Uint8Array(32).fill(0x11)}},blindSalt:new Uint8Array(32).fill(3),masterKey:{},db,assertCurrent(){if(controller.signal.aborted)throw Error('ACCOUNT_REVOKED');}})};
+const Store={async open(){return {aliases:{binding:'aa'.repeat(32),ledger:'bb'.repeat(32),state:'cc'.repeat(32)},async load(){if(mutateOnLoad){mutateOnLoad=false;rows.set('bb'.repeat(32),{alias:'bb'.repeat(32),blob:'ledger-v2'});}return {value:{confirmed:{session_id:newSession,generation:2},ledger:{session_id:newSession,generation:2},retired:[oldSession]}};},close(){}};}};
+const Session=class{async status(){return {phase:'ESTABLISHED',sessionId:newSession,generation:2};}};
+(async()=>{
+ const runtime=new Runtime({core,transport:{readRouteSnapshot:async()=>snapshot,prepareAndSubmitIntent:async()=>({queued:true})},Store,Session,App:null,Outbox:null,profile:{SUITE:'SUITE',createCodec:()=>({})},nacl:{},kem:{},discovery:{},crypto});
+ await runtime.openPeer(peer,{requiredSuite:'SUITE'});
+ const expected={peer,operationId,from:{bindingDigest:binding,generation:1,sessionId:oldSession},to:{bindingDigest:binding,generation:1,sessionId:newSession}};
+ const proof=await runtime.createPendingSuccessorProof(peer,expected),checked=await runtime.verifyPendingSuccessor(proof,expected);assert.equal(checked.valid,true);assert.equal(checked.dependencies.length,3);assert.deepEqual(checked.dependencies.map(x=>x.alias),['aa','bb','cc'].map(x=>x.repeat(32)));
+ await assert.rejects(()=>runtime.verifyPendingSuccessor(Object.freeze({}),expected),/SUCCESSOR_PROOF/);
+ await assert.rejects(()=>runtime.verifyPendingSuccessor(proof,{...expected,operationId:'ff'.repeat(32)}),/SUCCESSOR_PROOF/);
+ mutateOnLoad=true;await assert.rejects(()=>runtime.verifyPendingSuccessor(proof,expected),/SUCCESSOR_PROOF/,'interleaved ledger write escaped three-row snapshot bracket');
+ const refreshed=await runtime.verifyPendingSuccessor(proof,expected);assert.equal(refreshed.dependencies[1].blob,'ledger-v2');
+ controller.abort();await assert.rejects(()=>runtime.verifyPendingSuccessor(proof,expected),/SESSION_CHANGED|ACCOUNT_REVOKED/);runtime.close();
+ console.log('Account successor proof UNIT: private brand, exact context, three-row dependency, interleaved ledger change, Account abort PASS; synthetic IDB only');
+})().catch(error=>{console.error(error);process.exitCode=1;});

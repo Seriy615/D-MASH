@@ -50,6 +50,7 @@ async function initialize(data){
   if(['private-v1','public-v1'].includes(bootstrapProfile)){
    importScripts('account_pairing_v2.js','account_route_binding_v2.js','node_bootstrap_control_v4.js','node_bootstrap_dispatcher_v4.js','node_bootstrap_runtime_v4.js');
    bootstrap=await DmashNodeBootstrapRuntimeV4.open(data.storageKey,nodeId,{runtime,ownership,local,isCurrent:()=>!closed});
+   local.finalControl=(routeId,packet,keys)=>bootstrap.receiveFinal(routeId,packet,keys);
    ownership.detachBootstrap=routeId=>bootstrap.detach(routeId);ownership.archiveRowProvider=owner=>bootstrap.archiveRow(owner);
   }
   if(bootstrapProfile==='public-v1'){importScripts('node_public_bootstrap_control_v4.js','node_public_bootstrap_runtime_v4.js');publicBootstrap=await DmashNodePublicBootstrapRuntimeV4.open(data.storageKey,nodeId,{runtime,ownership,local,isCurrent:()=>!closed});}
@@ -59,9 +60,19 @@ async function initialize(data){
  finally{wipe(data.seed);wipe(data.storageKey);wipe(data.baseNcrh);wipe(data.credential?.key);}
 }
 async function connect(data){
- if(!ready||closed||connecting.size>=2||connecting.has(data.nodeId)||runtime.peers.has(data.nodeId))throw Error();
+ if(!ready||closed)throw Error();
  if(typeof data.url!=='string'||data.url.length>2048)throw Error();
  if(data.password!==undefined&&(typeof data.password!=='string'||!data.password||new TextEncoder().encode(data.password).length>1024))throw Error();
+ const existing=runtime.peers.get(data.nodeId);
+ if(existing){
+  // UI reconnection may reuse this exact authenticated socket. It is not a
+  // fresh password admission or permission to switch an endpoint silently.
+  if(data.password!==undefined||new URL(data.url).href!==existing.secure.socket.url)throw Error();
+  await existing.requireAuthorized();existing.secure.check();
+  if(closed||!ready||runtime.peers.get(data.nodeId)!==existing)throw Error();
+  return {connected:true,reused:true};
+ }
+ if(connecting.size>=2||connecting.has(data.nodeId))throw Error();
  connecting.add(data.nodeId);let secure,channel;const derived=[];
  try{
   secure=await DmashNodeSocketV4.connect(data.url,signing,data.nodeId,{signal:abort.signal});
@@ -100,11 +111,12 @@ self.onmessage=async({data})=>{
    else if(data.type==='OWNER_CHALLENGE')result=await ownership.challenge(data.accountPublic,data.certificate);
    else if(data.type==='OWNER_REGISTER')result=await ownership.register(data.challenge,data.signature);
    else if(data.type==='OWNER_PREPARE')result=await ownership.prepare(data.ownerToken,data);
-   else if(data.type==='OWNER_DISCOVER'){ownership.owner(data.ownerToken);const found=await local.discover(data.certificate);try{ownership.owner(data.ownerToken);}catch(error){local.routes.delete(found.handle);throw error;}result=found;}
+   else if(data.type==='OWNER_DISCOVER'){ownership.owner(data.ownerToken);const found=await local.discover(data.certificate,{ownerToken:data.ownerToken});try{ownership.owner(data.ownerToken);}catch(error){local.releaseGrant(found.handle,data.ownerToken);throw error;}result=found;}
+   else if(data.type==='OWNER_RELEASE_GRANT'){ownership.owner(data.ownerToken);result=local.releaseGrant(data.handle,data.ownerToken);ownership.owner(data.ownerToken);}
    else if(data.type==='OWNER_INBOX_LIST'){const owner=ownership.owner(data.ownerToken,{archiveAllowed:true});result=await inbox.list(owner.ownerSlot,data.limit,data.after);ownership.owner(data.ownerToken,{archiveAllowed:true});}
    else if(data.type==='OWNER_INBOX_ACK'){const owner=ownership.owner(data.ownerToken,{archiveAllowed:true});result=await inbox.acknowledge(data.handle,owner.ownerSlot,{guard:()=>{ownership.owner(data.ownerToken,{archiveAllowed:true});return true;}});ownership.owner(data.ownerToken,{archiveAllowed:true});}
-   else if(data.type==='OWNER_SUBMIT_SEALED'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=await local.sendSealed(data.handle,data.blob,owner.routeId,data.certificateDigest,{guard:()=>{ownership.owner(data.ownerToken);return true;}});}
-   else if(data.type==='OWNER_SUBMIT'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=local.send(data.handle,data.payload,owner.routeId);}
+   else if(data.type==='OWNER_SUBMIT_SEALED'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=await local.sendSealed(data.handle,data.blob,owner.routeId,data.certificateDigest,{ownerToken:data.ownerToken,guard:()=>{ownership.owner(data.ownerToken);return true;}});}
+   else if(data.type==='OWNER_SUBMIT'){const owner=ownership.owner(data.ownerToken),row=await ownership.read(owner.routeId);ownership.owner(data.ownerToken);ownership.matches(row,owner);if(row.state!=='ACTIVE')throw Error('Binding not active');result=local.send(data.handle,data.payload,owner.routeId,data.ownerToken);}
    else if(data.type.startsWith('OWNER_BOOTSTRAP_')){
     if(!bootstrap)throw Error('Private bootstrap profile required');
     if(data.type==='OWNER_BOOTSTRAP_PROVISION')result=await bootstrap.provision(data.ownerToken,data);
@@ -113,7 +125,7 @@ self.onmessage=async({data})=>{
     else if(data.type==='OWNER_BOOTSTRAP_SUBMIT')result=await bootstrap.submit(data.ownerToken,data.handle,data.control);
     else throw Error('Unknown bootstrap operation');
    }
-   else if(data.type==='OWNER_RELEASE'){ownership.owners.delete(data.ownerToken);result=true;}
+   else if(data.type==='OWNER_RELEASE'){local.releaseOwnerGrants(data.ownerToken);ownership.owners.delete(data.ownerToken);result=true;}
    else if(data.type==='OWNER_QUERY')result=await ownership.query(data.ownerToken,data.migrationId);
    else if(data.type==='OWNER_ACTIVATE')result=await ownership.change(data.ownerToken,data.tuple,'ACTIVE');
    else if(data.type==='OWNER_RETIRE')result=await ownership.change(data.ownerToken,data.tuple,'RETIRED');
@@ -123,14 +135,21 @@ self.onmessage=async({data})=>{
    else if(data.type==='SUBMIT')result=local.send(data.handle,data.payload,data.replyRouteId);
    else if(data.type==='INBOX_LIST')result=await inbox.list(data.accountSlot,data.limit,data.after);
    else if(data.type==='INBOX_ACK')result=await inbox.acknowledge(data.handle,data.accountSlot);
+   else if(data.type==='SERVICE_DESCRIPTOR'){
+    if(!self.DmashNodeServiceDescriptorV4)importScripts('node_service_descriptor_v4.js');
+    const channel=runtime.peers.get(data.nodeId);if(!channel||typeof data.signalingWss!=='string')throw Error('SERVICE_PEER_REQUIRED');
+    await channel.requireAuthorized();const response=await runtime.requestService(data.nodeId);await channel.requireAuthorized();
+    if(closed||runtime.peers.get(data.nodeId)!==channel||response.channel!==channel)throw Error('SERVICE_CHANNEL_CHANGED');
+    result=DmashNodeServiceDescriptorV4.verify(response.descriptor,{now:Math.floor(Date.now()/1000),issuer:data.nodeId,holder:channel.secure.session.localId,transcript_hash:hex(channel.secure.session.transcriptHash),challenge:response.challenge,signaling_wss:data.signalingWss});
+   }
    else if(data.type==='STATS')result={...runtime.stats,owned:runtime.owned.length,peers:runtime.peers.size,
     queued:[...runtime.queues.values()].reduce((n,q)=>n+q.length,0),sending:runtime.senders.size,
-    cover:runtime.coverHistory.length,worker:true};
+    cover:runtime.coverHistory.length,preparedGrants:local.routes.size,worker:true};
    else if(data.type==='INJECT_COVER')result=runtime.injectCoverOnce(data.size);
    else if(data.type==='COVER_POLICY'){if(data.enabled)runtime.startCover(data.policy);else runtime.stopCover();result=true;}
    else throw Error();
   }
   if(!closed)self.postMessage({id:data.id,ok:true,result});
- }catch(_){if(!closed)self.postMessage({id:data.id,ok:false});}
+ }catch(error){if(!closed){const codes=['SERVICE_UNAVAILABLE','SERVICE_EXPIRED','SERVICE_CONTEXT','SERVICE_TIMEOUT','SERVICE_PEER_REQUIRED','SERVICE_CHANNEL_CHANGED','SERVICE_CHANNEL_CLOSED','SERVICE_SIGNATURE'];self.postMessage({id:data.id,ok:false,...(data.type==='SERVICE_DESCRIPTOR'&&codes.includes(error.message)?{code:error.message}:{})});}}
  finally{requests.delete(data.id);wipe(data.discoverySeed);wipe(data.discoveryBox);if(Array.isArray(data.recipientKeys))for(const key of data.recipientKeys)wipe(key);}
 };

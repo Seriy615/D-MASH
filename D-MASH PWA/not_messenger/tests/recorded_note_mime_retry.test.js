@@ -9,7 +9,7 @@ require('../js/file_channel.js');require('../js/call_signaling.js');require('../
  const runtime=new DmashRecordedNoteTurn(core,storage),session=runtime.capture(peer);
  const known=await session.vault.getAlias(peer,'L1');rows.set(known,{blob:await runtime.crypt(session,{id:peer})});
  const manifest=await DmashFileChannel.describe(new File(['abc'],'voice_msg',{type:'audio/webm'}),'c'.repeat(64));
- const message={type:'voip_note_request',version:1,note_id:noteId,media_type:'voice',manifest,invitation:{call_id:manifest.id,expires_at:Math.floor(Date.now()/1000)+60,signaling:{wss_endpoint:'wss://stage-api-ems.d-mash.ru/signal/v1',session_id:'a'.repeat(43),one_time_key:'b'.repeat(43)}}};
+ const message={type:'voip_note_request',version:1,note_id:noteId,media_type:'voice',manifest,invitation:{call_id:manifest.id,expires_at:Math.floor(Date.now()/1000)+60,signaling:{wss_endpoint:'wss://proxy.d-mash.ru/signal/v1',session_id:'a'.repeat(43),one_time_key:'b'.repeat(43)}}};
  const alias=await runtime.alias(session,'received:'+peer+':'+noteId);
  for(const status of ['receiving','committed']){
   const blob=await runtime.crypt(session,{record:'turn_note_received_v1',status,sha256:manifest.sha256,size:manifest.size,mediaType:'voice',mime:'audio/webm'});rows.set(alias,{blob});

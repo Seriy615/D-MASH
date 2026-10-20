@@ -1,0 +1,4 @@
+'use strict';
+const assert=require('node:assert/strict'),schema=require('../js/account_media_control_v4.js'),Bridge=require('../js/account_media_bridge_v4.js');let now=100;
+const bridge=Bridge.create({schema,verifyService:async()=>true,clock:()=>now}),message={type:'voip_file_complete',file_id:'a'.repeat(64),sha256:'b'.repeat(64)},record={kind:'file',transferId:message.file_id,sha256:message.sha256,size:1,expiresAt:400};
+const first=bridge.outcome(message,record);now=101;assert.deepEqual(bridge.outcome(message,record),first,'same durable outcome must retain exact bytes after clock advances');assert.throws(()=>bridge.outcome(message,{...record,expiresAt:402}));assert.throws(()=>bridge.outcome(message,{...record,expiresAt:undefined}));now=400;assert.throws(()=>bridge.outcome(message,record));console.log('PASS persisted exact outcome expiry, same-op retry stable, expired/no-bound/future extension refused');

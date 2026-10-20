@@ -1,0 +1,297 @@
+{
+  "scope": "BROWSER two Chromium Workers through real Python Node; synthetic setup, not ordinary UI/page/SW acceptance",
+  "browser": "156.0.8078.4",
+  "sourceRoots": {
+    "integrationRoot": "/tmp/dmash-n4-full-mechanism",
+    "localRoot": "/tmp/dmash-n4-grant-refresh"
+  },
+  "sourceHashes": {
+    "/js/vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "/js/secure_session.js": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+    "/js/route_discovery_v4.js": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+    "/js/recipient_payload_v4.js": "8167b736b6a8e29c50ef8ffb146b0a712e3369cfa9895bdef171ff24b95e6a6a",
+    "/js/account_pairing_v2.js": "49692f34da52870e90d9f447ce8252afff40d82d972b238af3b5040e2a213a63",
+    "/js/account_route_binding_v2.js": "209f83e06cd6aa5439b23b627dcf534acb7abf1bd820334cf09bd737e58f312b",
+    "/js/node_inbox_v4.js": "44d0271df2e831445db79692c8a2631d6f3a8aede7c3804b396faf1e7229524f",
+    "/js/node_local_delivery_v4.js": "7fb8d396cd51ef96129a0a504fd942ab0c69a4a5473a40569914c7c7333f71dd",
+    "/js/node_local_ownership_v4.js": "51bf9d62c51dff240b0887c8e218e1c5d6fe527b336e4e2ee837c1fe6c6a9c7f",
+    "/js/node_bootstrap_control_v4.js": "c2f04dafebc3f93df8262edbb4c9e9a8bef665b1aa7f538ed651d7f63eee56f2",
+    "/js/node_bootstrap_dispatcher_v4.js": "2741afd5d220c9ca3f7e0154490600ec075dca5ee77fa77f14896ff988576a4b",
+    "/js/node_bootstrap_runtime_v4.js": "40eb0fefe7962b46c90eae5f339e896154543dfb277f3f90ac9c663758274433",
+    "/js/vendor/blake3.min.js": "8071ab35cb39002f3ba58c0b3ed48ce1be876d1c93a06a27572fe59d62afca0c",
+    "/js/vendor/argon2-bundled.min.js": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+    "/js/device_root.js": "1e0fc1552b4e4274cc8c0ca96698aeef1257ad9a94c3caab1a09946d6ee298a9",
+    "/js/node_identity.js": "47a18f80fd7e76b3bde39e0680830c8f317ab03eb0e282dddd32e26256560f43",
+    "/js/node_runtime_host_v4.js": "64cae7068c0676490a1aed7d28a408ed082cbfaf357e4b4e254d8f2ec4c5b0a1",
+    "/js/account_route_journal_v2.js": "8cb693a53a623d03d81c35b52f613c977e43a3095931757ee405fba2ede29665",
+    "/js/storage.js": "a22199ed407e54d3cf10fe03a6885d25b64d77a52867bcf4a508dbf8af67c4f8",
+    "/js/node_runtime_coordinator_v4.js": "b4b93af15ce554503a3e32149f77a0ba31b442a9132e19faa3eb8510b3bd3a37",
+    "/js/account_sealed_operation_v4.js": "f01ef000b15fe13ac503c24e0241871e5af6fa7861468c8b7790092f86844f13",
+    "/js/account_node_transport_v4.js": "ca515765bf88db317c2bb0eab49562e0e60ec119ce7f3a4819f47abe24ec2b17",
+    "/js/account_inbox_progress_v4.js": "851e6b2cdd067f09317a96e9276e51b0e08ed488d7b8c8d7d0bb4480422aa25f",
+    "/js/account_managed_inbox_v4.js": "f3532f537542ff3dd2c7b58b8a7c4c5b4e22f790efaa1c445cc8c678ffa046c3",
+    "/js/vendor/kyber768.js": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+    "/js/core_engine.js": "c183f7c9c8a93dc2843ab30e5b4a27ce5ff9c75545df31465db5f0a3cb08c530",
+    "/js/account_handshake_v4.js": "d34819c870e0d2aa923f78cebee43b986e2ddaa5e3d94123402c3805a707fc52",
+    "/js/account_session_v4.js": "acb30404ce864ba96440d4972645b33063520d50d36acbeebc0418276b443116",
+    "/js/account_session_store_v4.js": "68592c93ac40c4f340100932183a8347cf9f4d8ecee48cd86274e169e94b3f80",
+    "/js/account_session_runtime_v4.js": "b2accc803e8ce6c6724dac33380995085e266dd5bbb250579f08bd3592303155",
+    "/js/node_runtime_worker_v4.js": "d15cf76353423cdb4841298166a2f39e66f12d0071a26fedcb7ade8029154e62",
+    "/js/node_relationships_v4.js": "98c2889f0a915181d89dc0f36be2c236cd3b204346a11528587471ed5a677173",
+    "/js/node_admission_v4.js": "9c89e3aeba7c1e8ce8d99821ead92c43f1e59f083af7e73dacae5220f7705f50",
+    "/js/node_registration_v4.js": "674508bb0cf6f24e6a95bdee3cdb7b619af8c0c34ff12e9ed8474a029b9164d2",
+    "/js/resource_pow.js": "678881b320d8466f854ddac236686fccdaaf1d9d9e36d4be874224253cfe6275",
+    "/js/node_socket_v4.js": "327eb904751b432c9035440e354be7f7a68c50033fed7858f26d684f7d58f106",
+    "/js/node_channel_v4.js": "75faf8dbe71754e30a50ba399a3a403e0cd1475886a02933ae63f2d5909e65f3",
+    "/js/probe_primitives_v4.js": "3cc1b7dbbb016258bb756279a7b2b18c907ef69849759b59c3fc021dee26011e",
+    "/js/node_routing_v4.js": "3cdcbf8fe5179fb9831c1fb1880645f808bbe2dad3583adf6e7e979352472a48",
+    "/js/vendor/argon2.wasm": "0c2149886c13e4eae4a6ca25ee71d47423c5c8740a874cf04ff816d1b2c901d7",
+    "/js/vendor/kyber768.wasm": "e9b316e56f5d1eef1f44f28bca99bec16ec9cff69af4b17d318143512255b009"
+  },
+  "checks": {
+    "managedTwoWorkerHandshake": true,
+    "ackOnlyEstablished": true,
+    "lostFinalRetry": true,
+    "exactOpaqueCiphertextRetry": true,
+    "oneSidedStateLossRecovery": true,
+    "ledgerPreserved": true,
+    "nodeHasNoAccountKeys": true,
+    "pageReloadKeepsNodeAndConfirmedSession": true,
+    "pageReloadKeepsEncryptedInboxProgress": true
+  },
+  "wire": {
+    "opaquePackets": 29,
+    "repeatedOpaquePackets": 9
+  },
+  "observedPhases": [
+    [
+      "INIT_PREPARED",
+      "INITIATOR_CONFIRM_PENDING",
+      "ESTABLISHED"
+    ],
+    [
+      "NO_SESSION",
+      "RESPONDER_PENDING",
+      "ESTABLISHED"
+    ]
+  ],
+  "initialGeneration": 1,
+  "recoveredGeneration": 2,
+  "recoveryElapsedMs": 46737,
+  "recoveryEvents": [
+    {
+      "discoveries": [
+        {
+          "at": 1791457020000,
+          "expiresAt": 1791457200
+        },
+        {
+          "at": 1791457038189,
+          "expiresAt": 1791457218
+        },
+        {
+          "at": 1791457055541,
+          "expiresAt": 1791457235
+        }
+      ],
+      "sendEvents": [
+        {
+          "at": 1791457019200,
+          "kind": "INIT",
+          "queued": true,
+          "discoveries": 1
+        },
+        {
+          "at": 1791457022617,
+          "kind": "RECOVERY_REQUEST",
+          "queued": true,
+          "discoveries": 1
+        },
+        {
+          "at": 1791457024540,
+          "kind": "INIT",
+          "queued": true,
+          "discoveries": 1
+        },
+        {
+          "at": 1791457026232,
+          "kind": "RECOVERY_REQUEST",
+          "queued": true,
+          "discoveries": 1
+        },
+        {
+          "at": 1791457035976,
+          "kind": "INIT",
+          "queued": true,
+          "discoveries": 1
+        },
+        {
+          "at": 1791457037363,
+          "kind": "RECOVERY_PROOF",
+          "queued": true,
+          "discoveries": 2
+        },
+        {
+          "at": 1791457041517,
+          "kind": "INIT",
+          "queued": true,
+          "discoveries": 2
+        },
+        {
+          "at": 1791457042835,
+          "kind": "RECOVERY_PROOF",
+          "queued": true,
+          "discoveries": 2
+        },
+        {
+          "at": 1791457054650,
+          "kind": "CONFIRM",
+          "queued": true,
+          "discoveries": 3
+        }
+      ],
+      "receiveEvents": [
+        {
+          "at": 1791457035309,
+          "kind": "RECOVERY_CHALLENGE",
+          "phase": "RECOVERY_PROOF",
+          "persisted": true
+        },
+        {
+          "at": 1791457053994,
+          "kind": "FINAL",
+          "phase": "INITIATOR_CONFIRM_PENDING",
+          "persisted": true
+        },
+        {
+          "at": 1791457063959,
+          "kind": "CONFIRM_ACK",
+          "phase": "ESTABLISHED",
+          "persisted": true
+        }
+      ],
+      "preparedGrants": 1
+    },
+    {
+      "discoveries": [
+        {
+          "at": 1791456996147,
+          "expiresAt": 1791457176
+        },
+        {
+          "at": 1791457029558,
+          "expiresAt": 1791457209
+        },
+        {
+          "at": 1791457048006,
+          "expiresAt": 1791457228
+        },
+        {
+          "at": 1791457067508,
+          "expiresAt": 1791457247
+        }
+      ],
+      "sendEvents": [
+        {
+          "at": 1791456995315,
+          "kind": "FINAL",
+          "queued": true,
+          "discoveries": 1
+        },
+        {
+          "at": 1791457003726,
+          "kind": "CONFIRM_ACK",
+          "queued": true,
+          "discoveries": 1
+        },
+        {
+          "at": 1791457028782,
+          "kind": "CONFIRM_ACK",
+          "queued": true,
+          "discoveries": 2
+        },
+        {
+          "at": 1791457032801,
+          "kind": "RECOVERY_CHALLENGE",
+          "queued": true,
+          "discoveries": 2
+        },
+        {
+          "at": 1791457045499,
+          "kind": "CONFIRM_ACK",
+          "queued": true,
+          "discoveries": 2
+        },
+        {
+          "at": 1791457047041,
+          "kind": "RECOVERY_CHALLENGE",
+          "queued": true,
+          "discoveries": 3
+        },
+        {
+          "at": 1791457051367,
+          "kind": "FINAL",
+          "queued": true,
+          "discoveries": 3
+        },
+        {
+          "at": 1791457060356,
+          "kind": "CONFIRM_ACK",
+          "queued": true,
+          "discoveries": 3
+        },
+        {
+          "at": 1791457066567,
+          "kind": "CONFIRM_ACK",
+          "queued": true,
+          "discoveries": 4
+        }
+      ],
+      "receiveEvents": [
+        {
+          "at": 1791456994522,
+          "kind": "INIT",
+          "phase": "RESPONDER_PENDING",
+          "persisted": true
+        },
+        {
+          "at": 1791457003101,
+          "kind": "CONFIRM",
+          "phase": "ESTABLISHED",
+          "persisted": true
+        },
+        {
+          "at": 1791457028172,
+          "kind": "INIT",
+          "phase": "RECOVERY_REQUIRED",
+          "persisted": true
+        },
+        {
+          "at": 1791457032143,
+          "kind": "RECOVERY_REQUEST",
+          "phase": "RECOVERY_CHALLENGE",
+          "persisted": true
+        },
+        {
+          "at": 1791457044879,
+          "kind": "INIT",
+          "phase": "RECOVERY_PROOF_REQUIRED",
+          "persisted": true
+        },
+        {
+          "at": 1791457050593,
+          "kind": "RECOVERY_PROOF",
+          "phase": "RESPONDER_PENDING",
+          "persisted": true
+        },
+        {
+          "at": 1791457059541,
+          "kind": "CONFIRM",
+          "phase": "ESTABLISHED",
+          "persisted": true
+        }
+      ],
+      "preparedGrants": 1
+    }
+  ]
+}
