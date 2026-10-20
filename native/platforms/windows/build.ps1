@@ -9,16 +9,31 @@ $Repo=(Resolve-Path "$PSScriptRoot/../../..").Path
 $env:PATH="$MingwRoot/bin;$QtRoot/bin;$OpenSSLRoot/bin;$env:PATH"
 if (-not (Test-Path "$QtRoot/lib/cmake/Qt6Widgets/Qt6WidgetsConfig.cmake")) { throw 'Qt6.12 Widgets kit required' }
 # FindOpenSSL4.2 MinGW assigns OPENSSL_CRYPTO_LIBRARY from its LIB_EAY cache.
-$Common=@("-DCMAKE_PREFIX_PATH=$QtRoot", "-DOPENSSL_ROOT_DIR=$OpenSSLRoot", "-DOPENSSL_INCLUDE_DIR=$OpenSSLRoot/include", "-DLIB_EAY:FILEPATH=$OpenSSLRoot/lib/libcrypto.dll.a", "-DSSL_EAY:FILEPATH=$OpenSSLRoot/lib/libssl.dll.a", "-DOPENSSL_CRYPTO_LIBRARY=$OpenSSLRoot/lib/libcrypto.dll.a", '-DBUILD_TESTING=ON')
+$Common=@("-DCMAKE_PREFIX_PATH=$QtRoot", "-DOPENSSL_ROOT_DIR=$OpenSSLRoot", "-DOPENSSL_INCLUDE_DIR=$OpenSSLRoot/include", "-DLIB_EAY:FILEPATH=$OpenSSLRoot/lib/libcrypto.dll.a", "-DSSL_EAY:FILEPATH=$OpenSSLRoot/lib/libssl.dll.a", "-DOPENSSL_CRYPTO_LIBRARY=$OpenSSLRoot/lib/libcrypto.dll.a", '-DBUILD_TESTING=ON', '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON')
 cmake -S "$Repo/native/platforms/desktop" -B "$BuildRoot/desktop" -G Ninja @Common "-DDMASH_ACCOUNT_QUICKJS_DIR=$QuickJSSource"
 if ($LASTEXITCODE) { throw 'Desktop configure failed' }
 cmake --build "$BuildRoot/desktop" --target dmash-desktop dmash_desktop_ui_test --parallel 2
 if ($LASTEXITCODE) { throw 'Desktop build failed' }
 New-Item -Force -ItemType Directory "$HOME/.cache/dmash-native-20261020" | Out-Null
-ctest --test-dir "$BuildRoot/desktop" -R desktop-controls --output-on-failure
-if ($LASTEXITCODE) {
- & "$PSScriptRoot/diagnose-startup.ps1" -Executable "$BuildRoot/desktop/dmash_desktop_ui_test.exe" -QtRoot $QtRoot -MingwRoot $MingwRoot -OpenSSLRoot $OpenSSLRoot -OutputDirectory "$BuildRoot/diagnostics/desktop"
- throw 'Windows UI tests failed; direct exit/dependency/plugin diagnostics captured'
+$desktopDiagnostics="$BuildRoot/diagnostics/desktop"
+New-Item -Force -ItemType Directory $desktopDiagnostics | Out-Null
+# JUnit retains CTest's termination reason even when the process emits nothing.
+ctest --test-dir "$BuildRoot/desktop" -R desktop-controls --output-on-failure --verbose --output-junit "$desktopDiagnostics/ctest.xml"
+$desktopTestExit=$LASTEXITCODE
+if ($desktopTestExit -ne 0) {
+ [IO.File]::WriteAllText("$desktopDiagnostics/ctest-exit.txt",[string]$desktopTestExit)
+ foreach ($file in @('CMakeCache.txt','build.ninja','CMakeFiles/rules.ninja','compile_commands.json')) {
+  $source=Join-Path "$BuildRoot/desktop" $file
+  if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $desktopDiagnostics (Split-Path $file -Leaf)) }
+ }
+ Copy-Item -LiteralPath $PSCommandPath,"$PSScriptRoot/diagnose-startup.ps1" -Destination $desktopDiagnostics
+ try {
+  & "$PSScriptRoot/diagnose-startup.ps1" -Executable "$BuildRoot/desktop/dmash_desktop_ui_test.exe" -QtRoot $QtRoot -MingwRoot $MingwRoot -OpenSSLRoot $OpenSSLRoot -OutputDirectory $desktopDiagnostics
+ } catch {
+  # A diagnostic error must not replace or accidentally clear the CTest failure.
+  $_ | Out-String | Set-Content -Encoding utf8 "$desktopDiagnostics/diagnosis-error.txt"
+ }
+ throw "Windows UI tests failed (CTest exit $desktopTestExit); bounded native exit / QtTest / PE diagnostics captured"
 }
 cmake -S "$Repo/native/account" -B "$BuildRoot/account" -G Ninja @Common "-DDMASH_ACCOUNT_QUICKJS_DIR=$QuickJSSource"
 if ($LASTEXITCODE) { throw 'Account/broker configure failed' }

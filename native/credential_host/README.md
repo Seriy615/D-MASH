@@ -38,7 +38,13 @@ from Root; Account keys/DeviceID are not used as Node identity material.
 `accountSessionActive`, public `account` display fields, `accountImportPhase`,
 `nodeRunning`, `nodeState`, and accepted `nodePolicy`. Import/unlock returns
 Account inventory in `result.rows`; Account methods preserve the facade's
-`result.value`/`result.rows` shape. `node.disable` currently performs a full Root
+`result.value`/`result.rows` shape. `node.pause` revokes transport results, closes
+all scoped daemon connections and confirms actual Node exit while retaining the
+unlocked Root, Account session, encrypted stores and accepted pending jobs.
+`node.enable` resumes the same identities and durable jobs without another PIN
+or Account login in the same credential-host lifetime. A failed transport start
+also stops/revokes that attempt while retaining the Root and Account.
+`node.disable` retains its existing full-lock behavior and performs a full Root
 lock and Account cancellation before confirming the owned Node has stopped;
 it returns `rootLocked:true`. Reopening requires Root unlock. Endpoint policy
 is retained as private public-config JSON, without capabilities or secrets.
@@ -97,3 +103,14 @@ public signing/box identities in the Root-encrypted registry. The publication
 transaction inserts a new identity alias and refuses duplicates; it cannot
 replace an existing Account or its history. Account creation does not sign in.
 Missing keys or an existing credential database never select fresh setup.
+
+The pause process gate checks actual owned-child exit, authenticated registry and
+Saved access while paused, client detach, resume without PIN/login, same Node
+identity, failed-resume cleanup and the retained full-lock `node.disable` alias.
+The separate queued-job fixture uses two resident credential owners and actual
+Node children, existing signed synthetic contacts and a real default-difficulty
+22 Python transit. Its private diagnostics retain stage timings and synthetic
+state; it compares authenticated native job IDs, expiry and opaque packet hashes
+across pause/resume and an actual paused credential-owner crash, then requires
+recipient Account history commit exactly once. It does not establish UI pairing
+or Android/Windows execution.

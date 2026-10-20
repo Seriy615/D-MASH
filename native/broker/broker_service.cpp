@@ -96,7 +96,7 @@ void BrokerService::cancel() {
 }
 bool BrokerService::isCurrentTransportResult(const BrokerResult& result) const {
     return result.ok && result.control.phase == "ACTIVE" && result.operationEpoch == epoch_ &&
-           !stopping_;
+           result.transportEpoch == transportEpoch_ && !stopping_;
 }
 std::future<BrokerResult> BrokerService::createProfile(QByteArray pin, QString backup) {
     const auto requested = epoch_.load();
@@ -391,9 +391,9 @@ std::future<BrokerResult> BrokerService::enableNode(RootCodec::NodeSeedFactory f
     });
 }
 std::future<BrokerResult> BrokerService::transport(QJsonArray endpoints, bool direct) {
-    auto token = epoch_.load();
-    return enqueue([this, token, endpoints, direct] {
-        need(token == epoch_ && bool(root_), "CREDENTIAL_CANCELLED");
+    const auto token = epoch_.load(), scope = transportEpoch_.load();
+    return enqueue([this, token, scope, endpoints, direct] {
+        need(token == epoch_ && scope == transportEpoch_ && bool(root_), "CREDENTIAL_CANCELLED");
         auto s = store_->read();
         need(root_->matchesRecord(s.root), "CREDENTIAL_CONFLICT");
         // Validate material and migration state before burning a durable reservation.
@@ -408,7 +408,8 @@ std::future<BrokerResult> BrokerService::transport(QJsonArray endpoints, bool di
         BrokerResult result = success(s);
         result.control = state;
         result.operationEpoch = token;
-        if (token != epoch_) {
+        result.transportEpoch = scope;
+        if (token != epoch_ || scope != transportEpoch_) {
             result.ok = false;
             result.code = "CREDENTIAL_CANCELLED";
             result.control = control_->beginFullLock();
@@ -416,6 +417,25 @@ std::future<BrokerResult> BrokerService::transport(QJsonArray endpoints, bool di
         }
         bundle["generation"] = double(state.generation);
         result.transportBundle = std::move(bundle);
+        return result;
+    });
+}
+std::future<BrokerResult> BrokerService::pauseTransport() {
+    const auto token = epoch_.load(), scope = ++transportEpoch_;
+    return enqueue([this, token, scope] {
+        need(token == epoch_ && scope == transportEpoch_ && bool(root_), "ROOT_UNLOCK_REQUIRED");
+        const auto snapshot = store_->read();
+        need(root_->matchesRecord(snapshot.root), "CREDENTIAL_CONFLICT");
+        if (!control_ && QFileInfo::exists(controlPath_))
+            control_ = ControlJournal::openExisting(controlPath_, snapshot.deviceId);
+        auto result = success(snapshot);
+        if (control_)
+            result.control = control_->beginFullLock();
+        need(token == epoch_ && scope == transportEpoch_, "CREDENTIAL_CANCELLED");
+        // Only transport results are fenced. The prepared Root's epoch and
+        // Account owner session remain current, and no durable jobs are removed.
+        result.operationEpoch = token;
+        result.transportEpoch = scope;
         return result;
     });
 }

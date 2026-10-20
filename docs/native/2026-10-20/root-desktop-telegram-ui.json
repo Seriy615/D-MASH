@@ -1,0 +1,36 @@
+{
+  "kind": "ROOT actual Telegram-reference Desktop geometry and functional UI inspection",
+  "status": "PASS_SCOPED_UI_DESIGN_PARTIAL",
+  "sourceCommit": "7aaccb3",
+  "frozenSourceManifestSha256": "2e9dec668eb97ba6c26de0e236cb2338ba517955f8caa47f070a3601acf86fd6",
+  "sourceFilesVerified": 242,
+  "artifactsVerified": 8,
+  "runtimeLibrariesVerified": 9,
+  "uiBinarySha256": "b1c6791e77e92e388c93d65021451572779f54e45ee4d76b8de3a29d681acaef",
+  "hostBinarySha256": "99f324e0c5341cd5810a1d58b0dcc320f16c69e3a43740576dc4e9659615cd1c",
+  "handle": 97893,
+  "exitCode": 0,
+  "platform": "XCB via Xvfb, same Qt6.12/OpenSSL and appended existing XCB dependencies",
+  "qtTest": {
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "elapsedMs": 5609
+  },
+  "checks": [
+    "Actual Createprofile Cancel/empty/mismatch/valid",
+    "OptionalAccountCancel then Accountcreate/signin/Saved Send/windowreopen/signout",
+    "Actual disconnected controls inventory and menu open/close/searchfilter",
+    "Root visually inspected same-run screenshot: Telegram-reference sidebar search/menu/avatar/name/preview/time, header/message canvas/date/bubble/compact composer"
+  ],
+  "screenshot": "desktop-telegram-preview.png",
+  "screenshotSha256": "3cc1313121e7edf4dde75412b56d03b3fce52561450ef8497908f17f1d1f14b3",
+  "referenceDocument": "native/platforms/TELEGRAM_DESIGN_REFERENCE.md",
+  "limits": [
+    "First functional Desktop layout revision, not full Telegram design acceptance",
+    "Header label inherited border is known visual defect assigned to platform; next pin fixes it",
+    "Credential host predates integrated pause; no visible pause/Node enable/remote chat/Windows acceptance",
+    "Android layout Java compiles but actual package/runtime remains unaccepted",
+    "Synthetic profiles only; no Telegram source/assets copied"
+  ]
+}

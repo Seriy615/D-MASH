@@ -57,6 +57,7 @@ composer/settings, проверять реальными UI actions и срав�
 | Host crash/recovery | Immutablea52e9f5, root44213 exit0:183source/19artifact/7libs exact; SIGKILL host/Node lease EOF; sameRoot/Node/gens1,3,5,7/Saved2; authenticated floor merge; cancel stops verified suspended oldchild. Process/cancel/logout/reopen/ACTIVE grant lease PASS | [Recovery](docs/native/2026-10-20/root-resident-host-recovery.json). Integrated f8b17d2/1a5f179/87fc172. Не full N4; pin Account resources older remote integration. |
 | Fresh setup | Immutableca849fd root65965/54456 PASS:187source/27artifact/7libs exact; Root-only/zeroAccounts, optional compatible Account, cancellation, duplicates refuse overwrite, Saved/reopen/missing-key refusal; original JS/WASM Root+registry interop | [Fresh](docs/native/2026-10-20/root-fresh-root-account.json). Integrated1930b80; Root fresh transit accepted separately above; fresh UI still open. |
 | Desktop Account controls | Actual Widgets chooser/import/PIN/Account cancel/wrong/busy/correct/Saved/reopen on owning copy. Clipboard test-only correction33a6273 root20183 PASS3/0/22.644s, unchanged pinned product | [Chooser retest](docs/native/2026-10-20/root-desktop-chooser-retest.json). Visible Node controls ещё не root PASS. |
+| Telegram Desktop first layout | Actual root97893 XCB UI PASS4/0/5609ms,242source/8artifacts/runtime hashes verified; actual synthetic Saved screenshot inspected | [Proof](docs/native/2026-10-20/root-desktop-telegram-ui.json), [preview](docs/native/2026-10-20/desktop-telegram-preview.png). Source7aaccb3; design PARTIAL, header border fix pending; no Android/Windows/full UI/remote acceptance. |
 | Desktop fresh setup | Root actual Qt mouse/key controls PASS offscreen3035ms and XCB/Xvfb4076ms; Createprofile Cancel/empty/mismatch/valid, optionalAccount Cancel, CreateAccount/signin/Saved/windowreopen/signout | [Fresh UI](docs/native/2026-10-20/root-desktop-fresh-ui.json).241source/8artifacts exact. Sourceeea5c69; no Node-button/remote/Windows acceptance. |
 | Android package/UI | ARM64 package/signature/16K ELF inspection; actual x86 API35 KVM install/launch, Stop/compose/Send disabled when off, Details Close/Back, background/resume | [Package](docs/native/2026-10-20/root-android-package-inspection.json), [actual UI retest](docs/native/2026-10-20/root-android-kvm-launcher-retest.json). Node service/Account/UI/full app acceptance ещё нет. |
 
@@ -91,14 +92,21 @@ composer/settings, проверять реальными UI actions и срав�
  APK hash verified; same timeout with nativeStartupStages=[] (no ENTRY observed).
  [Run8 proof](docs/native/2026-10-20/root-android-empty-entry-retest.json).
  No specific loader cause established.8bd1c88/f639999 bounded Qt-loader reason
- collector published for next actual runner; includes QtLoader warning severity.
+ collector actual ec66run39449711991 now terminal FAIL: event
+ NATIVE_LIBRARY_LOAD_FAILED, missingLibraries=[], no ENTRY. Root exact source/APK
+ verified. [Loader reason](docs/native/2026-10-20/root-android-loader-reason.json).
+ Specific load cause unresolved; runtime agent investigates read-only while
+ platform implements requested Telegram UI.
 
 - **Windows:** actual run39443521913 source9988c73 exact merge tree confirmed:
   all75 Desktop/host/UI-test targets compiled and linked. desktop-controls then
   failed0.06s with empty output before QtTest banner. Cause unknown; no UI action
   or package acceptance. [Attempt](docs/native/2026-10-20/root-windows-compile-launch-attempt.json).
  10c5743 adds bounded direct exitcode/DLL/plugin diagnostics +always-upload logs;
- next actual runner required. Standalone Account/Node suites and Windows package
+ actual22a run39447632824 terminal same CTest FAIL0.05s; direct diagnostic reports
+ EXITED0 with empty stdout/stderr and no QtTest banner. No cause established.
+ [Artifact inspection](docs/native/2026-10-20/root-windows-empty-direct-diagnosis.json).
+ Broker now owns Windows build.ps1/diagnose-startup.ps1. Standalone Account/Node suites and Windows package
  not reached. Earlier compiler/OpenSSL/include fixes have passed this boundary.
 - **Long certificate retry/recipient Node restart accepted:**3cf41d9 stable expiresAt
   +9e23a60 fixture independently passed root54951 exit0,31forwards, lost accepted
@@ -115,18 +123,19 @@ composer/settings, проверять реальными UI actions и срав�
 
 ## 4. Source publication, environments и активные проверки
 
-Latest published GitHub snapshot **ec66d1142cdc94a8859cec4e29f6b72c4baef45b** is
-exact local **f63999927916daee7fd7c7f2baae4e55bf46fb61** tree
-**7223bc5867c8df77abdc7e16cec1a567fcbcb8b8**. create_tree exact + git ls-remote
+Latest published GitHub snapshot **177cebc72bad180b36cd38f1678c0c82348fa220** is
+exact local **e727884b1d689675e466512d69c01242e69bad6a** tree
+**4ee4c17f713282a5313a2ac1bc024a5ae9c90faf**. create_tree exact + git ls-remote
 verified. Branch `codex/native-clients-ci-20261020`, draft
 [PR8](https://github.com/Seriy615/D-MASH/pull/8), attached to task.
 Later source/docs and live platform WIP are not implicitly published.
 See [FORGE_SYNC.md](FORGE_SYNC.md). No deployment or runtime-state backup.
 
 Last actual REST check:22a snapshot Android39447633575/job118713660813 LIVE
-(scoped emulator service test); Windows39447632824/job118713657263 LIVE.
-4ed Android39446127764 and Windows39446127350 terminal FAIL. New ec66 snapshot
-contains loader diagnosis/scope changes; new run outcome not yet inspected.
+(scoped emulator service test); Windows39447632824/job118713657263 terminal FAIL (artifact above).
+4ed Android39446127764 and Windows39446127350 terminal FAIL. ec66 Android39449711991/job118720957614 terminal FAIL (loader reason above);
+Windows39449711886/job118720960622 was LIVE on last check. Latest177 snapshot includes normal AndroidUI+CI and
+Desktop fresh creation; new outcome not yet inspected. All are development checks.
 Use fresh public REST Cache-Control:no-cache: connector statuses may be stale.
 Transient log failure does not prove a process/job stopped; poll the same handle.
 
@@ -159,7 +168,15 @@ normal unlock/login recorded in BROWSER_QA. No user/production data touched.
 - **broker_store_sol:** isolated credential-host worktree. Accepted recovery
   integrated. Fresh Root-only/optional Account1930b80 independently accepted. Next isolated
   transport-only node.pause/resume preserves unlocked Root/Account/queued jobs;
-  current node.disable=fullRootlock unchanged until coherent UI migration.
+  current node.disable=fullRootlock unchanged until coherent UI migration. Immutable
+  pause-dd3c640 root90170 PASS actual child exit/pause/Saved/same identity/resume
+  withoutPIN/failed-resume-retainsRootAccount;278source/14artifacts/8libs exact.
+  [Process proof](docs/native/2026-10-20/root-native-pause-process.json). Independent root62953 queuedjob mesh PASS: freshsynthetic signed contacts,
+  actual default22transit; sameacceptedjob/opaqueexpiry throughpause/SIGKILL/
+  floors1,3,5/reconnect; recipienthistory1, identities preserved. OrdinaryUI
+  pairing/visiblepause/WindowsAndroid not inferred. Integrated5f3fa4d/6448583/41606d8. Platform frozen TelegramUI binary predates
+  pause; visiblepause API integration follows separately.
+  Windows two scripts now exclusively owned here while platform redesigns UI.
 - **native_runtime_sol:** native actor/localIPC, isolated remote Account worktree,
   Android CI diagnostics. 3cf/9e independent parent54951 PASS, source integratedf187474/9308218. Diagnose
   admission failure using retained metadata, no cause guess. Fresh foreign transit fixture accepted independently, integrated05dd2cc. Now
@@ -168,7 +185,9 @@ normal unlock/login recorded in BROWSER_QA. No user/production data touched.
   isolated f50e82c UNIT only, not shared yet; actual native pairing pending.
   Platform now owns Android CI UI/instrumentation files.
 - **native_platforms_sol:** PRIORITY: Telegram Desktop/Android design requirement above;
-  inspect/pin original reference source, implement both native client layouts,
+  pinned original Desktop86262333/Android0aae9598 references; Desktop7aaccb3
+  root97893 scoped actualXCB PASS (table above), first layout PARTIAL; implement
+  Android Telegram layout/runtime and next pause/explicitLock menu,
   move daemon technical controls into menu/settings. Existing functional UI tests
   do not accept current arbitrary layout as requested design. Desktop Node-control stage diagnostics, Android normal
   Views/credential service and Windows compile/runtime fixes.9988 entry published.

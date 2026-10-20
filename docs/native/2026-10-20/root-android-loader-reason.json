@@ -1,0 +1,51 @@
+{
+  "kind": "ROOT actual Android Qt loader diagnosis",
+  "status": "FAIL_SERVICE",
+  "runId": 39449711991,
+  "jobId": 118720957614,
+  "artifactId": 12278556524,
+  "zipSha256": "68fb336835606c22c754ed7a8f6c456a2c7c6dc4a531a126a49b61382c31476d",
+  "localTreeCommit": "f63999927916daee7fd7c7f2baae4e55bf46fb61",
+  "publishedHead": "ec66d1142cdc94a8859cec4e29f6b72c4baef45b",
+  "actualCiSourceCommit": "78f1226645b1d9075645ad4b6422360b8074baaf",
+  "verifiedSourceFiles": 328,
+  "runtime": {
+    "kind": "ANDROID_API35_ACTUAL_UI_AND_SCOPED_SERVICE",
+    "status": "FAIL",
+    "checks": [
+      "actual APK installed and package path verified",
+      "actual details open/Close/reopen/Back taps",
+      "disabled Stop Node/compose/Send",
+      "Activity background/resume preserves honest off state"
+    ],
+    "limits": [
+      "No Account import/login/history/contacts/remote chat acceptance",
+      "No mesh peers, transit/delivery, Doze, reboot or physical device acceptance",
+      "Synthetic same-UID instrumentation grant; resident credential owner not tested"
+    ],
+    "apkSha256": "9fc6a3f8ca76c53e60aec7bf2c378447af0ee186114ac8561e303a584e7985ce",
+    "api": "35",
+    "abi": "x86_64",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "instrumentation": "FAIL first-install-bootstrap-read TimeoutException",
+    "serviceDiagnostic": {
+      "binderAlive": true,
+      "nativeExited": false,
+      "serviceState": "STARTING"
+    },
+    "failureClass": "AssertionError",
+    "nativeStartupStages": [],
+    "qtLoaderDiagnostic": {
+      "events": [
+        "NATIVE_LIBRARY_LOAD_FAILED"
+      ],
+      "missingLibraries": []
+    }
+  },
+  "assessment": "Qt loader emitted a native-library load failure before any observed ENTRY; specific library/error cause not established. No runtime acceptance.",
+  "limits": [
+    "Classifier intentionally bounded; no raw logcat published",
+    "No Account normal UI acceptance from this older launcher package",
+    "MissingLibraries=[] does not prove all dependencies load"
+  ]
+}

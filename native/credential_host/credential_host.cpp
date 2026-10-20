@@ -108,7 +108,7 @@ struct CredentialHost::State {
     QString pendingId, pendingMethod, phase;
     QJsonObject policy, pendingPolicy;
     quint64 jobEpoch = 1, pendingEpoch = 0;
-    bool rootLocked = true;
+    bool rootLocked = true, nodePaused = false;
     QJsonObject activeAccount;
     struct Client {
         QByteArray input;
@@ -221,7 +221,7 @@ struct CredentialHost::State {
             {"nodeRunning", supervisor && supervisor->running()},
             {"nodeState", supervisor && supervisor->running()
                               ? "running"
-                              : (supervisor ? "stopped" : "unavailable")}};
+                              : (nodePaused ? "paused" : (supervisor ? "stopped" : "unavailable"))}};
         if (supervisor && supervisor->running()) {
             try {
                 auto node = daemon->call("status", "node.status", {}, true);
@@ -350,6 +350,30 @@ struct CredentialHost::State {
             return failure(e.what());
         }
     }
+    account::AccountResult pauseAndStop() {
+        try {
+            need(bool(supervisor), "NODE_HOST_UNAVAILABLE");
+            auto stopped = broker->pauseTransport().get();
+            need(stopped.ok, stopped.code.toUtf8().constData());
+            daemon->clear();
+            if (supervisor) {
+                if (stopped.control.phase == "REVOKING" && !supervisor->running())
+                    need(supervisor->provePreviousStopped(stopped.control, [] { return true; }),
+                         "NODE_PREVIOUS_EXIT_UNCONFIRMED");
+                supervisor->stop();
+            }
+            if (stopped.control.phase == "REVOKING") {
+                const auto ack = broker->confirmTransportStopped(stopped.control).get();
+                need(ack.ok, "NODE_STOP_UNCONFIRMED");
+            }
+            nodePaused = true;
+            account::AccountResult result;
+            result.ok = true;
+            result.value = {{"rootLocked", rootLocked}, {"nodeRunning", false},
+                {"nodeState", "paused"}, {"accountSessionActive", !activeAccount.isEmpty()}};
+            return result;
+        } catch (const std::exception& e) { return failure(e.what()); }
+    }
     account::AccountResult lockAndStop() {
         ++jobEpoch;
         account->cancel();
@@ -370,6 +394,7 @@ struct CredentialHost::State {
                 need(ack.ok, "NODE_STOP_UNCONFIRMED");
             }
             rootLocked = true;
+            nodePaused = false;
             account::AccountResult result;
             result.ok = true;
             result.value = {{"rootLocked", true}, {"nodeRunning", false}};
@@ -416,6 +441,10 @@ struct CredentialHost::State {
         }
         if (busy()) {
             respond(socket, id, failure("CREDENTIAL_HOST_BUSY"));
+            return;
+        }
+        if (method == "node.pause") {
+            respond(socket, id, pauseAndStop());
             return;
         }
         if (method == "node.enable") {
@@ -593,6 +622,7 @@ struct CredentialHost::State {
                          authenticatedStatus.value("policyRevision").toInteger() ==
                              qint64(finished.transport.control.policyRevision),
                      "NODE_TRANSPORT_POLICY_MISMATCH");
+                nodePaused = false;
                 publicNodeId = credential::nodePublicId(QByteArray::fromHex(
                     finished.transport.transportBundle.value("nodeSeed").toString().toLatin1()));
                 renewalClock.start();
@@ -606,15 +636,11 @@ struct CredentialHost::State {
                 finished.result.value = {{"nodeRunning", true}, {"nodeState", "running"}};
             } catch (const std::exception& e) {
                 finished.result = failure(e.what());
-                try {
-                    auto stopped = broker->fullRootLock().get();
-                    rootLocked = true;
-                    daemon->clear();
-                    supervisor->stop();
-                    if (stopped.ok && stopped.control.phase == "REVOKING")
-                        broker->confirmTransportStopped(stopped.control).get();
-                } catch (...) {
-                }
+                // A failed transport start revokes/stops that attempt. It does
+                // not discard the user's still-current Root or Account session.
+                const auto cleanup = pauseAndStop();
+                if (!cleanup.ok)
+                    finished.result.value["transportStopCode"] = cleanup.code;
             }
         }
         if (finished.result.ok && pendingMethod == "account.login" && pendingEpoch == jobEpoch)

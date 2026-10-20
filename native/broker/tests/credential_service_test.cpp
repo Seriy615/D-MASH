@@ -147,8 +147,21 @@ int main(int argc, char **argv) {
         check(exported.ok && exported.transportBundle.size() == 7 &&
               exported.control.phase == "ACTIVE");
         check(service.isCurrentTransportResult(exported));
+        const auto paused = service.pauseTransport().get();
+        check(paused.ok && paused.control.phase == "REVOKING" &&
+              paused.control.generation > exported.control.generation);
+        check(!service.isCurrentTransportResult(exported));
+        check(service.confirmTransportStopped(paused.control).get().control.phase == "LOCKED");
+        // Resume the same prepared Root, without PIN re-entry or material changes.
+        const auto resumed = service.transport({}, false).get();
+        check(resumed.ok && service.isCurrentTransportResult(resumed));
+        check(resumed.control.generation > paused.control.generation);
+        for (const auto& name : {"nodeSeed", "baseNcrh", "storageKey"})
+            check(resumed.transportBundle.value(name) == exported.transportBundle.value(name));
+        check(!service.isCurrentTransportResult(exported));
         auto locking = service.fullRootLock().get();
         check(!service.isCurrentTransportResult(exported));
+        check(!service.isCurrentTransportResult(resumed));
         check(locking.ok && locking.control.phase == "REVOKING" &&
               locking.control.generation > exported.control.generation);
         check(service.transport({}, false).get().code == "CREDENTIAL_CANCELLED");

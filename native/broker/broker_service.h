@@ -10,7 +10,7 @@
 namespace dmash::broker {
 struct BrokerResult {
     bool ok = false, committed = false, cleanupPending = false, rootReunlockRequired = false;
-    quint64 revision = 0, operationEpoch = 0;
+    quint64 revision = 0, operationEpoch = 0, transportEpoch = 0;
     QString code, deviceId, accountImportPhase, accountDatabasePath;
     QJsonObject transportBundle;
     QJsonArray accountRegistry;
@@ -46,6 +46,8 @@ class BrokerService final {
     // Recheck immediately before authenticated handoff; false results must never be installed.
     bool isCurrentTransportResult(const BrokerResult& result) const;
     // Account logout/window close do not call fullRootLock/cancel; transport survives.
+    // Stops transport authority only; the Root and Account owner remain unlocked.
+    std::future<BrokerResult> pauseTransport();
     std::future<BrokerResult> fullRootLock();
     // Invoke only with authenticated exact-floor daemon acknowledgement/owned-child exit proof.
     std::future<BrokerResult> confirmTransportStopped(ControlState pending);
@@ -55,7 +57,7 @@ class BrokerService final {
 
   private:
     std::future<BrokerResult> enqueue(std::function<BrokerResult()>);
-    std::atomic<quint64> epoch_{1};
+    std::atomic<quint64> epoch_{1}, transportEpoch_{1};
     std::atomic<bool> stopping_{false}, eraseRequested_{false};
     std::mutex mutex_;
     std::condition_variable ready_;

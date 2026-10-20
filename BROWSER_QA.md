@@ -951,3 +951,11 @@ Desktop/Android reference fidelity is NOT RUN; owner native_platforms_sol.
 Required next checks: Telegram-style chatlist/search/menu, header/bubbles/compact
 composer/settings on both clients, existing flows retained, real UI screenshots
 compared with pinned upstream references. No fake enabled unimplemented actions.
+
+Telegram Desktop7aaccb3 first layout: root97893 actual XCB/Xvfb UI PASS4/0/5609ms,
+242source/8artifacts/runtime hashes exact. Real menu/searchfilter/freshProfile/
+optionalAccount/Saved/windowreopen/signout controls; screenshot visually inspected.
+Design PARTIAL: known header-label inherited border assigned platforms, Android
+actual package/runtime and other Telegram flows NOT RUN. Pre-pause host; no
+visible Nodepause or remotechat acceptance. [Proof](docs/native/2026-10-20/root-desktop-telegram-ui.json),
+[actual synthetic screenshot](docs/native/2026-10-20/desktop-telegram-preview.png).
