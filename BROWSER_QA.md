@@ -1,3 +1,11 @@
+**2026-10-20 Android actual KVM API35 launcher — FAIL, install/launch PASS:**
+Run39437324295 APKbuilt/signed/installed and Activitylaunched; actualXML shows
+Nodeisoff but STOPNODE enabled. ANDROID-STOP-STATE-01 assignedplatform, fix2b293db
+compiled; actualunchangedCIassert retest NOT RUN. Sendfielddisabledobserved;
+Details/service lifecycle checks not reached. Root independently verified306source
+hashes andactualAPKhash in downloadedartifact12272812725.
+[RED evidence](docs/native/2026-10-20/root-android-kvm-launcher-red.json).
+
 **2026-10-20 native resident Desktop ROOT PASS (cab8fa6 stablepin):**
 Actual retained owning package/import/RootPIN/Account/login error/cancel/Saved/send/
 signout/hostrestart/relogin:6PASS/0FAIL/1liveServiceSKIP,4.757s,103sources/11artifacts/

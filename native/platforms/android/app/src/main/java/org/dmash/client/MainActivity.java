@@ -14,12 +14,12 @@ public final class MainActivity extends Activity {
  private final ServiceConnection connection=new ServiceConnection(){
   @Override public void onServiceConnected(ComponentName name,IBinder binder){
    Parcel input=Parcel.obtain(),output=Parcel.obtain();
-   try{input.writeInterfaceToken("org.dmash.client.NodeBroker.v1");binder.transact(IBinder.FIRST_CALL_TRANSACTION+1,input,output,0);output.readException();status.setText(output.readString());stopNode.setEnabled(true);binder.linkToDeath(()->runOnUiThread(()->status.setText(ServiceStatus.read(MainActivity.this))),0);}
-   catch(Exception ignored){status.setText("Node status is unavailable");}finally{input.recycle();output.recycle();}
+   try{input.writeInterfaceToken("org.dmash.client.NodeBroker.v1");binder.transact(IBinder.FIRST_CALL_TRANSACTION+1,input,output,0);output.readException();String serviceState=output.readString();status.setText(serviceState);stopNode.setEnabled("Node service is running".equals(serviceState));binder.linkToDeath(()->runOnUiThread(()->{status.setText(ServiceStatus.read(MainActivity.this));stopNode.setEnabled(false);}),0);}
+   catch(Exception ignored){status.setText("Node status is unavailable");stopNode.setEnabled(false);}finally{input.recycle();output.recycle();}
   }
   @Override public void onServiceDisconnected(ComponentName name){status.setText(ServiceStatus.read(MainActivity.this));stopNode.setEnabled(false);}
  };
- @Override public void onResume(){super.onResume();status.setText(ServiceStatus.read(this));bound=bindService(new Intent(this,NodeService.class),connection,0);stopNode.setEnabled(bound);if(!bound&&status.getText().toString().equals("Node service is running"))status.setText("Node is off");}
+ @Override public void onResume(){super.onResume();status.setText(ServiceStatus.read(this));stopNode.setEnabled(false);bound=bindService(new Intent(this,NodeService.class),connection,0);if(!bound&&status.getText().toString().equals("Node service is running"))status.setText("Node is off");}
  @Override public void onPause(){if(bound){unbindService(connection);bound=false;}super.onPause();}
  @Override public void onCreate(Bundle state) {
   super.onCreate(state);
