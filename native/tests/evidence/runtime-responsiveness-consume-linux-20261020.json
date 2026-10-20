@@ -1,0 +1,81 @@
+{
+  "kind": "C02_MEASURED_RESPONSIVENESS_AND_ATOMIC_CONSUME_EXECUTABLE_CHECKPOINT_NOT_RELEASE",
+  "date": "2026-10-20",
+  "sourceSha256": {
+    "native/src/crypto_port.cpp": "5a13338f178d4e0e48249fea3c574b23c5117d22f069470c5cf27b323abaf819",
+    "native/src/crypto_port.h": "c2f48520bba35f14335be31fb7f34f369cc01f87bd58268d2473dfb0bc84a4a5",
+    "native/src/js_actor.cpp": "25c7746aea4717ef06d20d3e79b9de7b99804f165afa30f152e4cb408caeb3b6",
+    "native/js/runtime_entry.js": "a674123be28039fcbf3548c3cf3b78fc831246f350999a7a3139745bbbc046df",
+    "native/js/nacl_native.js": "716ece11951aade8425b16f091fbfa11e66699f03c01fc67cc299cf7ca0badfd",
+    "native/js/resources.cmake": "4e467c622943fa472bd2c0000f5c54c8ba79a84684f73b6e6cc7de18177bff4a",
+    "native/tests/crypto_port_test.cpp": "5e662b09d3c69a01f0d047220b0e95be3e191078223d788adc61dd604f4d0916",
+    "native/tests/actor_responsiveness_probe.py": "2795fdd3a9cfa0f2f37231e5eb46072f68a62a3fd742926eb1253fb4d2204646",
+    "native/tests/ipc_delivery_test.py": "42a2426936dfbeac0e50110c0ebd8ad0b5233ad232942a0247bf4f62e55b7951"
+  },
+  "binarySha256": "06c8485b7f73f3295f53a89a66b83e4f027b3ba98b3bf11f4ee994b2d1d7119a",
+  "before": {
+    "ownerRpcElapsedMs": 4025,
+    "rpcMs": {
+      "challenge": 802,
+      "register": 261,
+      "prepare": 996,
+      "activate": 1964
+    },
+    "primitiveTotalMs": {
+      "ed25519Verify": 2148,
+      "x25519": 931,
+      "ed25519Public": 444
+    }
+  },
+  "after": {
+    "ownerRpcElapsedMs": 378,
+    "rpcMs": {
+      "challenge": 4,
+      "register": 2,
+      "prepare": 192,
+      "activate": 177
+    },
+    "primitiveTotalMs": {
+      "ed25519Verify": 1,
+      "x25519": 1,
+      "ed25519Public": 325
+    }
+  },
+  "measurementLimits": "Separate synthetic runs on same machine; no claim of controlled benchmark. Both actual owner IPC flows, socket deadline unchanged5s, no network/PoW during measured phases.",
+  "change": "Existing OpenSSL dependency handles synchronous Ed25519 verification and X25519 scalarMult. Protocol canonical encoding guards, bytes, signing keys, default22 work and500ms batching unchanged. Public RFC8032/7748 vectors; independent vendored TweetNaCl compares valid/invalid signatures plus15 low-order/noncanonical/high-bit X25519 inputs in actual BENCH actor startup; default startup performs bounded subset.",
+  "ctest": "8/8 PASS,2.81s",
+  "realDelivery": {
+    "status": "PASS",
+    "socketDeadlineSeconds": 5,
+    "peerStartupDelaySeconds": 0,
+    "backendForwarded": 4,
+    "admissionDifficulty": 22,
+    "wireRole": "NODE",
+    "payloadDigest": "aaefb85245bf6ffd1c4006fc97d460567a65b68ddb692430c01b2ba52ba192f0",
+    "checks": [
+      "UI SIGKILL after durable acceptance",
+      "sender SIGKILL before send, scoped restart, same job retry",
+      "actual unchanged discovery/Python transit/batching",
+      "recipient durable Inbox",
+      "sender post-send reopen",
+      "recipient SIGKILL/reopen same record handle",
+      "atomic app token+seen CAS",
+      "same token retry idempotent",
+      "different token conflict",
+      "recipient SIGKILL/reopen completion idempotent and Inbox empty"
+    ]
+  },
+  "earlierFailures": [
+    "bd1290c root recipient bind5s timeout (no retained raw logs)",
+    "e749234 fixture job.query5005ms timeout after delivery/second submit; diagnostics retained privately, actor log hashes d296969b225d2bed8a3908fd107364a295d4bf72fcab149b4d49e39ebcc3a860 and331c78bfbd4230dfb5724950c8b437641bba804f8455d486323fd4dd395a6765",
+    "bca447a owner.activate5019ms timeout before consume; full hashes/timings in inbox-app-commit-source evidence"
+  ],
+  "limits": [
+    "Root independent retest pending",
+    "Linux executable integration; browser/native GUI acceptance separate",
+    "Account storage must commit first and dedupe redelivery if crash precedes local consume call",
+    "Existing ACK-free recipient crash loss window unchanged",
+    "Windows/Android runtime NOT_RUN",
+    "No self-organizing peer discovery/NAT/direct carrier acceptance"
+  ]
+}

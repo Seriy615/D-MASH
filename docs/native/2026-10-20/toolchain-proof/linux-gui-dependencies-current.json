@@ -1,0 +1,27 @@
+{
+  "lib/libQt6Widgets.so.6": {
+    "missing": [],
+    "status": "read-only inventory; no GUI launch"
+  },
+  "plugins/platforms/libqxcb.so": {
+    "missing": [
+      "libxkbcommon-x11.so.0 => not found",
+      "libxcb-cursor.so.0 => not found",
+      "libxcb-icccm.so.4 => not found",
+      "libxcb-util.so.1 => not found",
+      "libxcb-image.so.0 => not found",
+      "libxcb-keysyms.so.1 => not found",
+      "libxcb-render-util.so.0 => not found",
+      "libxcb-xkb.so.1 => not found",
+      "libxcb-cursor.so.0 => not found",
+      "libxcb-icccm.so.4 => not found",
+      "libxcb-util.so.1 => not found",
+      "libxcb-image.so.0 => not found",
+      "libxcb-keysyms.so.1 => not found",
+      "libxcb-render-util.so.0 => not found",
+      "libxcb-xkb.so.1 => not found",
+      "libxkbcommon-x11.so.0 => not found"
+    ],
+    "status": "read-only inventory; no GUI launch"
+  }
+}

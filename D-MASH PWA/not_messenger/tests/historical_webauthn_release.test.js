@@ -10,7 +10,6 @@ const { TextEncoder, TextDecoder } = require("node:util");
   const source = fs.readFileSync(require.resolve("../js/release.js"), "utf8");
   const domListeners = new Map();
   const loadedScripts = [];
-  let installRuntime;
   const keypadListeners = new Map();
   const performedHolds = [];
   const createCalls = [];
@@ -36,32 +35,12 @@ const { TextEncoder, TextDecoder } = require("node:util");
     async put(record) { this.record = record; }
   };
 
-  class DeviceRootError extends Error {
-    constructor(code, message) { super(message); this.code = code; this.name = "DeviceRootError"; }
-  }
-
-  const DeviceRoot = {
-    VERSION: 1,
-    state: null,
-    _crypto: webcrypto,
-    _requireCrypto() {},
-    _requireWebAuthn() {},
-    _credentials() { return credentials; },
-    _webauthnChallenge() { return webcrypto.getRandomValues(new Uint8Array(32)); },
-    _credentialId(value) { return Buffer.from(new Uint8Array(value.rawId)).toString("base64"); },
-    _prfResult(value) {
-      const result = value.getClientExtensionResults().prf.results.first;
-      const bytes = new Uint8Array(result);
-      if (bytes.length !== 32) throw new DeviceRootError("WEBAUTHN_PRF_UNAVAILABLE", "invalid PRF");
-      return new Uint8Array(bytes);
-    },
-    async _prfWrapKey(output) {
-      return webcrypto.subtle.importKey("raw", output, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
-    },
-    _store() { return store; },
-    async deviceIdentity(root) { return { deviceId: `d1_${root[0]}` }; },
-    lock() { this.state = null; }
-  };
+  Object.defineProperty(global, "isSecureContext", { value: true, configurable: true });
+  Object.defineProperty(global, "navigator", { value: { credentials }, configurable: true });
+  global.location = { hostname: "messenger.d-mash.ru" };
+  global.nacl = require("../js/vendor/nacl-fast.min.js");
+  const { DeviceRoot, DeviceRootError } = require("../js/device_root.js");
+  DeviceRoot.setStoreForTests(store);
   DeviceRoot.state = { root: new Uint8Array(rootBytes), identity: { deviceId: "d1_test" }, record: store.record, created: false };
 
   const keypad = {
@@ -82,13 +61,15 @@ const { TextEncoder, TextDecoder } = require("node:util");
     Uint8Array,
     ArrayBuffer,
     Buffer,
+    queueMicrotask,
     setTimeout,
     clearTimeout,
-    setInterval(callback) { installRuntime = callback; return 1; },
+    setInterval() { throw new Error("release-managed runtime must not use an installer timer"); },
     clearInterval() {},
     DeviceRoot,
     DeviceRootError,
     ui,
+    sys: {},
     location: { hostname: "messenger.d-mash.ru" },
     navigator: { credentials },
     btoa(value) { return Buffer.from(value, "binary").toString("base64"); },
@@ -113,11 +94,20 @@ const { TextEncoder, TextDecoder } = require("node:util");
 
   vm.runInNewContext(source, context, { filename: "release.js" });
   await domListeners.get("DOMContentLoaded")();
-  assert.ok(loadedScripts.some(src => src.startsWith("js/runtime_fixes.js?")), "release loads the actual WebAuthn implementation");
+  assert.ok(loadedScripts.some(src => src.startsWith("js/runtime_fixes.js?")), "release loads the actual WebAuthn integration");
   // The implementation moved out of release.js; exercise the same runtime
   // module the loader selected, retaining the historical WebAuthn contract.
+  vm.runInNewContext(fs.readFileSync(require.resolve("../js/ui_global_bridge.js"), "utf8"), context, { filename: "ui_global_bridge.js" });
   vm.runInNewContext(fs.readFileSync(require.resolve("../js/runtime_fixes.js"), "utf8"), context, { filename: "runtime_fixes.js" });
-  installRuntime();
+  context.DmashRuntimeReadiness.flush();
+  // This fixture deliberately has no Core/NodeManager. The real installer can
+  // expose DeviceRoot/gesture stages, but must not report full UI readiness.
+  await assert.rejects(context.DmashRuntimeReadiness.compose(), /UI_RUNTIME_NOT_READY/);
+  const enrollReference = DeviceRoot.enrollWebAuthnPrf;
+  const holdReference = ui.handleBiometricHold;
+  context.DmashRuntimeReadiness.flush();
+  assert.equal(DeviceRoot.enrollWebAuthnPrf, enrollReference, "readiness retries preserve installed WebAuthn wrappers");
+  assert.equal(ui.handleBiometricHold, holdReference, "readiness retries must not duplicate the trusted gesture wrapper");
 
   const enrolled = await DeviceRoot.enrollWebAuthnPrf();
   assert.equal(enrolled.enrolled, true);
@@ -134,7 +124,8 @@ const { TextEncoder, TextDecoder } = require("node:util");
   assert.equal(createPk.extensions.prf.eval.first.length, 32);
   assert.equal(store.record.biometricWrap.wrap, "webauthn-prf-aes-256-gcm-v1");
 
-  DeviceRoot.state = null;
+  DeviceRoot.lock();
+  DeviceRoot.__dmashBiometricRecordCache = await store.get();
   const unlocked = await DeviceRoot.unlockWithWebAuthnPrf();
   assert.deepEqual([...unlocked.root], [...rootBytes]);
   assert.equal(getCalls.length, 1, "unlock uses one credentials.get assertion");

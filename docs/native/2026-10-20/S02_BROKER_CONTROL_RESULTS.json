@@ -1,0 +1,58 @@
+{
+  "checkpoint": "795fabe",
+  "scope": "Broker control metadata component; not full Root service or actual IPC/process supervisor",
+  "linux_full_checkpoint": {
+    "source": "130905d",
+    "ctest_passed": 2,
+    "ctest_failed": 0,
+    "seconds": 9.89
+  },
+  "corrective_affected_suite": {
+    "test": "broker-control-journal",
+    "passed": 1,
+    "failed": 0,
+    "seconds": 2.15,
+    "reason": "Impossible zero/nonzero counter combination rejects instead of opening corrupted control state",
+    "source": "795fabe"
+  },
+  "executable_cases": [
+    "SQLiteWAL/FULL reservation and same-profile binding",
+    "Missing/corrupt file never implicitly created/repaired",
+    "Canceled prepared proof inside reservation rolls back",
+    "Policy revision then full-lock floors remain strictly monotonic",
+    "Actual subprocess _Exit23 after committed REVOKING, reopen remains pending",
+    "Exact-floor completion and duplicate completion idempotence",
+    "Two independent processes reserve: one winner, one conflict",
+    "Authenticated-stopped-daemon floor merge against exact local state, then strictly newer reservation",
+    "Counter bound and contradictory zero integrity guard",
+    "No PIN/Root material written to control DB"
+  ],
+  "android": {
+    "final_static_crosscompile": "PASS",
+    "target": "AArch64 Android28 NDK27.2.12479018",
+    "runtime": "NOT RUN"
+  },
+  "windows_runtime": "NOT RUN",
+  "source_sha256": {
+    "native/broker/CMakeLists.txt": "38fe6da2382c24d97fe44cfc1d56fe1911424f99e2c7c4e993fb4b4748291018",
+    "native/broker/README.md": "16161939432953dbaa9c562992f4263f3acdc9dd7f11e10c4d0df2ea819064ce",
+    "native/broker/LIFECYCLE.md": "7adfd1c123c579bf1b3ded93aa80ff3b09f88628a002b745982e213c66ad5f79",
+    "native/broker/control_journal.h": "5f68d012018a0b550a977ea6aa041c62ee0f699decf3ba2a47a3955f5c36e482",
+    "native/broker/control_journal.cpp": "1d8864f7dd1393b2b5cee23958aef70bda4e77f5a542b7b3ae8cf8d8ac7dfe7c",
+    "native/broker/tests/control_journal_test.cpp": "c16d961d88de73590c2da5f51d2a190653eeac85e5747ea057cd6eeec6941f9a"
+  },
+  "mandatory_caller_contract": [
+    "Full Root lock invalidates local operation epoch/Root handles, persists REVOKING, then revokes daemon",
+    "UI remains LOCKING until authenticated exact-floor ACK/verifiedownedchildexit; journal alone is not exit proof",
+    "Remote floors consumed only after authenticatedscopedkeybinding and verifiedownedchildexit, never from unauthenticatederrors/logs",
+    "UIclose/Accountlogout do not close broker lifetimelease or invoke fullRootlock",
+    "New grant requires current canonicalRootproof and generationreservation; canceled/unused reservations burned",
+    "Backupantirollback and authority for a second writer require explicit recovery gate"
+  ],
+  "remaining": [
+    "Actual broker supervisor/daemon IPC/EOF/revoke while queued writes exist",
+    "Canonical credential CAS/setup/change/wipe/native PRF and full profile import preservingAccount/history",
+    "Native Widgets/Views UI and physical platform lifetimes",
+    "Android/Windows runtime and packaging acceptance"
+  ]
+}

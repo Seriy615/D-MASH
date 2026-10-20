@@ -1,0 +1,81 @@
+{
+  "suite": "native-foreign-transit-and-bounded-nonce-search",
+  "date": "2026-10-20",
+  "status": "PASS",
+  "baseCommit": "33411ec5f5c92a1c79a51272906f75e8e8fa3339",
+  "binarySha256": "5a198531198010d5d90d6258d1f7c55d650b40d3f09ad00ec01b129533d9983a",
+  "sourceSha256": {
+    "native/src/js_actor.cpp": "1840c02609ae2023d7d57f572fc169ba119169555f8d11f43dacf0a12008ae8b",
+    "native/src/nonce_hash.cpp": "3a9f5c16aee0d53d01b9d3181db2f7752a6e32ae5817641edabf02ab2a550ff4",
+    "native/src/nonce_hash.h": "230d088c18221c94799dce4eb2cac0243daad14735b2cb35aad0849c29fd61a2",
+    "native/js/platform.js": "458cdf220ca8e05f20a5d251a808e308384d63ce2fac552bf9fdcd26f0f65adb",
+    "native/tests/nonce_hash_test.cpp": "61cb15ed08fb6d3066cdc50cbaa308c69526f12350295682354bfac593b2f5cc",
+    "native/tests/nonce_adapter_test.js": "a41a6ec3fc0f85ee812c8da301ded5f550d0daf905b10eabfe220b223e7136ae",
+    "native/tests/foreign_transit_test.py": "95e1e63cfc3254e3329ddc58d4f766f9209913c3015c865dcd16faaf3757d079",
+    "D-MASH PWA/not_messenger/js/resource_pow.js": "6896cd90918c97d002a28902ac511d31d8f10182a474d4113bda22edbb80f63d",
+    "D-MASH PWA/not_messenger/tests/resource_pow_native_search.test.js": "1bd3fdb4fc24af4ec3071b005cee379796eb812f7a521b2d298fcd7c401186e2"
+  },
+  "actualLinux": {
+    "fixture": "native/tests/foreign_transit_test.py",
+    "admissionDifficulty": 22,
+    "wireRole": "NODE",
+    "middleOwnerCapabilities": 0,
+    "middleAccountRegistrations": 0,
+    "middleRestoredBindings": 0,
+    "pythonPeersConnectedOnlyToMiddle": true,
+    "sourcePackets": 2,
+    "recipientWirePackets": 1,
+    "recipientHandlerCalls": 1,
+    "hopLabelChanged": true,
+    "replyOfferChanged": true,
+    "probeTtlBefore": 14,
+    "probeTtlAfter": 13,
+    "probeNcrhChanged": true,
+    "expiredPacketForwarded": false,
+    "batchIntervalMs": 500,
+    "nonceBenchmarks": [
+      {
+        "attempts": 4096,
+        "crossingMs": 57.771473,
+        "batchMs": 14.178296
+      },
+      {
+        "attempts": 4096,
+        "crossingMs": 58.682477,
+        "batchMs": 15.677216
+      }
+    ]
+  },
+  "checks": {
+    "ctest": "8/8 PASS 4.80s",
+    "nonceAdapter": "PASS independent Node SHA parity and batch invocation",
+    "optionalSearch": "PASS bounded batches, independent full transcript digest, invalid return rejection, safe-integer boundary, progress/cancel",
+    "browserFallbackHash": "PASS existing resource_pow_hash.test.js",
+    "callAdmissionWorker": "PASS synchronous SHA worker matches WebCrypto first proof at8/10/12bits and malformed challenge rejection"
+  },
+  "earlierFailures": [
+    {
+      "candidate": "e39db47 per-nonce native crossing",
+      "result": "FAIL two authorized channels not reached within unchanged 180s; one endpoint occupied worker for about173s; original diagnostic retained privately",
+      "limits": "concurrent software emulator/artificial host CPU load was present; no deadline increased"
+    },
+    {
+      "candidate": "intermediate BENCH batch diagnostic",
+      "result": "FAIL worker generic report forbidden by existing worker guard; factory benchmark report threw; fixed with bounded BENCH-only workerBenchmark/workerBenchmarkError before guard, generic report still forbidden"
+    }
+  ],
+  "implementation": {
+    "canonicalPrefix": "unchanged JS-owned bytes",
+    "nativeHelper": "opaque prefix, u64BE nonce, batches1..4096; first match; target0..256; cancellation every256",
+    "independentReturnVerification": "JS SHA256 of original prefix plus returned u64BE nonce before proof accepted",
+    "fallback": "browser path has no hashNonce.search and keeps existing algorithm",
+    "diagnostics": "BENCH-only fixed native event schemas and bounded timings/errors; no worker SQL/network/report permission"
+  },
+  "limits": [
+    "Configured actual WS loopback peers; self-organization/NAT NOT_RUN",
+    "ACK-free baseline loss window unchanged; no custody/delivery ACK claim",
+    "Windows/Android runtime NOT_RUN for this candidate",
+    "Browser UI acceptance separate; focused JS tests do not replace browser clicks",
+    "No production or existing profile state changed; synthetic identity/log material excluded from Git"
+  ]
+}

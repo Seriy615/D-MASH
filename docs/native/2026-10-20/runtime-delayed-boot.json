@@ -1,0 +1,59 @@
+{
+  "provenance": "Reconstructed from exact semantic tool output after host reboot; original JSON/raw browser profile lost; no byte-equality claim",
+  "release": "transport-v3-node-preparation-20261020.38",
+  "profile": "legacy-migration",
+  "elapsed_ms": 1357723,
+  "service_worker_controller": false,
+  "core_markers": [
+    "__dmashV51BootCryptoGate",
+    "__dmashAcceptanceV51"
+  ],
+  "ui_markers": [
+    "_dmashQualifiedBiometricToken",
+    "__dmashTrustedBiometricGesture",
+    "__dmashFunctionalRepairV2",
+    "__dmashAcceptanceV51Ui",
+    "__dmashAcceptanceV52Ui",
+    "__dmashAcceptanceV54EmergencyWipe",
+    "__dmashAcceptanceV55EmergencyPrefix"
+  ],
+  "methods": {
+    "core_settings": {
+      "name": "openSettings",
+      "sha256": "bbdd160b1010dca6a9e93f15e0047bc66e5e18d8c21cc9793cc198f2c0744dae"
+    },
+    "root_rewrap": {
+      "name": "rewrapMasterPin",
+      "sha256": "251eaa2764d790be46a0a173bd68c710d3a2ac396d179ffb57979cbe465d3b69"
+    },
+    "recover": {
+      "name": "recoverDeviceAfterConfirmedMaster",
+      "sha256": "a2dd88bf99efeab5b4077edb58a88799e9db8205dc3ca8e99cd8ca00af33b400"
+    },
+    "loader": {
+      "name": "",
+      "sha256": "504a40ce14a7b95b8eba24598be59a1202297ae28c8f65743e5b6ccf2812889a"
+    }
+  },
+  "loaded_scripts": [
+    "/js/release.js",
+    "/js/runtime_fixes.js",
+    "/js/acceptance_fixes.js",
+    "/js/acceptance_v50.js",
+    "/js/acceptance_v51.js",
+    "/js/acceptance_v52.js",
+    "/js/acceptance_v54.js",
+    "/js/acceptance_v55.js"
+  ],
+  "visible_settings_buttons": [
+    "✈️ ТЕЛЕГРАМ-МАЯК",
+    "🌐 ПОДКЛЮЧЕНИЕ К УЗЛУ",
+    "🏷️ БЫСТРЫЕ ИМЕНА",
+    "📨 ЗАПРОСЫ В КОНТАКТЫ",
+    "ЭКСТРЕННЫЙ ФЛИП-ЛОК: ВЫКЛ",
+    "🧬 БИОМЕТРИЯ УСТРОЙСТВА",
+    "💤 ВКЛЮЧИТЬ БЕСПАРОЛЬНЫЙ ВХОД",
+    "СМЕНИТЬ MASTER-КОД",
+    "ЗАКРЫТЬ"
+  ]
+}

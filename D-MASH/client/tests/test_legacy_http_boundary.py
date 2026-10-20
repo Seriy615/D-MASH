@@ -52,3 +52,27 @@ class LegacyHttpBoundaryTests(unittest.IsolatedAsyncioTestCase):
                 'Origin': 'http://localhost',
             })
         self.assertEqual(response.status_code, 410)
+
+
+class RetiredHttpBeforeReceiveTests(unittest.IsolatedAsyncioTestCase):
+    async def test_retired_post_routes_deny_without_reading_or_parsing_body(self):
+        app = FastAPI()
+        app.include_router(api.router)
+        paths = ["/api/login", "/api/logout", "/api/connect", "/api/send", "/api/rename", "/api/read_chat", "/api/debug/get_route_ids"]
+        for path in paths:
+            for content_type in [b"application/json", b"multipart/form-data; boundary=synthetic"]:
+                with self.subTest(path=path, content_type=content_type):
+                    messages, reads = [], []
+
+                    async def receive():
+                        reads.append(True)
+                        raise AssertionError("retired HTTP request body was read before denial")
+
+                    async def send(message):
+                        messages.append(message)
+
+                    scope = {"type": "http", "asgi": {"version": "3.0"}, "http_version": "1.1", "method": "POST", "scheme": "http", "path": path, "raw_path": path.encode(), "query_string": b"", "root_path": "", "server": ("test", 80), "client": ("127.0.0.1", 1), "headers": [(b"content-type", content_type), (b"content-length", b"1000000000")]}
+                    await app(scope, receive, send)
+                    self.assertEqual(messages[0]["status"], 410)
+                    self.assertEqual(reads, [])
+                    self.assertNotIn(b"1000000000", b"".join(message.get("body", b"") for message in messages))

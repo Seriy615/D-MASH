@@ -1,0 +1,68 @@
+{
+  "kind": "WINDOWS_LOCAL_HOST_SOURCE_AND_CROSS_COMPILE_CHECKPOINT_NOT_RUNTIME_ACCEPTANCE",
+  "date": "2026-10-20",
+  "sourceSha256": {
+    "native/CMakeLists.txt": "e7539c0273c1f520460dcf61a4fe2e4a3cb7a2925ccce7a7de7660085c676615",
+    "native/src/os_windows.cpp": "2334cf4bd658f0de2dbd2383191a3d7026887c6cc784c2bb3e5ec5e99d13abf6",
+    "native/src/os_windows.h": "d5b5704930828adf0831c45a58fae1437f40025ca447d886f79a3d1138e22e11",
+    "native/src/main.cpp": "983b2cdd7cfbca55ffb0d123507d04628054fee74b15faf71d71b857c4a940a6",
+    "native/src/local_ipc.cpp": "fa29be051142d2cee59170b0b34ce1b0a618d4bceb10e431f83de92beb573041",
+    "native/src/local_ipc.h": "80bf2c46d5ef3a9e9935491b8739b81e769d229e0e3269c34cbc6c743e0c69fa",
+    "native/src/js_actor.cpp": "bf9af8fdcdbba484fde521009b2f0c140d11f85f5bf403a3b7ab6f0268e38f13",
+    "native/tests/windows_local_test.cpp": "8f944304acf5f1c0fe9ce3889552204a7454bd6b2cfeb8209ee08aa29a9340af",
+    "native/tests/actor_lifecycle_test.cpp": "f6b226e43a7b29b126b0179e84ebda0ca1ef97160e43840f5fdc0f6425ce6f4d"
+  },
+  "implementation": [
+    "Daemon accepts pointer-width --bootstrap-handle with private framed InstallTransportSession; capabilities and scoped bundle stay outside argv",
+    "Bounded5s/64KiB bootstrap reads from inherited duplex namedpipe; handle inheritance cleared before localQt adoption",
+    "GetNamedPipeClientProcessId/GetNamedPipeServerProcessId plus process-token user SID check; private current-user orSYSTEM DACL check",
+    "Existing role/capability framing reused over random-named Qt UserAccessOption pipe",
+    "Fresh Node profile receives protected inheritable user/SYSTEM ACL; existing profile/state ACLs verified without rewriting existing state",
+    "Shared os_windows helper has no actor/broker credential dependency",
+    "Windows native-windows-local test target covers actual same-process private namedpipe sides and synthetic profile/file ACL checks; binary built, NOT_RUN"
+  ],
+  "crossCompile": {
+    "compiler": "x86_64-w64-mingw32-g++-posix (GCC) 13-posix",
+    "helperTest": "PE32+ x86-64 executable linked with Advapi32, -Wall -Wextra -Werror",
+    "helperTestSha256": "c31c53a38879a53fe6d38d722c9ca7b2885ad4524c029dba3ab74002aa42e00c",
+    "branches": [
+      "main.cpp",
+      "local_ipc.cpp",
+      "js_actor.cpp"
+    ],
+    "branchObjectSha256": {
+      "main.o": "ee6cbcf86352cdf802e0ee2771e12ccdd7c7340148265a699856a098a202e099",
+      "local_ipc.o": "45a1f49db4d775900b5ea18e34ff9fd7be7f37d87abe015adad7519b6932556d",
+      "js_actor.o": "ffeda42253abfaa7d3bb955cad0b7c83ceac06f20d11e35c92b93dd3d0b2f4a4"
+    },
+    "headerLimit": "Qt6.12 Linux kit public headers used for Win-branch syntax smoke; NOT matching WindowsQt ABI/full link proof",
+    "packagesSha256": {
+      "gcc-mingw-w64-x86-64-posix_13.2.0-6ubuntu1+26.1_amd64.deb": "0855fa1d4a618550faac3a3e4352aa3226833b28184ad3c3b496a68a22c4eda2",
+      "mingw-w64-common_11.0.1-3build1_all.deb": "4a42fd30fbc3838c58c929d8a4882682fc12408bb7a0e6cafa913c0f0a57c187",
+      "g++-mingw-w64-x86-64-posix_13.2.0-6ubuntu1+26.1_amd64.deb": "52c3613f386e462ae71105d1a0b2a48d866ccb048ad253acff629c5a2291252d",
+      "binutils-mingw-w64-x86-64_2.41.90.20240122-1ubuntu1+11.4_amd64.deb": "28bfabbf64a68813a56360bca056072af9ff71ef4090a4b8a8a085afcda3e4dd",
+      "mingw-w64-x86-64-dev_11.0.1-3build1_all.deb": "018480a62907fcca19c6bf2975ae01f5c92c23dee8c3cf7a8355c10bf7d42c6f",
+      "gcc-mingw-w64-x86-64-posix-runtime_13.2.0-6ubuntu1+26.1_amd64.deb": "aca6b438e0b55b11cedcf1170a1ee26e7979e34192e34f6e6389e560908a5bfc"
+    }
+  },
+  "linuxRegression": {
+    "ctest": "8/8PASS5.09s",
+    "localIpc": "PASS including capability/roles/status/policy/lifetime/floors, no peer dial",
+    "actorFreshPrivateChildProfile": "PASS2.31s after fixture portability adjustment"
+  },
+  "limits": [
+    "Windows test executable NOT_RUN; no WindowsQt app/daemon link or runtime acceptance",
+    "Same-account process compromise remains outside localIPC boundary",
+    "Broker Windows child creation must provide only intended inherited overlapped duplex pipe handle; supervisor lifecycle runtime pending",
+    "Desktop --session-handle integration owned by platform agent, separate gate",
+    "Android package/runtime gate separate",
+    "No mesh wire/ACK/role or Account E2EE behavior changed"
+  ],
+  "references": [
+    "https://doc.qt.io/qt-6/qlocalserver.html#SocketOption-enum",
+    "https://learn.microsoft.com/en-us/windows/win32/ipc/named-pipe-security-and-access-rights",
+    "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getnamedpipeclientprocessid",
+    "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getnamedpipeserverprocessid",
+    "https://learn.microsoft.com/en-us/windows/win32/api/accctrl/ne-accctrl-se_object_type"
+  ]
+}

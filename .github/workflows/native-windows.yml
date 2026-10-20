@@ -1,0 +1,40 @@
+# Build/test only; no deployment, signing or publication.
+name: Native Windows apps
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "native/**"
+      - "D-MASH PWA/not_messenger/js/**"
+      - ".github/workflows/native-windows.yml"
+jobs:
+  windows-apps:
+    runs-on: windows-2025
+    env:
+      DMASH_WINDOWS_BUILD: ${{ runner.temp }}/dmash-windows
+      DMASH_MINGW: ${{ runner.temp }}/dmash-qt/Tools/mingw1310_64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - shell: pwsh
+        run: |
+          python -m venv "$env:RUNNER_TEMP/dmash-tools"
+          & "$env:RUNNER_TEMP/dmash-tools/Scripts/python.exe" -m pip install aqtinstall==3.3.0 cmake==4.2.3 ninja==1.13.0
+          & "$env:RUNNER_TEMP/dmash-tools/Scripts/python.exe" -m aqt install-qt windows desktop 6.12.0 win64_mingw -m qtwebsockets -O "$env:RUNNER_TEMP/dmash-qt"
+          & "$env:RUNNER_TEMP/dmash-tools/Scripts/python.exe" -m aqt install-tool windows desktop tools_mingw1310 qt.tools.win64_mingw1310 -O "$env:RUNNER_TEMP/dmash-qt"
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: make perl tar curl
+      - shell: msys2 {0}
+        run: bash native/platforms/windows/prepare-dependencies.sh
+      - shell: pwsh
+        run: |
+          $env:PATH="$env:RUNNER_TEMP/dmash-tools/Scripts;$env:PATH"
+          ./native/platforms/windows/build.ps1 -QtRoot "$env:RUNNER_TEMP/dmash-qt/6.12.0/mingw_64" -MingwRoot "$env:DMASH_MINGW" -BuildRoot "$env:DMASH_WINDOWS_BUILD" -OpenSSLRoot "$env:DMASH_WINDOWS_BUILD/openssl" -QuickJSSource "$env:DMASH_WINDOWS_BUILD/sources/quickjs-2026-06-04"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dmash-windows-development-apps
+          path: ${{ runner.temp }}/dmash-windows/package

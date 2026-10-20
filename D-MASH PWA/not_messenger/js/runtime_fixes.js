@@ -56,128 +56,10 @@
     /* ---------------- MULTI-CREDENTIAL DEVICE BIOMETRICS ---------------- */
     function patchBiometrics() {
         const root = global.DeviceRoot;
-        if (!root || root.__dmashMultiBiometricV2) return false;
-
-        root.enrollWebAuthnPrf = async function enrollMultipleWebAuthnCredentials() {
-            this._requireCrypto();
-            this._requireWebAuthn();
-            if (!this.state?.root || !this.state?.record) {
-                throw new global.DeviceRootError("DEVICE_LOCKED", "Сначала разблокируйте устройство Master-кодом.");
-            }
-
-            const record = this.state.record;
-            const wraps = Array.isArray(record.biometricWraps)
-                ? record.biometricWraps.map(clone)
-                : (record.biometricWrap ? [clone(record.biometricWrap)] : []);
-            if (wraps.length >= 8) throw new global.DeviceRootError("WEBAUTHN_LIMIT", "На устройство уже добавлено 8 биометрических ключей.");
-
-            // March 2026 behavior: every enrollment creates a distinct platform
-            // credential with a fresh user handle. All device credentials use
-            // one PRF input so a single allowCredentials assertion can select
-            // any enrolled finger/passkey and unwrap the same DeviceRoot.
-            const salt = wraps[0]?.prfSalt ? unb64(wraps[0].prfSalt) : new Uint8Array(PRF_BYTES);
-            if (salt.length !== PRF_BYTES) throw new global.DeviceRootError("STORAGE_CORRUPT", "Biometric PRF salt is invalid.");
-            const userId = this._crypto.getRandomValues(new Uint8Array(16));
-            let credential;
-            try {
-                credential = await this._credentials().create({ publicKey: {
-                    challenge: this._webauthnChallenge(),
-                    rp: { name: "MathPro Security", id: global.location?.hostname },
-                    user: {
-                        id: userId,
-                        name: `device-${wraps.length + 1}-${Date.now()}`,
-                        displayName: `D-MASH Device ${wraps.length + 1}`
-                    },
-                    pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-                    authenticatorSelection: {
-                        authenticatorAttachment: "platform",
-                        userVerification: "required",
-                        residentKey: "required"
-                    },
-                    extensions: { prf: { eval: { first: salt } } }
-                } });
-            } catch (error) {
-                throw new global.DeviceRootError("WEBAUTHN_ENROLLMENT_FAILED", error?.message || "Биометрический ключ не создан.");
-            }
-
-            const credentialId = unb64(this._credentialId(credential));
-            let output;
-            try {
-                // Exactly as in the March implementation, prefer the PRF result
-                // returned by create(). A second biometric prompt is only a
-                // compatibility fallback for platforms that omit it on create.
-                try { output = this._prfResult(credential); }
-                catch (_) { output = await this._getPrfAssertion(credentialId, salt); }
-                const key = await this._prfWrapKey(output);
-                const iv = this._crypto.getRandomValues(new Uint8Array(IV_BYTES));
-                const ciphertext = await this._crypto.subtle.encrypt(
-                    { name: "AES-GCM", iv, additionalData: PRF_AAD }, key, this.state.root
-                );
-                const wrap = {
-                    wrap: PRF_WRAP,
-                    credentialId: b64(credentialId),
-                    prfSalt: b64(salt),
-                    iv: b64(iv),
-                    wrappedRoot: b64(new Uint8Array(ciphertext)),
-                    addedAt: Date.now()
-                };
-                wraps.push(wrap);
-                const next = { ...record, biometricWraps: wraps, biometricWrap: wraps[0] };
-                await this._store().put(next);
-                this.state.record = next;
-                return Object.freeze({ enrolled: true, credentialCount: wraps.length });
-            } finally { output?.fill?.(0); }
-        };
-
-        root.unlockWithWebAuthnPrf = async function unlockWithAnyWebAuthnCredential() {
-            this._requireCrypto();
-            this._requireWebAuthn();
-            const record = await this._store().get();
-            const wraps = Array.isArray(record?.biometricWraps) && record.biometricWraps.length
-                ? record.biometricWraps
-                : (record?.biometricWrap ? [record.biometricWrap] : []);
-            if (!wraps.length) throw new global.DeviceRootError("WEBAUTHN_NOT_ENROLLED", "Биометрия устройства ещё не настроена.");
-
-            // All newly enrolled credentials share the first persisted PRF
-            // input. Historical singular records become that first input.
-            const salt = unb64(wraps[0].prfSalt);
-            const allowCredentials = wraps.map(wrap => ({ type: "public-key", id: unb64(wrap.credentialId) }));
-            let assertion;
-            try {
-                assertion = await this._credentials().get({ publicKey: {
-                    challenge: this._webauthnChallenge(),
-                    timeout: 60000,
-                    userVerification: "required",
-                    allowCredentials,
-                    extensions: { prf: { eval: { first: salt } } }
-                } });
-            } catch (_) {
-                throw new global.DeviceRootError("WEBAUTHN_ASSERTION_FAILED", "Биометрическая проверка отменена или не прошла.");
-            }
-
-            const assertionId = unb64(this._credentialId(assertion));
-            const selected = wraps.find(wrap => sameBytes(unb64(wrap.credentialId), assertionId));
-            if (!selected) throw new global.DeviceRootError("WEBAUTHN_UNKNOWN_CREDENTIAL", "Этот биометрический ключ не привязан к устройству.");
-            let output;
-            try {
-                output = this._prfResult(assertion);
-                const key = await this._prfWrapKey(output);
-                const plaintext = await this._crypto.subtle.decrypt(
-                    { name: "AES-GCM", iv: unb64(selected.iv), additionalData: PRF_AAD }, key, unb64(selected.wrappedRoot)
-                );
-                const unlockedRoot = new Uint8Array(plaintext);
-                if (unlockedRoot.length !== ROOT_BYTES) throw new Error("invalid DeviceRoot length");
-                const identity = await this.deviceIdentity(unlockedRoot);
-                this.state = { root: unlockedRoot, identity, created: false, record };
-                return this.state;
-            } catch (error) {
-                if (this.state?.root) this.lock();
-                if (error instanceof global.DeviceRootError) throw error;
-                throw new global.DeviceRootError("WEBAUTHN_UNLOCK_FAILED", "Биометрический ключ не смог открыть DeviceRoot.");
-            } finally { output?.fill?.(0); }
-        };
-
-        Object.defineProperty(root, "__dmashMultiBiometricV2", { value: true });
+        if (!root || typeof root.prepareWebAuthnUnlock !== "function") return false;
+        if (!root.__dmashMultiBiometricV2) Object.defineProperty(root, "__dmashMultiBiometricV2", { value: true });
+        // Credential implementation lives in DeviceRoot; repairs must not
+        // replace its cancellation/transaction guards with legacy wrappers.
         return true;
     }
 
@@ -638,7 +520,7 @@
                 bootstrap: { contact_request: request },
                 receivedRoute: routeId
             });
-            if (!stored.duplicate) this.customAlert("НОВЫЙ КОНТАКТ", `${this.escapeHtml(request.sender_display_name)} отправил запрос.`);
+            if (!stored.duplicate) this.customAlert("НОВЫЙ КОНТАКТ", `${request.sender_display_name} отправил запрос.`);
             return stored;
         };
 
@@ -809,6 +691,10 @@
         return a && b && c && d && e;
     }
 
+    if (global.DmashRuntimeReadiness) {
+        global.DmashRuntimeReadiness.register("functional-repair", 20, install, () => !!(global.DeviceRoot?.__dmashMultiBiometricV2 && global.ui?.__dmashTrustedBiometricGesture && global.NodeManager?.__dmashPublicRouteActivationV2 && global.Core?.__dmashFunctionalRepairV2 && global.ui?.__dmashFunctionalRepairV2), ["ui-bridge"]);
+        return;
+    }
     let attempts = 0;
     const timer = setInterval(() => {
         attempts++;

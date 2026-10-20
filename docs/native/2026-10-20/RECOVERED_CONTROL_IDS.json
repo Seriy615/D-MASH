@@ -1,0 +1,1449 @@
+{
+  "provenance": "Original inventory IDs and available labels recovered from conversation; not original byte-exact inventory",
+  "control_classes": [
+    {
+      "id": "CALC-01",
+      "members_or_label": "0,1,2,3,4,5,6,7,8,9",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-02",
+      "members_or_label": "decimal point",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-03",
+      "members_or_label": "AC",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-04",
+      "members_or_label": "±",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-05",
+      "members_or_label": "%",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-06",
+      "members_or_label": "÷,×,−,+",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-07",
+      "members_or_label": "=",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-08",
+      "members_or_label": "long-hold configured key / pointer release",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-09",
+      "members_or_label": "fresh master setup",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-10",
+      "members_or_label": "fresh wipe-code setup",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-11",
+      "members_or_label": "master unlock / loading",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-12",
+      "members_or_label": "master + wipe reconfiguration",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-13",
+      "members_or_label": "wipe PIN + equals",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-14",
+      "members_or_label": "0010<master>= emergency",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALC-15",
+      "members_or_label": "1020<master>= compatibility emergency",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GATE-01",
+      "members_or_label": "identity / access-key fields",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GATE-02",
+      "members_or_label": "ВОЙТИ В СИСТЕМУ / Enter",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GATE-03",
+      "members_or_label": "saved-account row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GATE-04",
+      "members_or_label": "+ НОВЫЙ ВХОД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GATE-05",
+      "members_or_label": "К СПИСКУ / НАЗАД К АККАУНТАМ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GATE-06",
+      "members_or_label": "save-in-registry checkbox",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GATE-07",
+      "members_or_label": "Account BIOMETRY row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GATE-08",
+      "members_or_label": "global settings gear",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-01",
+      "members_or_label": "PUBLIC ROUTES",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-02",
+      "members_or_label": "УЗЛЫ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-03",
+      "members_or_label": "БЫСТРЫЕ ИМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-04",
+      "members_or_label": "РЕЕСТР АККАУНТОВ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-05",
+      "members_or_label": "ЗАПРОСЫ В КОНТАКТЫ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-06",
+      "members_or_label": "ТЕЛЕГРАМ-МАЯК",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-07",
+      "members_or_label": "ЭКСТРЕННЫЙ ФЛИП-ЛОК toggle",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-08",
+      "members_or_label": "СМЕНИТЬ MASTER-КОД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-09",
+      "members_or_label": "БИОМЕТРИЯ УСТРОЙСТВА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-10",
+      "members_or_label": "УПРАВЛЕНИЕ БИОМЕТРИЕЙ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-11",
+      "members_or_label": "ПОЛНОЕ УДАЛЕНИЕ ДАННЫХ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GLOBAL-12",
+      "members_or_label": "КОНТАКТЫ NODE",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "QUICK-01",
+      "members_or_label": "ДОБАВИТЬ БЫСТРОЕ ИМЯ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "QUICK-02",
+      "members_or_label": "УДАЛИТЬ row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "QUICK-03",
+      "members_or_label": "НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ROUTE-01",
+      "members_or_label": "CREATE / СОЗДАТЬ PUBLIC ROUTE",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ROUTE-02",
+      "members_or_label": "ACTIVATE / DEACTIVATE",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ROUTE-03",
+      "members_or_label": "REISSUE current",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ROUTE-04",
+      "members_or_label": "CONTACT LINK / copy",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ROUTE-05",
+      "members_or_label": "НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "GNODE-01",
+      "members_or_label": "ДОБАВИТЬ NODE",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-02",
+      "members_or_label": "ПОДКЛЮЧИТЬ / ОТКЛЮЧИТЬ Node",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-03",
+      "members_or_label": "СДЕЛАТЬ ОСНОВНЫМ / ОСНОВНОЙ",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-04",
+      "members_or_label": "УДАЛИТЬ Node",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-05",
+      "members_or_label": "Node address input / OK / Cancel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-06",
+      "members_or_label": "НАЗАД к global settings",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "BIO-01",
+      "members_or_label": "НАЧАТЬ ПРИВЯЗКУ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "BIO-02",
+      "members_or_label": "ДОБАВИТЬ КЛЮЧ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "BIO-03",
+      "members_or_label": "УДАЛИТЬ КЛЮЧ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "BIO-04",
+      "members_or_label": "НАЗАД / ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "BIO-05",
+      "members_or_label": "stock Account settings БИОМЕТРИЯ УСТРОЙСТВА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ACCOUNT-01",
+      "members_or_label": "settings gear",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ACCOUNT-02",
+      "members_or_label": "КОПИРОВАТЬ ID АККАУНТА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ACCOUNT-03",
+      "members_or_label": "БИОМЕТРИЯ АККАУНТА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ACCOUNT-04",
+      "members_or_label": "ПРОВЕРИТЬ КЛЮЧ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ACCOUNT-05",
+      "members_or_label": "ПРИВЯЗАТЬ БИОМЕТРИЮ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ACCOUNT-06",
+      "members_or_label": "БЕСПАРОЛЬНЫЙ ВХОД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ACCOUNT-07",
+      "members_or_label": "Account registry remove biometric",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ACCOUNT-08",
+      "members_or_label": "inactive Account УДАЛИТЬ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ACCOUNT-09",
+      "members_or_label": "ЗАКРЫТЬ / НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "WORK-01",
+      "members_or_label": "my-ID card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "WORK-02",
+      "members_or_label": "network card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "WORK-03",
+      "members_or_label": "[ QR ] scanner",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "WORK-04",
+      "members_or_label": "[ + ] add contact",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "WORK-05",
+      "members_or_label": "[ ВЫХОД ]",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "WORK-06",
+      "members_or_label": "peer/Saved Messages row; Enter/Space",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "WORK-07",
+      "members_or_label": "chat delete ×",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "WORK-08",
+      "members_or_label": "contact progress row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "WORK-09",
+      "members_or_label": "progress sync/refresh",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "SHARE-01",
+      "members_or_label": "PRIVATE / PUBLIC tabs",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "SHARE-02",
+      "members_or_label": "public route dropdown",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "SHARE-03",
+      "members_or_label": "copy current payload",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "SHARE-04",
+      "members_or_label": "СОЗДАТЬ PUBLIC ROUTE empty state",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "SHARE-05",
+      "members_or_label": "stock QR КОПИРОВАТЬ / ЗАКРЫТЬ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "SCAN-01",
+      "members_or_label": "contact scanner ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-01",
+      "members_or_label": "manual input OK / alias OK",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-02",
+      "members_or_label": "name chooser quick-name row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-03",
+      "members_or_label": "ВВЕСТИ ДРУГОЕ ИМЯ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-04",
+      "members_or_label": "preparation ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-05",
+      "members_or_label": "pending request card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-06",
+      "members_or_label": "ПРИНЯТЬ / продолжить accept",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-07",
+      "members_or_label": "ВЫЙТИ И ВЫБРАТЬ АККАУНТ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-08",
+      "members_or_label": "ОТКЛОНИТЬ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-09",
+      "members_or_label": "quick-name accept list / new quick-name",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-10",
+      "members_or_label": "ЗАКРЫТЬ / НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-11",
+      "members_or_label": "НАЧАТЬ ОБМЕН КЛЮЧАМИ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CONTACT-12",
+      "members_or_label": "explicit Legacy Relay fallback ДА / НЕТ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CHAT-01",
+      "members_or_label": "back arrow + browser/mobile Back",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CHAT-02",
+      "members_or_label": "header peer ID click",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CHAT-03",
+      "members_or_label": "rename pencil",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CHAT-04",
+      "members_or_label": "chat password lock",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CHAT-05",
+      "members_or_label": "locked-history password OK / cancel",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CHAT-06",
+      "members_or_label": "composer text field",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CHAT-07",
+      "members_or_label": "SEND / Enter / Shift+Enter",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CHAT-08",
+      "members_or_label": "message delete ×",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-01",
+      "members_or_label": "ДОБАВИТЬ УЗЕЛ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-02",
+      "members_or_label": "ДОБАВИТЬ ПО QR",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-03",
+      "members_or_label": "ЗАПРОСИТЬ УЗЕЛ empty list",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-04",
+      "members_or_label": "row ON / OFF",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-05",
+      "members_or_label": "row QR",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-06",
+      "members_or_label": "row gear",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-07",
+      "members_or_label": "АВТОПОДКЛЮЧЕНИЕ checkbox",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-08",
+      "members_or_label": "РАЗРЕШИТЬ / ВЫКЛЮЧИТЬ УВЕДОМЛЕНИЯ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-09",
+      "members_or_label": "СДЕЛАТЬ ОСНОВНЫМ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-10",
+      "members_or_label": "УДАЛИТЬ УЗЕЛ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-11",
+      "members_or_label": "КОПИРОВАТЬ ССЫЛКУ / НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-12",
+      "members_or_label": "ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NODE-13",
+      "members_or_label": "НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MANAGED-01",
+      "members_or_label": "Подключить Node",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-02",
+      "members_or_label": "Публичный адрес Node field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-03",
+      "members_or_label": "Ваше имя для запроса field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-04",
+      "members_or_label": "Сообщение для знакомства field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-05",
+      "members_or_label": "Создать / показать публичный адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-06",
+      "members_or_label": "Копировать публичный адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-07",
+      "members_or_label": "Отправить запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-08",
+      "members_or_label": "Обновить запросы",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-09",
+      "members_or_label": "Выбрать аккаунт для принятия",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-10",
+      "members_or_label": "Принять в текущий аккаунт",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-11",
+      "members_or_label": "Подтвердить собеседника",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-12",
+      "members_or_label": "Завершить обмен ключами",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-13",
+      "members_or_label": "Повторить запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-14",
+      "members_or_label": "Отклонить запрос / ДА, ОТКЛОНИТЬ / НЕТ",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-15",
+      "members_or_label": "PRIVATE адрес Node field / Проверенный ID собеседника field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-16",
+      "members_or_label": "Создать PRIVATE QR",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-17",
+      "members_or_label": "Копировать PRIVATE адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-18",
+      "members_or_label": "Проверить PRIVATE адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-19",
+      "members_or_label": "Отправить PRIVATE запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-20",
+      "members_or_label": "Обновить PRIVATE запросы",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-21",
+      "members_or_label": "Показать PRIVATE QR / Повторить PRIVATE запрос / Подтвердить PRIVATE контакт / Отклонить PRIVATE запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-22",
+      "members_or_label": "Перевести существующий контакт на Node / confirm / cancel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-23",
+      "members_or_label": "ЗАКРЫТЬ managed panel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MEDIA-01",
+      "members_or_label": "paperclip + hidden file input",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-02",
+      "members_or_label": "file card ОТКРЫТЬ ФАЙЛ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-03",
+      "members_or_label": "ОТМЕНИТЬ ОТПРАВКУ stored card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-04",
+      "members_or_label": "incoming automatic receive status + cancel (NO separate YES/NO file consent)",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-05",
+      "members_or_label": "progress Отмена / Закрыть",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-06",
+      "members_or_label": "Сохранить файл link",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-07",
+      "members_or_label": "microphone start",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-08",
+      "members_or_label": "circle video start",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-09",
+      "members_or_label": "camera-choice row / ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-10",
+      "members_or_label": "recording × cancel (voice/circle)",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-11",
+      "members_or_label": "SEND recording",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-12",
+      "members_or_label": "cancel outbound / retry cancelled",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-13",
+      "members_or_label": "incoming Принять / Отклонить",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-14",
+      "members_or_label": "РАСШИФРОВАТЬ / КРУЖОК",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-15",
+      "members_or_label": "ПОВТОРИТЬ decrypt",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-16",
+      "members_or_label": "native audio/video playback controls",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-17",
+      "members_or_label": "circle tap play/pause",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MEDIA-18",
+      "members_or_label": "image open / download link",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "CALL-01",
+      "members_or_label": "VoIP call button / outbound cancel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-02",
+      "members_or_label": "incoming call accept / decline",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-03",
+      "members_or_label": "microphone mute / unmute",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-04",
+      "members_or_label": "camera enable / disable",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-05",
+      "members_or_label": "switch camera",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-06",
+      "members_or_label": "share screen",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-07",
+      "members_or_label": "speaker toggle",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-08",
+      "members_or_label": "end call",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "NOTIFY-01",
+      "members_or_label": "ОТКРЫТЬ БОТА external link",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "NOTIFY-02",
+      "members_or_label": "ОТКЛЮЧИТЬ МАЯК",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MODAL-01",
+      "members_or_label": "alert OK / modal close/back",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MODAL-02",
+      "members_or_label": "prompt field / OK / Enter",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MODAL-03",
+      "members_or_label": "prompt ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MODAL-04",
+      "members_or_label": "confirm ДА / НЕТ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MODAL-05",
+      "members_or_label": "native confirm/prompt",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "MODAL-06",
+      "members_or_label": "backdrop / sidebar / chat-main click",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "LOCK-01",
+      "members_or_label": "flipper orientation gesture",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "LOCK-02",
+      "members_or_label": "reload/window close/reopen",
+      "label_provenance": "original inventory label recovered from tool output",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution"
+    },
+    {
+      "id": "ABSENT-01",
+      "members_or_label": "Full installation backup / export / import UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-02",
+      "members_or_label": "Public Route DELETE UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-03",
+      "members_or_label": "Generic Node password UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-04",
+      "members_or_label": "Personal Telegram bot configuration UI (unloaded app_shell only)",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-05",
+      "members_or_label": "Custom ringtone UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-06",
+      "members_or_label": "Diagnostics launcher UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-07",
+      "members_or_label": "Per-file affirmative YES / NO consent UI (trusted files auto-receive)",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-08",
+      "members_or_label": "Master reconfiguration explicit Back / Cancel control",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "status": "NOT RUN",
+      "scope": "Historical context reconstruction; not new execution",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    }
+  ]
+}

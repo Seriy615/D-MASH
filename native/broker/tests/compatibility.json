@@ -1,0 +1,93 @@
+{
+  "scope": "SYNTHETIC ONLY; no production identities/secrets. Node seed is deliberately not mined; structural crypto scope only, actor authorization separate.",
+  "pin": "synthetic-only-master",
+  "deviceId": "d1_ZcRRPVgupv6CZKsdNlPMwBc_8tcrEzK8WvTuvDBMzpQ",
+  "expectedTransport": {
+    "nodeSeed": "0808080808080808080808080808080808080808080808080808080808080808",
+    "baseNcrh": "0909090909090909090909090909090909090909090909090909090909090909",
+    "storageKey": "406ff25c73db8fdf544d0f4dab0ad7a9ef982e1e87748cfcd50cce448464227d"
+  },
+  "records": {
+    "legacy_d": {
+      "id": "root",
+      "version": 1,
+      "wrap": "argon2id-aes-256-gcm-v1",
+      "wrapSalt": "AwMDAwMDAwMDAwMDAwMDAw==",
+      "iv": "BAQEBAQEBAQEBAQE",
+      "wrappedRoot": "Pc+UyV2XClLoigGZsOwXyH4t5yvaxoVKsuj9zwckujwYUOBDPjvOERKUh2D1G04s",
+      "materials": {
+        "node-ed25519-pow-v4": {
+          "iv": "BAQEBAQEBAQEBAQE",
+          "ciphertext": "ZnAmxDqqU2i7gyDuM5zATIPfi4raeKG9rTpvB5xH4qU4xCH5KDiWoMwLdgrXI4u2"
+        },
+        "node-base-ncrh-v4": {
+          "iv": "BAQEBAQEBAQEBAQE",
+          "ciphertext": "PXn5Y/Bk3quWCCrWBB02NjLpyUbHl92fBzK+cu8fc9ZG63qZBgj7g1rSmob0P5FW"
+        }
+      },
+      "opaqueMetadata": {
+        "mustSurvive": "synthetic encrypted owner metadata"
+      }
+    },
+    "legacy_id": {
+      "id": "root",
+      "version": 1,
+      "wrap": "argon2id-aes-256-gcm-v1",
+      "wrapSalt": "AwMDAwMDAwMDAwMDAwMDAw==",
+      "iv": "BAQEBAQEBAQEBAQE",
+      "wrappedRoot": "EJkf+50V8TKQSyLZBHNIHzQ1wV0wso9d9d+pUPsHBb96OhL//GMR2RFu5+xND4KB",
+      "materials": {
+        "node-ed25519-pow-v4": {
+          "iv": "BAQEBAQEBAQEBAQE",
+          "ciphertext": "ZnAmxDqqU2i7gyDuM5zATIPfi4raeKG9rTpvB5xH4qU4xCH5KDiWoMwLdgrXI4u2"
+        },
+        "node-base-ncrh-v4": {
+          "iv": "BAQEBAQEBAQEBAQE",
+          "ciphertext": "PXn5Y/Bk3quWCCrWBB02NjLpyUbHl92fBzK+cu8fc9ZG63qZBgj7g1rSmob0P5FW"
+        }
+      },
+      "opaqueMetadata": {
+        "mustSurvive": "synthetic encrypted owner metadata"
+      }
+    },
+    "modern_id": {
+      "id": "root",
+      "version": 1,
+      "wrap": "argon2id-aes-256-gcm-v2",
+      "wrapSalt": "AwMDAwMDAwMDAwMDAwMDAw==",
+      "iv": "BAQEBAQEBAQEBAQE",
+      "wrappedRoot": "EJkf+50V8TKQSyLZBHNIHzQ1wV0wso9d9d+pUPsHBb9+ubJ0PjRL2nSkCXsDzMzt",
+      "materials": {
+        "node-ed25519-pow-v4": {
+          "iv": "BAQEBAQEBAQEBAQE",
+          "ciphertext": "ZnAmxDqqU2i7gyDuM5zATIPfi4raeKG9rTpvB5xH4qU4xCH5KDiWoMwLdgrXI4u2"
+        },
+        "node-base-ncrh-v4": {
+          "iv": "BAQEBAQEBAQEBAQE",
+          "ciphertext": "PXn5Y/Bk3quWCCrWBB02NjLpyUbHl92fBzK+cu8fc9ZG63qZBgj7g1rSmob0P5FW"
+        }
+      },
+      "opaqueMetadata": {
+        "mustSurvive": "synthetic encrypted owner metadata"
+      },
+      "wrapKdf": {
+        "algorithm": "argon2id",
+        "version": 19,
+        "type": 2,
+        "time": 3,
+        "mem": 65536,
+        "parallelism": 1,
+        "hashLen": 32,
+        "saltEncoding": "base64-utf8"
+      },
+      "credentialRevision": 2,
+      "credentials": {
+        "version": 1,
+        "state": "ready",
+        "legacyCleanup": "complete",
+        "wipe": null,
+        "wipeDisabledReason": "not-configured"
+      }
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "issue": "MODAL-TITLE-XSS-01 / plain-text message hardening",
+  "source_commit": "a22b2db",
+  "release": "transport-v3-node-preparation-20261020.41",
+  "source_taint": [
+    "Local add/rename accepts contact alias and stores encrypted blind_peers.name",
+    "call_runtime120\u2192Core.showIncomingCall2738 reads name\u2192openModal title; formerly raw<h4> interpolation",
+    "Core.renameCurrent uses stored name in customPrompt message; deleteChatFlow uses name in customConfirm message"
+  ],
+  "implementation": [
+    "All openModal titles escaped as literal text; explicit body HTML template contract remains",
+    "customAlert/Prompt/Confirm messages escaped as literal text with whitespace preserved",
+    "Input prefills assigned to DOM value, including legacy string copy fallback",
+    "Removed preescaping in2 message callers and1 pending title caller to prevent double escaping"
+  ],
+  "unit": {
+    "status": "PASS",
+    "tests": [
+      "modal_text.test.js",
+      "ui_data_actions.test.js"
+    ],
+    "covered": [
+      "hostile alias/error/title markup",
+      "original Unicode/newline/quote value round trip",
+      "submit/cancel/confirm behavior",
+      "intentional openModal HTML body retained"
+    ]
+  },
+  "browser": {
+    "status": "PASS scoped ordinary flows",
+    "session": "dmash-credential-sw",
+    "origin": "http://127.0.0.1:9182",
+    "network": "all nonlocal HTTP and all WebSockets blocked",
+    "steps": [
+      "Actual Account UI login in existing synthetic Root profile",
+      "Add-contact prompt Cancel then actual synthetic ID submit",
+      "Submit literal markup-containing alias through actual prompt",
+      "Open contact and rename prompt; alias displayed literally, #sys-modal img count0",
+      "Prompt Cancel; contact Remove\u2192No preserves row",
+      "Remove\u2192Yes deletes only new synthetic contact; completion alertOK; original Saved row remains"
+    ],
+    "sentinel_console_count": 0,
+    "malicious_alias": "Modal <img src=x onerror=console.log(123456789)> & Unicode \u00e9",
+    "response_hashes_exact": {
+      "js/core_engine.js": "646737e74de5dfa0e02f5078917089f9d3a59cff5487856bc53e843f8d659048",
+      "js/runtime_fixes.js": "3d9e42059fd4d1b0e89941defe1832213e81e297591d40f8532de1477f4ce529"
+    },
+    "incoming_call_branch": "NOT RUN; SOURCE+UNIT only",
+    "malicious_error_and_input_value_cases": "UNIT only",
+    "fixture_errors": [
+      "An initial login wait used incorrect button spacing; actual login succeeded and fresh snapshot corrected locator",
+      "Own loopback server later exited143; inspection confirmed dead samehandle before restart; final read-only hash fetch retried. One failed-fetch console error recorded, no zero-console-error claim"
+    ]
+  },
+  "remaining": [
+    "Other intentional HTML body template sinks not globally audited or declared safe",
+    "Actual incoming media-call branch and physical hardware acceptance NOT RUN",
+    "No production network/deploy claim"
+  ]
+}

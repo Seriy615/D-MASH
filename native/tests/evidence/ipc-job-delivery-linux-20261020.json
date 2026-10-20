@@ -1,0 +1,95 @@
+{
+  "kind": "C02_ACTUAL_LINUX_LOCAL_IPC_OPAQUE_JOB_DELIVERY_CHECKPOINT_NOT_RELEASE",
+  "date": "2026-10-20",
+  "parent_commit": "0e9e0130b2dc270851d4db553355cd210599563f",
+  "source_sha256": {
+    "native/CMakeLists.txt": "c8ec7a33172a68db6a4995f631428043b0de04542bec9b77ed0b419bb6a02d0a",
+    "native/src/js_actor.cpp": "5d462ef522f9f681fe4815f5147235632c4a867631a4fa159f16bb8a3b6d501a",
+    "native/src/js_actor.h": "1923fed6fb566d91881f29843e8583b9d4bf970ee9300bd57d2f45a84c8c0f45",
+    "native/src/local_ipc.cpp": "8dbf12ced61c5935b336303a61a4fe7767a8751f2dbd72d6031b90a3206d6ec4",
+    "native/src/local_ipc.h": "c5a5eb94345e5845d11ff1b8062575e376fa83aa07c98954475ef158af7c96d5",
+    "native/src/main.cpp": "5cef5f839ab36796cff6e2ea4e2b6d92728a6d3fefdcb843f5bffdd8069c6d59",
+    "native/src/job_ledger.cpp": "04f2cc14952a92398e56b037ac1b9c20dec00dac30cb24e38b7ea16276152ae3",
+    "native/src/job_ledger.h": "761f4f120237fb5bdb0b64ef492aa95cd7f39c15d3ca92ef72fd33704db002f1",
+    "native/js/runtime_entry.js": "35cc8c7aace76650e4a2108f158bc92b51853832a437f6b1121ad6c2d210af41",
+    "native/js/job_runtime.js": "260c53245fd4cc7596935f61728939a570ce29efd68df91c2468797f830e82d5",
+    "native/js/resources.cmake": "d7f12053ecc67e38620abf729ec2d6342aee769f8d48d96fbbb6e596742c098e",
+    "native/tests/local_ipc_test.py": "5022e6fbe6dd5c57e80f90dd89a5ea88633eb9fa9a9e2cb957f32e6a35bcb072",
+    "native/tests/ipc_delivery_test.py": "ae81f613af1be0f3071970e0710f9202b78ad16c7485d1f284bb28f9ff6caceb",
+    "native/tests/local_frame_test.cpp": "2da9d16150c689bf1c9539afb578396c4ef3233d4ccfd12f071ea175ce035f56",
+    "native/tests/endpoint_scheduler_test.js": "43f86150ce814675fe6886451b9c5d2affefe8e2615fce891d2946ca6fb21d00"
+  },
+  "binary_sha256": "d19202d40e9220d13334ec1c03accf80371443963374d5d03845f074b3d84139",
+  "toolchain": "Linux x86_64 / Qt6.12.0 / OpenSSL3.5.9 / QuickJS2026-06-04 / Python python-s03-20261020 patched dependencies",
+  "local_ipc": {
+    "suite": "native-local-ipc",
+    "status": "PASS",
+    "checks": [
+      "private-socket",
+      "capability-rejection",
+      "preparse-length-and-UTF8",
+      "role-isolation",
+      "owner-required",
+      "UI-reconnect-independent-lifetime",
+      "policy-revision-fence",
+      "broker-EOF-durable-floors",
+      "stale-bootstrap-private-floors",
+      "restart-stale-capability",
+      "explicit-full-lock-ACK"
+    ],
+    "meshDelivery": "NOT_RUN"
+  },
+  "actual_delivery": {
+    "suite": "native-real-job-delivery",
+    "status": "PASS",
+    "admissionDifficulty": 22,
+    "wireRole": "NODE",
+    "checks": [
+      "Account-proof-managed-bindings",
+      "durable-ACCEPTED",
+      "policy-blocked-accept-UI-SIGKILL-then-resume",
+      "unchanged-discovery-transit-batching",
+      "recipient-durable-Inbox",
+      "transport-sent-only",
+      "identical-submit-dedupe",
+      "changed-bytes-conflict",
+      "sender-restart-retained-job",
+      "recipient-packet-id-dedupe"
+    ],
+    "backendForwarded": 4,
+    "payloadDigest": "95d3dfed108da525f9b48069a4f29cb1c16485476b75299084bbdcf6bbd0d856",
+    "limitations": [
+      "ACK-free recipient crash window unchanged",
+      "Windows/Android runtime NOT_RUN"
+    ]
+  },
+  "ctest": {
+    "result": "8/8PASS",
+    "seconds": 1.47,
+    "suites": [
+      "nonce",
+      "storage",
+      "crypto",
+      "bundle",
+      "actor-lifecycle",
+      "job-ledger",
+      "local-frame",
+      "inbox"
+    ]
+  },
+  "commands": [
+    "python native/tests/local_ipc_test.py \"$TC/build-native-linux/dmash-node-host\" PRIVATE_SYNTHETIC_BUNDLE \"$TC\"",
+    "python native/tests/ipc_delivery_test.py \"$TC/build-native-linux/dmash-node-host\" \"$TC\"",
+    "ctest --test-dir \"$TC/build-native-linux\" --output-on-failure -j1"
+  ],
+  "limits": [
+    "No product Root/PIN/Account private keys in network process; Account signatures produced only by synthetic client outside actor",
+    "Prepared payload is an opaque synthetic Account-ciphertext fixture, not full Account E2EE interoperability",
+    "SQL crash-before/after acceptance covered by prior native-job-ledger fault tests; IPC process hard-crash acceptance boundaries beyond UI kill remain additional gates",
+    "No remote wire ACK/custody guarantee; recipient crash after socket completion and before Inbox persist remains loss window",
+    "Consumption intents/events and real broker supervisor remain unimplemented",
+    "Android new slice link-only result recorded separately when terminal; Windows compile/runtime NOT_RUN",
+    "No physical power-loss or deployed acceptance",
+    "128MiB applies per QuickJS engine, not total process memory; Qt/crypto/compute buffers additionally bounded separately"
+  ]
+}

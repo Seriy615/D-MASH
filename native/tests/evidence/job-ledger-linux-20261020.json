@@ -1,0 +1,29 @@
+{
+  "kind": "C02_JOB_LEDGER_SQL_STORAGE_ONLY_NOT_IPC_OR_DELIVERY",
+  "date": "2026-10-20",
+  "source_sha256": {
+    "native/src/job_ledger.cpp": "30147242c54babdd6cb931a32868cf481357873e8dba142da66b66d4d5837c02",
+    "native/src/job_ledger.h": "569bfcd923a41c86741f79f5d0ea7314b01b421e80b92310f49e52dfd903257a",
+    "native/tests/job_ledger_test.cpp": "d41f38cc53604c57e480e1c9490a55655528bded5aedb815966a4508368a38cb",
+    "native/CMakeLists.txt": "e5f06b1324990d9e9910ffcdd568965b48141449d6d47a843e91fc10c5d8e8d3",
+    "native/LOCAL_IPC_V1.md": "5b1207eca8607777e485b5b578a37ebb7112b7b3a910a2923b681cd80be243b1"
+  },
+  "toolchain": "Qt6.12.0/OpenSSL3.5.9/Linux x86_64",
+  "checks": {
+    "complete_native_suite": "7/7PASS before final test assertion addition",
+    "final_native_job_ledger": "1/1PASS0.20s",
+    "crash_before_commit": "hardexit73\u2192zerojobs\u2192retryonejob",
+    "crash_after_commit_before_reply": "hardexit73\u2192onejob\u2192retryexactexistingID",
+    "wrongbytes_sameoperation": "reject",
+    "quota_lowering": "retainedjobsnotdeleted; new work rejected",
+    "owner_and_policy": "staleepoch denied; disabled/cancelled maySend false; revokedbootgeneration rejected",
+    "binding": "wrongkey/wrongNode rejected; keys wiped onclose/constructorfailure",
+    "offline_and_expiry": "deferral noattemptcost; policydisabledexpiry handled; sameoperationretryafterexpiry returnssameID"
+  },
+  "limits": [
+    "No actor/IPC integration atthisstoragecheckpoint",
+    "No OSauthentication orUIkill deliveryclaim",
+    "No wireACK, DELIVERED/CUSTODY orphysicalpowerlosstest",
+    "No Android/Windows execution ofjobledger yet"
+  ]
+}

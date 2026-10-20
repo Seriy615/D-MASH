@@ -1,3 +1,13 @@
+<!-- Native UI checkpoint; historical browser matrix below remains scoped. -->
+**2026-10-20 native Desktop27a28e7 ROOT PASS (Linux offscreen Qt clicks):**
+actual retained owning-profile copy, import/RootPIN/login choice/cancel/wrong/
+busy cancel/correct password/Saved compose-send/signout/window reopen.6PASS,
+0FAIL,1liveServiceSKIP;82source/7artifact hashes exact.
+[Evidence](docs/native/2026-10-20/root-desktop-account-ui.json).
+Remote chat/fresh setup/contacts/native policies/Android/Windows UI NOT RUN;
+resident credential host not yet integrated. Historical178class inventory below
+is not full current native or browser acceptance.
+
 # Browser-first QA — текущий аудит Forge
 
 Требование пользователя от 8 октября 2026: всё тестировать браузером; перед
@@ -5,6 +15,27 @@
 исправить и провести повторную приёмку. Тимлид/оркестратор сам отвечает за
 интегрированный результат. Этот файл — журнал и начальная матрица, не утверждение,
 что полный обход UI уже выполнен.
+
+**Текущий native/browser checkpoint — 20 октября, после e749234:**
+Root independently verified native desktop7589b92: 11 source/3 binary hashes
+match, actual offscreen Widgets About/Close, error/disabled, authenticated
+Node status/Refresh/Detach and UI-close preserving separate daemon PASS.
+Account/contact/chat native, Android/Windows runtime NOT RUN.
+[Evidence](docs/native/2026-10-20/root-desktop-controls.json).
+
+**UI-CHAT-DELEGATION-01 — FIXED004fa12/.43, root BROWSER PASS:** same retained
+profile upgraded through actual unlock/Account login to e749234/release.42,
+SW blocked. Saved original row1 remains; compose/SEND adds test row1. Clicking
+its × does nothing: no confirmation, no page error. The .chat-main bubble
+stopPropagation prevents the new document delegated data-action handler from
+receiving chat controls. Root keeps both rows for same-data fix/retest.109
+captured source responses exact,0errors.
+[Reproduction](docs/native/2026-10-20/root-chat-delegation-red.json).
+Root same-data upgrade/retest: × opens modal; НЕТ preserves original1/test1;
+ДА deletes only test; Back/reopen Saved original1/test0. Device/Account hashes
+unchanged,107source responses exact,0errors.
+[GREEN](docs/native/2026-10-20/root-chat-delegation-green.json).
+Synthetic retained profile, external traffic/SWblocked; no native chat claim.
 
 **Fresh deployed `.38` ordinary PRIVATE UI — scoped PASS, 20 October 2026:** exact
 `51b35ff2de810af5ccdf9ebac0839b812f1de38c`; normal production HTTPS and

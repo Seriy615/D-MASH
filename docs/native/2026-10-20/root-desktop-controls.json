@@ -1,0 +1,34 @@
+{
+  "kind": "ROOT_INDEPENDENT_NATIVE_UI",
+  "source": "7589b92",
+  "hostSource": "bca447a",
+  "sourceConsistency": {
+    "files": 11,
+    "binaries": 3,
+    "mismatches": []
+  },
+  "results": {
+    "disconnectedInventory": "PASS",
+    "rejectedHandoff": "PASS",
+    "liveService": "PASS"
+  },
+  "actualActions": [
+    "About modal Close",
+    "Refresh click after authenticated real Node status",
+    "Detach click",
+    "UI window closes while separate Node remains alive",
+    "Broker EOF stops Node"
+  ],
+  "limits": [
+    "synthetic private Node profile; no mesh endpoints",
+    "Account controls disabled pending facade",
+    "offscreen actual widgets, not X11/Wayland screen acceptance",
+    "no service worker",
+    "Not browser or deployed acceptance; no Android/Windows runtime."
+  ],
+  "binarySha256": {
+    "dmash_desktop_ui_test": "edfb0c987bf0f78eccd4a1d90ab3ddf1b2a386653ba7eb7b2df4cb61eb66d5cc",
+    "dmash-desktop": "26f50628841e854999794f4fa168197e0316a020bd53dffdf4439a1609ceae9f",
+    "dmash-node-host-bca447a": "ad806878e23d8fb7b71429c924981babf78b7113e75cfc9fa371988a2f144fd3"
+  }
+}

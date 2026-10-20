@@ -1,0 +1,39 @@
+{
+  "kind": "actual-source-crypto",
+  "status": "PASS",
+  "node": "v24.19.0",
+  "source_head": "9446c22f27309131456942870971d477f6f2358f",
+  "source_sha256": {
+    "vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "secure_session.js": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+    "private_routes_v3.js": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+    "device_envelope.js": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4"
+  },
+  "checks": [
+    "directional locator symmetry 0",
+    "directional authority symmetry 1",
+    "directional recipient symmetry 2",
+    "directional locator symmetry 3",
+    "directional authority symmetry 4",
+    "directional recipient symmetry 5",
+    "directions distinct",
+    "third peer isolated",
+    "generation changes authority and recipient",
+    "invalid generation rejected",
+    "maximum safe generation accepted",
+    "invalid or identical contributions rejected",
+    "independent of Account context",
+    "both captured contributions reproduce route secrets",
+    "actual outer roundtrip",
+    "third peer and generation wrong keys reject",
+    "wire has no static recipient field",
+    "wire hides semantic fields",
+    "outer encryption alone does not authenticate Account sender"
+  ],
+  "limits": [
+    "UNIT actual JS; no browser/network/native acceptance",
+    "Account independence checks this route helper only; no claim all runtime paths are independent",
+    "Wire shape inspected; no anonymity or traffic-analysis proof",
+    "Generation validation is syntactic; monotonicity/replay lifecycle not proven"
+  ]
+}

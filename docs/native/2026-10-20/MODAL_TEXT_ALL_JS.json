@@ -1,0 +1,1115 @@
+{
+  "source_commit": "a22b2db",
+  "scope": "UNIT all JS suites",
+  "node": "v24.19.0",
+  "test_count": 160,
+  "passed": 160,
+  "failed": 0,
+  "duration_seconds": 101.876,
+  "inputs_unchanged": true,
+  "source_files_sha256": {
+    "D-MASH PWA/not_messenger/DEVICE_AUTH_ARCHITECTURE.md": "6978d5bb0925c056d6b6a858d3d8607771a5f5160cc81877a097ac54e4f0ec48",
+    "D-MASH PWA/not_messenger/DEVICE_ROOT_ARCHITECTURE.md": "6a2c45570f0d8205afd6076b1a7c546d9af80c7c8c65a5a5e2c1bf4e2edbdf6a",
+    "D-MASH PWA/not_messenger/calc_icon.png": "e2edfaf28b60df71725c0a96fab4c6c80b135415c2913614ac497064b023f4da",
+    "D-MASH PWA/not_messenger/css/app_shell.css": "cea75ddf38b64e5c3bdd1b08e60c1b9256aa80961bfc9b524bc74307d1af6c18",
+    "D-MASH PWA/not_messenger/css/foundation.css": "4e73634fad97faf5239d2d7ceacd36a0de4be6d1b2106f47b0cbcd10297f1e01",
+    "D-MASH PWA/not_messenger/css/runtime_fixes.css": "8890a358595136854d2491cb5ab689f2bce0baeaf10605332133086084ad84cd",
+    "D-MASH PWA/not_messenger/index.html": "5e892e1d49790745214c519828b5e858e85eda5258eca58695445277e20847cb",
+    "D-MASH PWA/not_messenger/js/acceptance_fixes.js": "a6c2b5f3f7ca8206a94fe34e4a306e4cf7bfe73a7fa176241d2285e5848dd8fc",
+    "D-MASH PWA/not_messenger/js/acceptance_v50.js": "4f4d4c678cdccfb99a6f77db802a6ef9d9408c798b981d0e71d661aef5a5cdc0",
+    "D-MASH PWA/not_messenger/js/acceptance_v51.js": "e0b4a9e5603bd8ab0ef8c9f679c6063d1cd265979fc4608b4831f660ac8cb7d1",
+    "D-MASH PWA/not_messenger/js/acceptance_v52.js": "af0dc809e7a65649b07c31f004d87b38471c3cc2ee51878580dffb510d30860b",
+    "D-MASH PWA/not_messenger/js/acceptance_v53.js": "a390af4ec868747a9c507fc24c0e255f10f121cac03d140ef4bdd3605eadc3a5",
+    "D-MASH PWA/not_messenger/js/acceptance_v54.js": "52cd53f41ea166396589efcea6e1139fef7e6748e89bcdd8c9fb472849ba8b23",
+    "D-MASH PWA/not_messenger/js/acceptance_v55.js": "8b597692a8ef3b8a3e8eb26cfb9e0e375ad52558caf33b37f6cb08f36d538afd",
+    "D-MASH PWA/not_messenger/js/account_app_cipher_v4.js": "cbf1a950305c324cf848156cb7f5cbc31572711899443eec7ad596aa2b3c714b",
+    "D-MASH PWA/not_messenger/js/account_app_outbox_v4.js": "a5fb5b8b51b439944647b96b04cc9d44c569e94b6d07331132e7343aaab6a9ae",
+    "D-MASH PWA/not_messenger/js/account_authenticated_history_v4.js": "90c7263dccfbbda2ad332c44d4fe9580121e6debbf017122fee653c87b64000e",
+    "D-MASH PWA/not_messenger/js/account_handshake_v4.js": "d34819c870e0d2aa923f78cebee43b986e2ddaa5e3d94123402c3805a707fc52",
+    "D-MASH PWA/not_messenger/js/account_inbox_progress_v4.js": "851e6b2cdd067f09317a96e9276e51b0e08ed488d7b8c8d7d0bb4480422aa25f",
+    "D-MASH PWA/not_messenger/js/account_managed_inbox_v4.js": "f3532f537542ff3dd2c7b58b8a7c4c5b4e22f790efaa1c445cc8c678ffa046c3",
+    "D-MASH PWA/not_messenger/js/account_media_authority_v4.js": "0b75cb2f4e6f33656e733d74a1fe0f6210b877287c1f88f69158658b95cdd1bd",
+    "D-MASH PWA/not_messenger/js/account_media_bridge_v4.js": "f62cf27061a38f65d12fb4475af4738b3cb50d7d476c60a21ec476c38957dc61",
+    "D-MASH PWA/not_messenger/js/account_media_control_v4.js": "0e54c0fb4ef3e2d54ad66db15aa729ad523571a50c834a7af3267474df8dac9d",
+    "D-MASH PWA/not_messenger/js/account_media_dispatch_v4.js": "c0e13b3c2bdeabf6f94b8c33dd88696b7a34901a141a1a031064e216a4f76886",
+    "D-MASH PWA/not_messenger/js/account_node_inbox_v4.js": "4e55b612c6a305299999271cc89b609ae1326fbc0522f92d4a239773d5db904c",
+    "D-MASH PWA/not_messenger/js/account_node_transport_v4.js": "ca515765bf88db317c2bb0eab49562e0e60ec119ce7f3a4819f47abe24ec2b17",
+    "D-MASH PWA/not_messenger/js/account_pairing_v2.js": "49692f34da52870e90d9f447ce8252afff40d82d972b238af3b5040e2a213a63",
+    "D-MASH PWA/not_messenger/js/account_private_pairing_link_v4.js": "943d4894839357320fa44055c56b090bcf0db00abc295c9700fa944c53981547",
+    "D-MASH PWA/not_messenger/js/account_ratchet.js": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+    "D-MASH PWA/not_messenger/js/account_ratchet_runtime.js": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+    "D-MASH PWA/not_messenger/js/account_recorded_media.js": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+    "D-MASH PWA/not_messenger/js/account_route_binding_v2.js": "209f83e06cd6aa5439b23b627dcf534acb7abf1bd820334cf09bd737e58f312b",
+    "D-MASH PWA/not_messenger/js/account_route_journal_v2.js": "53a08e62eb095563e926d458d764833df3a88226e68691c52727f0e980a9d8a6",
+    "D-MASH PWA/not_messenger/js/account_sealed_operation_v4.js": "f01ef000b15fe13ac503c24e0241871e5af6fa7861468c8b7790092f86844f13",
+    "D-MASH PWA/not_messenger/js/account_session_runtime_v4.js": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+    "D-MASH PWA/not_messenger/js/account_session_store_v4.js": "68592c93ac40c4f340100932183a8347cf9f4d8ecee48cd86274e169e94b3f80",
+    "D-MASH PWA/not_messenger/js/account_session_v4.js": "709c777aff3f5101dd25672ea3dc5cacb635f2d2ad57f0a8414d6b3850f568cf",
+    "D-MASH PWA/not_messenger/js/account_static_kem_v1.js": "12008dbfe62f6f5c539767f3dad707d90e544376534b91de4c285d468bba9b33",
+    "D-MASH PWA/not_messenger/js/app_shell.js": "285133a63541d8792f1e9354b416f0125d986a53dae6eebdbbf695cf19473303",
+    "D-MASH PWA/not_messenger/js/call_admission_worker.js": "41d1588c8cee600682e09a654acc78ac620aeb8873641226cfb656f5cb8bb17c",
+    "D-MASH PWA/not_messenger/js/call_runtime.js": "2e59a5804d2167487ab443dcf9481c99dbbd91cb066a8525cdc63df055f7487a",
+    "D-MASH PWA/not_messenger/js/call_session.js": "b85f6bbbf8aebc9a4864101852eb205fe59900bde6b8c2ddf69f73acc7cab1b6",
+    "D-MASH PWA/not_messenger/js/call_signaling.js": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+    "D-MASH PWA/not_messenger/js/chat_cipher.js": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+    "D-MASH PWA/not_messenger/js/chat_password.js": "5d850716a4b5e3316061961088ba718d453e587eb5eccf8bc8611e95f87f545c",
+    "D-MASH PWA/not_messenger/js/contact_bootstrap_v3.js": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+    "D-MASH PWA/not_messenger/js/contact_flow_v3.js": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+    "D-MASH PWA/not_messenger/js/contact_payloads.js": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+    "D-MASH PWA/not_messenger/js/contact_transport.js": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+    "D-MASH PWA/not_messenger/js/core_engine.js": "646737e74de5dfa0e02f5078917089f9d3a59cff5487856bc53e843f8d659048",
+    "D-MASH PWA/not_messenger/js/device_authority_v3.js": "5644ecf21dd35f4e755983a5afc06d7f08d4482d2e0519caa9e58891197de6d9",
+    "D-MASH PWA/not_messenger/js/device_client_v3.js": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+    "D-MASH PWA/not_messenger/js/device_envelope.js": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+    "D-MASH PWA/not_messenger/js/device_inbox.js": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+    "D-MASH PWA/not_messenger/js/device_root.js": "b52b75f04d8a5a8d838e5e4b7700746c5b527f7acf96f1a6433c1407e9e61f54",
+    "D-MASH PWA/not_messenger/js/device_routes.js": "c6890386be8c3c05eb5b4223466152486b65edefafb5bfa658715bc7fd0cb94b",
+    "D-MASH PWA/not_messenger/js/dmash_links.js": "0af0247f7d3ba1b478cfcfa7cbb59b51b4f3078521ec2495550c103368dad1a6",
+    "D-MASH PWA/not_messenger/js/file_channel.js": "02f650c74455b2e4c7f043a2546b401040ab172ce07d31fa277d0f3f21081b6f",
+    "D-MASH PWA/not_messenger/js/file_runtime.js": "f8c391d672362ce786617609fcfd4a1c891808a7ac06772393211cd24114ea8a",
+    "D-MASH PWA/not_messenger/js/file_session.js": "81f2a4fd1a0ba573250bc4946da26397cfd36131937ab32764b7efecfd1b1d28",
+    "D-MASH PWA/not_messenger/js/file_vault.js": "212deabf54c951e4fd80b80a4b7a06701b10e02f68dfa5ef20aa34ed6fc883de",
+    "D-MASH PWA/not_messenger/js/i18n.js": "a3491022799b728247ff9e80f10bf16370435ff48b23de64a619afe85a0136d3",
+    "D-MASH PWA/not_messenger/js/local_credentials.js": "36975b2bdb15b002b4e1d1004656acac1e40f2470302d3ba16cd2ef52fc6ad0f",
+    "D-MASH PWA/not_messenger/js/local_credentials_bootstrap.js": "7060865e1dff9e124ee50df69d5c60dd4e09a5b9a11c47890702537c3a7fe0db",
+    "D-MASH PWA/not_messenger/js/local_credentials_worker.js": "0c4e31073785c226300a53d865e5b8964fa57398bed510e08b8ea042367d2f21",
+    "D-MASH PWA/not_messenger/js/locales/en.js": "238e8a4794ea25c1255639bf80f5d8fe0bb59956dbf44f8fb877a3689616b87b",
+    "D-MASH PWA/not_messenger/js/locales/ru.js": "d228d475f9d85352357923adc5265a0082bac58be4038cbfd16b3cfa70315897",
+    "D-MASH PWA/not_messenger/js/managed_node_catalog_v4.js": "afbc54e6970cacc922eaf02bf8b66bb1161b33db1f00f41da97045fd6ef91329",
+    "D-MASH PWA/not_messenger/js/node_account_ui_v4.js": "718f68acb9d2667c771fd95992523aaac5b83f83c8b37a3adced8a4ad0c58687",
+    "D-MASH PWA/not_messenger/js/node_admission_v4.js": "9c89e3aeba7c1e8ce8d99821ead92c43f1e59f083af7e73dacae5220f7705f50",
+    "D-MASH PWA/not_messenger/js/node_bootstrap_control_v4.js": "c2f04dafebc3f93df8262edbb4c9e9a8bef665b1aa7f538ed651d7f63eee56f2",
+    "D-MASH PWA/not_messenger/js/node_bootstrap_dispatcher_v4.js": "2741afd5d220c9ca3f7e0154490600ec075dca5ee77fa77f14896ff988576a4b",
+    "D-MASH PWA/not_messenger/js/node_bootstrap_runtime_v4.js": "bb0e8aed378b6e91213989988989b4d392c4b57ee40d8d34ff8e64e934475592",
+    "D-MASH PWA/not_messenger/js/node_channel_v4.js": "75faf8dbe71754e30a50ba399a3a403e0cd1475886a02933ae63f2d5909e65f3",
+    "D-MASH PWA/not_messenger/js/node_identity.js": "47a18f80fd7e76b3bde39e0680830c8f317ab03eb0e282dddd32e26256560f43",
+    "D-MASH PWA/not_messenger/js/node_inbox_v4.js": "44d0271df2e831445db79692c8a2631d6f3a8aede7c3804b396faf1e7229524f",
+    "D-MASH PWA/not_messenger/js/node_local_delivery_v4.js": "8f610ac165381e34438cb4ff87daf8155ba96ff1e7c6a1a2cd09b66ff56de710",
+    "D-MASH PWA/not_messenger/js/node_local_ownership_v4.js": "c3ff0523f260fbeaa41ec973e6ad5ed94688dae6bb9ef628d4ca841ca3bf5464",
+    "D-MASH PWA/not_messenger/js/node_manager.js": "fbd505265d829f21e1919447b28b7aa785a9ce76567e62387b13fd5a2da230bb",
+    "D-MASH PWA/not_messenger/js/node_public_bootstrap_control_v4.js": "91f7cbef5df02e3449c8fbee99425afe68f4b4e8bb584c6d3e80a39f352387ad",
+    "D-MASH PWA/not_messenger/js/node_public_bootstrap_runtime_v4.js": "88d4a94bede1d265558bc27da61446c9988db8e87ae03b8d75f2eee0295dd290",
+    "D-MASH PWA/not_messenger/js/node_registration_v4.js": "674508bb0cf6f24e6a95bdee3cdb7b619af8c0c34ff12e9ed8474a029b9164d2",
+    "D-MASH PWA/not_messenger/js/node_relationships_v4.js": "d08c79c4950166a42f922758851f8e26ff4c7a4e72042be548fae1b317872a50",
+    "D-MASH PWA/not_messenger/js/node_root_lifecycle_v4.js": "3ccba9ccd65c930c95dc6b4f56a3a07233645e1ea2e4f8260132e43bc29d3ae6",
+    "D-MASH PWA/not_messenger/js/node_routing_v4.js": "9ae26919aed67ddadf62d681f9b398a2f51cbb4e54cc6fdd3244b4e0d320d900",
+    "D-MASH PWA/not_messenger/js/node_runtime_coordinator_v4.js": "203aace2938f92b22a46943d24ea14fc6f90f6a499e979e1962a6899ac444ae7",
+    "D-MASH PWA/not_messenger/js/node_runtime_host_v4.js": "ae62fc05079655a25e61edd1af6802ef3564437986c3cf722c42234cb6f8a7e5",
+    "D-MASH PWA/not_messenger/js/node_runtime_worker_v4.js": "b7ec8e63528c20578a048f032afaf37be3e00d91165806ceb50b2763a6a1e684",
+    "D-MASH PWA/not_messenger/js/node_service_descriptor_v4.js": "e69d5c118de8c0b5bedda6b71b3ba2568d0b3b03aca4431b9f18fad54fabe68d",
+    "D-MASH PWA/not_messenger/js/node_socket_v4.js": "327eb904751b432c9035440e354be7f7a68c50033fed7858f26d684f7d58f106",
+    "D-MASH PWA/not_messenger/js/node_store_profile_v4.js": "a159c5b4badf883b12f6dbccbdc786820481a692c88e1a494fc89d7904354d06",
+    "D-MASH PWA/not_messenger/js/node_sturn_service_v4.js": "a79100996a95698ed302b577d4d58e6b7a42cbad238cbe4f80fc77e839fdbfa6",
+    "D-MASH PWA/not_messenger/js/pending_contact_requests.js": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+    "D-MASH PWA/not_messenger/js/private_routes_v3.js": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+    "D-MASH PWA/not_messenger/js/probe_primitives_v4.js": "3cc1b7dbbb016258bb756279a7b2b18c907ef69849759b59c3fc021dee26011e",
+    "D-MASH PWA/not_messenger/js/public_account_orchestrator_v4.js": "e7ffffd6f16f4d33c4a430e904891e4ba625e557ce09383bd4415f0412046cdb",
+    "D-MASH PWA/not_messenger/js/public_contact_runtime.js": "a548f3defd239bfeb777d7867b47ef3b16c661bc1a975300393ced8a22f3f759",
+    "D-MASH PWA/not_messenger/js/quick_name_registry.js": "e6f805bd5776ecd2ab093fe6ac78fb4042cc510060ed55c6e0667163614e6388",
+    "D-MASH PWA/not_messenger/js/recipient_payload_v4.js": "8167b736b6a8e29c50ef8ffb146b0a712e3369cfa9895bdef171ff24b95e6a6a",
+    "D-MASH PWA/not_messenger/js/recorded_note_turn.js": "38d26537f1611d650c61924e4289bda6f95c1e6dde4e0e43456ad2f7b0d9275c",
+    "D-MASH PWA/not_messenger/js/release.js": "78e7e9bc7bee430b4accfed16fc3737e2a2b34594a598e6d14dbe099e3bb6ecc",
+    "D-MASH PWA/not_messenger/js/resource_pow.js": "9561922d0db7cf74ad32e5eff88e084b24f3b2673cf04edf62ef11d335e45955",
+    "D-MASH PWA/not_messenger/js/route_discovery_v4.js": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+    "D-MASH PWA/not_messenger/js/runtime_fixes.js": "3d9e42059fd4d1b0e89941defe1832213e81e297591d40f8532de1477f4ce529",
+    "D-MASH PWA/not_messenger/js/saved_messages.js": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+    "D-MASH PWA/not_messenger/js/secure_session.js": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+    "D-MASH PWA/not_messenger/js/stability_fixes.js": "bf340a5d578c89772f8ac4323437787c715f2b342a663faa3a99ad89da4080ee",
+    "D-MASH PWA/not_messenger/js/storage.js": "a9c925caf69bea63d56a0a54e0391eb804b78377c05d8b89b4a2a5074e71742d",
+    "D-MASH PWA/not_messenger/js/ui_global_bridge.js": "449f2fd2fabbe6c0a933a667a5632bfdfa1fd509988a4543c0dd4bde09f913a7",
+    "D-MASH PWA/not_messenger/js/ui_logic.js": "9a658f7c250a3a203bb4596255c05c0b2161ffb022d2407fd9d6cb794273695f",
+    "D-MASH PWA/not_messenger/js/vendor/argon2-bundled.min.js": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+    "D-MASH PWA/not_messenger/js/vendor/argon2.wasm": "0c2149886c13e4eae4a6ca25ee71d47423c5c8740a874cf04ff816d1b2c901d7",
+    "D-MASH PWA/not_messenger/js/vendor/blake3.LICENSE.txt": "4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec",
+    "D-MASH PWA/not_messenger/js/vendor/blake3.PROVENANCE.txt": "b709e4fdc847e3fb78adc7f742ea2a89364ddd20387235824b715e3121beac09",
+    "D-MASH PWA/not_messenger/js/vendor/blake3.min.js": "8071ab35cb39002f3ba58c0b3ed48ce1be876d1c93a06a27572fe59d62afca0c",
+    "D-MASH PWA/not_messenger/js/vendor/html5-qrcode.min.js": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+    "D-MASH PWA/not_messenger/js/vendor/kyber768.js": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+    "D-MASH PWA/not_messenger/js/vendor/kyber768.wasm": "e9b316e56f5d1eef1f44f28bca99bec16ec9cff69af4b17d318143512255b009",
+    "D-MASH PWA/not_messenger/js/vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "D-MASH PWA/not_messenger/js/vendor/nacl-util.min.js": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+    "D-MASH PWA/not_messenger/js/vendor/qrcode.min.js": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+    "D-MASH PWA/not_messenger/manifest.json": "03c04aeaa964b9048391972378c516fe0c2f1bd1c3775a9f4a2b931a9c2e2ad6",
+    "D-MASH PWA/not_messenger/nodes.json": "ff4979797e9370c3c174a8156a378289787c953a63bee88319b06a8683b43c3c",
+    "D-MASH PWA/not_messenger/sw.js": "4768298b90cc9c77a48299e653892579692cd920a90a8e6eedbd89ba14a0bb0d",
+    "D-MASH PWA/not_messenger/tests/acceptance_fixes_source.test.js": "a04a23c9db4e74385df9b251a351bf588fde37af99f0c26fbe0ac6aa9fe91cc6",
+    "D-MASH PWA/not_messenger/tests/account_app_cipher_v4.test.js": "81107822455183ae76c5e9e2d53634f305ec07e947f36c7f4702eb6ddb584ef3",
+    "D-MASH PWA/not_messenger/tests/account_app_outbox_v4.test.js": "53cb405c6c0dc9cd00b4c4c47a23d5f3a5d3ee2080255ded4ce9d6b3cc5ac9f3",
+    "D-MASH PWA/not_messenger/tests/account_app_receipt_v4.test.js": "7aa5e543b2e130454e2c4df2477a38dc8c219797850cbcf6f34dffbc76088341",
+    "D-MASH PWA/not_messenger/tests/account_app_retry_node_inbox_v4.test.js": "92ff4d40d49757d1fe7754506fd484edaff51d32418d8eff968b79ca1c5faadd",
+    "D-MASH PWA/not_messenger/tests/account_biometric_security.test.js": "81ad376eb5191f7907cfae354bd06d06203ad972a866ae45898de5538a88d234",
+    "D-MASH PWA/not_messenger/tests/account_control_crypto_v4.test.js": "27a597d86312c6a57a275d5a04692a05ed73633552ea72d7ca2f5079b7ba7b8d",
+    "D-MASH PWA/not_messenger/tests/account_control_receipt_retention.test.js": "40ac51e2a87ce140631e5079aa65291be9b0fc1c3a208186a7e3e37c6997a314",
+    "D-MASH PWA/not_messenger/tests/account_device_dispatch_v3.test.js": "ff3f5bf03f9f9459afd5fc2af4c51e25f1b2587c68d6f7fbfca93e0edcaa1ab1",
+    "D-MASH PWA/not_messenger/tests/account_handshake_v4.test.js": "169d292ea908907be9605b4785d4af7b470b65ad570387091d5808ff6617e4c5",
+    "D-MASH PWA/not_messenger/tests/account_login_identity.test.js": "14b64167f1a4771080d2ca4642876432a8a15d68b98398a41f63b12c5f47be9d",
+    "D-MASH PWA/not_messenger/tests/account_managed_inbox_v4.test.js": "303ee338a08261e591cc08594f3ff41bd045b212e5a1d3f3a9ca848f98c55e6d",
+    "D-MASH PWA/not_messenger/tests/account_media_authority_v4.test.js": "b488fdb19b03d15726f98a6f265708e104863ab5e77467637f46eac41884bcbe",
+    "D-MASH PWA/not_messenger/tests/account_media_bridge_v4.test.js": "30ae75ce5995954175d4fa94d0d7d4f7f09e221b4b35447055021d1af041e728",
+    "D-MASH PWA/not_messenger/tests/account_media_control_v4.test.js": "4898a21704e36e753dca5daceabfb82265f805ee7586a12c31c08a3fca3cfbc3",
+    "D-MASH PWA/not_messenger/tests/account_media_dispatch_v4.test.js": "987e482eda9a60e43fa4a29d0ab3b8b4e44d03f646170c1aee9c01dd8744a5de",
+    "D-MASH PWA/not_messenger/tests/account_media_drain_isolation.test.js": "a51cfcc78fd549ae425ec46fe2b912b77a11b52112f6ac2ba874be199012be89",
+    "D-MASH PWA/not_messenger/tests/account_media_outcome_expiry.test.js": "ba2f4155c178319980c31496c7a49f6210fb242713e28c9774700aaec3635bf9",
+    "D-MASH PWA/not_messenger/tests/account_media_task_v4.test.js": "9e77abefc2273c86fa0387b1aeae6cece77bae7a452456525ae95bb079c8a095",
+    "D-MASH PWA/not_messenger/tests/account_node_inbox_v4.test.js": "7283050fbaf75ea69ba72bdc685a01ec635799f56d427df1056ac690be450933",
+    "D-MASH PWA/not_messenger/tests/account_node_transport_v4.test.js": "581db39f776248ea31da23b046ea2090abc07ce93e604bf399c2a5120a0e280b",
+    "D-MASH PWA/not_messenger/tests/account_pairing_v2.test.js": "6b312de1d99e9c7cda6847bab92e47603ff3ed6afd4c1355edec9f96f356e585",
+    "D-MASH PWA/not_messenger/tests/account_private_orchestrator_v4.test.js": "588be0cd022d4159801924e27eb10fade6cd6802ad179eb2232e7c809b99099f",
+    "D-MASH PWA/not_messenger/tests/account_private_pairing_link_v4.test.js": "d814d1bce796f93506684ea2211e9624f72d305642de50a48ac1291a228ba1c8",
+    "D-MASH PWA/not_messenger/tests/account_ratchet.test.js": "fd6fd411d08e7736ad4a86ce7f943b32b4ced499c4a0005e294498c6be28724d",
+    "D-MASH PWA/not_messenger/tests/account_ratchet_ack_retry.test.js": "9d4a32682924a404c335f384be49c7b82f38b49a19e6b9aa0fcec5d69e92ac9f",
+    "D-MASH PWA/not_messenger/tests/account_ratchet_collision.test.js": "4e3a2fc22688e28c5fbaa55000cea5824d843ea7af965bcb41edef12fc081841",
+    "D-MASH PWA/not_messenger/tests/account_ratchet_persistence.test.js": "995f148321b999150a05400c4b810ac9d6cc1d135117d84c7d50082bad5d80ab",
+    "D-MASH PWA/not_messenger/tests/account_ratchet_runtime.test.js": "112d23fc2d3024138c7da543f6e8c75665245a6fe1815be66b1542e2064ad7f6",
+    "D-MASH PWA/not_messenger/tests/account_ratchet_runtime_source.test.js": "fbb3becd089a3f3ffde824741ec2207a8f3d88d66beb888fd4c6b56b676afe69",
+    "D-MASH PWA/not_messenger/tests/account_receipt_nonblocking_v4.test.js": "a761361eab8d4e6a6c57cea1eda60be5b9c60abc58754155c39c3672ce83d6f4",
+    "D-MASH PWA/not_messenger/tests/account_receiver_startup_v4.test.js": "52f43da7a00a0b5e922a6f291170b3c61a86f31de93cbb6e0b3986bf528941e1",
+    "D-MASH PWA/not_messenger/tests/account_recorded_media.test.js": "002b9204c0693761b2b5fd29d1d71bf3460b3da0569b335f1e03c354349e6736",
+    "D-MASH PWA/not_messenger/tests/account_retry_timer_ownership_v4.test.js": "d1ef05c6c169de996314130ab852ac6b1d6f69cddb467b133b8f6e3db0dd1d8e",
+    "D-MASH PWA/not_messenger/tests/account_route_binding_v2.test.js": "d78b1a65635f18c5173b9bb0e36b70c0976115b5b42e0b5d8d211b1bc4acaf93",
+    "D-MASH PWA/not_messenger/tests/account_route_journal_v2.test.js": "72040037b7be592419ef660f4339173a58ab50fc6383a10001299eef47d48c1d",
+    "D-MASH PWA/not_messenger/tests/account_route_journal_validation_reuse.test.js": "b25bccd75eb93319550c827cc9b3572d519bbe1d6511a32c8d6fc2247bfa0f02",
+    "D-MASH PWA/not_messenger/tests/account_session_flush_independence_v4.test.js": "0b2ac4e0f4dcc8da5f0c4240aa69e5dff578ca079c41eabdfd15ccae4d5232d8",
+    "D-MASH PWA/not_messenger/tests/account_session_runtime_v4.test.js": "b755f7b492c5b4a7ec1c8585a97c9e1811b4959ebabd2a103c78b584408568a2",
+    "D-MASH PWA/not_messenger/tests/account_session_successor_proof_v4.test.js": "a42624725d259c0f4f339e33b571d3cd6566af0000fa7dd70e57382adc0fcdcc",
+    "D-MASH PWA/not_messenger/tests/account_session_v4.test.js": "aed602f4b53cb5ba34fd125d8258ee936f3dfa1825fe530cdf68e895a4e0313f",
+    "D-MASH PWA/not_messenger/tests/biometric_account_login_disabled.test.js": "0ef100c0e8f7ceeb7240400abb008b72be52a5aee3f79807296aee9d3760e6b8",
+    "D-MASH PWA/not_messenger/tests/biometric_setup_cancel.test.js": "c6c02e7382f80c1d12cce3eaf06c2bd302a81b636af44c6c9f6d72ecd49c6451",
+    "D-MASH PWA/not_messenger/tests/calculator_secret_gate.test.js": "2281f0fef80256ba3dc47b349e9c5b6063e910956b431c9059c4ea38831c7795",
+    "D-MASH PWA/not_messenger/tests/call_admission_worker.test.js": "e75c07278473704249ee127cac8ca7db33dd380157d2b846e3d4fce59fe79a03",
+    "D-MASH PWA/not_messenger/tests/call_runtime.test.js": "9dbdff90b174ca464d8289c5d6f3b46bc5daca64df554dbed1c3c3353c64ab40",
+    "D-MASH PWA/not_messenger/tests/call_runtime_start_errors.test.js": "4e074ef7a15474b76a699b6a582aa94a3fe44b350bd337652f39e90156060506",
+    "D-MASH PWA/not_messenger/tests/call_session.test.js": "3ef784d5e0c3b036fd8bd1897780bb5576d9723383d9a7f0d9a0f62c6faea693",
+    "D-MASH PWA/not_messenger/tests/call_signaling.test.js": "c27ffe8382bf9079cea0d3d99ba3a8536e3c1a516a752bdac695396b57c89cd8",
+    "D-MASH PWA/not_messenger/tests/call_signaling_abort.test.js": "64912d3d8d7301ae78f83b62a44e4b68680c0fd27e7c37c04b484ba2be27495e",
+    "D-MASH PWA/not_messenger/tests/call_video.test.js": "824e205f88a86bd3ca954e88437ade2b82cc4a6cc0e29aae3891eefbd09b97f9",
+    "D-MASH PWA/not_messenger/tests/contact_bootstrap_v3.test.js": "ffb27371cb4ff1cc93669726a28b07db3a45425b0fb47c32c67d5d5568820dea",
+    "D-MASH PWA/not_messenger/tests/contact_flow_owner_diagnostic.test.js": "7c5158a9df7ebd1492f989a1d9829d89b6c5c19f544b992b483de2659258b97e",
+    "D-MASH PWA/not_messenger/tests/contact_flow_owner_retry.test.js": "2f8ede0c07f2dc9ed01905ff11cb8f10e43036b4ad32f03bc880e206d150c8f1",
+    "D-MASH PWA/not_messenger/tests/contact_flow_v3.test.js": "1d881ba419c7e8fbe46b8a084e3cda6f1a0f7a9debd6f58321eef069faccc9f6",
+    "D-MASH PWA/not_messenger/tests/contact_owner_preflight.test.js": "bd6345bd3000e5273f3af7e5c4b94f0918aca0dac5f5a18c15b5d8d011123cab",
+    "D-MASH PWA/not_messenger/tests/contact_payloads.test.js": "ed12b221704ef409a65d350b5d9f3e0e7794eb9b3d10ef416b122de09a05ea45",
+    "D-MASH PWA/not_messenger/tests/contact_transport.test.js": "def805fe2e727ea807f5b802d19e973941c0aba5042459a5f470ccffa41b858d",
+    "D-MASH PWA/not_messenger/tests/core_lifecycle_acceptance.test.js": "614818a1e24173df30eb36c9b2908935cb7e4f403bce0114d4ff0ede8f0954ad",
+    "D-MASH PWA/not_messenger/tests/delete_chat_order.test.js": "374d34d17df5bf6dc8753d098d7675a483c86bbd4a2d8e8c1b110b8657176679",
+    "D-MASH PWA/not_messenger/tests/device_authority_v3.test.js": "00a961eeb8b7b4e15d706bd62e87c5de68dcf14bf639771671d83e02d3fe1ecb",
+    "D-MASH PWA/not_messenger/tests/device_biometric_unlock_integration.test.js": "bda8000e0e81e3a8bbed91329af66e190137a7514a4b60e7595ca9cb0d344a5e",
+    "D-MASH PWA/not_messenger/tests/device_envelope.test.js": "48e99487d66f19e5c7fe5054a5511f8629e961e51b389f25c9946443064c3ef9",
+    "D-MASH PWA/not_messenger/tests/device_inbox.browser.html": "ee6b4bec8d53da4bb65bb5da43ff8aba803d7f2507183b09cbe68f63ef025d07",
+    "D-MASH PWA/not_messenger/tests/device_inbox.test.js": "8f49fc4d34e4d8d89785627b21310b1e6490a23190651dfd1735f10be6e2a8d9",
+    "D-MASH PWA/not_messenger/tests/device_inbox_isolation.test.js": "227212a56755ee927676a396b669259c43b3145035d4178798189e2c109a1ed7",
+    "D-MASH PWA/not_messenger/tests/device_material_concurrency.test.js": "669661ee06905069f64aae2bb3ad8438a116234b4547fff00a1ab511a6689514",
+    "D-MASH PWA/not_messenger/tests/device_material_liveness.test.js": "c2d986bdfe66777902d4729246522bdd71a487f9648ab99c183aff942b70760a",
+    "D-MASH PWA/not_messenger/tests/device_root.test.js": "bc5906cef702f8e6c7ce445ec404a8b1458f2d5f849eb2a4451b9d51248996fb",
+    "D-MASH PWA/not_messenger/tests/device_root_lifecycle.test.js": "286d12929b3c83492298ce3cf2554b49f28c5228a5262c426cf15f10e04dfb9d",
+    "D-MASH PWA/not_messenger/tests/device_route_lifecycle.test.js": "501205109535a514c88d064f46d42c38309d232c54bae1626566d2e0ae921428",
+    "D-MASH PWA/not_messenger/tests/device_routes.test.js": "cda67640552fc569a3fb9a629e1e0314c6516ced651d82e72f7a0cef9fdb4dfa",
+    "D-MASH PWA/not_messenger/tests/dmash_links.test.js": "b7dee8a3965a3270616122cec8385360c60c0983318506ade308d7691b03fd18",
+    "D-MASH PWA/not_messenger/tests/emergency_handshake.test.js": "b82d17aa4b878638e001a9e1545b61718661659ce3cfee2ddd4c4be5fbac154c",
+    "D-MASH PWA/not_messenger/tests/entry_grant_route_ownership.test.js": "3f0c857546f50357bb5c4f35fd8130723e16e038893fa6aa1a54906fc31c08cb",
+    "D-MASH PWA/not_messenger/tests/file_channel.test.js": "8c8e24b54cd133851ccceea1f145f65b2bcc66700afb016ba62186ffc6ad0870",
+    "D-MASH PWA/not_messenger/tests/file_runtime.test.js": "c9ab54cbca1f02e6c10750194fd0e4904df7ef954073969f562948d014d13096",
+    "D-MASH PWA/not_messenger/tests/file_runtime_flush_isolation.test.js": "ffdb600efdfef90abeab458b369c6cd7bd8c983e745f28f9c8d9dcd81377e70f",
+    "D-MASH PWA/not_messenger/tests/file_vault_mode.test.js": "3bc35c4a2dff78f3505f0d9a3ec2ac168b7d2c289996fa80050b48a311e42def",
+    "D-MASH PWA/not_messenger/tests/file_vault_owner.test.js": "4739feccff87a5105fbc75c3fe4875917dba6fb0d2ec1fa6077b706fef0e1b75",
+    "D-MASH PWA/not_messenger/tests/fixtures/core_vm.cjs": "3ae4c335de53b9ecc1ef846fbb5733d701019e33bde63befd05e2f2ef56c8229",
+    "D-MASH PWA/not_messenger/tests/fixtures/node_identity_public.json": "08a7071faf404a7809b0b605ec71b28ab1f397c6f6038cd1aae6282d10fe2819",
+    "D-MASH PWA/not_messenger/tests/fixtures/node_local_owner_contract_v4.json": "a1be797024b56dbf32e69b75d885eb7c6f00706733541eed2d804eae0239b0c0",
+    "D-MASH PWA/not_messenger/tests/fixtures/node_service_descriptor_v4.json": "c002e8f2d5b2a2f35ecd00f24a82c3ff6db7378623b56ee40887530991d2902e",
+    "D-MASH PWA/not_messenger/tests/fixtures/node_store_profile_v4_proposed.json": "da430d6400d550b48e1a8fbfb0e46caa29ceae2a1db9a5aa13bcda4fa0062da3",
+    "D-MASH PWA/not_messenger/tests/fixtures/node_store_profile_v4_signed.json": "308200814d663d9400a27395611f8adcebba0bc923fc3b02737fd5d82b4cba0b",
+    "D-MASH PWA/not_messenger/tests/fixtures/route_discovery_strict_v4.json": "0db606a88cd6c529929f616212f83c8de9c2068104d896fb83211e5503f6fdee",
+    "D-MASH PWA/not_messenger/tests/global_settings_ui.test.js": "54e0e1aebfbbd338f3f5f2c5bc405a73247c4a742dbda5d6ab0d8cd4cb818a29",
+    "D-MASH PWA/not_messenger/tests/handshake_history_counter.test.js": "ab57ad973be5bfdd01f575748ebd383380f165bca3fe81ba0447e50f9e4b6408",
+    "D-MASH PWA/not_messenger/tests/handshake_retention.test.js": "5f08a80c511e6f37615afd81d6733aa95598c52ec427ebf87cb57234a3ee782e",
+    "D-MASH PWA/not_messenger/tests/historical_webauthn_release.test.js": "35657bbb4050937ac4a8b1367d61b5c05b915458bca5d2a0aa971ca1104d6e9a",
+    "D-MASH PWA/not_messenger/tests/historical_webauthn_source_regression.test.js": "50585484d76655927e593ad4bdbca30872ff22ef68b5f2496173d47e9412ba6f",
+    "D-MASH PWA/not_messenger/tests/initial_handshake_recovery.test.js": "28e0a1135c154b1c3315157f56c8fccade5fd001152280cb03a1e0a5d6a5b3b6",
+    "D-MASH PWA/not_messenger/tests/key_exchange_feedback.test.js": "9dd30b3a6382fcbd413a9b8dc017ed375d63b843f9c63c56f2fa5dea3ccb8b68",
+    "D-MASH PWA/not_messenger/tests/local_credential_biometric_repair.test.js": "1338166e4833992b50dc3eaa9b3089ce2e8f579536c94938a77882cc96af6126",
+    "D-MASH PWA/not_messenger/tests/local_credential_cross_context.test.js": "3561bde040ed117d96ee881003358ab1a9362b5e1de1ec77d2d1d76cc18fbbe4",
+    "D-MASH PWA/not_messenger/tests/local_credential_foundation.test.js": "660f3499ee61706ed2aeef4a23da2a2efe35e04c310021a8816e2a5cae8e6ffc",
+    "D-MASH PWA/not_messenger/tests/local_credential_integration_contract.test.js": "50ebff0f18efe79343e5fe75d8326dfd2fbf4e4edeb5a63d66bf7a30ef67ef12",
+    "D-MASH PWA/not_messenger/tests/local_credential_schema.test.js": "b9b5721fdf86236f7aabde5086334f525c0eabdac18be617c2eb301f20a5c4e4",
+    "D-MASH PWA/not_messenger/tests/local_credential_vendor_vectors.test.js": "172557b75366965d1a5adaa6d429731d6f3267d73f50ec7a60af5772af17f7ab",
+    "D-MASH PWA/not_messenger/tests/local_credential_wipe.test.js": "072d09c427bc6ade0731c630767cbb33c56bc377378b7579540b72878f656b0f",
+    "D-MASH PWA/not_messenger/tests/managed_node_catalog_v4.test.js": "3f94d95fc0c0cf27e58dd82490e20b90b73a433902e8d3c1be2398b5b0bf23bc",
+    "D-MASH PWA/not_messenger/tests/media_release_loader.test.js": "f216d5962fb61b0ab83a6df5218fe77952dfd01c15b2820547bda7866cbfa15c",
+    "D-MASH PWA/not_messenger/tests/modal_text.test.js": "22812a1dbe7e042da6feea057032ab2ec1c6b493691ec18f3b03737ef14bb0cb",
+    "D-MASH PWA/not_messenger/tests/node_account_history_refresh.test.js": "60bdecb3ec3858c9280a343a12cb7b5fff9b03d2024ecacab7680c59a30dc65f",
+    "D-MASH PWA/not_messenger/tests/node_account_panel_status_v4.test.js": "64d46fad71246d8349e5fc5cb361d74791f0c2326daabce29e0a932f9d12acc6",
+    "D-MASH PWA/not_messenger/tests/node_account_ui_v4.test.js": "cb5cb73bed5ff128fee7697b9e2017af1475ff715fe0c35561242e7b361ad1f0",
+    "D-MASH PWA/not_messenger/tests/node_admission_peer.cjs": "2e6b8426475161f9876e8f59d48761038ec347331200878caf7b859b532006e4",
+    "D-MASH PWA/not_messenger/tests/node_bootstrap_control_v4.test.js": "a23a01975e4e2b8344023b3d879a5b49a9461538f152f5092bdf5a0c46122c32",
+    "D-MASH PWA/not_messenger/tests/node_catalog_identity.test.js": "c60cf11ff1f4a4b6d2cebd54d2fdaddfb813ca0259eceb86008c4baabc3b5b78",
+    "D-MASH PWA/not_messenger/tests/node_discovery_reprobe_v4.test.js": "5d578d60eb580fdfc1f860533f3d56d4807441b2d736d32a988dead08204be98",
+    "D-MASH PWA/not_messenger/tests/node_identity_peer.cjs": "5402917cb2c8fedd0ee1e4a81c3b0b99e270aca6b4ff5c6c2d48605edcf04372",
+    "D-MASH PWA/not_messenger/tests/node_inbox_v4.test.js": "87821fd3934840b7329d7a0dd937303024d57ccf1ee55f25c8baa46902303de0",
+    "D-MASH PWA/not_messenger/tests/node_link_integration.test.js": "9cee90142f5ab87f5f74043c3deecdb6ffdd657aa855e2fb3f0f947be720e456",
+    "D-MASH PWA/not_messenger/tests/node_local_delivery_grant_v4.test.js": "65dcf2b1ddccbf4976ab639901ee2f2c28c3349ab3f58cc208f6c333a8bcef10",
+    "D-MASH PWA/not_messenger/tests/node_local_discovery_cancel_v4.test.js": "c67226dfdaef0a0ab5195d1c58b567cca03a7871e3d9ff9178eaea74a251ffcf",
+    "D-MASH PWA/not_messenger/tests/node_local_ownership_v4.test.js": "15e0ce0d9c42f3d0d9dda938c6ebba7b4336a46ca2d793ca781c6a72034db10b",
+    "D-MASH PWA/not_messenger/tests/node_manager_dnss_gate.test.js": "6a135fbed92432c583853642088eb5de37267a45df43bdc81f347be280461859",
+    "D-MASH PWA/not_messenger/tests/node_manager_ems_domain_migration.test.js": "cf4839e18c0ffc10536887d14118827c001951275da6dc09602c47c19d207ad5",
+    "D-MASH PWA/not_messenger/tests/node_manager_forge_exclusion.test.js": "e1619b3f3598491cf2eead86bcedd81fd23078e6c6499f6001eed98e44d6de27",
+    "D-MASH PWA/not_messenger/tests/node_manager_managed_lifecycle.test.js": "97cb44be93e1b855f4d74714abf723ca16269e8b58f4e58fde548ed0ce03c4f7",
+    "D-MASH PWA/not_messenger/tests/node_manager_private_v3.test.js": "172f34b33aa898f1a3292b3931b4004665244ba2f4411f185def8bf69adc9e56",
+    "D-MASH PWA/not_messenger/tests/node_manager_removed_retry.test.js": "ea998785fca3de255c32fb2ae0813913ff2be39a930537864483c34118bc4ad8",
+    "D-MASH PWA/not_messenger/tests/node_private_activation_recovery.test.js": "151ddae8ec6d1ad484a3ae988ec330c020e3c9f3084d3f01021118e79ae1ce11",
+    "D-MASH PWA/not_messenger/tests/node_private_bootstrap_owner.test.js": "4ecfa9730f70187c13659298f1d7193f25edc14b3fa4a777fe120c18f6ea65f0",
+    "D-MASH PWA/not_messenger/tests/node_private_pairing_qa_step.test.js": "4f1586d3b75aaa3ea73977a1525e97564f82ebdad16be6d9a0857b24ef786c3e",
+    "D-MASH PWA/not_messenger/tests/node_private_receipt_continuation.test.js": "be6259cff82c0b977d635998caf6aa11a2781cf98a16f2a8c85f3ae020888e2a",
+    "D-MASH PWA/not_messenger/tests/node_public_bootstrap_control_v4.test.js": "3ba4e5fd57744c99c6e8877503467bfd4bd6c4f57a50e098a999644038eb6422",
+    "D-MASH PWA/not_messenger/tests/node_public_bootstrap_runtime_v4.test.js": "ceaa436bb46de84aeeb71639e3351823bf14e9fd313fd4fbd8c8b4d0022ed7a9",
+    "D-MASH PWA/not_messenger/tests/node_registration_peer.cjs": "b5b8a1919af5af5d16d004a1b7277314108324c1fb9902db444c076129b70bd7",
+    "D-MASH PWA/not_messenger/tests/node_relationships_backend.test.js": "757008ed0bf37fa6d379ca3279cd9e49ea4e367467d32d4ce41ec98a2ab8cc51",
+    "D-MASH PWA/not_messenger/tests/node_root_lifecycle_v4.test.js": "28138868433275d34f03207a8edd31695aa6d970d7be83f55df880ffe20330c7",
+    "D-MASH PWA/not_messenger/tests/node_routing_retry_v4.test.js": "8722c1b5ecf865a3283a1590258b0fbc40b164939e4108f4cdafa665086cab68",
+    "D-MASH PWA/not_messenger/tests/node_routing_v4.test.js": "6f2f0d8d25d79ffbe09012651fa2e9d94b56ade8f9c0fc3e4f9fdf5714968800",
+    "D-MASH PWA/not_messenger/tests/node_runtime_coordinator_v4.test.js": "8ec059973a231ac137419e0a00301759871f277ed3c8295bd796f90442f6f759",
+    "D-MASH PWA/not_messenger/tests/node_runtime_host_v4.test.js": "2fdf51205d6b58b7258f39fec319c8b9a6f2cc943b657c119a5b5499cf3a25f6",
+    "D-MASH PWA/not_messenger/tests/node_service_descriptor_v4.test.js": "3c5315740db087cb8e842c044549da0fdc1846b3d706ba9c198a69542fe0e764",
+    "D-MASH PWA/not_messenger/tests/node_service_query_v4.test.js": "7dbe94fac41a20b80e69962ecc7007c3813f75ca476aa2a34d85802aad30633f",
+    "D-MASH PWA/not_messenger/tests/node_store_profile_v4.test.js": "87d336cf60f68f7dc70551455542df5855c1f42589055b80c4cda9700893ae0b",
+    "D-MASH PWA/not_messenger/tests/node_sturn_service_v4.test.js": "41393797aecc7ce1df2c5d1e9500581f540846cb0e789c7ce080a2408dd7fffe",
+    "D-MASH PWA/not_messenger/tests/node_worker_connect_reuse.test.js": "e9cc54b803db6280b29d6d478e481255afb6293b83a027a3f8f2303010c469e3",
+    "D-MASH PWA/not_messenger/tests/password_prompt_worker_regression.test.js": "a1157b2b41ecfbabc8d2af91261260608264fe01beb45e09717f767066e3cb94",
+    "D-MASH PWA/not_messenger/tests/pending_contact_requests.test.js": "f96691c37055028ba41f4fbcbcae8031b02a0b509d5cb1988cfd8116f55c4f75",
+    "D-MASH PWA/not_messenger/tests/pending_contact_ui.test.js": "b77dd5454ea4bc2f68e8cda7e8e3ee49f9f5523e2fe8f33e99950b430e79012f",
+    "D-MASH PWA/not_messenger/tests/private_route_lifecycle.test.js": "7a4485edec690de200792281b46261ed2b105d39b50052a0774638301b29954d",
+    "D-MASH PWA/not_messenger/tests/private_routes_v3.test.js": "263631420265b3f0a4ac2ebabb0565fab8a0c8ccfd58ef0b1f9985b81ad7b56a",
+    "D-MASH PWA/not_messenger/tests/probe_primitives_v4.test.js": "802853bb7718aa33eba5a8ab5c3e592457f76401bab1a24c24ddc671d63a74b9",
+    "D-MASH PWA/not_messenger/tests/public_account_core_seam.test.js": "600101fc1f6e7a27b828d0c55d5d1053fd30d9006808b703ca354baade439bcd",
+    "D-MASH PWA/not_messenger/tests/public_account_enqueue_independence.test.js": "8628741c889400ce21c036ca23cbc3cbdfb775f24c5ddc0708ff5aa37631d86e",
+    "D-MASH PWA/not_messenger/tests/public_account_orchestrator_v4.test.js": "3b4f5dce37d7cbc67bd145dc5bf8fbeafed8976ed698ff35684676e5962a824e",
+    "D-MASH PWA/not_messenger/tests/public_account_successor_wiring.test.js": "4a3b4557e2065586f25147b89aa98ad93751d3109f3c52b9421b8734f18edb47",
+    "D-MASH PWA/not_messenger/tests/public_request_preparation.test.js": "b643b55458e3ecfb27f66913124b4f0682cf29aee5b67f76c83879a474fd636f",
+    "D-MASH PWA/not_messenger/tests/quick_name_registry.test.js": "26f06940fa5d7c2ecb42204a2df5a2999c5c8b387978e19219425c65d3347c5c",
+    "D-MASH PWA/not_messenger/tests/quick_name_ui.test.js": "3625f83563b9fc0dc18acd9aea1d8db264019e1601720912855f87444cb39a58",
+    "D-MASH PWA/not_messenger/tests/recipient_payload_v4.test.js": "b0a10e04a459c4c5f43bf47833cfe1337ab2c48b54c7abf5fd7fec859ad17b9f",
+    "D-MASH PWA/not_messenger/tests/recorded_note_chat_alias.test.js": "897e6eaf4e2b260e01075217f0982590b4f779550dd389e92669859dd8710033",
+    "D-MASH PWA/not_messenger/tests/recorded_note_data_url_mime.test.js": "225c24362d1eef5c502d319c8bb10a18bb0c549122fd800223cc3cca34de12ff",
+    "D-MASH PWA/not_messenger/tests/recorded_note_mime_retry.test.js": "511ae93672896e793b8d733b8ed73aa041cea7d1ac4735f5e488a3093f36a7e8",
+    "D-MASH PWA/not_messenger/tests/recorded_note_transport_boundary.test.js": "c16d2fd18fb0cf89890801669887604e7edcba5b6985372323be61099ee481f6",
+    "D-MASH PWA/not_messenger/tests/recorded_note_wake.test.js": "8721aed08c72d6d927b0b95479d5803a9a5f08c79e997d5b583585535eb3b68b",
+    "D-MASH PWA/not_messenger/tests/recording_context.test.js": "05f1f453fb735cf9dd92d0e037c37e8a069d13029522906d939c215ed6fb6ded",
+    "D-MASH PWA/not_messenger/tests/resource_pow_hash.test.js": "930fa340337e6eccc1249b37f3018589f8c0903fa4f5ba94971ebc951b680439",
+    "D-MASH PWA/not_messenger/tests/route_discovery_v4.test.js": "da3b23f832d546c528727b51265b865af25e47c70bfb931a672c26f8564d55f5",
+    "D-MASH PWA/not_messenger/tests/saved_messages.test.js": "0be012f41d178e4476a4f59e0d2e7dbb5a9cef777c71ba50167e5e7e16bca40f",
+    "D-MASH PWA/not_messenger/tests/secure_session_clock.test.js": "9db9412f0b0e42d0c536e5b948974d7816c0a816e57b2c4609dcf0e7c2421901",
+    "D-MASH PWA/not_messenger/tests/secure_session_peer.cjs": "68e0b44d64dca6c98648bf69d17c19151025b152a7fff2809c37e5ba7308d3fd",
+    "D-MASH PWA/not_messenger/tests/secure_session_profiles.test.js": "4bf5a39171a4f7f795e796b102266bf04280d139d340d1977209bc33400cae9d",
+    "D-MASH PWA/not_messenger/tests/service_worker_cache_policy.test.js": "3a06b5137638f43ce3913c5e6db8a28e47222152cd4c20530eed0cbce9a504ac",
+    "D-MASH PWA/not_messenger/tests/signaling_client.integration.js": "af97105c41228c840b00ed2c8f07d1fd164f2ee61f14c564b0c917b8e3b6556c",
+    "D-MASH PWA/not_messenger/tests/stability_fixes_source.test.js": "bd1188cf6051b9864ac67b7f380b561378d86defb0456f76d93cce8042544f72",
+    "D-MASH PWA/not_messenger/tests/ui_data_actions.test.js": "8457fa50e382bee53357cd0b260396e28b392d5a3e57c1d36f24dde6490816e4",
+    "D-MASH PWA/not_messenger/tests/ui_global_bridge_source.test.js": "e6ce0436767002774d39e9929327552795131accbefbfbb345247b820cc88a1e",
+    "D-MASH PWA/not_messenger/tests/ui_runtime_readiness.test.js": "e150cee78c1c203098592b13a547e961621531e196eae6ef91c96beab3fd5b18"
+  },
+  "tests": [
+    {
+      "name": "acceptance_fixes_source.test.js",
+      "exit_code": 0,
+      "seconds": 0.083
+    },
+    {
+      "name": "account_app_cipher_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.136
+    },
+    {
+      "name": "account_app_outbox_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.156
+    },
+    {
+      "name": "account_app_receipt_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.141
+    },
+    {
+      "name": "account_app_retry_node_inbox_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.265
+    },
+    {
+      "name": "account_biometric_security.test.js",
+      "exit_code": 0,
+      "seconds": 0.07
+    },
+    {
+      "name": "account_control_crypto_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.344
+    },
+    {
+      "name": "account_control_receipt_retention.test.js",
+      "exit_code": 0,
+      "seconds": 0.906
+    },
+    {
+      "name": "account_device_dispatch_v3.test.js",
+      "exit_code": 0,
+      "seconds": 0.241
+    },
+    {
+      "name": "account_handshake_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.378
+    },
+    {
+      "name": "account_login_identity.test.js",
+      "exit_code": 0,
+      "seconds": 0.364
+    },
+    {
+      "name": "account_managed_inbox_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.142
+    },
+    {
+      "name": "account_media_authority_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.076
+    },
+    {
+      "name": "account_media_bridge_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.066
+    },
+    {
+      "name": "account_media_control_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.16
+    },
+    {
+      "name": "account_media_dispatch_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.549
+    },
+    {
+      "name": "account_media_drain_isolation.test.js",
+      "exit_code": 0,
+      "seconds": 0.311
+    },
+    {
+      "name": "account_media_outcome_expiry.test.js",
+      "exit_code": 0,
+      "seconds": 0.146
+    },
+    {
+      "name": "account_media_task_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.192
+    },
+    {
+      "name": "account_node_inbox_v4.test.js",
+      "exit_code": 0,
+      "seconds": 9.931
+    },
+    {
+      "name": "account_node_transport_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.243
+    },
+    {
+      "name": "account_pairing_v2.test.js",
+      "exit_code": 0,
+      "seconds": 0.903
+    },
+    {
+      "name": "account_private_orchestrator_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.686
+    },
+    {
+      "name": "account_private_pairing_link_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.198
+    },
+    {
+      "name": "account_ratchet.test.js",
+      "exit_code": 0,
+      "seconds": 0.097
+    },
+    {
+      "name": "account_ratchet_ack_retry.test.js",
+      "exit_code": 0,
+      "seconds": 0.247
+    },
+    {
+      "name": "account_ratchet_collision.test.js",
+      "exit_code": 0,
+      "seconds": 0.456
+    },
+    {
+      "name": "account_ratchet_persistence.test.js",
+      "exit_code": 0,
+      "seconds": 0.131
+    },
+    {
+      "name": "account_ratchet_runtime.test.js",
+      "exit_code": 0,
+      "seconds": 0.181
+    },
+    {
+      "name": "account_ratchet_runtime_source.test.js",
+      "exit_code": 0,
+      "seconds": 0.071
+    },
+    {
+      "name": "account_receipt_nonblocking_v4.test.js",
+      "exit_code": 0,
+      "seconds": 1.081
+    },
+    {
+      "name": "account_receiver_startup_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.309
+    },
+    {
+      "name": "account_recorded_media.test.js",
+      "exit_code": 0,
+      "seconds": 3.978
+    },
+    {
+      "name": "account_retry_timer_ownership_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.14
+    },
+    {
+      "name": "account_route_binding_v2.test.js",
+      "exit_code": 0,
+      "seconds": 3.673
+    },
+    {
+      "name": "account_route_journal_v2.test.js",
+      "exit_code": 0,
+      "seconds": 0.144
+    },
+    {
+      "name": "account_route_journal_validation_reuse.test.js",
+      "exit_code": 0,
+      "seconds": 6.397
+    },
+    {
+      "name": "account_session_flush_independence_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.081
+    },
+    {
+      "name": "account_session_runtime_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.49
+    },
+    {
+      "name": "account_session_successor_proof_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.077
+    },
+    {
+      "name": "account_session_v4.test.js",
+      "exit_code": 0,
+      "seconds": 3.735
+    },
+    {
+      "name": "biometric_account_login_disabled.test.js",
+      "exit_code": 0,
+      "seconds": 0.102
+    },
+    {
+      "name": "biometric_setup_cancel.test.js",
+      "exit_code": 0,
+      "seconds": 0.078
+    },
+    {
+      "name": "calculator_secret_gate.test.js",
+      "exit_code": 0,
+      "seconds": 0.067
+    },
+    {
+      "name": "call_admission_worker.test.js",
+      "exit_code": 0,
+      "seconds": 0.965
+    },
+    {
+      "name": "call_runtime.test.js",
+      "exit_code": 0,
+      "seconds": 0.124
+    },
+    {
+      "name": "call_runtime_start_errors.test.js",
+      "exit_code": 0,
+      "seconds": 0.119
+    },
+    {
+      "name": "call_session.test.js",
+      "exit_code": 0,
+      "seconds": 0.128
+    },
+    {
+      "name": "call_signaling.test.js",
+      "exit_code": 0,
+      "seconds": 0.109
+    },
+    {
+      "name": "call_signaling_abort.test.js",
+      "exit_code": 0,
+      "seconds": 0.12
+    },
+    {
+      "name": "call_video.test.js",
+      "exit_code": 0,
+      "seconds": 0.197
+    },
+    {
+      "name": "contact_bootstrap_v3.test.js",
+      "exit_code": 0,
+      "seconds": 0.584
+    },
+    {
+      "name": "contact_flow_owner_diagnostic.test.js",
+      "exit_code": 0,
+      "seconds": 0.723
+    },
+    {
+      "name": "contact_flow_owner_retry.test.js",
+      "exit_code": 0,
+      "seconds": 0.618
+    },
+    {
+      "name": "contact_flow_v3.test.js",
+      "exit_code": 0,
+      "seconds": 1.337
+    },
+    {
+      "name": "contact_owner_preflight.test.js",
+      "exit_code": 0,
+      "seconds": 0.158
+    },
+    {
+      "name": "contact_payloads.test.js",
+      "exit_code": 0,
+      "seconds": 0.073
+    },
+    {
+      "name": "contact_transport.test.js",
+      "exit_code": 0,
+      "seconds": 0.065
+    },
+    {
+      "name": "core_lifecycle_acceptance.test.js",
+      "exit_code": 0,
+      "seconds": 0.086
+    },
+    {
+      "name": "delete_chat_order.test.js",
+      "exit_code": 0,
+      "seconds": 0.068
+    },
+    {
+      "name": "device_authority_v3.test.js",
+      "exit_code": 0,
+      "seconds": 0.367
+    },
+    {
+      "name": "device_biometric_unlock_integration.test.js",
+      "exit_code": 0,
+      "seconds": 0.085
+    },
+    {
+      "name": "device_envelope.test.js",
+      "exit_code": 0,
+      "seconds": 0.27
+    },
+    {
+      "name": "device_inbox.test.js",
+      "exit_code": 0,
+      "seconds": 0.616
+    },
+    {
+      "name": "device_inbox_isolation.test.js",
+      "exit_code": 0,
+      "seconds": 0.52
+    },
+    {
+      "name": "device_material_concurrency.test.js",
+      "exit_code": 0,
+      "seconds": 0.227
+    },
+    {
+      "name": "device_material_liveness.test.js",
+      "exit_code": 0,
+      "seconds": 0.236
+    },
+    {
+      "name": "device_root.test.js",
+      "exit_code": 0,
+      "seconds": 0.202
+    },
+    {
+      "name": "device_root_lifecycle.test.js",
+      "exit_code": 0,
+      "seconds": 0.15
+    },
+    {
+      "name": "device_route_lifecycle.test.js",
+      "exit_code": 0,
+      "seconds": 0.172
+    },
+    {
+      "name": "device_routes.test.js",
+      "exit_code": 0,
+      "seconds": 1.074
+    },
+    {
+      "name": "dmash_links.test.js",
+      "exit_code": 0,
+      "seconds": 0.193
+    },
+    {
+      "name": "emergency_handshake.test.js",
+      "exit_code": 0,
+      "seconds": 0.362
+    },
+    {
+      "name": "entry_grant_route_ownership.test.js",
+      "exit_code": 0,
+      "seconds": 0.516
+    },
+    {
+      "name": "file_channel.test.js",
+      "exit_code": 0,
+      "seconds": 0.71
+    },
+    {
+      "name": "file_runtime.test.js",
+      "exit_code": 0,
+      "seconds": 1.163
+    },
+    {
+      "name": "file_runtime_flush_isolation.test.js",
+      "exit_code": 0,
+      "seconds": 0.095
+    },
+    {
+      "name": "file_vault_mode.test.js",
+      "exit_code": 0,
+      "seconds": 0.07
+    },
+    {
+      "name": "file_vault_owner.test.js",
+      "exit_code": 0,
+      "seconds": 0.066
+    },
+    {
+      "name": "global_settings_ui.test.js",
+      "exit_code": 0,
+      "seconds": 0.119
+    },
+    {
+      "name": "handshake_history_counter.test.js",
+      "exit_code": 0,
+      "seconds": 0.189
+    },
+    {
+      "name": "handshake_retention.test.js",
+      "exit_code": 0,
+      "seconds": 0.275
+    },
+    {
+      "name": "historical_webauthn_release.test.js",
+      "exit_code": 0,
+      "seconds": 0.213
+    },
+    {
+      "name": "historical_webauthn_source_regression.test.js",
+      "exit_code": 0,
+      "seconds": 0.062
+    },
+    {
+      "name": "initial_handshake_recovery.test.js",
+      "exit_code": 0,
+      "seconds": 1.185
+    },
+    {
+      "name": "key_exchange_feedback.test.js",
+      "exit_code": 0,
+      "seconds": 0.201
+    },
+    {
+      "name": "local_credential_biometric_repair.test.js",
+      "exit_code": 0,
+      "seconds": 0.36
+    },
+    {
+      "name": "local_credential_cross_context.test.js",
+      "exit_code": 0,
+      "seconds": 0.325
+    },
+    {
+      "name": "local_credential_foundation.test.js",
+      "exit_code": 0,
+      "seconds": 0.295
+    },
+    {
+      "name": "local_credential_integration_contract.test.js",
+      "exit_code": 0,
+      "seconds": 0.092
+    },
+    {
+      "name": "local_credential_schema.test.js",
+      "exit_code": 0,
+      "seconds": 0.3
+    },
+    {
+      "name": "local_credential_vendor_vectors.test.js",
+      "exit_code": 0,
+      "seconds": 6.469
+    },
+    {
+      "name": "local_credential_wipe.test.js",
+      "exit_code": 0,
+      "seconds": 0.207
+    },
+    {
+      "name": "managed_node_catalog_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.065
+    },
+    {
+      "name": "media_release_loader.test.js",
+      "exit_code": 0,
+      "seconds": 0.108
+    },
+    {
+      "name": "modal_text.test.js",
+      "exit_code": 0,
+      "seconds": 0.109
+    },
+    {
+      "name": "node_account_history_refresh.test.js",
+      "exit_code": 0,
+      "seconds": 0.131
+    },
+    {
+      "name": "node_account_panel_status_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.077
+    },
+    {
+      "name": "node_account_ui_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.076
+    },
+    {
+      "name": "node_bootstrap_control_v4.test.js",
+      "exit_code": 0,
+      "seconds": 4.645
+    },
+    {
+      "name": "node_catalog_identity.test.js",
+      "exit_code": 0,
+      "seconds": 0.13
+    },
+    {
+      "name": "node_discovery_reprobe_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.476
+    },
+    {
+      "name": "node_inbox_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.276
+    },
+    {
+      "name": "node_link_integration.test.js",
+      "exit_code": 0,
+      "seconds": 0.064
+    },
+    {
+      "name": "node_local_delivery_grant_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.087
+    },
+    {
+      "name": "node_local_discovery_cancel_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.071
+    },
+    {
+      "name": "node_local_ownership_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.704
+    },
+    {
+      "name": "node_manager_dnss_gate.test.js",
+      "exit_code": 0,
+      "seconds": 0.068
+    },
+    {
+      "name": "node_manager_ems_domain_migration.test.js",
+      "exit_code": 0,
+      "seconds": 0.111
+    },
+    {
+      "name": "node_manager_forge_exclusion.test.js",
+      "exit_code": 0,
+      "seconds": 0.085
+    },
+    {
+      "name": "node_manager_managed_lifecycle.test.js",
+      "exit_code": 0,
+      "seconds": 0.086
+    },
+    {
+      "name": "node_manager_private_v3.test.js",
+      "exit_code": 0,
+      "seconds": 0.353
+    },
+    {
+      "name": "node_manager_removed_retry.test.js",
+      "exit_code": 0,
+      "seconds": 0.069
+    },
+    {
+      "name": "node_private_activation_recovery.test.js",
+      "exit_code": 0,
+      "seconds": 0.073
+    },
+    {
+      "name": "node_private_bootstrap_owner.test.js",
+      "exit_code": 0,
+      "seconds": 0.073
+    },
+    {
+      "name": "node_private_pairing_qa_step.test.js",
+      "exit_code": 0,
+      "seconds": 0.091
+    },
+    {
+      "name": "node_private_receipt_continuation.test.js",
+      "exit_code": 0,
+      "seconds": 0.084
+    },
+    {
+      "name": "node_public_bootstrap_control_v4.test.js",
+      "exit_code": 0,
+      "seconds": 3.099
+    },
+    {
+      "name": "node_public_bootstrap_runtime_v4.test.js",
+      "exit_code": 0,
+      "seconds": 9.194
+    },
+    {
+      "name": "node_relationships_backend.test.js",
+      "exit_code": 0,
+      "seconds": 0.088
+    },
+    {
+      "name": "node_root_lifecycle_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.069
+    },
+    {
+      "name": "node_routing_retry_v4.test.js",
+      "exit_code": 0,
+      "seconds": 9.619
+    },
+    {
+      "name": "node_routing_v4.test.js",
+      "exit_code": 0,
+      "seconds": 3.768
+    },
+    {
+      "name": "node_runtime_coordinator_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.066
+    },
+    {
+      "name": "node_runtime_host_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.387
+    },
+    {
+      "name": "node_service_descriptor_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.193
+    },
+    {
+      "name": "node_service_query_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.07
+    },
+    {
+      "name": "node_store_profile_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.259
+    },
+    {
+      "name": "node_sturn_service_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.064
+    },
+    {
+      "name": "node_worker_connect_reuse.test.js",
+      "exit_code": 0,
+      "seconds": 0.059
+    },
+    {
+      "name": "password_prompt_worker_regression.test.js",
+      "exit_code": 0,
+      "seconds": 0.066
+    },
+    {
+      "name": "pending_contact_requests.test.js",
+      "exit_code": 0,
+      "seconds": 0.075
+    },
+    {
+      "name": "pending_contact_ui.test.js",
+      "exit_code": 0,
+      "seconds": 0.083
+    },
+    {
+      "name": "private_route_lifecycle.test.js",
+      "exit_code": 0,
+      "seconds": 0.079
+    },
+    {
+      "name": "private_routes_v3.test.js",
+      "exit_code": 0,
+      "seconds": 0.2
+    },
+    {
+      "name": "probe_primitives_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.12
+    },
+    {
+      "name": "public_account_core_seam.test.js",
+      "exit_code": 0,
+      "seconds": 0.132
+    },
+    {
+      "name": "public_account_enqueue_independence.test.js",
+      "exit_code": 0,
+      "seconds": 0.157
+    },
+    {
+      "name": "public_account_orchestrator_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.132
+    },
+    {
+      "name": "public_account_successor_wiring.test.js",
+      "exit_code": 0,
+      "seconds": 0.079
+    },
+    {
+      "name": "public_request_preparation.test.js",
+      "exit_code": 0,
+      "seconds": 0.071
+    },
+    {
+      "name": "quick_name_registry.test.js",
+      "exit_code": 0,
+      "seconds": 0.118
+    },
+    {
+      "name": "quick_name_ui.test.js",
+      "exit_code": 0,
+      "seconds": 0.103
+    },
+    {
+      "name": "recipient_payload_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.208
+    },
+    {
+      "name": "recorded_note_chat_alias.test.js",
+      "exit_code": 0,
+      "seconds": 0.105
+    },
+    {
+      "name": "recorded_note_data_url_mime.test.js",
+      "exit_code": 0,
+      "seconds": 0.21
+    },
+    {
+      "name": "recorded_note_mime_retry.test.js",
+      "exit_code": 0,
+      "seconds": 0.12
+    },
+    {
+      "name": "recorded_note_transport_boundary.test.js",
+      "exit_code": 0,
+      "seconds": 0.139
+    },
+    {
+      "name": "recorded_note_wake.test.js",
+      "exit_code": 0,
+      "seconds": 0.531
+    },
+    {
+      "name": "recording_context.test.js",
+      "exit_code": 0,
+      "seconds": 0.179
+    },
+    {
+      "name": "resource_pow_hash.test.js",
+      "exit_code": 0,
+      "seconds": 0.306
+    },
+    {
+      "name": "route_discovery_v4.test.js",
+      "exit_code": 0,
+      "seconds": 0.904
+    },
+    {
+      "name": "saved_messages.test.js",
+      "exit_code": 0,
+      "seconds": 0.082
+    },
+    {
+      "name": "secure_session_clock.test.js",
+      "exit_code": 0,
+      "seconds": 0.447
+    },
+    {
+      "name": "secure_session_profiles.test.js",
+      "exit_code": 0,
+      "seconds": 0.146
+    },
+    {
+      "name": "service_worker_cache_policy.test.js",
+      "exit_code": 0,
+      "seconds": 0.264
+    },
+    {
+      "name": "stability_fixes_source.test.js",
+      "exit_code": 0,
+      "seconds": 0.131
+    },
+    {
+      "name": "ui_data_actions.test.js",
+      "exit_code": 0,
+      "seconds": 0.136
+    },
+    {
+      "name": "ui_global_bridge_source.test.js",
+      "exit_code": 0,
+      "seconds": 0.124
+    },
+    {
+      "name": "ui_runtime_readiness.test.js",
+      "exit_code": 0,
+      "seconds": 0.193
+    }
+  ],
+  "raw_stdout": {
+    "storage": "private output directory; not suitable for blind publication",
+    "sha256": "dab60dc9778af7720d6405ca026b8cf5b2657949bfcd22f687445c42a9892b9f"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "date_utc": "2026-10-20",
+  "kind": "NATIVE_SQLITE_UNIT_AND_ACTUAL_JS_CONSUMER",
+  "status": "PASS_SCOPED",
+  "source_base_commit": "f3a3dee0a50d79601c905b366d2a61bf816b08b6",
+  "source_authority": "Exact hashes include new candidate persistence overlay and unchanged JS consumers; no actor integration acceptance implied.",
+  "source_sha256": {
+    "native/persistence/inbox_sql_store.cpp": "2dbe32aa907c3e8caa8d4caf917ee1d0a63ca331562ad6f8bde5d3d57158130b",
+    "native/persistence/CMakeLists.txt": "1ffb6004563804e5659566ed1a47fbd9a32bf877588776e61eb8b75bced06974",
+    "native/persistence/inbox_sql_store.h": "53f924340011f7455d1026dd152e5e2adcd1f2bba41058568d2313d42be7e05b",
+    "native/persistence/README.md": "7e55c5afeed5febd44a3acf61053e8b849a710440e58e49334c31e1310de20ab",
+    "native/persistence/tests/inbox_sql_test.cpp": "c2b4120316fc876a4987c7b4875a6880e1d3fd96e2b878793da4910e0792d083",
+    "native/persistence/tests/node_inbox_sqlite.cjs": "fcabae5147963ffbc2be408953778940ebfaa4edf651d06677e69d12fdaca914",
+    "native/persistence/tests/inbox_bridge.cpp": "ac24ee82e78e6b8157ef945006231b9772e5e8830d6336534a1918f6a4ba9451",
+    "D-MASH PWA/not_messenger/js/node_inbox_v4.js": "44d0271df2e831445db79692c8a2631d6f3a8aede7c3804b396faf1e7229524f",
+    "D-MASH PWA/not_messenger/js/node_local_delivery_v4.js": "8f610ac165381e34438cb4ff87daf8155ba96ff1e7c6a1a2cd09b66ff56de710",
+    "D-MASH PWA/not_messenger/js/recipient_payload_v4.js": "8167b736b6a8e29c50ef8ffb146b0a712e3369cfa9895bdef171ff24b95e6a6a",
+    "D-MASH PWA/not_messenger/js/route_discovery_v4.js": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+    "D-MASH PWA/not_messenger/js/vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "native/src/storage_port.h": "dd8fb540c4c7ff507fcb139da9fa9d2f0a90e5e7153b8e5cf5e094f5df433ebe"
+  },
+  "environment": {
+    "Qt": "6.12.0 gcc_64",
+    "Node": "v24.19.0",
+    "SQLite": "Qt QSQLITE driver; WAL/synchronous FULL asserted at runtime",
+    "test_platform": "Linux x86_64",
+    "fake_indexeddb": "6.2.6"
+  },
+  "results": {
+    "ctest": {
+      "tests": 1,
+      "passed": 1,
+      "exit_code": 0
+    },
+    "js_consumer": {
+      "exit_code": 0,
+      "unchanged_NodeInboxV4": true,
+      "unchanged_LocalDelivery": true,
+      "crypto": "actual WebCrypto/TweetNaCl, synthetic material",
+      "differential_operations": 70,
+      "oracle": "actual original InboxStore with fake-indexeddb platform adapter",
+      "both_buckets_compared_after_every_operation": true
+    },
+    "crash": {
+      "mid_promote": "Child _Exit73 after actual target write before source/usage commit; reopened old source+usage, target absent",
+      "post_commit": "Child _Exit74 after actual promote commit, no destructor; reopened new target+usage, source absent",
+      "test_hooks_absent_from_production_archive": true
+    }
+  },
+  "binary_sha256": {
+    "libdmash_native_inbox.a": "4059e518230f7f252a086c8cb6bdfa78d17341fec75b544b4f597e3b166d71da",
+    "libdmash_native_inbox_fault_test_port.a": "8f60dfd51c24abd118f669cc5b83a0dfc8cd72bb6e675bb8637ed466d6400a26",
+    "dmash_inbox_test": "980ff6790cf33b3358d21e676b8abc2be303291e657460ecaf83c84b37be54db",
+    "dmash_inbox_bridge": "a9d7f10e520fc50388efc5b31af377e76f485c37c4540fc1f3ecc48c62eb1916"
+  },
+  "logs": [
+    {
+      "file": "inbox-configure.log",
+      "sha256": "9e96ab66e0096bf1b871e0d92959ff3d8a01de4889645c98e55189b360304888",
+      "status": "HARNESS_ERROR",
+      "note": "First system PATH lacked cmake; canonical owned venv used next"
+    },
+    {
+      "file": "inbox-js-consumer.log",
+      "sha256": "5d03c6e697d8f4c927be2946a1e484823b312ca6554bb8ec3bcc4c3b5dc0ae4e",
+      "status": "HARNESS_ERROR",
+      "note": "Test CLI emitted EOF as extra reply; bridge fixed without product workaround"
+    },
+    {
+      "file": "inbox-ctest-extended.log",
+      "sha256": "070291dccafe47aa44bbe9f5389316fef8d68aa9602fdc1e8e7eeceef6210b55",
+      "status": "PASS",
+      "note": "Native production-source fault variant; SQL rollback/concurrent connections/child crash and reopen"
+    },
+    {
+      "file": "inbox-js-differential.log",
+      "sha256": "53ca2ed372302f466ff5f766d947e38c03fad1beec91d07c5cec4ab974b2f48d",
+      "status": "PASS",
+      "note": "Actual unchanged JS consumers plus70 differential operations against original IndexedDB store"
+    }
+  ],
+  "limits": [
+    "Test-only CLI transport, not production IPC; actor owner integrates dispatcher separately.",
+    "Thread/close fences are native; JS guard must be checked synchronously by actor before CAS.",
+    "Process-exit tests are not sudden physical power-loss or hostile filesystem acceptance.",
+    "No new network ACK/lease/custody protocol; existing local seen/prune semantics only.",
+    "Linux execution only; Windows/Android runtime not verified.",
+    "No Account plaintext or key derivation in native persistence; API accepts encrypted rows only."
+  ]
+}

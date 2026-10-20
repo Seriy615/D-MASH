@@ -1,0 +1,34 @@
+[
+  {
+    "label": "jdk21",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jdk_x64_linux_hotspot_21.0.12.1_1.tar.gz",
+    "upstream_algorithm": "sha256",
+    "upstream_hash": "ce79869e1307ed8ee1e2baa86a412b1eb5b75d10a01006d788a6f968bcfaee94",
+    "sha256": "ce79869e1307ed8ee1e2baa86a412b1eb5b75d10a01006d788a6f968bcfaee94",
+    "destination": "/home/jcode/.cache/dmash-native-20261020/android-restored/jdk21"
+  },
+  {
+    "label": "ndk",
+    "url": "https://dl.google.com/android/repository/android-ndk-r27c-linux.zip",
+    "upstream_algorithm": "sha1",
+    "upstream_hash": "090e8083a715fdb1a3e402d0763c388abb03fb4e",
+    "sha256": "59c2f6dc96743b5daf5d1626684640b20a6bd2b1d85b13156b90333741bad5cc",
+    "destination": "/home/jcode/.cache/dmash-native-20261020/android-restored/ndk"
+  },
+  {
+    "label": "platform",
+    "url": "https://dl.google.com/android/repository/platform-36_r02.zip",
+    "upstream_algorithm": "sha1",
+    "upstream_hash": "2c1a80dd4d9f7d0e6dd336ec603d9b5c55a6f576",
+    "sha256": "37607369a28c5b640b3a7998868d45898ebcb777565a0e85f9acf36f29631d2e",
+    "destination": "/home/jcode/.cache/dmash-native-20261020/android-restored/platform"
+  },
+  {
+    "label": "buildtools",
+    "url": "https://dl.google.com/android/repository/build-tools_r36_linux.zip",
+    "upstream_algorithm": "sha1",
+    "upstream_hash": "b0b6376977657e8ad9b969bacf4093601da2c6fb",
+    "sha256": "5d9ac77fb6ff43d9da518a337b4fcf8f9097113df531d99ccefe80ef7ce8250b",
+    "destination": "/home/jcode/.cache/dmash-native-20261020/android-restored/buildtools"
+  }
+]

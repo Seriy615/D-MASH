@@ -1,0 +1,21 @@
+{
+  "kind": "existing focused suites",
+  "status": "PASS",
+  "source_head": "9446c22f27309131456942870971d477f6f2358f",
+  "node": "v24.19.0",
+  "suites": [
+    {
+      "path": "D-MASH PWA/not_messenger/tests/private_routes_v3.test.js",
+      "sha256": "263631420265b3f0a4ac2ebabb0565fab8a0c8ccfd58ef0b1f9985b81ad7b56a",
+      "status": "PASS"
+    },
+    {
+      "path": "D-MASH PWA/not_messenger/tests/device_envelope.test.js",
+      "sha256": "48e99487d66f19e5c7fe5054a5511f8629e961e51b389f25c9946443064c3ef9",
+      "status": "PASS"
+    }
+  ],
+  "limits": [
+    "Focused UNIT rerun only; no fresh full suite, browser, native or deployed acceptance"
+  ]
+}

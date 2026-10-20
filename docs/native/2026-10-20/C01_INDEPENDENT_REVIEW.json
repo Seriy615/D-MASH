@@ -1,0 +1,53 @@
+{
+  "kind": "INDEPENDENT_SOURCE_NATIVE_AND_SCOPED_UNIT_REVIEW",
+  "date_utc": "2026-10-20",
+  "source": "8bc67f06971a261378f5f75204c2caee99ef7b3d",
+  "previous_source": "f3a3dee0a50d79601c905b366d2a61bf816b08b6",
+  "status": "ACCEPT_SCOPED_NOT_RELEASE",
+  "source_sha256": {
+    "native/CMakeLists.txt": "2fa72c4388416c0a13f08bc96fd9cb2cc7076bfbebc661abc25af5743eea0343",
+    "native/src/js_actor.cpp": "369d399c6706ad4f0e3c7934bad333821369951b0c607072e8418c9f5c79488a",
+    "native/src/main.cpp": "0f3ada28fa684c94f7ee63f7aa9566c475863a7591ab4c4f17388a53e240e44b",
+    "native/js/runtime_entry.js": "6ac9212634d08ad29685037a2a55e6f08ca22894ae37b731501faeeba1dabf25",
+    "native/tests/actor_lifecycle_test.cpp": "e76722acf90ce013a9cfd8e42295a3e0eddd73895bb9a390c7a91a1c03bc2217",
+    "native/tests/cli_boundary_test.py": "8289ca5a14d6b88270cf50eb67e06c7c6ddca325f5a6ee5f81335bb4dc52b348",
+    "native/tests/endpoint_scheduler_test.js": "42836514010977eb53d734ab46dd5db1f4a6a2b1532117d99741bb64cf76b8f3",
+    "native/src/js_actor.h": "8bf7e168303ba302b67539d80f8f320328a44bc79e42036099d658b48040caa2",
+    "native/src/crypto_port.cpp": "9b400bde89ce3d9d7531a0ebff44faf5aeb36fd79a38708feabb488f689625b7",
+    "native/js/platform.js": "7d6536e6f71064834c06e35fb84924753c260b7a949be50b90512bbe0f6fa7dd",
+    "native/persistence/inbox_sql_store.cpp": "2dbe32aa907c3e8caa8d4caf917ee1d0a63ca331562ad6f8bde5d3d57158130b",
+    "native/persistence/inbox_sql_store.h": "53f924340011f7455d1026dd152e5e2adcd1f2bba41058568d2313d42be7e05b"
+  },
+  "working_tree_differences": {
+    "native/CMakeLists.txt": "bfeaafb371c71ea6965d38825c6edfa16adb9efe957f35ad83fe52a335365c65"
+  },
+  "input_note": "Executed existing corrective Linux build; no new build claimed. Actor/CLI/platform/port/test sources match commit. Concurrent CMake-only WIP adds an ANDROID-guarded link-only probe, no Linux source/target change. Immutable JS fixtures archived at reviewed commits.",
+  "execution": {
+    "native_ctest": {
+      "passed": 6,
+      "tests": 6,
+      "exit_code": 0
+    },
+    "platform_adapter": "PASS immutable source Node24",
+    "endpoint_scheduler": "PASS immutable source Node24",
+    "cli_descriptor_boundary": "PASS actual native CLI, Python3.12.3",
+    "new_network_peer_run_by_reviewer": false
+  },
+  "log_sha256": {
+    "ctest.log": "dfc7adbdfee40fdf9f7a0d3eba69a84a9283638c80d2943ffa563654ffe9192d",
+    "platform.log": "024df63482cac4acdd5d52f85bd8d49725ddfa8b8a8cc1cbecd7dc7cea54e8a2",
+    "scheduler.log": "e52f7d4cdb4686a39dfa4bbe6441fb889a23ffe79579d95b1fc599538fa47808",
+    "cli.log": "048733cd4daabee7f6eafe225274113f02dc84bd2308be1ab6b44720c0f54b46"
+  },
+  "binary_sha256": {
+    "dmash-node-host": "8e36af934f3bf5fd044f24f3b12200c9ed8179fbd5b27ac372acd6f46f5b8cac",
+    "dmash_actor_lifecycle_test": "f9433161c6af7c4aca88c9ffdd5c6c8cbea86cb5c25d5fc928a3fdcd2a320faf"
+  },
+  "author_evidence_sha256": "459f3a4e1cdfc0d783c779dbdd7cdb70508cfe39692c37dfcc5da73aa9760296",
+  "limits": [
+    "No independent reviewer new network fixture run; author/root actual default22 evidence separately attributed.",
+    "VM128MiB per engine not total process memory bound.",
+    "Headless Linux checkpoint; real route/Inbox/Account delivery and IPC/native GUI/Android/Windows acceptance remain open.",
+    "No private password admission, physical powerloss, anonymity/PFS/PCS/PQ conformance claim."
+  ]
+}

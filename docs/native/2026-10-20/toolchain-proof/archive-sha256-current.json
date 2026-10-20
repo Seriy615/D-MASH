@@ -1,0 +1,70 @@
+{
+  "kind": "fresh restored archive hashes; upstream verification separate",
+  "archives": [
+    {
+      "file": "OpenJDK21U-jdk_x64_linux_hotspot_21.0.12.1_1.tar.gz",
+      "size": 207473347,
+      "sha256": "ce79869e1307ed8ee1e2baa86a412b1eb5b75d10a01006d788a6f968bcfaee94"
+    },
+    {
+      "file": "android-ndk-r27c-linux.zip",
+      "size": 663987688,
+      "sha256": "59c2f6dc96743b5daf5d1626684640b20a6bd2b1d85b13156b90333741bad5cc"
+    },
+    {
+      "file": "build-tools_r36_linux.zip",
+      "size": 63737259,
+      "sha256": "5d9ac77fb6ff43d9da518a337b4fcf8f9097113df531d99ccefe80ef7ce8250b"
+    },
+    {
+      "file": "icu-linux-Rhel8.6-x86_64.7z",
+      "size": 9660660,
+      "sha256": "1fdbcd67b1760f3a3f031c64637a9f19992aed2f35aa615e12a468f8c655d4da"
+    },
+    {
+      "file": "openssl-3.5.9.tar.gz",
+      "size": 53279637,
+      "sha256": "603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a"
+    },
+    {
+      "file": "openssl-3.5.9.tar.gz.sha256",
+      "size": 87,
+      "sha256": "f482705825eb43b47ce08d5cf4287ae062cdbada1a142d728a8d89c387300bf0"
+    },
+    {
+      "file": "platform-36_r02.zip",
+      "size": 65878410,
+      "sha256": "37607369a28c5b640b3a7998868d45898ebcb777565a0e85f9acf36f29631d2e"
+    },
+    {
+      "file": "qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z",
+      "size": 23729678,
+      "sha256": "943023b929d0c08eafe7341700b5ed7601284410b7afd6093f950be291d1d7cd"
+    },
+    {
+      "file": "qtbase-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z",
+      "size": 14860312,
+      "sha256": "6c55d891f1685bdafb22425cc209b304eacb04b6bc774fd3965ac1326ffa1cc2"
+    },
+    {
+      "file": "qtwebsockets-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z",
+      "size": 110346,
+      "sha256": "6a8b0e642db897ae50f892a496cfbf1865d61af55205ca9e69e0c5e0e3726d09"
+    },
+    {
+      "file": "qtwebsockets-MacOS-MacOS_15-Clang-Android-Android_ANY-ARM64.7z",
+      "size": 102220,
+      "sha256": "2f52cbfb8065579ab98a0047440c1eb464ee309d623ebc3ec81e8fc177da17de"
+    },
+    {
+      "file": "quickjs-2026-06-04.tar.xz",
+      "size": 621500,
+      "sha256": "b376e839b322978313d929fd20663b11ba58b75df5a46c126dd19ea2fa70ad2a"
+    },
+    {
+      "file": "gradle-9.5.1-bin.zip",
+      "size": 140320662,
+      "sha256": "bafc141b619ad6350fd975fc903156dd5c151998cc8b058e8c1044ab5f7b031f"
+    }
+  ]
+}

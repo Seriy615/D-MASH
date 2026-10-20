@@ -165,30 +165,20 @@ const Core = {
     Запуск приложения, генерация мастер-ключей и выход.
     */
     // Core.boot               - Главная функция входа: Argon2id, генерация ключей и запуск
-    async unlockDevice(masterPin) {
-        // DeviceRoot is unlocked by the calculator/master PIN, before an
-        // Account credential is requested.  Keep this boundary explicit: an
-        // account password must never become the device-unlock credential.
-        const deviceState = await window.DeviceRoot.bootstrap(masterPin);
-        this.deviceState = deviceState;
-        // Discard a registry object from a preceding DeviceRoot session.  Its
-        // first cryptographic operation will now use this unlocked root.
-        this.quickNameRegistry = null;
-        this.pendingContactRequestStore = null;
-        if (!deviceState.legacy && deviceState.identity) {
-            this.device = Object.freeze({
-                id: deviceState.identity.deviceId,
-                fingerprints: deviceState.identity.fingerprints,
-                signing: deviceState.identity.signing,
-                agreement: deviceState.identity.agreement
-            });
-        }
-        // Device unlock is the first safe boundary at which device-scoped
-        // transport credentials and public routes may be used.  Keep this
-        // connection-driven (never a route refresh timer); account login is
-        // intentionally not required for public DeviceRoutes.
+    adoptDeviceState(deviceState) {
+        if (!deviceState?.root || window.DeviceRoot.state !== deviceState) throw Object.assign(new Error('Разблокировка отменена'), { code: 'DEVICE_LOCKED' });
+        this.deviceState = deviceState; this.quickNameRegistry = null; this.pendingContactRequestStore = null;
+        this.device = Object.freeze({ id: deviceState.identity.deviceId, fingerprints: deviceState.identity.fingerprints, signing: deviceState.identity.signing, agreement: deviceState.identity.agreement });
         void window.NodeManager?.onDeviceUnlocked?.().catch(error => this.shmon('WARN', `Node restore deferred: ${error.message}`));
         return deviceState;
+    },
+    async unlockDevice(masterPin, { isCurrent = () => true } = {}) {
+        const service = await window.DmashLocalCredentials.ensure();
+        if (!isCurrent()) throw Object.assign(new Error('Разблокировка отменена'), { code: 'DEVICE_LOCKED' });
+        const state = await service.unlock(masterPin);
+        if (!isCurrent()) { if (window.DeviceRoot.state === state) window.DeviceRoot.lock(); throw Object.assign(new Error('Разблокировка отменена'), { code: 'DEVICE_LOCKED' }); }
+        if (state?.pendingSetup) return state;
+        return this.adoptDeviceState(state);
     },
     async recoverDeviceAfterConfirmedMaster() {
         // A failed unwrap is not authorization to replace an existing identity.
@@ -306,19 +296,24 @@ const Core = {
         const adapter = await this.openPublicAccountNodeV4(coordinator);
         return adapter.pollSessions();
     },
-    async changeDeviceMasterSecret(currentMasterPin, nextMasterPin) {
-        // This is deliberately device-scoped.  Account passwords never unwrap
-        // or rewrap DeviceRoot, and the root/device identity is never replaced.
-        const result = await window.DeviceRoot.rewrapMasterPin(currentMasterPin, nextMasterPin);
-        if (this.deviceState) this.deviceState.record = window.DeviceRoot.state?.record || this.deviceState.record;
-        return result;
+    async changeDeviceMasterSecret(currentMasterPin, nextMasterPin, nextWipePin) {
+        const service = await window.DmashLocalCredentials.ensure();
+        return service.change(currentMasterPin, nextMasterPin, nextWipePin);
     },
-    async migrateDeviceRootFromLegacyAccountPassphrase(accountPassphrase, calculatorMasterPin) {
-        // This compatibility path is explicit and local-only. DeviceRoot
-        // validates the old account-derived wrapping key before rewrapping the
-        // existing root under the calculator secret; no Account data or device
-        // identity is sent, recreated, or replaced.
-        return window.DeviceRoot.migrateLegacyAccountPassphrase(accountPassphrase, calculatorMasterPin);
+    async migrateDeviceRootFromLegacyAccountPassphrase(accountPassphrase, calculatorMasterPin, wipePin) {
+        const service = await window.DmashLocalCredentials.ensure();
+        const handle = await service.prepareLegacyRecovery(accountPassphrase);
+        return service.completeLegacyRecovery(handle, calculatorMasterPin, wipePin);
+    },
+    openCredentialRecovery() {
+        this.openModal("ВОССТАНОВЛЕНИЕ ДОСТУПА", '<p>Сохранённые данные не удаляются при неверном коде. Если DeviceRoot ранее защищался ключом аккаунта, подтвердите этот прежний ключ и выберите новые локальные коды.</p><button class="gate-btn" onclick="Core.beginLegacyRootRecovery()">ПРЕЖНИЙ КЛЮЧ АККАУНТА</button><button class="gate-btn" onclick="Core.repairMasterWithBiometrics()">ПРИВЯЗАННАЯ БИОМЕТРИЯ</button><button class="gate-btn danger" onclick="Core.totalRecoveryWipe()">ПОЛНОЕ УДАЛЕНИЕ ДАННЫХ</button><button class="gate-btn" onclick="Core.closeModal()">НАЗАД</button>');
+    },
+    beginLegacyRootRecovery() {
+        this.customPrompt("ПРЕЖНИЙ КЛЮЧ АККАУНТА", "Только прежний ключ, которым защищён существующий DeviceRoot:", async passphrase => {
+            if (!passphrase) return;
+            try { const handle = await (await window.DmashLocalCredentials.ensure()).prepareLegacyRecovery(passphrase); ui.startLegacyRootRecovery(handle); }
+            catch (error) { this.customAlert("ДАННЫЕ СОХРАНЕНЫ", error.message); }
+        }, { inputType: 'password' });
     },
     async boot(identity, passphrase, options = {}) {
         const attempt = {};
@@ -340,7 +335,7 @@ const Core = {
             if (statusEl) statusEl.innerText = 'КУЗНИЦА КЛЮЧЕЙ (1024 bit)...';
             const result = await window.argon2.hash({
                 pass: passphrase, salt: identity + 'D_MASH_GAMMA_V1_STABLE',
-                time: 3, mem: 65536, hashLen: 128, type: window.argon2.argon2id
+                time: 3, mem: 65536, hashLen: 128, type: 0 /* deployed Account Argon2d profile, preserve existing identities */
             });
             fullHash = result.hash;
             guard();
@@ -557,7 +552,7 @@ const Core = {
         if (typeof window.argon2 === 'undefined') return rej(new Error("Argon2 missing"));
         window.argon2.hash({
             pass: `${id}::[SILENT_v11]_${pwd}`, salt: "D_MASH_SALT_STABLE_V11",
-            time: 3, mem: 65536, hashLen: 64, parallelism: 2, type: window.argon2.argon2id
+            time: 3, mem: 65536, hashLen: 64, parallelism: 2, type: 0 /* deployed Account Argon2d profile, preserve existing identities */
         }).then(r => res(r.hashHex)).catch(e => rej(e));
     }),
     // Core.launchWorkspace    - Отрисовка основного интерфейса после логина
@@ -790,6 +785,8 @@ const Core = {
         this.device = null;
         this.deviceState = null;
         this.pendingContactRequestStore = null;
+        window.LocalCredentials?.cancel();
+        window.ui?.cancelCredentialOperation?.();
         window.DeviceRoot?.lock();
         this.privateRouteProbeGeneration++;
         this.activeIdentity = null;
@@ -881,7 +878,7 @@ const Core = {
             pass: warpedTime.toString(),
             salt: psk.slice(0, 16), // Кусок PSK как соль
             time: 2, mem: 16384, hashLen: 32,
-            type: window.argon2.argon2id
+            type: 0 /* deployed Account Argon2d profile, preserve existing identities */
         });
 
         // Смешиваем каскад: SS + PSK + Argon2(ms + shift)
@@ -1405,7 +1402,7 @@ const Core = {
             if (forceHandshake && this.customConfirm && !this.nodeTransportV4) {
                 this.customConfirm(
                     "D-MASH MESH",
-                    `${message}<br><br>Переключить режим на <b>Legacy Relay (explicit)</b> и повторить обмен ключами?`,
+                    `${message}\n\nПереключить режим на Legacy Relay (explicit) и повторить обмен ключами?`,
                     () => {
                         window.NodeManager.setTransportMode('legacy');
                         this.sendMessage(c, forceHandshake, targetPid);
@@ -1437,7 +1434,7 @@ const Core = {
 
             const sig = window.nacl.sign.detached(this.hexToBytes(blob), this.keys.sign.secretKey);
 
-            await fetch('../api/pidorskiy_api.php', {
+            const response = await fetch('../api/pidorskiy_api.php', {
                 method: 'POST',
                 headers: { 'X-DMASH-AGENT': 'V1Silent-Node', 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1449,6 +1446,15 @@ const Core = {
                     silent: isSilent
                 })
             });
+            if (!current()) return false;
+            if (!response.ok) {
+                // A retired/rejected Relay response is not acceptance. Keep
+                // the draft, keys and history; never silently change mode.
+                if (!isVoip && !isReceipt && !isRatchet && !isHandshakeConfirm && !forceHandshake && !suppressQueue && pid === this.activePeerId) {
+                    this.customAlert("НЕ ОТПРАВЛЕНО", "Legacy Relay недоступен. Текст сообщения оставлен в поле ввода; данные и режим транспорта не изменены.");
+                }
+                return false;
+            }
 
             // Сохраняем и обновляем UI только если это не системный сигнал и это текущий открытый чат
             if (!isVoip && !isReceipt && !isRatchet && !isHandshakeConfirm && !forceHandshake && pid === this.activePeerId) {
@@ -1904,7 +1910,7 @@ const Core = {
         const pending=(await this.getContactFlowV3().listForAccount()).find(item=>item.id===id);
         if(!pending){await this.renderPeers();return;}
         if(pending.status==='request_expired'){this.customAlert('ЗАПРОС ИСТЁК','Автоматические повторы завершены. Откройте публичную ссылку собеседника, чтобы создать новый запрос.');return;}
-        this.openModal('КОНТАКТ: '+this.escapeHtml(pending.name),'<div>Запрос ещё не завершён. Чат появится после подтверждения Account собеседника. Получателю нужно открыть приложение.</div><button class="sys-modal-btn" id="contact-progress-retry">ПРОВЕРИТЬ СНОВА</button>');
+        this.openModal('КОНТАКТ: '+pending.name,'<div>Запрос ещё не завершён. Чат появится после подтверждения Account собеседника. Получателю нужно открыть приложение.</div><button class="sys-modal-btn" id="contact-progress-retry">ПРОВЕРИТЬ СНОВА</button>');
         const button=document.getElementById('contact-progress-retry');
         if(button)button.onclick=async()=>{button.disabled=true;try{await this.syncNetwork();await this.renderPeers();this.closeModal();}finally{button.disabled=false;}};
     },
@@ -1939,7 +1945,7 @@ const Core = {
             const fullIdToCopy = peer ? (peer.id + (peer.curvePub || '') + (peer.kyberPub || '')) : id;
             document.getElementById('chat-header').innerHTML = `
                 <button id="back-btn" class="action-btn" onclick="Core.closeChat()">←</button>
-                <div style="flex-grow:1; margin-left:10px; cursor:pointer;" onclick="Core.copyPeerId('${fullIdToCopy}')">
+                <div style="flex-grow:1; margin-left:10px; cursor:pointer;" ${this.dataActionAttributes("copyPeerId", [fullIdToCopy])}>
                     <b id="chat-title">${peer ? this.escapeHtml(peer.name.toUpperCase()) : id.substring(0,8)}</b><br>
                     <small style="font-size:0.6rem; color:#555;">ID: ${id.substring(0,8)}... (КОПИРОВАТЬ)</small>
                 </div>
@@ -2391,7 +2397,7 @@ const Core = {
                     if (label.toLowerCase().includes('back') || label.toLowerCase().includes('env')) label = "ОСНОВНАЯ";
 
                     return `<button class="sys-modal-btn primary" style="margin-bottom:10px;"
-                        onclick="Core.startCircleRecording('${cam.deviceId}')">${label}</button>`;
+                        ${Core.dataActionAttributes("startCircleRecording", [cam.deviceId])}>${Core.escapeHtml(label)}</button>`;
                 }).join('');
 
                 Core.openModal("ВЫБЕРИ ГЛАЗ", `<div style="display:flex; flex-direction:column;">${listHtml}<button class="sys-modal-btn" onclick="Core.closeModal()">ОТМЕНА</button></div>`);
@@ -2531,11 +2537,11 @@ const Core = {
             clearTimeout(timer);
             if (!current()) return;
             this.shmon('ERR', `Media decode failed: ${e.message}`);
-            stub.innerHTML = `<span style="color:var(--accent)">ОШИБКА РАСШИФРОВКИ</span><button class="sys-modal-btn" style="padding:5px; font-size:.6rem; margin-top:8px;" onclick="Core.decryptMediaEncoded('${id}', '${this.encodeMediaPayload(rawData)}')">ПОВТОРИТЬ</button>`;
+            stub.innerHTML = `<span style="color:var(--accent)">ОШИБКА РАСШИФРОВКИ</span><button class="sys-modal-btn" style="padding:5px; font-size:.6rem; margin-top:8px;" ${this.dataActionAttributes("decryptMediaEncoded", [id, this.encodeMediaPayload(rawData)])}>ПОВТОРИТЬ</button>`;
         }
     },
-    // Media arrives inside encrypted JSON. Encode it once for the HTML handler
-    // so a data URL or a filename cannot corrupt an inline JSON attribute.
+    // Media arrives inside encrypted JSON. Preserve its serialized data for
+    // the DOM command argument; it is never interpolated as JavaScript.
     encodeMediaPayload(data) {
         return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
     },
@@ -2559,12 +2565,12 @@ const Core = {
         const progress = transportState === 'WAITING' ? 'ОЖИДАЕТ ПОЛУЧАТЕЛЯ' :
             transportState === 'FAILED' ? 'НЕ ДОСТАВЛЕНО' : '';
         const cancel = !inbound && transportState === 'WAITING' ?
-            `<button class="sys-modal-btn dmash-file-cancel" type="button" onclick="Core.cancelStoredFile('${data.fileId}')">ОТМЕНИТЬ ОТПРАВКУ</button>` : '';
+            `<button class="sys-modal-btn dmash-file-cancel" type="button" ${this.dataActionAttributes("cancelStoredFile", [data.fileId])}>ОТМЕНИТЬ ОТПРАВКУ</button>` : '';
         return `<div class="dmash-file-card" data-file-ref="${encoded}" data-file-id="${data.fileId}">
             <div class="dmash-file-name">📎 ${name}</div><small>${size} КиБ</small>
             <div class="dmash-file-preview" role="status">ЗАШИФРОВАННЫЙ ФАЙЛ</div>
             <div class="dmash-file-progress" role="status">${progress}</div>
-            <button class="sys-modal-btn primary" type="button" onclick="Core.openStoredFileEncoded('${id}','${encoded}')">ОТКРЫТЬ ФАЙЛ</button>
+            <button class="sys-modal-btn primary" type="button" ${this.dataActionAttributes("openStoredFileEncoded", [id, encoded])}>ОТКРЫТЬ ФАЙЛ</button>
             ${cancel}
         </div>`;
     },
@@ -2606,18 +2612,18 @@ const Core = {
 
         if (data.type === 'video_note') {
             return `
-                <div class="media-stub" id="stub-${id}">
+                <div class="media-stub" id="stub-${this.escapeAttribute(id)}">
                     <div class="circle-note-container"><video src="" playsinline preload="metadata"></video></div>
                     <button class="sys-modal-btn primary" style="padding:5px; font-size:0.6rem; margin-top:8px;"
-                        onclick="Core.decryptMediaEncoded('${id}', '${this.encodeMediaPayload(data)}')">РАСШИФРОВАТЬ КРУЖОК</button>
+                        ${this.dataActionAttributes("decryptMediaEncoded", [id, this.encodeMediaPayload(data)])}>РАСШИФРОВАТЬ КРУЖОК</button>
                 </div>`;
         }
 
         return `
-            <div class="media-stub" id="stub-${id}">
+            <div class="media-stub" id="stub-${this.escapeAttribute(id)}">
                 <div style="color:var(--main); font-size:0.7rem; margin-bottom:5px;">[ ${label}: ${this.escapeHtml(data.name || 'file')} ]</div>
                 <button class="sys-modal-btn primary" style="padding:5px; font-size:0.6rem;"
-                    onclick="Core.decryptMediaEncoded('${id}', '${this.encodeMediaPayload(data)}')">РАСШИФРОВАТЬ</button>
+                    ${this.dataActionAttributes("decryptMediaEncoded", [id, this.encodeMediaPayload(data)])}>РАСШИФРОВАТЬ</button>
             </div>`;
     },
     // Core.resetCircleUI         - Сброс интерфейса записи кружка (возврат кнопок в дефолт)
@@ -2981,20 +2987,11 @@ const Core = {
     // returned a verified unlocked state.
     unlockDeviceWithBiometrics: async function() {
         try {
-            const unlock = window.DeviceRoot?.unlockWithWebAuthnPrf;
-            if (typeof unlock !== "function") throw new Error("БИОМЕТРИЯ УСТРОЙСТВА НЕДОСТУПНА");
-            const state = await unlock.call(window.DeviceRoot);
-            if (!state || !state.root || !state.identity) throw new Error("БИОМЕТРИЯ НЕ РАЗБЛОКИРОВАЛА УСТРОЙСТВО");
-            this.deviceState = state;
-            this.device = Object.freeze({ id: state.identity.deviceId, fingerprints: state.identity.fingerprints, signing: state.identity.signing, agreement: state.identity.agreement });
-            this.quickNameRegistry = null;
-            this.pendingContactRequestStore = null;
-            void window.NodeManager?.onDeviceUnlocked?.().catch(error => this.shmon('WARN', `Node restore deferred: ${error.message}`));
-            return true;
-        } catch (error) {
-            Core.customAlert("ОТКАЗ", error?.message || "БИОМЕТРИЯ УСТРОЙСТВА НЕДОСТУПНА");
-            return false;
-        }
+            const root = window.DeviceRoot, epoch = root?._epoch;
+            const state = await root.unlockWithWebAuthnPrf();
+            if (root._epoch !== epoch || root.state !== state) throw new Error('БИОМЕТРИЧЕСКИЙ ВХОД ОТМЕНЁН');
+            this.adoptDeviceState(state); return true;
+        } catch (error) { Core.customAlert("ОТКАЗ", error?.message || "БИОМЕТРИЯ УСТРОЙСТВА НЕДОСТУПНА"); return false; }
     },
     // Core.setupLazyLogin     - Сохранение зашифрованного пароля для быстрого входа
     setupLazyLogin: function() {
@@ -3012,7 +3009,7 @@ const Core = {
         if (!this.activeIdentity || !this.gammaKeys?.master || typeof window.argon2 === 'undefined') return false;
         const result = await window.argon2.hash({
             pass: passphrase, salt: this.activeIdentity + "D_MASH_GAMMA_V1_STABLE",
-            time: 3, mem: 65536, hashLen: 128, type: window.argon2.argon2id
+            time: 3, mem: 65536, hashLen: 128, type: 0 /* deployed Account Argon2d profile, preserve existing identities */
         });
         const expected = this.gammaKeys.master;
         const actual = result.hash.slice(0, 32);
@@ -3034,9 +3031,20 @@ const Core = {
     // Core.changePinFlow         - Интерфейс смены Master-кода или Wipe-кода (самоликвидация)
     changePinFlow: function(type) {
         if (type === 'M' && window.ui?.startMasterReconfiguration) return ui.startMasterReconfiguration();
-        Core.customPrompt("WIPE-КОД", "Введите новый цифровой код:", async (v) => {
-            if (v && /^\d+$/.test(v)) { localStorage.setItem('sys_w', await sys.fastHash(v)); Core.customAlert("УСПЕХ", "Код изменен"); }
+        Core.customPrompt("ТЕКУЩИЙ MASTER", "Подтвердите текущий master-код:", master => {
+            if (!master) return;
+            Core.customPrompt("НОВЫЙ WIPE-КОД", "Введите новый цифровой код:", async wipe => {
+                if (!wipe) return;
+                try { await (await window.DmashLocalCredentials.ensure()).changeWipe(master, wipe); Core.customAlert("УСПЕХ", "Wipe-код изменён"); }
+                catch (error) { Core.customAlert("КОДЫ", window.ui?.credentialError(error) || error.message); }
+            }, { inputType: 'password' });
         }, { inputType: 'password' });
+    },
+    async repairMasterWithBiometrics() {
+        try {
+            const handle = await window.DeviceRoot.prepareWebAuthnUnlock();
+            ui.startBiometricMasterRepair(handle);
+        } catch (error) { this.customAlert("ВОССТАНОВЛЕНИЕ MASTER", error.message); }
     },
     // Account erasure requires a complete authenticated ownership inventory.
     // Registry removal alone discards the saved identity pin, not shared-vault data.
@@ -3094,13 +3102,10 @@ const Core = {
         try {
             const entries = await this.getQuickNameRegistry().list();
             const list = entries.map((entry) => {
-                // IDs are passed encoded rather than interpolated directly, so
-                // encrypted persisted data cannot break the inline handler.
-                const id = encodeURIComponent(entry.id);
                 return `<div style="background:#111;padding:12px;margin-bottom:10px;border:1px solid #333;text-align:left;">
                     <b style="color:var(--main);">${Core.escapeHtml(entry.name)}</b>
                     <div style="font-size:.7rem;color:#aaa;overflow-wrap:anywhere;margin:5px 0 9px;">${Core.escapeHtml(entry.value)}</div>
-                    <button class="sys-modal-btn danger" style="padding:5px;font-size:.6rem;margin:0;" onclick="Core.removeQuickName(decodeURIComponent('${id}'))">УДАЛИТЬ</button>
+                    <button class="sys-modal-btn danger" style="padding:5px;font-size:.6rem;margin:0;" ${Core.dataActionAttributes("removeQuickName", [entry.id])}>УДАЛИТЬ</button>
                 </div>`;
             }).join("");
             const h = `<div style="max-height:350px;overflow-y:auto;margin-bottom:15px;">${list || "БЫСТРЫХ ИМЁН НЕТ"}</div>
@@ -3227,9 +3232,8 @@ const Core = {
                 .filter(request => request.status === "pending")
                 .sort((a, b) => b.receivedAt - a.receivedAt);
             const list = requests.map(request => {
-                const id = encodeURIComponent(request.id);
                 const intro = request.intro ? `<div style="font-size:.7rem;color:#aaa;margin-top:5px;">${Core.escapeHtml(request.intro)}</div>` : "";
-                return `<button class="sys-modal-btn" style="color:#49b9ff;border-color:#49b9ff;text-align:left;" onclick="Core.readPendingContactRequest(decodeURIComponent('${id}'))">
+                return `<button class="sys-modal-btn" style="color:#49b9ff;border-color:#49b9ff;text-align:left;" ${Core.dataActionAttributes("readPendingContactRequest", [request.id])}>
                     <b>${Core.escapeHtml(request.displayName)}</b>${intro}
                 </button>`;
             }).join("");
@@ -3262,16 +3266,15 @@ const Core = {
             const payload = this.pendingContactRequestPayload(request);
             const requestId = payload ? `<div style="font-size:.6rem;color:#777;overflow-wrap:anywhere;margin-top:8px;">REQUEST: ${Core.escapeHtml(payload.request_id)}</div>` : "";
             const intro = request.intro ? `<div style="margin:12px 0;color:#ccc;white-space:pre-wrap;">${Core.escapeHtml(request.intro)}</div>` : "";
-            const encodedId = encodeURIComponent(request.id);
             const acceptance = await this.pendingContactAcceptanceInfo(request);
             const canAccept = ['fresh', 'retry', 'established'].includes(acceptance.kind);
             const acceptLabel = acceptance.kind === 'retry' ? 'ПОВТОРИТЬ ПРИНЯТИЕ' : acceptance.kind === 'established' ? 'ЗАВЕРШИТЬ' : 'ПРИНЯТЬ';
             const networkAccept = !!window.ContactFlowV3 && window.NodeManager?.connectedConnections().some(node => node.client);
             const h = `<div style="color:#49b9ff;font-weight:bold;">${Core.escapeHtml(request.displayName)}</div>${intro}${requestId}
                 <div style="font-size:.8rem;color:#aaa;margin:12px 0;" role="status">${acceptance.message ? Core.escapeHtml(acceptance.message) : networkAccept ? 'Для принятия откройте выбранный Account. Контакт получит защищённое подтверждение.' : 'Локальный просмотр запроса. Для сетевого принятия подключите Node v3.'}</div>
-                ${canAccept ? `<button class="sys-modal-btn primary" onclick="Core.startAcceptPendingContactRequest(decodeURIComponent('${encodedId}'))">${acceptLabel}</button>` : ''}
+                ${canAccept ? `<button class="sys-modal-btn primary" ${Core.dataActionAttributes("startAcceptPendingContactRequest", [request.id])}>${acceptLabel}</button>` : ''}
                 ${acceptance.kind === 'owner' && this.activeIdentity ? '<button class="sys-modal-btn primary" onclick="Core.accountLogout()">ВЫЙТИ И ВЫБРАТЬ АККАУНТ</button>' : ''}
-                <button class="sys-modal-btn danger" onclick="Core.rejectPendingContactRequest(decodeURIComponent('${encodedId}'))">ОТКЛОНИТЬ</button>
+                <button class="sys-modal-btn danger" ${Core.dataActionAttributes("rejectPendingContactRequest", [request.id])}>ОТКЛОНИТЬ</button>
                 <button class="sys-modal-btn" onclick="Core.openPendingContacts()">ЗАКРЫТЬ</button>`;
             this.openModal("ЗАПРОС В КОНТАКТЫ", h);
         } catch (error) { this.pendingContactError(error); }
@@ -3315,15 +3318,13 @@ const Core = {
             // device inbox; it is used only for this local decision.
             const identifier = String(account.pk || "").slice(0, 64).toLowerCase();
             if (!/^[0-9a-f]{64}$/.test(identifier)) return "";
-            const encodedId = encodeURIComponent(id);
-            const encodedName = encodeURIComponent(quickName);
-            return `<button class="sys-modal-btn" style="text-align:left;" onclick="Core.acceptPendingContactRequest(decodeURIComponent('${encodedId}'),decodeURIComponent('${encodedName}'),'${identifier}')">
+            return `<button class="sys-modal-btn" style="text-align:left;" ${Core.dataActionAttributes("acceptPendingContactRequest", [id, quickName, identifier])}>
                 <b>${Core.escapeHtml(account.id || identifier)}</b><br><small style="color:#777;">${identifier}</small>
             </button>`;
         }).join("");
         const h = `<div style="margin-bottom:10px;color:#aaa;font-size:.75rem;">Quick Name: ${Core.escapeHtml(quickName)}<br>ВЫБЕРИТЕ ACCOUNT IDENTIFIER:</div>
             ${choices || "НЕТ ПОДХОДЯЩИХ АККАУНТОВ"}
-            <button class="sys-modal-btn" onclick="Core.readPendingContactRequest(decodeURIComponent('${encodeURIComponent(id)}'))">НАЗАД</button>`;
+            <button class="sys-modal-btn" ${Core.dataActionAttributes("readPendingContactRequest", [id])}>НАЗАД</button>`;
         this.openModal("ВЫБОР АККАУНТА", h);
     },
     acceptPendingContactRequest: async function(id, quickName, selectedAccountIdentifier) {
@@ -3347,7 +3348,7 @@ const Core = {
                 return;
             }
             await this.getPendingContactRequestStore().accept(id);
-            this.customAlert("ЗАПРОС ПРИНЯТ", `Quick Name «${Core.escapeHtml(quickName)}» и выбранный Account identifier подтверждены локально. Сетевой CONTACT_ACCEPT не отправлялся.`);
+            this.customAlert("ЗАПРОС ПРИНЯТ", `Quick Name «${quickName}» и выбранный Account identifier подтверждены локально. Сетевой CONTACT_ACCEPT не отправлялся.`);
         } catch (error) { this.pendingContactError(error); }
     },
     // Core.openAccountManager - Реестр всех аккаунтов на устройстве
@@ -3358,16 +3359,16 @@ const Core = {
             return `
             <div style="background:#111; padding:12px; margin-bottom:10px; border:1px solid #333; text-align:left;">
                 <div style="margin-bottom:8px;">
-                    <b style="color:var(--main);">${acc.id}</b>
-                    <div style="font-size:0.6rem; color:#555;">${acc.pk.substring(0,16)}...</div>
+                    <b style="color:var(--main);">${Core.escapeHtml(acc.id)}</b>
+                    <div style="font-size:0.6rem; color:#555;">${Core.escapeHtml(acc.pk.substring(0,16))}...</div>
                     <div style="font-size:0.6rem; color:var(--op); margin-top:4px;">
                         ${acc.lazy ? '[⚡ ЛЕНИВЫЙ] ' : ''}
                     </div>
                 </div>
                 <div style="display:flex; gap:5px;">
-                    ${hasExtra ? `<button class="sys-modal-btn" style="padding:5px; font-size:0.6rem; margin:0;" onclick="Core.resetAccountAuthFlow('${acc.id}')">СБРОСИТЬ ВХОД</button>` : ''}
+                    ${hasExtra ? `<button class="sys-modal-btn" style="padding:5px; font-size:0.6rem; margin:0;" ${Core.dataActionAttributes("resetAccountAuthFlow", [acc.id])}>СБРОСИТЬ ВХОД</button>` : ''}
                     ${acc.id !== Core.activeIdentity ?
-                        `<button class="sys-modal-btn danger" style="padding:5px; font-size:0.6rem; margin:0;" onclick="Core.removeAccountFlow('${acc.id}')">УДАЛИТЬ</button>`
+                        `<button class="sys-modal-btn danger" style="padding:5px; font-size:0.6rem; margin:0;" ${Core.dataActionAttributes("removeAccountFlow", [acc.id])}>УДАЛИТЬ</button>`
                         : ''}
                 </div>
             </div>`;
@@ -3561,7 +3562,61 @@ const Core = {
         });
     },
     // Core.openModal/closeModal - Базовый движок модальных окон
-    openModal: (t, h) => { const m = document.getElementById('sys-modal'); m.innerHTML = `<div class="sys-modal-box"><h4>${t}</h4>${h}</div>`; m.style.display = 'flex'; },
+    // UI data is serialized only into HTML-escaped data attributes, never
+    // JavaScript source. Bind a small explicit command set with DOM listeners.
+    dataActionAttributes: function(action, args) {
+        return `data-ui-action="${this.escapeAttribute(action)}" data-ui-args="${this.escapeAttribute(JSON.stringify(args))}"`;
+    },
+    escapeAttribute: function(value) {
+        return String(value).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+    },
+    bindDataActions: function(container) {
+        if (this._dataActionListenerInstalled) return;
+        const commands = {
+            copyPeerId: (...args) => this.copyPeerId(...args),
+            startCircleRecording: (...args) => this.startCircleRecording(...args),
+            decryptMediaEncoded: (...args) => this.decryptMediaEncoded(...args),
+            cancelStoredFile: (...args) => this.cancelStoredFile(...args),
+            openStoredFileEncoded: (...args) => this.openStoredFileEncoded(...args),
+            deleteMessageFlow: (...args) => this.deleteMessageFlow(...args),
+            copyPublicContactLink: (...args) => this.copyPublicContactLink(...args),
+            resetAccountAuthFlow: (...args) => this.resetAccountAuthFlow(...args),
+            selectAccountForLogin: (...args) => window.ui.selectAccountForLogin(...args),
+            togglePublicRoute: (...args) => window.ui.togglePublicRoute(...args),
+            selectGlobalNode: (...args) => window.ui.selectGlobalNode(...args),
+            removeGlobalNode: (...args) => window.ui.removeGlobalNode(...args),
+            removeQuickName: (...args) => this.removeQuickName(...args),
+            readPendingContactRequest: (...args) => this.readPendingContactRequest(...args),
+            startAcceptPendingContactRequest: (...args) => this.startAcceptPendingContactRequest(...args),
+            rejectPendingContactRequest: (...args) => this.rejectPendingContactRequest(...args),
+            acceptPendingContactRequest: (...args) => this.acceptPendingContactRequest(...args),
+            removeAccountFlow: (...args) => this.removeAccountFlow(...args),
+            removeAccountBiometric: (...args) => this.removeAccountBiometric(...args),
+            accountBiometricLogin: (...args) => this.accountBiometricLogin(...args),
+            choosePublicContactQuickName: (...args) => this.choosePublicContactQuickName(...args),
+            renderLoginForm: (...args) => window.ui.renderLoginForm(...args),
+            removeGlobalQuickName: (...args) => window.ui.removeGlobalQuickName(...args)
+        };
+        const dispatch = button => {
+            if (!button || !Object.hasOwn(commands, button.dataset.uiAction)) return;
+            let args;
+            try { args = JSON.parse(button.dataset.uiArgs); } catch (_) { return; }
+            if (Array.isArray(args)) commands[button.dataset.uiAction](...args);
+        };
+        if (document.addEventListener) {
+            // Capture reaches data actions inside chat surfaces that intentionally
+            // stop bubbling to outside/backdrop handlers. Keep one listener so
+            // repeated message/modal renders cannot dispatch an action twice.
+            document.addEventListener("click", event => dispatch(event.target.closest?.("[data-ui-action]")), true);
+            this._dataActionListenerInstalled = true;
+        } else {
+            // Non-browser embedders may provide a bounded container DOM port.
+            for (const button of (container.querySelectorAll?.("[data-ui-action]") || [])) {
+                if (Object.hasOwn(commands, button.dataset.uiAction)) button.addEventListener("click", () => dispatch(button));
+            }
+        }
+    },
+    openModal: (t, h) => { const m = document.getElementById('sys-modal'); m.innerHTML = `<div class="sys-modal-box"><h4>${Core.escapeAttribute(t ?? "")}</h4>${h}</div>`; m.style.display = 'flex'; Core.bindDataActions(m); },
 
     closeModal: function() {
         const m = document.getElementById('sys-modal');
@@ -3572,10 +3627,14 @@ const Core = {
         this.flipLockSuppressed = false;
         // ВЫЗЫВАЕМ ФИКСАТОР
     },
+    // Plain-text titles/messages/values. Intentional body HTML is accepted
+    // only by openModal; callers must construct/escape that template explicitly.
     // Core.customAlert/Prompt/Confirm - Кастомные диалоги в стиле системы
-    customAlert: (t, tx) => Core.openModal(t, `<div>${tx}</div><button class="sys-modal-btn primary" onclick="Core.closeModal()">OK</button>`),
+    customAlert: (t, tx) => Core.openModal(t, `<div style="white-space:pre-wrap">${Core.escapeAttribute(tx ?? "")}</div><button class="sys-modal-btn primary" onclick="Core.closeModal()">OK</button>`),
 
     customPrompt: (t, tx, cb, options = {}) => {
+        // Old copy fallbacks supplied a string; keep that value as DOM data.
+        options = typeof options === "string" ? { value: options, readOnly: true } : (options || {});
         const inputType = options.inputType === 'password' ? 'password' : 'text';
         const safeChatPassword = inputType === 'password' && options.passwordManagerSafe;
         const renderedType = safeChatPassword ? 'text' : inputType;
@@ -3583,7 +3642,7 @@ const Core = {
         const inputAttrs = safeChatPassword
             ? 'autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"'
             : '';
-        Core.openModal(t, `<form id="sys-prompt-form" autocomplete="off" onsubmit="return false"><div>${tx}</div><input type="${renderedType}" id="p-in" class="${inputClass}" ${inputAttrs}><button type="button" class="sys-modal-btn primary" id="p-ok">OK</button><button type="button" class="sys-modal-btn" onclick="Core.closeModal()">ОТМЕНА</button></form>`);
+        Core.openModal(t, `<form id="sys-prompt-form" autocomplete="off" onsubmit="return false"><div style="white-space:pre-wrap">${Core.escapeAttribute(tx ?? "")}</div><input type="${renderedType}" id="p-in" class="${inputClass}" ${inputAttrs}><button type="button" class="sys-modal-btn primary" id="p-ok">OK</button><button type="button" class="sys-modal-btn" onclick="Core.closeModal()">ОТМЕНА</button></form>`);
         const input = document.getElementById('p-in');
         input.value = typeof options.value === 'string' ? options.value : '';
         input.readOnly = Boolean(options.readOnly);
@@ -3597,7 +3656,7 @@ const Core = {
 
     customConfirm: function(t, tx, onYes) {
         const h = `
-            <div style="margin-bottom:20px; font-size:1rem; color:#ccc;">${tx}</div>
+            <div style="margin-bottom:20px; font-size:1rem; color:#ccc;white-space:pre-wrap;">${Core.escapeAttribute(tx ?? "")}</div>
             <div style="display:flex; gap:15px;">
                 <button class="sys-modal-btn" style="flex:1;" onclick="Core.closeModal()">НЕТ</button>
                 <button class="sys-modal-btn primary" style="flex:1;" id="confirm-yes">ДА</button>
@@ -3639,8 +3698,8 @@ const Core = {
                 const side = msg.inbound ? 'in' : 'out';
                 const time = new Date(ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                 const content = this.renderFileStub(parsed, id || ts, msg.transportState, msg.inbound);
-                return `<div class="msg ${side}" id="msg-box-${id || ts}" data-wire-id="${encodeURIComponent(String(msg.wireId || ''))}">
-                    <div class="m-txt">${content}<span class="msg-del-btn" onclick="Core.deleteMessageFlow('${id || ts}')">×</span></div>
+                return `<div class="msg ${side}" id="msg-box-${this.escapeAttribute(id || ts)}" data-wire-id="${encodeURIComponent(String(msg.wireId || ''))}">
+                    <div class="m-txt">${content}<span class="msg-del-btn" ${this.dataActionAttributes("deleteMessageFlow", [id || ts])}>×</span></div>
                     <small class="m-ts">${time}${this.messageStatusHtml(msg)}</small></div>`;
             }
             if (parsed.type && parsed.data) {
@@ -3649,10 +3708,10 @@ const Core = {
                 const content = this.renderStub(parsed, id || ts);
 
                 return `
-                    <div class="msg ${side}" id="msg-box-${id || ts}" data-wire-id="${encodeURIComponent(String(msg.wireId || ''))}">
+                    <div class="msg ${side}" id="msg-box-${this.escapeAttribute(id || ts)}" data-wire-id="${encodeURIComponent(String(msg.wireId || ''))}">
                         <div class="m-txt">
                             ${content}
-                            <span class="msg-del-btn" onclick="Core.deleteMessageFlow('${id || ts}')">×</span>
+                            <span class="msg-del-btn" ${this.dataActionAttributes("deleteMessageFlow", [id || ts])}>×</span>
                         </div>
                         <small class="m-ts">${time}${this.messageStatusHtml(msg)}</small>
                     </div>`;
@@ -3667,10 +3726,10 @@ const Core = {
         if (!content || content.trim() === "") return "";
 
         return `
-            <div class="msg ${side}" id="msg-box-${id || ts}" data-wire-id="${encodeURIComponent(String(msg.wireId || ''))}">
+            <div class="msg ${side}" id="msg-box-${this.escapeAttribute(id || ts)}" data-wire-id="${encodeURIComponent(String(msg.wireId || ''))}">
                 <div class="m-txt">
                     ${content}
-                    <span class="msg-del-btn" onclick="Core.deleteMessageFlow('${id || ts}')">×</span>
+                    <span class="msg-del-btn" ${this.dataActionAttributes("deleteMessageFlow", [id || ts])}>×</span>
                 </div>
                 <small class="m-ts">${time}${this.messageStatusHtml(msg)}</small>
             </div>`;
@@ -3726,6 +3785,7 @@ const Core = {
 // exposed on window in every browser, therefore both modules must share this
 // exact active Core instance.
 window.Core = Core;
+Core.bindDataActions(document);
 Core.initProximity();
 window.boot_sequence = (id, pwd) => Core.boot(id, pwd);
 window.addEventListener('popstate', (event) => {

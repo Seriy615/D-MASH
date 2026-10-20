@@ -1,0 +1,92 @@
+{
+  "kind": "C02_LINUX_LIFECYCLE_RETENTION_CORRECTIVE_CHECKPOINT_NOT_RELEASE",
+  "prior_checkpoint": "dd977fd",
+  "date": "2026-10-20",
+  "source_sha256": {
+    "native/src/job_ledger.cpp": "7a48109453bac2d50d30583224bfdafd339a8c8d8d64dc5dec43673b1345773d",
+    "native/src/job_ledger.h": "4345d3951fbfafc9f4394dafacd0a828650ca98409b7aa6d1841d73e2ec04cdb",
+    "native/src/js_actor.cpp": "89e13b085477e97361394e4b8a342385d7311e5b8d08e3b614981cb160a1ef44",
+    "native/src/local_ipc.cpp": "aeaaf400857bf2b70a2095d3e36298a596f020665159b41f0d74b46793172456",
+    "native/src/local_ipc.h": "c939ae90919a7b45ee75325f8d00fd15fdc0fb1c9dfd627bcd16217a8fc95a45",
+    "native/src/main.cpp": "b8783dd2f1bb2b150e071d99faccb043c73917d87509ed92d53040d2fb4c18ca",
+    "native/js/job_runtime.js": "e5d7ad2ecdad5cf738a1916dc4526b135d465971994ced26f64327c2c642bd84",
+    "native/tests/job_ledger_test.cpp": "6067a8168f9b7ef33c762e3c88cea72705aca84daa07a5aa58a5a5cd413be602",
+    "native/tests/job_scheduler_test.js": "241c72f2e507b0a34554e2c1159b9580d3290ebe8824508e2ee85cb1ddc4b4ef",
+    "native/tests/local_ipc_test.py": "d5f64039cb18886085a9b09f100a435730213e1774cb4b2f6c0a5f1698639426",
+    "native/tests/ipc_delivery_test.py": "ae81f613af1be0f3071970e0710f9202b78ad16c7485d1f284bb28f9ff6caceb"
+  },
+  "binary_sha256": "e4dba8c9c50f0a368ab40f9e950cadf423ef81aa0385de88ab8fa04f2f61f46b",
+  "ctest": {
+    "status": "8/8PASS",
+    "seconds": 0.58
+  },
+  "local_ipc": {
+    "suite": "native-local-ipc",
+    "status": "PASS",
+    "checks": [
+      "private-socket",
+      "capability-rejection",
+      "preparse-length-and-UTF8",
+      "role-isolation",
+      "owner-required",
+      "UI-reconnect-independent-lifetime",
+      "broker-private-capability-renewal",
+      "policy-revision-fence",
+      "broker-EOF-durable-floors",
+      "stale-bootstrap-private-floors",
+      "restart-stale-capability",
+      "explicit-full-lock-ACK"
+    ],
+    "meshDelivery": "NOT_RUN"
+  },
+  "real_delivery": {
+    "suite": "native-real-job-delivery",
+    "status": "PASS",
+    "admissionDifficulty": 22,
+    "wireRole": "NODE",
+    "checks": [
+      "Account-proof-managed-bindings",
+      "durable-ACCEPTED",
+      "policy-blocked-accept-UI-SIGKILL-then-resume",
+      "unchanged-discovery-transit-batching",
+      "recipient-durable-Inbox",
+      "transport-sent-only",
+      "identical-submit-dedupe",
+      "changed-bytes-conflict",
+      "sender-restart-retained-job",
+      "recipient-packet-id-dedupe"
+    ],
+    "backendForwarded": 4,
+    "payloadDigest": "3414adee227ea5826c0220012b5da5ee05e49bb3ca7aec33de25f51bfb0ed047",
+    "limitations": [
+      "ACK-free recipient crash window unchanged",
+      "Windows/Android runtime NOT_RUN"
+    ]
+  },
+  "focused_js": [
+    "job scheduler: retention prune/single long deadline/no offline poll/peer-ready wake/close PASS",
+    "platform timer and key adapter suite PASS"
+  ],
+  "corrections": [
+    "Terminal jobs and unreferenced destination retention schedule actual pruning and reclaim bounded quotas",
+    "WAITING_BOOTSTRAP defers until accepted expiry; an internal peer-ready flag can claim it earlier; other retries retain60s bound",
+    "Inherited FD MintCapability renews only configured principals; old contexts revoked and new token returned privately",
+    "Pending requests have absolute30s deadlines independent of incoming frame traffic",
+    "Broker EOF immediately after full-lock ACK is idempotent and does not manufacture another revocation"
+  ],
+  "red_observation": {
+    "source": "uncommitted corrective WIP, not dd977fd",
+    "symptom": "native-job-ledger failed and actual delivery actor stopped failclosed",
+    "cause": "WAITING_BOOTSTRAP expiry deadline conflicted with old generic60s defer bound",
+    "correction": "Only that waiting state allows nextAt <=accepted expiresAt and <=7days; normal retry guard unchanged",
+    "native_log_sha256": "6ed2b44396a2008d7fa24c0bc29c2993ff30da67d8443436bff8887b7e6430a2",
+    "delivery_log_sha256": "e89826e3cda34e8ab44b5ba93251f1e1752fd51e4caecf9c8238ebb4a2d62891"
+  },
+  "limits": [
+    "Consumption intent/cursor events/supervisor and native platform services remain open",
+    "Same remote ACK-free loss window unchanged",
+    "Capability wall-clock skew and platform mobility lifecycle acceptance remain open",
+    "Windows runtime NOT_RUN; Android link-only evidence separate",
+    "No full Account E2EE/UI/deployed release acceptance"
+  ]
+}

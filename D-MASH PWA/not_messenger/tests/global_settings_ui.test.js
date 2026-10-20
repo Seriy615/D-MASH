@@ -6,21 +6,27 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 
 const gateBox = { innerHTML: "" };
-const calculator = { style: {}, dataset: {}, addEventListener() {} };
+const controls = new Map();
+const calculator = { style: {}, dataset: {}, addEventListener() {}, appendChild(node) { controls.set(node.id, node); } };
 const settingsLayer = { style: { setProperty() {} } };
 const local = new Map();
 const document = {
   querySelector(selector) { return selector === ".gate-container" ? gateBox : null; },
-  getElementById(id) { return id === "app-container" ? calculator : (id === "settings-layer" ? settingsLayer : null); }
+  getElementById(id) { return controls.get(id) || (id === "app-container" ? calculator : (id === "settings-layer" ? settingsLayer : null)); },
+  createElement() { return { remove() { controls.delete(this.id); } }; }
 };
 const context = {
   window: { addEventListener() {}, NodeManager: null }, document, localStorage: { getItem(key) { return local.get(key) || null; }, setItem(key, value) { local.set(key, value); } },
   console, Promise, setTimeout() {}, requestAnimationFrame(callback) { callback(); }, TextEncoder
 };
 
-vm.runInNewContext(fs.readFileSync(require.resolve("../js/ui_logic.js"), "utf8"), context, { filename: "ui_logic.js" });
+vm.runInNewContext(fs.readFileSync(require.resolve("../js/ui_logic.js"), "utf8").replace("ui.init();", "/* isolated UI fixture: bootstrap covered separately */"), context, { filename: "ui_logic.js" });
 const ui = vm.runInContext("ui", context);
 
+// Command serialization/dispatch is exercised using production Core in
+// ui_data_actions.test.js; this fixture isolates unrelated settings behavior.
+const actionPort = { dataActionAttributes() { return 'data-ui-action="fixture"'; }, bindDataActions() {} };
+context.window.Core = actionPort;
 (async () => {
   await ui.renderAccountSelector([{ id: "alice", bio: false, lazy: false }]);
   assert.match(gateBox.innerHTML, /id="global-settings-button"/, "selector exposes the global settings gear");
@@ -46,11 +52,13 @@ const ui = vm.runInContext("ui", context);
   let enrollment = 0;
   assert.equal(ui.beginBiometricTriggerSetup(), true, "an unlocked device may configure its biometric trigger");
   assert.equal(ui.mode, 6, "biometric setup uses a dedicated calculator mode");
+  assert.equal(controls.get("biometric-setup-cancel").type, "button", "setup exposes explicit non-submit cancellation");
   assert.match(ui.hist, /УДЕРЖИВАЙТЕ/, "setup asks the user to choose a trigger with a hold");
   await ui.handleBiometricHold("3");
   assert.equal(enrollment, 1, "only a deliberate hold starts device biometric enrollment");
   assert.equal(local.get("cfg_biometric_trigger"), "3", "selected calculator token is stored as the trigger");
   assert.equal(ui.mode, 0, "setup returns to ordinary calculator mode");
+  assert.equal(controls.has("biometric-setup-cancel"), false, "completed setup removes its cancellation control");
 
   let unlocks = 0; let gates = 0;
   context.Core = { async unlockDeviceWithBiometrics() { unlocks += 1; return true; } };
@@ -70,7 +78,7 @@ const ui = vm.runInContext("ui", context);
     async remove(id) { quickEntries.splice(quickEntries.findIndex(item => item.id === id), 1); }
   };
   context.Core = { getQuickNameRegistry() { return quickRegistry; }, customAlert(...args) { throw new Error(args.join(":")); } };
-  context.window.Core = context.Core;
+  context.window.Core = Object.assign(context.Core, actionPort);
   await ui.renderGlobalQuickNames();
   assert.match(gateBox.innerHTML, /СОХРАНЯЮТСЯ ЛОКАЛЬНО/, "registry view explains local encrypted storage");
   assert.match(gateBox.innerHTML, /Дом/, "existing Quick Names are visibly listed");

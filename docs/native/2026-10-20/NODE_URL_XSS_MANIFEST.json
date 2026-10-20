@@ -1,0 +1,16 @@
+{
+  "source_commit": "690cb1b",
+  "public_files_sha256": {
+    "NODE_URL_XSS_RETEST.json": "c7bfc1b373655223717e9a0228f4514040dd86bd9073ba4bfa9a80a8dcd0bc15",
+    "NODE_URL_XSS_RETEST.md": "8304a61429866e39c6ee1a38a23f0e75cd1e0eecda8971815a3275caf6ee110b",
+    "NODE_URL_XSS_ALL_JS.json": "7f7f11927767e4c50972e9bb175f37a79009fef2a6a9c8054dc5eee91147295a"
+  },
+  "private_raw_stdout_sha256": "009384a881073ea11601794b6dfb1c3518e0c9df33a4aa70c591b2eeebcdd4be",
+  "raw_stdout_in_git": false,
+  "diagnostic_before_final_guard_delta": {
+    "passed": 159,
+    "failed": 0,
+    "scope": "live unchanged-source diagnostic, superseded exact690 result",
+    "raw_stdout_sha256": "009384a881073ea11601794b6dfb1c3518e0c9df33a4aa70c591b2eeebcdd4be"
+  }
+}

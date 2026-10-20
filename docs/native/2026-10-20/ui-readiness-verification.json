@@ -1,0 +1,44 @@
+{
+  "recorded_utc": "2026-10-20T08:07:23.104004+00:00",
+  "kind": "UNIT and scoped BROWSER",
+  "source_parent_sha": "b26ee81161a1b01cd214e10a13587070f84dacde",
+  "source_state": "13 installer/lifecycle files modified; hashes identify tested candidate before commit",
+  "node": "v24.19.0",
+  "red_baseline_sha": "9446c22f27309131456942870971d477f6f2358f",
+  "red_result": "FAIL missing __dmashFunctionalRepairV2 after180000ms",
+  "unit_tests": {
+    "ui_runtime_readiness": "PASS",
+    "ui_global_bridge_source": "PASS",
+    "public_request_preparation": "PASS",
+    "password_prompt_worker_regression": "PASS",
+    "pending_contact_ui": "PASS",
+    "account_login_identity": "PASS",
+    "node_account_panel_status_v4": "PASS",
+    "node_runtime_host_v4": "PASS"
+  },
+  "browser_result": "PASS early/late; 8 visible steps each; exact handler hashes match",
+  "browser_report_sha256": "f0c2a6e61c9a6cddb87231614c73c89ae7d71a95ee26c86d6855ecc385496709",
+  "candidate_sha256": {
+    "D-MASH PWA/not_messenger/js/release.js": "3d6c8c515c42fc154e13b201c2eac1461a23e656f7be6572a6ef64e40c2638dc",
+    "D-MASH PWA/not_messenger/js/runtime_fixes.js": "e3b93582d11fe727b8c480fa6d7662be6ff0199c8c4ed9bb0956c07e960f8a80",
+    "D-MASH PWA/not_messenger/js/public_contact_runtime.js": "a548f3defd239bfeb777d7867b47ef3b16c661bc1a975300393ced8a22f3f759",
+    "D-MASH PWA/not_messenger/js/acceptance_fixes.js": "e3d22992726aead01f233a03cb3fd6958bcc05108bc62f434526848b8efcd79d",
+    "D-MASH PWA/not_messenger/js/acceptance_v50.js": "fd1b78390ea850c8c3986191339bc04bc5c3e2724cccb958fd27d8a5b226e1d8",
+    "D-MASH PWA/not_messenger/js/acceptance_v51.js": "32094829a3412156f77e481af9bffb43dce342d88aa2aef64116ea484095eac8",
+    "D-MASH PWA/not_messenger/js/acceptance_v52.js": "af0dc809e7a65649b07c31f004d87b38471c3cc2ee51878580dffb510d30860b",
+    "D-MASH PWA/not_messenger/js/acceptance_v54.js": "d3a2e5d662f26b96dfef5726ef85e60946a5bee2764ad9f638594ed06e6c056d",
+    "D-MASH PWA/not_messenger/js/acceptance_v55.js": "8b597692a8ef3b8a3e8eb26cfb9e0e375ad52558caf33b37f6cb08f36d538afd",
+    "D-MASH PWA/not_messenger/js/ui_global_bridge.js": "449f2fd2fabbe6c0a933a667a5632bfdfa1fd509988a4543c0dd4bde09f913a7",
+    "D-MASH PWA/not_messenger/js/ui_logic.js": "216e565e05064c78ecda5bd43073bd827684a5b6e89dff98f18f57d3c224b8c6",
+    "D-MASH PWA/not_messenger/js/node_account_ui_v4.js": "718f68acb9d2667c771fd95992523aaac5b83f83c8b37a3adced8a4ad0c58687",
+    "D-MASH PWA/not_messenger/js/node_root_lifecycle_v4.js": "3ccba9ccd65c930c95dc6b4f56a3a07233645e1ea2e4f8260132e43bc29d3ae6",
+    "D-MASH PWA/not_messenger/tests/ui_runtime_readiness.test.js": "937828cde80e6f55aa2ec3d5a74250d7eafba0f5dba093cf7124b9bed13b1288",
+    "tools/test_ui_runtime_readiness_browser.cjs": "f092f70bef8f345509372ee95efd7fe0feb887673c43e3e7918724d0b99dc8fa"
+  },
+  "limits": [
+    "No full-suite claim",
+    "No positive external transport/media/native acceptance",
+    "Original pre-reboot retained profiles lost; only fresh synthetic contexts tested",
+    "Overall all-controls gate remains open"
+  ]
+}

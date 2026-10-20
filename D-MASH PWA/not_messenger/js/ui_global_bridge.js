@@ -28,6 +28,10 @@
         return !!global.ui && !!global.sys;
     };
 
+    if (global.DmashRuntimeReadiness) {
+        global.DmashRuntimeReadiness.register("ui-bridge", 0, expose, () => !!global.ui && !!global.sys);
+        return;
+    }
     if (expose()) return;
     const timer = setInterval(() => {
         if (expose() || attempts > 2400) clearInterval(timer);

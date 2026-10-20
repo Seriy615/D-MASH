@@ -1,133 +1,17 @@
-#!/usr/bin/env node
-"use strict";
-
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const vm = require("node:vm");
-const { webcrypto } = require("node:crypto");
-
-const values = new Map();
-const elements = {
-  current: { innerText: "" },
-  history: { innerText: "" },
-  keypad: { dataset: {}, addEventListener() {} },
-};
-const context = {
-  window: { crypto: webcrypto, addEventListener() {}, NodeManager: null },
-  crypto: webcrypto,
-  TextEncoder, Uint8Array, Array, Object, Number, RegExp, Promise, Math, Date, JSON,
-  setTimeout, clearTimeout, console,
-  localStorage: { getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, String(value)), clear: () => values.clear() },
-  sessionStorage: { clear() {} },
-  indexedDB: { async databases() { return []; }, deleteDatabase() { return { onsuccess: null, onerror: null, onblocked: null }; } },
-  document: {
-    getElementById(id) { return elements[id] || null; },
-    querySelector() { return null; },
-    body: { style: {} },
-  },
-};
-context.window.window = context.window;
-vm.runInNewContext(fs.readFileSync(require.resolve("../js/ui_logic.js"), "utf8"), context, { filename: "ui_logic.js" });
-const ui = vm.runInNewContext("ui", context);
-const sys = vm.runInNewContext("sys", context);
-
-(async () => {
-  // Exact boundary is accepted; the next character is rejected rather than
-  // letting an overlong value reach the secret/KDF path.
-  ui.mode = 0; ui.resetCalculator();
-  for (let i = 0; i < ui.maxInputLength; i++) ui.num("7");
-  assert.equal(ui.curr.length, ui.maxInputLength, "calculator accepts its exact input limit");
-  ui.num("8");
-  assert.equal(ui.curr.length, ui.maxInputLength, "calculator rejects input beyond its limit");
-  ui.num(".");
-  assert.equal(ui.curr.length, ui.maxInputLength, "decimal cannot bypass the input limit");
-
-  // A calculator expression creates the master secret from its evaluated
-  // result, not the visible right operand or stale history.
-  values.clear(); ui.mode = 1; ui.resetCalculator();
-  for (const digit of "123") ui.num(digit);
-  ui.cmd("+");
-  for (const digit of "4567") ui.num(digit);
-  await ui.eval();
-  assert.equal(ui.mode, 2, "valid evaluated expression advances master-secret setup");
-  assert.equal(values.get("sys_m"), await sys.fastHash("4690"), "master verifier hashes evaluated expression");
-  assert.notEqual(values.get("sys_m"), await sys.fastHash("4567"), "right operand is not used as secret");
-  assert.equal(ui.op, null, "expression operator is cleared after secret evaluation");
-  assert.equal(ui.leftOperand, null, "expression operand is cleared after secret evaluation");
-
-  // An expression-derived master secret unlocks DeviceRoot exactly once and
-  // never reuses prior expression state.
-  values.set("sys_configured", "true");
-  ui.mode = 0; ui.resetCalculator();
-  let unlockPin = null;
-  context.Core = { async unlockDevice(pin) { unlockPin = pin; } };
-  sys.loadAllLibs = async () => true;
-  ui.show_gate = async () => {};
-  for (const digit of "1200") ui.num(digit);
-  ui.cmd("+");
-  for (const digit of "3490") ui.num(digit);
-  await ui.eval();
-  assert.equal(unlockPin, "4690", "DeviceRoot receives evaluated master secret");
-  assert.equal(ui.curr, "0", "unlock clears calculator secret from display state");
-  assert.equal(ui.hist, "", "unlock clears calculator history state");
-  assert.equal(ui.op, null, "unlock leaves no pending operator");
-  assert.equal(ui.leftOperand, null, "unlock leaves no pending left operand");
-
-  // Reconfiguration rewraps the existing device before changing sys_m, so a
-  // user cannot be locked out by a calculator-master-secret change.
-  let rewrap = null;
-  context.Core = { async changeDeviceMasterSecret(current, next) { rewrap = [current, next]; } };
-  values.set("sys_m", await sys.fastHash("4690"));
-  ui.mode = 3; ui.resetCalculator();
-  for (const digit of "4690") ui.num(digit); await ui.eval();
-  for (const digit of "2345") ui.num(digit); await ui.eval();
-  for (const digit of "6789") ui.num(digit); await ui.eval();
-  assert.deepEqual(rewrap, ["4690", "2345"], "device root is rewrapped from the old to new evaluated master secret");
-  assert.equal(values.get("sys_m"), await sys.fastHash("2345"), "calculator verifier changes only after successful device rewrap");
-
-  // A rewrap failure must retain the old verifier and report an error rather
-  // than stranding the existing device identity.
-  context.Core = { async changeDeviceMasterSecret() { throw new Error("rewrap failed"); } };
-  values.set("sys_m", await sys.fastHash("2345"));
-  ui.mode = 3; ui.resetCalculator();
-  for (const digit of "2345") ui.num(digit); await ui.eval();
-  for (const digit of "3456") ui.num(digit); await ui.eval();
-  for (const digit of "7890") ui.num(digit); await ui.eval();
-  assert.equal(values.get("sys_m"), await sys.fastHash("2345"), "failed device rewrap retains the old calculator verifier");
-  assert.match(ui.hist, /ОШИБКА УСТРОЙСТВА/, "failed device rewrap is surfaced to the user");
-
-  // Normal calculator unlock never opens an unexplained recovery/password
-  // prompt when DeviceRoot rejects the configured master secret. The record is
-  // left untouched and the ordinary device error is shown instead.
-  let prompts = 0;
-  context.window.prompt = () => { prompts += 1; return "unexpected"; };
-  const recoveryCalls = [];
-  context.Core = {
-    async unlockDevice() { recoveryCalls.push("unlock"); const error = new Error("locked"); error.code = "UNLOCK_FAILED"; throw error; },
-    async recoverDeviceAfterConfirmedMaster(pin) { recoveryCalls.push(`recover:${pin}`); }
-  };
-  values.set("sys_m", await sys.fastHash("4690"));
-  ui.mode = 0; ui.resetCalculator();
-  for (const digit of "4690") ui.num(digit); await ui.eval();
-  assert.equal(prompts, 0, "normal device unlock never asks for a second or legacy account secret");
-  assert.deepEqual(recoveryCalls, ["unlock", "recover:4690"], "a confirmed-master decrypt failure creates a fresh device without another credential prompt");
-
-  // Explicit wipe awaits DeviceRoot deletion before clearing local state. The
-  // next setup is therefore permitted to create a new installation identity;
-  // no old-key or legacy-account prompt is involved.
-  const wipeOrder = [];
-  context.window.DeviceRoot = { async eraseForExplicitWipe() { wipeOrder.push("root-erased"); } };
-  context.window.location = { replace(url) { wipeOrder.push(`redirect:${url}`); } };
-  values.set("sentinel", "present");
-  await sys.wipe();
-  assert.deepEqual(wipeOrder, ["root-erased"], "wipe awaits DeviceRoot erasure before scheduling redirect");
-  assert.equal(values.size, 0, "wipe clears local state only after DeviceRoot erasure");
-
-  // Invalid expression results fail validation and cannot replace a verifier.
-  const priorMaster = values.get("sys_m");
-  ui.mode = 4; ui.resetCalculator(); ui.num("1"); ui.cmd("+"); ui.num("2");
-  await ui.eval();
-  assert.equal(ui.mode, 4, "too-short evaluated secret stays in configuration mode");
-  assert.equal(values.get("sys_m"), priorMaster, "invalid expression never changes stored verifier");
-  console.log("Calculator secret gate: all assertions passed");
-})().catch(error => { console.error(error); process.exitCode = 1; });
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const calls=[],values=new Map(),elements={current:{},history:{},keypad:{dataset:{},addEventListener(){}}};
+const service={cancel(){calls.push(['cancel']);},async beginSetup(pin){calls.push(['begin',pin]);},async completeSetup(master,wipe){calls.push(['setup',master,wipe]);},async verifyMaster(pin){calls.push(['proof',pin]);},async change(...pins){calls.push(['change',...pins]);},async wipe(pin){calls.push(['wipe',pin]);throw Object.assign(Error('invalid'),{code:'WIPE_CODE_INVALID'});}};
+const c={console,TextEncoder,Uint8Array,Promise,setTimeout,clearTimeout,localStorage:{getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v)},document:{getElementById:id=>elements[id]||null,createElement:()=>({remove(){}}),querySelector:()=>null},window:null};c.window=c;vm.createContext(c);vm.runInContext(fs.readFileSync(require.resolve('../js/ui_logic.js'),'utf8').replace('ui.init();',''),c);const ui=vm.runInContext('ui',c),sys=vm.runInContext('sys',c);sys.ensureCredentials=async()=>service;sys.loadAllLibs=async()=>true;ui.show_gate=async()=>{};c.LocalCredentials=service;
+const input=async value=>{for(const digit of value)ui.num(digit);await ui.eval();};
+(async()=>{
+ ui.mode=0;for(let i=0;i<ui.maxInputLength;i++)ui.num('7');ui.num('8');assert.equal(ui.curr.length,ui.maxInputLength);ui.num('.');assert.equal(ui.curr.length,ui.maxInputLength);
+ ui.mode=1;ui.resetCalculator();for(const digit of '123')ui.num(digit);ui.cmd('+');await input('4567');assert.equal(ui.mode,2);assert.deepEqual(calls.at(-1),['begin','4690']);assert.equal(values.has('sys_m'),false);assert.equal(values.has('sys_w'),false);await input('6789');assert.deepEqual(calls.at(-1),['setup','4690','6789']);assert.equal(ui.mode,0);
+ let opened=0,recovered=0;c.Core={async unlockDevice(pin){calls.push(['unlock',pin]);opened++;return {};},recoverDeviceAfterConfirmedMaster(){recovered++;}};ui.resetCalculator();await input('4690');assert.equal(opened,1);assert.equal(ui.curr,'0');assert.equal(ui.hist,'');assert.equal(recovered,0);
+ ui.mode=3;ui.resetCalculator();await input('4690');await input('2345');await input('6789');assert.deepEqual(calls.at(-1),['change','4690','2345','6789']);assert.equal(values.has('sys_m'),false);assert.equal(values.has('sys_w'),false);
+ service.change=async()=>{throw Object.assign(Error('cleanup pending'),{code:'MIGRATION_CLEANUP_REQUIRED',committed:true,useNewMaster:true});};ui.mode=3;ui.resetCalculator();await input('4690');await input('3456');await input('7890');assert.match(ui.hist,/НОВЫЙ MASTER СОХРАНЁН/);assert.equal(ui.pendingNextMasterSecret,null);
+ c.Core.unlockDevice=async()=>{throw Object.assign(Error('wrong'),{code:'UNLOCK_FAILED'});};ui.mode=0;ui.resetCalculator();await input('1111');assert.equal(recovered,0);assert.deepEqual(calls.at(-1),['wipe','1111']);assert.match(ui.hist,/НЕВЕРНЫЙ MASTER/);
+ let release;c.Core.unlockDevice=async()=>new Promise(r=>release=r);ui.resetCalculator();const late=input('4690');await new Promise(setImmediate);ui.cmd('AC');release({});await late;assert.equal(ui.hist,'');assert.equal(ui._credentialPending,false);
+ ui.mode=4;ui.resetCalculator();ui.num('1');ui.cmd('+');await input('2');assert.equal(ui.mode,4);assert.equal(values.size,0);
+ console.log('PASS evaluated secret inputs delegate to canonical service, no fast verifiers/reset, atomic change receipt, cancel prevents late gate and invalid expressions stay local');
+})().catch(e=>{console.error(e);process.exitCode=1;});

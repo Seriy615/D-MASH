@@ -1,0 +1,49 @@
+{
+  "source_commit": "d8c27b0",
+  "release": "transport-v3-node-preparation-20261020.42",
+  "scope": "SOURCE+UNIT legacy caller correction; actual explicit-legacy browser branch NOT RUN",
+  "issue": "Retired PHP Relay HTTP410 formerly followed by SENT history write and draft clear",
+  "changes": [
+    "Check HTTP response.ok before success persistence/UI clearing",
+    "Check owner session current after awaited POST",
+    "Returnfalse and plain-text unsupported notice for ordinary user sends on rejected response",
+    "Preserve selected transport mode, keys, draft and existing history; no fallback/reset",
+    "Remaining multiline confirmation markup converted to equivalent plain newlines"
+  ],
+  "focused_unit": {
+    "passed": 5,
+    "failed": 0,
+    "test": "legacy_relay_rejection.test.js",
+    "cases": [
+      "410/503 no SENT write or draft clear",
+      "same key object and legacy mode retained",
+      "stale200 completion cannot write history"
+    ]
+  },
+  "full_js": {
+    "passed": 161,
+    "failed": 0,
+    "inputs_unchanged": true,
+    "summary": "S07_LEGACY_CALLER_ALL_JS.json"
+  },
+  "modal_followup": {
+    "kind": "actual source AST review",
+    "parsed_js_files": 101,
+    "parse_failures": 0,
+    "modal_calls_after_delta": 159,
+    "remaining_literal_message_markup": 0,
+    "note": "Explicit openModal HTML body contract remains separately reviewed; no global DOM/XSS closure claim"
+  },
+  "browser": {
+    "explicit_legacy_http410": "NOT RUN; requires actual valid pairing/legacy UI fixture",
+    "ordinary_modal_alias_flows": "Prior immutablea22 BROWSER scoped PASS in MODAL_TEXT_RETEST.json; not relabelled as .42 execution"
+  },
+  "private_raw_stdout_sha256": "2d6aac9c7b94c08d372a3d6750bb659312c19f38520db0fb0c44551ea03d3a9c",
+  "public_summary_sha256": "4c45780d1940ab27e83d7683269b6cb5abb6d6f4ba307b090e87c94ba35d3af9",
+  "limits": [
+    "No PHP deployment or web-SAPI body-limit claim",
+    "Backend actual PHP tests are separate S07 evidence",
+    "Default mesh/managed and signed Origin paths unchanged by this delta",
+    "Raw stdout and owning profiles remain off Git"
+  ]
+}

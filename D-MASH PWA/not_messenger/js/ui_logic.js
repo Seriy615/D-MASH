@@ -20,19 +20,21 @@ const ui = {
     _holdTimer: null,
     _heldToken: null,
     _suppressToken: null,
+    _biometricSetup: null,
+    _biometricEnrollment: null,
 
     /**
      * СТАРТ СИСТЕМЫ
      */
     async init() {
-        const isSetup = localStorage.getItem('sys_configured');
-        if (!isSetup) {
-            this.mode = 1;
-            this.hist = "УСТАНОВКА MASTER-КОДА";
-        } else {
-            this.mode = 0;
-            this.hist = "";
-        }
+        this.hist = "ПРОВЕРКА ЛОКАЛЬНОГО ХРАНИЛИЩА..."; this.update();
+        try {
+            await sys.ensureCredentials();
+            const status = await window.DmashLocalCredentials.status();
+            this.mode = status === 'fresh' ? 1 : 0;
+            this._credentialRecoveryAvailable = ['wipe-pending', 'recovery-required'].includes(status);
+            this.hist = status === 'fresh' ? 'УСТАНОВКА MASTER-КОДА' : status === 'pending-wipe-code' ? 'ВВЕДИТЕ MASTER ДЛЯ ЗАВЕРШЕНИЯ НАСТРОЙКИ' : status === 'wipe-pending' ? 'ОЧИСТКА НЕ ЗАВЕРШЕНА — ВОССТАНОВЛЕНИЕ В НАСТРОЙКАХ' : status === 'recovery-required' ? 'ТРЕБУЕТСЯ ВОССТАНОВЛЕНИЕ. ДАННЫЕ СОХРАНЕНЫ' : '';
+        } catch (error) { this.mode = 0; this._credentialRecoveryAvailable = true; this.hist = 'ХРАНИЛИЩЕ НЕДОСТУПНО: ' + error.message; }
 
         // Фикс клавиатуры для мобил
         window.addEventListener('focusin', (e) => {
@@ -50,9 +52,13 @@ const ui = {
         }
     },
 
+    validBiometricTriggerToken(token) {
+        return typeof token === 'string' && /^[0-9+\-*/%.]$/.test(token);
+    },
+
     configuredBiometricTrigger() {
         const token = localStorage.getItem(this.biometricTriggerKey);
-        return typeof token === 'string' && /^[0-9+\-*/%.]$/.test(token) ? token : null;
+        return this.validBiometricTriggerToken(token) ? token : null;
     },
 
     // The trigger is deliberately only a public calculator key, not a secret
@@ -85,11 +91,29 @@ const ui = {
         // only after its deliberate hold, not on an ordinary tap.
         if (this.mode === 6) {
             this._suppressToken = token;
+            if (!this.validBiometricTriggerToken(token) || this._biometricEnrollment) return;
+            const setup = this._biometricSetup;
+            const request = {};
+            this._biometricEnrollment = request;
             try {
-                if (typeof Core === 'undefined' || !(await Core.setupDeviceBiometrics())) throw new Error('unavailable');
+                const enrolled = typeof Core !== 'undefined' && await Core.setupDeviceBiometrics();
+                // Cancellation only ends trigger selection. An already open OS
+                // credential prompt has its own Cancel; do not commit a stale
+                // completion to a cancelled/new setup or a different root.
+                if (this.mode !== 6 || this._biometricSetup !== setup) return;
+                if (!enrolled || !setup?.deviceState || Core.deviceState !== setup.deviceState || window.DeviceRoot?.state !== setup.deviceState) {
+                    this.cancelBiometricTriggerSetup(true);
+                    return;
+                }
                 localStorage.setItem(this.biometricTriggerKey, token);
-                this.mode = 0; this.resetCalculator();
-            } catch (_) { this.hist = ''; this.update(); }
+                this._biometricSetup = null;
+                this.mode = 0;
+                this.resetCalculator();
+            } catch (_) {
+                if (this.mode === 6 && this._biometricSetup === setup) this.cancelBiometricTriggerSetup(true);
+            } finally {
+                if (this._biometricEnrollment === request) this._biometricEnrollment = null;
+            }
             return;
         }
         if (this.mode !== 0 || token !== this.configuredBiometricTrigger()) return;
@@ -102,6 +126,24 @@ const ui = {
             // Preserve the calculator disguise for cancellation/failure.
             this.resetCalculator();
         }
+    },
+
+    cancelBiometricTriggerSetup(preserveClickSuppression = false) {
+        if (this.mode !== 6) return false;
+        this._biometricSetup = null;
+        if (this._holdTimer) clearTimeout(this._holdTimer);
+        this._holdTimer = null;
+        this._heldToken = null;
+        this._dmashQualifiedBiometricToken = null;
+        if (!preserveClickSuppression) this._suppressToken = null;
+        this.mode = 0;
+        this.resetCalculator();
+        if (typeof Core !== 'undefined' && Core.deviceState && window.DeviceRoot?.state === Core.deviceState) {
+            this.renderGlobalSettings();
+            document.getElementById('app-container')?.style?.setProperty('display', 'none');
+            document.getElementById('settings-layer')?.style?.setProperty('display', 'flex', 'important');
+        }
+        return true;
     },
 
     beginBiometricTriggerSetup() {
@@ -162,8 +204,8 @@ const ui = {
 
             return `
                 <button class="gate-btn" style="margin-bottom:10px; background:#111; color:#0f0; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;"
-                    onclick="ui.selectAccountForLogin('${a.id}', ${!!a.lazy})">
-                    <span style="display:flex; align-items:center;">${badges} ${a.id}</span>
+                    ${window.Core.dataActionAttributes("selectAccountForLogin", [a.id, !!a.lazy])}>
+                    <span style="display:flex; align-items:center;">${badges} ${this.quickNameEscape(a.id)}</span>
                     <span style="font-size:0.8rem;">${icons}</span>
                 </button>`;
         }).join('');
@@ -176,6 +218,7 @@ const ui = {
             <div class="acc-list-scroll" style="max-height:250px; overflow-y:auto; width:100%;">${listHtml}</div>
             <button class="gate-btn" onclick="ui.renderLoginForm()">+ НОВЫЙ ВХОД</button>
         `;
+        window.Core.bindDataActions(gateBox);
     },
 
     // This view is available after DeviceRoot unlock but before an account is
@@ -199,8 +242,9 @@ const ui = {
     openPublicRoutes() {
         try {
             if (!window.DeviceRoutes || !window.DeviceRoot?.state) throw new Error('СНАЧАЛА РАЗБЛОКИРУЙТЕ УСТРОЙСТВО');
-            const rows = window.DeviceRoutes.list().map(route => `<div style="padding:8px;margin:7px 0;border:1px solid #333;overflow-wrap:anywhere"><b>${route.current ? 'CURRENT' : 'PREVIOUS'} · ${route.active ? 'ACTIVE' : 'INACTIVE'}</b><div style="font-size:.6rem;color:#aaa">${route.routeId}</div><button class="gate-btn" onclick="ui.togglePublicRoute('${route.routeId}')">${route.active ? 'DEACTIVATE' : 'ACTIVATE'}</button>${route.current ? '<button class="gate-btn" style="margin-top:5px" onclick="ui.reissuePublicRoute()">REISSUE</button>' : ''}</div>`).join('') || 'PUBLIC ROUTES НЕ СОЗДАНЫ';
+            const rows = window.DeviceRoutes.list().map(route => `<div style="padding:8px;margin:7px 0;border:1px solid #333;overflow-wrap:anywhere"><b>${route.current ? 'CURRENT' : 'PREVIOUS'} · ${route.active ? 'ACTIVE' : 'INACTIVE'}</b><div style="font-size:.6rem;color:#aaa">${this.quickNameEscape(route.routeId)}</div><button class="gate-btn" ${window.Core.dataActionAttributes("togglePublicRoute", [route.routeId])}>${route.active ? 'DEACTIVATE' : 'ACTIVATE'}</button>${route.current ? '<button class="gate-btn" style="margin-top:5px" onclick="ui.reissuePublicRoute()">REISSUE</button>' : ''}</div>`).join('') || 'PUBLIC ROUTES НЕ СОЗДАНЫ';
             document.querySelector('.gate-container').innerHTML = `<div style="color:#0f0;text-align:center">PUBLIC ROUTES</div>${rows}<button class="gate-btn" onclick="ui.createPublicRoute()">CREATE PUBLIC ROUTE</button><button class="gate-btn" style="margin-top:8px" onclick="ui.renderGlobalSettings()">НАЗАД</button>`;
+            window.Core.bindDataActions(document.querySelector('.gate-container'));
         } catch (error) { window.Core?.customAlert?.('PUBLIC ROUTES', error.message); }
     },
     createPublicRoute() { window.DeviceRoutes.issue({ type: 'public-contact', allowedAccounts: [] }).then(() => this.openPublicRoutes()).catch(error => window.Core?.customAlert?.('PUBLIC ROUTES', error.message)); },
@@ -219,10 +263,10 @@ const ui = {
             if (!registry) throw new Error('СНАЧАЛА РАЗБЛОКИРУЙТЕ УСТРОЙСТВО');
             const entries = await registry.list();
             const rows = entries.length ? entries.map(entry => {
-                const id = encodeURIComponent(entry.id);
-                return `<div style="padding:10px 0;border-bottom:1px solid #333;text-align:left;"><b style="color:#0f0;display:block;overflow-wrap:anywhere;">${this.quickNameEscape(entry.name)}</b><div style="font-size:.72rem;color:#ccc;overflow-wrap:anywhere;margin:4px 0 8px;">${this.quickNameEscape(entry.value)}</div><button class="gate-btn" type="button" style="width:auto;margin:0;padding:6px 9px;background:#400;color:#fff;border-color:#a44;" onclick="ui.removeGlobalQuickName(decodeURIComponent('${id}'))">УДАЛИТЬ</button></div>`;
+                return `<div style="padding:10px 0;border-bottom:1px solid #333;text-align:left;"><b style="color:#0f0;display:block;overflow-wrap:anywhere;">${this.quickNameEscape(entry.name)}</b><div style="font-size:.72rem;color:#ccc;overflow-wrap:anywhere;margin:4px 0 8px;">${this.quickNameEscape(entry.value)}</div><button class="gate-btn" type="button" style="width:auto;margin:0;padding:6px 9px;background:#400;color:#fff;border-color:#a44;" ${window.Core.dataActionAttributes("removeGlobalQuickName", [entry.id])}>УДАЛИТЬ</button></div>`;
             }).join('') : '<div style="padding:18px 0;color:#aaa;text-align:left;">СПИСОК ПУСТ. ДОБАВЬТЕ ИМЯ — ОНО СРАЗУ ПОЯВИТСЯ ЗДЕСЬ.</div>';
             gateBox.innerHTML = `<div id="global-quick-names-title" style="color:#0f0;font-size:.95rem;font-weight:bold;text-align:left;">БЫСТРЫЕ ИМЕНА</div><p style="color:#aaa;font-size:.72rem;line-height:1.45;margin:7px 0 10px;text-align:left;">СОХРАНЯЮТСЯ ЛОКАЛЬНО В ЭТОМ БРАУЗЕРЕ В ЗАШИФРОВАННОМ РЕЕСТРЕ. В АККАУНТ, СЕТЬ ИЛИ НА УЗЕЛ НЕ ОТПРАВЛЯЮТСЯ.</p><div aria-labelledby="global-quick-names-title" style="max-height:250px;overflow-y:auto;margin-bottom:12px;">${rows}</div><button id="global-add-quick-name-button" class="gate-btn" type="button" style="margin:0;" onclick="ui.addGlobalQuickName()">ДОБАВИТЬ БЫСТРОЕ ИМЯ</button><button class="gate-btn" type="button" style="margin-top:9px;background:transparent;color:#aaa;border-color:#555;" onclick="ui.renderGlobalSettings()">НАЗАД К НАСТРОЙКАМ</button>`;
+            window.Core.bindDataActions(gateBox);
         } catch (error) { window.Core?.customAlert?.('БЫСТРЫЕ ИМЕНА', error.message); }
     },
     async addGlobalQuickName() {
@@ -245,7 +289,7 @@ const ui = {
         const endpoints = (manager.endpoints || []).filter(endpoint => !manager.isExcludedNode?.(endpoint.url));
         const rows = endpoints.length ? endpoints.map(endpoint => {
             const selected = manager.active?.url === endpoint.url ? ' ОСНОВНОЙ' : '';
-            return `<li style="padding:9px 0; border-bottom:1px solid #333; color:#ddd; word-break:break-word;">${endpoint.label}${selected}<br><small>${endpoint.url}</small><br><button class="gate-btn" type="button" style="margin-top:6px; padding:7px;" onclick="ui.selectGlobalNode('${endpoint.url}')">СДЕЛАТЬ ОСНОВНЫМ</button> <button class="gate-btn" type="button" style="margin-top:6px; padding:7px; background:#400; color:#fff;" onclick="ui.removeGlobalNode('${endpoint.url}')">УДАЛИТЬ</button></li>`;
+            return `<li style="padding:9px 0; border-bottom:1px solid #333; color:#ddd; word-break:break-word;">${this.quickNameEscape(endpoint.label)}${selected}<br><small>${this.quickNameEscape(endpoint.url)}</small><br><button class="gate-btn" type="button" style="margin-top:6px; padding:7px;" ${window.Core.dataActionAttributes("selectGlobalNode", [endpoint.url])}>СДЕЛАТЬ ОСНОВНЫМ</button> <button class="gate-btn" type="button" style="margin-top:6px; padding:7px; background:#400; color:#fff;" ${window.Core.dataActionAttributes("removeGlobalNode", [endpoint.url])}>УДАЛИТЬ</button></li>`;
         }).join('') : '<li style="padding:9px 0; color:#aaa;">УЗЛЫ НЕ ДОБАВЛЕНЫ</li>';
         gateBox.innerHTML = `
             <div id="global-nodes-title" style="color:#0f0; font-size:0.8rem; margin-bottom:10px; text-align:center;">NODES — УСТРОЙСТВО</div>
@@ -254,6 +298,7 @@ const ui = {
             <button id="global-add-node-button" class="gate-btn" type="button" onclick="ui.addGlobalNode()">ДОБАВИТЬ УЗЕЛ</button>
             <button class="gate-btn" type="button" onclick="ui.renderGlobalSettings()">НАЗАД</button>
         `;
+        window.Core.bindDataActions(gateBox);
     },
     addGlobalNode() {
         const url = window.prompt?.('WSS URL УЗЛА');
@@ -326,6 +371,7 @@ const ui = {
      */
     num(n) {
         if (this.consumeLongPress(n)) return;
+        if (this._credentialPending) this.cancelCredentialOperation();
         // Do not rely on the keypad alone: callers can invoke this public UI
         // object directly. A number may have one decimal point and may never
         // exceed the bound (the former > check admitted eleven characters).
@@ -339,7 +385,9 @@ const ui = {
 
     cmd(c) {
         if (this.consumeLongPress(c)) return;
+        if (this._credentialPending && c !== 'AC') this.cancelCredentialOperation();
         if (c === 'AC') {
+            this.cancelCredentialOperation();
             this.curr = "0";
             if (this.mode === 1) this.hist = "УСТАНОВКА MASTER-КОДА";
             else if (this.mode === 2) this.hist = "УСТАНОВКА WIPE-КОДА";
@@ -395,97 +443,111 @@ const ui = {
         return typeof value === 'string' && new RegExp(`^\\d{${this.minSecretLength},${this.maxInputLength}}$`).test(value);
     },
 
+    cancelCredentialOperation() {
+        this.unlockGeneration++;
+        window.LocalCredentials?.cancel();
+        this._credentialPending = false;
+        this.pendingCurrentMasterSecret = null; this.pendingNextMasterSecret = null;
+        this.pendingSetupMaster = null;
+        this.pendingRepairHandle?.dispose(); this.pendingRepairHandle = null;
+        this.pendingLegacyHandle?.dispose(); this.pendingLegacyHandle = null;
+        if ([2, 3, 4, 5].includes(this.mode)) this.mode = 0;
+    },
+    credentialError(error) {
+        if (error.committed && error.useNewMaster) return 'НОВЫЙ MASTER СОХРАНЁН. ОЧИСТКА НЕ ЗАВЕРШЕНА; ВОЙДИТЕ НОВЫМ КОДОМ';
+        if (error.committed) return 'КОДЫ СОХРАНЕНЫ. ОЧИСТКА НЕ ЗАВЕРШЕНА; ПОВТОРИТЕ ВХОД';
+        if (['UNLOCK_FAILED', 'WIPE_CODE_INVALID'].includes(error.code)) return 'НЕВЕРНЫЙ MASTER-КОД';
+        if (['ROOT_MISSING', 'STORAGE_CORRUPT', 'LEGACY_MIGRATION_REQUIRED'].includes(error.code)) return 'ТРЕБУЕТСЯ ВОССТАНОВЛЕНИЕ. ДАННЫЕ НЕ ИЗМЕНЕНЫ';
+        if (error.code === 'WIPE_PENDING') return 'ОЧИСТКА НЕ ЗАВЕРШЕНА — ВОССТАНОВЛЕНИЕ В НАСТРОЙКАХ';
+        return 'ОШИБКА ХРАНИЛИЩА: ' + error.message;
+    },
     async eval() {
         if (this.consumeLongPress('=')) return;
         const candidate = this.resolveExpression();
-        if (candidate === null) return;
-        if (this.mode === 1) {
-            if (!this.validSecret(candidate)) { this.hist = 'MASTER-КОД: МИНИМУМ 4 ЦИФРЫ'; this.update(); return; }
-            localStorage.setItem('sys_m', await sys.fastHash(candidate));
-            this.curr = "0"; this.mode = 2; this.hist = "УСТАНОВКА WIPE-КОДА";
-            this.update(); return;
-        }
-        if (this.mode === 2) {
-            if (!this.validSecret(candidate)) { this.hist = 'WIPE-КОД: МИНИМУМ 4 ЦИФРЫ'; this.update(); return; }
-            localStorage.setItem('sys_w', await sys.fastHash(candidate));
-            localStorage.setItem('sys_configured', 'true');
-            this.mode = 0; this.curr = "0"; this.hist = "СИСТЕМА ГОТОВА";
-            this.update(); setTimeout(() => { this.cmd('AC'); }, 1000); return;
-        }
-        if (this.mode === 3) {
-            if (!this.validSecret(candidate) || await sys.fastHash(candidate) !== localStorage.getItem('sys_m')) { this.curr = '0'; this.hist = 'НЕВЕРНЫЙ MASTER-КОД'; this.update(); return; }
-            this.pendingCurrentMasterSecret = candidate;
-            this.curr = '0'; this.mode = 4; this.hist = 'НОВЫЙ MASTER-КОД'; this.update(); return;
-        }
-        if (this.mode === 4) {
-            if (!this.validSecret(candidate)) { this.hist = 'MASTER-КОД: МИНИМУМ 4 ЦИФРЫ'; this.update(); return; }
-            this.pendingMasterHash = await sys.fastHash(candidate); this.pendingNextMasterSecret = candidate; this.curr = '0'; this.mode = 5; this.hist = 'НОВЫЙ WIPE-КОД'; this.update(); return;
-        }
-        if (this.mode === 5) {
-            if (!this.validSecret(candidate)) { this.hist = 'WIPE-КОД: МИНИМУМ 4 ЦИФРЫ'; this.update(); return; }
-            try {
-                // Rewrap first.  Do not replace the local verifier until the
-                // existing DeviceRoot has been proved unlockable and safely
-                // re-encrypted under the new master secret.
-                if (typeof Core?.changeDeviceMasterSecret === 'function') {
-                    await Core.changeDeviceMasterSecret(this.pendingCurrentMasterSecret, this.pendingNextMasterSecret);
-                }
-                localStorage.setItem('sys_m', this.pendingMasterHash); localStorage.setItem('sys_w', await sys.fastHash(candidate));
-                this.pendingMasterHash = null; this.pendingCurrentMasterSecret = null; this.pendingNextMasterSecret = null;
-                this.mode = 0; this.curr = '0'; this.hist = 'КОДЫ ОБНОВЛЕНЫ'; this.update(); setTimeout(() => this.cmd('AC'), 1000); return;
-            } catch (error) {
-                this.pendingMasterHash = null; this.pendingCurrentMasterSecret = null; this.pendingNextMasterSecret = null;
-                this.mode = 0; this.curr = '0'; this.hist = 'ОШИБКА УСТРОЙСТВА: ' + error.message; this.update(); return;
-            }
-        }
-
-        const inputHash = await sys.fastHash(candidate);
-        if (inputHash === localStorage.getItem('sys_m')) {
-            if (!this.validSecret(candidate)) { this.curr = '0'; this.hist = 'НЕВЕРНЫЙ MASTER-КОД'; this.update(); return; }
-            const devicePin = candidate;
-            const generation = ++this.unlockGeneration;
-            this.cmd('AC');
-            // Show the loading status only for an intentional unlock.  The
-            // flip-lock path resets the calculator directly and therefore
-            // never passes through this branch.
-            this.hist = "ЗАГРУЗКА ЯДРА...";
-            this.update();
-            const loaded = await sys.loadAllLibs();
-            if (generation !== this.unlockGeneration) return;
-            if (loaded) {
-                try {
-                    await Core.unlockDevice(devicePin);
-                    this.resetCalculator();
-                    await this.show_gate();
-                } catch (error) {
-                    // The calculator verifier has already confirmed this
-                    // master code. A root that still cannot decrypt is lost
-                    // local device state, so replace that unusable installation
-                    // with one fresh device identity—never request another
-                    // password or enter an unexplained migration flow.
-                    if (error?.code === 'UNLOCK_FAILED' && typeof Core?.recoverDeviceAfterConfirmedMaster === 'function') {
-                        try {
-                            await Core.recoverDeviceAfterConfirmedMaster(devicePin);
-                            this.resetCalculator();
-                            await this.show_gate();
-                            return;
-                        } catch (recoveryError) {
-                            this.hist = "ОШИБКА ВОССТАНОВЛЕНИЯ УСТРОЙСТВА: " + recoveryError.message;
-                        }
-                    } else this.hist = "ОШИБКА УСТРОЙСТВА: " + error.message;
-                    this.update();
-                }
-            }
-            else { this.hist = "ОШИБКА СЕТИ"; this.update(); }
+        if (candidate === null || !this.validSecret(candidate)) {
+            if ([1, 2, 3, 4, 5].includes(this.mode)) { this.hist = 'КОД: МИНИМУМ 4 ЦИФРЫ'; this.update(); }
             return;
         }
-        if (inputHash === localStorage.getItem('sys_w')) { sys.wipe(); return; }
-
-        if (!this.op) return;
-        this.update();
+        const generation = ++this.unlockGeneration, mode = this.mode;
+        this._credentialRecoveryAvailable = false;
+        this._credentialPending = true;
+        const current = () => { if (generation !== this.unlockGeneration) throw Object.assign(new Error('Операция отменена'), { code: 'CREDENTIAL_CANCELLED' }); };
+        this.hist = 'ПРОВЕРКА КОДА...'; this.update();
+        try {
+            const credentials = await sys.ensureCredentials(); current();
+            if (mode === 1) {
+                await credentials.beginSetup(candidate); current();
+                this.pendingSetupMaster = candidate; this.curr = '0'; this.mode = 2; this.hist = 'УСТАНОВКА WIPE-КОДА'; this.update(); return;
+            }
+            if (mode === 2) {
+                if (!this.pendingSetupMaster) throw Object.assign(new Error('Повторите master для завершения настройки'), { code: 'ROOT_MISSING' });
+                await credentials.completeSetup(this.pendingSetupMaster, candidate); current();
+                this.pendingSetupMaster = null; this.mode = 0; this.curr = '0'; this.hist = 'СИСТЕМА ГОТОВА'; this.update(); return;
+            }
+            if (mode === 3) {
+                await credentials.verifyMaster(candidate); current();
+                this.pendingCurrentMasterSecret = candidate; this.curr = '0'; this.mode = 4; this.hist = 'НОВЫЙ MASTER-КОД'; this.update(); return;
+            }
+            if (mode === 4) {
+                this.pendingNextMasterSecret = candidate; this.curr = '0'; this.mode = 5; this.hist = 'НОВЫЙ WIPE-КОД'; this.update(); return;
+            }
+            if (mode === 5) {
+                if (this.pendingLegacyHandle) await credentials.completeLegacyRecovery(this.pendingLegacyHandle, this.pendingNextMasterSecret, candidate);
+                else if (this.pendingRepairHandle) await credentials.repairFromBiometric(this.pendingRepairHandle, this.pendingNextMasterSecret, candidate);
+                else await credentials.change(this.pendingCurrentMasterSecret, this.pendingNextMasterSecret, candidate);
+                this.pendingRepairHandle = null; this.pendingLegacyHandle = null; current();
+                this.pendingCurrentMasterSecret = null; this.pendingNextMasterSecret = null;
+                this.mode = 0; this.curr = '0'; this.hist = 'КОДЫ ОБНОВЛЕНЫ'; this.update(); return;
+            }
+            if (mode !== 0) return;
+            this.hist = 'ЗАГРУЗКА ЯДРА...'; this.update();
+            const loaded = await sys.loadAllLibs(); current();
+            if (!loaded) throw Object.assign(new Error('Не удалось загрузить защищённые модули'), { code: 'CREDENTIAL_RUNTIME_UNSUPPORTED' });
+            try {
+                const state = await Core.unlockDevice(candidate, { isCurrent: () => generation === this.unlockGeneration }); current();
+                if (state?.pendingSetup) { this.pendingSetupMaster = candidate; this.mode = 2; this.curr = '0'; this.hist = 'УСТАНОВКА WIPE-КОДА'; this.update(); return; }
+                this.resetCalculator(); await this.show_gate(); current();
+            } catch (error) {
+                current();
+                if (error.code !== 'UNLOCK_FAILED') throw error;
+                const result = await credentials.wipe(candidate);
+                if (result?.complete) window.location.replace('about:blank');
+            }
+        } catch (error) {
+            if (error.wipeAccepted) { this.mode = 0; this.curr = '0'; this._credentialRecoveryAvailable = true; this.hist = 'ОЧИСТКА НЕ ЗАВЕРШЕНА: ' + error.message; this.update(); return; }
+            if (generation !== this.unlockGeneration || ['CREDENTIAL_CANCELLED', 'DEVICE_LOCKED', 'AbortError'].includes(error.code || error.name)) return;
+            if (mode === 5) { this.pendingCurrentMasterSecret = null; this.pendingNextMasterSecret = null; this.pendingRepairHandle?.dispose(); this.pendingRepairHandle = null; this.pendingLegacyHandle?.dispose(); this.pendingLegacyHandle = null; this.mode = 0; }
+            this._credentialRecoveryAvailable = ['UNLOCK_FAILED', 'WIPE_CODE_INVALID', 'ROOT_MISSING', 'STORAGE_CORRUPT', 'LEGACY_MIGRATION_REQUIRED', 'WIPE_PENDING'].includes(error.code);
+            this.hist = this.credentialError(error); this.update();
+        } finally { if (generation === this.unlockGeneration) this._credentialPending = false; }
     },
 
+    async openCredentialRecovery() {
+        if (await sys.loadAllLibs()) Core.openCredentialRecovery();
+    },
     update() {
+        let recovery = document.getElementById('local-credential-recovery');
+        if (this._credentialRecoveryAvailable) {
+            if (!recovery) { recovery = document.createElement('button'); recovery.id = 'local-credential-recovery'; recovery.className = 'gate-btn'; recovery.type = 'button'; recovery.textContent = 'ВОССТАНОВЛЕНИЕ ДОСТУПА'; recovery.onclick = () => this.openCredentialRecovery(); document.getElementById('app-container')?.appendChild(recovery); }
+        } else recovery?.remove();
+        let cancel = document.getElementById('biometric-setup-cancel');
+        if (this.mode === 6) {
+            if (!this._biometricSetup) this._biometricSetup = { deviceState: typeof Core === 'undefined' ? null : Core.deviceState };
+            const seconds = this.biometricHoldMs / 1000;
+            this.hist = `УДЕРЖИВАЙТЕ ЦИФРУ ИЛИ + − × ÷ % , ${seconds} СЕК.`;
+            if (!cancel) {
+                cancel = document.createElement('button');
+                cancel.id = 'biometric-setup-cancel';
+                cancel.type = 'button';
+                cancel.className = 'gate-btn';
+                cancel.textContent = 'ОТМЕНА ПРИВЯЗКИ КНОПКИ';
+                cancel.onclick = () => this.cancelBiometricTriggerSetup();
+                document.getElementById('app-container')?.appendChild(cancel);
+            }
+        } else {
+            this._biometricSetup = null;
+            cancel?.remove();
+        }
         const curEl = document.getElementById('current');
         const histEl = document.getElementById('history');
         if (curEl) curEl.innerText = this.curr;
@@ -493,7 +555,18 @@ const ui = {
     }
 };
 
+ui.startLegacyRootRecovery = function(handle) {
+    this.startMasterReconfiguration(); this.pendingLegacyHandle = handle;
+    this.mode = 4; this.hist = 'НОВЫЙ MASTER-КОД'; this.update();
+};
+
+ui.startBiometricMasterRepair = function(handle) {
+    this.startMasterReconfiguration();
+    this.pendingRepairHandle = handle; this.mode = 4; this.hist = 'НОВЫЙ MASTER-КОД'; this.update();
+};
+
 ui.startMasterReconfiguration = function() {
+    this.cancelCredentialOperation();
     Core.closeModal();
     document.getElementById('workspace')?.style && (document.getElementById('workspace').style.display = 'none');
     document.getElementById('settings-layer')?.style.setProperty('display', 'none', 'important');
@@ -509,29 +582,23 @@ const sys = {
         return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     },
 
-    async wipe() {
-        document.getElementById('current').innerText = "УДАЛЕНИЕ...";
-        document.body.style.background = '#ff003c';
-        try {
-            // Remove DeviceRoot first and await completion. This establishes an
-            // explicit, durable wipe boundary: the next setup is a genuinely
-            // new device identity, never a prompt for historical credentials.
-            await window.DeviceRoot?.eraseForExplicitWipe?.();
-        } catch (error) {
-            document.getElementById('current').innerText = "ОЧИСТКА НЕ ЗАВЕРШЕНА";
-            document.getElementById('history').innerText = error?.message || "Закройте другие вкладки D-MASH и повторите очистку.";
-            return;
-        }
-        localStorage.clear(); sessionStorage.clear();
-        const databases = await indexedDB.databases?.() || [];
-        await Promise.all(databases.map(({ name }) => new Promise(resolve => {
-            if (!name) return resolve();
-            const request = indexedDB.deleteDatabase(name);
-            request.onsuccess = request.onerror = request.onblocked = resolve;
-        })));
-        setTimeout(() => { window.location.replace("https://google.com"); }, 1500);
+    async ensureCredentials() {
+        if (!this._credentialTask) this._credentialTask = (async () => {
+            const ver = window.DMASH_RELEASE?.id;
+            if (!ver) throw new Error('Версия защищённых модулей неизвестна');
+            await Promise.all(['vendor/argon2-bundled.min.js', 'vendor/nacl-fast.min.js', 'device_root.js', 'local_credentials.js'].map(name => this.loadScript(`js/${name}?v=${ver}`)));
+            await this.loadScript(`js/local_credentials_bootstrap.js?v=${ver}`);
+            if (!window.DeviceRoot?.prepareUnlock || !window.DmashLocalCredentials) throw new Error('Защищённые модули несовместимы');
+            return window.DmashLocalCredentials.ensure();
+        })().catch(error => { this._credentialTask = null; throw error; });
+        return this._credentialTask;
     },
-
+    async wipe(pin) {
+        const credentials = await this.ensureCredentials();
+        const result = await credentials.wipe(pin);
+        if (result?.complete) window.location.replace('about:blank');
+        return result;
+    },
 
 // В ui_logic.js
 loadAllLibs() {
@@ -585,6 +652,7 @@ async _loadAllLibs() {
         if (typeof window.QRCode === 'undefined' && typeof qrcode !== 'undefined') {
             window.QRCode = qrcode;
         }
+        await window.DmashRuntimeReadiness?.compose();
         this.shmon("INFO", "Двойной WASM засинхронен!");
         return true;
     } catch (e) { return false; }
@@ -603,20 +671,17 @@ async _loadAllLibs() {
         console.log(`%c[D-MASH][${tag}] %c${msg}`, `color:${color}; font-weight:bold;`, "color:#ccc;", data || "");
     },
     loadScript(src) {
-        return new Promise((resolve, reject) => {
-            const baseSrc = src.split('?')[0];
-            if (document.querySelector(`script[src="${src}"]`)) return resolve();
-            const s = document.createElement('script');
-            s.src = src; s.async = true; s.onload = resolve;
-            s.onerror = () => {
-                setTimeout(() => {
-                    const retry = document.createElement('script');
-                    retry.src = baseSrc; retry.onload = resolve; retry.onerror = reject;
-                    document.head.appendChild(retry);
-                }, 1000);
-            };
-            document.head.appendChild(s);
+        this._scriptTasks ||= new Map();
+        if (this._scriptTasks.has(src)) return this._scriptTasks.get(src);
+        const task = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = src; script.async = true;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('MODULE_LOAD_FAILED: ' + src.split('?')[0]));
+            document.head.appendChild(script);
         });
+        this._scriptTasks.set(src, task);
+        return task.catch(error => { this._scriptTasks.delete(src); throw error; });
     },
 
     async init() {
@@ -653,3 +718,4 @@ async _loadAllLibs() {
 };
 
 ui.init();
+window.DmashRuntimeReadiness?.flush();

@@ -1,0 +1,24 @@
+{
+  "originalWasm": {
+    "repositoryPath": "D-MASH PWA/not_messenger/js/vendor/kyber768.wasm",
+    "sha256": "e9b316e56f5d1eef1f44f28bca99bec16ec9cff69af4b17d318143512255b009",
+    "license": "Existing artifact terms/provenance are unchanged; generated translation does not relicense it"
+  },
+  "translator": {
+    "name": "WABT wasm2c",
+    "version": "1.0.34",
+    "upstream": "https://github.com/WebAssembly/wabt/tree/1.0.34/wasm2c",
+    "license": "Apache-2.0",
+    "package": "wabt_1.0.34+dsfg2+~cs1.0.32-1ubuntu2_amd64.deb",
+    "packageSHA256": "ac76092c4ce135ea946f3f9b60b13cd0e1cbbbb8ae96c2bf4838b45950e833aa",
+    "runtimeSource": "Unmodified usr/src/wasm2c files from that Ubuntu package"
+  },
+  "files": {
+    "vendor/kyber.c": "73c14e6e1d63b544f22251ee511f43f1222b6add331321421757d66f7397ca93",
+    "vendor/kyber.h": "7c7bf140c282f950e61cfd1f4feab8bd3f2221dc6ba3cb074e83441bec75cce3",
+    "vendor/wasm2c/wasm-rt.h": "a3093763b4be95d92303fcdd0ed0a669d959a0d8fea12de1e4aadf281d292d49",
+    "vendor/wasm2c/wasm-rt-impl.h": "4efaf6f9174c5d6e87e28f02c1fe51e804f323b5615eb962ce4b22ec9231ed33",
+    "vendor/wasm2c/wasm-rt-impl.c": "dfd19aafbbbc18ad70bd65c7e51aa59fd0a15a1f943dca7281d3b2b5b57a906d",
+    "vendor/wasm2c/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  }
+}

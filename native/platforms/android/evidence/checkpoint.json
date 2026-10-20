@@ -1,0 +1,33 @@
+{
+  "scope": "Android arm64 Views+QtService Gradle package compile/inspection, not device runtime",
+  "baseCommit": "b7905dffcb8f363e1ca93f659449b3b8b51970cd",
+  "frozenSourceManifestSha256": "ce6611ff5e0924a018ccf79c59bbfc9671f91540b700d94e5e69185b998b7488",
+  "buildScriptSha256": "c2e1231684ef4eaa550457a87311aaad2070ff8a3cc62790b69a9d932bd9513a",
+  "toolchain": {
+    "Qt": "6.12.0",
+    "NDK": "27.2.12479018",
+    "SDK": 36,
+    "JDK": "21.0.12.1+1",
+    "Gradle": "9.5.1",
+    "OpenSSL": "3.5.9",
+    "QuickJS": "2026-06-04"
+  },
+  "frozenCommon": "Full native and existing PWA JS source copied before build; paths+SHA in frozen-source-sha256.json; worktree changed independently afterward",
+  "fixes": [
+    "Qt QAndroidService startup handshake before broker FD wait",
+    "JNI duplicates broker transport descriptor",
+    "separate :node process",
+    "specialUse explicit continuous mesh subtype",
+    "persistent notification Stop",
+    "public startup/failure state; no network-ready claim",
+    "minSDK28 targetSDK36 versionCode1",
+    "packaged Qt/OpenSSL/QuickJS/libc++/AndroidX notices"
+  ],
+  "limits": [
+    "Android device install/runtime NOT RUN",
+    "UI Account/contact/messaging NOT RUN",
+    "specialUse Play review/device behavior not accepted",
+    "debug signing only; not release reproducibility proof",
+    "app-private key provisioning/background restart authority not complete"
+  ]
+}

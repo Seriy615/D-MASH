@@ -1,0 +1,4613 @@
+{
+  "schema": 1,
+  "source_baseline_sha": "9446c22f27309131456942870971d477f6f2358f",
+  "recovery": "178 stable IDs retained; 133 original labels retained from conversation; 45 labels regenerated from source. Original exact JSON and raw browser logs lost in host reboot. This is a new source inventory, not byte-exact recovery.",
+  "execution_authority": "BROWSER_QA.md / BROWSER_QA_RESULTS.json / BROWSER_QA_MATRIX.md; scoped readiness browser report supplements these. No class is automatically PASS here.",
+  "control_class_count": 178,
+  "control_classes": [
+    {
+      "id": "CALC-01",
+      "members_or_label": "0,1,2,3,4,5,6,7,8,9",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-02",
+      "members_or_label": "decimal point",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-03",
+      "members_or_label": "AC",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-04",
+      "members_or_label": "±",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-05",
+      "members_or_label": "%",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-06",
+      "members_or_label": "÷,×,−,+",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-07",
+      "members_or_label": "=",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-08",
+      "members_or_label": "long-hold configured key / pointer release",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-09",
+      "members_or_label": "fresh master setup",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-10",
+      "members_or_label": "fresh wipe-code setup",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-11",
+      "members_or_label": "master unlock / loading",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-12",
+      "members_or_label": "master + wipe reconfiguration",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-13",
+      "members_or_label": "wipe PIN + equals",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-14",
+      "members_or_label": "0010<master>= emergency",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "CALC-15",
+      "members_or_label": "1020<master>= compatibility emergency",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/ui_logic.js",
+        "js/acceptance_v51.js",
+        "js/acceptance_v54.js",
+        "js/acceptance_v55.js"
+      ]
+    },
+    {
+      "id": "GATE-01",
+      "members_or_label": "identity / access-key fields",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_v50.js",
+        "js/acceptance_v52.js"
+      ]
+    },
+    {
+      "id": "GATE-02",
+      "members_or_label": "ВОЙТИ В СИСТЕМУ / Enter",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_v50.js",
+        "js/acceptance_v52.js"
+      ]
+    },
+    {
+      "id": "GATE-03",
+      "members_or_label": "saved-account row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_v50.js",
+        "js/acceptance_v52.js"
+      ]
+    },
+    {
+      "id": "GATE-04",
+      "members_or_label": "+ НОВЫЙ ВХОД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_v50.js",
+        "js/acceptance_v52.js"
+      ]
+    },
+    {
+      "id": "GATE-05",
+      "members_or_label": "К СПИСКУ / НАЗАД К АККАУНТАМ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_v50.js",
+        "js/acceptance_v52.js"
+      ]
+    },
+    {
+      "id": "GATE-06",
+      "members_or_label": "save-in-registry checkbox",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_v50.js",
+        "js/acceptance_v52.js"
+      ]
+    },
+    {
+      "id": "GATE-07",
+      "members_or_label": "Account BIOMETRY row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_v50.js",
+        "js/acceptance_v52.js"
+      ]
+    },
+    {
+      "id": "GATE-08",
+      "members_or_label": "global settings gear",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_v50.js",
+        "js/acceptance_v52.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-01",
+      "members_or_label": "PUBLIC ROUTES",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-02",
+      "members_or_label": "УЗЛЫ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-03",
+      "members_or_label": "БЫСТРЫЕ ИМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-04",
+      "members_or_label": "РЕЕСТР АККАУНТОВ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-05",
+      "members_or_label": "ЗАПРОСЫ В КОНТАКТЫ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-06",
+      "members_or_label": "ТЕЛЕГРАМ-МАЯК",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-07",
+      "members_or_label": "ЭКСТРЕННЫЙ ФЛИП-ЛОК toggle",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-08",
+      "members_or_label": "СМЕНИТЬ MASTER-КОД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-09",
+      "members_or_label": "БИОМЕТРИЯ УСТРОЙСТВА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-10",
+      "members_or_label": "УПРАВЛЕНИЕ БИОМЕТРИЕЙ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-11",
+      "members_or_label": "ПОЛНОЕ УДАЛЕНИЕ ДАННЫХ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "GLOBAL-12",
+      "members_or_label": "КОНТАКТЫ NODE",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js",
+        "js/node_account_ui_v4.js"
+      ]
+    },
+    {
+      "id": "QUICK-01",
+      "members_or_label": "ДОБАВИТЬ БЫСТРОЕ ИМЯ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "QUICK-02",
+      "members_or_label": "УДАЛИТЬ row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "QUICK-03",
+      "members_or_label": "НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "ROUTE-01",
+      "members_or_label": "CREATE / СОЗДАТЬ PUBLIC ROUTE",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/runtime_fixes.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "ROUTE-02",
+      "members_or_label": "ACTIVATE / DEACTIVATE",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/runtime_fixes.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "ROUTE-03",
+      "members_or_label": "REISSUE current",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/runtime_fixes.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "ROUTE-04",
+      "members_or_label": "CONTACT LINK / copy",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/runtime_fixes.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "ROUTE-05",
+      "members_or_label": "НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/runtime_fixes.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-01",
+      "members_or_label": "ДОБАВИТЬ NODE",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-02",
+      "members_or_label": "ПОДКЛЮЧИТЬ / ОТКЛЮЧИТЬ Node",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-03",
+      "members_or_label": "СДЕЛАТЬ ОСНОВНЫМ / ОСНОВНОЙ",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-04",
+      "members_or_label": "УДАЛИТЬ Node",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-05",
+      "members_or_label": "Node address input / OK / Cancel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "GNODE-06",
+      "members_or_label": "НАЗАД к global settings",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "BIO-01",
+      "members_or_label": "НАЧАТЬ ПРИВЯЗКУ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js"
+      ]
+    },
+    {
+      "id": "BIO-02",
+      "members_or_label": "ДОБАВИТЬ КЛЮЧ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js"
+      ]
+    },
+    {
+      "id": "BIO-03",
+      "members_or_label": "УДАЛИТЬ КЛЮЧ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js"
+      ]
+    },
+    {
+      "id": "BIO-04",
+      "members_or_label": "НАЗАД / ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js"
+      ]
+    },
+    {
+      "id": "BIO-05",
+      "members_or_label": "stock Account settings БИОМЕТРИЯ УСТРОЙСТВА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/ui_logic.js",
+        "js/acceptance_fixes.js",
+        "js/acceptance_v51.js"
+      ]
+    },
+    {
+      "id": "ACCOUNT-01",
+      "members_or_label": "settings gear",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "ACCOUNT-02",
+      "members_or_label": "КОПИРОВАТЬ ID АККАУНТА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "ACCOUNT-03",
+      "members_or_label": "БИОМЕТРИЯ АККАУНТА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "ACCOUNT-04",
+      "members_or_label": "ПРОВЕРИТЬ КЛЮЧ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "ACCOUNT-05",
+      "members_or_label": "ПРИВЯЗАТЬ БИОМЕТРИЮ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "ACCOUNT-06",
+      "members_or_label": "БЕСПАРОЛЬНЫЙ ВХОД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "ACCOUNT-07",
+      "members_or_label": "Account registry remove biometric",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "ACCOUNT-08",
+      "members_or_label": "inactive Account УДАЛИТЬ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "ACCOUNT-09",
+      "members_or_label": "ЗАКРЫТЬ / НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "WORK-01",
+      "members_or_label": "my-ID card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "WORK-02",
+      "members_or_label": "network card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "WORK-03",
+      "members_or_label": "[ QR ] scanner",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "WORK-04",
+      "members_or_label": "[ + ] add contact",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "WORK-05",
+      "members_or_label": "[ ВЫХОД ]",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "WORK-06",
+      "members_or_label": "peer/Saved Messages row; Enter/Space",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "WORK-07",
+      "members_or_label": "chat delete ×",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "WORK-08",
+      "members_or_label": "contact progress row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "WORK-09",
+      "members_or_label": "progress sync/refresh",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "SHARE-01",
+      "members_or_label": "PRIVATE / PUBLIC tabs",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "SHARE-02",
+      "members_or_label": "public route dropdown",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "SHARE-03",
+      "members_or_label": "copy current payload",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "SHARE-04",
+      "members_or_label": "СОЗДАТЬ PUBLIC ROUTE empty state",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "SHARE-05",
+      "members_or_label": "stock QR КОПИРОВАТЬ / ЗАКРЫТЬ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/acceptance_fixes.js"
+      ]
+    },
+    {
+      "id": "SCAN-01",
+      "members_or_label": "contact scanner ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js"
+      ]
+    },
+    {
+      "id": "CONTACT-01",
+      "members_or_label": "manual input OK / alias OK",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-02",
+      "members_or_label": "name chooser quick-name row",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-03",
+      "members_or_label": "ВВЕСТИ ДРУГОЕ ИМЯ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-04",
+      "members_or_label": "preparation ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-05",
+      "members_or_label": "pending request card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-06",
+      "members_or_label": "ПРИНЯТЬ / продолжить accept",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-07",
+      "members_or_label": "ВЫЙТИ И ВЫБРАТЬ АККАУНТ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-08",
+      "members_or_label": "ОТКЛОНИТЬ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-09",
+      "members_or_label": "quick-name accept list / new quick-name",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-10",
+      "members_or_label": "ЗАКРЫТЬ / НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-11",
+      "members_or_label": "НАЧАТЬ ОБМЕН КЛЮЧАМИ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CONTACT-12",
+      "members_or_label": "explicit Legacy Relay fallback ДА / НЕТ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/runtime_fixes.js",
+        "js/acceptance_v50.js"
+      ]
+    },
+    {
+      "id": "CHAT-01",
+      "members_or_label": "back arrow + browser/mobile Back",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/chat_password.js"
+      ]
+    },
+    {
+      "id": "CHAT-02",
+      "members_or_label": "header peer ID click",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/chat_password.js"
+      ]
+    },
+    {
+      "id": "CHAT-03",
+      "members_or_label": "rename pencil",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/chat_password.js"
+      ]
+    },
+    {
+      "id": "CHAT-04",
+      "members_or_label": "chat password lock",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/chat_password.js"
+      ]
+    },
+    {
+      "id": "CHAT-05",
+      "members_or_label": "locked-history password OK / cancel",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/chat_password.js"
+      ]
+    },
+    {
+      "id": "CHAT-06",
+      "members_or_label": "composer text field",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/chat_password.js"
+      ]
+    },
+    {
+      "id": "CHAT-07",
+      "members_or_label": "SEND / Enter / Shift+Enter",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/chat_password.js"
+      ]
+    },
+    {
+      "id": "CHAT-08",
+      "members_or_label": "message delete ×",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/chat_password.js"
+      ]
+    },
+    {
+      "id": "NODE-01",
+      "members_or_label": "ДОБАВИТЬ УЗЕЛ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-02",
+      "members_or_label": "ДОБАВИТЬ ПО QR",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-03",
+      "members_or_label": "ЗАПРОСИТЬ УЗЕЛ empty list",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-04",
+      "members_or_label": "row ON / OFF",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-05",
+      "members_or_label": "row QR",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-06",
+      "members_or_label": "row gear",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-07",
+      "members_or_label": "АВТОПОДКЛЮЧЕНИЕ checkbox",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-08",
+      "members_or_label": "РАЗРЕШИТЬ / ВЫКЛЮЧИТЬ УВЕДОМЛЕНИЯ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-09",
+      "members_or_label": "СДЕЛАТЬ ОСНОВНЫМ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-10",
+      "members_or_label": "УДАЛИТЬ УЗЕЛ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-11",
+      "members_or_label": "КОПИРОВАТЬ ССЫЛКУ / НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-12",
+      "members_or_label": "ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "NODE-13",
+      "members_or_label": "НАЗАД",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/node_manager.js"
+      ]
+    },
+    {
+      "id": "MANAGED-01",
+      "members_or_label": "Подключить Node",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-02",
+      "members_or_label": "Публичный адрес Node field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-03",
+      "members_or_label": "Ваше имя для запроса field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-04",
+      "members_or_label": "Сообщение для знакомства field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-05",
+      "members_or_label": "Создать / показать публичный адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-06",
+      "members_or_label": "Копировать публичный адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-07",
+      "members_or_label": "Отправить запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-08",
+      "members_or_label": "Обновить запросы",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-09",
+      "members_or_label": "Выбрать аккаунт для принятия",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-10",
+      "members_or_label": "Принять в текущий аккаунт",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-11",
+      "members_or_label": "Подтвердить собеседника",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-12",
+      "members_or_label": "Завершить обмен ключами",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-13",
+      "members_or_label": "Повторить запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-14",
+      "members_or_label": "Отклонить запрос / ДА, ОТКЛОНИТЬ / НЕТ",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-15",
+      "members_or_label": "PRIVATE адрес Node field / Проверенный ID собеседника field",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-16",
+      "members_or_label": "Создать PRIVATE QR",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-17",
+      "members_or_label": "Копировать PRIVATE адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-18",
+      "members_or_label": "Проверить PRIVATE адрес",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-19",
+      "members_or_label": "Отправить PRIVATE запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-20",
+      "members_or_label": "Обновить PRIVATE запросы",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-21",
+      "members_or_label": "Показать PRIVATE QR / Повторить PRIVATE запрос / Подтвердить PRIVATE контакт / Отклонить PRIVATE запрос",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-22",
+      "members_or_label": "Перевести существующий контакт на Node / confirm / cancel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MANAGED-23",
+      "members_or_label": "ЗАКРЫТЬ managed panel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "managed-v4 opt-in, genuine Node/Account/peer state prerequisites",
+      "source_files": [
+        "js/node_account_ui_v4.js",
+        "js/managed_node_catalog_v4.js"
+      ]
+    },
+    {
+      "id": "MEDIA-01",
+      "members_or_label": "paperclip + hidden file input",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-02",
+      "members_or_label": "file card ОТКРЫТЬ ФАЙЛ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-03",
+      "members_or_label": "ОТМЕНИТЬ ОТПРАВКУ stored card",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-04",
+      "members_or_label": "incoming automatic receive status + cancel (NO separate YES/NO file consent)",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-05",
+      "members_or_label": "progress Отмена / Закрыть",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-06",
+      "members_or_label": "Сохранить файл link",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-07",
+      "members_or_label": "microphone start",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-08",
+      "members_or_label": "circle video start",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-09",
+      "members_or_label": "camera-choice row / ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-10",
+      "members_or_label": "recording × cancel (voice/circle)",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-11",
+      "members_or_label": "SEND recording",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-12",
+      "members_or_label": "cancel outbound / retry cancelled",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-13",
+      "members_or_label": "incoming Принять / Отклонить",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-14",
+      "members_or_label": "РАСШИФРОВАТЬ / КРУЖОК",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-15",
+      "members_or_label": "ПОВТОРИТЬ decrypt",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-16",
+      "members_or_label": "native audio/video playback controls",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-17",
+      "members_or_label": "circle tap play/pause",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "MEDIA-18",
+      "members_or_label": "image open / download link",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/file_runtime.js",
+        "js/account_recorded_media.js"
+      ]
+    },
+    {
+      "id": "CALL-01",
+      "members_or_label": "VoIP call button / outbound cancel",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-02",
+      "members_or_label": "incoming call accept / decline",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-03",
+      "members_or_label": "microphone mute / unmute",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-04",
+      "members_or_label": "camera enable / disable",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-05",
+      "members_or_label": "switch camera",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-06",
+      "members_or_label": "share screen",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-07",
+      "members_or_label": "speaker toggle",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "CALL-08",
+      "members_or_label": "end call",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "index.html",
+        "js/core_engine.js",
+        "js/call_runtime.js"
+      ]
+    },
+    {
+      "id": "NOTIFY-01",
+      "members_or_label": "ОТКРЫТЬ БОТА external link",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js"
+      ]
+    },
+    {
+      "id": "NOTIFY-02",
+      "members_or_label": "ОТКЛЮЧИТЬ МАЯК",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js"
+      ]
+    },
+    {
+      "id": "MODAL-01",
+      "members_or_label": "alert OK / modal close/back",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js"
+      ]
+    },
+    {
+      "id": "MODAL-02",
+      "members_or_label": "prompt field / OK / Enter",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js"
+      ]
+    },
+    {
+      "id": "MODAL-03",
+      "members_or_label": "prompt ОТМЕНА",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js"
+      ]
+    },
+    {
+      "id": "MODAL-04",
+      "members_or_label": "confirm ДА / НЕТ",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js"
+      ]
+    },
+    {
+      "id": "MODAL-05",
+      "members_or_label": "native confirm/prompt",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js"
+      ]
+    },
+    {
+      "id": "MODAL-06",
+      "members_or_label": "backdrop / sidebar / chat-main click",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js"
+      ]
+    },
+    {
+      "id": "LOCK-01",
+      "members_or_label": "flipper orientation gesture",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "LOCK-02",
+      "members_or_label": "reload/window close/reopen",
+      "label_provenance": "original inventory label recovered from tool output",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "legacy-migration; conditional on loaded repairs, unlocked DeviceRoot, selected Account and feature state",
+      "source_files": [
+        "js/core_engine.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-01",
+      "members_or_label": "Full installation backup / export / import UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "absent",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-02",
+      "members_or_label": "Public Route DELETE UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "absent",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-03",
+      "members_or_label": "Generic Node password UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "absent",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-04",
+      "members_or_label": "Personal Telegram bot configuration UI (unloaded app_shell only)",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "absent",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-05",
+      "members_or_label": "Custom ringtone UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "absent",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-06",
+      "members_or_label": "Diagnostics launcher UI",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "absent",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-07",
+      "members_or_label": "Per-file affirmative YES / NO consent UI (trusted files auto-receive)",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "absent",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    },
+    {
+      "id": "ABSENT-08",
+      "members_or_label": "Master reconfiguration explicit Back / Cancel control",
+      "label_provenance": "regenerated from authoritative source after host reboot; historical exact label unavailable",
+      "required_cases": [
+        "enabled member actions",
+        "error/invalid input",
+        "loading/repeated action",
+        "disabled/unavailable state",
+        "cancel/back/dismiss"
+      ],
+      "execution_status": "NOT RUN",
+      "reachability": "absent",
+      "source_files": [
+        "js/file_runtime.js",
+        "js/app_shell.js",
+        "js/acceptance_fixes.js",
+        "js/ui_logic.js"
+      ]
+    }
+  ],
+  "baseline_source_sha256": {
+    "css/runtime_fixes.css": "8890a358595136854d2491cb5ab689f2bce0baeaf10605332133086084ad84cd",
+    "index.html": "5e892e1d49790745214c519828b5e858e85eda5258eca58695445277e20847cb",
+    "js/acceptance_fixes.js": "9d74679e96ef3b5de96a63363549bea7d1d1edcfcc4e8b2a9d64c6cebb03b7f3",
+    "js/acceptance_v50.js": "393f25a104b78beeca58542fad4e308bb04619bd1e50854a9dae9c2bfb5cb60f",
+    "js/acceptance_v51.js": "682cf2c19d1147f5f3d7814e1bc370db3dbe5e95e929ed20b012d6ce6c365ca2",
+    "js/acceptance_v52.js": "a1445355f23047ef327b7d20ff1110b64ce317d4b239406679039c6c793c07e1",
+    "js/acceptance_v54.js": "bee337cffafc8ba29a824d6be5b7fb98ccc41a0f9b1e00d3365d57ea54345916",
+    "js/acceptance_v55.js": "56aff3d591ac25b1e696f92a366d18d6ae2e8c77d6c4a9597ad2cda0af5f5326",
+    "js/account_app_cipher_v4.js": "cbf1a950305c324cf848156cb7f5cbc31572711899443eec7ad596aa2b3c714b",
+    "js/account_app_outbox_v4.js": "a5fb5b8b51b439944647b96b04cc9d44c569e94b6d07331132e7343aaab6a9ae",
+    "js/account_authenticated_history_v4.js": "90c7263dccfbbda2ad332c44d4fe9580121e6debbf017122fee653c87b64000e",
+    "js/account_handshake_v4.js": "d34819c870e0d2aa923f78cebee43b986e2ddaa5e3d94123402c3805a707fc52",
+    "js/account_inbox_progress_v4.js": "851e6b2cdd067f09317a96e9276e51b0e08ed488d7b8c8d7d0bb4480422aa25f",
+    "js/account_managed_inbox_v4.js": "f3532f537542ff3dd2c7b58b8a7c4c5b4e22f790efaa1c445cc8c678ffa046c3",
+    "js/account_media_authority_v4.js": "0b75cb2f4e6f33656e733d74a1fe0f6210b877287c1f88f69158658b95cdd1bd",
+    "js/account_media_bridge_v4.js": "f62cf27061a38f65d12fb4475af4738b3cb50d7d476c60a21ec476c38957dc61",
+    "js/account_media_control_v4.js": "0e54c0fb4ef3e2d54ad66db15aa729ad523571a50c834a7af3267474df8dac9d",
+    "js/account_media_dispatch_v4.js": "c0e13b3c2bdeabf6f94b8c33dd88696b7a34901a141a1a031064e216a4f76886",
+    "js/account_node_inbox_v4.js": "4e55b612c6a305299999271cc89b609ae1326fbc0522f92d4a239773d5db904c",
+    "js/account_node_transport_v4.js": "ca515765bf88db317c2bb0eab49562e0e60ec119ce7f3a4819f47abe24ec2b17",
+    "js/account_pairing_v2.js": "49692f34da52870e90d9f447ce8252afff40d82d972b238af3b5040e2a213a63",
+    "js/account_private_pairing_link_v4.js": "943d4894839357320fa44055c56b090bcf0db00abc295c9700fa944c53981547",
+    "js/account_ratchet.js": "ea230799d3982dadfadfc0953bf67ae484b0f53014284925bc92fa3dceb0c1fc",
+    "js/account_ratchet_runtime.js": "8affd3aa26fb05a6df42b4a7c6df1665f48d022c3391370d15f62c4213401c80",
+    "js/account_recorded_media.js": "4896173a54d29c73da0214e12428c3b6db5d92380006628a627d6a6b7c0388fb",
+    "js/account_route_binding_v2.js": "209f83e06cd6aa5439b23b627dcf534acb7abf1bd820334cf09bd737e58f312b",
+    "js/account_route_journal_v2.js": "53a08e62eb095563e926d458d764833df3a88226e68691c52727f0e980a9d8a6",
+    "js/account_sealed_operation_v4.js": "f01ef000b15fe13ac503c24e0241871e5af6fa7861468c8b7790092f86844f13",
+    "js/account_session_runtime_v4.js": "a4847ad7608c0a1f43ddb16a11339f9ca24e0ae053340551e2ee6ba8f4755eba",
+    "js/account_session_store_v4.js": "68592c93ac40c4f340100932183a8347cf9f4d8ecee48cd86274e169e94b3f80",
+    "js/account_session_v4.js": "709c777aff3f5101dd25672ea3dc5cacb635f2d2ad57f0a8414d6b3850f568cf",
+    "js/account_static_kem_v1.js": "12008dbfe62f6f5c539767f3dad707d90e544376534b91de4c285d468bba9b33",
+    "js/app_shell.js": "285133a63541d8792f1e9354b416f0125d986a53dae6eebdbbf695cf19473303",
+    "js/call_runtime.js": "2e59a5804d2167487ab443dcf9481c99dbbd91cb066a8525cdc63df055f7487a",
+    "js/call_session.js": "b85f6bbbf8aebc9a4864101852eb205fe59900bde6b8c2ddf69f73acc7cab1b6",
+    "js/call_signaling.js": "8604f3005a7666e038e0bb79982edcecc02134b3e828a44b37fb77898e3743aa",
+    "js/chat_cipher.js": "f1f27bf0617e0d59f8e360b983154c0570dc977b9f8fdba114a56355590855dc",
+    "js/chat_password.js": "5d850716a4b5e3316061961088ba718d453e587eb5eccf8bc8611e95f87f545c",
+    "js/contact_bootstrap_v3.js": "71e6f04ccecb9709a4de15df1f875bfc0f57dbe5315b770ac6fad8a71de28cf8",
+    "js/contact_flow_v3.js": "144d9c4e60e8daef42f8fdc8a9e697f2083f79e10b9019e25f56ca27030805b8",
+    "js/contact_payloads.js": "b1d644634d8a83c65e75b291cd1b61738aed3f7b3698ff1ae0f8fb9ee0a6d06b",
+    "js/contact_transport.js": "5cc9bbd7323b4575298742d57835709f4e3c89abee47c2c181a709814d1378f7",
+    "js/core_engine.js": "2d1a897c80a9fe83e731c8e3c9b8381224fc2886e8278a0120c4f45b2457d920",
+    "js/device_authority_v3.js": "5644ecf21dd35f4e755983a5afc06d7f08d4482d2e0519caa9e58891197de6d9",
+    "js/device_client_v3.js": "d9b546818ae2626cdbc12c2df6366042ddb6734945ac69058f1020df99313e85",
+    "js/device_envelope.js": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+    "js/device_inbox.js": "89ba6fa7f545ef2aa806e6469f2c8739694c48cb5160ad899dbc3e7eefb02064",
+    "js/device_root.js": "4e17177fa33414a7351d60567648ba0e0f4aabb2d1a10759a486feb7461170be",
+    "js/file_channel.js": "02f650c74455b2e4c7f043a2546b401040ab172ce07d31fa277d0f3f21081b6f",
+    "js/file_runtime.js": "f8c391d672362ce786617609fcfd4a1c891808a7ac06772393211cd24114ea8a",
+    "js/file_session.js": "81f2a4fd1a0ba573250bc4946da26397cfd36131937ab32764b7efecfd1b1d28",
+    "js/file_vault.js": "212deabf54c951e4fd80b80a4b7a06701b10e02f68dfa5ef20aa34ed6fc883de",
+    "js/managed_node_catalog_v4.js": "afbc54e6970cacc922eaf02bf8b66bb1161b33db1f00f41da97045fd6ef91329",
+    "js/node_account_ui_v4.js": "5da784ec9587efa0428457a73aa139f982f9b3b6726edb7196da6bf2ae5f4183",
+    "js/node_bootstrap_control_v4.js": "c2f04dafebc3f93df8262edbb4c9e9a8bef665b1aa7f538ed651d7f63eee56f2",
+    "js/node_identity.js": "47a18f80fd7e76b3bde39e0680830c8f317ab03eb0e282dddd32e26256560f43",
+    "js/node_manager.js": "fbd505265d829f21e1919447b28b7aa785a9ce76567e62387b13fd5a2da230bb",
+    "js/node_public_bootstrap_control_v4.js": "91f7cbef5df02e3449c8fbee99425afe68f4b4e8bb584c6d3e80a39f352387ad",
+    "js/node_root_lifecycle_v4.js": "c93c12bee0556974d0cf545d35bbe998a3fcbd183112b074c5cbe74a92e1b134",
+    "js/node_runtime_coordinator_v4.js": "203aace2938f92b22a46943d24ea14fc6f90f6a499e979e1962a6899ac444ae7",
+    "js/node_runtime_host_v4.js": "ae62fc05079655a25e61edd1af6802ef3564437986c3cf722c42234cb6f8a7e5",
+    "js/node_service_descriptor_v4.js": "e69d5c118de8c0b5bedda6b71b3ba2568d0b3b03aca4431b9f18fad54fabe68d",
+    "js/node_sturn_service_v4.js": "a79100996a95698ed302b577d4d58e6b7a42cbad238cbe4f80fc77e839fdbfa6",
+    "js/pending_contact_requests.js": "2eeb29ae798fe22cf6b33b700a723f2ba7d14861100f4513a80e4407b4e22a18",
+    "js/private_routes_v3.js": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+    "js/public_account_orchestrator_v4.js": "e7ffffd6f16f4d33c4a430e904891e4ba625e557ce09383bd4415f0412046cdb",
+    "js/public_contact_runtime.js": "9ca8eeaba6163101e525c84a82368cd7a4dcf569481e3fcf4305b8d20a6f38ef",
+    "js/recipient_payload_v4.js": "8167b736b6a8e29c50ef8ffb146b0a712e3369cfa9895bdef171ff24b95e6a6a",
+    "js/recorded_note_turn.js": "38d26537f1611d650c61924e4289bda6f95c1e6dde4e0e43456ad2f7b0d9275c",
+    "js/resource_pow.js": "89a85384c71581d716c051fa5475ed01c7e3a761033e2cbd4fb7b6bd794ab81b",
+    "js/route_discovery_v4.js": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248",
+    "js/runtime_fixes.js": "85492caa67d2443d8a8f4b5d048d69f78bcdc53f2f02a904a1af5d33d41b1f55",
+    "js/saved_messages.js": "71071fae1078b4a6110e7f0e25c443fb96cd13cb764ad42511b8881d78fa595f",
+    "js/secure_session.js": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5",
+    "js/storage.js": "a9c925caf69bea63d56a0a54e0391eb804b78377c05d8b89b4a2a5074e71742d",
+    "js/ui_global_bridge.js": "57844525e8a438ec93558582223e6b62cd888f66c3041edcb567ea11accf6857",
+    "js/ui_logic.js": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+    "js/vendor/argon2-bundled.min.js": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+    "js/vendor/blake3.min.js": "8071ab35cb39002f3ba58c0b3ed48ce1be876d1c93a06a27572fe59d62afca0c",
+    "js/vendor/html5-qrcode.min.js": "660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e",
+    "js/vendor/kyber768.js": "5653877b68f396a88779f80690fdcaa2dc4b3f213b5db3f080810bcba794469c",
+    "js/vendor/nacl-fast.min.js": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131",
+    "js/vendor/nacl-util.min.js": "97dc9513760f5ac4c3e3c7232360018d0a38eba480474a0b2a3d55cd03a56755",
+    "js/vendor/qrcode.min.js": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36"
+  },
+  "binding_line_count": 241,
+  "raw_binding_lines": [
+    {
+      "file": "index.html",
+      "line": 401,
+      "source": "<input type=\"file\" id=\"file-input\" style=\"display: none;\">"
+    },
+    {
+      "file": "index.html",
+      "line": 405,
+      "source": "<button class=\"btn sys\" data-calc-token=\"AC\" onclick=\"ui.cmd('AC')\">AC</button><button class=\"btn sys\" data-calc-token=\"±\" onclick=\"ui.cmd('±')\">±</button><button class=\"btn sys\" data-calc-token=\"%\" onclick=\"ui.cmd('%')\">%</button><button class=\"btn op\" data-calc-token=\"/\" onclick=\"ui.cmd('/')\">÷</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 406,
+      "source": "<button class=\"btn\" data-calc-token=\"7\" onclick=\"ui.num('7')\">7</button><button class=\"btn\" data-calc-token=\"8\" onclick=\"ui.num('8')\">8</button><button class=\"btn\" data-calc-token=\"9\" onclick=\"ui.num('9')\">9</button><button class=\"btn op\" data-calc-token=\"*\" onclick=\"ui.cmd('*')\">×</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 407,
+      "source": "<button class=\"btn\" data-calc-token=\"4\" onclick=\"ui.num('4')\">4</button><button class=\"btn\" data-calc-token=\"5\" onclick=\"ui.num('5')\">5</button><button class=\"btn\" data-calc-token=\"6\" onclick=\"ui.num('6')\">6</button><button class=\"btn op\" data-calc-token=\"-\" onclick=\"ui.cmd('-')\">−</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 408,
+      "source": "<button class=\"btn\" data-calc-token=\"1\" onclick=\"ui.num('1')\">1</button><button class=\"btn\" data-calc-token=\"2\" onclick=\"ui.num('2')\">2</button><button class=\"btn\" data-calc-token=\"3\" onclick=\"ui.num('3')\">3</button><button class=\"btn op\" data-calc-token=\"+\" onclick=\"ui.cmd('+')\">+</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 409,
+      "source": "<button class=\"btn zero\" data-calc-token=\"0\" onclick=\"ui.num('0')\">0</button><button class=\"btn\" data-calc-token=\".\" onclick=\"ui.num('.')\">,</button><button class=\"btn op\" data-calc-token=\"=\" onclick=\"ui.eval()\">=</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 416,
+      "source": "<form autocomplete=\"off\" onsubmit=\"event.preventDefault(); sys.init();\">"
+    },
+    {
+      "file": "index.html",
+      "line": 417,
+      "source": "<input type=\"text\" id=\"p1\" class=\"gate-input\" placeholder=\"ИДЕНТИФИКАТОР\" spellcheck=\"false\" autocomplete=\"off\">"
+    },
+    {
+      "file": "index.html",
+      "line": 418,
+      "source": "<input type=\"password\" id=\"p2\" class=\"gate-input\" placeholder=\"КЛЮЧ ДОСТУПА\" autocomplete=\"off\">"
+    },
+    {
+      "file": "index.html",
+      "line": 419,
+      "source": "<button type=\"submit\" class=\"gate-btn\">ВОЙТИ В СИСТЕМУ</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 443,
+      "source": "<button onclick=\"Core.switchCamera()\" class=\"call-action-btn small\">🔄</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 444,
+      "source": "<button onclick=\"Core.shareScreen()\" class=\"call-action-btn small\">🖥️</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 445,
+      "source": "<button id=\"btn-speaker-toggle\" onclick=\"Core.toggleSpeaker()\" class=\"call-action-btn small\">🔊</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 448,
+      "source": "<button id=\"btn-vid-toggle\" onclick=\"Core.toggleVideo()\" class=\"call-action-btn off\" type=\"button\" aria-label=\"Включить камеру\" title=\"Включить камеру\">📷</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 449,
+      "source": "<button onclick=\"Core.endCall()\" style=\"width:80px; height:80px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:2rem; cursor:pointer;\">🛑</button>"
+    },
+    {
+      "file": "index.html",
+      "line": 450,
+      "source": "<button id=\"btn-mic-toggle\" onclick=\"Core.toggleMic()\" class=\"call-action-btn\">🎤</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 106,
+      "source": "const button = document.querySelector('#sys-modal [onclick=\"Core.openSettings()\"]');"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 124,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.copyMyId()\">КОПИРОВАТЬ ID АККАУНТА</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 125,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.setupLazyLogin()\">БЕСПАРОЛЬНЫЙ ВХОД АККАУНТА</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 126,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.showMyQR()\">PUBLIC / PRIVATE QR</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 127,
+      "source": "<button class=\"dmash-settings-action primary\" onclick=\"Core.closeModal()\">ЗАКРЫТЬ</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 185,
+      "source": "<button class=\"dmash-share-tab\" onclick=\"Core.setShareMode('private')\">PRIVATE</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 186,
+      "source": "<button class=\"dmash-share-tab active\" onclick=\"Core.setShareMode('public')\">PUBLIC</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 189,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"ui.openPublicRoutes()\">СОЗДАТЬ PUBLIC ROUTE</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 190,
+      "source": "<button class=\"dmash-settings-action primary\" onclick=\"Core.closeModal()\">ЗАКРЫТЬ</button>`;"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 200,
+      "source": "<select id=\"dmash-share-route\" class=\"dmash-share-select\" onchange=\"Core.selectSharePublicRoute(this.value)\">${options}</select>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 211,
+      "source": "<button class=\"dmash-share-tab ${this._shareMode === \"private\" ? \"active\" : \"\"}\" onclick=\"Core.setShareMode('private')\">PRIVATE</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 212,
+      "source": "<button class=\"dmash-share-tab ${this._shareMode === \"public\" ? \"active\" : \"\"}\" onclick=\"Core.setShareMode('public')\">PUBLIC</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 217,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.copyCurrentSharePayload()\">${this._shareMode === \"public\" ? \"КОПИРОВАТЬ CONTACT LINK\" : \"КОПИРОВАТЬ PRIVATE PAIRING\"}</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 218,
+      "source": "<button class=\"dmash-settings-action primary\" onclick=\"Core.closeModal()\">ЗАКРЫТЬ</button>`;"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 249,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"ui.openPublicRoutes()\"><b>PUBLIC ROUTES</b><small>Создание, активация, выбор RouteID и Contact Link</small></button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 250,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"ui.renderGlobalNodes()\"><b>НОДЫ</b><small>Запрос публичной Node, ручное добавление и подключения</small></button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 251,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"ui.renderGlobalQuickNames()\"><b>БЫСТРЫЕ ИМЕНА</b><small>Локальный зашифрованный реестр устройства</small></button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 252,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"Core.openAccountManager()\"><b>РЕЕСТР АККАУНТОВ</b><small>Все локальные аккаунты этой установки</small></button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 253,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"Core.openPendingContacts()\"><b>ЗАПРОСЫ В КОНТАКТЫ</b><small>Входящие запросы через Public Routes</small></button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 254,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"ui.beginBiometricTriggerSetup()\"><b>БИОМЕТРИЯ УСТРОЙСТВА</b><small>Привязка нескольких platform credentials к DeviceRoot</small></button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 255,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"Core.setupTelegram()\"><b>ТЕЛЕГРАМ-МАЯК</b><small>Уведомления устройства</small></button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 256,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"Core.toggleFlipper('global')\"><b>ЭКСТРЕННЫЙ ФЛИП-ЛОК: ${panic ? \"ВКЛ\" : \"ВЫКЛ\"}</b><small>Блокировка устройства при перевороте; во время звонка или записи не срабатывает</small></button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 257,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"ui.startMasterReconfiguration()\"><b>СМЕНИТЬ MASTER-КОД</b><small>Перешифровать тот же DeviceRoot</small></button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 259,
+      "source": "<button class=\"gate-btn dmash-settings-back\" onclick=\"ui.show_gate()\">НАЗАД К АККАУНТАМ</button>`;"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 271,
+      "source": "<button class=\"gate-btn\" onclick=\"Core.copyPublicContactLink('${route.routeId}')\">CONTACT LINK</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 272,
+      "source": "<button class=\"gate-btn secondary\" onclick=\"ui.togglePublicRoute('${route.routeId}')\">${route.active ? \"DEACTIVATE\" : \"ACTIVATE\"}</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 273,
+      "source": "${route.current ? '<button class=\"gate-btn secondary\" onclick=\"ui.reissuePublicRoute()\">REISSUE</button>' : \"\"}"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 281,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"ui.createPublicRoute()\">СОЗДАТЬ PUBLIC ROUTE</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 282,
+      "source": "<button class=\"gate-btn dmash-settings-back\" onclick=\"${global.Core?.activeIdentity ? 'Core.showMyQR()' : 'ui.renderGlobalSettings()'}\">НАЗАД</button>`;"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 354,
+      "source": "<button class=\"gate-btn secondary\" onclick=\"ui.toggleGlobalNodeConnection(decodeURIComponent('${encoded}'))\">${connected ? \"ОТКЛЮЧИТЬ\" : \"ПОДКЛЮЧИТЬ\"}</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 355,
+      "source": "<button class=\"gate-btn secondary\" onclick=\"ui.selectGlobalNode(decodeURIComponent('${encoded}'))\">${primary ? \"ОСНОВНОЙ\" : \"СДЕЛАТЬ ОСНОВНЫМ\"}</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 356,
+      "source": "<button class=\"gate-btn danger\" onclick=\"ui.removeGlobalNode(decodeURIComponent('${encoded}'))\">УДАЛИТЬ</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 366,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"ui.requestGlobalNode()\">ЗАПРОСИТЬ ПУБЛИЧНУЮ NODE</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 367,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"ui.addGlobalNode()\">ДОБАВИТЬ ПО WSS</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 369,
+      "source": "<button class=\"gate-btn dmash-settings-back\" onclick=\"ui.renderGlobalSettings()\">НАЗАД</button>`;"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 425,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"ui.enterBiometricTriggerSetup()\">НАЧАТЬ ПРИВЯЗКУ</button>"
+    },
+    {
+      "file": "js/acceptance_fixes.js",
+      "line": 426,
+      "source": "<button class=\"gate-btn dmash-settings-back\" onclick=\"ui.renderGlobalSettings()\">НАЗАД</button>`;"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 343,
+      "source": "<input id=\"dmash-account-bio-pass\" class=\"gate-input\" type=\"password\" autocomplete=\"current-password\" placeholder=\"КЛЮЧ АККАУНТА\">"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 344,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.verifyAccountBiometricSecret()\">ПРОВЕРИТЬ КЛЮЧ</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 345,
+      "source": "<button class=\"dmash-settings-action primary\" onclick=\"Core.closeModal()\">ОТМЕНА</button>`);"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 361,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.finishAccountBiometricEnrollment()\">ПРИВЯЗАТЬ БИОМЕТРИЮ</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 362,
+      "source": "<button class=\"dmash-settings-action primary\" onclick=\"Core.closeModal()\">ОТМЕНА</button>`);"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 461,
+      "source": "${account.id !== this.activeIdentity ? `<button class=\"gate-btn danger\" onclick=\"Core.removeAccountFlow(decodeURIComponent('${id}'))\">УДАЛИТЬ</button>` : \"\"}"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 466,
+      "source": "<button class=\"dmash-settings-action primary\" onclick=\"Core.closeModal()\">НАЗАД</button>`);"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 480,
+      "source": "button.addEventListener(\"click\", () => this.closeModal());"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 526,
+      "source": "this.openModal('ГОТОВИМ ЗАПРОС', `<div data-public-request-preparation class=\"dmash-settings-note\">Готовим защищённый маршрут. Это может занять до 90 секунд. Запрос ещё не отправлен.</div><button class=\"dmash-settings-action primary\" data-public-request-cancel>ОТМЕНА</button>`);"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 527,
+      "source": "document.querySelector('[data-public-request-cancel]')?.addEventListener('click', cancel);"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 621,
+      "source": "return `<button class=\"dmash-quick-choice\" onclick=\"Core.choosePublicContactQuickName(decodeURIComponent('${id}'))\">"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 628,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.useCustomPublicContactName()\">ВВЕСТИ ДРУГОЕ ИМЯ</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 629,
+      "source": "<button class=\"dmash-settings-action primary\" onclick=\"Core.closeModal()\">ОТМЕНА</button>`);"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 699,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.copyMyId()\">КОПИРОВАТЬ ID АККАУНТА</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 700,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.setupAccountBiometrics()\">БИОМЕТРИЯ АККАУНТА</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 701,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.showMyQR()\">PUBLIC / PRIVATE QR</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 702,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.openPendingContacts()\">ЗАПРОСЫ В КОНТАКТЫ</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 703,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"NodeManager.renderSettings()\">УЗЛЫ И ПОДКЛЮЧЕНИЕ</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 704,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.toggleFlipper()\">ЭКСТРЕННЫЙ ФЛИП-ЛОК УСТРОЙСТВА: ${panic ? \"ВКЛ\" : \"ВЫКЛ\"}</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 705,
+      "source": "<button class=\"dmash-settings-action primary\" onclick=\"Core.closeModal()\">ЗАКРЫТЬ</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 729,
+      "source": "<button class=\"gate-btn dmash-account-select-main\" onclick=\"ui.renderLoginForm(decodeURIComponent('${id}'))\">${esc(account.id)}</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 730,
+      "source": "${account.accountBiometric ? `<button class=\"gate-btn dmash-account-bio-button\" onclick=\"Core.accountBiometricLogin(decodeURIComponent('${id}'))\">БИОМЕТРИЯ</button>` : \"\"}"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 736,
+      "source": "<button id=\"global-settings-button\" class=\"gate-btn\" onclick=\"ui.renderGlobalSettings()\">⚙</button>"
+    },
+    {
+      "file": "js/acceptance_v50.js",
+      "line": 743,
+      "source": "<button class=\"gate-btn\" onclick=\"ui.renderLoginForm()\">+ НОВЫЙ ВХОД</button>`;"
+    },
+    {
+      "file": "js/acceptance_v51.js",
+      "line": 420,
+      "source": "<button class=\"gate-btn danger\" onclick=\"Core.removeDeviceBiometric(${index})\">УДАЛИТЬ КЛЮЧ</button>"
+    },
+    {
+      "file": "js/acceptance_v51.js",
+      "line": 425,
+      "source": "<button class=\"dmash-settings-action\" onclick=\"Core.closeModal(); ui.beginBiometricTriggerSetup()\">ДОБАВИТЬ КЛЮЧ</button>"
+    },
+    {
+      "file": "js/acceptance_v51.js",
+      "line": 426,
+      "source": "<button class=\"dmash-settings-action primary\" onclick=\"Core.closeModal()\">НАЗАД</button>`);"
+    },
+    {
+      "file": "js/acceptance_v51.js",
+      "line": 472,
+      "source": "${account.accountBiometric ? `<button class=\"gate-btn\" onclick=\"Core.removeAccountBiometric(decodeURIComponent('${id}'))\">УДАЛИТЬ БИОМЕТРИЮ</button>` : \"\"}"
+    },
+    {
+      "file": "js/acceptance_v51.js",
+      "line": 473,
+      "source": "${account.id !== this.activeIdentity ? `<button class=\"gate-btn danger\" onclick=\"Core.removeAccountFlow(decodeURIComponent('${id}'))\">УДАЛИТЬ АККАУНТ</button>` : \"\"}"
+    },
+    {
+      "file": "js/acceptance_v51.js",
+      "line": 476,
+      "source": "this.openModal(\"РЕЕСТР АККАУНТОВ\", `<div class=\"dmash-registry-list\">${rows}</div><button class=\"dmash-settings-action primary\" onclick=\"Core.closeModal()\">НАЗАД</button>`);"
+    },
+    {
+      "file": "js/acceptance_v52.js",
+      "line": 368,
+      "source": "row.innerHTML = '<div style=\"font-size:.68rem;color:#888\">DEVICE UNLOCKED</div><button id=\"global-settings-button\" class=\"gate-btn\" type=\"button\" style=\"width:auto;min-width:0;margin:0;padding:5px 9px\" onclick=\"ui.renderGlobalSettings()\">⚙</button>';"
+    },
+    {
+      "file": "js/app_shell.js",
+      "line": 17,
+      "source": "if (options.onClick) node.addEventListener(\"click\", options.onClick);"
+    },
+    {
+      "file": "js/app_shell.js",
+      "line": 222,
+      "source": "language.addEventListener(\"change\", event => window.DMashI18n?.setLocale(event.target.value));"
+    },
+    {
+      "file": "js/app_shell.js",
+      "line": 269,
+      "source": "select.addEventListener(\"change\", event => this.setTheme(event.target.value));"
+    },
+    {
+      "file": "js/app_shell.js",
+      "line": 385,
+      "source": "dialog.addEventListener(\"click\", event => { if (event.target === dialog) dialog.close(); });"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 580,
+      "source": "<div class=\"my-id-card\" onclick=\"Core.showMyQR()\">"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 584,
+      "source": "<button class=\"my-id-card network-card\" type=\"button\" onclick=\"NodeManager.renderSettings()\">"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 589,
+      "source": "<button onclick=\"Core.openScanner()\">[ QR ]</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 590,
+      "source": "<button onclick=\"Core.addPeerPrompt()\">[ + ]</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 591,
+      "source": "<button class=\"settings-tool\" type=\"button\" aria-label=\"Настройки\" title=\"Настройки\" onclick=\"Core.openSettings()\">⚙</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 594,
+      "source": "<button class=\"exit-btn\" onclick=\"Core.accountLogout()\">[ ВЫХОД ]</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 598,
+      "source": "<button id=\"back-btn\" class=\"action-btn\" onclick=\"Core.closeChat()\">←</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 601,
+      "source": "<button class=\"action-btn\" id=\"voip-btn\" onclick=\"Core.initVoip()\" style=\"display:none\">📞</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 602,
+      "source": "<button class=\"edit-btn\" onclick=\"Core.renameCurrent()\">✎</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 609,
+      "source": "<button class=\"action-btn\" onclick=\"Core.uiAttach()\">📎</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 610,
+      "source": "<textarea id=\"msgInput\" placeholder=\"Сообщение...\" rows=\"1\" spellcheck=\"false\"></textarea>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 611,
+      "source": "<button class=\"action-btn\" id=\"circle-btn\" onclick=\"Core.uiCircle()\">⭕</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 612,
+      "source": "<button class=\"action-btn\" id=\"voice-btn\" onclick=\"Core.uiVoice()\">🎤</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 614,
+      "source": "<button class=\"action-btn send-btn\" onmousedown=\"event.preventDefault()\" onclick=\"Core.sendMessage()\">SEND</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 624,
+      "source": "document.querySelector('.chat-main')?.addEventListener('click', event => event.stopPropagation());"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 625,
+      "source": "document.querySelector('.sidebar')?.addEventListener('click', event => {"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 652,
+      "source": "msgInp.addEventListener('keydown', (e) => {"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1495,
+      "source": "cancel.onclick=()=>state==='cancelled'?this.retryRecordedNote(id):this.cancelRecordedNote(id);status.append(cancel);"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1858,
+      "source": "item.addEventListener('click', () => this.selectPeer(peer.id));"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1859,
+      "source": "item.addEventListener('keydown', event => {"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1878,
+      "source": "remove.addEventListener('click', event => {"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1900,
+      "source": "item.onclick=()=>this.openContactProgress(pending.id);list.append(item);"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1907,
+      "source": "this.openModal('КОНТАКТ: '+this.escapeHtml(pending.name),'<div>Запрос ещё не завершён. Чат появится после подтверждения Account собеседника. Получателю нужно открыть приложение.</div><button class=\"sys-modal-btn\" id=\"contact-progress-retry\">ПРОВЕРИТЬ СНОВА</button>');"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1909,
+      "source": "if(button)button.onclick=async()=>{button.disabled=true;try{await this.syncNetwork();await this.renderPeers();this.closeModal();}finally{button.disabled=false;}};"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1941,
+      "source": "<button id=\"back-btn\" class=\"action-btn\" onclick=\"Core.closeChat()\">←</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1942,
+      "source": "<div style=\"flex-grow:1; margin-left:10px; cursor:pointer;\" onclick=\"Core.copyPeerId('${fullIdToCopy}')\">"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1947,
+      "source": "<button class=\"action-btn\" id=\"voip-btn\" onclick=\"Core.initVoip()\" style=\"${secrets ? '' : 'display:none'}\">📞</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1948,
+      "source": "<button class=\"action-btn\" onclick=\"Core.renameCurrent()\">✎</button><button class=\"action-btn\" title=\"Пароль чата\" onclick=\"Core.configureChatPassword()\">🔒</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1952,
+      "source": "if (isLocal) document.getElementById('chat-header').innerHTML = `<button class=\"action-btn\" onclick=\"Core.closeChat()\">←</button><div><b id=\"chat-title\">${this.escapeHtml(peer?.name || \"Избранное\")}</b><br><small>Только на этом устройстве</small></div><button class=\"action-btn\" onclick=\"Core.renameCurrent()\">✎</button><button class=\"action-btn\" title=\"Пароль чата\" onclick=\"Core.configureChatPassword()\">🔒</button>`;"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 1975,
+      "source": "<button class=\"sys-modal-btn primary\" style=\"width:220px; padding:15px;\" onclick=\"Core.beginKeyExchange()\">"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2393,
+      "source": "return `<button class=\"sys-modal-btn primary\" style=\"margin-bottom:10px;\""
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2394,
+      "source": "onclick=\"Core.startCircleRecording('${cam.deviceId}')\">${label}</button>`;"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2397,
+      "source": "Core.openModal(\"ВЫБЕРИ ГЛАЗ\", `<div style=\"display:flex; flex-direction:column;\">${listHtml}<button class=\"sys-modal-btn\" onclick=\"Core.closeModal()\">ОТМЕНА</button></div>`);"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2501,
+      "source": "retry.onclick=()=>this.decryptMedia(id,rawData);stub.appendChild(retry);"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2516,
+      "source": "video.addEventListener('click', event => {"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2524,
+      "source": "const image=document.createElement('img');image.src=url;image.className='img-attachment';image.onclick=()=>window.open(url);stub.appendChild(image);"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2534,
+      "source": "stub.innerHTML = `<span style=\"color:var(--accent)\">ОШИБКА РАСШИФРОВКИ</span><button class=\"sys-modal-btn\" style=\"padding:5px; font-size:.6rem; margin-top:8px;\" onclick=\"Core.decryptMediaEncoded('${id}', '${this.encodeMediaPayload(rawData)}')\">ПОВТОРИТЬ</button>`;"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2562,
+      "source": "`<button class=\"sys-modal-btn dmash-file-cancel\" type=\"button\" onclick=\"Core.cancelStoredFile('${data.fileId}')\">ОТМЕНИТЬ ОТПРАВКУ</button>` : '';"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2567,
+      "source": "<button class=\"sys-modal-btn primary\" type=\"button\" onclick=\"Core.openStoredFileEncoded('${id}','${encoded}')\">ОТКРЫТЬ ФАЙЛ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2611,
+      "source": "<button class=\"sys-modal-btn primary\" style=\"padding:5px; font-size:0.6rem; margin-top:8px;\""
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2612,
+      "source": "onclick=\"Core.decryptMediaEncoded('${id}', '${this.encodeMediaPayload(data)}')\">РАСШИФРОВАТЬ КРУЖОК</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2619,
+      "source": "<button class=\"sys-modal-btn primary\" style=\"padding:5px; font-size:0.6rem;\""
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2620,
+      "source": "onclick=\"Core.decryptMediaEncoded('${id}', '${this.encodeMediaPayload(data)}')\">РАСШИФРОВАТЬ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2746,
+      "source": "<button class=\"sys-modal-btn\" id=\"decline-call\">ОТКЛОНИТЬ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 2747,
+      "source": "<button class=\"sys-modal-btn primary\" id=\"accept-call\">ПРИНЯТЬ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3066,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.setupTelegram()\">✈️ ТЕЛЕГРАМ-МАЯК</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3067,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"NodeManager.renderSettings()\">🌐 ПОДКЛЮЧЕНИЕ К УЗЛУ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3068,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.openQuickNames()\">🏷️ БЫСТРЫЕ ИМЕНА</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3069,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.openPendingContacts()\">📨 ЗАПРОСЫ В КОНТАКТЫ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3070,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.toggleFlipper()\">ЭКСТРЕННЫЙ ФЛИП-ЛОК: ${panicGestureEnabled ? 'ВКЛ' : 'ВЫКЛ'}</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3071,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.setupDeviceBiometrics()\">🧬 БИОМЕТРИЯ УСТРОЙСТВА</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3072,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.setupLazyLogin()\">💤 ВКЛЮЧИТЬ БЕСПАРОЛЬНЫЙ ВХОД</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3073,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"ui.startMasterReconfiguration()\">СМЕНИТЬ MASTER-КОД</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3074,
+      "source": "<button class=\"sys-modal-btn primary\" onclick=\"Core.closeModal()\">ЗАКРЫТЬ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3103,
+      "source": "<button class=\"sys-modal-btn danger\" style=\"padding:5px;font-size:.6rem;margin:0;\" onclick=\"Core.removeQuickName(decodeURIComponent('${id}'))\">УДАЛИТЬ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3107,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.addQuickNameFlow()\">ДОБАВИТЬ БЫСТРОЕ ИМЯ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3108,
+      "source": "<button class=\"sys-modal-btn primary\" onclick=\"Core.openSettings()\">НАЗАД</button>`;"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3232,
+      "source": "return `<button class=\"sys-modal-btn\" style=\"color:#49b9ff;border-color:#49b9ff;text-align:left;\" onclick=\"Core.readPendingContactRequest(decodeURIComponent('${id}'))\">"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3237,
+      "source": "<button class=\"sys-modal-btn primary\" onclick=\"Core.openSettings()\">НАЗАД</button>`;"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3272,
+      "source": "${canAccept ? `<button class=\"sys-modal-btn primary\" onclick=\"Core.startAcceptPendingContactRequest(decodeURIComponent('${encodedId}'))\">${acceptLabel}</button>` : ''}"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3273,
+      "source": "${acceptance.kind === 'owner' && this.activeIdentity ? '<button class=\"sys-modal-btn primary\" onclick=\"Core.accountLogout()\">ВЫЙТИ И ВЫБРАТЬ АККАУНТ</button>' : ''}"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3274,
+      "source": "<button class=\"sys-modal-btn danger\" onclick=\"Core.rejectPendingContactRequest(decodeURIComponent('${encodedId}'))\">ОТКЛОНИТЬ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3275,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.openPendingContacts()\">ЗАКРЫТЬ</button>`;"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3320,
+      "source": "return `<button class=\"sys-modal-btn\" style=\"text-align:left;\" onclick=\"Core.acceptPendingContactRequest(decodeURIComponent('${encodedId}'),decodeURIComponent('${encodedName}'),'${identifier}')\">"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3326,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.readPendingContactRequest(decodeURIComponent('${encodeURIComponent(id)}'))\">НАЗАД</button>`;"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3368,
+      "source": "${hasExtra ? `<button class=\"sys-modal-btn\" style=\"padding:5px; font-size:0.6rem; margin:0;\" onclick=\"Core.resetAccountAuthFlow('${acc.id}')\">СБРОСИТЬ ВХОД</button>` : ''}"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3370,
+      "source": "`<button class=\"sys-modal-btn danger\" style=\"padding:5px; font-size:0.6rem; margin:0;\" onclick=\"Core.removeAccountFlow('${acc.id}')\">УДАЛИТЬ</button>`"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3378,
+      "source": "<button class=\"sys-modal-btn primary\" onclick=\"Core.openSettings()\">НАЗАД</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3414,
+      "source": "${localStorage.getItem('dmash_beacon_bound_v1') === 'true' ? '<button class=\"sys-modal-btn\" onclick=\"Core.disableTelegramBeacon()\" style=\"margin-top:10px;\">⛔ ОТКЛЮЧИТЬ МАЯК</button>' : ''}"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3415,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.closeModal()\" style=\"margin-top:10px;\">ГОТОВО</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3437,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.closeScanner()\">ОТМЕНА</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3496,
+      "source": "<button class=\"sys-modal-btn primary\" style=\"flex:1;\" onclick=\"Core.copyMyId()\">КОПИРОВАТЬ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3497,
+      "source": "<button class=\"sys-modal-btn\" style=\"flex:1;\" onclick=\"Core.closeModal()\">ЗАКРЫТЬ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3576,
+      "source": "customAlert: (t, tx) => Core.openModal(t, `<div>${tx}</div><button class=\"sys-modal-btn primary\" onclick=\"Core.closeModal()\">OK</button>`),"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3586,
+      "source": "Core.openModal(t, `<form id=\"sys-prompt-form\" autocomplete=\"off\" onsubmit=\"return false\"><div>${tx}</div><input type=\"${renderedType}\" id=\"p-in\" class=\"${inputClass}\" ${inputAttrs}><button type=\"button\" class=\"sys-modal-btn primary\" id=\"p-ok\">OK</button><button type=\"button\" class=\"sys-modal-btn\" onclick=\"Core.closeModal()\">ОТМЕНА</button></form>`);"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3602,
+      "source": "<button class=\"sys-modal-btn\" style=\"flex:1;\" onclick=\"Core.closeModal()\">НЕТ</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3603,
+      "source": "<button class=\"sys-modal-btn primary\" style=\"flex:1;\" id=\"confirm-yes\">ДА</button>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3643,
+      "source": "<div class=\"m-txt\">${content}<span class=\"msg-del-btn\" onclick=\"Core.deleteMessageFlow('${id || ts}')\">×</span></div>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3655,
+      "source": "<span class=\"msg-del-btn\" onclick=\"Core.deleteMessageFlow('${id || ts}')\">×</span>"
+    },
+    {
+      "file": "js/core_engine.js",
+      "line": 3673,
+      "source": "<span class=\"msg-del-btn\" onclick=\"Core.deleteMessageFlow('${id || ts}')\">×</span>"
+    },
+    {
+      "file": "js/managed_node_catalog_v4.js",
+      "line": 28,
+      "source": "connect.addEventListener('click',click);"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 14,
+      "source": "for(const node of document.querySelectorAll('[onclick=\"Core.uiAttach()\"],#circle-btn,#voice-btn,#voip-btn')){if(!mediaControls.has(node))mediaControls.set(node,{hidden:node.hidden,disabled:node.disabled});node.hidden=true;node.disabled=true;}"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 64,
+      "source": "view?.close();core.openModal('КОНТАКТЫ NODE','<div data-node-account-panel></div><button type=\"button\" class=\"sys-modal-btn\" data-node-account-close>ЗАКРЫТЬ</button>');"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 68,
+      "source": "const button=(parent,label,run)=>{const b=doc.createElement('button');b.type='button';b.className='sys-modal-btn';b.textContent=label;b.addEventListener('click',async()=>{if(state.disposed||state.task)return;state.task=true;const controls=[...container.querySelectorAll('button')].map(node=>({node,disabled:node.disabled}));for(const item of controls)item.node.disabled=true;container.setAttribute('aria-busy','true');status.textContent='Выполняется…';try{await run();if(!state.disposed&&status.textContent==='Выполняется…')status.textContent='Действие завершено';}catch(e){if(!state.disposed)status.textContent=errorText(e);}finally{state.task=false;container.setAttribute('aria-busy','false');if(!state.disposed)for(const item of controls)item.node.disabled=item.disabled;}});parent.append(b);return b;};"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 72,
+      "source": "async function finishPairing(a,result,name){if(!result.ready){status.textContent='Ожидание подтверждения второго участника';return;}await a.establish(result.peer);watch(core,a);try{await a.publishContact(result.peer,name||'Node контакт');await core.renderPeers();status.textContent='Контакт добавлен. Идёт подтверждение ключей.';}catch(e){if(e.code!=='HISTORY_CONTACT_MIGRATION_REQUIRED')throw e;status.textContent='Существующий контакт сохранён. Для перехода дождитесь ключей и подтвердите миграцию.';if(!rows.querySelector('[data-node-migrate-peer=\"'+result.peer+'\"]')){const migrationButton=button(rows,'Перевести существующий контакт на Node',async()=>{core.customConfirm('ПЕРЕХОД КОНТАКТА','Имя, история и прежние ключи сохранятся. Новый обмен использует тот же подписанный ID аккаунта.',async()=>{try{await a.migrateContact(result.peer);await core.renderPeers();core.closeModal();}catch(error){core.openModal('ПЕРЕХОД НЕ ЗАВЕРШЁН','<p data-node-migration-error></p><button class=\"sys-modal-btn\" onclick=\"Core.closeModal()\">OK</button>');document.querySelector('[data-node-migration-error]').textContent=errorText(error);}});});migrationButton.dataset.nodeMigratePeer=result.peer;}}}"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 78,
+      "source": "if(row.direction==='INBOUND'&&!row.claim&&!core.keys?.sign)button(card,'Выбрать аккаунт для принятия',()=>{core.closeModal();g.ui.show_gate();});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 79,
+      "source": "if(row.direction==='INBOUND'&&!row.claim&&core.keys?.sign)button(card,'Принять в текущий аккаунт',async()=>{const a=await adapter();await a.accept(reg,row.requestId,row.requestDigest);status.textContent='Принято. Ожидается подтверждение собеседника.';await refresh();});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 80,
+      "source": "if(row.direction==='OUTBOUND'&&row.accept&&!row.confirm){const bundle=JSON.parse(JSON.parse(row.accept).bundle),peer=bundle.account_keys.signing,fingerprint=doc.createElement('p');fingerprint.textContent='ID собеседника: '+peer;card.append(fingerprint);button(card,'Подтвердить собеседника',async()=>{const a=await adapter();await a.confirm(reg,row.requestId,row.requestDigest,peer);await advance(reg,row);await refresh();});}"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 81,
+      "source": "if(row.accept&&row.confirm)button(card,'Завершить обмен ключами',async()=>advance(reg,row));"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 82,
+      "source": "if(row.direction==='OUTBOUND'&&!row.accept)button(card,'Повторить запрос',async()=>{await state.host.sendPublicRequest(reg.capability,row.targetCertificate,{requestId:row.requestId,displayName:request.display_name,introduction:request.introduction,nonce:request.nonce,expiresAt:request.expires_at});status.textContent='Запрос сохранён; ожидается ответ';});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 83,
+      "source": "if(row.direction==='INBOUND'&&!row.claim)button(card,'Отклонить запрос',()=>{const confirm=doc.createElement('div');card.append(confirm);button(confirm,'ДА, ОТКЛОНИТЬ',async()=>{await state.host.declinePublicRequest(reg.capability,row.requestId,row.requestDigest);await refresh();});button(confirm,'НЕТ',()=>confirm.remove());});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 90,
+      "source": "async function refreshPrivate(){const a=await adapter();rows.replaceChildren();for(const offer of await a.privateOffers()){const card=doc.createElement('article'),title=doc.createElement('p');title.textContent=offer.pending?'PRIVATE: '+offer.code:'PRIVATE предложение';card.append(title);rows.append(card);if(offer.pending)continue;button(card,'Показать PRIVATE QR',()=>showPrivate(offer.bundle));for(const request of offer.requests){const box=doc.createElement('div');card.append(box);const label=doc.createElement('p'),remote=JSON.parse(request.direction==='OUTBOUND'?request.targetBundle:JSON.parse(request.serialized||'{}').bundle||'{}')?.account_keys?.signing;label.textContent='Account '+(remote||'недоступен')+' · '+request.state;box.append(label);if(!remote||request.state==='DENIED'||request.state.startsWith('EXPIRED'))continue;if(request.direction==='OUTBOUND')button(box,'Повторить PRIVATE запрос',async()=>{await a.retryPrivateRequest(offer.id);status.textContent='PRIVATE запрос повторён';});button(box,'Подтвердить PRIVATE контакт',async()=>{const result=await a.advancePrivate(offer.id,request.exchangeId,request.requestDigest,remote);await finishPairing(a,result,displayName.value);});if(request.state==='PENDING')button(box,'Отклонить PRIVATE запрос',async()=>{await a.advancePrivate(offer.id,request.exchangeId,request.requestDigest,remote,{deny:true});await refreshPrivate();});}}"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 92,
+      "source": "button(actions,'Создать PRIVATE QR',async()=>{const a=await adapter(),offer=await a.createPrivateOffer(privatePeer.value.trim()||null);await showPrivate(offer.bundle);});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 93,
+      "source": "button(actions,'Копировать PRIVATE адрес',async()=>{if(!privateLink.value)throw Error('PRIVATE_LINK_REQUIRED');await navigator.clipboard.writeText(privateLink.value);status.textContent='PRIVATE адрес скопирован';});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 94,
+      "source": "button(actions,'Проверить PRIVATE адрес',async()=>{const bundle=await g.DmashAccountPrivatePairingLinkV4.decode(privateLink.value.trim()),parsed=g.DmashAccountPairingV2.createCodec({nacl:g.nacl,discovery:g.DmashRouteDiscoveryV4}).parse(bundle);privatePeer.value=parsed.bundle.account_keys.signing;status.textContent='Сверьте ID лично перед подтверждением: '+privatePeer.value;});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 95,
+      "source": "button(actions,'Отправить PRIVATE запрос',async()=>{const a=await adapter(),bundle=await g.DmashAccountPrivatePairingLinkV4.decode(privateLink.value.trim());await a.importPrivateBundle(bundle,privatePeer.value.trim());status.textContent='Подписанный PRIVATE запрос отправлен. Ожидается подтверждение.';await refreshPrivate();});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 96,
+      "source": "button(actions,'Обновить PRIVATE запросы',refreshPrivate);"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 97,
+      "source": "button(actions,'Создать / показать публичный адрес',async()=>{if(!state.host)throw Error('NODE_NOT_CONNECTED');const reg=await registration(state.host,'PUBLIC_INTAKE',true);address.value=JSON.stringify({type:'DMASH_PUBLIC_NODE_V4',version:4,certificate:reg.certificate});status.textContent='Публичный адрес готов. Он не раскрывает выбранный аккаунт.';});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 98,
+      "source": "button(actions,'Копировать публичный адрес',async()=>{if(!address.value)throw Error('PUBLIC_ADDRESS_REQUIRED');await navigator.clipboard.writeText(address.value);status.textContent='Адрес скопирован';});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 99,
+      "source": "button(actions,'Отправить запрос',async()=>{if(!state.host)throw Error('NODE_NOT_CONNECTED');const value=JSON.parse(address.value);if(!value||Object.keys(value).sort().join(',')!=='certificate,type,version'||value.type!=='DMASH_PUBLIC_NODE_V4'||value.version!==4)throw Error('PUBLIC_ADDRESS_PROFILE');g.DmashRouteDiscoveryV4.verifyCertificate(value.certificate);const reg=await registration(state.host,'PUBLIC_REPLY',true);await state.host.sendPublicRequest(reg.capability,value.certificate,{requestId:random(),displayName:displayName.value,introduction:introduction.value,nonce:random()});status.textContent='Запрос сохранён; ожидается ответ';await refresh();});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 100,
+      "source": "button(actions,'Обновить запросы',refresh);"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 102,
+      "source": "view={onStatus(statuses){if(!state.disposed&&statuses.some(s=>s.sessionEstablished))status.textContent='Ключи подтверждены';},close(){if(state.disposed)return;state.disposed=true;catalog.close();}};document.querySelector('[data-node-account-close]').addEventListener('click',()=>{view.close();core.closeModal();});"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 106,
+      "source": "const settings=core.openSettings.bind(core);core.openNodeContactsV4=()=>open(core);core.openSettings=function(){const value=settings();const box=document.querySelector('#sys-modal .dmash-settings-list');if(box){const button=document.createElement('button');button.type='button';button.className='dmash-settings-action';button.textContent='КОНТАКТЫ NODE';button.addEventListener('click',()=>open(core));box.append(button);}return value;};"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 109,
+      "source": "const ui=g.ui;if(ui?.renderGlobalSettings){const globalSettings=ui.renderGlobalSettings.bind(ui);ui.renderGlobalSettings=function(...args){const result=globalSettings(...args),box=document.querySelector('.gate-container .dmash-settings-list');if(box){const b=document.createElement('button');b.type='button';b.className='dmash-settings-card';b.textContent='КОНТАКТЫ NODE';b.addEventListener('click',()=>open(core));box.prepend(b);}return result;};}"
+    },
+    {
+      "file": "js/node_account_ui_v4.js",
+      "line": 128,
+      "source": "const task=(async()=>{try{const coordinator=g.DmashManagedNodeCatalogV4.coordinator(g.DeviceRoot),adapter=await this.openPublicAccountNodeV4(coordinator);await adapter.rehydrate();capture.assertCurrent();const result=await adapter.sendApplication(peer,{operationId:random(),plaintext:text,contentType:'text/plain;charset=utf-8'});capture.assertCurrent();if(result.durable===true){if(!content&&field?.value.trim()===text)field.value='';await this.renderPeers();capture.assertCurrent();if(this.activePeerId===peer)await refreshChat(this,capture);return true;}return false;}catch(error){try{capture.assertCurrent();this.openModal('СООБЩЕНИЕ НЕ ОТПРАВЛЕНО','<p data-node-send-error></p><button class=\"sys-modal-btn\" onclick=\"Core.closeModal()\">OK</button>');document.querySelector('[data-node-send-error]').textContent=errorText(error);}catch(_){}return false;}})();pending.set(peer,task);try{return await task;}finally{if(pending.get(peer)===task)pending.delete(peer);}"
+    },
+    {
+      "file": "js/recorded_note_turn.js",
+      "line": 141,
+      "source": "const panel=document.createElement('section'),label=document.createElement('span'),yes=document.createElement('button'),no=document.createElement('button');panel.className='dmash-file-transfer';label.textContent='Входящая запись '+Math.ceil(manifest.size/1024)+' КиБ';yes.textContent='Принять';no.textContent='Отклонить';yes.onclick=()=>{yes.disabled=true;void accept();};no.onclick=()=>this.stop(task);panel.append(label,yes,no);document.body.append(panel);task.panel=panel;task.timer=setTimeout(()=>this.stop(task),90000);return true;"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 200,
+      "source": "keypad.addEventListener(\"pointerup\", event => {"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 207,
+      "source": "keypad.addEventListener(\"pointercancel\", () => { ui._dmashQualifiedBiometricToken = null; }, true);"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 461,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.copyMyId()\">КОПИРОВАТЬ ID АККАУНТА</button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 462,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.setupLazyLogin()\">БЕСПАРОЛЬНЫЙ ВХОД АККАУНТА</button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 463,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"Core.openAccountManager()\">РЕЕСТР АККАУНТОВ</button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 464,
+      "source": "<button class=\"sys-modal-btn\" onclick=\"NodeManager.renderSettings()\">УЗЛЫ И ПОДКЛЮЧЕНИЕ</button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 465,
+      "source": "<button class=\"sys-modal-btn primary\" onclick=\"Core.closeModal()\">ЗАКРЫТЬ</button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 690,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"ui.openPublicRoutes()\"><b>ПУБЛИЧНЫЕ МАРШРУТЫ</b><small>RouteID, Contact Link, активация и PoW</small></button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 691,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"ui.renderGlobalQuickNames()\"><b>БЫСТРЫЕ ИМЕНА</b><small>Локальный зашифрованный реестр</small></button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 692,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"ui.renderGlobalNodes()\"><b>УЗЛЫ</b><small>Подключения этого устройства</small></button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 693,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"Core.openPendingContacts()\"><b>ЗАПРОСЫ В КОНТАКТЫ</b><small>Входящие Public Route requests</small></button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 694,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"Core.setupTelegram()\"><b>ТЕЛЕГРАМ-МАЯК</b><small>Device notification beacon</small></button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 695,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"Core.toggleFlipper()\"><b>ЭКСТРЕННЫЙ ФЛИП-ЛОК: ${panic ? \"ВКЛ\" : \"ВЫКЛ\"}</b><small>Блокирует устройство, не Account</small></button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 696,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"ui.startMasterReconfiguration()\"><b>СМЕНИТЬ MASTER-КОД</b><small>Перешифровать тот же DeviceRoot</small></button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 697,
+      "source": "<button class=\"dmash-settings-card\" onclick=\"ui.beginBiometricTriggerSetup()\"><b>БИОМЕТРИЯ УСТРОЙСТВА</b><small>Можно привязать несколько platform credentials</small></button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 699,
+      "source": "<button class=\"gate-btn dmash-settings-back\" onclick=\"ui.show_gate()\">НАЗАД К АККАУНТАМ</button>`;"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 720,
+      "source": "<button class=\"gate-btn\" onclick=\"Core.copyPublicContactLink('${route.routeId}')\">КОПИРОВАТЬ CONTACT LINK</button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 721,
+      "source": "<button class=\"gate-btn secondary\" onclick=\"ui.togglePublicRoute('${route.routeId}')\">${route.active ? \"DEACTIVATE\" : \"ACTIVATE\"}</button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 722,
+      "source": "${route.current ? '<button class=\"gate-btn secondary\" onclick=\"ui.reissuePublicRoute()\">REISSUE</button>' : \"\"}"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 730,
+      "source": "<button class=\"gate-btn\" onclick=\"ui.createPublicRoute()\">CREATE PUBLIC ROUTE</button>"
+    },
+    {
+      "file": "js/runtime_fixes.js",
+      "line": 731,
+      "source": "<button class=\"gate-btn dmash-settings-back\" onclick=\"ui.renderGlobalSettings()\">НАЗАД</button>`;"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 66,
+      "source": "keypad.addEventListener('pointerdown', (event) => {"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 72,
+      "source": "keypad.addEventListener('pointerup', clear);"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 73,
+      "source": "keypad.addEventListener('pointercancel', clear);"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 74,
+      "source": "keypad.addEventListener('pointerleave', clear);"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 164,
+      "source": "<button class=\"gate-btn\" style=\"margin-bottom:10px; background:#111; color:#0f0; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;\""
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 165,
+      "source": "onclick=\"ui.selectAccountForLogin('${a.id}', ${!!a.lazy})\">"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 174,
+      "source": "<button id=\"global-settings-button\" class=\"gate-btn\" type=\"button\" aria-label=\"ГЛОБАЛЬНЫЕ НАСТРОЙКИ\" title=\"ГЛОБАЛЬНЫЕ НАСТРОЙКИ\" style=\"position:absolute; top:-8px; right:0; width:auto; min-width:0; padding:4px 8px; margin:0;\" onclick=\"ui.renderGlobalSettings()\">⚙</button>"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 177,
+      "source": "<button class=\"gate-btn\" onclick=\"ui.renderLoginForm()\">+ НОВЫЙ ВХОД</button>"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 191,
+      "source": "<button id=\"global-public-routes-button\" class=\"gate-btn\" type=\"button\" style=\"margin:0;text-align:left;padding:12px 13px;\" onclick=\"ui.openPublicRoutes()\"><b style=\"display:block;color:#0f0;\">ПУБЛИЧНЫЕ МАРШРУТЫ</b><small style=\"color:#aaa;\">Приём новых контактов на этом устройстве</small></button>"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 192,
+      "source": "<button id=\"global-quick-names-button\" class=\"gate-btn\" type=\"button\" style=\"margin:0;text-align:left;padding:12px 13px;\" onclick=\"ui.renderGlobalQuickNames()\"><b style=\"display:block;color:#0f0;\">БЫСТРЫЕ ИМЕНА</b><small style=\"color:#aaa;\">Локальные подписи и значения, зашифрованные ключом устройства</small></button>"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 193,
+      "source": "<button id=\"global-nodes-button\" class=\"gate-btn\" type=\"button\" style=\"margin:0;text-align:left;padding:12px 13px;\" onclick=\"ui.renderGlobalNodes()\"><b style=\"display:block;color:#0f0;\">УЗЛЫ</b><small style=\"color:#aaa;\">Выбор и список узлов только этого устройства</small></button>"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 194,
+      "source": "<button class=\"gate-btn\" type=\"button\" style=\"margin:0;text-align:left;padding:12px 13px;\" onclick=\"ui.beginBiometricTriggerSetup()\"><b style=\"display:block;color:#0f0;\">БИОМЕТРИЯ УСТРОЙСТВА</b><small style=\"color:#aaa;\">Разблокирует устройство, но не входит в аккаунт</small></button>"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 196,
+      "source": "<button class=\"gate-btn\" type=\"button\" style=\"margin-top:15px;background:transparent;color:#aaa;border-color:#555;\" onclick=\"ui.show_gate()\">НАЗАД К ВЫБОРУ АККАУНТА</button>"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 202,
+      "source": "const rows = window.DeviceRoutes.list().map(route => `<div style=\"padding:8px;margin:7px 0;border:1px solid #333;overflow-wrap:anywhere\"><b>${route.current ? 'CURRENT' : 'PREVIOUS'} · ${route.active ? 'ACTIVE' : 'INACTIVE'}</b><div style=\"font-size:.6rem;color:#aaa\">${route.routeId}</div><button class=\"gate-btn\" onclick=\"ui.togglePublicRoute('${route.routeId}')\">${route.active ? 'DEACTIVATE' : 'ACTIVATE'}</button>${route.current ? '<button class=\"gate-btn\" style=\"margin-top:5px\" onclick=\"ui.reissuePublicRoute()\">REISSUE</button>' : ''}</div>`).join('') || 'PUBLIC ROUTES НЕ СОЗДАНЫ';"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 203,
+      "source": "document.querySelector('.gate-container').innerHTML = `<div style=\"color:#0f0;text-align:center\">PUBLIC ROUTES</div>${rows}<button class=\"gate-btn\" onclick=\"ui.createPublicRoute()\">CREATE PUBLIC ROUTE</button><button class=\"gate-btn\" style=\"margin-top:8px\" onclick=\"ui.renderGlobalSettings()\">НАЗАД</button>`;"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 223,
+      "source": "return `<div style=\"padding:10px 0;border-bottom:1px solid #333;text-align:left;\"><b style=\"color:#0f0;display:block;overflow-wrap:anywhere;\">${this.quickNameEscape(entry.name)}</b><div style=\"font-size:.72rem;color:#ccc;overflow-wrap:anywhere;margin:4px 0 8px;\">${this.quickNameEscape(entry.value)}</div><button class=\"gate-btn\" type=\"button\" style=\"width:auto;margin:0;padding:6px 9px;background:#400;color:#fff;border-color:#a44;\" onclick=\"ui.removeGlobalQuickName(decodeURIComponent('${id}'))\">УДАЛИТЬ</button></div>`;"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 225,
+      "source": "gateBox.innerHTML = `<div id=\"global-quick-names-title\" style=\"color:#0f0;font-size:.95rem;font-weight:bold;text-align:left;\">БЫСТРЫЕ ИМЕНА</div><p style=\"color:#aaa;font-size:.72rem;line-height:1.45;margin:7px 0 10px;text-align:left;\">СОХРАНЯЮТСЯ ЛОКАЛЬНО В ЭТОМ БРАУЗЕРЕ В ЗАШИФРОВАННОМ РЕЕСТРЕ. В АККАУНТ, СЕТЬ ИЛИ НА УЗЕЛ НЕ ОТПРАВЛЯЮТСЯ.</p><div aria-labelledby=\"global-quick-names-title\" style=\"max-height:250px;overflow-y:auto;margin-bottom:12px;\">${rows}</div><button id=\"global-add-quick-name-button\" class=\"gate-btn\" type=\"button\" style=\"margin:0;\" onclick=\"ui.addGlobalQuickName()\">ДОБАВИТЬ БЫСТРОЕ ИМЯ</button><button class=\"gate-btn\" type=\"button\" style=\"margin-top:9px;background:transparent;color:#aaa;border-color:#555;\" onclick=\"ui.renderGlobalSettings()\">НАЗАД К НАСТРОЙКАМ</button>`;"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 248,
+      "source": "return `<li style=\"padding:9px 0; border-bottom:1px solid #333; color:#ddd; word-break:break-word;\">${endpoint.label}${selected}<br><small>${endpoint.url}</small><br><button class=\"gate-btn\" type=\"button\" style=\"margin-top:6px; padding:7px;\" onclick=\"ui.selectGlobalNode('${endpoint.url}')\">СДЕЛАТЬ ОСНОВНЫМ</button> <button class=\"gate-btn\" type=\"button\" style=\"margin-top:6px; padding:7px; background:#400; color:#fff;\" onclick=\"ui.removeGlobalNode('${endpoint.url}')\">УДАЛИТЬ</button></li>`;"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 254,
+      "source": "<button id=\"global-add-node-button\" class=\"gate-btn\" type=\"button\" onclick=\"ui.addGlobalNode()\">ДОБАВИТЬ УЗЕЛ</button>"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 255,
+      "source": "<button class=\"gate-btn\" type=\"button\" onclick=\"ui.renderGlobalSettings()\">НАЗАД</button>"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 288,
+      "source": "<form onsubmit=\"event.preventDefault(); sys.loginAndSave();\">"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 289,
+      "source": "<input type=\"text\" id=\"p1\" class=\"gate-input\" placeholder=\"ИДЕНТИФИКАТОР\" value=\"${prefillId}\" spellcheck=\"false\" autocomplete=\"username\">"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 290,
+      "source": "<input type=\"password\" id=\"p2\" class=\"gate-input\" placeholder=\"КЛЮЧ ДОСТУПА\" autocomplete=\"current-password\">"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 292,
+      "source": "<input type=\"checkbox\" id=\"save-in-registry\"> СОХРАНИТЬ В РЕЕСТРЕ"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 294,
+      "source": "<button type=\"submit\" class=\"gate-btn\">ВОЙТИ</button>"
+    },
+    {
+      "file": "js/ui_logic.js",
+      "line": 296,
+      "source": "<button class=\"gate-btn\" style=\"margin-top:10px; background:transparent; color:#444;\" onclick=\"ui.show_gate()\">К СПИСКУ</button>"
+    }
+  ],
+  "load_branches": {
+    "default": "legacy-migration",
+    "managed": "explicit DMASH_NODE_PROFILE=managed-v4 only",
+    "loaded_repairs": "v50 v51 v52 v54 v55; delayed legacy baseline can expire installers before lazy Core",
+    "unloaded": [
+      "acceptance_v53.js",
+      "stability_fixes.js",
+      "app_shell.js"
+    ]
+  }
+}

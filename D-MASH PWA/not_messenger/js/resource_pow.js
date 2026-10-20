@@ -180,10 +180,33 @@
         if (!Number.isInteger(difficulty) || difficulty < 0 || difficulty > 256) throw new RangeError("difficulty must be 0..256");
         if (!Number.isSafeInteger(startNonce) || startNonce < 0) throw new RangeError("startNonce must be a non-negative safe integer");
         const { prefix, item } = activationPrefix(nodeId, activationType, deviceTransportKey, resource, expiresAt);
-        const hashNonce = nonceHasher(prefix);
+        // Optional trusted native host port; browsers retain the identical JS
+        // fallback. Prefix construction, work target and full proof stay here.
+        const hashNonce = typeof global.DmashNativeNonceHasher === 'function'
+            ? global.DmashNativeNonceHasher(prefix) : nonceHasher(prefix);
         const started = global.performance?.now?.() ?? Date.now();
         for (let nonce = startNonce; Number.isSafeInteger(nonce); nonce++) {
-            const digest = hashNonce(nonce);
+            let digest;
+            if (typeof hashNonce.search === 'function') {
+                const count = Math.min(4096, Number.MAX_SAFE_INTEGER - nonce + 1);
+                const found = hashNonce.search(nonce, count, difficulty);
+                if (found === null) {
+                    nonce += count - 1;
+                    if ((nonce - startNonce + 1) % 4096 === 0) {
+                        onProgress?.({ attempts: nonce - startNonce + 1, elapsedMs: (global.performance?.now?.() ?? Date.now()) - started });
+                        if (typeof global.importScripts !== 'function') await new Promise(resolve => setTimeout(resolve, 0));
+                    }
+                    continue;
+                }
+                if (!found || !Number.isSafeInteger(found.nonce) || found.nonce < nonce || found.nonce >= nonce + count || !(found.digest instanceof Uint8Array) || found.digest.length !== 32)
+                    throw new Error("Native PoW search result invalid");
+                // Prefix remains JS-owned. Independently recompute the complete
+                // winning transcript before accepting the optional native port.
+                digest = sha256(join(prefix, u64(found.nonce)));
+                if (digest.some((byte, index) => byte !== found.digest[index]) || leadingZeroBits(digest) < difficulty)
+                    throw new Error("Native PoW search proof mismatch");
+                nonce = found.nonce;
+            } else digest = hashNonce(nonce);
             if (leadingZeroBits(digest) >= difficulty) {
                 return Object.freeze({
                     v: VERSION, type: activationType,

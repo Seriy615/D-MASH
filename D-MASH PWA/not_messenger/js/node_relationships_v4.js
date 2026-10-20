@@ -18,7 +18,7 @@
                 return await this.open(key,localId,{...options,isCurrent:()=>deviceRoot.state===session && (options.isCurrent?.()??true)});
             } finally {key?.fill(0);}
         }
-        static async open(storageKey, localId, {databaseName='dmash_node_relationships_v4', maxRelationships=4096, isCurrent=()=>true}={}) {
+        static async open(storageKey, localId, {databaseName='dmash_node_relationships_v4', maxRelationships=4096, isCurrent=()=>true, store:backend=null}={}) {
             field(localId,64);
             if(!(storageKey instanceof Uint8Array) || storageKey.length!==32 || !Number.isInteger(maxRelationships) || maxRelationships<1 || maxRelationships>65536) throw Error('Invalid Node storage parameters');
             const store = new NodeRelationships();
@@ -34,14 +34,21 @@
                     store.encryptionKey=await crypto.subtle.importKey('raw',encryption,'AES-GCM',false,['encrypt','decrypt']);
                 } finally {alias.fill(0);encryption.fill(0);}
                 store.check();
-                store.db=await new Promise((resolve,reject)=>{
-                    const request=global.indexedDB.open(databaseName,1);
-                    request.onupgradeneeded=()=>request.result.createObjectStore('relationships',{keyPath:'key'});
-                    request.onsuccess=()=>{if(store.closed){request.result.close();reject(Error("Node storage session changed"));}else resolve(request.result);};
-                    request.onerror=()=>reject(Error('Node relationship storage unavailable'));
-                    request.onblocked=()=>reject(Error('Node relationship storage blocked'));
-                });
-                store.db.onversionchange=()=>store.close();
+                if(backend!==null) {
+                    // Trusted host adapter, not an IndexedDB emulation. Its CAS must
+                    // atomically enforce revision, empty binding creation and quota.
+                    if(!backend || !['read','cas','close'].every(name=>typeof backend[name]==='function')) throw Error('Invalid Node relationship backend');
+                    store.backend=backend;
+                } else {
+                    store.db=await new Promise((resolve,reject)=>{
+                        const request=global.indexedDB.open(databaseName,1);
+                        request.onupgradeneeded=()=>request.result.createObjectStore('relationships',{keyPath:'key'});
+                        request.onsuccess=()=>{if(store.closed){request.result.close();reject(Error("Node storage session changed"));}else resolve(request.result);};
+                        request.onerror=()=>reject(Error('Node relationship storage unavailable'));
+                        request.onblocked=()=>reject(Error('Node relationship storage blocked'));
+                    });
+                    store.db.onversionchange=()=>store.close();
+                }
                 const binding={version:4,localId};
                 for(let attempt=0;attempt<8;attempt++) {
                     const row=await store.read('binding');
@@ -54,7 +61,7 @@
                     if(await store.cas('binding',null,await store.encrypt('binding',binding),true)) return store;
                 }
                 throw Error('Node relationship storage contention');
-            } catch(error) {store.close();throw error;}
+            } catch(error) {try{store.close();}catch(_){}throw error;}
         }
         check() {if(this.closed || !this.isCurrent()) throw Error('Node storage session changed');}
         transaction(mode,body) {
@@ -69,8 +76,15 @@
                 catch(error) {tx.abort();reject(error);}
             });
         }
-        read(key) {return this.transaction('readonly',(objectStore,done)=>{objectStore.get(key).onsuccess=event=>done(event.target.result||null);});}
+        read(key) {
+            if(this.backend) return this.readBackend(key);
+            return this.transaction('readonly',(objectStore,done)=>{objectStore.get(key).onsuccess=event=>done(event.target.result||null);});
+        }
+        async readBackend(key) {
+            this.check();const row=await this.backend.read(key);this.check();return row;
+        }
         cas(key,revision,row,binding=false) {
+            if(this.backend) return this.casBackend(key,revision,row,binding);
             return this.transaction('readwrite',(objectStore,done,tx)=>{
                 objectStore.get(key).onsuccess=event=>{
                     const current=event.target.result;
@@ -83,6 +97,11 @@
                     };
                 };
             });
+        }
+        async casBackend(key,revision,row,binding) {
+            this.check();
+            const result=await this.backend.cas(key,revision,row,{binding,maxRelationships:this.maxRelationships,guard:()=>{this.check();return true;}});
+            this.check();return result;
         }
         async encrypt(key,value) {
             this.check();
@@ -127,7 +146,12 @@
             this.closed=true;
             for(const tx of this.transactions||[]) {try{tx.abort();}catch(_){}}
             this.transactions?.clear();
-            this.db?.close();this.db=null;this.aliasKey=null;this.encryptionKey=null;
+            try {this.backend?.close();}
+            finally {
+                this.backend=null;
+                try {this.db?.close();}
+                finally {this.db=null;this.aliasKey=null;this.encryptionKey=null;}
+            }
         }
     }
     global.DmashNodeRelationshipsV4=NodeRelationships;

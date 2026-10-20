@@ -1,0 +1,150 @@
+{
+  "kind": "C01_HEADLESS_ACTOR_LINUX_CHECKPOINT_NOT_RELEASE",
+  "date": "2026-10-20",
+  "toolchain": "Qt6.12.0/OpenSSL3.5.9/QuickJS2026-06-04 O1/Linux x86_64/Node24.19.0/Python patched s03",
+  "source_sha256": {
+    "native/CMakeLists.txt": "9a058dd0f40b383ccb95427b4bc3bb4b97141e968fe939058e22229b99872312",
+    "native/src/js_actor.cpp": "22797a8cf5c8c610480ce99f020f8631ee8bd80d5f5a27efadefd22968d5cf68",
+    "native/src/js_actor.h": "8bf7e168303ba302b67539d80f8f320328a44bc79e42036099d658b48040caa2",
+    "native/src/main.cpp": "39401810ed45823f24b8260a1a22afbfdecd80a0904824b6e5421181fd80ce67",
+    "native/src/nonce_hash.cpp": "bca53deb04b5e0e674601cfc9b4ac4fe02813eac5ffe2d65061ca506bc37e7ec",
+    "native/src/nonce_hash.h": "a8098beb50afecb225e018dbe43f353f62e53d516c8b1b7c8aee530fb503449a",
+    "native/js/platform.js": "7d6536e6f71064834c06e35fb84924753c260b7a949be50b90512bbe0f6fa7dd",
+    "native/js/runtime_entry.js": "468729f76387694788f408652d07145e8d10dafe136288761f4b7b707d5e4808",
+    "native/js/resources.cmake": "c3b1331e0ab6bccde6b3dd46ae06db80aaa46c443279da4b726f5a160744cca6",
+    "native/tests/nonce_hash_test.cpp": "5849ffd0f4a3e8f0f01f9352015d0c6f99ea49b1300f7b00a726ba711e8e77d1",
+    "native/tests/endpoint_scheduler_test.js": "a9b02f5e7fe5fce96ee0cc5ee94c79c6a7123317fe3454673966b83ed2a82c0b",
+    "native/tests/platform_adapter_test.js": "6d3a7937517bad41e91808053424aa60dcde5f8d1a34018baa2de0743778de07",
+    "native/tests/python_interop_fixture.py": "eb4492d3e6e6c6af5e4d4ca6fddfe21715cb9aefc6748161d3d3eb5e7b153256",
+    "D-MASH PWA/not_messenger/js/resource_pow.js": "9561922d0db7cf74ad32e5eff88e084b24f3b2673cf04edf62ef11d335e45955"
+  },
+  "protocol_modules": {
+    "files": [
+      {
+        "name": "vendor/nacl-fast.min.js",
+        "sha256": "3ec535c004aeeb225785d8e93fb33bf99f52e399bd7dfc01969b5629baea5131"
+      },
+      {
+        "name": "vendor/blake3.min.js",
+        "sha256": "8071ab35cb39002f3ba58c0b3ed48ce1be876d1c93a06a27572fe59d62afca0c"
+      },
+      {
+        "name": "secure_session.js",
+        "sha256": "757f002bedd54d7af8c88260b9c981d5234d9373f5af8e7a6d4a91c5b5c0c0a5"
+      },
+      {
+        "name": "node_identity.js",
+        "sha256": "47a18f80fd7e76b3bde39e0680830c8f317ab03eb0e282dddd32e26256560f43"
+      },
+      {
+        "name": "node_relationships_v4.js",
+        "sha256": "d08c79c4950166a42f922758851f8e26ff4c7a4e72042be548fae1b317872a50"
+      },
+      {
+        "name": "node_admission_v4.js",
+        "sha256": "9c89e3aeba7c1e8ce8d99821ead92c43f1e59f083af7e73dacae5220f7705f50"
+      },
+      {
+        "name": "node_registration_v4.js",
+        "sha256": "674508bb0cf6f24e6a95bdee3cdb7b619af8c0c34ff12e9ed8474a029b9164d2"
+      },
+      {
+        "name": "resource_pow.js",
+        "sha256": "9561922d0db7cf74ad32e5eff88e084b24f3b2673cf04edf62ef11d335e45955"
+      },
+      {
+        "name": "node_socket_v4.js",
+        "sha256": "327eb904751b432c9035440e354be7f7a68c50033fed7858f26d684f7d58f106"
+      },
+      {
+        "name": "node_channel_v4.js",
+        "sha256": "75faf8dbe71754e30a50ba399a3a403e0cd1475886a02933ae63f2d5909e65f3"
+      },
+      {
+        "name": "probe_primitives_v4.js",
+        "sha256": "3cc1b7dbbb016258bb756279a7b2b18c907ef69849759b59c3fc021dee26011e"
+      },
+      {
+        "name": "route_discovery_v4.js",
+        "sha256": "60fcc805c8005b5b6bb28f0ecea84d0309980250ca2e502b771a64c5b2559248"
+      },
+      {
+        "name": "recipient_payload_v4.js",
+        "sha256": "8167b736b6a8e29c50ef8ffb146b0a712e3369cfa9895bdef171ff24b95e6a6a"
+      },
+      {
+        "name": "node_routing_v4.js",
+        "sha256": "9ae26919aed67ddadf62d681f9b398a2f51cbb4e54cc6fdd3244b4e0d320d900"
+      },
+      {
+        "name": "node_inbox_v4.js",
+        "sha256": "44d0271df2e831445db79692c8a2631d6f3a8aede7c3804b396faf1e7229524f"
+      },
+      {
+        "name": "node_local_delivery_v4.js",
+        "sha256": "8f610ac165381e34438cb4ff87daf8155ba96ff1e7c6a1a2cd09b66ff56de710"
+      },
+      {
+        "name": "node_local_ownership_v4.js",
+        "sha256": "c3ff0523f260fbeaa41ec973e6ad5ed94688dae6bb9ef628d4ca841ca3bf5464"
+      }
+    ]
+  },
+  "scope": {
+    "python_backend": "unchanged NodeServiceV4+gateway",
+    "work_difficulty": 22,
+    "identity_pow": "existing0520prefix preserved",
+    "account_loaded": false,
+    "profile": "same synthetic retained profile for fallback,accelerated,reopen",
+    "wire": "ordinary authenticated encrypted SERVICE_QUERY \u2192 SERVICE_UNAVAILABLE",
+    "password_peer": "unsupported failclosed",
+    "windows_runtime": "NOT_RUN",
+    "android_runtime": "NOT_RUN",
+    "physical_power_loss": "NOT_RUN",
+    "full_transit_recovery": "NOT_RUN",
+    "credential_IPC": "NOT_IMPLEMENTED"
+  },
+  "checks": {
+    "native_ctest": "4/4PASS",
+    "endpoint_scheduler": "PASS max2/queued3rd/identitydedupe/sequentialalternative/close",
+    "platform": "PASS timer normalization/cancel/reentrantinterval/close/HKDFextractability",
+    "second_owner": "exit1 HOST_START_FAILED while firstactor alive",
+    "retained_reopen": "authenticated exchange PASS",
+    "SIGTERM_close": "exit0",
+    "bounded1second_worker_cancel_close": "exit0"
+  },
+  "transcripts": {
+    "actor-first-interop.log": [
+      "{\"accountsLoaded\":false,\"event\":\"ready\",\"nodeId\":\"79b105b20414e7f9b40d3746604e76ad18291b156c11ae770d999f245f4d6489\",\"role\":\"NODE\"}",
+      "{\"clockCalls\":2,\"elapsedMs\":2344.11321,\"event\":\"worker-clock-sample\",\"worker\":1}",
+      "{\"event\":\"connected\",\"index\":0,\"role\":\"NODE\",\"version\":4}",
+      "{\"code\":\"NODE_OPERATION_FAILED\",\"event\":\"error\",\"phase\":\"query\",\"stack\":\"    at __dmashHost (native)\\n    at <anonymous> (@platform:33:165)\\n    at arm (node_routing_v4.js:83:35)\\n    at enqueue (node_routing_v4.js:79:63)\\n    at <anonymous> (node_routing_v4.js:159:267)\\n    at Promise (native)\\n    at requestService (node_routing_v4.js:159:52)\\n    at query (@entry:30:131)\\n    at query (@entry:32:203)\\n\"}"
+    ],
+    "actor-native-interop.log": [
+      "{\"accountsLoaded\":false,\"event\":\"ready\",\"nodeId\":\"79b105b20414e7f9b40d3746604e76ad18291b156c11ae770d999f245f4d6489\",\"role\":\"NODE\"}",
+      "{\"clockCalls\":2,\"elapsedMs\":37.702237,\"event\":\"worker-clock-sample\",\"worker\":1}",
+      "{\"event\":\"connected\",\"index\":0,\"role\":\"NODE\",\"version\":4}",
+      "{\"authenticated\":true,\"event\":\"service-unavailable\",\"index\":0}"
+    ],
+    "actor-reopen-interop.log": [
+      "{\"accountsLoaded\":false,\"event\":\"ready\",\"nodeId\":\"79b105b20414e7f9b40d3746604e76ad18291b156c11ae770d999f245f4d6489\",\"role\":\"NODE\"}",
+      "{\"clockCalls\":2,\"elapsedMs\":28.882909,\"event\":\"worker-clock-sample\",\"worker\":1}",
+      "{\"event\":\"connected\",\"index\":0,\"role\":\"NODE\",\"version\":4}",
+      "{\"authenticated\":true,\"event\":\"service-unavailable\",\"index\":0}"
+    ],
+    "actor-final-interop.log": [
+      "{\"accountsLoaded\":false,\"event\":\"ready\",\"nodeId\":\"79b105b20414e7f9b40d3746604e76ad18291b156c11ae770d999f245f4d6489\",\"role\":\"NODE\"}",
+      "{\"clockCalls\":2,\"elapsedMs\":30.284450999999997,\"event\":\"worker-clock-sample\",\"worker\":1}",
+      "{\"difficulty\":22,\"event\":\"worker-proof\",\"nonce\":689646,\"worker\":1}",
+      "{\"event\":\"connected\",\"index\":0,\"role\":\"NODE\",\"version\":4}",
+      "{\"authenticated\":true,\"event\":\"service-unavailable\",\"index\":0}"
+    ],
+    "actor-final-second-owner.log": [
+      "HOST_START_FAILED"
+    ],
+    "actor-cancel-reopen.log": [
+      "{\"accountsLoaded\":false,\"event\":\"ready\",\"nodeId\":\"79b105b20414e7f9b40d3746604e76ad18291b156c11ae770d999f245f4d6489\",\"role\":\"NODE\"}"
+    ]
+  },
+  "benchmark_limit": "First fallback clock interval2344ms; proof nonce not retained so exact candidate count unknown. Final accelerated interval30.284ms preceded nonce689646 proof and therefore represents first4096 work loop. Nativefactory checks 0/MAX_SAFE/2^63/u64max against existing JS SHA for actualprefix; CTest covers padding lengths0/55/56/63/64/65/119/120/127/128."
+}

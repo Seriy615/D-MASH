@@ -1,0 +1,524 @@
+{
+  "kind": "SPEC MODEL, not product implementation",
+  "status": "PASS (expected counterexamples found)",
+  "python": "3.12.3",
+  "source_head": "9446c22f27309131456942870971d477f6f2358f",
+  "script_sha256": "1f8e5d58b2847441b70846004b63211cdc7e5662fa572df70766556a49d56a3f",
+  "results": [
+    {
+      "mode": "durable_authenticated",
+      "max_depth": 12,
+      "unique_states": 2875,
+      "transitions": 21117,
+      "events_explored": [
+        "account-decrypt-verify-persist",
+        "account-offline",
+        "account-online",
+        "authenticated-end-to-end-delivered",
+        "crash-restart",
+        "delete-remote",
+        "duplicate-network-packet",
+        "emit-authenticated-custody-receipt",
+        "forward-opaque-transit-without-Account-read",
+        "lease-current-policy",
+        "lease-expiry-retry",
+        "lose-packet",
+        "lose-receipt",
+        "mobility-address-change",
+        "persist-unique-local-job",
+        "receive-volatile",
+        "reject-forged-or-wrong-message-receipt",
+        "revoke-ingress-policy",
+        "send-or-retry",
+        "verify-matching-custody-receipt"
+      ],
+      "first_counterexample": null,
+      "witnesses": {
+        "offline_account_transit": [
+          "account-offline",
+          "forward-opaque-transit-without-Account-read"
+        ],
+        "durable_custody_survives_policy_revoke": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "revoke-ingress-policy"
+        ],
+        "mobility_delivery": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "account-decrypt-verify-persist",
+          "authenticated-end-to-end-delivered",
+          "mobility-address-change"
+        ]
+      }
+    },
+    {
+      "mode": "send_delete",
+      "max_depth": 12,
+      "unique_states": 3461,
+      "transitions": 25363,
+      "events_explored": [
+        "account-decrypt-verify-persist",
+        "account-offline",
+        "account-online",
+        "authenticated-end-to-end-delivered",
+        "crash-restart",
+        "delete-remote",
+        "duplicate-network-packet",
+        "emit-authenticated-custody-receipt",
+        "forward-opaque-transit-without-Account-read",
+        "lease-current-policy",
+        "lease-expiry-retry",
+        "lose-packet",
+        "lose-receipt",
+        "mobility-address-change",
+        "persist-unique-local-job",
+        "receive-volatile",
+        "reject-forged-or-wrong-message-receipt",
+        "revoke-ingress-policy",
+        "send-or-retry",
+        "verify-matching-custody-receipt"
+      ],
+      "first_counterexample": {
+        "violation": "custody-lost",
+        "trace": [
+          "lease-current-policy",
+          "send-or-retry",
+          "lose-packet",
+          "delete-remote"
+        ],
+        "state": {
+          "remote": false,
+          "leased": false,
+          "sent": false,
+          "wire": 0,
+          "volatile": false,
+          "durable": false,
+          "jobs": 0,
+          "ack": false,
+          "verified": false,
+          "account_commit": false,
+          "delivered": false,
+          "policy": true,
+          "generation": 0,
+          "lease_generation": 0,
+          "location": 0,
+          "account_online": true,
+          "forwarded": false
+        }
+      },
+      "witnesses": {
+        "offline_account_transit": [
+          "account-offline",
+          "forward-opaque-transit-without-Account-read"
+        ],
+        "durable_custody_survives_policy_revoke": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "revoke-ingress-policy"
+        ],
+        "mobility_delivery": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "account-decrypt-verify-persist",
+          "authenticated-end-to-end-delivered",
+          "mobility-address-change"
+        ]
+      }
+    },
+    {
+      "mode": "volatile_ack",
+      "max_depth": 12,
+      "unique_states": 3894,
+      "transitions": 29722,
+      "events_explored": [
+        "account-decrypt-verify-persist",
+        "account-offline",
+        "account-online",
+        "authenticated-end-to-end-delivered",
+        "crash-restart",
+        "delete-remote",
+        "duplicate-network-packet",
+        "emit-authenticated-custody-receipt",
+        "forward-opaque-transit-without-Account-read",
+        "lease-current-policy",
+        "lease-expiry-retry",
+        "lose-packet",
+        "lose-receipt",
+        "mobility-address-change",
+        "persist-unique-local-job",
+        "receive-volatile",
+        "reject-forged-or-wrong-message-receipt",
+        "revoke-ingress-policy",
+        "send-or-retry",
+        "verify-matching-custody-receipt"
+      ],
+      "first_counterexample": {
+        "violation": "custody-lost",
+        "trace": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "emit-authenticated-custody-receipt",
+          "crash-restart",
+          "verify-matching-custody-receipt",
+          "delete-remote"
+        ],
+        "state": {
+          "remote": false,
+          "leased": false,
+          "sent": false,
+          "wire": 0,
+          "volatile": false,
+          "durable": false,
+          "jobs": 0,
+          "ack": false,
+          "verified": true,
+          "account_commit": false,
+          "delivered": false,
+          "policy": true,
+          "generation": 0,
+          "lease_generation": 0,
+          "location": 0,
+          "account_online": true,
+          "forwarded": false
+        }
+      },
+      "witnesses": {
+        "offline_account_transit": [
+          "account-offline",
+          "forward-opaque-transit-without-Account-read"
+        ],
+        "durable_custody_survives_policy_revoke": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "revoke-ingress-policy"
+        ],
+        "mobility_delivery": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "account-decrypt-verify-persist",
+          "authenticated-end-to-end-delivered",
+          "mobility-address-change"
+        ]
+      }
+    },
+    {
+      "mode": "no_dedupe",
+      "max_depth": 12,
+      "unique_states": 3582,
+      "transitions": 24461,
+      "events_explored": [
+        "account-decrypt-verify-persist",
+        "account-offline",
+        "account-online",
+        "authenticated-end-to-end-delivered",
+        "crash-restart",
+        "delete-remote",
+        "duplicate-network-packet",
+        "emit-authenticated-custody-receipt",
+        "forward-opaque-transit-without-Account-read",
+        "lease-current-policy",
+        "lease-expiry-retry",
+        "lose-packet",
+        "lose-receipt",
+        "mobility-address-change",
+        "persist-unique-local-job",
+        "receive-volatile",
+        "reject-forged-or-wrong-message-receipt",
+        "revoke-ingress-policy",
+        "send-or-retry",
+        "verify-matching-custody-receipt"
+      ],
+      "first_counterexample": {
+        "violation": "duplicate-local-jobs",
+        "trace": [
+          "lease-current-policy",
+          "send-or-retry",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "receive-volatile",
+          "persist-unique-local-job"
+        ],
+        "state": {
+          "remote": true,
+          "leased": true,
+          "sent": true,
+          "wire": 0,
+          "volatile": false,
+          "durable": true,
+          "jobs": 2,
+          "ack": false,
+          "verified": false,
+          "account_commit": false,
+          "delivered": false,
+          "policy": true,
+          "generation": 0,
+          "lease_generation": 0,
+          "location": 0,
+          "account_online": true,
+          "forwarded": false
+        }
+      },
+      "witnesses": {
+        "offline_account_transit": [
+          "account-offline",
+          "forward-opaque-transit-without-Account-read"
+        ],
+        "durable_custody_survives_policy_revoke": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "revoke-ingress-policy"
+        ],
+        "mobility_delivery": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "account-decrypt-verify-persist",
+          "authenticated-end-to-end-delivered",
+          "mobility-address-change"
+        ]
+      }
+    },
+    {
+      "mode": "unauth_receipt",
+      "max_depth": 12,
+      "unique_states": 3687,
+      "transitions": 31407,
+      "events_explored": [
+        "accept-forged-custody-receipt",
+        "account-decrypt-verify-persist",
+        "account-offline",
+        "account-online",
+        "authenticated-end-to-end-delivered",
+        "crash-restart",
+        "delete-remote",
+        "duplicate-network-packet",
+        "emit-authenticated-custody-receipt",
+        "forward-opaque-transit-without-Account-read",
+        "lease-current-policy",
+        "lease-expiry-retry",
+        "lose-packet",
+        "lose-receipt",
+        "mobility-address-change",
+        "persist-unique-local-job",
+        "receive-volatile",
+        "reject-forged-or-wrong-message-receipt",
+        "revoke-ingress-policy",
+        "send-or-retry",
+        "verify-matching-custody-receipt"
+      ],
+      "first_counterexample": {
+        "violation": "custody-lost",
+        "trace": [
+          "accept-forged-custody-receipt",
+          "delete-remote"
+        ],
+        "state": {
+          "remote": false,
+          "leased": false,
+          "sent": false,
+          "wire": 0,
+          "volatile": false,
+          "durable": false,
+          "jobs": 0,
+          "ack": false,
+          "verified": true,
+          "account_commit": false,
+          "delivered": false,
+          "policy": true,
+          "generation": 0,
+          "lease_generation": 0,
+          "location": 0,
+          "account_online": true,
+          "forwarded": false
+        }
+      },
+      "witnesses": {
+        "offline_account_transit": [
+          "account-offline",
+          "forward-opaque-transit-without-Account-read"
+        ],
+        "durable_custody_survives_policy_revoke": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "revoke-ingress-policy"
+        ],
+        "mobility_delivery": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "account-decrypt-verify-persist",
+          "authenticated-end-to-end-delivered",
+          "mobility-address-change"
+        ]
+      }
+    },
+    {
+      "mode": "custody_as_delivery",
+      "max_depth": 12,
+      "unique_states": 3749,
+      "transitions": 29634,
+      "events_explored": [
+        "account-decrypt-verify-persist",
+        "account-offline",
+        "account-online",
+        "authenticated-end-to-end-delivered",
+        "crash-restart",
+        "delete-remote",
+        "duplicate-network-packet",
+        "emit-authenticated-custody-receipt",
+        "forward-opaque-transit-without-Account-read",
+        "lease-current-policy",
+        "lease-expiry-retry",
+        "lose-packet",
+        "lose-receipt",
+        "mislabel-custody-as-delivered",
+        "mobility-address-change",
+        "persist-unique-local-job",
+        "receive-volatile",
+        "reject-forged-or-wrong-message-receipt",
+        "revoke-ingress-policy",
+        "send-or-retry",
+        "verify-matching-custody-receipt"
+      ],
+      "first_counterexample": {
+        "violation": "false-delivered",
+        "trace": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "mislabel-custody-as-delivered"
+        ],
+        "state": {
+          "remote": true,
+          "leased": true,
+          "sent": true,
+          "wire": 0,
+          "volatile": false,
+          "durable": true,
+          "jobs": 1,
+          "ack": false,
+          "verified": false,
+          "account_commit": false,
+          "delivered": true,
+          "policy": true,
+          "generation": 0,
+          "lease_generation": 0,
+          "location": 0,
+          "account_online": true,
+          "forwarded": false
+        }
+      },
+      "witnesses": {
+        "offline_account_transit": [
+          "account-offline",
+          "forward-opaque-transit-without-Account-read"
+        ],
+        "durable_custody_survives_policy_revoke": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "revoke-ingress-policy"
+        ],
+        "mobility_delivery": [
+          "lease-current-policy",
+          "send-or-retry",
+          "receive-volatile",
+          "persist-unique-local-job",
+          "mislabel-custody-as-delivered",
+          "mobility-address-change"
+        ]
+      }
+    }
+  ],
+  "local_handoff_results": [
+    {
+      "early_reply": false,
+      "atomic_unique": true,
+      "max_depth": 9,
+      "unique_states": 14,
+      "transitions": 65,
+      "first_counterexample": null
+    },
+    {
+      "early_reply": true,
+      "atomic_unique": true,
+      "max_depth": 9,
+      "unique_states": 21,
+      "transitions": 112,
+      "first_counterexample": {
+        "trace": [
+          "submit-same-scoped-operation-id",
+          "unsafe-reply-before-persist",
+          "receive-durable-acceptance",
+          "retire-application-transport-intent",
+          "daemon-crash-restart"
+        ],
+        "state": {
+          "application_intent": false,
+          "pending_request": false,
+          "daemon_jobs": 0,
+          "reply_in_flight": false,
+          "caller_accepted": true
+        }
+      }
+    },
+    {
+      "early_reply": false,
+      "atomic_unique": false,
+      "max_depth": 9,
+      "unique_states": 22,
+      "transitions": 99,
+      "first_counterexample": {
+        "trace": [
+          "submit-same-scoped-operation-id",
+          "atomic-persist-or-return-existing-job",
+          "submit-same-scoped-operation-id",
+          "atomic-persist-or-return-existing-job"
+        ],
+        "state": {
+          "application_intent": true,
+          "pending_request": false,
+          "daemon_jobs": 2,
+          "reply_in_flight": true,
+          "caller_accepted": false
+        }
+      }
+    }
+  ],
+  "assumptions": [
+    "Single stable message ID; atomic durable write; storage not destroyed by crash",
+    "Perfect symbolic authenticated message-bound receipt; no key compromise",
+    "Two in-flight packets; depth 12; state merging; no fairness or unconditional liveness claim",
+    "Custody ACK and Account delivery receipt have distinct meanings",
+    "Revocation blocks new ingress/send; already durable custody remains available for local processing",
+    "Mobility changes transport address only; no native/NAT adaptation is modeled"
+  ],
+  "limits": [
+    "Model verifies proposed stronger custody contract only; current send-then-delete is deliberately modeled as a weaker alternative",
+    "No RFC, native runtime, sockets, real signatures, persistence engine or NAT traversal is implemented/tested",
+    "Model does not establish all production transit paths are Account-independent"
+  ]
+}

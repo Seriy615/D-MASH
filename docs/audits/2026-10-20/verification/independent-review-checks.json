@@ -1,0 +1,14 @@
+{
+  "source_head": "9446c22f27309131456942870971d477f6f2358f",
+  "independent_checks": {
+    "master_repro_node": "v24.19.0",
+    "master_checks": 7,
+    "master_all_pass": true,
+    "native_executable_rerun_exit": 0,
+    "native_module_bodies_exact_and_ordered": 25,
+    "product_tracked_diff_empty": true
+  },
+  "limits": [
+    "Planning/document review; no native app, Android/Qt build, physical device, NAT or release acceptance"
+  ]
+}

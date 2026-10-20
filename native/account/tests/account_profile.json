@@ -1,0 +1,188 @@
+{
+  "synthetic": true,
+  "identity": "native-synthetic-account",
+  "password": "synthetic-account-password",
+  "rootPin": "synthetic-only-master",
+  "accountPublicId": "f0d8b6060d453b8a1b5dd1aef593f9c6440655601846d1ab130954dffcc3df77",
+  "profile": {
+    "version": 1,
+    "inventoryComplete": true,
+    "root": {
+      "id": "root",
+      "version": 1,
+      "wrap": "argon2id-aes-256-gcm-v2",
+      "wrapSalt": "AwMDAwMDAwMDAwMDAwMDAw==",
+      "iv": "BAQEBAQEBAQEBAQE",
+      "wrappedRoot": "EJkf+50V8TKQSyLZBHNIHzQ1wV0wso9d9d+pUPsHBb9+ubJ0PjRL2nSkCXsDzMzt",
+      "materials": {
+        "node-ed25519-pow-v4": {
+          "iv": "BAQEBAQEBAQEBAQE",
+          "ciphertext": "ZnAmxDqqU2i7gyDuM5zATIPfi4raeKG9rTpvB5xH4qU4xCH5KDiWoMwLdgrXI4u2"
+        },
+        "node-base-ncrh-v4": {
+          "iv": "BAQEBAQEBAQEBAQE",
+          "ciphertext": "PXn5Y/Bk3quWCCrWBB02NjLpyUbHl92fBzK+cu8fc9ZG63qZBgj7g1rSmob0P5FW"
+        },
+        "account-registry-v1": {
+          "iv": "NJ1Fgtlh1R1Sdfvf",
+          "ciphertext": "ZBEfyTkp314PABEn8VS2boGY+iYuKo5U3QhGZ1pt/UH/5QYodbAzcwkva4lt9zZE"
+        }
+      },
+      "opaqueMetadata": {
+        "mustSurvive": "synthetic encrypted owner metadata"
+      },
+      "wrapKdf": {
+        "algorithm": "argon2id",
+        "version": 19,
+        "type": 2,
+        "time": 3,
+        "mem": 65536,
+        "parallelism": 1,
+        "hashLen": 32,
+        "saltEncoding": "base64-utf8"
+      },
+      "credentialRevision": 2,
+      "credentials": {
+        "version": 1,
+        "state": "ready",
+        "legacyCleanup": "complete",
+        "wipe": null,
+        "wipeDisabledReason": "not-configured"
+      }
+    },
+    "ancillary": {
+      "synthetic": true
+    },
+    "databases": [
+      {
+        "name": "dmash_device_root_v1",
+        "stores": [
+          {
+            "name": "device_root",
+            "records": [
+              {
+                "id": "root",
+                "version": 1,
+                "wrap": "argon2id-aes-256-gcm-v2",
+                "wrapSalt": "AwMDAwMDAwMDAwMDAwMDAw==",
+                "iv": "BAQEBAQEBAQEBAQE",
+                "wrappedRoot": "EJkf+50V8TKQSyLZBHNIHzQ1wV0wso9d9d+pUPsHBb9+ubJ0PjRL2nSkCXsDzMzt",
+                "materials": {
+                  "node-ed25519-pow-v4": {
+                    "iv": "BAQEBAQEBAQEBAQE",
+                    "ciphertext": "ZnAmxDqqU2i7gyDuM5zATIPfi4raeKG9rTpvB5xH4qU4xCH5KDiWoMwLdgrXI4u2"
+                  },
+                  "node-base-ncrh-v4": {
+                    "iv": "BAQEBAQEBAQEBAQE",
+                    "ciphertext": "PXn5Y/Bk3quWCCrWBB02NjLpyUbHl92fBzK+cu8fc9ZG63qZBgj7g1rSmob0P5FW"
+                  },
+                  "account-registry-v1": {
+                    "iv": "NJ1Fgtlh1R1Sdfvf",
+                    "ciphertext": "ZBEfyTkp314PABEn8VS2boGY+iYuKo5U3QhGZ1pt/UH/5QYodbAzcwkva4lt9zZE"
+                  }
+                },
+                "opaqueMetadata": {
+                  "mustSurvive": "synthetic encrypted owner metadata"
+                },
+                "wrapKdf": {
+                  "algorithm": "argon2id",
+                  "version": 19,
+                  "type": 2,
+                  "time": 3,
+                  "mem": 65536,
+                  "parallelism": 1,
+                  "hashLen": 32,
+                  "saltEncoding": "base64-utf8"
+                },
+                "credentialRevision": 2,
+                "credentials": {
+                  "version": 1,
+                  "state": "ready",
+                  "legacyCleanup": "complete",
+                  "wipe": null,
+                  "wipeDisabledReason": "not-configured"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "dm_registry_secure_v1",
+        "stores": [
+          {
+            "name": "accounts",
+            "records": [
+              {
+                "alias": "gR/1q6kVVgfHVC+QwJ2knS9+NhJGX2AauiF/C+smuBQ=",
+                "blob": "C5qYb1NEaxcsdPbRM4Z6uN88THXhhSJ57MfniLP6Zw7yo+yQumgHvCF2ZxFbvFiNRjg1ZWlzarS5ct0YkrfLlwP5LdBA6O9IYvpB2aD2JFLmZ5omgUFqTT8zFAJSwluFV15s3ecnGzLBMdwq0QPFjWw+MO7bpP6c7drvA+4Oq4pwL8p3G9+QzVuhldqmmR7J94cKZZ/sxrXFc/4ttYu/pF/p28JvRtSOHrU5UznI0vYxNRXIBIIb+zv0fgNrdktGaBLfL6w="
+              }
+            ]
+          },
+          {
+            "name": "meta",
+            "records": [
+              {
+                "key": "legacy-migrated",
+                "done": true,
+                "at": 1700000000000
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "dm_gamma_vault",
+        "stores": [
+          {
+            "name": "blind_peers",
+            "records": [
+              {
+                "alias": "0ab5afe65de330862d42b6a1c66817c4aaa84fa0242290d5ea4ed3b0abeac341",
+                "blob": "je8dEr42q8/L8k+hjm59g914cBJLXXQ7LBo+w1t8xtJd/YB5NV+3bM7573F8ndC74vTFZKQj55ottmBEJOXXpKvNZNkhjeuklnYGAI5yKcefNbBKk958Zg=="
+              },
+              {
+                "alias": "23f0f9065e51d2d7342fb05c6d3b42b796497db854c8e9da64be84c52faf5a58",
+                "blob": "oUri7GT0s/hjuH89/t+9wLQGvs+vw7wAWOCAmLzwwd53zD2tTfoz7+SBsk27uFz8TXKVSVyFZXOTHxjs8r0iJSMreDAqF+kMBs/KWVB/sLLvWHTP2fQA55dlOSFQDAk+qPY1HPX6Axb68N/ypykvw0K+z+n48lQmnTSshVq4ojvwL2MF9F2BeeGg3gUuQCMzMatlmKQK096iv40j"
+              }
+            ]
+          },
+          {
+            "name": "blind_secrets",
+            "records": [
+              {
+                "alias": "0ab5afe65de330862d42b6a1c66817c4aaa84fa0242290d5ea4ed3b0abeac341",
+                "blob": "A3rj+S99QGWnA+VqzgWwtyybz1qBj5Ua1hC7O0Jfwob325YEfTNSngPS"
+              }
+            ]
+          },
+          {
+            "name": "blind_messages",
+            "records": [
+              {
+                "alias": "d52f4be34e6023446452454516707eea726f2fce616f6364f6f31e570fc939fa",
+                "blob": "xOOOZDXtP1iRSKQKJspDivuDCgyFtnFZOVnl3aBa3CtcgceD7x2q1TRcfZsMCN0VDhoroGhUJ7xw5ZTBCEoivMq3XOFXYNmuCPhN4ldBmK5jDthj8d8HvAVSsBMxOn54antJO8P4SQwzY9ep9lGzBZlzL1eR84giHiZ3/DByA4VGze6Et9dkLzniwXRHrKAZd+dyJj6Hip+RBb8WmGNx6GWU1NdNOJBjW+tMSDg/vXifraV1WB8wHXwvRc5FBgyxChU="
+              }
+            ]
+          },
+          {
+            "name": "pairing_material",
+            "records": []
+          },
+          {
+            "name": "blind_outbox",
+            "records": []
+          },
+          {
+            "name": "blind_files",
+            "records": []
+          },
+          {
+            "name": "blind_file_owners",
+            "records": []
+          }
+        ]
+      }
+    ]
+  }
+}

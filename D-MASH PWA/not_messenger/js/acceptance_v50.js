@@ -79,8 +79,8 @@
 
     function patchDeviceRoot(root) {
         if (!root || root[ROOT_PATCH]) return false;
+        if (typeof root.prepareWebAuthnUnlock !== "function" || typeof root.prepareUnlock !== "function") throw new Error("VERSIONED_DEVICE_ROOT_REQUIRED");
         const previousEnroll = root.enrollWebAuthnPrf.bind(root);
-        const previousRewrap = root.rewrapMasterPin.bind(root);
 
         root.__dmashBiometricRecordCache = null;
         root.refreshBiometricRecordCache = async function refreshBiometricRecordCache() {
@@ -95,128 +95,16 @@
         };
         void root.refreshBiometricRecordCache();
 
-        // Device biometric enrollment may add credentials, but must never
-        // destroy the independent Argon2 master wrap.
         root.enrollWebAuthnPrf = async function guardedEnrollment() {
-            const store = this._store();
-            let before = await store.get();
-            if (!validRootRecord(before) && validRootRecord(this.state?.record)) {
-                before = this.state.record;
-                await store.put(before);
-            }
-            if (!validRootRecord(before)) {
-                throw new global.DeviceRootError("STORAGE_CORRUPT", "Master-wrap DeviceRoot повреждён. Биометрия не будет менять запись.");
-            }
-            if (this.state) this.state.record = before;
-            try {
-                const result = await previousEnroll();
-                const after = await store.get();
-                if (!validRootRecord(after)) throw new Error("biometric enrollment damaged master wrap");
-                this.__dmashBiometricRecordCache = after;
-                if (this.state) this.state.record = after;
-                return result;
-            } catch (error) {
-                await store.put(before).catch(() => {});
-                this.__dmashBiometricRecordCache = before;
-                if (this.state) this.state.record = before;
-                if (error instanceof global.DeviceRootError) throw error;
-                throw new global.DeviceRootError("WEBAUTHN_ENROLLMENT_FAILED", error?.message || "Biometric enrollment failed");
-            }
+            const result = await previousEnroll();
+            await this.refreshBiometricRecordCache();
+            return result;
         };
-
-        // The 3-second hold is qualified by runtime_fixes.js; WebAuthn starts on
-        // the trusted pointerup. Metadata is preloaded so no IndexedDB await
-        // occurs between pointerup and navigator.credentials.get().
+        // Prepared APIs preserve trusted synchronous OS invocation, root epoch,
+        // current persisted biometric binding and temporary-secret ownership.
         root.unlockWithWebAuthnPrf = async function cachedWebAuthnUnlock() {
-            this._requireCrypto();
-            this._requireWebAuthn();
-            const record = this.__dmashBiometricRecordCache;
-            const wraps = biometricWraps(record);
-            if (!record || !wraps.length) {
-                throw new global.DeviceRootError("WEBAUTHN_METADATA_NOT_READY", "Биометрические данные ещё загружаются. Повторите удержание через секунду.");
-            }
-            const salt = unb64(wraps[0].prfSalt);
-            if (salt.length !== PRF_BYTES) throw new global.DeviceRootError("STORAGE_CORRUPT", "Biometric PRF metadata is invalid.");
-            const allowCredentials = wraps.map(wrap => ({ type: "public-key", id: unb64(wrap.credentialId) }));
-
-            let assertionPromise;
-            try {
-                assertionPromise = this._credentials().get({ publicKey: {
-                    challenge: this._webauthnChallenge(),
-                    rpId: global.location.hostname,
-                    timeout: 60000,
-                    userVerification: "required",
-                    allowCredentials,
-                    extensions: { prf: { eval: { first: salt } } }
-                } });
-            } catch (error) {
-                throw new global.DeviceRootError("WEBAUTHN_ASSERTION_FAILED", error?.message || "WebAuthn could not start.");
-            }
-
-            let assertion;
-            try { assertion = await assertionPromise; }
-            catch (_) { throw new global.DeviceRootError("WEBAUTHN_ASSERTION_FAILED", "Биометрическая проверка отменена или не прошла."); }
-
-            const selectedId = new Uint8Array(assertion.rawId);
-            const selected = wraps.find(wrap => {
-                const id = unb64(wrap.credentialId);
-                return id.length === selectedId.length && id.every((v, i) => v === selectedId[i]);
-            });
-            if (!selected) throw new global.DeviceRootError("WEBAUTHN_UNKNOWN_CREDENTIAL", "Этот биометрический ключ не привязан к устройству.");
-
-            let output;
-            try {
-                output = prfResult(assertion);
-                const key = await this._prfWrapKey(output);
-                const plaintext = await this._crypto.subtle.decrypt(
-                    { name: "AES-GCM", iv: unb64(selected.iv), additionalData: DEVICE_PRF_AAD },
-                    key,
-                    unb64(selected.wrappedRoot)
-                );
-                const unlockedRoot = new Uint8Array(plaintext);
-                if (unlockedRoot.length !== ROOT_BYTES) throw new Error("invalid DeviceRoot length");
-                const identity = await this.deviceIdentity(unlockedRoot);
-                this.state = { root: unlockedRoot, identity, created: false, record };
-                return this.state;
-            } catch (error) {
-                if (error instanceof global.DeviceRootError) throw error;
-                throw new global.DeviceRootError("WEBAUTHN_UNLOCK_FAILED", "Биометрический ключ не смог открыть DeviceRoot.");
-            } finally { output?.fill?.(0); }
-        };
-
-        // Repair an already damaged master wrap only when the same DeviceRoot is
-        // currently unlocked (for example through an older biometric binding).
-        root.rewrapMasterPin = async function repairableMasterRewrap(currentMasterPin, nextMasterPin) {
-            const store = this._store();
-            const stored = await store.get();
-            if (validRootRecord(stored)) {
-                const result = await previousRewrap(currentMasterPin, nextMasterPin);
-                await this.refreshBiometricRecordCache();
-                return result;
-            }
-            if (!this.state?.root) {
-                throw new global.DeviceRootError("STORAGE_CORRUPT", "DeviceRoot master-wrap повреждён. Сначала разблокируйте устройство привязанной биометрией.");
-            }
-            if (await sha256Hex(currentMasterPin) !== localStorage.getItem("sys_m")) {
-                throw new global.DeviceRootError("UNLOCK_FAILED", "Текущий Master-код неверен.");
-            }
-            const salt = this._crypto.getRandomValues(new Uint8Array(16));
-            const wrapped = await this._encryptRoot(this.state.root, nextMasterPin, salt);
-            const stateRecord = this.state.record && typeof this.state.record === "object" ? this.state.record : {};
-            const source = stored && typeof stored === "object" ? stored : {};
-            const updated = {
-                ...stateRecord,
-                ...source,
-                id: "root",
-                version: 1,
-                wrapSalt: b64(salt),
-                materials: source.materials || stateRecord.materials || {},
-                ...wrapped
-            };
-            await store.put(updated);
-            this.state.record = updated;
-            this.__dmashBiometricRecordCache = updated;
-            return Object.freeze({ rewrapped: true, repaired: true });
+            const handle = await this.prepareWebAuthnUnlock({ record: this.__dmashBiometricRecordCache });
+            try { return await this.publishPrepared(handle); } finally { handle.dispose(); }
         };
 
         Object.defineProperty(root, ROOT_PATCH, { value: true });
@@ -230,7 +118,7 @@
             time: 3,
             mem: 65536,
             hashLen: 128,
-            type: global.argon2.argon2id
+            type: 0 /* deployed Account Argon2d; separate from local credentials */
         });
         const full = result.hash instanceof Uint8Array ? result.hash : new Uint8Array(result.hash || []);
         if (full.length !== 128) return false;
@@ -316,12 +204,6 @@
             if (originalDeviceBio) core.setupDeviceBiometrics = async function(...args) {
                 const result = await originalDeviceBio(...args);
                 if (result !== false) scheduleReload(220);
-                return result;
-            };
-            const originalMasterChange = core.changeDeviceMasterSecret?.bind(core);
-            if (originalMasterChange) core.changeDeviceMasterSecret = async function(...args) {
-                const result = await originalMasterChange(...args);
-                scheduleReload(220);
                 return result;
             };
             // terminateSession already clears RAM and restores the calculator
@@ -454,11 +336,10 @@
             try {
                 const accounts = await storage.getAllRegistryAccounts();
                 const rows = accounts.map(account => {
-                    const id = encodeURIComponent(account.id);
                     return `<div class="dmash-registry-row">
                         <div class="dmash-registry-id">${esc(account.id)}</div>
                         <div class="dmash-registry-state">${account.accountBiometric ? "BIOMETRIC · " : ""}${account.id === this.activeIdentity ? "ACTIVE" : "LOCAL"}</div>
-                        ${account.id !== this.activeIdentity ? `<button class="gate-btn danger" onclick="Core.removeAccountFlow(decodeURIComponent('${id}'))">УДАЛИТЬ</button>` : ""}
+                        ${account.id !== this.activeIdentity ? `<button class="gate-btn danger" ${global.Core.dataActionAttributes("removeAccountFlow", [account.id])}>УДАЛИТЬ</button>` : ""}
                     </div>`;
                 }).join("") || '<div class="dmash-settings-note">Реестр аккаунтов пуст.</div>';
                 this.openModal("РЕЕСТР АККАУНТОВ", `
@@ -617,8 +498,7 @@
             let entries = [];
             try { entries = await this.getQuickNameRegistry().list(); } catch (_) {}
             const buttons = entries.map(entry => {
-                const id = encodeURIComponent(entry.id);
-                return `<button class="dmash-quick-choice" onclick="Core.choosePublicContactQuickName(decodeURIComponent('${id}'))">
+                return `<button class="dmash-quick-choice" ${global.Core.dataActionAttributes("choosePublicContactQuickName", [entry.id])}>
                     <b>${esc(entry.name)}</b><small>${esc(entry.value)}</small>
                 </button>`;
             }).join("");
@@ -724,10 +604,9 @@
                 for (const account of accounts) if (account?.accountBiometric) core._accountBiometricCache.set(account.id, account.accountBiometric);
             }
             const rows = accounts.map(account => {
-                const id = encodeURIComponent(account.id);
                 return `<div class="dmash-account-select-row">
-                    <button class="gate-btn dmash-account-select-main" onclick="ui.renderLoginForm(decodeURIComponent('${id}'))">${esc(account.id)}</button>
-                    ${account.accountBiometric ? `<button class="gate-btn dmash-account-bio-button" onclick="Core.accountBiometricLogin(decodeURIComponent('${id}'))">БИОМЕТРИЯ</button>` : ""}
+                    <button class="gate-btn dmash-account-select-main" ${global.Core.dataActionAttributes("renderLoginForm", [account.id])}>${esc(account.id)}</button>
+                    ${account.accountBiometric ? `<button class="gate-btn dmash-account-bio-button" ${global.Core.dataActionAttributes("accountBiometricLogin", [account.id])}>БИОМЕТРИЯ</button>` : ""}
                 </div>`;
             }).join("");
             gateBox.innerHTML = `
@@ -742,6 +621,7 @@
                 </div>
                 <button class="gate-btn" onclick="ui.renderLoginForm()">+ НОВЫЙ ВХОД</button>`;
             void refreshMetrics();
+            global.Core.bindDataActions(gateBox);
         };
 
         Object.defineProperty(ui, PATCH, { value: true });
@@ -783,6 +663,13 @@
     global.addEventListener("dmash-node-state", () => void refreshMetrics());
     global.addEventListener("dmash-incoming-contacts-changed", () => void refreshMetrics());
 
+    if (global.DmashRuntimeReadiness) {
+        let warmupChecked = false;
+        global.DmashRuntimeReadiness.register("acceptance-v50-ui", 50, () => { exposeLegacyLexicals(); if (global.ui) patchUi(global.ui); }, () => !!global.ui?.[PATCH], ["acceptance-ui"]);
+        global.DmashRuntimeReadiness.register("acceptance-v50", 50, install, () => !!(global.Core?.[PATCH] && global.DeviceRoot?.[ROOT_PATCH]), ["acceptance-core"]);
+        global.DmashRuntimeReadiness.register("acceptance-v50-warmup", 51, () => { warmColdStartBiometrics(); warmupChecked = true; }, () => warmupChecked, ["foundation-loader", "acceptance-v50-ui"]);
+        return;
+    }
     let attempts = 0;
     const timer = setInterval(() => {
         attempts += 1;

@@ -1,0 +1,26 @@
+{
+  "kind": "actual vendor JS/WASM execution",
+  "status": "PASS (confirmed KDF type mismatch)",
+  "node": "v24.19.0",
+  "source_head": "9446c22f27309131456942870971d477f6f2358f",
+  "source_sha256": {
+    "vendor/argon2-bundled.min.js": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+    "vendor/argon2.wasm": "0c2149886c13e4eae4a6ca25ee71d47423c5c8740a874cf04ff816d1b2c901d7",
+    "device_root.js": "4e17177fa33414a7351d60567648ba0e0f4aabb2d1a10759a486feb7461170be",
+    "core_engine.js": "2d1a897c80a9fe83e731c8e3c9b8381224fc2886e8278a0120c4f45b2457d920",
+    "ui_logic.js": "af85da1366a72e758bbd31a7e2878876002762a819c1af05b6928a4894df4174",
+    "acceptance_v51.js": "682cf2c19d1147f5f3d7814e1bc370db3dbe5e95e929ed20b012d6ce6c365ca2"
+  },
+  "checks": [
+    "vendor exports ArgonType.Argon2id=2; top-level argon2id undefined",
+    "actual undefined-type invocation equals explicit Argon2d",
+    "actual undefined-type invocation differs from explicit Argon2id",
+    "encoded result independently identifies argon2d",
+    "no top-level enum alias assignment in non-minified product JS"
+  ],
+  "limits": [
+    "Synthetic public vector uses reduced time/memory; type dispatch is actual vendor code/WASM",
+    "Not a real Account/root unlock or browser loading acceptance",
+    "Do not silently fix type for existing Account derivation: it changes keys; wrap migration must preserve existing root"
+  ]
+}

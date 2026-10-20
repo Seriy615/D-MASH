@@ -1,4 +1,168 @@
-# D-MASH — актуальный хендофф для нового сервера
+# D-MASH — текущий хендофф
+
+**20 октября 2026 UTC: цель ACTIVE, приложения Android/Windows/Linux НЕ ГОТОВЫ.**
+Последнее указание пользователя: «аккуратно думай не сильно о кибербезе».
+Приоритет — работающие приложения, простая обычная переписка, фоновые доставка
+и восстановление. Исправлять подтверждённые ошибки и риск потери данных; не
+раздувать работу гипотетическим hardening и дополнительными пользовательскими
+церемониями. Сохранение identities/history и разделение Account/Node остаются.
+Production/deploy и reset пользовательского storage не выполняются.
+
+Checkout `/home/jcode/D-MASH`, branch `codex/native-clients-20261020`.
+`/home/jcode/D-MASH-Gamma` — прежний WIP, не изменять. Product baseline
+`9446c22f27309131456942870971d477f6f2358f`. Runtime checkpoint `a0f54a9`, Desktop Account UI `27a28e7`, N4 import recovery `a8f8dbf`, Android package `1cbc3f0`;
+рабочее дерево содержит незавершённые broker/platform/Inbox изменения агентов.
+[Аудит](docs/audits/2026-10-20/README.md),
+[backlog](docs/audits/2026-10-20/IMPLEMENTATION_BACKLOG.md),
+[платформы](docs/native/2026-10-20/TARGETS.md),
+[implementation delta](docs/native/2026-10-20/CURRENT_IMPLEMENTATION_DELTA.md),
+[модель угроз](docs/native/2026-10-20/THREAT_MODEL.md).
+Файлы срезов описывают собственные SHA/ограничения, не весь текущий HEAD.
+
+## Реализовано и проверено в ограниченном scope
+
+- Общий нативный Qt/QuickJS Node actor: encrypted NODE v4 peering с существующим
+  Python peer/default22, без Account login. Scoped TransportBundle; Account
+  plaintext/E2EE и полный Root вне network process. Root самостоятельно повторил
+  два запуска одного retained synthetic profile, сохранение NodeID, запрет второго
+  owner, SIGTERM/SIGINT exit0: [proof](docs/native/2026-10-20/root-native-actor-interop.json).
+- SQLite NodeInbox: atomic promote, quotas и recovery. Независимые root CTest,
+  неизменённый JS consumer и70 differential IndexedDB операций PASS на d81d356:
+  [proof](docs/native/2026-10-20/root-native-inbox-verification.json).
+- Durable encrypted JobLedger, authenticated local IPC/broker control, generation
+  fencing и bounded jobs. dd977fd/bd1290c: авторская реальная передача opaque job
+  через Python transit после закрытия submitter UI в retained native Inbox.
+  Root самостоятельно CTest8/8 PASS на bd1290c, но independent delivery fixture
+  FAIL: recipient bind timeout5s до передачи. Не считать этот запуск PASS.
+- e749234 исправляет остановку reconnect после трёх неудач и добавляет node.status.
+  Авторский реальный peer65s late, >3 failed attempts, sender SIGKILL/restart с тем
+  же job и recipient SIGKILL/reopen с тем же Inbox PASS; CTest8/8 PASS. Начальные
+  intermittent bind timeouts сохранены как открытое наблюдение responsiveness.
+  [Evidence](../../../native/tests/evidence/ipc-reconnect-crash-linux-20261020.json).
+- Web credential migration сохраняет тот же Root/Account/history. Root same-profile
+  browser PASS master/wipe changes, old reject/new unlock, worker cancel/retry;
+  owning pre-migration backup реально restored отдельно. Не менять Account legacy
+  KDF: фактический Argon2d/type0 нужен для прежней identity, root rewrap versioned.
+- NODE-URL-XSS-01 исправлен690cb1b, root подтвердил реальными UI действиями на том
+  же сохранённом URL/profile, identities/history сохранены,107 source responses
+  exact,0 page errors: [proof](docs/native/2026-10-20/root-node-url-xss-green.json).
+  Plain modal sinks исправлены a22b2db, release.41; incoming-call branch пока
+  SOURCE+UNIT, не полный browser PASS.
+- Dependency pins/SBOM d123325: root23 focused tests/pipcheck/114 hashes PASS;
+  авторские303 backend/22Origin. Legacy PHP boundary0645ec3 unconditional410;
+  root независимо повторил8/8 actual PHP tests PASS. Legacy Core d8c27b0 теперь
+  не показывает ложный SENT при410. Нового общего exact-HEAD full PASS нет.
+
+**Свежая root приёмка:** ce3f83d broker CTest3/3 PASS53.80s,17 source
+files exact: [proof](docs/native/2026-10-20/root-broker-service-verification.json).
+7589b92 Desktop actual Widgets controls/lifecycle PASS,11source/3binary hashes
+exact: [proof](docs/native/2026-10-20/root-desktop-controls.json). Нативная
+Account переписка ещё не готова. bca447a добавляет атомарный app token Inbox CAS;
+UNIT PASS, реальный consume/reopen пока не принят из-за5s RPC stalls.
+Измерено: большая часть owner RPC времени — synchronous NaCl verify/scalarMult;
+агент runtime переносит эти операции в существующий OpenSSL без wire изменений.
+
+**UI-CHAT-DELEGATION-01 исправлен004fa12/.43:** root actual retained
+same-data retest: × открывает modal, НЕТ сохраняет обе строки, ДА удаляет только
+новую тестовую; Back/reopen Saved original1/test0. DeviceID/signing Account ID
+совпадают,107 source responses exact/errors0. [RED](docs/native/2026-10-20/root-chat-delegation-red.json),
+[GREEN](docs/native/2026-10-20/root-chat-delegation-green.json).
+
+**b62304d принят root в executable Linux scope:** immutable binary hash и320
+source files exact. Реальная default22/Python transit передача, UI/sender/
+recipient SIGKILL/reopen, durable Inbox, atomic consumption/idempotence/conflict
+и второй reopen PASS, process exit0.5s socket deadline не увеличен. Прежние
+FAIL сохранены. [Proof](docs/native/2026-10-20/root-native-delivery-consumption.json).
+Это synthetic opaque payload, не готовая Account переписка/nativeGUI acceptance.
+
+**Текущая Account интеграция:** aa2cc63 добавляет настоящий Account owner,
+защищённый registry reader после Root unlock и existing JS/WASM/Storage path.
+Root независимо проверил160source/8artifact/3runtime library hashes и запустил
+private probe на новом изолированном target с фактическим owning package004fa12.
+SECURE registry, тот же Account public ID, original Saved1, native write+
+logout/relogin2, source package SHA неизменён — PASS:
+[proof](docs/native/2026-10-20/root-native-account-retained.json).
+Полный owning export/package0600 остаётся вне Git;4DB/11stores/6records:
+[inventory](docs/native/2026-10-20/root-retained-native-import-input.json).
+Root independently accepted actual Desktop Widgets UI27a28e7 on the same owning
+profile copy:82source/7artifact hashes exact, actual file chooser/import, RootPIN,
+Account selection/cancel/wrong password/busy cancel/correct login, Saved send,
+signout/window reopen retained history;6PASS/0FAIL/1liveServiceSKIP,14.8s.
+[Proof](docs/native/2026-10-20/root-desktop-account-ui.json).
+N4 atomic initial import/recovery510d872 integrated as a8f8dbf; author focused
+crash/concurrent-publisher tests PASS, root independent recovery verification pending.
+These do not establish remote messaging or resident daemon integration.
+
+Desktop переносит реальный Account UI/import/Root PIN/login/Saved/cancel/reopen;
+resident credential host/Node supervisor и настоящий Account→Node Transport
+callback пока не подключены. BrokerService как библиотека в UI не обеспечивает
+UI-process-death acceptance; отдельный тестовый broker lifetime не подменяет это.
+
+Android1cbc3f0: final ARM64 APK Gradle/package author PASS; root независимо
+APK SHA/signaturev2/ZIP16K/all17 AArch64 ELF16K/manifest SDK28–36/specialUse/
+4notice entries PASS: [proof](docs/native/2026-10-20/root-android-package-inspection.json).
+Это не install/runtime; frozen common source имеет отдельный manifest и не
+получает новых desktop worker/PoW гарантий. Root API35 x86_64 software emulator
+жив74134/PID620628, ADBserver5042 serialemulator-5580 ONLINE, SDK35/zygote running,
+boot_completed пока пуст. Без KVM, первый boot медленный; не перезапускать по
+observation timeout. x86_64 Qt kit установлен, x86OpenSSL/APK строит platform
+агент. Root retained Chromium штатно закрыт после owning backup для экономии RAM,
+profile сохранён; не путать с reset. Windows actual runtime остаётся NOT RUN.
+
+Runtime foreign-transit fixture initially FAIL: second peer not admitted180s.
+aff6a0b/a0f54a9 native nonce batch preserves default22, author actual foreign
+transit PASS: two Python NODE peers through native middle, no Account/owner
+registration, hop rewrite, duplicate/expiry checks. Author8CTest PASS. Root
+independent pinned runtime fixture now running; no root PASS claim yet.
+Windows8ca1b79 adds actual fullbuild/UI/Account/Node CI workflow; not yet run.
+
+## Текущая командная работа и основной остаток
+
+Все новые исполнители созданы явно как `gpt-6.1-sol`; старых неизвестной модели
+не возобновлять. Владение файлами разделено:
+
+- `broker_store_sol`: `native/broker/` — encrypted canonical SQLite credentials,
+  полный legacy profile import/inventory/source backup, revision CAS/cleanup,
+  async unlock/change/cancel, scoped bundle/fullRootLock. Checkpoint ce3f83d committed; CTest3/3 и actual bundledJS/WASM
+  cross-open PASS. Следующий участок — native/account/ exact legacy WASM adapter. Не выдавать
+  import/backend за готовую пользовательскую миграцию.
+- `native_runtime_sol`: `native/src/`, `native/js/`, top CMake/runtime tests.
+  e749234 committed; следующий минимальный app consumption token CAS в Inbox.
+  Account сначала сохраняет собственный message/E2EE state; повторная доставка
+  до commitConsumption требует Account dedupe. Не вводить скрытый wire ACK.
+- `native_platforms_sol`: `native/platforms/` — Desktop Qt Widgets и Android
+  Views + foreground отдельный Node service/JNI. Desktop UI/build выполняется;
+  Account/contacts/chat facade ещё предстоит. Status screen не готовое приложение. Desktop7589b92 принят root в указанном scope.
+  Web fix UI-CHAT-DELEGATION-01 завершён с root browser retest.
+- Root — интеграция, независимые тесты, реальные UI действия и checkpoints.
+
+Нужны обычные Account/contacts/chat flows в обоих клиентах, реальная упаковка/
+запуск Android и Windows, полное N4 recovery, самоорганизация/NAT/direct/relay,
+буферные файлы и гибкие пользовательские настройки. Android ARM64 actor/JNI link
+доказан, APK/service/runtime ещё нет; Windows build/runtime NOT RUN. Сохранить
+существующий Kyber/history формат при Account port; QuickJS не исполняет WASM.
+Не заменять N0–N8/A–M/E6 целью зелёной v3 регрессии. DHT вне scope.
+
+## QA и сохранение состояния
+
+[BROWSER_QA.md](BROWSER_QA.md):178 control classes; historical67 scoped PASS,
+4FAIL,107 NOT RUN. Отдельные новые исправления имеют собственные retests;
+это не all-controls PASS. Обязательный подробный обход — раздел7 ниже.
+Browser actions/видимый результат обязательны; для native дополнительно actual
+widget clicks/device acceptance. UNIT/BROWSER/DEPLOYED/compile не смешивать.
+
+После прежнего reboot `/tmp` исчез; всё новое хранить в постоянном `.cache`
+вне Git. Toolchain `/home/jcode/.cache/dmash-native-20261020`.
+Root synthetic browser profile `.cache/dmash-qa-20261020/root-retained-profile`,
+CLI `dmash-root-retained`, loopback9181, SW/external traffic blocked. Последний
+проверенный source004fa12/.43; реальные secrets/access metadata/exports0600 вне
+Git. Same-profile identities, original Saved row, QuickName/public route сохранены;
+проблемный временный Node URL удалён реальной UI confirm после retest. Перед
+использованием проверить живой процесс/page; observation timeout не доказывает
+остановку. Source/context sync и прежний EMS deployment — разные операции.
+
+Ниже сохранён прежний production/reference context; он не является приёмкой
+новых приложений и не меняет текущий приоритет daemon + три клиента.
 
 **15 октября 2026: работа возобновлена, цель ACTIVE, НЕ DONE.**
 Пользователь подтвердил продолжение и запретил остальные модели: только

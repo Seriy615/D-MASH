@@ -1,0 +1,63 @@
+{
+  "checkpoint_commit": "176ae36",
+  "scope": "Historical foundation176ae36; superseded integration verification linked below",
+  "source_files_sha256": {
+    "js/device_root.js": "bd16ff2a0857d4dafa091aac4d4c50fd5e23967ef90e0a62cd0d319cdf88eed5",
+    "js/local_credentials.js": "ab47329b380b5b2dbee7c637b06ac1dd9008f3d7340e56d50a6ee6a418eef46c",
+    "js/local_credentials_worker.js": "3ab4091bc14ddba168b9ee9a45a4c563eae13f45b5fc59cc99e60318a6366dd0",
+    "js/vendor/argon2-bundled.min.js": "77c64b946baf1a5116dc591f4b9965d636b1b455f75edd2d4a587cb75e01687b",
+    "tests/local_credential_foundation.test.js": "3755a0e4d5452639056b438c1af3b639a7fa59c007bee521c9ccbf9f68e29775",
+    "tests/local_credential_vendor_vectors.test.js": "172557b75366965d1a5adaa6d429731d6f3267d73f50ec7a60af5772af17f7ab",
+    "tests/local_credential_wipe.test.js": "072d09c427bc6ade0731c630767cbb33c56bc377378b7579540b72878f656b0f",
+    "tests/local_credential_biometric_repair.test.js": "5d1ba92d78a4590748a07f2c934f6d38ec77b4fd2d59dbc3d15565ac103629e1",
+    "tests/local_credential_cross_context.test.js": "3561bde040ed117d96ee881003358ab1a9362b5e1de1ec77d2d1d76cc18fbbe4",
+    "tests/local_credential_schema.test.js": "b9b5721fdf86236f7aabde5086334f525c0eabdac18be617c2eb301f20a5c4e4"
+  },
+  "unit_1853bb0_pass": [
+    "local_credential_foundation",
+    "local_credential_vendor_vectors",
+    "local_credential_wipe",
+    "local_credential_biometric_repair",
+    "local_credential_cross_context",
+    "local_credential_schema",
+    "device_material_liveness",
+    "device_root_lifecycle"
+  ],
+  "unit_176ae36_affected_pass": [
+    "local_credential_foundation",
+    "local_credential_wipe",
+    "local_credential_cross_context"
+  ],
+  "known_old_test_failure": "Historical at176ae36 only; corrected conservation assertions now pass in full354 run",
+  "browser_worker": {
+    "kind": "actual Chromium Worker and bundled WASM via Playwright CLI; not UI flow",
+    "session": "dmash-credential-worker",
+    "page": "http://127.0.0.1:9179/js/local_credentials.js",
+    "service_workers": "blocked/uncontrolled",
+    "network": "all nonlocal HTTP and all WebSockets blocked",
+    "synthetic_pass": "synthetic-only-master",
+    "salt_utf8": "AwMDAwMDAwMDAwMDAwMDAw==",
+    "params": {
+      "type": 2,
+      "time": 3,
+      "mem": 65536,
+      "parallelism": 1,
+      "hashLen": 32,
+      "version": 19
+    },
+    "actual_hash": "b890ec8c8f2b3217ced9eb117fa46330b80d0795d1ee6e44bf3d10320283cb45",
+    "console_errors": 0,
+    "console_warnings": 0,
+    "limits": "No app setup/identity profile, hardware, deployed SW upgrade or production network proof; worker/vendor bytes unchanged across foundation checkpoints"
+  },
+  "remaining": [
+    "Actual native broker/platform adapters and physical hardware acceptance",
+    "Blocked-delete/ancillary failure real browser fixtures remain NOT RUN (UNIT covered)"
+  ],
+  "integration_checkpoint": {
+    "source_commit": "3541458",
+    "all_js": "S01_ALL_JS_354.json",
+    "original_failure": "S01_ALL_JS_D8.json",
+    "browser": "S01_BROWSER_UPGRADE_WIPE.json"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "kind": "UNIT root independent native Inbox verification",
+  "source": "d81d356",
+  "native_ctest": "1/1 PASS",
+  "actual_unchanged_js_consumer": "PASS",
+  "differential_actual_original_indexeddb": {
+    "operations": 70,
+    "status": "PASS"
+  },
+  "source_manifest": {
+    "inputs": 13,
+    "mismatches": []
+  },
+  "limits": [
+    "Standalone actual SQLite and unchanged JS Inbox/LocalDelivery consumer tests; actor Inbox dispatcher integration pending.",
+    "Crash test child exits inside actual transaction; physical power loss, Windows/Android runtime and Account-free network Inbox delivery remain unverified."
+  ]
+}

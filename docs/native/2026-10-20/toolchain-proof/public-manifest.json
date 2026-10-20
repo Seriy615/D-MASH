@@ -1,0 +1,171 @@
+{
+  "generated_utc": "2026-10-20T08:48:07.866043+00:00",
+  "scope": "public synthetic source and current Linux/Android compiler-packaging evidence; Windows/Android runtime NOT RUN",
+  "files": [
+    {
+      "path": "AndroidManifest.xml",
+      "sha256": "0dcd43b47b4da3a53def7b1f1c32ac756dc43132c65e0983bacb3445a798f2a6",
+      "bytes": 656
+    },
+    {
+      "path": "CMakeLists.txt",
+      "sha256": "51e1d2f7cfe37ed0b81fa356ebdd575e57400e9359a1fcaddffdffed0f2327e8",
+      "bytes": 1245
+    },
+    {
+      "path": "ProbeService.java",
+      "sha256": "4912d4eff60579ed64ca1aae9a90ee74606ae39e373e097546024e822e02092e",
+      "bytes": 335
+    },
+    {
+      "path": "README.md",
+      "sha256": "3d4d462fb54ef3d10c08c2b679b2fa96dac26b54bb974583d839f0c5127916fd",
+      "bytes": 5646
+    },
+    {
+      "path": "android-arm64-build-current.log",
+      "sha256": "b9ba71260ad2fc83d092d586fc17a04a5fad9924a254ae8b3e966ba2ac68c826",
+      "bytes": 1127
+    },
+    {
+      "path": "android-arm64-configure-current.log",
+      "sha256": "dad0881ef67f5136d732e8047cd842dfae7dfc53eb946e1733925419637c626d",
+      "bytes": 1315
+    },
+    {
+      "path": "android-d8-current.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "android-java-current.log",
+      "sha256": "312e9bd919c699a2f8409f70240177012720c94095f0f4374d44152defc50f7e",
+      "bytes": 268
+    },
+    {
+      "path": "android-jni-elf-current.txt",
+      "sha256": "0d6fe5d296cfd5ae218b59033df32e2c0c6bc32fee54ebcd510740e919bcd6c4",
+      "bytes": 4496
+    },
+    {
+      "path": "android-packaging-current.txt",
+      "sha256": "8370c5205586a21f642d6867b409f81a3e80503769042c0e5579cb9ddcbcc625",
+      "bytes": 706
+    },
+    {
+      "path": "android-packaging-summary-current.json",
+      "sha256": "34bd735979ad60188ebaa798307652cc049a1b11f9bb1fa4da228993c79a9e92",
+      "bytes": 10391
+    },
+    {
+      "path": "android-restoration-current.json",
+      "sha256": "b75ba03882349a47d0090df3e7e273d5c456d62276eaf3a907333811e87e724e",
+      "bytes": 1616
+    },
+    {
+      "path": "android_main.cpp",
+      "sha256": "00781a2346292eb01e4d919aadcc23be8a6db6effa6d8f1af9bfa68417479861",
+      "bytes": 954
+    },
+    {
+      "path": "archive-sha256-current.json",
+      "sha256": "811bfaa0858edb5f04137e1f9a58155b8886d44ab49289007c077b3f6dbc6c56",
+      "bytes": 2346
+    },
+    {
+      "path": "argon-profile-current.txt",
+      "sha256": "599c75434711ce16712b461984768026e90541cbae2638f772b53cda997c4283",
+      "bytes": 171
+    },
+    {
+      "path": "argon_profile_probe.c",
+      "sha256": "523061374a6a06493274692e87b0a2307b2ca3213ef2638f112cccf30bef460b",
+      "bytes": 1711
+    },
+    {
+      "path": "assemble-disposable-apk.py",
+      "sha256": "51bd1f29a6d2a8eef5d8101994111bf5e8a457375b4949f577c7c32ae41fbc9d",
+      "bytes": 3626
+    },
+    {
+      "path": "build-android-proof.sh",
+      "sha256": "6a9059ba65640b394181c4cdfecde3fe448f38e15d486fa80bb634f2f353cbe9",
+      "bytes": 1162
+    },
+    {
+      "path": "desktop_main.cpp",
+      "sha256": "55c1c9c5786be8f95e070aa93b8bfc3d158b44ef04e725a6ff116a832702026d",
+      "bytes": 4737
+    },
+    {
+      "path": "gradle-restoration-current.json",
+      "sha256": "7b8994a581c86c0eb0b5a027dd046a3d9388ee43826ab49abfc1035236e08fa6",
+      "bytes": 256
+    },
+    {
+      "path": "historical-argon-transcript.txt",
+      "sha256": "fa9101a301696cddbd87f169bc6545149a18672b03bb63b61567ad514f7cebf9",
+      "bytes": 264
+    },
+    {
+      "path": "historical-linux-owned-transcript.txt",
+      "sha256": "27ea2173473e38913214f97988877b1d74a3f4741881ec9a9dea344d59cbe5fe",
+      "bytes": 383
+    },
+    {
+      "path": "linux-gui-dependencies-current.json",
+      "sha256": "ce9c5e246bd51f4faaa527e56e2567b1f2c584c43eb7ea58c066d2a756cb2d17",
+      "bytes": 883
+    },
+    {
+      "path": "linux-owned-current.txt",
+      "sha256": "1c05bf2d34c6bd4dd4a5f734240973be80dd0afe30b58984a9ae033ff90be8c0",
+      "bytes": 461
+    },
+    {
+      "path": "linux-system-openssl-current.txt",
+      "sha256": "97806b4944f991d1ea76fb5864cdb1f022e6c55403b0a8725c955d291b43703e",
+      "bytes": 291
+    },
+    {
+      "path": "openssl-android-configure-current.log",
+      "sha256": "4ba02b6cbd3dd88ac43aa733439ca563b6de77d9300b5fd108f8c3dacba31bfb",
+      "bytes": 1212
+    },
+    {
+      "path": "rebuild-linux-owned.sh",
+      "sha256": "dfa9477600a8965a44b1c7e8a25c6e318f701aa5e6e09111da078ad328ee84c7",
+      "bytes": 1354
+    },
+    {
+      "path": "recovery-manifest.json",
+      "sha256": "f62b98ff59f87571a4a439e83e4d04189c21283329652afaf90f1faaf6fe9c10",
+      "bytes": 2913
+    },
+    {
+      "path": "resource-restart-current.json",
+      "sha256": "65e15f23893b3a9084a2cdb2f321038b061ff784f89ef6fb052db75170e5bf98",
+      "bytes": 741
+    },
+    {
+      "path": "source-load-current.txt",
+      "sha256": "5208f16b72a55a8fcbc9d875b2ea0488e4cec429b9b9fe9c34c8c961577bd8a9",
+      "bytes": 275
+    },
+    {
+      "path": "windows-compiler-current.json",
+      "sha256": "1d7a0f36334cbd7d29b1d3f49012832b40343b1ff94287a875914f79464aa209",
+      "bytes": 486
+    },
+    {
+      "path": "windows-kit-selection-current.json",
+      "sha256": "f6cb371d92b58a8cf33c60fff7d6027f28643302a3c17f13bf32d0fad5daee69",
+      "bytes": 1717
+    },
+    {
+      "path": "windows-kit-selection-recovered.json",
+      "sha256": "17835c6d13da9e0444d4f340358e389b975c6a552fbb06731c5f4cf47f3730fa",
+      "bytes": 607
+    }
+  ]
+}

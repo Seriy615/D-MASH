@@ -18,7 +18,7 @@ const unlockedState = {
 };
 const deviceRoot = {
   state: previousState,
-  async unlockWithWebAuthnPrf() { prfCalls += 1; return unlockedState; },
+  async unlockWithWebAuthnPrf() { prfCalls += 1; this.state = unlockedState; return unlockedState; },
   async bootstrap() { bootstrapCalls += 1; throw new Error("PIN bootstrap must not run"); },
   async unlock() { pinFallbackCalls += 1; throw new Error("PIN fallback must not run"); }
 };

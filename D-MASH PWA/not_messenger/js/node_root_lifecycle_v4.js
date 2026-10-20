@@ -30,6 +30,7 @@
  // DeviceRoot is loaded lazily by the shell. Install once its genuine lifecycle
  // and the independently pinned catalog exist, without waiting for an Account.
  function install(){if(g.DMASH_NODE_PROFILE!=='managed-v4')return true;if(!g.DeviceRoot||!g.DmashManagedNodeCatalogV4)return false;attach(g.DeviceRoot);return true;}
+ if(g.DmashRuntimeReadiness){let ready=false;g.DmashRuntimeReadiness.register('node-root-lifecycle',90,()=>{ready=install();},()=>ready,['acceptance-v51']);return;}
  if(typeof document!=='undefined'&&!install()){const timer=setInterval(()=>{if(install())clearInterval(timer);},250);}
  if(typeof module!=='undefined')module.exports=g.DmashNodeRootLifecycleV4;
 })(globalThis);

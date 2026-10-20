@@ -1,0 +1,24 @@
+{
+  "schema": 2,
+  "scope": "Immutable full Git archives; all158 JS suites; public JSON has only statuses and input hashes. Raw stdout remains private off Git. Original d8 failure retained, no Python/browser/native/deployed claim.",
+  "reference_node": "v24.19.0",
+  "reproducible_harness": "tools/test_js.py --repo /path/to/immutable/archive --source-ref FULL_SHA --node /path/to/node24 --output-dir /private/cache/result",
+  "public_files_sha256": {
+    "S01_ALL_JS_D8.json": "642e420a90e9599bd69fb01426c3eb49c8c6af7aebbab78bca92717eeb6323f8",
+    "S01_ALL_JS_354.json": "62b4643eafa00737e748bcedd84115069850f2916edd0edea76f7bacb57e6cf6",
+    "S01_BROWSER_UPGRADE_WIPE.json": "47f3779670ca737ca6a6c503997dc178afd63444dbd6b5a18b53c66c76ca83d0"
+  },
+  "private_raw_stdout_sha256": {
+    "d8": "981e19f307ec9bb2ec782734b3258b0e0d6eea2d90f3723a7b89f7c835660b97",
+    "354": "c672886635fa466c291ca8e56e10f24b31d991e3571a26ee9c5756b558b9f5f7"
+  },
+  "historical_runner_sha256": {
+    "run_all_js.py": "6dc8094047a0a8f5fb1cd1ae79ccddb83503131a65cc55e9e212a62fccf6ae19",
+    "run_all_js_354.py": "7804e665f5d1332a8d13e569a3cd54c952e62abcde078b4142b85ffa0729afdd"
+  },
+  "portable_harness": {
+    "path": "tools/test_js.py",
+    "sha256": "06ffdcdefd8b8d40d5e6710282b92b0877a653852f5f3bffc12556f6c902d24c",
+    "smoke": "immutable354 integration-contract1PASS; inputs unchanged; raw stdout outside repository enforced"
+  }
+}

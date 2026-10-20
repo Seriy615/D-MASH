@@ -1,0 +1,47 @@
+{
+  "bug": "CHAT-DATA-ACTION-BUBBLING-01",
+  "utc": "2026-10-20",
+  "release": "transport-v3-node-preparation-20261020.43",
+  "sourceSha256": {
+    "D-MASH PWA/not_messenger/js/core_engine.js": "0da96863fc5faafe4714baae7e293e8708d8bcd4cfb7137cae97d38ceaa444d7",
+    "D-MASH PWA/not_messenger/js/release.js": "01f530bc84bab3d9e7b1d3cac9022c001983fd56920a758bcf63a5301f2ca456",
+    "D-MASH PWA/not_messenger/sw.js": "ae0e28808418c632d5ca318264f3f2ba53ad6ca97f940167fcdb5b46cb812592",
+    "tools/test_ui_data_action_propagation_browser.cjs": "36e0d92681cc22da450da0a3beec5a5775f48502b3cd5586172469bf5f336ba7"
+  },
+  "red": {
+    "source": "e749234",
+    "coreSha256": "672cb251d675c0cd046e0b9ccf7940ed958a8a20bea4ea7ca97482d6b7ab29ae",
+    "browser": "156.0.8078.4",
+    "result": "FAIL as expected",
+    "assertion": "chat action must reach delegated listener across chat stopPropagation; false !== true"
+  },
+  "green": {
+    "result": "PASS",
+    "browser": "156.0.8078.4",
+    "checks": [
+      "actual Core message renderer",
+      "actual delegated DOM listener",
+      "actual chat surface stopPropagation",
+      "delete opens actual confirmation modal",
+      "Cancel retains synthetic row",
+      "Yes invokes storage once and removes row",
+      "nested late media action dispatches once",
+      "repeated bind idempotent",
+      "empty chat surface does not close",
+      "outside bubble remains suppressed",
+      "Back closes once",
+      "page errors 0"
+    ]
+  },
+  "focusedUnit": {
+    "ui_data_actions.test.js": "PASS",
+    "local_credential_integration_contract.test.js": "PASS",
+    "stability_fixes_source.test.js": "PASS"
+  },
+  "limits": [
+    "isolated synthetic DOM/storage fixture",
+    "retained owning Account/DB retest by root is separate",
+    "no production/deployment",
+    "full suite not rerun for this focused fix"
+  ]
+}

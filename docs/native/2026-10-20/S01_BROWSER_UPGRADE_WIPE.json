@@ -1,0 +1,92 @@
+{
+  "source_commit": "3541458da5ff433aa705e3e329e6d148a3fa1445",
+  "scope": "Actual Chromium via Playwright CLI; synthetic independent profiles; loopback-only HTTP, all WebSockets blocked; no production network or hardware claim",
+  "service_worker": {
+    "status": "PASS",
+    "session": "dmash-credential-sw",
+    "service_workers": "allowed",
+    "baseline_commit": "9446c22f27309131456942870971d477f6f2358f",
+    "steps": [
+      "Actual legacy UI setup and unlock; old .38 SW/cache controlling",
+      "Switch same-origin immutable server to .39; open candidate tab while original old-JS tab remains",
+      "Actual candidate calculator master submit displays close-other-tabs error; encrypted canonical record unchanged",
+      "Close only original tab; AC and actual master submit succeeds",
+      "Read current canonical metadata and cached service/worker/bootstrap response digests"
+    ],
+    "blocked_record_sha256": "70d89da613dda0d0f56f72c837aec80702c62d964538d2333882ee91a86e1671",
+    "before": {
+      "wrap": "argon2id-aes-256-gcm-v1",
+      "revision": 0,
+      "fast_master_present": true
+    },
+    "blocked": {
+      "other_clients": 1,
+      "root_unlocked": false,
+      "account_unlocked": false,
+      "record_unchanged": true
+    },
+    "after": {
+      "other_clients": 0,
+      "wrap": "argon2id-aes-256-gcm-v2",
+      "revision": 2,
+      "fast_master_present": false,
+      "fast_wipe_present": false,
+      "root_unlocked": true,
+      "device_id_sha256": "8638bdb6a98e2c640b769a6484486910708020fdd2544ae50b8d2f2fd7b797b3",
+      "device_id_unchanged": true,
+      "cache_names": [
+        "dmash-static-transport-v3-node-preparation-20261020.39"
+      ]
+    },
+    "cache_source_sha256": {
+      "js/local_credentials.js": "36975b2bdb15b002b4e1d1004656acac1e40f2470302d3ba16cd2ef52fc6ad0f",
+      "js/local_credentials_worker.js": "0c4e31073785c226300a53d865e5b8964fa57398bed510e08b8ea042367d2f21",
+      "js/local_credentials_bootstrap.js": "7060865e1dff9e124ee50df69d5c60dd4e09a5b9a11c47890702537c3a7fe0db"
+    },
+    "limits": [
+      "Account/history migration covered separately by root-owned retained-profile evidence",
+      "Explicit old-tab exclusion and cooperative new-client fencing; no protection claim against arbitrary old same-origin JS",
+      "Private owning export is not a restore-verified backup in this profile"
+    ]
+  },
+  "disposable_wipe": {
+    "status": "PASS",
+    "session": "dmash-credential-ui",
+    "service_workers": "blocked",
+    "steps": [
+      "Fresh actual UI setup, unlock and synthetic Account login before checkpoint; logout and reload locked",
+      "Submit wrong public emergency prefix0010 plus wrong suffix through real calculator",
+      "Compare encrypted canonical record hash and DB names; still locked",
+      "Submit correct wipe code through real calculator; await about:blank",
+      "Navigate static manifest.json, without app bootstrap; inspect IDB/storage/cache metadata"
+    ],
+    "wrong_code": {
+      "denied": true,
+      "root_unlocked": false,
+      "record_before_and_after_sha256": "30da45d7c664177ed506f40dad47adeb3e2062e2bc4a67a24decfedfc9967b72",
+      "databases_unchanged": true
+    },
+    "correct_code": {
+      "navigated_about_blank": true,
+      "remaining_databases": [
+        "dmash_local_credentials_control_v1"
+      ],
+      "deleted_databases": [
+        "dm_gamma_vault",
+        "dm_registry_secure_v1",
+        "dmash_device_root_v1"
+      ],
+      "journal_state": "complete",
+      "ancillary_complete": true,
+      "local_storage_count": 0,
+      "session_storage_count": 0,
+      "cache_names": []
+    },
+    "limits": [
+      "Physical erase of SSD/browser backups is not claimed",
+      "Actual blocked-delete/ancillary-failure and pre-intent cancellation browsers NOT RUN here; deterministic focused UNIT coverage is separate",
+      "Root-owned actual worker AC cancellation proof is separate",
+      "No production data was used or deleted"
+    ]
+  }
+}

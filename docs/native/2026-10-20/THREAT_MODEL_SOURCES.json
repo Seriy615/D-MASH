@@ -1,0 +1,101 @@
+{
+  "date_utc": "2026-10-20",
+  "product_source_commit": "d1233258ed424859e33329bfafd6cea927de0ecc",
+  "source_sha256": {
+    "native/README.md": "9113f270cc075a919a41895f5246cc33907f21676ce533edd9e27b6178675f36",
+    "D-MASH PWA/not_messenger/js/node_runtime_host_v4.js": "ae62fc05079655a25e61edd1af6802ef3564437986c3cf722c42234cb6f8a7e5",
+    "native/src/transport_bundle.h": "9ba6ff62a5ed24293f78e3cab6ba81c4c010e4b6e9b53d7ca14be6f5a5919c75",
+    "D-MASH/client/backend/secure_session.py": "985762ffbfdb928f13cd8c66489920407825adf00c5131fe1ba3450adefe9558",
+    "D-MASH/client/backend/node_registration_v4.py": "aaad92ff9b807086bb36fd7177b61d1818b25dbbf0eea2f648cde0ac5b25387e",
+    "D-MASH PWA/not_messenger/js/node_relationships_v4.js": "d08c79c4950166a42f922758851f8e26ff4c7a4e72042be548fae1b317872a50",
+    "D-MASH/client/backend/node_routing_v4.py": "168f2bbe6d8ac116a18cb11b46ee9caef7b692649ad646b0ff967ba3551a575d",
+    "D-MASH PWA/not_messenger/js/private_routes_v3.js": "6b9b7f0e50ed1915ac7896bd0590f11c76e542d8d45b87046e4164a319b97552",
+    "D-MASH PWA/not_messenger/js/device_envelope.js": "7554d69a7df465cdb6dc9df265718d845eea1b522e9835b4f1cde68a14fc82f4",
+    "D-MASH PWA/not_messenger/js/device_root.js": "b52b75f04d8a5a8d838e5e4b7700746c5b527f7acf96f1a6433c1407e9e61f54",
+    "D-MASH PWA/not_messenger/js/local_credentials.js": "36975b2bdb15b002b4e1d1004656acac1e40f2470302d3ba16cd2ef52fc6ad0f",
+    "D-MASH PWA/not_messenger/js/local_credentials_worker.js": "0c4e31073785c226300a53d865e5b8964fa57398bed510e08b8ea042367d2f21",
+    "D-MASH PWA/not_messenger/js/local_credentials_bootstrap.js": "7060865e1dff9e124ee50df69d5c60dd4e09a5b9a11c47890702537c3a7fe0db",
+    "D-MASH PWA/not_messenger/js/account_session_v4.js": "709c777aff3f5101dd25672ea3dc5cacb635f2d2ad57f0a8414d6b3850f568cf",
+    "D-MASH PWA/not_messenger/js/account_app_cipher_v4.js": "cbf1a950305c324cf848156cb7f5cbc31572711899443eec7ad596aa2b3c714b",
+    "D-MASH PWA/not_messenger/js/account_static_kem_v1.js": "12008dbfe62f6f5c539767f3dad707d90e544376534b91de4c285d468bba9b33",
+    "D-MASH/client/backend/dnss_mailbox.py": "17b97a6e0f609bc134e60380cdc052177066ab227a8289064d41856d97b88fbd",
+    "D-MASH/client/backend/node_mailbox_v4.py": "8c222f557fe36eae47e526888af65a64a70d21fff9f1522f6bd5c987c39cce12",
+    "D-MASH/client/backend/node_service_v4.py": "e80a380cd527ac060c5b96fa4c3f6c0bfcae502938eabf3c67bf481e1f816d43",
+    "D-MASH PWA/not_messenger/js/file_runtime.js": "f8c391d672362ce786617609fcfd4a1c891808a7ac06772393211cd24114ea8a",
+    "D-MASH PWA/not_messenger/js/file_channel.js": "02f650c74455b2e4c7f043a2546b401040ab172ce07d31fa277d0f3f21081b6f",
+    "D-MASH PWA/not_messenger/js/file_vault.js": "212deabf54c951e4fd80b80a4b7a06701b10e02f68dfa5ef20aa34ed6fc883de",
+    "origin/notification_service.py": "95f1d9a6b61f4fd9e94a83e275d3e5dfd5d25c2a359d6f498d0cbb6acf52bbc0",
+    "origin/personal_bot_vault.py": "9da4112a8cfa8274ef58dceebfb72ea9fb1b6e5ed6099a64316170882e2a1cea"
+  },
+  "referenced_evidence_sha256": {
+    "docs/native/2026-10-20/root-biometric-cancel.json": "bca99b06a85a932ac3fe8ab2ee324ab10b8b6cc488e8a75156cf521c06bf6e87",
+    "docs/native/2026-10-20/root-biometric-instruction-retest.json": "f1fb771fbdf496182f644cd7c36db4c4bf29e8e917bb2268baaffeb64c65410c",
+    "docs/native/2026-10-20/root-s01-retained-migration.json": "26f03b3657d67d31591a0f4085daee53225349e749e8a49ca140f1a8b33ab932",
+    "docs/native/2026-10-20/root-s01-worker-cancel.json": "be243d618d17b0073740a6d6efcb5dfdceb4e2aa98be6847c5feb975e3ed506d",
+    "docs/native/2026-10-20/root-native-port-verification.json": "8238c5c413d5ea6fa21533c3a7567fba1dc6f90aa846443eee1f48ac0f37ad03",
+    "docs/native/2026-10-20/root-native-actor-interop.json": "a67b7f37425794b4c3932dc4848375b788015cac4fbeabf2191cdee246b484c6",
+    "docs/native/2026-10-20/root-node-url-xss-green.json": "24002b7858b9aa71686dd485bbbedd808a6bed7b2ca4a1e783be2a02f6dd784d",
+    "docs/native/2026-10-20/root-node-url-xss-red.json": "71e3245aa9f290cfdf0a28ddd8d18c53866b0e47a78b472c04484299a4bcb091",
+    "docs/native/2026-10-20/C01_INDEPENDENT_REVIEW.json": "0a9f1a6deb747ae48effe251d78e95b659ad72afa7085a48c6ce11099d46fddf",
+    "native/persistence/verification.json": "d29f3c07544488fa4f94aee2d91e05c9c651a66366fc348665659bc3322733c7",
+    "native/tests/evidence/actor-inbox-linux-20261020.json": "459f3a4e1cdfc0d783c779dbdd7cdb70508cfe39692c37dfcc5da73aa9760296",
+    "docs/native/2026-10-20/S07_PHP_RESULTS.json": "f0060c8265cfd52fdd2851791d5b5790b2b09018cbe46638e535d0d50ccb2026",
+    "docs/native/2026-10-20/S07_PHP_PROVENANCE.json": "935fe7ecc4b6cb2cff3f0928323b31a6240c1ba71524ad2cf9d477a385679e50",
+    "docs/native/2026-10-20/MODAL_TEXT_RETEST.json": "093fe36e164da382432083dc6059af674fe68ddec25265b2158a5786adaa1807",
+    "docs/native/2026-10-20/MODAL_TEXT_ALL_JS.json": "5dc1e86a2c9a0f485b36ea7cd6f826467539169bb29298a11fe110eb96175aaa",
+    "docs/native/2026-10-20/root-native-inbox-verification.json": "51303e6066099a38a5fb2cb0c65d1aee115b6d4e4eff511961d8b890238c864f"
+  },
+  "evidence_note": "Original product snapshot remains d123325. Explicit later checkpoints include C01/C02,690 URL fix,a22 modal plain-text fix and0645 PHP retirement. Modal incoming-call browser branch remains NOT RUN; ordinary author UI flows/160JS suites separately attributed. PHP deployment/SAPI and caller-status work remain open. This manifest does not claim new executions.",
+  "document_sha256": {
+    "CURRENT_IMPLEMENTATION_DELTA.md": "dbf5097510ded717c0bf5ffb38ab610bdbf436bcf31a7afcc7b55ae4b6a1aca9",
+    "THREAT_MODEL.md": "4388d22c4d6d735cb7624ed05d11843ed85ede7c87d98852de62a6041fc0f897"
+  },
+  "subsequent_source_snapshots": {
+    "8bc67f0": {
+      "commit": "8bc67f06971a261378f5f75204c2caee99ef7b3d",
+      "source_sha256": {
+        "native/src/js_actor.cpp": "369d399c6706ad4f0e3c7934bad333821369951b0c607072e8418c9f5c79488a",
+        "native/src/main.cpp": "0f3ada28fa684c94f7ee63f7aa9566c475863a7591ab4c4f17388a53e240e44b",
+        "native/js/runtime_entry.js": "6ac9212634d08ad29685037a2a55e6f08ca22894ae37b731501faeeba1dabf25",
+        "native/js/platform.js": "7d6536e6f71064834c06e35fb84924753c260b7a949be50b90512bbe0f6fa7dd",
+        "native/CMakeLists.txt": "2fa72c4388416c0a13f08bc96fd9cb2cc7076bfbebc661abc25af5743eea0343"
+      }
+    },
+    "d81d356": {
+      "commit": "d81d356f55ebba95fd5156ec85ddaddae9385097",
+      "source_sha256": {
+        "native/persistence/inbox_sql_store.cpp": "2dbe32aa907c3e8caa8d4caf917ee1d0a63ca331562ad6f8bde5d3d57158130b",
+        "native/persistence/inbox_sql_store.h": "53f924340011f7455d1026dd152e5e2adcd1f2bba41058568d2313d42be7e05b",
+        "native/persistence/tests/inbox_sql_test.cpp": "c2b4120316fc876a4987c7b4875a6880e1d3fd96e2b878793da4910e0792d083",
+        "native/persistence/tests/node_inbox_sqlite.cjs": "fcabae5147963ffbc2be408953778940ebfaa4edf651d06677e69d12fdaca914"
+      }
+    },
+    "690cb1b": {
+      "commit": "690cb1b1f74f20d1ed0dfa181ca2101e93597b0c",
+      "source_sha256": {
+        "D-MASH PWA/not_messenger/js/core_engine.js": "13c22152714f47d5b76a2fc8fd59049245e765ace9c7a68f8a235fe2067f1367",
+        "D-MASH PWA/not_messenger/js/acceptance_fixes.js": "a6c2b5f3f7ca8206a94fe34e4a306e4cf7bfe73a7fa176241d2285e5848dd8fc",
+        "D-MASH PWA/not_messenger/js/acceptance_v50.js": "4f4d4c678cdccfb99a6f77db802a6ef9d9408c798b981d0e71d661aef5a5cdc0",
+        "D-MASH PWA/not_messenger/js/acceptance_v51.js": "e0b4a9e5603bd8ab0ef8c9f679c6063d1cd265979fc4608b4831f660ac8cb7d1",
+        "D-MASH PWA/not_messenger/js/ui_logic.js": "9a658f7c250a3a203bb4596255c05c0b2161ffb022d2407fd9d6cb794273695f",
+        "D-MASH PWA/not_messenger/js/release.js": "830c2a57412bb8c23b0d4e62864527027542be700489d1fcfde19138189bb5d9"
+      }
+    },
+    "a22b2db": {
+      "commit": "a22b2dbf5e947c06f063e871a47aeaf30714ca37",
+      "source_sha256": {
+        "D-MASH PWA/not_messenger/js/core_engine.js": "646737e74de5dfa0e02f5078917089f9d3a59cff5487856bc53e843f8d659048",
+        "D-MASH PWA/not_messenger/js/runtime_fixes.js": "3d9e42059fd4d1b0e89941defe1832213e81e297591d40f8532de1477f4ce529",
+        "D-MASH PWA/not_messenger/tests/modal_text.test.js": "22812a1dbe7e042da6feea057032ab2ec1c6b493691ec18f3b03737ef14bb0cb"
+      }
+    },
+    "0645ec3": {
+      "commit": "0645ec3bff96bcf6a04fa32d95f265a9e6c04e34",
+      "source_sha256": {
+        "D-MASH PWA/api/pidorskiy_api.php": "c50342e1309e3c60168ae87ff7636e034f11b2b69445565418a33f723f26ec03",
+        "D-MASH PWA/api/tg_webhook.php": "820871ddb0d46f80976f6baed156c4b290a00e2c454a7b2a9e355683a6d3f0dd",
+        "tools/test_legacy_php_boundary.py": "cb99f0091b28e9e30cc89b26ad4fb6a68fd0c98287c716e133b0550ef3927596"
+      }
+    }
+  }
+}

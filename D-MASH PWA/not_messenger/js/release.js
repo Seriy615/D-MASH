@@ -1,9 +1,58 @@
 "use strict";
 
+// Runtime installers are synchronous, idempotent stages. Lazy foundation loads
+// explicitly compose them; readiness never depends on a polling deadline.
+(function runtimeReadiness(global) {
+    if (global.DmashRuntimeReadiness) return;
+    const stages = new Map();
+    let supportDone = false, supportError = null, queued = false;
+    let resolveSupport;
+    const support = new Promise(resolve => { resolveSupport = resolve; });
+    function ready(stage) {
+        try { return !!stage.ready(); }
+        catch (error) { stage.error = error; return false; }
+    }
+    function flush() {
+        queued = false;
+        for (const stage of [...stages.values()].sort((a, b) => a.order - b.order)) {
+            if (!stage.after.every(name => stages.has(name) && ready(stages.get(name)))) continue;
+            if (ready(stage)) { stage.error = null; continue; }
+            try {
+                const result = stage.install();
+                if (result && typeof result.then === "function") throw new Error("ASYNC_RUNTIME_INSTALLER: " + stage.name);
+                stage.error = null;
+            } catch (error) { stage.error = error; }
+        }
+    }
+    function schedule() { if (!queued) { queued = true; queueMicrotask(flush); } }
+    global.DmashRuntimeReadiness = Object.freeze({
+        register(name, order, install, isReady, after = []) {
+            if (!stages.has(name)) stages.set(name, { name, order, install, ready: isReady, after, error: null });
+            schedule();
+        },
+        flush,
+        supportLoaded() { supportDone = true; supportError = null; resolveSupport(); schedule(); },
+        supportFailed(error) { supportDone = false; supportError = error; resolveSupport(); },
+        async compose() {
+            await support;
+            if (!supportDone || supportError) throw supportError || new Error("UI_SUPPORT_NOT_READY");
+            flush();
+            const pending = [...stages.values()].filter(stage => !ready(stage) || stage.error);
+            if (pending.length) {
+                const error = new Error("UI_RUNTIME_NOT_READY: " + pending.map(stage => stage.name).join(", "));
+                error.cause = pending.find(stage => stage.error)?.error;
+                throw error;
+            }
+            return true;
+        }
+    });
+})(window);
+
+
 // One visible release identifier for the page and Service Worker generation.
 // Review opt-in must be set before loading this script; never inferred from data.
 window.DMASH_NODE_PROFILE = window.DMASH_NODE_PROFILE === "managed-v4" ? "managed-v4" : "legacy-migration";
-window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-20261020.38" });
+window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-20261020.44" });
 
 /*
  * Runtime repair loader.
@@ -114,7 +163,9 @@ window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-202610
         if (badge) badge.textContent = `D-MASH build ${global.DMASH_RELEASE.id}`;
         try {
             for (const src of support) await load(src);
+            global.DmashRuntimeReadiness.supportLoaded();
         } catch (error) {
+            global.DmashRuntimeReadiness.supportFailed(error);
             console.error("D-MASH functional repair loader failed", error);
             const notice = document.getElementById("dmash-release-notice");
             if (notice) {

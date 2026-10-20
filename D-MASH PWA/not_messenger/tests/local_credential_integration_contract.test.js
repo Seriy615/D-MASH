@@ -1,0 +1,9 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const read=name=>fs.readFileSync(path.join(__dirname,'..',name),'utf8');
+const effective=['ui_logic','core_engine','runtime_fixes','acceptance_v50','acceptance_v51','acceptance_v54','acceptance_v55'];
+for(const name of effective){const source=read('js/'+name+'.js');assert(!/localStorage\.(?:getItem|setItem)\(["']sys_[mw]["']/.test(source),name+' cannot use fast master/wipe verifiers');assert(!/argon2\.argon2id\s*=/.test(source),name+' must not globally change Account enum');}
+const core=read('js/core_engine.js');assert(!core.includes('argon2.argon2id'));assert.match(core,/hashLen: 128, type: 0/);assert.match(core,/fullHash\.slice\(64, 96\)/);assert.match(core,/fullHash\.slice\(96, 128\)/);assert.match(core,/fullHash\.slice\(32, 64\)/);assert.match(read('js/acceptance_v50.js'),/hashLen: 128,\s+type: 0/);
+assert(!/\.state\s*=\s*\{\s*root/.test(read('js/acceptance_v50.js')));assert(!/root\.unlockWithWebAuthnPrf\s*=/.test(read('js/runtime_fixes.js')));assert.match(read('js/acceptance_v50.js'),/prepareWebAuthnUnlock/);
+const sw=read('sw.js'),release=read('js/release.js');for(const file of ['local_credentials.js','local_credentials_worker.js','local_credentials_bootstrap.js'])assert(sw.includes('./js/'+file));const version=release.match(/id: "(transport-v3-node-preparation-[^"]+)"/)[1];assert(sw.includes("const RELEASE_ID = '"+version+"'"));assert.match(read('js/ui_logic.js'),/ensureCredentials/);assert.match(read('js/local_credentials_worker.js'),/vendor\.search = self\.location\.search/);
+assert.match(read('js/ui_logic.js'),/validBiometricTriggerToken/);assert.match(read('js/ui_logic.js'),/cancelBiometricTriggerSetup/);console.log('PASS actual loaded credential entrypoints, Account legacy Argon2d slices, biometric owner delegation, pinned worker/SW assets and retained BIO guards');

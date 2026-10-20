@@ -1,0 +1,13 @@
+{
+  "reason": "parent approved nice5 sequential resume instead of nice15 starvation",
+  "terminated_verified_owned_roots": [
+    54699,
+    69804
+  ],
+  "discarded_partial_outputs": [
+    "/home/jcode/.cache/dmash-native-20261020/build/openssl-3.5.9/crypto/cast/libcrypto-shlib-c_cfb64.o",
+    "/home/jcode/.cache/dmash-native-20261020/build/openssl-3.5.9/crypto/cast/libcrypto-shlib-c_cfb64.o",
+    "/home/jcode/.cache/dmash-native-20261020/build-android-arm64-probe/CMakeFiles/qjs.dir/home/jcode/.cache/dmash-native-20261020/build/quickjs-2026-06-04/quickjs.c.o",
+    "/home/jcode/.cache/dmash-native-20261020/build-android-arm64-probe/CMakeFiles/qjs.dir/home/jcode/.cache/dmash-native-20261020/build/quickjs-2026-06-04/quickjs.c.o"
+  ]
+}
