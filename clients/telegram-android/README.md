@@ -63,3 +63,29 @@ The first APK configuration attempts exposed a missing Ninja PATH entry and the
 nonportable AndroidNdkModules CMake import. Patch six compiles the unchanged
 pinned NDK CPU-features files directly. These are build findings, not service/UI
 results. Ninja and NASM must be available on PATH.
+
+## Actual fork KVM CI
+
+`.github/workflows/telegram-android.yml` builds this pinned original fork and the
+matching independent core from the same checkout, for x86_64 only. It reuses the
+Qt/SDK bootstrap but never builds/runs the former standalone app UI or its
+MainActivity/NodeDiagnostics harness. The real launcher is original
+`org.telegram.ui.LaunchActivity`; package namespace is `org.dmash.telegram.beta`.
+
+The default `loader` gate captures that actual window and requires the separate
+credential service to reach the fresh Root-auth UI. `fresh-account` additionally
+uses normal PIN confirmation, Account creation/login, original Saved Messages
+ChatActivity/composer, and Activity background/reopen. Generated credentials are
+never uploaded; password fields are redacted in XML, and only bounded native/Qt
+loader diagnostics are retained. Build-only success and these scoped UI gates
+never imply complete product acceptance. `full` intentionally fails after those
+steps until the actual Node-control and ordinary remote-chat UI gates are wired.
+Node/remote/Doze/reboot/multi-client UI remain explicitly NOT_RUN in that draft.
+
+Evidence includes the exact source/dependency hashes, signature, APK/native ELF
+hashes and actual screenshots. Package verification still fails on signature,
+namespace, missing original classes/notices, unexpected ABI, mismatching bundled
+core or 16-KiB alignment; available UI capture can run after that failure so its
+separate observation is not lost. No existing app/profile is uninstalled/reset.
+Final Account/UI acceptance requires the shared worker session binding and its
+explicit attach adapter, not the older core139 compile checkpoint.

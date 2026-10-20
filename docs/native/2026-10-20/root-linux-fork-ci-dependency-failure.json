@@ -1,0 +1,22 @@
+{
+  "status": "FAIL",
+  "scope": "Actual Telegram Desktop clean Linux CI dependency setup; no app compile/runtime result",
+  "runId": 39466512625,
+  "jobId": 118779217412,
+  "sourceSnapshot": "4929fa6e8cd09c1854e9b56a8d7adbcffe407287",
+  "artifactId": 12285456677,
+  "artifactSha256": "8b091bd8cc6fd94416afd09cd7719d871035134553550781954257769add1d72",
+  "rootInspection": "Root independently read retained artifact dependencies.log and verified zip hash; job terminal error also inspected",
+  "failure": {
+    "stage": "prepare-packages.py apt-get download",
+    "package": "libprotobuf-dev",
+    "exactVersion": "3.21.12-8.2ubuntu0.4",
+    "exitCode": 100,
+    "diagnostic": "Version '3.21.12-8.2ubuntu0.4' for 'libprotobuf-dev' was not found"
+  },
+  "nextAction": "Locate official exact .deb with unchanged pinned hash; no silent version substitution",
+  "limits": [
+    "No full app compile, screenshot, Account or chat acceptance",
+    "Source path/owned profile followup is independently useful but does not fix this dependency failure"
+  ]
+}

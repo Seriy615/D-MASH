@@ -139,17 +139,21 @@ D-MASH не требует Telegram SMS/login. Форки воспроизвод
 
 ## 4. Source publication, environments и активные проверки
 
-Latest published GitHub snapshot **4929fa6e8cd09c1854e9b56a8d7adbcffe407287** is
-exact local **88756340d787f6bcb726afb2ff7535aa62677153** tree
-**224c1cde415e1460d09ad509fa21e8e9cf4b9dd6**. create_tree exact + git ls-remote
-verified. Actual Linux run39466512625/job118779217412 is IN_PROGRESS at
-owned dependency build; previous stages checkout/cache passed. Existing Windows
-run39466512564/job118779217204 and Android39466512504/job118779217330 are
-IN_PROGRESS intermediate harnesses, not actual fork GUI acceptance. Observe the
-same jobs before rerun. Root review found checkout.sh ignoring cache override;
-platform followup e740454 fixes it and includes owned UI paths/MIT notices.
-Root independently reconstructed33files from both patches; [proof](docs/native/2026-10-20/root-desktop-owned-profile-source.json).
-Local build13001 keeps earlier32file source; no mutation under the live compiler. No new screenshot exists yet.
+Latest published GitHub snapshot **274419f969d036c8352fbb5b968c10c927ac9ba1** is
+exact local **dc41fb30ed3d928278f2b445222066a1933736cb** tree
+**8b11394e0fff654b7d2e84f7826962dec9f48176**. create_tree exact + git ls-remote
+verified. Actual Linux run39466512625/job118779217412 TERMINAL FAIL at
+owned dependencies: exact libprotobuf-dev=3.21.12-8.2ubuntu0.4 absent from apt
+index (agent artifact12285456677; no full application compile). No silent version
+fallback. Agent investigates official same-bit archive URL/hash. Next automatic
+Linux run39467132097 on274419 is IN_PROGRESS; observe same job, no timeout rerun.
+Old Windows39466512564/Android39466512504 and newer39467132094/39467131993
+are intermediate harnesses, not actual Telegram fork GUI acceptance.
+Platform followup e740454 corrects checkout cache and includes owned UI paths/MIT
+notices. Root independently reconstructed33files from both patches;
+[proof](docs/native/2026-10-20/root-desktop-owned-profile-source.json).
+Local build13001 keeps earlier32file source; no mutation under live compiler,
+last author149/822. No new screenshot exists yet.
 Branch `codex/native-clients-ci-20261020`, draft
 [PR8](https://github.com/Seriy615/D-MASH/pull/8). Full fork applications not
 accepted; later source/docs/WIP are not implicitly published. See FORGE_SYNC.
