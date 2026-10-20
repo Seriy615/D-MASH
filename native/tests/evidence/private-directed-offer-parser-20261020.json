@@ -1,0 +1,25 @@
+{
+  "scope": "existing directed private bootstrap parser context",
+  "status": "AUTHOR_UNIT_PASS",
+  "observedRuntimeFailure": {
+    "handle": 79644,
+    "candidate": "private-pairing-candidate01",
+    "phase": "private-request",
+    "code": "TARGET_MISMATCH",
+    "freshRootAndAccountApis": true,
+    "nativeOfferAndInspectReached": true,
+    "privateProfileRetained": true
+  },
+  "checks": [
+    "actual signed directed A offer accepted only for signed requester B",
+    "actual signed wrong requester C rejected",
+    "tampered requester bundle rejected",
+    "original untargeted bootstrap and canonical/signature/selection controls remain PASS"
+  ],
+  "sourceChange": "supply requester Account context when parsing target/local offer; authenticate requester bundle, request signature and binding using original checks",
+  "limits": [
+    "actual fixed native private pairing mesh NOT_RUN yet",
+    "no wire/profile flag changes",
+    "no PWA release or browser acceptance claim"
+  ]
+}

@@ -40,6 +40,11 @@ class AccountService final {
     std::future<AccountResult> sync();
     std::future<AccountResult> listHistory(QString peer, int beforeSequence = 0, int limit = 50);
     std::future<AccountResult> sendText(QString peer, QString operationId, QString text);
+    std::future<AccountResult> pairingCreate(QString expectedPeer = {});
+    std::future<AccountResult> pairingInspect(QString signedBundle, QString expectedPeer = {});
+    std::future<AccountResult> pairingRequest(QString signedBundle, QString expectedPeer);
+    std::future<AccountResult> pairingOffers();
+    std::future<AccountResult> pairingAdvance(QJsonObject selection);
     std::future<AccountResult> logout();
     // Root lock must call this in addition to fencing broker/daemon authority.
     void cancel();

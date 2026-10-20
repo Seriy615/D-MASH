@@ -546,6 +546,16 @@ struct CredentialHost::State {
                                                 params.value("operationId").toString(),
                                                 params.value("text").toString())
                                      .get();
+                else if (method == "account.pairingCreate")
+                    out.result = account->pairingCreate(params.value("expectedPeer").toString()).get();
+                else if (method == "account.pairingInspect")
+                    out.result = account->pairingInspect(params.value("bundle").toString(),params.value("expectedPeer").toString()).get();
+                else if (method == "account.pairingRequest")
+                    out.result = account->pairingRequest(params.value("bundle").toString(),params.value("expectedPeer").toString()).get();
+                else if (method == "account.pairingOffers")
+                    out.result = account->pairingOffers().get();
+                else if (method == "account.pairingAdvance")
+                    out.result = account->pairingAdvance(params).get();
                 else if (method == "account.logout")
                     out.result = account->logout().get();
                 else

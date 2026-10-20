@@ -5,7 +5,8 @@ set(DMASH_PROTOCOL_MODULES
  node_relationships_v4.js node_admission_v4.js node_registration_v4.js resource_pow.js
  node_socket_v4.js node_channel_v4.js probe_primitives_v4.js route_discovery_v4.js
  recipient_payload_v4.js node_routing_v4.js node_inbox_v4.js node_local_delivery_v4.js
- node_local_ownership_v4.js)
+ node_local_ownership_v4.js account_pairing_v2.js account_route_binding_v2.js
+ node_bootstrap_control_v4.js node_bootstrap_dispatcher_v4.js node_bootstrap_runtime_v4.js)
 set(DMASH_PROTOCOL_FILES)
 set(DMASH_MANIFEST "{\n  \"files\": [")
 set(DMASH_SEPARATOR "")

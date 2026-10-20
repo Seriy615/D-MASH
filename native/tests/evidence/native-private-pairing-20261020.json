@@ -1,0 +1,64 @@
+{
+  "scope": "AUTHOR_COMPONENT_PASS; real native Account private pairing and one-direction text through actual native Nodes/Python transit",
+  "candidate": "private-pairing-candidate02b",
+  "manifestSha256": "33be779275162ecda06b46f785face528165ecaf97e8ad2295ba2757748e8d57",
+  "runtimeHandle": 22153,
+  "exitCode": 0,
+  "binaries": {
+    "dmash-credential-host": "da90ca9b4c8e0b598e69b280d3264af0f12bb5fd6d1ceba291e6218ff8654381",
+    "dmash-node-host": "9e31b8c9ac0ea3d5f2119e12829e476d72253a7f9dbfbb30933a4a67104b0598"
+  },
+  "result": {
+    "freshRoots": 2,
+    "freshAccounts": 2,
+    "preinjectedContacts": 0,
+    "preinjectedRoutes": 0,
+    "actualSignedRequestAcceptConfirm": true,
+    "actualNativeKyber": true,
+    "bothContactsPublished": true,
+    "backendForwarded": 24,
+    "recipientHistory": 1,
+    "bothAccountReopenHistory": 1,
+    "plaintextDigest": "c60c7c124b81cd093ad73221c837425f47b13d2d7776cf678d4824be242197d9"
+  },
+  "checks": [
+    "normal profile.create/account.create/account.login/node.enable APIs",
+    "default activation difficulty22, real Python transit",
+    "directed private offer created and inspected; signed request/accept/confirm via original canonical protocol",
+    "actual journal stage/reserve/sign/preparation/commit/activation; immediate handshake initiate on first local ready",
+    "real E2EE A-to-B text and same history after both Account logout/login",
+    "existing local IPC capability/policy/floor/EOF regression PASS61114",
+    "strict directed parser unit success/wrong third party/tamper rejection PASS37301"
+  ],
+  "earlierFailures": [
+    {
+      "candidate": "private-pairing-candidate01",
+      "handle": 79644,
+      "phase": "private-request",
+      "code": "TARGET_MISMATCH",
+      "disposition": "fixed canonical parser recipient context; immutable failure preserved"
+    },
+    {
+      "candidate": "private-pairing-candidate02",
+      "handle": 20750,
+      "phase": "identity",
+      "code": "Node relationship store identity changed",
+      "disposition": "harness copied old transit DB with new identity; separate new transit directory preserves original"
+    },
+    {
+      "candidate": "private-pairing-candidate02b retained-copy mode",
+      "handle": 4864,
+      "phase": "fresh-hosts",
+      "code": "ACCOUNT_IMPORT_PATH_CONFLICT",
+      "disposition": "path-bound vault correctly refuses moved profile; original/copy retained, accepted run used fresh normal APIs"
+    }
+  ],
+  "limits": [
+    "Linux component API only; ordinary pairing UI/browser NOT_RUN",
+    "return-direction B-to-A text and activation race timing need separate stronger fixture",
+    "configured WS loopback peers; NAT/self-organization NOT_RUN",
+    "compressed browser link/QR import NOT_IMPLEMENTED by native facade; raw original signed bundle supported",
+    "ACK-free mesh baseline unchanged; no physical resend/custody ACK patch",
+    "no production or PWA deployment"
+  ]
+}

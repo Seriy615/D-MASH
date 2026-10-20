@@ -299,9 +299,14 @@ struct AccountService::State {
                                      "account_authenticated_history_v4.js",
                                      "account_session_runtime_v4.js",
                                      "account_static_kem_v1.js",
+                                     "node_bootstrap_control_v4.js",
+                                     "node_public_bootstrap_control_v4.js",
+                                     "public_account_orchestrator_v4.js",
                                      "storage.js",
                                      "saved_messages.js",
                                      "native/idb.js",
+                                     "native/pairing_host.js",
+                                     "native/pending_sends.js",
                                      "native/account_entry.js"};
         for (auto name : modules)
             load(name);
@@ -653,6 +658,21 @@ std::future<AccountResult> AccountService::sendText(QString peer, QString operat
     return state_->enqueue([s = state_.get(), peer, operation, text] {
         return s->invoke("sendText", {{"peer", peer}, {"operationId", operation}, {"text", text}});
     });
+}
+std::future<AccountResult> AccountService::pairingCreate(QString expectedPeer) {
+    return state_->enqueue([s=state_.get(),expectedPeer] { return s->invoke("pairingCreate",{{"expectedPeer",expectedPeer.isEmpty()?QJsonValue(QJsonValue::Null):QJsonValue(expectedPeer)}}); });
+}
+std::future<AccountResult> AccountService::pairingInspect(QString bundle,QString expectedPeer) {
+    return state_->enqueue([s=state_.get(),bundle,expectedPeer] { return s->invoke("pairingInspect",{{"bundle",bundle},{"expectedPeer",expectedPeer.isEmpty()?QJsonValue(QJsonValue::Null):QJsonValue(expectedPeer)}}); });
+}
+std::future<AccountResult> AccountService::pairingRequest(QString bundle,QString expectedPeer) {
+    return state_->enqueue([s=state_.get(),bundle,expectedPeer] { return s->invoke("pairingRequest",{{"bundle",bundle},{"expectedPeer",expectedPeer}}); });
+}
+std::future<AccountResult> AccountService::pairingOffers() {
+    return state_->enqueue([s=state_.get()] { return s->invoke("pairingOffers"); });
+}
+std::future<AccountResult> AccountService::pairingAdvance(QJsonObject selection) {
+    return state_->enqueue([s=state_.get(),selection] { return s->invoke("pairingAdvance",selection); });
 }
 std::future<AccountResult> AccountService::logout() {
     ++state_->epoch;

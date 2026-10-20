@@ -1,0 +1,71 @@
+{
+  "repository": "https://github.com/DrKLO/Telegram.git",
+  "commit": "0aae959806c57be8ad457980f2a5c6277ff18635",
+  "version": "13.0.3 (7183)",
+  "upstreamLicense": "GPL-2.0; Telegram source headers specify GPL-2.0-or-later; third-party licenses remain in pinned source",
+  "licenseSha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+  "forkSourceCheckpoint": "30db783",
+  "status": "IMPLEMENTATION_WIP_NOT_BUILT",
+  "applicationId": "org.dmash.telegram.beta",
+  "submodules": {
+    "TMessagesProj/jni/td": "022d60202e446ad1287b9fb68e687c8a0760788b",
+    "TMessagesProj/jni/tgcalls": "03d7b8662512af7528f476c02094862c1a37177d",
+    "TMessagesProj/jni/third_party/absl": "54fac219c4ef0bc379dfffb0b8098725d77ac81b",
+    "TMessagesProj/jni/third_party/boost-regex": "4cbcd3078e6ae10d05124379623a1bf03fcb9350",
+    "TMessagesProj/jni/third_party/boringssl": "2b44a3701a4788e1ef866ddc7f143060a3d196c9",
+    "TMessagesProj/jni/third_party/dav1d": "54706fc6bc0cdecab7e9593974a4039cc038fca7",
+    "TMessagesProj/jni/third_party/ffmpeg": "45f1910444f34b02621f9f0426ea1a538a613c41",
+    "TMessagesProj/jni/third_party/libprisma": "31a5d6fbbef8136e4a2b3adaf7b95e2ccaa7436d",
+    "TMessagesProj/jni/third_party/libvpx": "1024874c5919305883187e2953de8fcb4c3d7fa6",
+    "TMessagesProj/jni/third_party/libyuv": "28ce69c2744a6aafdb58564e7b884aec3f66be5f",
+    "TMessagesProj/jni/third_party/openh264": "652bdb7719f30b52b08e506645a7322ff1b2cc6f",
+    "TMessagesProj/jni/third_party/wamr": "25bd7eb63e828e4bd242cc9b38d260b4b31c6605",
+    "TMessagesProj/jni/third_party/xiph/ogg": "be05b13e98b048f0b5a0f5fa8ce514d56db5f822",
+    "TMessagesProj/jni/third_party/xiph/opus": "22244de5a79bd1d6d623c32e72bf1954b56235be",
+    "TMessagesProj/jni/third_party/xiph/opusfile": "a55c164e9891a9326188b7d4d216ec9a88373739",
+    "TMessagesProj/jni/tlottie": "31f1b542f88e7b4be9a01e749920d857535fc715",
+    "TMessagesProj/jni/wallet-engine": "5c65e47cb8d68727c20d89382d0bc51292486b9a",
+    "TMessagesProj/lib/jlatexmath": "919e50b2f6f64b04b712cdb13d558ff9ecf9c8ed",
+    "TMessagesProj_Modules/media": "09b6c97c0d691c50cd4541e1573995d4066d6f5c"
+  },
+  "requiredSubmodules": [
+    "TMessagesProj/jni/td",
+    "TMessagesProj/jni/tgcalls",
+    "TMessagesProj/jni/third_party/absl",
+    "TMessagesProj/jni/third_party/boost-regex",
+    "TMessagesProj/jni/third_party/boringssl",
+    "TMessagesProj/jni/third_party/dav1d",
+    "TMessagesProj/jni/third_party/ffmpeg",
+    "TMessagesProj/jni/third_party/libprisma",
+    "TMessagesProj/jni/third_party/libvpx",
+    "TMessagesProj/jni/third_party/libyuv",
+    "TMessagesProj/jni/third_party/openh264",
+    "TMessagesProj/jni/third_party/xiph/ogg",
+    "TMessagesProj/jni/third_party/xiph/opus",
+    "TMessagesProj/jni/third_party/xiph/opusfile",
+    "TMessagesProj/jni/tlottie",
+    "TMessagesProj/lib/jlatexmath",
+    "TMessagesProj_Modules/media"
+  ],
+  "patches": [
+    {
+      "path": "patches/0001-dmash-credential-ui.patch",
+      "sha256": "5d9a4a4b157330cc889f4ea67eb1fc3525fcf985ddaf0daab265821cba3447d2"
+    }
+  ],
+  "toolchain": {
+    "gradle": "8.13",
+    "androidGradlePlugin": "8.13.2",
+    "ndk": "27.2.12479018",
+    "sdk": 36,
+    "buildTools": "36.0.0",
+    "java": 21
+  },
+  "boundaries": {
+    "ui": "Original LaunchActivity, DialogsActivity, ChatActivity, Cells and ActionBar",
+    "account": "Independent D-MASH credential service via framed local IPC; actual encrypted history authoritative",
+    "transport": "Independent NodeService; Telegram MTProto init/requests/socket disabled",
+    "projection": "Telegram SQLite wrapper memory-only; UserConfig save disabled; public IDs mapped with collision checks",
+    "coreLicense": "Independent D-MASH core declared MIT in repository README; not a blanket license for the GPL fork"
+  }
+}

@@ -2,16 +2,20 @@
 
 **20 октября 2026 UTC. Цель ACTIVE. Android, Windows и Linux приложения НЕ ГОТОВЫ.**
 
-Последнее указание пользователя: «аккуратно думай не сильно о кибербезе».
-Приоритет — обычная переписка, автономная фоновая Node, простой UI и сохранность
-данных. Повторное явное требование пользователя: «я просил дизайн из тг взять».
-Telegram Desktop и Telegram Android из исходно указанных репозиториев — образцы
-обоих интерфейсов. Текущий произвольный teal/Widgets экран — промежуточный,
-НЕ приёмка дизайна; воспроизвести Telegram компоновку/navigation/chatlist/chat/
-composer/settings, проверять реальными UI actions и сравнением скриншотов. Исправлять подтверждённые ошибки; не добавлять гипотетические проверки
-и пользовательские церемонии. Этот файл — единственная текущая сводка.
-Исторические checkpoints/deployments доступны в Git и docs/archive; они не
-задают текущие SHA, указания или критерии DONE.
+Последнее явное уточнение: «Делай прям клон телеграмма… Не отдалённо похожее
+а именно клон». **Использовать форки самих Telegram Desktop и Telegram Android**,
+сохраняя их реальные UI/components/assets/navigation/behaviour; под ними наш
+Account/core/Node daemon. Самостоятельная похожая QtWidgets/JavaViews перерисовка
+ОСТАНОВЛЕНА. Ранние скриншоты и UI PASS — только промежуточная инфраструктура,
+не приёмка требуемого клиента. GPL клиентов и их notices сохраняются, отдельное
+MIT ядро остаётся независимым. Telegram backend/MTProto не является fallback;
+D-MASH не требует Telegram SMS/login. Форки воспроизводятся pinned upstream +
+открытыми patches/build scripts в clients/telegram-{desktop,android}.
+
+Прежнее совместимое указание «аккуратно думай не сильно о кибербезе» сохраняется:
+обычная переписка, автономная Node, простой UI и сохранность данных. Исправлять
+подтверждённые ошибки без гипотетических церемоний. Этот файл — единственная
+текущая сводка; docs/archive и Git history не задают текущие SHA/критерии DONE.
 
 ## 1. Цель, checkout и обязательные границы
 
@@ -52,6 +56,7 @@ composer/settings, проверять реальными UI actions и срав�
 | Account retained data | Secure-only registry, тот же Account public ID, original Saved1→native write2, logout/relogin, source owning export unchanged | [Account](docs/native/2026-10-20/root-native-account-retained.json). |
 | Initial import recovery | Atomic staged publish/retry, crash before/after stage/publish, concurrent publisher, no overwrite of accepted DB/keys | [Import](docs/native/2026-10-20/root-account-import-recovery.json). Это initial import, не full N4. |
 | Resident host | Separate credential/Account process, UI death/Account logout preserve Node; Root lock stops Node; Account cancel preserves unlocked Root/Node | [Host](docs/native/2026-10-20/root-resident-credential-host.json), [resident UI](docs/native/2026-10-20/root-desktop-resident-ui.json). |
+| Ordinary private pairing API | Root62234 PASS: freshRoot/Account2, no injectedcontacts/routes, signedRequest/Accept/Confirm, actualnativeKyber,37forwards; bilateralhistory2 +bothrelogin2 | [Proof](docs/native/2026-10-20/root-native-private-pairing.json).1177files/30runtimeentries exact; sourceintegrated006814a–a1bc16c. UI pairing/NAT/publiccontacts NOT RUN; manualfirstsend retry limitation below. |
 | Actual remote E2EE | Immutable283ba51 integrated3e3e845:2245 archived files/18 libs exact, fresh signed pairs, nativeNodes→Python transit20forwards. Recipient Account exit73 after durable history before consume; before/replay/reopen1, both identities/history retained | [Remote Account](docs/native/2026-10-20/root-native-remote-account.json). Known synthetic signed pair/scoped grants; ordinary UI pairing NOT RUN. Node binary explicitly older a0f54a9. |
 | Local capability lease | Runtime64e6933 + test875c679: real TTL10→30, past original expiry same token/socket/ACTIVE tuple, initialized Node, fresh auth | [Lease](docs/native/2026-10-20/root-native-capability-lease.json). Mint deliberately rotates/drops old contexts; не использовать вместо lease extension. |
 | Host crash/recovery | Immutablea52e9f5, root44213 exit0:183source/19artifact/7libs exact; SIGKILL host/Node lease EOF; sameRoot/Node/gens1,3,5,7/Saved2; authenticated floor merge; cancel stops verified suspended oldchild. Process/cancel/logout/reopen/ACTIVE grant lease PASS | [Recovery](docs/native/2026-10-20/root-resident-host-recovery.json). Integrated f8b17d2/1a5f179/87fc172. Не full N4; pin Account resources older remote integration. |
@@ -117,18 +122,35 @@ composer/settings, проверять реальными UI actions и срав�
   Earlier12040 native-authorize180s FAIL remains an unexplained admission
   observation; quiet subsequent PASS does not prove its cause. [FAIL](docs/native/2026-10-20/root-native-account-retry-attempt.json).
   Known signed pairs/scoped grants/old a0f Node; not UI pairing or full N4.
-- Android Account Views/credential service remain platform-owned WIP, not the
-  published launcher. Current build checkpoints may predate accepted host/Account;
-  require coherent frozen source/binary/resource provenance before acceptance.
+- **First remote message fixed at component scope:** source31c5aa4 and focused
+ followup integrated after root56828 actual PASS: send once before other ready,
+ accepted pending/history visible, Account logout/relogin + owner SIGKILL/same
+ identity reopen, automatic bilateral delivery/history2/relogin2 without retry.
+ [Actual proof](docs/native/2026-10-20/root-native-first-send.json). Immutable01
+ 1183files/30runtime exact,38forwards, activation146.05/72.42s under unchanged150s.
+ Followup02 1187/30 exact, strict transient handoff and actual retained Account
+ test62090 PASS; [proof](docs/native/2026-10-20/root-first-send-transient-retest.json).
+ Actual Telegram fork UI not yet accepted; public/NAT/fullN4 remain separate.
+
+- Android ordinaryAccount UI source d0f6990 was published177; cc0fe09/aadace6
+  Telegram layout+matchingnavCI newer than published85 snapshot. Immutablev6
+ 302source at aadace6 is building8597; actual runtime not accepted. Native pins
+ predate newly integrated privatepairing and require coherent provenance.
 
 ## 4. Source publication, environments и активные проверки
 
-Latest published GitHub snapshot **177cebc72bad180b36cd38f1678c0c82348fa220** is
-exact local **e727884b1d689675e466512d69c01242e69bad6a** tree
-**4ee4c17f713282a5313a2ac1bc024a5ae9c90faf**. create_tree exact + git ls-remote
+Latest published GitHub snapshot **7f6560122ebb744b4d09d75cbbe052c747793008** is
+exact local **85b0443d5a13614d0ebfd62b8ddd8226f14a602c** tree
+**6f7f76720f4db5e94f07bd300d4f4accc33d7589**. create_tree exact + git ls-remote
 verified. Branch `codex/native-clients-ci-20261020`, draft
 [PR8](https://github.com/Seriy615/D-MASH/pull/8), attached to task.
-Later source/docs and live platform WIP are not implicitly published.
+Later source/docs, actual upstream fork checkouts and WIP are not implicitly published.
+Root independently verified Desktop86262333 and Android0aae9598 HEAD+licenses;
+ actual fork patch recipes now tracked39b5f02 Desktop and40c6c3b/e2053c7 Android.
+ Desktop LocalClient real-core probe59223 PASS after standalonecompile15103;
+ [IPC-only proof](docs/native/2026-10-20/root-actual-fork-ipc.json). No full fork
+ compile/render/egress/UI claim. Android actual fork Java compile32593 pending;
+exact paths/hashes in FORGE_SYNC. Actual fork integration/build/runtime NOT RUN.
 See [FORGE_SYNC.md](FORGE_SYNC.md). No deployment or runtime-state backup.
 
 Last actual REST check:22a snapshot Android39447633575/job118713660813 LIVE
@@ -165,7 +187,10 @@ normal unlock/login recorded in BROWSER_QA. No user/production data touched.
 известно созданы с явным gpt-6.1-sol. Разрешены только gpt-6.1-sol/gpt-6-luna;
 новых создавать с явной моделью, старых неизвестной модели не возобновлять.
 
-- **broker_store_sol:** isolated credential-host worktree. Accepted recovery
+- **broker_store_sol:** NEW ownership actual Telegram Android upstreamfork in
+  private worktree; reproducible clients/telegram-android patches/build+GPL.
+  Preserve old Windows artifacts, stop old scaffold diagnosis at checkpoint.
+  isolated credential-host worktree. Accepted recovery
   integrated. Fresh Root-only/optional Account1930b80 independently accepted. Next isolated
   transport-only node.pause/resume preserves unlocked Root/Account/queued jobs;
   current node.disable=fullRootlock unchanged until coherent UI migration. Immutable
@@ -176,15 +201,22 @@ normal unlock/login recorded in BROWSER_QA. No user/production data touched.
   floors1,3,5/reconnect; recipienthistory1, identities preserved. OrdinaryUI
   pairing/visiblepause/WindowsAndroid not inferred. Integrated5f3fa4d/6448583/41606d8. Platform frozen TelegramUI binary predates
   pause; visiblepause API integration follows separately.
-  Windows two scripts now exclusively owned here while platform redesigns UI.
+  Windows two scripts old scaffold preserved:24c+2a7df00 integrated; actual
+ 7f directfilelogger proves QtTest3PASS, fullCTest stillFAIL. Furtheroldscaffold
+ diagnosis paused for actualAndroidfork priority.
 - **native_runtime_sol:** native actor/localIPC, isolated remote Account worktree,
   Android CI diagnostics. 3cf/9e independent parent54951 PASS, source integratedf187474/9308218. Diagnose
   admission failure using retained metadata, no cause guess. Fresh foreign transit fixture accepted independently, integrated05dd2cc. Now
   ordinary private pairing/contact DTOs + existing bootstrap runtime/dispatcher
   via separate encrypted SQLite; optional trusted store/KEM +private-v1 seams
-  isolated f50e82c UNIT only, not shared yet; actual native pairing pending.
+  integrated006814a–a1bc16c after root62234 actualbilateral PASS; sourceproof
+  table above. Next Account-owned pendingfirstsend durablequeue/autoflush (gap
+  above); browser-native interop helper offline, not actual acceptance yet.
   Platform now owns Android CI UI/instrumentation files.
-- **native_platforms_sol:** PRIORITY: Telegram Desktop/Android design requirement above;
+- **native_platforms_sol:** NEW ownership actual Telegram Desktop upstreamfork,
+  reproducible clients/telegram-desktop patches/build+GPL. Old imitation UI work
+  STOPPED; preserve WIP and observe already-live builds to terminal. Old scoped
+  checkpoints below are infrastructure only, not final design acceptance;
   pinned original Desktop86262333/Android0aae9598 references; Desktop7aaccb3
   root97893 scoped actualXCB PASS (table above), first layout PARTIAL; implement
   Android Telegram layout/runtime and next pause/explicitLock menu,

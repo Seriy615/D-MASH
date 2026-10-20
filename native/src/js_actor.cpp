@@ -171,6 +171,7 @@ class Engine final : public QObject {
     QHash<int, std::shared_ptr<Compute>> computes;
     std::unique_ptr<RelationshipSqlStore> relations;
     std::unique_ptr<InboxSqlStore> inbox;
+    std::unique_ptr<InboxSqlStore> bootstrapInbox;
     std::unique_ptr<JobLedger> jobs;
     QString profilePath;
     std::function<void(const QString&, const QJsonObject&)> localReply;
@@ -228,6 +229,7 @@ class Engine final : public QObject {
                 const auto file = QDir(profile).filePath("node.sqlite");
                 relations = std::make_unique<RelationshipSqlStore>(file);
                 inbox = std::make_unique<InboxSqlStore>(file);
+                bootstrapInbox = std::make_unique<InboxSqlStore>(QDir(profile).filePath("bootstrap.sqlite"), 96, 1024 * 1024);
             }
             load("@platform");
             if (worker)
@@ -251,7 +253,9 @@ class Engine final : public QObject {
                 "node_registration_v4.js",   "resource_pow.js",           "node_socket_v4.js",
                 "node_channel_v4.js",        "probe_primitives_v4.js",    "route_discovery_v4.js",
                 "recipient_payload_v4.js",   "node_routing_v4.js",        "node_inbox_v4.js",
-                "node_local_delivery_v4.js", "node_local_ownership_v4.js"};
+                "node_local_delivery_v4.js", "node_local_ownership_v4.js",
+                "account_pairing_v2.js", "account_route_binding_v2.js", "node_bootstrap_control_v4.js",
+                "node_bootstrap_dispatcher_v4.js", "node_bootstrap_runtime_v4.js"};
     }
     void check() { demand(!closed && QThread::currentThread() == thread() && !cancel->load()); }
     void load(const QString& name) {
@@ -421,6 +425,7 @@ class Engine final : public QObject {
             stopWorker(id);
         batchGuards.clear();
         jobs.reset();
+        bootstrapInbox.reset();
         inbox.reset();
         relations.reset();
         if (ctx) {
@@ -780,15 +785,18 @@ class Engine final : public QObject {
                                                           JS_ToBool(c, arg(5)) == 1,
                                                           integer(c, arg(6), 1, 65536)));
             }
-            if (op == "inboxReconcile") {
-                self->inbox->reconcile();
+            const bool bootstrapStore = op.startsWith("bootstrapInbox");
+            const auto inboxOp = bootstrapStore ? QStringLiteral("inbox") + op.mid(14) : op;
+            auto* inboxStore = bootstrapStore ? self->bootstrapInbox.get() : self->inbox.get();
+            if (inboxOp == "inboxReconcile") {
+                inboxStore->reconcile();
                 return JS_UNDEFINED;
             }
-            if (op == "inboxRead")
-                return self->row(self->inbox->read(string(c, arg(1), 520)));
-            if (op == "inboxAll" || op == "inboxBindings") {
+            if (inboxOp == "inboxRead")
+                return self->row(inboxStore->read(string(c, arg(1), 520)));
+            if (inboxOp == "inboxAll" || inboxOp == "inboxBindings") {
                 const auto rows =
-                    op == "inboxAll" ? self->inbox->all() : self->inbox->allBindings();
+                    inboxOp == "inboxAll" ? inboxStore->all() : inboxStore->allBindings();
                 auto array = JS_NewArray(c);
                 demand(!JS_IsException(array));
                 for (qsizetype i = 0; i < rows.size(); ++i) {
@@ -799,7 +807,7 @@ class Engine final : public QObject {
                 }
                 return array;
             }
-            if (op == "inboxCas" || op == "inboxPromote") {
+            if (inboxOp == "inboxCas" || inboxOp == "inboxPromote") {
                 auto revision = [&](int index) -> std::optional<qint64> {
                     if (JS_IsNull(arg(index)))
                         return std::nullopt;
@@ -808,7 +816,7 @@ class Engine final : public QObject {
                            n >= 1 && n <= 9007199254740991.0 && n == qint64(n));
                     return qint64(n);
                 };
-                const int at = op == "inboxCas" ? 3 : 5;
+                const int at = inboxOp == "inboxCas" ? 3 : 5;
                 std::optional<EncryptedRow> row;
                 if (!JS_IsNull(arg(at)))
                     row = EncryptedRow{QString(), 0, bytes(c, arg(at), 12),
@@ -816,12 +824,12 @@ class Engine final : public QObject {
                 else
                     demand(JS_IsNull(arg(at + 1)));
                 bool changed = false;
-                if (op == "inboxCas")
-                    changed = self->inbox->cas(string(c, arg(1), 520), revision(2), row);
+                if (inboxOp == "inboxCas")
+                    changed = inboxStore->cas(string(c, arg(1), 520), revision(2), row);
                 else {
                     const auto source = revision(2);
                     demand(source.has_value());
-                    changed = self->inbox->promote(string(c, arg(1), 64), *source,
+                    changed = inboxStore->promote(string(c, arg(1), 64), *source,
                                                    string(c, arg(3), 64), revision(4), row);
                 }
                 return JS_NewBool(c, changed);

@@ -1,0 +1,25 @@
+{
+  "scope": "AUTHOR_UNIT_COMPONENT_PASS focused transient first-send handoff + retained Saved regression; no new mesh acceptance",
+  "candidate": "private-pending-send-candidate02",
+  "manifestSha256": "fbf35d8123b217f8dc961a9f3d9785c9599330ff1f54cbdbdbc06b5faba93f5b",
+  "sourceCommit": "b91617f",
+  "toolHandle": 2432,
+  "exitCode": 0,
+  "hostSha256": "5606c6301e9220dbcdaf1ac4af02e481bda28ffdec1a95be8e8f0e9d7ca48bdc",
+  "nodeSha256": "9e31b8c9ac0ea3d5f2119e12829e476d72253a7f9dbfbb30933a4a67104b0598",
+  "retainedAccountTestSha256": "a875006386b0eccfb664f31e5085ed45f68caac8eba605769eca94da43df7269",
+  "checks": [
+    "durable stage then ACCOUNT_TRANSPORT_UNAVAILABLE returns durable deferred handoff, pending operation remains visible",
+    "same operation automatically hands off after close/reopen and recovery",
+    "APP_OUTBOX_CONFLICT, pending binding changed/corrupt, rejected peer/auth and cancellation are not swallowed as transient",
+    "original queue actual AESGCM/IDB idempotence, conflict, wrongkey and durablehandoff crash checks remain PASS",
+    "actual original JS Argon2d identity, imported original Saved text plus native write2, same Account contacts, duplicate/conflict, logout/cancel/restart exact history; Saved makes zero daemon callbacks"
+  ],
+  "limits": [
+    "first-send actual mesh candidate01 independently accepted separately (author7158/root56828); this followup does not claim a repeated network gate",
+    "paused/unavailable handoff uses a typed test submit callback, not an actual paused Node",
+    "retained Account test compiled fixture path remains the same owning worktree account_profile.json; its tracked bytes equal pinned source fixture",
+    "browser mixed-runtime gate prepared only; syntax/pycompile are not browser or mesh acceptance",
+    "Node ciphertext/ACK baseline unchanged; no production/PWA deployment"
+  ]
+}

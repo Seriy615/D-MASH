@@ -9,7 +9,7 @@ const Orchestrator=require('../js/public_account_orchestrator_v4.js');
  const host={localOwnership:'managed',identity:{bootstrapProfile:'public-v1'},verifyPreparation(){},activateLocalBinding(){activations++;},publicRequests:async()=>[{registration:'a'.repeat(64),requestId:'b'.repeat(64),requestDigest:'c'.repeat(64),request:'retained-control',expiresAt:Math.floor(Date.now()/1000)+60,direction:'INBOUND'}]};
  const coordinator={start:async()=>{started++;},capture:()=>({host,current:()=>true}),registerAccountJournal:()=>({}),unregisterAccountJournal(){unregistered++;}};
  await assert.rejects(()=>Orchestrator.open({core,storage:{db:{},masterKey},deviceRoot,coordinator}),e=>e.code==='ACCOUNT_VAULT_CONTEXT');assert.equal(started,0);
- host.identity.bootstrapProfile='private-v1';await assert.rejects(()=>Orchestrator.open({core,storage,deviceRoot,coordinator}),e=>e.code==='PUBLIC_NODE_PROFILE_REQUIRED');host.identity.bootstrapProfile='public-v1';
+ host.identity.bootstrapProfile='unsupported-v1';await assert.rejects(()=>Orchestrator.open({core,storage,deviceRoot,coordinator}),e=>e.code==='PUBLIC_NODE_PROFILE_REQUIRED');host.identity.bootstrapProfile='public-v1';
  global.DmashAccountStaticKemV1={open:async()=>({close(){closed++;}})};global.DmashAccountRouteJournalV2={open:async()=>({commit(){commits++;},close(){closed++;}})};
  const instance=await Orchestrator.open({core,storage,deviceRoot,coordinator});assert.deepEqual(await instance.advance({id:'a'.repeat(64),capability:{}},'b'.repeat(64),'c'.repeat(64)),{state:'WAITING_PUBLIC_CONTROL',ready:false});assert.equal(commits,0);assert.equal(activations,0);
  await assert.rejects(()=>instance.advance({id:'a'.repeat(64),capability:{}},'b'.repeat(64),'d'.repeat(64)),e=>e.code==='PUBLIC_REQUEST_CONTEXT');

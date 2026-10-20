@@ -1,0 +1,564 @@
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index 96fc51d..798b38b 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -24,6 +24,11 @@ get_filename_component(src_loc SourceFiles REALPATH)
+ get_filename_component(res_loc Resources REALPATH)
+ 
+ include(cmake/telegram_options.cmake)
++if (TDESKTOP_DMASH_CLIENT)
++    add_subdirectory(${CMAKE_SOURCE_DIR}/dmash ${CMAKE_BINARY_DIR}/dmash)
++    target_link_libraries(Telegram PRIVATE dmash_ipc_adapter)
++endif()
++
+ include(cmake/lib_ffmpeg.cmake)
+ include(cmake/lib_stripe.cmake)
+ include(cmake/lib_tgcalls.cmake)
+diff --git a/Telegram/SourceFiles/core/launcher.cpp b/Telegram/SourceFiles/core/launcher.cpp
+index e844acf..4a510a4 100644
+--- a/Telegram/SourceFiles/core/launcher.cpp
++++ b/Telegram/SourceFiles/core/launcher.cpp
+@@ -5,6 +5,7 @@ the official desktop application for the Telegram messaging service.
+ For license and copyright information please follow this link:
+ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ */
++#include <QStandardPaths>
+ #include "core/launcher.h"
+ 
+ #include "platform/platform_launcher.h"
+@@ -321,7 +322,11 @@ void Launcher::init() {
+ 	prepareSettings();
+ 	initQtMessageLogging();
+ 
++	#ifdef TDESKTOP_DMASH_CLIENT
++	QApplication::setApplicationName(u"DMashDesktop"_q);
++#else
+ 	QApplication::setApplicationName(u"TelegramDesktop"_q);
++#endif
+ 
+ #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+ 	// fallback session management is useless for tdesktop since it doesn't have
+@@ -580,7 +585,15 @@ void Launcher::processArguments() {
+ 	gStartInTray = parseResult.contains("-startintray");
+ 	gQuit = parseResult.contains("-quit");
+ 	gSendPaths = parseResult.value("-sendpath", {});
++#ifdef TDESKTOP_DMASH_CLIENT
++	// Never inspect an installed Telegram working directory, even when the
++	// executable is launched from one. Native Account DB is a separate owner.
++	_customWorkingDir = QStandardPaths::writableLocation(
++		QStandardPaths::GenericDataLocation) + u"/D-MASH/telegram-ui/"_q;
++	QDir().mkpath(_customWorkingDir);
++#else
+ 	_customWorkingDir = parseResult.value("-workdir", {}).join(QString());
++#endif
+ 	if (!_customWorkingDir.isEmpty()) {
+ 		_customWorkingDir = QDir(_customWorkingDir).absolutePath() + '/';
+ 	}
+diff --git a/Telegram/SourceFiles/mtproto/connection_http.cpp b/Telegram/SourceFiles/mtproto/connection_http.cpp
+index baaad90..72b9585 100644
+--- a/Telegram/SourceFiles/mtproto/connection_http.cpp
++++ b/Telegram/SourceFiles/mtproto/connection_http.cpp
+@@ -74,6 +74,14 @@ void HttpConnection::connectToServer(
+ 		const bytes::vector &protocolSecret,
+ 		int16 protocolDcId,
+ 		bool protocolForFiles) {
++#ifdef TDESKTOP_DMASH_CLIENT
++	// Defence in depth for internal connection paths not going through RPC.
++	QMetaObject::invokeMethod(this, [this] {
++		Q_EMIT error(kErrorCodeOther);
++	}, Qt::QueuedConnection);
++	return;
++#endif
++
+ 	_address = address;
+ 	connect(
+ 		&_manager,
+diff --git a/Telegram/SourceFiles/mtproto/connection_resolving.cpp b/Telegram/SourceFiles/mtproto/connection_resolving.cpp
+index 571e14e..0b63809 100644
+--- a/Telegram/SourceFiles/mtproto/connection_resolving.cpp
++++ b/Telegram/SourceFiles/mtproto/connection_resolving.cpp
+@@ -211,6 +211,14 @@ void ResolvingConnection::connectToServer(
+ 		const bytes::vector &protocolSecret,
+ 		int16 protocolDcId,
+ 		bool protocolForFiles) {
++#ifdef TDESKTOP_DMASH_CLIENT
++	// Defence in depth for internal connection paths not going through RPC.
++	QMetaObject::invokeMethod(this, [this] {
++		Q_EMIT error(kErrorCodeOther);
++	}, Qt::QueuedConnection);
++	return;
++#endif
++
+ 	if (!_child) {
+ 		InvokeQueued(this, [=] { emitError(kErrorCodeOther); });
+ 		return;
+diff --git a/Telegram/SourceFiles/mtproto/connection_tcp.cpp b/Telegram/SourceFiles/mtproto/connection_tcp.cpp
+index 26dff1d..30ec30d 100644
+--- a/Telegram/SourceFiles/mtproto/connection_tcp.cpp
++++ b/Telegram/SourceFiles/mtproto/connection_tcp.cpp
+@@ -509,6 +509,14 @@ void TcpConnection::connectToServer(
+ 		const bytes::vector &protocolSecret,
+ 		int16 protocolDcId,
+ 		bool protocolForFiles) {
++#ifdef TDESKTOP_DMASH_CLIENT
++	// Defence in depth for internal connection paths not going through RPC.
++	QMetaObject::invokeMethod(this, [this] {
++		Q_EMIT error(kErrorCodeOther);
++	}, Qt::QueuedConnection);
++	return;
++#endif
++
+ 	Expects(_address.isEmpty());
+ 	Expects(_port == 0);
+ 	Expects(_protocol == nullptr);
+diff --git a/Telegram/SourceFiles/mtproto/mtp_instance.cpp b/Telegram/SourceFiles/mtproto/mtp_instance.cpp
+index 1890c44..fdff1e5 100644
+--- a/Telegram/SourceFiles/mtproto/mtp_instance.cpp
++++ b/Telegram/SourceFiles/mtproto/mtp_instance.cpp
+@@ -373,6 +373,11 @@ Instance::Private::Private(
+ }
+ 
+ void Instance::Private::start() {
++#ifdef TDESKTOP_DMASH_CLIENT
++	// D-MASH uses only its resident local core, never Telegram endpoints.
++	return;
++#endif
++
+ 	if (isKeysDestroyer()) {
+ 		for (const auto &[shiftedDcId, dc] : _dcenters) {
+ 			startSession(shiftedDcId);
+@@ -388,6 +393,11 @@ void Instance::Private::start() {
+ }
+ 
+ void Instance::Private::resolveProxyDomain(const QString &host) {
++#ifdef TDESKTOP_DMASH_CLIENT
++	// D-MASH uses only its resident local core, never Telegram endpoints.
++	return;
++#endif
++
+ 	if (!_domainResolver) {
+ 		_domainResolver = std::make_unique<DomainResolver>([=](
+ 				const QString &host,
+@@ -511,6 +521,11 @@ rpl::producer<DcId> Instance::Private::mainDcIdValue() const {
+ }
+ 
+ void Instance::Private::requestConfig() {
++#ifdef TDESKTOP_DMASH_CLIENT
++	// D-MASH uses only its resident local core, never Telegram endpoints.
++	return;
++#endif
++
+ 	if (_configLoader || isKeysDestroyer()) {
+ 		return;
+ 	}
+@@ -541,6 +556,11 @@ void Instance::Private::badConfigurationError() {
+ }
+ 
+ void Instance::Private::syncHttpUnixtime() {
++#ifdef TDESKTOP_DMASH_CLIENT
++	// D-MASH uses only its resident local core, never Telegram endpoints.
++	return;
++#endif
++
+ 	if (base::unixtime::http_valid() || _httpUnixtimeLoader) {
+ 		return;
+ 	}
+@@ -1016,6 +1036,18 @@ void Instance::Private::sendRequest(
+ 		crl::time msCanWait,
+ 		bool needsLayer,
+ 		mtpRequestId afterRequestId) {
++#ifdef TDESKTOP_DMASH_CLIENT
++	// Keep unsupported Telegram RPCs terminal; do not open a DC session.
++	crl::on_main([callbacks = std::move(callbacks), requestId]() mutable {
++		if (callbacks.fail) {
++			callbacks.fail(Error::Local(
++				u"DMASH_UNSUPPORTED_OPERATION"_q,
++				u"This action is not provided by the D-MASH core."_q),
++				Response{ {}, 0, requestId });
++		}
++	});
++	return;
++#endif
+ 	const auto session = getSession(shiftedDcId);
+ 
+ 	request->requestId = requestId;
+diff --git a/Telegram/cmake/telegram_options.cmake b/Telegram/cmake/telegram_options.cmake
+index 18fa736..281f1bc 100644
+--- a/Telegram/cmake/telegram_options.cmake
++++ b/Telegram/cmake/telegram_options.cmake
+@@ -4,6 +4,13 @@
+ # For license and copyright information please follow this link:
+ # https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ 
++option(TDESKTOP_DMASH_CLIENT "Build the D-MASH local-core client, with Telegram transport disabled." OFF)
++
++if (TDESKTOP_DMASH_CLIENT)
++    target_compile_definitions(Telegram PRIVATE TDESKTOP_DMASH_CLIENT)
++    target_compile_definitions(common_options INTERFACE TDESKTOP_DMASH_CLIENT)
++endif()
++
+ option(TDESKTOP_API_TEST "Use test API credentials." OFF)
+ set(TDESKTOP_API_ID "0" CACHE STRING "Provide 'api_id' for the Telegram API access.")
+ set(TDESKTOP_API_HASH "" CACHE STRING "Provide 'api_hash' for the Telegram API access.")
+@@ -13,7 +20,7 @@ if (TDESKTOP_API_TEST)
+     set(TDESKTOP_API_HASH 344583e45741c457fe1862106095a5eb)
+ endif()
+ 
+-if (TDESKTOP_API_ID STREQUAL "0" OR TDESKTOP_API_HASH STREQUAL "")
++if (NOT TDESKTOP_DMASH_CLIENT AND (TDESKTOP_API_ID STREQUAL "0" OR TDESKTOP_API_HASH STREQUAL ""))
+     message(FATAL_ERROR
+     " \n"
+     " PROVIDE: -D TDESKTOP_API_ID=[API_ID] -D TDESKTOP_API_HASH=[API_HASH]\n"
+diff --git a/dmash/CMakeLists.txt b/dmash/CMakeLists.txt
+new file mode 100644
+index 0000000..41da1eb
+--- /dev/null
++++ b/dmash/CMakeLists.txt
+@@ -0,0 +1,14 @@
++cmake_minimum_required(VERSION 3.25)
++if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
++ project(DMashTelegramAdapter LANGUAGES CXX)
++ set(CMAKE_CXX_STANDARD 20)
++ set(CMAKE_AUTOMOC ON)
++ find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Core Network)
++endif()
++add_library(dmash_ipc_adapter STATIC local_client.cpp local_client.h)
++target_link_libraries(dmash_ipc_adapter PUBLIC Qt6::Core Qt6::Network)
++target_include_directories(dmash_ipc_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
++if(WIN32)
++ target_sources(dmash_ipc_adapter PRIVATE os_windows.cpp os_windows.h)
++ target_link_libraries(dmash_ipc_adapter PRIVATE advapi32)
++endif()
+diff --git a/dmash/local_client.cpp b/dmash/local_client.cpp
+new file mode 100644
+index 0000000..1b0720e
+--- /dev/null
++++ b/dmash/local_client.cpp
+@@ -0,0 +1,55 @@
++// D-MASH local IPC adapter. Derived from D-MASH MIT client code.
++// This fork preserves its upstream GPL client license and separate core boundary.
++#include "local_client.h"
++#include <QCoreApplication>
++#include <QDir>
++#include <QFile>
++#include <QFileInfo>
++#include <QJsonDocument>
++#include <QProcess>
++#include <QSignalBlocker>
++#include <QUuid>
++#include <QtEndian>
++#include <QStringDecoder>
++#ifdef Q_OS_UNIX
++#include <sys/socket.h>
++#include <unistd.h>
++#endif
++#ifdef Q_OS_WIN
++#include "os_windows.h"
++#endif
++namespace {constexpr quint32 MaximumFrame=128*1024*1024;}
++LocalClient::LocalClient(QString directory,QObject* parent):QObject(parent),directory_(std::move(directory)){
++ connectTimer_.setInterval(100);deadline_.setSingleShot(true);deadline_.setInterval(30000);
++ connect(&connectTimer_,&QTimer::timeout,this,&LocalClient::connectHost);
++ connect(&deadline_,&QTimer::timeout,this,[this]{fail("CREDENTIAL_HOST_TIMEOUT");});
++ connect(&socket_,&QLocalSocket::connected,this,[this]{
++#ifdef Q_OS_UNIX
++  ucred peer{};socklen_t size=sizeof(peer);if(getsockopt(socket_.socketDescriptor(),SOL_SOCKET,SO_PEERCRED,&peer,&size)||peer.uid!=geteuid()){fail("CREDENTIAL_HOST_PEER_MISMATCH");return;}
++#endif
++#ifdef Q_OS_WIN
++  try{dmash::windowsLocal::requireSameUserPipe(quintptr(socket_.socketDescriptor()));dmash::windowsLocal::requirePrivatePipe(quintptr(socket_.socketDescriptor()));}catch(...){fail("CREDENTIAL_HOST_PEER_MISMATCH");return;}
++#endif
++  connectTimer_.stop();send("ready","host.status",{});
++ });
++ connect(&socket_,&QLocalSocket::readyRead,this,&LocalClient::read);
++ connect(&socket_,&QLocalSocket::disconnected,this,[this]{ready_=false;if(busy())fail("CREDENTIAL_HOST_DISCONNECTED");});
++ connect(&socket_,&QLocalSocket::errorOccurred,this,[this](QLocalSocket::LocalSocketError){if(!ready_&&!connectTimer_.isActive())connectTimer_.start();else if(ready_)fail("CREDENTIAL_HOST_DISCONNECTED");});
++}
++void LocalClient::request(const QString& method,const QJsonObject& params){if(busy())return;method_=method;params_=params;id_=QUuid::createUuid().toString(QUuid::Id128);emit busyChanged(true);deadline_.start((method=="node.enable"||method=="account.pairingAdvance")?180000:30000);if(ready_&&socket_.state()==QLocalSocket::ConnectedState){send(id_,method_,params_);params_={};}else{attempts_=0;connectHost();if(busy())connectTimer_.start();}}
++void LocalClient::connectHost(){if(socket_.state()==QLocalSocket::ConnectedState||socket_.state()==QLocalSocket::ConnectingState)return;if(++attempts_>150){fail("CREDENTIAL_HOST_UNAVAILABLE");return;}
++ QFile file(QDir(directory_).filePath("credential-endpoint.json"));if((launched_||attempts_==1)&&file.open(QIODevice::ReadOnly)&&file.size()<=4096){auto locator=QJsonDocument::fromJson(file.readAll()).object();auto endpoint=locator.value("endpoint").toString();if(locator.value("v").toInt()==1&&!endpoint.isEmpty()){socket_.connectToServer(endpoint);return;}}
++ if(!launched_){auto executable=QCoreApplication::instance()->property("dmashCredentialHost").toString();auto node=QCoreApplication::instance()->property("dmashNodeHost").toString();if(executable.isEmpty())executable=QDir(QCoreApplication::applicationDirPath()).filePath("dmash-credential-host");if(node.isEmpty())node=QDir(QCoreApplication::applicationDirPath()).filePath("dmash-node-host");
++#ifdef Q_OS_WIN
++ if(!executable.endsWith(".exe"))executable+=".exe";if(!node.endsWith(".exe"))node+=".exe";
++#endif
++ launched_=QProcess::startDetached(executable,{"--profile",directory_,"--node-host",node});if(!launched_)fail("CREDENTIAL_HOST_LAUNCH_FAILED");}
++}
++void LocalClient::send(const QString& id,const QString& method,const QJsonObject& params){auto bytes=QJsonDocument(QJsonObject{{"v",1},{"id",id},{"method",method},{"params",params}}).toJson(QJsonDocument::Compact);if(bytes.size()>MaximumFrame){fail("CREDENTIAL_REQUEST_TOO_LARGE");return;}QByteArray frame(4,0);qToBigEndian<quint32>(bytes.size(),frame.data());frame+=bytes;const bool accepted=socket_.write(frame)==frame.size();bytes.fill(0);frame.fill(0);if(!accepted)fail("CREDENTIAL_HOST_WRITE_FAILED");}
++void LocalClient::cancel(){if(!busy())return;if(ready_)send("cancel","account.cancel",{});else fail("ACCOUNT_SESSION_CHANGED");}
++void LocalClient::fail(const QString& code){connectTimer_.stop();deadline_.stop();ready_=false;auto method=std::move(method_);method_.clear();{QSignalBlocker blocked(&socket_);socket_.abort();}input_.fill(0);input_.clear();length_=0;params_={};if(!method.isEmpty()){emit busyChanged(false);emit response(method,false,code,{});}}
++void LocalClient::read(){while(socket_.bytesAvailable()){
++ if(!length_){input_+=socket_.read(4-input_.size());if(input_.size()<4)return;length_=qFromBigEndian<quint32>(input_.constData());input_.clear();if(!length_||length_>MaximumFrame){fail("CREDENTIAL_HOST_BAD_FRAME");return;}}
++ input_+=socket_.read(length_-input_.size());if(input_.size()<length_)return;QStringDecoder utf8(QStringDecoder::Utf8);utf8.decode(input_);QJsonParseError error;auto message=QJsonDocument::fromJson(input_,&error).object();input_.fill(0);input_.clear();length_=0;if(utf8.hasError()||error.error!=QJsonParseError::NoError||message.value("v").toInt()!=1){fail("CREDENTIAL_HOST_BAD_REPLY");return;}
++ auto id=message.value("id").toString();if(id=="cancel")continue;if(id=="ready"){if(!message.value("ok").toBool()){fail(message.value("code").toString());return;}ready_=true;emit hostStatusReady(message.value("result").toObject().value("value").toObject());if(busy()){send(id_,method_,params_);params_={};}continue;}if(id!=id_){fail("CREDENTIAL_HOST_REPLY_MISMATCH");return;}deadline_.stop();auto method=std::move(method_);method_.clear();emit busyChanged(false);emit response(method,message.value("ok").toBool(),message.value("code").toString(),message.value("result").toObject());
++}}
+diff --git a/dmash/local_client.h b/dmash/local_client.h
+new file mode 100644
+index 0000000..e7f6ab9
+--- /dev/null
++++ b/dmash/local_client.h
+@@ -0,0 +1,23 @@
++// D-MASH local IPC adapter. Derived from D-MASH MIT client code.
++// This fork preserves its upstream GPL client license and separate core boundary.
++#pragma once
++#include <QObject>
++#include <QLocalSocket>
++#include <QTimer>
++#include <QJsonObject>
++// Credential worker owns the Account and Root; this socket owns only a UI session.
++class LocalClient final:public QObject {
++ Q_OBJECT
++public:
++ explicit LocalClient(QString directory,QObject* parent=nullptr);
++ void request(const QString& method,const QJsonObject& params={});
++ void cancel();
++ bool busy()const{return !method_.isEmpty();}
++signals:
++ void busyChanged(bool);
++ void hostStatusReady(const QJsonObject&);
++ void response(const QString& method,bool ok,const QString& code,const QJsonObject& result);
++private:
++ void connectHost();void read();void send(const QString&,const QString&,const QJsonObject&);void fail(const QString&);
++ QString directory_,method_,id_;QJsonObject params_;QLocalSocket socket_;QTimer connectTimer_,deadline_;QByteArray input_;quint32 length_=0;int attempts_=0;bool launched_=false,ready_=false;
++};
+diff --git a/dmash/os_windows.cpp b/dmash/os_windows.cpp
+new file mode 100644
+index 0000000..9d6624f
+--- /dev/null
++++ b/dmash/os_windows.cpp
+@@ -0,0 +1,201 @@
++#include "os_windows.h"
++#ifdef _WIN32
++#ifndef _WIN32_WINNT
++#define _WIN32_WINNT 0x0602
++#endif
++#ifndef NOMINMAX
++#define NOMINMAX
++#endif
++#include <windows.h>
++#include <aclapi.h>
++#include <sddl.h>
++#include <memory>
++#include <stdexcept>
++#include <vector>
++#include <utility>
++namespace dmash::windowsLocal {
++namespace {
++void require(bool yes) { if (!yes) throw std::runtime_error("Windows local ownership rejected"); }
++struct Handle {
++    HANDLE value = nullptr;
++    explicit Handle(HANDLE h = nullptr) : value(h) {}
++    ~Handle() { if (value && value != INVALID_HANDLE_VALUE) CloseHandle(value); }
++    Handle(const Handle&) = delete;
++};
++struct Local {
++    void* value = nullptr;
++    ~Local() { if (value) LocalFree(value); }
++};
++std::vector<unsigned char> tokenUser(HANDLE process) {
++    Handle token;
++    require(OpenProcessToken(process, TOKEN_QUERY, &token.value));
++    DWORD bytes = 0;
++    GetTokenInformation(token.value, TokenUser, nullptr, 0, &bytes);
++    require(bytes >= sizeof(TOKEN_USER) && bytes <= 65536);
++    std::vector<unsigned char> result(bytes);
++    require(GetTokenInformation(token.value, TokenUser, result.data(), bytes, &bytes));
++    return result;
++}
++PSID sid(std::vector<unsigned char>& user) { return reinterpret_cast<TOKEN_USER*>(user.data())->User.Sid; }
++void privateDacl(PACL acl, PSID current) {
++    require(acl && IsValidAcl(acl));
++    unsigned char system[SECURITY_MAX_SID_SIZE]; DWORD size = sizeof(system);
++    require(CreateWellKnownSid(WinLocalSystemSid, nullptr, system, &size));
++    bool ownerAllowed = false;
++    for (DWORD i = 0; i < acl->AceCount; ++i) {
++        void* raw = nullptr;
++        require(GetAce(acl, i, &raw));
++        const auto* header = static_cast<ACE_HEADER*>(raw);
++        if (header->AceType == ACCESS_DENIED_ACE_TYPE) continue;
++        require(header->AceType == ACCESS_ALLOWED_ACE_TYPE);
++        const auto* ace = static_cast<ACCESS_ALLOWED_ACE*>(raw);
++        auto* allowed = const_cast<DWORD*>(&ace->SidStart);
++        require(IsValidSid(allowed));
++        require(EqualSid(allowed, current) || EqualSid(allowed, system));
++        if (EqualSid(allowed, current) && !(header->AceFlags & INHERIT_ONLY_ACE) && ace->Mask)
++            ownerAllowed = true;
++    }
++    require(ownerAllowed);
++}
++void verifyFile(const std::wstring& path, bool missing, bool directory) {
++    Handle file(CreateFileW(path.c_str(), READ_CONTROL | FILE_READ_ATTRIBUTES,
++                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
++                           OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
++                           nullptr));
++    if (file.value == INVALID_HANDLE_VALUE && missing && GetLastError() == ERROR_FILE_NOT_FOUND)
++        return;
++    require(file.value != INVALID_HANDLE_VALUE);
++    BY_HANDLE_FILE_INFORMATION info{};
++    require(GetFileInformationByHandle(file.value, &info));
++    require(!(info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT));
++    require(bool(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == directory);
++    auto current = tokenUser(GetCurrentProcess());
++    PSID owner = nullptr; PACL acl = nullptr; Local descriptor;
++    require(GetSecurityInfo(file.value, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
++                            &owner, nullptr, &acl, nullptr, reinterpret_cast<PSECURITY_DESCRIPTOR*>(&descriptor.value)) == ERROR_SUCCESS);
++    require(owner && EqualSid(owner, sid(current)));
++    privateDacl(acl, sid(current));
++}
++}
++ChildProcess::~ChildProcess() {
++    if (parentPipe) CloseHandle(reinterpret_cast<HANDLE>(parentPipe));
++    if (process) CloseHandle(reinterpret_cast<HANDLE>(process));
++}
++ChildProcess::ChildProcess(ChildProcess&& other) noexcept
++    : process(std::exchange(other.process, 0)), parentPipe(std::exchange(other.parentPipe, 0)),
++      pid(std::exchange(other.pid, 0)) {}
++ChildProcess& ChildProcess::operator=(ChildProcess&& other) noexcept {
++    if (this != &other) {
++        if (parentPipe) CloseHandle(reinterpret_cast<HANDLE>(parentPipe));
++        if (process) CloseHandle(reinterpret_cast<HANDLE>(process));
++        process = std::exchange(other.process, 0);
++        parentPipe = std::exchange(other.parentPipe, 0);
++        pid = std::exchange(other.pid, 0);
++    }
++    return *this;
++}
++std::uintptr_t ChildProcess::releaseParentPipe() noexcept { return std::exchange(parentPipe, 0); }
++ChildProcess spawnDaemon(const std::wstring& executable, const std::vector<std::wstring>& arguments) {
++    require(!executable.empty() && executable.find(L'\0') == std::wstring::npos);
++    // Windows CRT argv quoting, including trailing slashes and embedded quotes.
++    auto quoted = [](const std::wstring& value) {
++        require(value.find(L'\0') == std::wstring::npos);
++        std::wstring result = L"\""; size_t slashes = 0;
++        for (const wchar_t c : value) {
++            if (c == L'\\') { ++slashes; continue; }
++            if (c == L'\"') result.append(slashes * 2 + 1, L'\\');
++            else result.append(slashes, L'\\');
++            slashes = 0; result += c;
++        }
++        result.append(slashes * 2, L'\\'); result += L'\"'; return result;
++    };
++    auto current = tokenUser(GetCurrentProcess()); Local stringSid, descriptor;
++    require(ConvertSidToStringSidW(sid(current), reinterpret_cast<LPWSTR*>(&stringSid.value)));
++    const std::wstring user = static_cast<wchar_t*>(stringSid.value);
++    const std::wstring sddl = L"O:" + user + L"D:P(A;;GA;;;" + user + L")(A;;GA;;;SY)";
++    require(ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl.c_str(), SDDL_REVISION_1,
++                reinterpret_cast<PSECURITY_DESCRIPTOR*>(&descriptor.value), nullptr));
++    unsigned char random[16]; HCRYPTPROV provider = 0;
++    require(CryptAcquireContextW(&provider, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT));
++    const bool generated = CryptGenRandom(provider, sizeof(random), random);
++    CryptReleaseContext(provider, 0); require(generated);
++    std::wstring name = L"\\\\.\\pipe\\dmash-bootstrap-";
++    for (const auto byte : random) { name += L"0123456789abcdef"[byte >> 4]; name += L"0123456789abcdef"[byte & 15]; }
++    SECURITY_ATTRIBUTES attributes{sizeof(attributes), descriptor.value, FALSE};
++    Handle server(CreateNamedPipeW(name.c_str(), PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED | FILE_FLAG_FIRST_PIPE_INSTANCE,
++        PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS, 1, 65536, 65536, 0, &attributes));
++    require(server.value != INVALID_HANDLE_VALUE);
++    attributes.bInheritHandle = TRUE;
++    Handle child(CreateFileW(name.c_str(), GENERIC_READ | GENERIC_WRITE | READ_CONTROL, 0, &attributes,
++                             OPEN_EXISTING, FILE_FLAG_OVERLAPPED, nullptr));
++    require(child.value != INVALID_HANDLE_VALUE);
++    OVERLAPPED connected{}; Handle event(CreateEventW(nullptr, TRUE, FALSE, nullptr)); require(event.value);
++    connected.hEvent = event.value;
++    const bool connectedNow = ConnectNamedPipe(server.value, &connected);
++    require(connectedNow || GetLastError() == ERROR_PIPE_CONNECTED);
++    requirePrivatePipe(reinterpret_cast<std::uintptr_t>(server.value));
++    requirePrivatePipe(reinterpret_cast<std::uintptr_t>(child.value));
++    require(SetHandleInformation(server.value, HANDLE_FLAG_INHERIT, 0));
++    std::wstring command = quoted(executable);
++    for (const auto& arg : arguments) {
++        for (const auto* reserved : {L"--bootstrap-handle", L"--bootstrap-fd", L"--bundle"})
++            require(arg != reserved && arg.rfind(std::wstring(reserved) + L"=", 0) != 0);
++        command += L" " + quoted(arg);
++    }
++    command += L" --bootstrap-handle " + std::to_wstring(reinterpret_cast<std::uintptr_t>(child.value));
++    require(command.size() < 32767);
++    SIZE_T bytes = 0; InitializeProcThreadAttributeList(nullptr, 1, 0, &bytes); require(bytes > 0);
++    std::vector<unsigned char> storage(bytes);
++    auto* list = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(storage.data());
++    require(InitializeProcThreadAttributeList(list, 1, 0, &bytes));
++    struct AttributeCleanup { LPPROC_THREAD_ATTRIBUTE_LIST value; ~AttributeCleanup() { DeleteProcThreadAttributeList(value); } } cleanup{list};
++    require(UpdateProcThreadAttribute(list, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, &child.value, sizeof(child.value), nullptr, nullptr));
++    STARTUPINFOEXW startup{}; startup.StartupInfo.cb = sizeof(startup); startup.lpAttributeList = list;
++    PROCESS_INFORMATION info{};
++    require(CreateProcessW(executable.c_str(), command.data(), nullptr, nullptr, TRUE,
++        EXTENDED_STARTUPINFO_PRESENT | CREATE_NO_WINDOW, nullptr, nullptr, &startup.StartupInfo, &info));
++    CloseHandle(info.hThread);
++    ChildProcess result;
++    result.process = reinterpret_cast<std::uintptr_t>(info.hProcess);
++    result.parentPipe = reinterpret_cast<std::uintptr_t>(server.value); server.value = nullptr;
++    result.pid = info.dwProcessId;
++    return result;
++}
++void requireSameUserPipe(std::uintptr_t raw) {
++    HANDLE pipe = reinterpret_cast<HANDLE>(raw);
++    require(GetFileType(pipe) == FILE_TYPE_PIPE);
++    DWORD flags = 0; ULONG pid = 0;
++    require(GetNamedPipeInfo(pipe, &flags, nullptr, nullptr, nullptr));
++    require((flags & PIPE_SERVER_END) ? GetNamedPipeClientProcessId(pipe, &pid)
++                                    : GetNamedPipeServerProcessId(pipe, &pid));
++    require(pid != 0);
++    Handle peer(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
++    require(peer.value != nullptr);
++    auto theirs = tokenUser(peer.value), current = tokenUser(GetCurrentProcess());
++    require(EqualSid(sid(theirs), sid(current)));
++}
++void requirePrivatePipe(std::uintptr_t raw) {
++    auto current = tokenUser(GetCurrentProcess()); PACL acl = nullptr; Local descriptor;
++    require(GetSecurityInfo(reinterpret_cast<HANDLE>(raw), SE_KERNEL_OBJECT, DACL_SECURITY_INFORMATION,
++                            nullptr, nullptr, &acl, nullptr, reinterpret_cast<PSECURITY_DESCRIPTOR*>(&descriptor.value)) == ERROR_SUCCESS);
++    privateDacl(acl, sid(current));
++}
++void ensurePrivateProfile(const std::wstring& path) {
++    if (GetFileAttributesW(path.c_str()) == INVALID_FILE_ATTRIBUTES) {
++        require(GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND);
++        auto current = tokenUser(GetCurrentProcess()); Local stringSid, descriptor;
++        require(ConvertSidToStringSidW(sid(current), reinterpret_cast<LPWSTR*>(&stringSid.value)));
++        const std::wstring user = static_cast<wchar_t*>(stringSid.value);
++        const std::wstring sddl = L"O:" + user + L"D:P(A;OICI;FA;;;" + user + L")(A;OICI;FA;;;SY)";
++        require(ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl.c_str(), SDDL_REVISION_1,
++                    reinterpret_cast<PSECURITY_DESCRIPTOR*>(&descriptor.value), nullptr));
++        SECURITY_ATTRIBUTES attributes{sizeof(attributes), descriptor.value, FALSE};
++        require(CreateDirectoryW(path.c_str(), &attributes));
++    }
++    verifyFile(path, false, true);
++    for (const auto* file : {L"node.sqlite", L"node.sqlite-wal", L"node.sqlite-shm", L"owner.lock"})
++        requirePrivateFile(path + L"\\" + file, true);
++}
++void requirePrivateFile(const std::wstring& path, bool allowMissing) { verifyFile(path, allowMissing, false); }
++}
++#endif
+diff --git a/dmash/os_windows.h b/dmash/os_windows.h
+new file mode 100644
+index 0000000..58c07b5
+--- /dev/null
++++ b/dmash/os_windows.h
+@@ -0,0 +1,30 @@
++#pragma once
++#ifdef _WIN32
++#include <cstdint>
++#include <string>
++#include <vector>
++namespace dmash::windowsLocal {
++// Owns only this spawned process handle and its broker lifetime lease. Closing
++// process does not kill the child; the daemon observes bootstrap lease EOF.
++struct ChildProcess final {
++    std::uintptr_t process = 0, parentPipe = 0;
++    std::uint32_t pid = 0;
++    ChildProcess() = default;
++    ~ChildProcess();
++    ChildProcess(const ChildProcess&) = delete;
++    ChildProcess& operator=(const ChildProcess&) = delete;
++    ChildProcess(ChildProcess&&) noexcept;
++    ChildProcess& operator=(ChildProcess&&) noexcept;
++    // Transfer to QLocalSocket::setSocketDescriptor; its owner retains the lease.
++    std::uintptr_t releaseParentPipe() noexcept;
++};
++// Arguments contain paths/options only, never credentials. Appends the private
++// bootstrap handle; only that child pipe endpoint is inherited by CreateProcess.
++ChildProcess spawnDaemon(const std::wstring& executable, const std::vector<std::wstring>& arguments);
++// Shared by broker, daemon and GUI. No credential material enters these helpers.
++void requireSameUserPipe(std::uintptr_t handle);
++void requirePrivatePipe(std::uintptr_t handle);
++void ensurePrivateProfile(const std::wstring& path);
++void requirePrivateFile(const std::wstring& path, bool allowMissing = false);
++}
++#endif

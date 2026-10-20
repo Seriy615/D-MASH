@@ -1,0 +1,21 @@
+{
+  "scope": "canonical existing pairing/bootstrap adapters",
+  "status": "AUTHOR_UNIT_PASS",
+  "checks": [
+    "original default IndexedDB BootstrapRuntime provisions real signed owner/offer and reopens same config",
+    "trusted injected actual C++ SQLite backend provisions and restores same route/public discovery keys",
+    "injected bootstrap backend never opens IndexedDB",
+    "bootstrap storage uses separate domain key from main Inbox",
+    "orchestrator original public/default KEM option remains null",
+    "managed private-v1 opens and forwards explicit KEM adapter unchanged",
+    "signed private offer encrypted persistence and exact reopen, wrong-peer/missing-receipt refusal",
+    "original public orchestrator guards and logout cleanup"
+  ],
+  "nativeInboxBridgeSha256": "181aef90eed4e208358470314c06057a2041ad56c10b7cb5ea9e1de4efcd26cc",
+  "limits": [
+    "UNIT source/runtime seams only; actual native signed pairing mesh still pending",
+    "orchestrator test uses synthetic KEM material and Host doubles",
+    "storage test uses real signatures/encrypted SQLite but no network/KEM-validity claim",
+    "browser acceptance and release metadata pending root integration"
+  ]
+}

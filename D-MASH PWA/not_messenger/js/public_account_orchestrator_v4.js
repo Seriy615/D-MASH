@@ -6,7 +6,7 @@
  const unhex=s=>{if(typeof s!=='string'||!/^[0-9a-f]{64}$/.test(s))fail('PUBLIC_ACCOUNT_ENCODING');return Uint8Array.from(s.match(/../g),v=>parseInt(v,16));};
  class PublicAccountOrchestratorV4{
   #media;#dispatch;#poll=null;#history;#core;#storage;#active=new Map();#opened=new Set();#sealed;#transport;#runtime;#progress;#inbox;#session;#coordinator;#capture;#host;#journal;#router;#kem;#aliasKey;#owners=new Map();#closed=false;#tail=Promise.resolve();#transactions=new Set();#ownerAbort=new AbortController();#onAbort;#account;#pairing;#binding;#control;#privateControl;#privatePreparations=new Map();
-  static async open({core,storage,deviceRoot,coordinator}){
+  static async open({core,storage,deviceRoot,coordinator,kem=null}){
    if(typeof core?.captureAccountSessionV4!=='function')fail('ACCOUNT_SESSION_REQUIRED');
    const s=core.captureAccountSessionV4();s.assertCurrent();
    if(storage?.db!==s.db||storage.masterKey!==s.masterKey||deviceRoot?.state!==s.rootState||!s.db.objectStoreNames.contains(STORE))fail('ACCOUNT_VAULT_CONTEXT');
@@ -14,11 +14,11 @@
    value.#onAbort=()=>value.close();s.signal.addEventListener('abort',value.#onAbort,{once:true});
    try{
     await value.#wait(coordinator.start());value.#capture=coordinator.capture();value.#host=value.#capture.host;
-    if(value.#host.localOwnership!=='managed'||value.#host.identity?.bootstrapProfile!=='public-v1')fail('PUBLIC_NODE_PROFILE_REQUIRED');
+    if(value.#host.localOwnership!=='managed'||!['private-v1','public-v1'].includes(value.#host.identity?.bootstrapProfile))fail('PUBLIC_NODE_PROFILE_REQUIRED');
     value.#pairing=g.DmashAccountPairingV2.createCodec({nacl:g.nacl,discovery:g.DmashRouteDiscoveryV4});value.#binding=g.DmashAccountRouteBindingV2.createBindingCodec({nacl:g.nacl,discovery:g.DmashRouteDiscoveryV4,pairing:value.#pairing});value.#control=g.DmashNodePublicBootstrapControlV4.createCodec({pairing:value.#pairing,binding:value.#binding});
     value.#privateControl=g.DmashNodeBootstrapControlV4.createCodec({pairing:value.#pairing,binding:value.#binding});
     value.#aliasKey=await value.#wait(crypto.subtle.importKey('raw',s.blindSalt,{name:'HMAC',hash:'SHA-256'},false,['sign']));
-    value.#kem=await value.#wait(g.DmashAccountStaticKemV1.open({session:s}));
+    value.#kem=await value.#wait(g.DmashAccountStaticKemV1.open({session:s,kem}));
     value.#journal=await value.#wait(g.DmashAccountRouteJournalV2.open({core,storage,deviceRoot,accountSignal:s.signal,bindingCodec:value.#binding,verifyPreparation:value.#host.verifyPreparation.bind(value.#host)}));
     value.#router=coordinator.registerAccountJournal(value.#journal);value.#check();return value;
    }catch(error){value.close();throw error;}

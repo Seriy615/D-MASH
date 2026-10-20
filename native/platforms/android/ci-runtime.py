@@ -91,15 +91,15 @@ def snapshot(name):
 
 
 def element(nodes, text):
-    found = [node for node in nodes if node.get('text', '').casefold() == text.casefold()]
+    found = [node for node in nodes if (node.get('text', '').casefold() == text.casefold() or node.get('content-desc', '').casefold() == text.casefold())]
     assert len(found) == 1, 'visible control missing/ambiguous: ' + text
     return found[0]
 
 
-def tap(node, enabled=True):
+def tap(node, enabled=True, row=False):
     assert node.get('enabled') == ('true' if enabled else 'false')
     if enabled:
-        assert node.get('clickable') == 'true'
+        assert node.get('clickable') == 'true' or (row and node.get('class', '').endswith('TextView')), 'control is not clickable'
     left, top, right, bottom = map(int, re.fullmatch(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', node.get('bounds')).groups())
     adb('shell', 'input', 'tap', str((left + right) // 2), str((top + bottom) // 2))
 
@@ -123,7 +123,7 @@ def wait_ui(name, predicate, timeout=30):
 
 
 def has(nodes, text, enabled=None):
-    return any(n.get('text', '').casefold() == text.casefold() and
+    return any((n.get('text', '').casefold() == text.casefold() or n.get('content-desc', '').casefold() == text.casefold()) and
                (enabled is None or n.get('enabled') == str(enabled).lower()) for n in nodes)
 
 
@@ -141,7 +141,23 @@ def fill_fields(values):
     adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
 
 
+def settings(name):
+    nodes = read_nodes()
+    if not has(nodes, 'Details'):
+        control = 'Main menu' if has(nodes, 'Main menu') else 'Chat menu'
+        tap(element(nodes, control))
+    return wait_ui(name, lambda n: has(n, 'Details'))
+
+
+def close_settings():
+    nodes = read_nodes()
+    if has(nodes, 'Details'):
+        tap(element(nodes, 'Main menu'))
+
+
 def ordinary_ui(result):
+    wait_ui('01-messenger-launcher', lambda n: has(n, 'Main menu'))
+    settings('01-main-menu')
     nodes = wait_ui('01-messenger-ready', lambda n: has(n, 'Create profile', True))
     for label in ['Sign in', 'Start Node', 'Connections']:
         assert element(nodes, label).get('enabled') == 'false'
@@ -165,12 +181,13 @@ def ordinary_ui(result):
     assert has(snapshot('06-node-tools-back'), 'Application details')
     adb('shell', 'input', 'keyevent', 'KEYCODE_HOME')
     adb('shell', 'am', 'start', '-W', '-n', 'org.dmash.client/.MainActivity')
-    nodes = read_nodes()
+    nodes = settings('07-main-menu')
     tap(element(nodes, 'Details'))
     tap(element(read_nodes(), 'Node tools'))
     assert has(snapshot('07-node-tools-resume'), 'Node is off')
     adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
     adb('shell', 'am', 'start', '-W', '-n', 'org.dmash.client/.MainActivity')
+    settings('08-main-menu')
     nodes = wait_ui('08-main-return', lambda n: has(n, 'Create profile', True))
     result['checks'].append('ordinary launcher + explicit Node tools: unchanged disabled controls/details Close/Back/background checks')
     tap(element(nodes, 'Create profile'))
@@ -206,13 +223,19 @@ def ordinary_ui(result):
     assert len({main_pid, credential_pid, node_pid}) == 3
     adb('shell', 'run-as', 'org.dmash.client', 'kill', '-9', main_pid)
     adb('shell', 'am', 'start', '-W', '-n', 'org.dmash.client/.MainActivity')
+    settings('17-main-menu')
     nodes = wait_ui('17-ui-process-reconnect', lambda n: has(n, 'Node running · 0 connected peers'))
     assert adb('shell', 'pidof', 'org.dmash.client:credentials').decode().strip() == credential_pid
     assert adb('shell', 'pidof', 'org.dmash.client:node').decode().strip() == node_pid
-    tap(element(nodes, 'Stop Node and lock'))
+    tap(element(nodes, 'Pause Node'))
+    nodes = wait_ui('18-node-paused', lambda n: has(n, 'Node paused') and has(n, 'Resume Node', True))
+    assert not adb('shell', 'sh', '-c', "'pidof org.dmash.client:node || true'").decode().strip(), 'Node process still alive after pause'
+    tap(element(nodes, 'Resume Node'))
+    nodes = wait_ui('18-node-resumed', lambda n: has(n, 'Node running · 0 connected peers'), timeout=180)
+    tap(element(nodes, 'Lock device'))
     nodes = wait_ui('18-node-stopped-locked', lambda n: has(n, 'Node is off') and has(n, 'Unlock device', True))
     assert not adb('shell', 'sh', '-c', "'pidof org.dmash.client:node || true'").decode().strip(), 'Node process still alive after explicit stop'
-    result['checks'].append('visible zero-Account Start Node; exact separate services survive UI SIGKILL/reconnect; visible Stop Node and lock verifies Node process exit')
+    result['checks'].append('visible zero-Account Start Node; exact separate services survive UI SIGKILL/reconnect; visible Pause/Resume requires no PIN; explicit Lock device verifies Node process exit')
     tap(element(nodes, 'Create Account'))
     fill_fields(['773411'])
     tap(element(read_nodes(), 'Unlock'))
@@ -228,20 +251,39 @@ def ordinary_ui(result):
     tap(element(read_nodes(), 'Create Account'))
     fill_fields(['android-new-ui', 'Android_New_Profile', 'android-profile-password', 'android-profile-password'])
     tap(element(read_nodes(), 'Create and sign in'))
-    nodes = wait_ui('22-account-created', lambda n: has(n, 'Android_New_Profile') and has(n, 'Избранное'))
-    tap(element(nodes, 'Избранное'))
+    nodes = wait_ui('22-account-created', lambda n: has(n, 'Избранное'))
+    nodes = settings('22-created-account-menu')
+    assert has(nodes, 'Android_New_Profile')
+    close_settings()
+    nodes = read_nodes()
+    tap(element(nodes, 'Search conversations'))
+    fill_fields(['missing-conversation'])
+    assert not has(snapshot('22-search-filtered'), 'Избранное')
+    tap(element(read_nodes(), 'Search conversations'))
+    nodes = wait_ui('22-search-cleared', lambda n: has(n, 'Избранное'))
+    tap(element(nodes, 'New message'))
+    tap(element(snapshot('22-new-message'), 'Избранное'), row=True)
     nodes = wait_ui('23-saved', lambda n: any(x.get('content-desc') == 'Message' and x.get('enabled') == 'true' for x in n))
     assert element(nodes, 'Send').get('enabled') == 'false'
+    tap(element(nodes, 'Insert emoji'))
+    nodes = read_nodes()
+    assert element(nodes, 'Send').get('enabled') == 'true'
+    tap(next(n for n in nodes if n.get('content-desc') == 'Message'))
+    adb('shell', 'input', 'keyevent', 'KEYCODE_DEL')
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+    assert element(read_nodes(), 'Send').get('enabled') == 'false'
     fill_fields(['Saved_from_Android_UI'])
     nodes = read_nodes()
     tap(element(nodes, 'Send'))
     nodes = wait_ui('24-saved-write', lambda n: has(n, 'Saved_from_Android_UI'))
     adb('shell', 'input', 'keyevent', 'KEYCODE_HOME')
     adb('shell', 'am', 'start', '-W', '-n', 'org.dmash.client/.MainActivity')
-    nodes = wait_ui('25-account-resume', lambda n: has(n, 'Android_New_Profile'))
+    nodes = wait_ui('25-account-resume', lambda n: has(n, 'Saved_from_Android_UI') or has(n, 'Избранное'))
     if not has(nodes, 'Saved_from_Android_UI'):
-        tap(element(nodes, 'Избранное'))
+        tap(element(nodes, 'Избранное'), row=True)
         nodes = wait_ui('26-history-reopened', lambda n: has(n, 'Saved_from_Android_UI'))
+    nodes = settings('26-account-menu')
+    assert has(nodes, 'Android_New_Profile')
     tap(element(nodes, 'Sign out'))
     nodes = wait_ui('27-signed-out', lambda n: has(n, 'Sign in', True))
     assert not any(n.get('content-desc') == 'Message' and n.get('enabled') == 'true' for n in nodes)

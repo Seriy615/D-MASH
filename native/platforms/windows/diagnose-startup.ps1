@@ -7,7 +7,7 @@ $ErrorActionPreference='Stop'
 New-Item -Force -ItemType Directory $OutputDirectory | Out-Null
 $Executable=(Resolve-Path -LiteralPath $Executable).Path
 $OutputDirectory=(Resolve-Path -LiteralPath $OutputDirectory).Path
-$report=[ordered]@{kind='Windows Qt startup diagnosis';version=2;status='NOT_RUN';platform='offscreen';test='disconnectedInventory';resolution='filesystem candidates, not a loader trace';imports=@();binaries=@()}
+$report=[ordered]@{kind='Windows Qt startup diagnosis';version=2;status='NOT_RUN';platform='offscreen';test='full desktop-controls suite';resolution='filesystem candidates, not a loader trace';imports=@();binaries=@()}
 $report.executable=$Executable
 $report.path=$env:PATH
 $report.workingDirectory=(Get-Location).Path
@@ -58,7 +58,7 @@ $process=$null
 $clock=[Diagnostics.Stopwatch]::StartNew()
 try {
  $info=[System.Diagnostics.ProcessStartInfo]::new($Executable)
- $info.ArgumentList.Add('disconnectedInventory')
+ $info.ArgumentList.Add('-v1')
  # This logger also proves QtTest ran if its CRT stdout handles are unavailable.
  $info.ArgumentList.Add('-o');$info.ArgumentList.Add("$OutputDirectory/direct.qtest.txt,txt")
  $info.UseShellExecute=$false;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true

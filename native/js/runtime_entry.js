@@ -1,7 +1,7 @@
 'use strict';
 (function(g){
  const host=NativePlatform.host;
- let initializing=false,ready=false,closed=false,signing=null,store=null,inbox=null,routing=null,local=null,ownership=null,jobs=null,nodeId=null,ownerGeneration=null;
+ let initializing=false,ready=false,closed=false,signing=null,store=null,inbox=null,routing=null,local=null,ownership=null,bootstrap=null,jobs=null,nodeId=null,ownerGeneration=null;
  const localSessions=new Map();let inboxBusy=false;
  const abort=new AbortController(),channels=new Map(),peers=new Map(),connecting=new Set(),groups=new Map();let pumpQueued=false;
  const hex=bytes=>Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
@@ -20,6 +20,16 @@
   async promote(source,sourceRevision,target,targetRevision,row){this.check();return host('inboxPromote',source,sourceRevision,target,targetRevision,row?row.iv:null,row?new Uint8Array(row.ciphertext):null);},
   close(){this.closed=true;}
  };
+ const bootstrapBackend={closed:false,
+  check(){if(this.closed||closed)throw Error('Bootstrap Inbox closed');},
+  async open(){this.check();return this;},
+  async read(key){this.check();return host('bootstrapInboxRead',key);},
+  async all(){this.check();return host('bootstrapInboxAll');},
+  async allBindings(){this.check();return host('bootstrapInboxBindings');},
+  async reconcile(){this.check();host('bootstrapInboxReconcile');},
+  async cas(key,revision,row,{guard=()=>true}={}){this.check();if(!guard())throw Error('Bootstrap owner session changed');this.check();return host('bootstrapInboxCas',key,revision,row?row.iv:null,row?new Uint8Array(row.ciphertext):null);},
+  close(){this.closed=true;}
+ };
  async function initialize(data){
   if(initializing||ready||closed)throw Error('Node already initialized');initializing=true;
   try{
@@ -34,6 +44,9 @@
    routing=new DmashNodeRoutingV4(data.baseNcrh);
    local=new DmashNodeLocalDeliveryV4(routing,inbox);const restored=await local.restore({managedOnly:true});
    ownership=new DmashNodeLocalOwnershipV4(local,inbox);
+   bootstrap=await DmashNodeBootstrapRuntimeV4.open(data.storageKey,nodeId,{runtime:routing,ownership,local,isCurrent:current,store:bootstrapBackend});
+   local.finalControl=(routeId,packet,keys)=>bootstrap.receiveFinal(routeId,packet,keys);
+   ownership.detachBootstrap=routeId=>bootstrap.detach(routeId);ownership.archiveRowProvider=owner=>bootstrap.archiveRow(owner);
    const policy=host('jobsOpen',nodeId,data.storageKey,data.transportGeneration,data.policyRevision,data.directEnabled);ownerGeneration=policy.ownerGeneration;
    jobs=new NativeJobRuntime({host,routing,local,inbox,ownership,current,report});ready=true;jobs.wake();report({event:'ready',nodeId,ownerGeneration,role:'NODE',accountsLoaded:false,...restored});
   }finally{data.seed?.fill(0);data.storageKey?.fill(0);data.baseNcrh?.fill(0);initializing=false;}
@@ -78,7 +91,7 @@
    const alive=()=>{if(closed||localSessions.get(connectionId)!==ctx)throw Error('Local session ended');};
    let result;
    if(method==='node.status'){
-    requireKeys(params,'');const policy=host('jobsPolicy');result={initialized:ready,role:'NODE',connectedPeers:routing.peers.size,ownerGeneration,transportGeneration:policy.transportGeneration,policyRevision:policy.policyRevision,transportEnabled:policy.enabled,directEnabled:policy.directEnabled};
+    requireKeys(params,'');const policy=host('jobsPolicy');result={initialized:ready,role:'NODE',bootstrapProfile:'private-v1',connectedPeers:routing.peers.size,ownerGeneration,transportGeneration:policy.transportGeneration,policyRevision:policy.policyRevision,transportEnabled:policy.enabled,directEnabled:policy.directEnabled};
    }else if(method.startsWith('broker.')){
     if(ctx.role!=='broker')throw Error('Broker scope required');
     if(method==='broker.policy'){
@@ -103,6 +116,18 @@
      requireKeys(params,'tuple');owner();requireKeys(params.tuple,'accountPublic,ownerSlot,routeAuthorityDigest,routeId,migrationId,bindingDigest,generation,preparationDigest');result=await ownership.change(ctx.ownerToken,params.tuple,method==='owner.activate'?'ACTIVE':'RETIRED');jobs.wake();
     }else if(method==='owner.query'){requireKeys(params,'migrationId');owner(true);result=await ownership.query(ctx.ownerToken,params.migrationId);
     }else if(method==='owner.release'){requireKeys(params,'');owner(true);local.releaseOwnerGrants(ctx.ownerToken);ownership.owners.delete(ctx.ownerToken);ctx.ownerToken=null;result={released:true};
+    }else if(method==='owner.discover'){
+     requireKeys(params,'certificate');owner();const found=await local.discover(params.certificate,{ownerToken:ctx.ownerToken});try{owner();}catch(e){local.releaseGrant(found.handle,ctx.ownerToken);throw e;}result=found;
+    }else if(method==='owner.releaseGrant'){requireKeys(params,'handle');owner();result=local.releaseGrant(params.handle,ctx.ownerToken);owner();
+    }else if(method==='bootstrap.provision'){
+     requireKeys(params,'localBundle,discoverySeed,discoveryBox,recipientKeys');owner();if(!Array.isArray(params.recipientKeys)||params.recipientKeys.length!==1)throw Error('Bootstrap recipient key');
+     const material=[];try{const decode=value=>{const bytes=unhex(value);material.push(bytes);return bytes;};result=await bootstrap.provision(ctx.ownerToken,{localBundle:params.localBundle,discoverySeed:decode(params.discoverySeed),discoveryBox:decode(params.discoveryBox),recipientKeys:params.recipientKeys.map(decode)});}finally{for(const bytes of material)bytes.fill(0);}
+    }else if(method==='bootstrap.list'){requireKeys(params,'');owner(true);result={requests:await bootstrap.dispatcher.list(ctx.ownerToken)};owner(true);
+    }else if(method==='bootstrap.select'){requireKeys(params,'exchangeId,requestDigest,deny');owner();if(!token(params.exchangeId)||!token(params.requestDigest)||typeof params.deny!=='boolean')throw Error('Bootstrap selection');result=await bootstrap.dispatcher.select(ctx.ownerToken,params.exchangeId,params.requestDigest,{deny:params.deny});owner();
+    }else if(method==='bootstrap.submit'){
+     requireKeys(params,'handle,control');owner();if(!params.control||typeof params.control!=='object')throw Error('Bootstrap control');
+     if(params.control.kind==='REQUEST')requireKeys(params.control,'kind,targetBundle,serialized');else if(params.control.kind==='RECEIPT')requireKeys(params.control,'kind,exchangeId,serialized');else throw Error('Bootstrap control kind');
+     result=await bootstrap.submit(ctx.ownerToken,params.handle,params.control);owner();
     }else if(method==='destination.install'){requireKeys(params,'certificate,replyRouteId');owner();result=await jobs.install(ctx.ownerToken,params.certificate,params.replyRouteId);
     }else if(method==='job.submit'){requireKeys(params,'destination,operationId,blob,expiresAt');owner(true);result=await jobs.submit(ctx.ownerToken,params,alive);
     }else if(method==='job.query'){requireKeys(params,'id');owner(true);result=jobs.query(ctx.ownerToken,params.id);
@@ -135,6 +160,6 @@
    if(revoke){report({event:'transport-revoked',ownerGeneration});stop();}
   }catch(_){if(!closed)host('localReply',id,JSON.stringify({ok:false,code:'REQUEST_REJECTED'}));}
  }
- function stop(){if(closed)return;closed=true;ready=false;for(const group of groups.values())if(group.timer)clearTimeout(group.timer);groups.clear();for(const id of [...localSessions.keys()])closeLocal(id);jobs?.close();ownership?.close();local?.close();abort.abort();for(const channel of channels.values())channel.close();channels.clear();peers.clear();void routing?.close();inbox?.close();store?.close();signing?.secretKey.fill(0);signing=null;NativePlatform.close();}
+ function stop(){if(closed)return;closed=true;ready=false;for(const group of groups.values())if(group.timer)clearTimeout(group.timer);groups.clear();for(const id of [...localSessions.keys()])closeLocal(id);jobs?.close();bootstrap?.close();ownership?.close();local?.close();abort.abort();for(const channel of channels.values())channel.close();channels.clear();peers.clear();void routing?.close();inbox?.close();store?.close();signing?.secretKey.fill(0);signing=null;NativePlatform.close();}
  g.NativeNode=Object.freeze({openLocal,closeLocal,dispatchLocal:data=>{void dispatchLocal(data);},initialize:data=>{void initialize(data).catch(e=>{error('initialize',e);stop();});},connect:peer=>{try{connect(peer);}catch(e){error('connect',e);}},query:index=>{void query(index).catch(e=>error('query',e));},snapshot:()=>report({event:'snapshot',ready,nodeId,peers:routing?.peers.size||0,stats:routing?.stats||{}}),stop});
 })(globalThis);

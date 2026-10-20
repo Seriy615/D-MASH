@@ -15,7 +15,7 @@
   for(const name of Object.keys(value))Object.defineProperty(result,name,{value:copy(value[name],seen),enumerable:true,writable:true,configurable:true});return result;
  };
  if(typeof g.structuredClone!=='function')g.structuredClone=value=>copy(value);
- let generation=0,session=null,core=null,journal=null,sealed=null,runtime=null,root=null;
+ let generation=0,session=null,core=null,journal=null,sealed=null,runtime=null,root=null,history=null,pairingRuntime=null,pairingHost=null,pendingSends=null;
  const peers=new Map();let preparations=new WeakMap();
  const preparationFields=['accountPublic','ownerSlot','routeAuthorityDigest','routeId','migrationId','bindingDigest','generation','preparationDigest'];
  const preparationTuple=value=>Object.fromEntries(preparationFields.map(name=>[name,value[name]]));
@@ -28,7 +28,7 @@
  async function plain(row){if(!row)return null;let bytes;try{const raw=Uint8Array.from(atob(row.blob),c=>c.charCodeAt(0));bytes=new Uint8Array(await wait(crypto.subtle.decrypt({name:'AES-GCM',iv:raw.subarray(0,12)},current().masterKey,raw.subarray(12))));return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}finally{bytes?.fill(0);}}
  async function alias(base,level){const salt=current().blindSalt,bytes=utf(base+level),input=new Uint8Array(bytes.length+salt.length);input.set(bytes);input.set(salt,bytes.length);try{return await core.fastHash(input);}finally{input.fill(0);}}
  const kem=Object.freeze({generateKeys:()=>{const k=host('kemKeypair');return {pk:k.pk,sk:k.sk,success:true};},encapsulate:pk=>{const k=host('kemEncapsulate',pk);return {ct:k.ct,ss:k.ss,success:true};},decapsulate:(ct,sk)=>({ss:host('kemDecapsulate',ct,sk),success:true})});
- function logout(){++generation;runtime?.close();runtime=null;sealed?.close();sealed=null;journal?.close();journal=null;for(const p of peers.values()){try{host('transport',p.route,'owner.release',{});}catch(_){}}peers.clear();preparations=new WeakMap();if(session){session.controller.abort();session.db.close();session.keys.sign.secretKey.fill(0);session.keys.box.secretKey.fill(0);session.blindSalt.fill(0);}session=core=root=null;if(g.DMashStorage){DMashStorage.db=null;DMashStorage.masterKey=null;}return {loggedOut:true};}
+ function logout(){++generation;pendingSends?.close();pendingSends=null;pairingRuntime?.close();pairingRuntime=null;pairingHost?.close();pairingHost=null;history=null;runtime?.close();runtime=null;sealed?.close();sealed=null;journal?.close();journal=null;for(const p of peers.values()){try{host('transport',p.route,'owner.release',{});}catch(_){}}peers.clear();preparations=new WeakMap();if(session){session.controller.abort();session.db.close();session.keys.sign.secretKey.fill(0);session.keys.box.secretKey.fill(0);session.blindSalt.fill(0);}session=core=root=null;if(g.DMashStorage){DMashStorage.db=null;DMashStorage.masterKey=null;}return {loggedOut:true};}
  async function registryAccounts(){const secure=host('hasSecureRegistry'),db=new NativeAccountDatabase(secure?'dm_registry_secure_v1':'dm_registry_v1');try{const rows=await all(db,'accounts');return secure?host('registryRead',rows):rows;}finally{db.close();}}
  async function listAccounts(){return (await registryAccounts()).map(a=>({identity:a.id,accountPublicId:typeof a.pk==='string'?a.pk.slice(0,64):null}));}
  async function createAccount({identity,password,displayName='',expectedEpoch}){
@@ -54,7 +54,7 @@
    if(host('epoch')!==epoch){sign.secretKey.fill(0);box.secretKey.fill(0);fail('ACCOUNT_SESSION_CHANGED');}
    const controller=new AbortController(),db=new NativeAccountDatabase('dm_gamma_vault'),keys={sign,box},blindSalt=full.slice(32,64);
    session={epoch,controller,signal:controller.signal,db,masterKey,keys,blindSalt,generation:++generation,assertCurrent:()=>current()};
-   const listeners=new Set();root={state:{nativeOwnerEpoch:epoch},onLock:fn=>{listeners.add(fn);return()=>listeners.delete(fn);}};
+   const listeners=new Set();root={state:{nativeOwnerEpoch:epoch},onLock:fn=>{listeners.add(fn);return()=>listeners.delete(fn);}};session.rootState=root.state;
    core={keys,blindSalt,activeIdentity:identity,_accountBootAttempt:{},captureAccountSessionV4:()=>{current();return session;},
     // Exact effective legacy Core.fastHash: UTF8(String(typedArray)), including commas.
     fastHash:async m=>hex(new Uint8Array(await crypto.subtle.digest('SHA-256',utf(String(m)))))};
@@ -62,15 +62,17 @@
    const codec=DmashAccountRouteBindingV2.createBindingCodec({nacl,discovery:DmashRouteDiscoveryV4,pairing:DmashAccountPairingV2.createCodec({nacl,discovery:DmashRouteDiscoveryV4}),subtle:crypto.subtle});
    journal=await DmashAccountRouteJournalV2.open({storage:{db,masterKey},core,deviceRoot:root,accountSignal:controller.signal,bindingCodec:codec,verifyPreparation});
    sealed=await DmashAccountSealedOperationV4.open({session,journal});
-   const history=new DmashAccountAuthenticatedHistoryV4({core});
+   history=new DmashAccountAuthenticatedHistoryV4({core});
    const transport={readRouteSnapshot:peer=>journal.readRouteSnapshot(peer),prepareAndSubmitIntent:submitIntent};
-   runtime=new DmashAccountSessionRuntimeV4({core,transport,kem,persistAuthenticated:v=>history.persistAuthenticated(v),persistOutgoing:v=>history.persistOutgoing(v),persistOutgoingAck:v=>history.ackOutgoing(v),outgoingDeliveryStatus:v=>history.outgoingDeliveryStatus(v),verifyOutgoingDeliveryStatus:(v,e)=>history.verifyOutgoingDeliveryStatus(v,e)});
-   controller.signal.addEventListener('abort',()=>history.close(),{once:true});
+   let capturedPending=null;
+   runtime=new DmashAccountSessionRuntimeV4({core,transport,kem,onStatus:(peer,status)=>{if(status.phase==='ESTABLISHED'&&capturedPending)void capturedPending.flush(peer).catch(()=>{});},persistAuthenticated:history.persistAuthenticated.bind(history),persistOutgoing:history.persistOutgoing.bind(history),persistOutgoingAck:history.ackOutgoing.bind(history),outgoingDeliveryStatus:history.outgoingDeliveryStatus.bind(history),verifyOutgoingDeliveryStatus:history.verifyOutgoingDeliveryStatus.bind(history)});
+   pendingSends=capturedPending=await DmashNativePendingSends.open({session,snapshot:peer=>journal.readRouteSnapshot(peer),submit:(peer,message)=>runtime.sendApplication(peer,message)});
+   controller.signal.addEventListener('abort',history.close.bind(history),{once:true});
    return {accountPublicId:hex(sign.publicKey),displayName:saved.displayName||identity};
   }catch(e){logout();throw e;}finally{full?.fill(0);}
  }
  async function listContacts(){const s=current(),rows=await wait(all(s.db,'blind_peers')),out=[];for(const row of rows){try{const p=await plain(row);if(typeof p?.id==='string'&&typeof p.name==='string')out.push({id:p.id,name:p.name,state:p.securityAlert?'SECURITY_ALERT':p.transportProfile||'LEGACY',chatLocked:!!p.chatLock});}catch(e){current();/* Different Accounts share encrypted blind rows; no plaintext is exposed. */}}return DmashSavedMessages.peers(out);}
- async function listHistory({peer,before=0,limit=50}){current();if(typeof peer!=='string'||!Number.isInteger(limit)||limit<1||limit>100)fail('ACCOUNT_HISTORY_INPUT');const a=await alias(peer,'L1'),contact=await plain(await wait(read(session.db,'blind_peers',a)));if(contact?.chatLock)fail('ACCOUNT_CHAT_PASSWORD_REQUIRED');const secrets=await plain(await wait(read(session.db,'blind_secrets',a))),count=secrets?.msgCount??0;if(!Number.isSafeInteger(count)||count<0||count>1000000)fail('ACCOUNT_HISTORY_CORRUPT');let seq=before?Math.min(count,before-1):count;const out=[];for(;seq>0&&out.length<limit;--seq){const row=await wait(read(session.db,'blind_messages',await alias(a+seq,'L3')));if(!row)continue;const m=await plain(row);if(typeof m?.text!=='string')fail('ACCOUNT_HISTORY_CORRUPT');out.push({sequence:seq,operationId:m.wireId??null,direction:m.inbound?'in':'out',text:m.text,time:m.ts,state:m.transportState??null});}return out;}
+ async function listHistory({peer,before=0,limit=50}){current();if(typeof peer!=='string'||!Number.isInteger(limit)||limit<1||limit>100)fail('ACCOUNT_HISTORY_INPUT');const a=await alias(peer,'L1'),contact=await plain(await wait(read(session.db,'blind_peers',a)));if(contact?.chatLock)fail('ACCOUNT_CHAT_PASSWORD_REQUIRED');const secrets=await plain(await wait(read(session.db,'blind_secrets',a))),count=secrets?.msgCount??0;if(!Number.isSafeInteger(count)||count<0||count>1000000)fail('ACCOUNT_HISTORY_CORRUPT');let seq=before?Math.min(count,before-1):count;const out=[];for(;seq>0&&out.length<limit;--seq){const row=await wait(read(session.db,'blind_messages',await alias(a+seq,'L3')));if(!row)continue;const m=await plain(row);if(typeof m?.text!=='string')fail('ACCOUNT_HISTORY_CORRUPT');out.push({sequence:seq,operationId:m.wireId??null,direction:m.inbound?'in':'out',text:m.text,time:m.ts,state:m.transportState??null});}if(key(peer)&&!before){const pending=await wait(pendingSends.list(peer)),known=new Set(out.map(row=>row.operationId));out.push(...pending.filter(row=>!known.has(row.operationId)));out.sort((a,b)=>b.time-a.time);return out.slice(0,limit);}return out;}
  async function verifyPreparation(handle,expected={}){
   current();const entry=preparations.get(handle);if(!entry)fail('NODE_PREPARATION_HANDLE_REQUIRED');
   const live=host('transport',entry.route,'owner.query',{migrationId:entry.tuple.migrationId});current();
@@ -118,25 +120,42 @@
   const sealedOperation=await wait(sealed.materialize(intent)),destination=host('transport',p.route,'destination.install',{certificate:snapshot.remoteCertificate,replyRouteId:p.route});
   const expiresAt=destination.expiresAt,result=host('transport',p.route,'job.submit',{destination:destination.handle,operationId:intent.operationId,blob:sealedOperation.blob,expiresAt});if(result.accepted!==true)fail('LOCAL_NODE_REFUSED');return {queued:true,state:result.state,jobId:result.id};
  }
+ async function pairing(){
+  const captured=current();if(pairingRuntime)return pairingRuntime;
+  const status=host('transport','pairing-status','node.status',{});if(!status.initialized||status.bootstrapProfile!=='private-v1')fail('ACCOUNT_PRIVATE_NODE_REQUIRED');
+  const adapter=DmashNativePairingHost.create({session:captured,isCurrent:()=>current()===captured,transport:(route,method,params)=>host('transport',route,method,params),preparations,tupleOf:preparationTuple,verifyPreparation});
+  let registered=null;const coordinator={start:async()=>adapter,capture:()=>({host:adapter,current:()=>{try{return current()===captured;}catch(_){return false;}}}),registerAccountJournal:value=>{registered=value;adapter.setCommitVerifier(value.verifyCommitReceipt.bind(value));return value;},unregisterAccountJournal:value=>{if(value===registered){registered=null;adapter.setCommitVerifier(null);}}};
+  try{const value=await wait(DmashPublicAccountOrchestratorV4.open({core,storage:{db:session.db,masterKey:session.masterKey},deviceRoot:root,coordinator,kem}));pairingHost=adapter;pairingRuntime=value;return value;}catch(error){adapter.close();throw error;}
+ }
+ async function pairingCreate({expectedPeer=null}={}){current();if(expectedPeer!==null&&!key(expectedPeer))fail('ACCOUNT_PAIRING_PEER');return (await pairing()).createPrivateOffer(expectedPeer);}
+ async function pairingInspect({bundle,expectedPeer=null}){current();if(typeof bundle!=='string'||utf(bundle).length>12288||expectedPeer!==null&&!key(expectedPeer))fail('ACCOUNT_PAIRING_INPUT');const value=DmashAccountPairingV2.createCodec({nacl,discovery:DmashRouteDiscoveryV4}).parse(bundle,{localAccount:hex(session.keys.sign.publicKey),...(expectedPeer===null?{}:{expectedPeer})}).bundle;return {accountPublic:value.account_keys.signing,expiresAt:value.expires_at,intendedPeer:value.intended_peer,bundle};}
+ async function pairingRequest({bundle,expectedPeer}){await pairingInspect({bundle,expectedPeer});if(!key(expectedPeer))fail('ACCOUNT_PAIRING_PEER');return (await pairing()).importPrivateBundle(bundle,expectedPeer);}
+ async function pairingOffers(){return (await pairing()).privateOffers();}
+ async function pairingAdvance({id,exchangeId,requestDigest,expectedPeer,deny=false,name}){
+  current();if(![id,exchangeId,requestDigest,expectedPeer].every(key)||typeof deny!=='boolean'||!deny&&(typeof name!=='string'||!name.trim()||utf(name).length>256))fail('ACCOUNT_PAIRING_SELECTION');
+  const value=await (await pairing()).advancePrivate(id,exchangeId,requestDigest,expectedPeer,{deny});current();
+  if(value.ready){const snapshot=await wait(journal.readRouteSnapshot(value.peer));if(!snapshot?.preparation||snapshot.digest!==value.bindingDigest||snapshot.generation!==value.generation)fail('ACCOUNT_ROUTE_CHANGED');peers.set(value.peer,{route:snapshot.localCertificate.route_id});await owner(value.peer,snapshot);await wait(history.registerContact(value.peer,name));await wait(runtime.openPeer(value.peer,{requiredSuite:DmashAccountHandshakeV4.SUITE}));const state=await wait(runtime.status(value.peer));if(state.phase==='NO_SESSION')await wait(runtime.initiate(value.peer));return {...value,contactPublished:true,sessionEstablished:state.phase==='ESTABLISHED'};}
+  return value;
+ }
  async function sendText({peer,operationId,text}){current();if(DmashSavedMessages.isLocal(peer)){
   if(!key(operationId)||typeof text!=='string'||!text||utf(text).length>8192)fail('ACCOUNT_MESSAGE_INPUT');
   await DmashSavedMessages.ensure(Storage);
   const a=await alias(peer,'L1'),secrets=await plain(await wait(read(session.db,'blind_secrets',a))),count=secrets?.msgCount??0;
   for(let seq=count;seq>0;--seq){const row=await plain(await wait(read(session.db,'blind_messages',await alias(a+seq,'L3'))));if(row?.wireId===operationId){if(row.text!==text)fail('ACCOUNT_OPERATION_CONFLICT');return {accepted:true,operationId,transportState:'LOCAL',recipientAck:false,sequence:seq,duplicate:true};}}
   const sequence=await wait(Storage.saveMessageGamma(peer,text,false,true,'LOCAL',operationId));return {accepted:true,operationId,transportState:'LOCAL',recipientAck:false,sequence};
- }if(!key(peer)||!key(operationId)||typeof text!=='string'||utf(text).length>8192)fail('ACCOUNT_MESSAGE_INPUT');const status=await wait(runtime.openPeer(peer,{requiredSuite:DmashAccountHandshakeV4.SUITE}));if(status.phase!=='ESTABLISHED'){if(status.phase==='NO_SESSION')await wait(runtime.initiate(peer));return {accepted:false,operationId,transportState:'HANDSHAKE_PENDING',recipientAck:false};}const result=await wait(runtime.sendApplication(peer,{operationId,plaintext:text}));return {accepted:result?.durable===true,operationId,transportState:result?.recipientAck===true?'DELIVERED':result?.queued===true?'NODE_ACCEPTED':'APPLICATION_PENDING',recipientAck:result?.recipientAck===true,result};}
+ }if(!key(peer)||!key(operationId)||typeof text!=='string'||utf(text).length>8192)fail('ACCOUNT_MESSAGE_INPUT');const contact=(await listContacts()).find(row=>row.id===peer);if(!contact||contact.state!=='NODE_ACCOUNT_V4'||contact.chatLocked)fail('ACCOUNT_CONTACT_REQUIRED');const status=await wait(runtime.openPeer(peer,{requiredSuite:DmashAccountHandshakeV4.SUITE}));const staged=await wait(pendingSends.stage({peer,operationId,text}));if(status.phase!=='ESTABLISHED'){if(status.phase==='NO_SESSION')try{await wait(runtime.initiate(peer));}catch(e){current();if(!DmashNativePendingSends.transient(e))throw e;}return {accepted:true,operationId,transportState:staged.state==='HANDED_OFF'?'APPLICATION_PENDING':'HANDSHAKE_PENDING',recipientAck:false};}const handed=await wait(pendingSends.handoff(peer)),result=handed.results.find(row=>row.operationId===operationId);return {accepted:true,operationId,transportState:result?.recipientAck===true?'DELIVERED':'APPLICATION_PENDING',recipientAck:result?.recipientAck===true};}
  async function sync(){current();const contacts=await listContacts(),results=[];
   for(const contact of contacts.filter(p=>key(p.id)&&p.state==='NODE_ACCOUNT_V4').slice(0,32)){
    const peer=contact.id;try{const snapshot=await wait(journal.readRouteSnapshot(peer));if(!snapshot||snapshot.readiness!=='NODE_PROOF_REQUIRED')fail(snapshot?.readiness||'ACCOUNT_ROUTE_REQUIRED');
-    await wait(runtime.openPeer(peer,{requiredSuite:DmashAccountHandshakeV4.SUITE}));const p=await owner(peer,snapshot);
+    const opened=await wait(runtime.openPeer(peer,{requiredSuite:DmashAccountHandshakeV4.SUITE}));if(opened.phase==='NO_SESSION'&&(await wait(pendingSends.list(peer))).length)await wait(runtime.initiate(peer));const p=await owner(peer,snapshot);
     const page=host('transport',p.route,'inbox.list',{limit:32,after:null});let consumed=0;
     for(const record of page.records||[]){if(typeof record.payload!=='string'||record.routeId!==p.route)continue;
      const received=await wait(runtime.receive({peer,frame:record.payload,localRouteId:p.route,bindingDigest:snapshot.digest,generation:snapshot.generation}));
      if(received?.persisted===true){const commitToken=hex(new Uint8Array(await wait(crypto.subtle.digest('SHA-256',utf(record.payload)))));host('transport',p.route,'inbox.commitConsumption',{recordHandle:record.handle,applicationCommitToken:commitToken});consumed++;}
     }
-    await wait(runtime.resume());results.push({peer,consumed,status:await wait(runtime.status(peer))});
+    await wait(runtime.resume());const status=await wait(runtime.status(peer));if(status.phase==='ESTABLISHED')await wait(pendingSends.flush(peer));results.push({peer,consumed,status});
    }catch(e){current();results.push({peer,code:e.code||'ACCOUNT_SYNC_FAILED',debugStack:String(e.stack).slice(0,2048)});}
   }return results;
  }
- g.NativeAccount=Object.freeze({listAccounts,createAccount,login,listContacts,listHistory,sendText,sync,logout});
+ g.NativeAccount=Object.freeze({listAccounts,createAccount,login,listContacts,listHistory,sendText,sync,pairingCreate,pairingInspect,pairingRequest,pairingOffers,pairingAdvance,logout});
 })(globalThis);

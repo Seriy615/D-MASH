@@ -959,3 +959,9 @@ Design PARTIAL: known header-label inherited border assigned platforms, Android
 actual package/runtime and other Telegram flows NOT RUN. Pre-pause host; no
 visible Nodepause or remotechat acceptance. [Proof](docs/native/2026-10-20/root-desktop-telegram-ui.json),
 [actual synthetic screenshot](docs/native/2026-10-20/desktop-telegram-preview.png).
+
+Authoritative user correction: actual Telegram clone required, not a similar
+layout. Old Widgets/Views rendering and its scoped functional PASS do not accept
+the final frontend. Actual Telegram Desktop/Android fork UI acceptance NOT RUN.
+Owners: native_platforms_sol Desktop, broker_store_sol Android; root integration/
+actual UI acceptance. Preserve old WIP/evidence, no fallback to imitation UI.
