@@ -104,12 +104,15 @@ Android1cbc3f0: final ARM64 APK Gradle/package author PASS; root независ�
 APK SHA/signaturev2/ZIP16K/all17 AArch64 ELF16K/manifest SDK28–36/specialUse/
 4notice entries PASS: [proof](docs/native/2026-10-20/root-android-package-inspection.json).
 Это не install/runtime; frozen common source имеет отдельный manifest и не
-получает новых desktop worker/PoW гарантий. Root API35 x86_64 software emulator
-жив74134/PID620628, ADBserver5042 serialemulator-5580 ONLINE, SDK35/zygote running,
-boot_completed пока пуст. Без KVM, первый boot медленный; не перезапускать по
-observation timeout. x86_64 Qt kit установлен, x86OpenSSL/APK строит platform
-агент. Root retained Chromium штатно закрыт после owning backup для экономии RAM,
-profile сохранён; не путать с reset. Windows actual runtime остаётся NOT RUN.
+получает новых desktop worker/PoW гарантий. Root API35 software emulator failed OS boot stability: actual log watchdog killed
+system_server(main81s); package/activity service appeared then disappeared,
+APK streamed install exited1 before app launch. Root intentionally stopped own
+QEMU620628 (74134 terminal143), preserved AVD/data; not an observation timeout
+or app failure. x86_64 APK b553586a independently inspected signature/ZIP16K/ELF/
+manifest PASS; [attempt](docs/native/2026-10-20/root-android-x86-runtime-attempt.json).
+Android runtime/UI acceptance remains NOT RUN; native_runtime_sol prepares
+KVM CI route. Root retained Chromium remains closed after owning backup,
+profile preserved. Windows actual runtime remains NOT RUN.
 
 Runtime foreign-transit fixture initially FAIL: second peer not admitted180s.
 aff6a0b/a0f54a9 native nonce batch preserves default22, author actual foreign
@@ -121,9 +124,11 @@ regression PASS:262source hashes exact, same pinned binary hash.
 Windows8ca1b79 fullbuild/UI/Account/Node workflow submitted through draft
 [PR8](https://github.com/Seriy615/D-MASH/pull/8); remote921e5fb tree3a3ff830
 is exact localb553586a tree. Git push HTTPS/SSH unavailable; GitHub connector
-uploaded tracked tree without secrets/private cache or deployment. Root monitors
-CI; real Windows PASS not yet established. Later9b5a4ba Windows bootstrap helper
-is not in this first remote snapshot.
+uploaded tracked tree without secrets/private cache or deployment. First Actions39432120160 rejected invalid runner.temp job.env before jobs.
+Platform fixed32e18be; remote210701cf exact local32e18be tree now includes
+9b5a4ba Windows bootstrap helper. Actions39432602934 was actually queued.
+Qt6.12 aqt3.3 metadata path incompatibility found; platform prepares exact official
+archive installer. No Windows compile/runtime PASS claim.
 
 ## Текущая командная работа и основной остаток
 

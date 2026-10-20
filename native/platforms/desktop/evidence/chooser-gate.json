@@ -1,0 +1,10 @@
+{
+  "kind": "Real QtTest file chooser regression from build directory",
+  "result": "PASS6/0/skip1,6604ms",
+  "trigger": "File chooser selection must replace retained filename and resolve exact existing export before Open click",
+  "change": "Select all existing filename, type complete profile path, wait for canonical selected file and enabled Open, real mouse click; CTest uses source root and120s bound",
+  "testSourceSha256": "a687e101dc89cd47e5ac6a7f28028ce22086589e48cf278e0b0aa7e4eac0cdb1",
+  "validation": "Recompiled updated UI test against immutable27a28e7 headers and7pinned libraries, ran full gate from scratch build directory with offscreen platform (without verbose logging). Parent retained-profile check is separately reported.",
+  "gateLogSha256": "ddc89753193901fc6b2b5c23f2a6b93d838d556d39439d7d3c19f4272a8269b0",
+  "Windows": "NOT RUN; next actualCI gate"
+}

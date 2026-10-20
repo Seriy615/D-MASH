@@ -23,9 +23,8 @@ jobs:
       - shell: pwsh
         run: |
           python -m venv "$env:RUNNER_TEMP/dmash-tools"
-          & "$env:RUNNER_TEMP/dmash-tools/Scripts/python.exe" -m pip install aqtinstall==3.3.0 cmake==4.2.3 ninja==1.13.0
-          & "$env:RUNNER_TEMP/dmash-tools/Scripts/python.exe" -m aqt install-qt windows desktop 6.12.0 win64_mingw -m qtwebsockets -O "$env:RUNNER_TEMP/dmash-qt"
-          & "$env:RUNNER_TEMP/dmash-tools/Scripts/python.exe" -m aqt install-tool windows desktop tools_mingw1310 qt.tools.win64_mingw1310 -O "$env:RUNNER_TEMP/dmash-qt"
+          & "$env:RUNNER_TEMP/dmash-tools/Scripts/python.exe" -m pip install cmake==4.2.3 ninja==1.13.0
+          & "$env:RUNNER_TEMP/dmash-tools/Scripts/python.exe" native/platforms/windows/install-qt.py "$env:RUNNER_TEMP/dmash-qt"
       - uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
