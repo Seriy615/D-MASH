@@ -6,9 +6,9 @@ unchanged transport/Account code inherited from **`9446c22`**. It supplements
 the frozen [implementation map](../../audits/2026-10-20/CURRENT_IMPLEMENTATION.md)
 and [repository audit](../../audits/2026-10-20/REPOSITORY_AUDIT.md), with current
 changes in [CURRENT_IMPLEMENTATION_DELTA.md](CURRENT_IMPLEMENTATION_DELTA.md).
-The [subsequent checkpoint addendum](CURRENT_IMPLEMENTATION_DELTA.md#subsequent-bounded-checkpoints)
-tracks native actor `f3a3dee`→`8bc67f0`, Inbox `d81d356` and UI sink fix
-`690cb1b`/`a22b2db`, plus PHP retirement `0645ec3`, separately. Other uncommitted work receives no security guarantees.
+Later integrated native boundaries through `3a72492` and source-verification
+followup `0b804bf` are described in the current delta and the bounded native
+section below. Uncommitted fork integration has no runtime acceptance.
 [Exact source and evidence hashes](THREAT_MODEL_SOURCES.json) identify the
 original 24 referenced source files, subsequent source snapshots and bounded
 verification artifacts inspected.
@@ -22,7 +22,7 @@ implementation goal remain open; no production deployment was performed.
 ## Native checkpoint: implemented boundaries and current limits
 
 The original model below remains pinned to its stated source. Later native
-implementation through `3e3e845` has independently checked Linux process and
+implementation through `3a72492` has independently checked Linux process and
 transport behavior, described in the [current implementation delta](CURRENT_IMPLEMENTATION_DELTA.md#native-application-checkpoint-after-the-frozen-baseline).
 
 - The resident credential owner holds the unlocked local Root and Account worker.
@@ -41,8 +41,9 @@ transport behavior, described in the [current implementation delta](CURRENT_IMPL
   replay/reopen for the tested text operation. It does not prove every handshake,
   ratchet, migration or file crash transition.
 - Account logout preserves unlocked Node; full Root lock currently stops it.
-  A transport-only pause with durable queued work retained is still separate
-  product work. Private lease extension keeps a live owner context; rotating
+  Transport-only pause preserves queued work and resumes without PIN; the
+  [process/crash proof](root-native-pause-process.json) is scoped to Linux.
+  Actual fork controls and OS lifecycle remain open. Private lease extension keeps a live owner context; rotating
   MintCapability deliberately revokes its old context and must not be substituted.
 - The plaintext check in the remote E2EE proof scans Node profile files only.
   Metadata, ciphertext sizes, route availability and process memory have their
@@ -55,6 +56,23 @@ diagnostic-only successor PASS does not establish its cause. Android scoped
 service installation and full Desktop Node-control UI still time out. These
 availability blockers do not justify resetting accepted identities/history.
 No production runtime or user data was changed by these native checks.
+
+The selected UI is now the actual GPL Telegram Desktop/Android code, with
+D-MASH Account/Node adapters. It adds a large endpoint parsing/rendering and
+dependency surface to the trusted client. Telegram numeric peer/message IDs are
+local presentation projections; they must not become global transport identities.
+The independent Account encrypted store remains authoritative. Fork patches
+currently disable Telegram backend calls and use memory-only presentation caches;
+full-app execution and no-egress acceptance have not proved those boundaries.
+Upstream auto-update must stay disabled in the D-MASH build, so an upstream binary
+cannot replace the adapted application. GPL source/notices remain distributable.
+
+Fresh signed private pairing and Account-owned encrypted pending sends now have
+[independent process/network proof](root-native-first-send.json), including a
+host crash and automatic retry without caller resending. Accepting pending work
+only means local durable acceptance. UI clocks, delivery and read marks must
+follow actual Account state/receipts; native/Node acceptance is not remote READ.
+Public contact IPC, full N4, phone NAT and file-provider custody remain open.
 
 ## Assets, owners and trusted computing base
 

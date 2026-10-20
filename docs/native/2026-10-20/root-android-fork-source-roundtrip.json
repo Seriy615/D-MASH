@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "scope": "ROOT actual Android fork source patch roundtrip; no APK/runtime claim",
+  "recipeSourceCommit": "70f5513",
+  "upstreamCommit": "0aae959806c57be8ad457980f2a5c6277ff18635",
+  "forkSourceCheckpoint": "16b2cbf65469d963d3d190cda2b3897c1ce23c74",
+  "patches": [
+    {
+      "path": "patches/0001-dmash-credential-ui.patch",
+      "sha256": "5d9a4a4b157330cc889f4ea67eb1fc3525fcf985ddaf0daab265821cba3447d2"
+    },
+    {
+      "path": "patches/0002-android-toolchain-service-base-and-send-state.patch",
+      "sha256": "61a9d01bf176ab6d524e1428ef70d1460fe5de0f9f135dd38a682ba6e9c6a23c"
+    }
+  ],
+  "patchedFilesVerified": 21,
+  "allDigestsMatch": true,
+  "limits": [
+    "Source subset reconstructed from pinned upstream git objects and both original patches",
+    "Author Java module compile verified separately; this test does not run Gradle",
+    "No native core/service startup, rendered UI or no-egress acceptance"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "scope": "ROOT source patch application and exact file digests; not full app compilation or UI",
+  "recipeSourceCommit": "c6db2fa348e957836627a80aa7f9a12133720a87",
+  "upstreamCommit": "86262333a457f62709726ee4ab9c48fa58824da4",
+  "patches": [
+    {
+      "path": "patches/0001-local-core-boundary.patch",
+      "sha256": "391d3c0624397a9b9b8076ed7485a012fd1641c151865adf9d39cf16887a2749",
+      "status": "DRAFT; standalone IPC/SessionAdapter compiled; original Intro/DataSession/History/Composer wiring source present, full application not compiled or rendered"
+    }
+  ],
+  "patchedFilesVerified": 27,
+  "allDigestsMatch": true,
+  "limits": [
+    "Fresh temporary synthetic source subset from pinned upstream git objects, no runtime or user data",
+    "Does not build dependencies or full Telegram target",
+    "No rendered UI, services, no-egress, package acceptance"
+  ]
+}

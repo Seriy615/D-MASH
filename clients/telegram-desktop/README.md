@@ -6,6 +6,27 @@ Upstream revision and license/submodule inventory are in `UPSTREAM.json`. Run `s
 
 The integration keeps the real Telegram navigation, dialogs, history renderer, composer, controls and assets. Root/Account authentication replaces Telegram authentication. Native encrypted Account storage is authoritative; Telegram presentation models are populated in memory only while logged in and cleared on logout/Root lock. Numeric peer/message IDs are local presentation identifiers with collision checks; Account public keys, operation IDs, network routes and cryptography stay unchanged. The client uses a D-MASH app-data namespace and must never open an installed Telegram `tdata` directory.
 
-Actual build is in progress. Initial configure found the missing OpenGL search prefix; upstream Qt also requires Svg, which is being added from the exact matching official Qt6.12 archive. Full upstream master additionally depends on TON, tde2e, tg_owt and media libraries. Their UI/backend usages are being audited before changing dependencies. No rendered fork UI or D-MASH chat acceptance is claimed yet.
+Current source checkpoint includes the original Intro Step with original Telegram
+input widgets/styles for native unlock/login; Main::Account session projection;
+original Data::Session contacts and History messages; and the original primary
+composer calling account.sendText with a stable operation ID. The composer clears
+only after accepted:true, and pending operation/sequence-zero rows use local
+negative message IDs. Account logout/Root lock clears RAM presentation while Node
+lifetime stays owned by the resident native host. This wiring is a draft and has
+NOT passed full application compilation or real UI acceptance. Fresh setup,
+imports, paging, all alternate send paths, media/calls, full persistence fencing
+and process/network acceptance still require implementation and tests. Do not run
+this draft against personal Telegram or D-MASH data.
 
-First reviewable patch adds an explicit D-MASH client mode, a standalone-compiling local credential IPC adapter, Telegram RPC/connection/config/DNS guards, separate application name and forced D-MASH UI-data path. The actual upstream application target links the adapter. These guards and the whole application are NOT compiled/runtime accepted yet; they are not an egress proof. Root/Account Intro and presentation-model wiring remain in progress. The adapter library compiled with the exact installed Qt6.12.0 (4 build steps). Full configure now passes Qt after the owned OpenGL prefix and exact Svg archive, then stops at missing packaged ada dependency. No API credential is requested for D-MASH mode.
+The standalone Qt6.12 IPC/SessionAdapter library compiled. Full original app
+configuration passes Qt (including matching Svg), Ada3.2.4 and Boost1.83, and now
+stops at missing FFmpeg development libraries (protobuf3.21.12 now resolves).
+tde2e/tg_owt/media dependencies remain to be built and audited. A separate optional
+upstream widget bootstrap target is only a diagnostic build, never the selected
+messenger application. No full fork binary or rendered fork UI is claimed.
+
+`scripts/checkout.sh` reads the pinned revision, license, recursive gitlink map,
+patch digests and final patched-file hashes from UPSTREAM.json. It refuses
+unexpected existing changes before submodule mutation and never resets or cleans
+a checkout. Upstream automatic updates and crash reporting are disabled explicitly
+in the actual app configure script. License classification is in LICENSES.md.

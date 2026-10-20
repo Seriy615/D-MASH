@@ -7,9 +7,9 @@
 | Actual host | forgeai.isgood.host (`hostname` проверен) |
 | Checkout | `/home/jcode/D-MASH` |
 | Branch | `codex/native-clients-20261020` |
-| Последний опубликованный local checkpoint | `85b0443d5a13614d0ebfd62b8ddd8226f14a602c` |
-| Его Git tree | `6f7f76720f4db5e94f07bd300d4f4accc33d7589` |
-| GitHub CI snapshot | `7f6560122ebb744b4d09d75cbbe052c747793008` |
+| Последний опубликованный local checkpoint | `3a7249230d245da703e3c3540591baa3ee137873` |
+| Его Git tree | `a0d4b0ed35e0709774776aac253dfb6d0f5295ac` |
+| GitHub CI snapshot | `214c5c5aced874cdc2e9e08e09688f3525112a05` |
 | Remote branch | `codex/native-clients-ci-20261020` |
 | Draft PR | https://github.com/Seriy615/D-MASH/pull/8 |
 | Source sync | Exact tracked tree uploaded through connected GitHub app; create_tree SHA exactly matches local tree; remote head independently checked with `git ls-remote` |
@@ -32,17 +32,20 @@ verified by root:
 | Telegram Desktop | `/home/jcode/.cache/dmash-native-20261020/telegram-desktop-fork` | `86262333a457f62709726ee4ab9c48fa58824da4` | `30e52a0e4d8207c631458d98be89adcadf5b60e2608fe9c9a3eff1cde1877c8e` (GPLv3 + OpenSSL exception) |
 | Telegram Android | `/home/jcode/.cache/dmash-native-20261020/worktrees/telegram-android` | `0aae959806c57be8ad457980f2a5c6277ff18635` | `8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643` (GPLv2) |
 
-Those external checkouts and future fork patches are not yet part of the published
-85b0443 tree. Reproducible source/patch/build manifests will live under
+Pinned fork recipes/patches39b5f02 Desktop and40c6c3b/e2053c7 Android are now
+in published3a72492. The external mutable checkouts themselves and later changes
+are not implicitly published or accepted binaries. Reproducible source/patch/build manifests will live under
 clients/telegram-desktop and clients/telegram-android; no mass vendoring or
 license reassignment. Separate own MIT core remains authoritative for
 Account/Node state. Telegram network is not a fallback transport.
 
-Published85b0443 contains intermediate Telegram-reference custom Desktop UI,
-verified transport pause and bounded Android/Windows diagnostics, not actual
-Telegram forks. Private pairing integration/page-SW45 and newer docs are newer
-than that snapshot. No app release/deployment/runtime-state backup follows from
-source publication. Gamma WIP/user identities/history/keys are preserved.
+Published3a72492 includes actual Telegram fork recipes/initial adapters, accepted
+private pairing and first-send durable queue, independent scoped evidence and
+page/SW45. Root create_tree equality and git ls-remote verified; draft PR8 title/
+body now describe actual forks. Connector PR head snapshots can be stale; actual
+branch ref/tree is authoritative. Fork full builds/render/three-platform acceptance
+remain open; old native CI harnesses are component checks only. No release,
+deployment or runtime-state backup follows from source publication.
 
 [CURRENT_HANDOFF.md](CURRENT_HANDOFF.md) is the current implementation/acceptance
 authority, with original FAIL and scoped retests. CI snapshots are development

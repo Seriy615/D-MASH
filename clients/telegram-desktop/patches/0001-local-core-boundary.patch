@@ -1,19 +1,112 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fc7b239..25b171a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -52,5 +52,26 @@ set(desktop_app_skip_libs
+     variant
+ )
+ 
++option(TDESKTOP_DMASH_UI_BOOTSTRAP "Build actual upstream UI toolkit + Root IPC integration harness (not full messenger)." OFF)
++if (TDESKTOP_DMASH_UI_BOOTSTRAP)
++    # The full original application and all its screens remain in the tree.
++    # This explicit early target verifies the real renderer/auth widgets while
++    # the complete Telegram model adapter is integrated separately.
++    set(desktop_app_skip_libs ada angle boost cld3 dispatch ffmpeg glibmm hunspell iconv minizip openal openh264 opus qr_code_generator rnnoise tde2e ton variant vpx webrtc xcb)
++    set(DESKTOP_APP_DISABLE_X11_INTEGRATION ON)
++endif()
+ add_subdirectory(cmake)
+-add_subdirectory(Telegram)
++if (TDESKTOP_DMASH_UI_BOOTSTRAP)
++    add_subdirectory(Telegram/lib_rpl)
++    add_subdirectory(Telegram/lib_crl)
++    add_subdirectory(Telegram/lib_base)
++    add_subdirectory(Telegram/codegen)
++    add_subdirectory(Telegram/lib_ui)
++    add_subdirectory(dmash)
++    add_executable(dmash-telegram-ui-bootstrap Telegram/SourceFiles/tests/test_main.cpp dmash/bootstrap_root.cpp)
++    target_include_directories(dmash-telegram-ui-bootstrap PRIVATE Telegram/SourceFiles)
++    init_target(dmash-telegram-ui-bootstrap "(D-MASH integration harness)")
++    target_link_libraries(dmash-telegram-ui-bootstrap PRIVATE dmash_ipc_adapter desktop-app::lib_ui desktop-app::lib_base desktop-app::lib_crl desktop-app::external_qt desktop-app::external_qt_static_plugins)
++else()
++    add_subdirectory(Telegram)
++endif()
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index 96fc51d..798b38b 100644
+index 96fc51d..5db8c7c 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -24,6 +24,11 @@ get_filename_component(src_loc SourceFiles REALPATH)
+@@ -24,6 +24,14 @@ get_filename_component(src_loc SourceFiles REALPATH)
  get_filename_component(res_loc Resources REALPATH)
  
  include(cmake/telegram_options.cmake)
 +if (TDESKTOP_DMASH_CLIENT)
 +    add_subdirectory(${CMAKE_SOURCE_DIR}/dmash ${CMAKE_BINARY_DIR}/dmash)
 +    target_link_libraries(Telegram PRIVATE dmash_ipc_adapter)
++    target_sources(Telegram PRIVATE ${CMAKE_SOURCE_DIR}/dmash/model_bridge.cpp ${CMAKE_SOURCE_DIR}/dmash/model_bridge.h
++        ${CMAKE_SOURCE_DIR}/dmash/intro_step.cpp
++        ${CMAKE_SOURCE_DIR}/dmash/intro_step.h)
 +endif()
 +
  include(cmake/lib_ffmpeg.cmake)
  include(cmake/lib_stripe.cmake)
  include(cmake/lib_tgcalls.cmake)
+diff --git a/Telegram/SourceFiles/apiwrap.cpp b/Telegram/SourceFiles/apiwrap.cpp
+index 256dbdb..ad35994 100644
+--- a/Telegram/SourceFiles/apiwrap.cpp
++++ b/Telegram/SourceFiles/apiwrap.cpp
+@@ -5,6 +5,9 @@ the official desktop application for the Telegram messaging service.
+ For license and copyright information please follow this link:
+ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ */
++#ifdef TDESKTOP_DMASH_CLIENT
++#include "model_bridge.h"
++#endif
+ #include "apiwrap.h"
+ 
+ #include "api/api_authorizations.h"
+@@ -783,6 +786,10 @@ QString ApiWrap::exportDirectStoryLink(not_null<Data::Story*> story) {
+ }
+ 
+ void ApiWrap::requestContacts() {
++#ifdef TDESKTOP_DMASH_CLIENT
++	Dmash::RequestContacts(_session);
++	return;
++#endif
+ 	if (_session->data().contactsLoaded().current() || _contactsRequestId) {
+ 		return;
+ 	}
+@@ -811,6 +818,10 @@ void ApiWrap::requestContacts() {
+ }
+ 
+ void ApiWrap::requestDialogs(Data::Folder *folder) {
++#ifdef TDESKTOP_DMASH_CLIENT
++	Dmash::RequestContacts(_session);
++	return;
++#endif
+ 	if (folder && !_foldersLoadState.contains(folder)) {
+ 		_foldersLoadState.emplace(folder, DialogsLoadState());
+ 	}
+@@ -818,6 +829,10 @@ void ApiWrap::requestDialogs(Data::Folder *folder) {
+ }
+ 
+ void ApiWrap::requestMoreDialogs(Data::Folder *folder) {
++#ifdef TDESKTOP_DMASH_CLIENT
++	Dmash::RequestContacts(_session);
++	return;
++#endif
+ 	const auto state = dialogsLoadState(folder);
+ 	if (!state) {
+ 		return;
+@@ -3167,6 +3182,10 @@ void ApiWrap::requestHistory(
+ 		not_null<History*> history,
+ 		MsgId messageId,
+ 		SliceType slice) {
++#ifdef TDESKTOP_DMASH_CLIENT
++	Dmash::RequestHistory(_session,history->peer->id);
++	return;
++#endif
+ 	const auto peer = history->peer;
+ 	const auto key = HistoryRequest{
+ 		peer,
 diff --git a/Telegram/SourceFiles/core/launcher.cpp b/Telegram/SourceFiles/core/launcher.cpp
 index e844acf..4a510a4 100644
 --- a/Telegram/SourceFiles/core/launcher.cpp
@@ -54,6 +147,166 @@ index e844acf..4a510a4 100644
  	if (!_customWorkingDir.isEmpty()) {
  		_customWorkingDir = QDir(_customWorkingDir).absolutePath() + '/';
  	}
+diff --git a/Telegram/SourceFiles/history/history_item.cpp b/Telegram/SourceFiles/history/history_item.cpp
+index 47b8410..144b86f 100644
+--- a/Telegram/SourceFiles/history/history_item.cpp
++++ b/Telegram/SourceFiles/history/history_item.cpp
+@@ -7148,3 +7148,10 @@ void HistoryItem::overrideMedia(std::unique_ptr<Data::Media> media) {
+ 
+ 	_media = std::move(media);
+ }
++
++#ifdef TDESKTOP_DMASH_CLIENT
++void HistoryItem::setDmashPending(bool pending) {
++ if(pending)_flags|=MessageFlag::BeingSent;else _flags&=~MessageFlag::BeingSent;
++ _history->owner().requestItemRepaint(this);
++}
++#endif
+diff --git a/Telegram/SourceFiles/history/history_item.h b/Telegram/SourceFiles/history/history_item.h
+index 7431124..2088fb4 100644
+--- a/Telegram/SourceFiles/history/history_item.h
++++ b/Telegram/SourceFiles/history/history_item.h
+@@ -416,6 +416,9 @@ public:
+ 		bool isForumPost);
+ 	void setPostAuthor(const QString &author);
+ 	void setRealId(MsgId newId);
++#ifdef TDESKTOP_DMASH_CLIENT
++	void setDmashPending(bool pending);
++#endif
+ 	void incrementReplyToTopCounter();
+ 	void applyEffectWatchedOnUnreadKnown();
+ 
+diff --git a/Telegram/SourceFiles/history/history_widget.cpp b/Telegram/SourceFiles/history/history_widget.cpp
+index 1fa75f6..5b8ca85 100644
+--- a/Telegram/SourceFiles/history/history_widget.cpp
++++ b/Telegram/SourceFiles/history/history_widget.cpp
+@@ -6,6 +6,9 @@ For license and copyright information please follow this link:
+ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ */
+ #include "history/history_widget.h"
++#ifdef TDESKTOP_DMASH_CLIENT
++#include "dmash/model_bridge.h"
++#endif
+ 
+ #include "api/api_editing.h"
+ #include "api/api_bot.h"
+@@ -4678,6 +4681,35 @@ void HistoryWidget::send(Api::SendOptions options) {
+ 		return;
+ 	}
+ 
++#ifdef TDESKTOP_DMASH_CLIENT
++ // Keep the original composer and defer clearing until the Account store
++ // confirms durable acceptance. Unknown RPC outcomes retain the same id.
++ auto& adapter = Dmash::Adapter(&session().account());
++ const auto native = Dmash::NativePeer(&session(), _peer->id);
++ const auto text = _field->getTextWithAppliedMarkdown().text;
++ if (native.isEmpty() || text.trimmed().isEmpty() || adapter.busy()) return;
++ if (!property("dmashAcceptedConnected").toBool()) {
++  setProperty("dmashAcceptedConnected", true);
++  QObject::connect(&adapter, &SessionAdapter::accepted, this,
++   [=](const QJsonObject& value) {
++    if (!value.value("accepted").toBool()
++     || value.value("operationId").toString() != property("dmashSendOp").toString()) return;
++    if (_field->getTextWithAppliedMarkdown().text == property("dmashSendText").toString()) clearFieldText();
++    setProperty("dmashSendOp", QVariant());
++    setProperty("dmashSendText", QVariant());
++   });
++ }
++ if (property("dmashSendText").toString() != text
++  || property("dmashSendPeer").toString() != native
++  || property("dmashSendOp").toString().isEmpty()) {
++  setProperty("dmashSendOp", SessionAdapter::newOperationId());
++  setProperty("dmashSendText", text);
++  setProperty("dmashSendPeer", native);
++ }
++ adapter.sendText(native, property("dmashSendOp").toString(), text);
++ return;
++#endif
++
+ 	if (!options.scheduled) {
+ 		_cornerButtons.clearReplyReturns();
+ 	}
+diff --git a/Telegram/SourceFiles/intro/intro_start.cpp b/Telegram/SourceFiles/intro/intro_start.cpp
+index d4ebdec..3fd78b8 100644
+--- a/Telegram/SourceFiles/intro/intro_start.cpp
++++ b/Telegram/SourceFiles/intro/intro_start.cpp
+@@ -6,6 +6,9 @@ For license and copyright information please follow this link:
+ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ */
+ #include "intro/intro_start.h"
++#ifdef TDESKTOP_DMASH_CLIENT
++#include "dmash/intro_step.h"
++#endif
+ 
+ #include "lang/lang_keys.h"
+ #include "intro/intro_qr.h"
+@@ -30,8 +33,12 @@ StartWidget::StartWidget(
+ }
+ 
+ void StartWidget::submit() {
++	#ifdef TDESKTOP_DMASH_CLIENT
++	goNext<DmashStep>();
++#else
+ 	account().destroyStaleAuthorizationKeys();
+ 	goNext<QrWidget>();
++#endif
+ }
+ 
+ rpl::producer<QString> StartWidget::nextButtonText() const {
+diff --git a/Telegram/SourceFiles/main/main_account.cpp b/Telegram/SourceFiles/main/main_account.cpp
+index 5a2f894..032e4d9 100644
+--- a/Telegram/SourceFiles/main/main_account.cpp
++++ b/Telegram/SourceFiles/main/main_account.cpp
+@@ -6,6 +6,9 @@ For license and copyright information please follow this link:
+ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ */
+ #include "main/main_account.h"
++#ifdef TDESKTOP_DMASH_CLIENT
++#include "dmash/model_bridge.h"
++#endif
+ 
+ #include "base/platform/base_platform_info.h"
+ #include "core/application.h"
+@@ -271,6 +274,9 @@ void Account::setLegacyMtpKey(std::shared_ptr<MTP::AuthKey> key) {
+ }
+ 
+ QByteArray Account::serializeMtpAuthorization() const {
++#ifdef TDESKTOP_DMASH_CLIENT
++ return {};
++#endif
+ 	const auto serialize = [&](
+ 			MTP::DcId mainDcId,
+ 			const MTP::AuthKeysList &keys,
+@@ -515,7 +521,15 @@ bool Account::checkForNewSession(const MTP::Response &message) {
+ 	return true;
+ }
+ 
++#ifdef TDESKTOP_DMASH_CLIENT
++void Account::dmashClearPresentation(){
++ _loggingOut=false;destroySession(DestroyReason::LoggedOut);
++}
++#endif
+ void Account::logOut() {
++#ifdef TDESKTOP_DMASH_CLIENT
++ Dmash::Adapter(this).logout();return;
++#endif
+ 	if (_loggingOut) {
+ 		return;
+ 	}
+diff --git a/Telegram/SourceFiles/main/main_account.h b/Telegram/SourceFiles/main/main_account.h
+index ba09159..371cf20 100644
+--- a/Telegram/SourceFiles/main/main_account.h
++++ b/Telegram/SourceFiles/main/main_account.h
+@@ -105,6 +105,9 @@ public:
+ 
+ 	// Serialization.
+ 	[[nodiscard]] QByteArray serializeMtpAuthorization() const;
++#ifdef TDESKTOP_DMASH_CLIENT
++ void dmashClearPresentation();
++#endif
+ 	void setMtpAuthorization(const QByteArray &serialized);
+ 
+ 	void suggestMainDcId(MTP::DcId mainDcId);
 diff --git a/Telegram/SourceFiles/mtproto/connection_http.cpp b/Telegram/SourceFiles/mtproto/connection_http.cpp
 index baaad90..72b9585 100644
 --- a/Telegram/SourceFiles/mtproto/connection_http.cpp
@@ -211,10 +464,10 @@ index 18fa736..281f1bc 100644
      " PROVIDE: -D TDESKTOP_API_ID=[API_ID] -D TDESKTOP_API_HASH=[API_HASH]\n"
 diff --git a/dmash/CMakeLists.txt b/dmash/CMakeLists.txt
 new file mode 100644
-index 0000000..41da1eb
+index 0000000..2c8c2ac
 --- /dev/null
 +++ b/dmash/CMakeLists.txt
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,15 @@
 +cmake_minimum_required(VERSION 3.25)
 +if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 + project(DMashTelegramAdapter LANGUAGES CXX)
@@ -222,19 +475,132 @@ index 0000000..41da1eb
 + set(CMAKE_AUTOMOC ON)
 + find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Core Network)
 +endif()
-+add_library(dmash_ipc_adapter STATIC local_client.cpp local_client.h)
++add_library(dmash_ipc_adapter STATIC local_client.cpp local_client.h session_adapter.cpp session_adapter.h)
++set_target_properties(dmash_ipc_adapter PROPERTIES AUTOMOC ON)
 +target_link_libraries(dmash_ipc_adapter PUBLIC Qt6::Core Qt6::Network)
 +target_include_directories(dmash_ipc_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 +if(WIN32)
 + target_sources(dmash_ipc_adapter PRIVATE os_windows.cpp os_windows.h)
 + target_link_libraries(dmash_ipc_adapter PRIVATE advapi32)
 +endif()
+diff --git a/dmash/bootstrap_root.cpp b/dmash/bootstrap_root.cpp
+new file mode 100644
+index 0000000..5b0390f
+--- /dev/null
++++ b/dmash/bootstrap_root.cpp
+@@ -0,0 +1,37 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// The OpenSSL linking exception in ../LICENSE applies to this fork source.
++// Actual upstream UI toolkit / Root IPC integration harness, not a chat mockup.
++#include "tests/test_main.h"
++#include "local_client.h"
++#include "ui/widgets/labels.h"
++#include "ui/widgets/buttons.h"
++#include "ui/widgets/fields/password_input.h"
++#include "ui/widgets/rp_window.h"
++#include "styles/style_widgets.h"
++#include <QStandardPaths>
++#include <QJsonArray>
++
++namespace Test {
++QString name(){return u"D-MASH-Root-Bridge"_q;}
++void test(not_null<Ui::RpWindow*> window,not_null<Ui::RpWidget*> body){
++ window->setWindowTitle(u"D-MASH · original Telegram UI integration"_q);
++ auto profile=qEnvironmentVariable("DMASH_PROFILE");
++ if(profile.isEmpty())profile=QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)+u"/D-MASH/native-profile"_q;
++ const auto client=new LocalClient(profile,body);
++ const auto title=new Ui::FlatLabel(body,u"D-MASH"_q,st::defaultFlatLabel);
++ const auto detail=new Ui::FlatLabel(body,u"Create or unlock your local profile."_q,st::defaultSubTextLabel);
++ const auto pin=new Ui::PasswordInput(body,st::defaultInputField,rpl::single(u"Device PIN"_q));pin->setObjectName(u"rootPin"_q);
++ const auto create=new Ui::RoundButton(body,rpl::single(u"Create profile"_q),st::defaultActiveButton);create->setObjectName(u"createProfile"_q);
++ const auto unlock=new Ui::RoundButton(body,rpl::single(u"Unlock profile"_q),st::defaultLightButton);unlock->setObjectName(u"unlockProfile"_q);
++ const auto lock=new Ui::RoundButton(body,rpl::single(u"Lock device"_q),st::defaultLightButton);lock->setObjectName(u"lockDevice"_q);lock->setDisabled(true);
++ const auto status=new Ui::FlatLabel(body,u"Connecting to the resident D-MASH core…"_q,st::defaultSubTextLabel);status->setObjectName(u"profileStatus"_q);
++ body->sizeValue()|rpl::start_with_next([=](QSize size){const auto x=(size.width()-320)/2;title->move(x,70);detail->move(x,110);pin->setGeometry(x,160,320,52);create->setGeometry(x,236,320,44);unlock->setGeometry(x,292,320,44);lock->setGeometry(x,348,320,44);status->resizeToWidth(320);status->move(x,418);},body->lifetime());
++ QObject::connect(client,&LocalClient::busyChanged,body,[=](bool busy){create->setDisabled(busy);unlock->setDisabled(busy);pin->setDisabled(busy);});
++ QObject::connect(client,&LocalClient::hostStatusReady,body,[=](const QJsonObject& value){status->setText(value.value("rootLocked").toBool()?u"Profile is locked."_q:u"Profile is unlocked."_q);lock->setDisabled(value.value("rootLocked").toBool());});
++ QObject::connect(client,&LocalClient::response,body,[=](const QString& method,bool ok,const QString&,const QJsonObject& result){if(!ok){status->setText(u"Could not complete this action. The existing profile was kept."_q);return;}const auto value=result.value("value").toObject();if(method==u"profile.create"_q||method==u"root.unlock"_q){status->setText(u"Profile unlocked. Account data remains in the resident core."_q);lock->setDisabled(false);}else if(method==u"root.lock"_q){status->setText(u"Profile locked."_q);lock->setDisabled(true);}});
++ create->setClickedCallback([=]{if(pin->getLastText().isEmpty()){pin->showError();return;}const auto value=pin->getLastText();pin->setText(QString());client->request(u"profile.create"_q,{{u"pin"_q,value}});});
++ unlock->setClickedCallback([=]{if(pin->getLastText().isEmpty()){pin->showError();return;}const auto value=pin->getLastText();pin->setText(QString());client->request(u"root.unlock"_q,{{u"pin"_q,value}});});
++ lock->setClickedCallback([=]{client->request(u"root.lock"_q);});
++ client->request(u"host.status"_q);
++}
++}
+diff --git a/dmash/intro_step.cpp b/dmash/intro_step.cpp
+new file mode 100644
+index 0000000..04069e8
+--- /dev/null
++++ b/dmash/intro_step.cpp
+@@ -0,0 +1,34 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Upstream OpenSSL linking exception in ../LICENSE applies.
++#include "intro_step.h"
++#include "model_bridge.h"
++#include "ui/widgets/fields/input_field.h"
++#include "ui/widgets/fields/password_input.h"
++#include "styles/style_intro.h"
++namespace Intro::details {
++DmashStep::DmashStep(QWidget* parent,not_null<Main::Account*> owner,not_null<Data*> data)
++:Step(parent,owner,data)
++,pin_(this,st::introPassword,rpl::single(u"Device PIN"_q))
++,identity_(this,st::introPassword,rpl::single(u"Account"_q))
++,password_(this,st::introPassword,rpl::single(u"Account password"_q)){
++ setTitleText(rpl::single(u"D-MASH"_q));
++ identity_->hide();password_->hide();
++ auto& adapter=Dmash::Adapter(owner);
++ QObject::connect(&adapter,&SessionAdapter::accounts,this,[=](const QJsonArray& rows){
++  unlocked_=true;pin_->clear();pin_->hide();identity_->show();password_->show();
++  if(rows.size()==1)identity_->setText(rows.first().toObject().value("identity").toString());
++  identity_->setFocusFast();
++ });
++ QObject::connect(&adapter,&SessionAdapter::failed,this,[=](const QString& code){showError(rpl::single(code));});
++ QObject::connect(&adapter,&SessionAdapter::busyChanged,this,[=](bool busy){pin_->setEnabled(!busy);identity_->setEnabled(!busy);password_->setEnabled(!busy);});
++}
++void DmashStep::submit(){auto& adapter=Dmash::Adapter(&account());if(adapter.busy())return;hideError();
++ if(!unlocked_){if(pin_->getLastText().isEmpty()){pin_->showError();return;}adapter.unlock(pin_->getLastText());}
++ else{if(identity_->getLastText().isEmpty()||password_->getLastText().isEmpty()){password_->showError();return;}adapter.login(identity_->getLastText(),password_->getLastText());}
++}
++void DmashStep::setInnerFocus(){if(unlocked_)identity_->setFocusFast();else pin_->setFocusFast();}
++rpl::producer<QString> DmashStep::nextButtonText()const{return rpl::single(u"Continue"_q);}
++void DmashStep::resizeEvent(QResizeEvent* event){Step::resizeEvent(event);const auto y=contentTop()+st::introPasswordTop;
++ pin_->moveToLeft(contentLeft(),y);identity_->moveToLeft(contentLeft(),y);password_->moveToLeft(contentLeft(),y+identity_->height()+20);
++}
++}
+diff --git a/dmash/intro_step.h b/dmash/intro_step.h
+new file mode 100644
+index 0000000..de9a98e
+--- /dev/null
++++ b/dmash/intro_step.h
+@@ -0,0 +1,20 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Upstream OpenSSL linking exception in ../LICENSE applies.
++#pragma once
++#include "intro/intro_step.h"
++namespace Ui {class InputField;class PasswordInput;}
++namespace Intro::details {
++class DmashStep final:public Step {
++public:
++ DmashStep(QWidget*,not_null<Main::Account*>,not_null<Data*>);
++ void submit() override;void setInnerFocus() override;
++ bool hasBack()const override{return true;}
++ rpl::producer<QString> nextButtonText()const override;
++protected:void resizeEvent(QResizeEvent*)override;
++private:
++ object_ptr<Ui::PasswordInput> pin_;
++ object_ptr<Ui::InputField> identity_;
++ object_ptr<Ui::PasswordInput> password_;
++ bool unlocked_=false;
++};
++}
 diff --git a/dmash/local_client.cpp b/dmash/local_client.cpp
 new file mode 100644
-index 0000000..1b0720e
+index 0000000..35be4a4
 --- /dev/null
 +++ b/dmash/local_client.cpp
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,58 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// The upstream OpenSSL linking exception in ../LICENSE applies.
++// Original D-MASH MIT-origin IPC/platform helper retained in this GPL client fork.
 +// D-MASH local IPC adapter. Derived from D-MASH MIT client code.
 +// This fork preserves its upstream GPL client license and separate core boundary.
 +#include "local_client.h"
@@ -270,10 +636,10 @@ index 0000000..1b0720e
 +  connectTimer_.stop();send("ready","host.status",{});
 + });
 + connect(&socket_,&QLocalSocket::readyRead,this,&LocalClient::read);
-+ connect(&socket_,&QLocalSocket::disconnected,this,[this]{ready_=false;if(busy())fail("CREDENTIAL_HOST_DISCONNECTED");});
++ connect(&socket_,&QLocalSocket::disconnected,this,[this]{fail("CREDENTIAL_HOST_DISCONNECTED");});
 + connect(&socket_,&QLocalSocket::errorOccurred,this,[this](QLocalSocket::LocalSocketError){if(!ready_&&!connectTimer_.isActive())connectTimer_.start();else if(ready_)fail("CREDENTIAL_HOST_DISCONNECTED");});
 +}
-+void LocalClient::request(const QString& method,const QJsonObject& params){if(busy())return;method_=method;params_=params;id_=QUuid::createUuid().toString(QUuid::Id128);emit busyChanged(true);deadline_.start((method=="node.enable"||method=="account.pairingAdvance")?180000:30000);if(ready_&&socket_.state()==QLocalSocket::ConnectedState){send(id_,method_,params_);params_={};}else{attempts_=0;connectHost();if(busy())connectTimer_.start();}}
++void LocalClient::request(const QString& method,const QJsonObject& params){if(busy())return;method_=method;params_=params;id_=QUuid::createUuid().toString(QUuid::Id128);Q_EMIT busyChanged(true);deadline_.start((method=="node.enable"||method=="account.pairingAdvance")?180000:30000);if(ready_&&socket_.state()==QLocalSocket::ConnectedState){send(id_,method_,params_);params_={};}else{attempts_=0;connectHost();if(busy())connectTimer_.start();}}
 +void LocalClient::connectHost(){if(socket_.state()==QLocalSocket::ConnectedState||socket_.state()==QLocalSocket::ConnectingState)return;if(++attempts_>150){fail("CREDENTIAL_HOST_UNAVAILABLE");return;}
 + QFile file(QDir(directory_).filePath("credential-endpoint.json"));if((launched_||attempts_==1)&&file.open(QIODevice::ReadOnly)&&file.size()<=4096){auto locator=QJsonDocument::fromJson(file.readAll()).object();auto endpoint=locator.value("endpoint").toString();if(locator.value("v").toInt()==1&&!endpoint.isEmpty()){socket_.connectToServer(endpoint);return;}}
 + if(!launched_){auto executable=QCoreApplication::instance()->property("dmashCredentialHost").toString();auto node=QCoreApplication::instance()->property("dmashNodeHost").toString();if(executable.isEmpty())executable=QDir(QCoreApplication::applicationDirPath()).filePath("dmash-credential-host");if(node.isEmpty())node=QDir(QCoreApplication::applicationDirPath()).filePath("dmash-node-host");
@@ -284,18 +650,21 @@ index 0000000..1b0720e
 +}
 +void LocalClient::send(const QString& id,const QString& method,const QJsonObject& params){auto bytes=QJsonDocument(QJsonObject{{"v",1},{"id",id},{"method",method},{"params",params}}).toJson(QJsonDocument::Compact);if(bytes.size()>MaximumFrame){fail("CREDENTIAL_REQUEST_TOO_LARGE");return;}QByteArray frame(4,0);qToBigEndian<quint32>(bytes.size(),frame.data());frame+=bytes;const bool accepted=socket_.write(frame)==frame.size();bytes.fill(0);frame.fill(0);if(!accepted)fail("CREDENTIAL_HOST_WRITE_FAILED");}
 +void LocalClient::cancel(){if(!busy())return;if(ready_)send("cancel","account.cancel",{});else fail("ACCOUNT_SESSION_CHANGED");}
-+void LocalClient::fail(const QString& code){connectTimer_.stop();deadline_.stop();ready_=false;auto method=std::move(method_);method_.clear();{QSignalBlocker blocked(&socket_);socket_.abort();}input_.fill(0);input_.clear();length_=0;params_={};if(!method.isEmpty()){emit busyChanged(false);emit response(method,false,code,{});}}
++void LocalClient::fail(const QString& code){connectTimer_.stop();deadline_.stop();ready_=false;auto method=std::move(method_);method_.clear();{QSignalBlocker blocked(&socket_);socket_.abort();}input_.fill(0);input_.clear();length_=0;params_={};Q_EMIT sessionInvalidated();if(!method.isEmpty()){Q_EMIT busyChanged(false);Q_EMIT response(method,false,code,{});}}
 +void LocalClient::read(){while(socket_.bytesAvailable()){
 + if(!length_){input_+=socket_.read(4-input_.size());if(input_.size()<4)return;length_=qFromBigEndian<quint32>(input_.constData());input_.clear();if(!length_||length_>MaximumFrame){fail("CREDENTIAL_HOST_BAD_FRAME");return;}}
 + input_+=socket_.read(length_-input_.size());if(input_.size()<length_)return;QStringDecoder utf8(QStringDecoder::Utf8);utf8.decode(input_);QJsonParseError error;auto message=QJsonDocument::fromJson(input_,&error).object();input_.fill(0);input_.clear();length_=0;if(utf8.hasError()||error.error!=QJsonParseError::NoError||message.value("v").toInt()!=1){fail("CREDENTIAL_HOST_BAD_REPLY");return;}
-+ auto id=message.value("id").toString();if(id=="cancel")continue;if(id=="ready"){if(!message.value("ok").toBool()){fail(message.value("code").toString());return;}ready_=true;emit hostStatusReady(message.value("result").toObject().value("value").toObject());if(busy()){send(id_,method_,params_);params_={};}continue;}if(id!=id_){fail("CREDENTIAL_HOST_REPLY_MISMATCH");return;}deadline_.stop();auto method=std::move(method_);method_.clear();emit busyChanged(false);emit response(method,message.value("ok").toBool(),message.value("code").toString(),message.value("result").toObject());
++ auto id=message.value("id").toString();if(id=="cancel")continue;if(id=="ready"){if(!message.value("ok").toBool()){fail(message.value("code").toString());return;}ready_=true;Q_EMIT hostStatusReady(message.value("result").toObject().value("value").toObject());if(busy()){send(id_,method_,params_);params_={};}continue;}if(id!=id_){fail("CREDENTIAL_HOST_REPLY_MISMATCH");return;}deadline_.stop();auto method=std::move(method_);method_.clear();Q_EMIT busyChanged(false);Q_EMIT response(method,message.value("ok").toBool(),message.value("code").toString(),message.value("result").toObject());
 +}}
 diff --git a/dmash/local_client.h b/dmash/local_client.h
 new file mode 100644
-index 0000000..e7f6ab9
+index 0000000..7a27704
 --- /dev/null
 +++ b/dmash/local_client.h
-@@ -0,0 +1,23 @@
+@@ -0,0 +1,27 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// The upstream OpenSSL linking exception in ../LICENSE applies.
++// Original D-MASH MIT-origin IPC/platform helper retained in this GPL client fork.
 +// D-MASH local IPC adapter. Derived from D-MASH MIT client code.
 +// This fork preserves its upstream GPL client license and separate core boundary.
 +#pragma once
@@ -311,20 +680,93 @@ index 0000000..e7f6ab9
 + void request(const QString& method,const QJsonObject& params={});
 + void cancel();
 + bool busy()const{return !method_.isEmpty();}
-+signals:
++Q_SIGNALS:
 + void busyChanged(bool);
++ void sessionInvalidated();
 + void hostStatusReady(const QJsonObject&);
 + void response(const QString& method,bool ok,const QString& code,const QJsonObject& result);
 +private:
 + void connectHost();void read();void send(const QString&,const QString&,const QJsonObject&);void fail(const QString&);
 + QString directory_,method_,id_;QJsonObject params_;QLocalSocket socket_;QTimer connectTimer_,deadline_;QByteArray input_;quint32 length_=0;int attempts_=0;bool launched_=false,ready_=false;
 +};
+diff --git a/dmash/model_bridge.cpp b/dmash/model_bridge.cpp
+new file mode 100644
+index 0000000..d33f614
+--- /dev/null
++++ b/dmash/model_bridge.cpp
+@@ -0,0 +1,45 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Upstream OpenSSL linking exception in ../LICENSE applies.
++#include "model_bridge.h"
++#include "main/main_account.h"
++#include "main/main_session.h"
++#include "data/data_session.h"
++#include "data/data_user.h"
++#include "history/history.h"
++#include "history/history_item.h"
++#include "base/flat_map.h"
++#include <QStandardPaths>
++
++namespace Dmash {
++namespace {
++base::flat_map<Main::Account*,SessionAdapter*> Adapters;
++MTPUser PresentationUser(quint64 id,const QString& name,bool self){
++ return MTP_user(MTP_flags(MTPDuser::Flag::f_first_name|(self?MTPDuser::Flag::f_self:MTPDuser::Flag::f_contact)),MTP_long(id),MTPlong(),MTP_string(name),MTPstring(),MTPstring(),MTPstring(),MTPUserProfilePhoto(),MTPUserStatus(),MTPint(),MTPVector<MTPRestrictionReason>(),MTPstring(),MTPstring(),MTPEmojiStatus(),MTPVector<MTPUsername>(),MTPint(),MTPPeerColor(),MTPPeerColor(),MTPint(),MTPlong(),MTPlong());
++}
++void ProjectContacts(Main::Account* account,SessionAdapter* adapter,const QJsonArray& rows){
++ if(!account->sessionExists())return;auto& data=account->session().data();
++ for(const auto& entry:rows){const auto row=entry.toObject();const auto id=adapter->localPeerId(row.value("id").toString());const auto peer=data.processUser(PresentationUser(id,row.value("name").toString(),id==1));auto history=data.history(peer);history->clearFolder();history->updateChatListExistence();}
++ data.contactsLoaded()=true;data.chatsListDone(nullptr);
++}
++void ProjectHistory(Main::Account* account,SessionAdapter* adapter,const QString& native,const QJsonArray& rows){
++ if(!account->sessionExists())return;auto& data=account->session().data();const auto peer=peerFromUser(UserId(adapter->localPeerId(native)));auto history=data.history(peer);history->clearFolder();
++ for(const auto& entry:rows){const auto row=entry.toObject();const auto id=MsgId(row.value("localMessageId").toInt());auto item=data.message(FullMsgId(peer,id));const bool pending=row.value("pending").toBool();if(item){item->setText(TextWithEntities{.text=row.value("text").toString()});item->setDmashPending(pending);}else{
++  auto flags=MessageFlags(MessageFlag::HasFromId);const bool out=row.value("direction").toString()==u"out"_q;if(out)flags|=MessageFlag::Outgoing;if(pending)flags|=MessageFlag::BeingSent;
++  item=history->addNewLocalMessage({.id=id,.flags=flags,.from=out?peerFromUser(UserId(1)):peer,.date=TimeId(row.value("time").toInteger()/1000)},TextWithEntities{.text=row.value("text").toString()},MTP_messageMediaEmpty());
++ }history->setLastMessage(item);history->setChatListMessage(item);}
++ history->updateChatListExistence();
++}
++}
++SessionAdapter& Adapter(Main::Account* account){if(const auto i=Adapters.find(account);i!=Adapters.end())return *i->second;
++ auto profile=qEnvironmentVariable("DMASH_PROFILE");if(profile.isEmpty())profile=QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)+u"/D-MASH/native-profile"_q;
++ const auto adapter=new SessionAdapter(profile);Adapters.emplace(account,adapter);account->lifetime().add([=]{Adapters.erase(account);delete adapter;});
++ QObject::connect(adapter,&SessionAdapter::authenticated,adapter,[=](const QJsonObject& value){if(!account->sessionExists())account->createSession(PresentationUser(1,value.value("displayName").toString(),true));});
++ QObject::connect(adapter,&SessionAdapter::cleared,adapter,[=]{account->dmashClearPresentation();});
++ QObject::connect(adapter,&SessionAdapter::contacts,adapter,[=](const QJsonArray& rows){ProjectContacts(account,adapter,rows);});
++ QObject::connect(adapter,&SessionAdapter::history,adapter,[=](const QString& peer,const QJsonArray& rows){ProjectHistory(account,adapter,peer,rows);});
++ return *adapter;
++}
++void RequestContacts(Main::Session* session){Adapter(&session->account()).refreshContacts();}
++QString NativePeer(Main::Session* session,PeerId peer){return Adapter(&session->account()).nativePeer(peerToUser(peer).bare);}
++void RequestHistory(Main::Session* session,PeerId peer){const auto native=NativePeer(session,peer);if(!native.isEmpty())Adapter(&session->account()).loadHistory(native);}
++}
+diff --git a/dmash/model_bridge.h b/dmash/model_bridge.h
+new file mode 100644
+index 0000000..2da7af9
+--- /dev/null
++++ b/dmash/model_bridge.h
+@@ -0,0 +1,12 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Upstream OpenSSL linking exception in ../LICENSE applies.
++#pragma once
++#include "session_adapter.h"
++#include "data/data_peer_id.h"
++namespace Main {class Account;class Session;}
++namespace Dmash {
++SessionAdapter &Adapter(Main::Account* account);
++void RequestContacts(Main::Session* session);
++void RequestHistory(Main::Session* session,PeerId peer);
++QString NativePeer(Main::Session* session,PeerId peer);
++}
 diff --git a/dmash/os_windows.cpp b/dmash/os_windows.cpp
 new file mode 100644
-index 0000000..9d6624f
+index 0000000..080f612
 --- /dev/null
 +++ b/dmash/os_windows.cpp
-@@ -0,0 +1,201 @@
+@@ -0,0 +1,204 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// The upstream OpenSSL linking exception in ../LICENSE applies.
++// Original D-MASH MIT-origin IPC/platform helper retained in this GPL client fork.
 +#include "os_windows.h"
 +#ifdef _WIN32
 +#ifndef _WIN32_WINNT
@@ -528,10 +970,13 @@ index 0000000..9d6624f
 +#endif
 diff --git a/dmash/os_windows.h b/dmash/os_windows.h
 new file mode 100644
-index 0000000..58c07b5
+index 0000000..658f5fb
 --- /dev/null
 +++ b/dmash/os_windows.h
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,33 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// The upstream OpenSSL linking exception in ../LICENSE applies.
++// Original D-MASH MIT-origin IPC/platform helper retained in this GPL client fork.
 +#pragma once
 +#ifdef _WIN32
 +#include <cstdint>
@@ -562,3 +1007,101 @@ index 0000000..58c07b5
 +void requirePrivateFile(const std::wstring& path, bool allowMissing = false);
 +}
 +#endif
+diff --git a/dmash/session_adapter.cpp b/dmash/session_adapter.cpp
+new file mode 100644
+index 0000000..11df51c
+--- /dev/null
++++ b/dmash/session_adapter.cpp
+@@ -0,0 +1,54 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Upstream OpenSSL linking exception in ../LICENSE applies.
++#include "session_adapter.h"
++#include <QJsonObject>
++#include <QRegularExpression>
++#include <QUuid>
++#include <limits>
++#include <utility>
++#include <stdexcept>
++
++SessionAdapter::SessionAdapter(QString profile,QObject* parent):QObject(parent),client_(std::move(profile),this){
++ connect(&client_,&LocalClient::response,this,&SessionAdapter::response);
++ connect(&client_,&LocalClient::sessionInvalidated,this,[this]{pendingControl_.clear();clear();});
++ connect(&client_,&LocalClient::busyChanged,this,&SessionAdapter::busyChanged);
++ connect(&client_,&LocalClient::hostStatusReady,this,[this](const QJsonObject& value){if(loggedIn_&&(value.value("rootLocked").toBool()||!value.value("accountSessionActive").toBool()))clear();});
++ sync_.setInterval(2000);connect(&sync_,&QTimer::timeout,this,[this]{if(loggedIn_&&!client_.busy())request("account.sync");});request("account.listAccounts");
++}
++void SessionAdapter::request(const QString& method,const QJsonObject& params){if(client_.busy())return;requestEpoch_=epoch_;client_.request(method,params);}
++void SessionAdapter::clear(){++epoch_;sync_.stop();loggedIn_=false;account_.clear();historyPeer_.clear();wantedPeer_.clear();activePeer_.clear();peers_.clear();nativePeers_.clear();messages_.clear();nextPeer_=1;nextMessage_=1;Q_EMIT cleared();}
++QString SessionAdapter::newOperationId(){return QUuid::createUuid().toString(QUuid::Id128)+QUuid::createUuid().toString(QUuid::Id128);}
++quint64 SessionAdapter::localPeerId(const QString& peer){if(peer.isEmpty()||peer.size()>2048)throw std::runtime_error("INVALID_CORE_PEER");if(peers_.contains(peer))return peers_.value(peer);if(!nextPeer_||nextPeer_>quint64(std::numeric_limits<qint64>::max()))throw std::runtime_error("LOCAL_PEER_LIMIT");const auto local=nextPeer_++;if(nativePeers_.contains(local))throw std::runtime_error("LOCAL_PEER_COLLISION");peers_.insert(peer,local);nativePeers_.insert(local,peer);return local;}
++QString SessionAdapter::nativePeer(quint64 id)const{return nativePeers_.value(id);}
++void SessionAdapter::unlock(const QString& pin){request("root.unlock",{{"pin",pin}});}
++void SessionAdapter::login(const QString& identity,const QString& password){request("account.login",{{"identity",identity},{"password",password}});}
++void SessionAdapter::logout(){clear();if(client_.busy()){pendingControl_="account.logout";client_.cancel();}else request("account.logout");}
++void SessionAdapter::lockRoot(){clear();if(client_.busy()){pendingControl_="root.lock";client_.cancel();}else request("root.lock");}
++void SessionAdapter::loadHistory(const QString& peer){if(!loggedIn_)return;activePeer_=peer;if(client_.busy()){wantedPeer_=peer;return;}historyPeer_=peer;request("account.history",{{"peer",peer},{"before",0},{"limit",50}});}
++void SessionAdapter::sendText(const QString& peer,const QString& operationId,const QString& text){if(!loggedIn_||client_.busy())return;if(!QRegularExpression("^[0-9a-f]{64}$").match(operationId).hasMatch()){Q_EMIT failed("INVALID_OPERATION_ID");return;}request("account.sendText",{{"peer",peer},{"operationId",operationId},{"text",text}});}
++void SessionAdapter::response(const QString& method,bool ok,const QString& code,const QJsonObject& result){
++ if(!pendingControl_.isEmpty()){const auto next=std::exchange(pendingControl_,{});request(next);return;}
++ if(requestEpoch_!=epoch_)return;
++ if(!ok){if(code=="ROOT_UNLOCK_REQUIRED"||code=="CREDENTIAL_HOST_DISCONNECTED"||code=="CREDENTIAL_HOST_UNAVAILABLE")clear();Q_EMIT failed(code);return;}
++ const auto value=result.value("value").toObject();const auto rows=result.value("rows").toArray();
++ try{
++  if(method=="root.unlock"||method=="account.listAccounts"){Q_EMIT accounts(rows);const auto active=value.value("activeAccount").toObject();if(!active.isEmpty())activate(active);}
++  else if(method=="account.login"){
++   activate(value);
++  }else if(method=="account.contacts"){
++   QJsonArray projected;for(const auto& item:rows){auto row=item.toObject();row["localPeerId"]=qint64(localPeerId(row.value("id").toString()));projected.append(row);}Q_EMIT contacts(projected);
++  }else if(method=="account.history"){
++   QJsonArray projected;const auto peer=std::exchange(historyPeer_,{});for(const auto& item:rows){auto row=item.toObject();const auto operation=row.value("operationId").toString();const auto sequence=row.value("sequence").toInteger();if(sequence<0||(sequence==0&&operation.isEmpty()))throw std::runtime_error("INVALID_CORE_HISTORY_ID");
++    const auto key=peer+"/"+(operation.isEmpty()?"sequence:"+QString::number(sequence):"operation:"+operation);
++    if(!messages_.contains(key)){if(nextMessage_>std::numeric_limits<qint32>::max())throw std::runtime_error("LOCAL_MESSAGE_LIMIT");messages_.insert(key,qint32(nextMessage_++));}
++    row["localMessageId"]=-messages_.value(key);const auto state=row.value("state").toString();row["pending"]=state=="HANDSHAKE_PENDING"||state=="APPLICATION_PENDING"||state=="NODE_ACCEPTED";row["recipientDelivered"]=state=="DELIVERED";projected.append(row);
++   }Q_EMIT history(peer,projected);if(!wantedPeer_.isEmpty()){const auto next=std::exchange(wantedPeer_,{});loadHistory(next);}
++  }else if(method=="account.sendText"){Q_EMIT accepted(value);if(value.value("accepted").toBool()&&!activePeer_.isEmpty())loadHistory(activePeer_);}
++  else if(method=="account.sync"&&!activePeer_.isEmpty())loadHistory(activePeer_);
++  else if(method=="account.logout"||method=="root.lock")clear();
++ }catch(const std::exception& error){clear();Q_EMIT failed(QString::fromLatin1(error.what()));}
++}
++
++void SessionAdapter::activate(const QJsonObject& value){clear();account_=value.value("accountPublicId").toString();if(!QRegularExpression("^[0-9a-f]{64}$").match(account_).hasMatch())throw std::runtime_error("INVALID_CORE_ACCOUNT");loggedIn_=true;const auto self=localPeerId("local:saved-messages:v1");peers_.insert(account_,self);Q_EMIT authenticated(value);request("account.contacts");sync_.start();}
++
++void SessionAdapter::refreshContacts(){if(loggedIn_&&!client_.busy())request("account.contacts");}
+diff --git a/dmash/session_adapter.h b/dmash/session_adapter.h
+new file mode 100644
+index 0000000..796d1b2
+--- /dev/null
++++ b/dmash/session_adapter.h
+@@ -0,0 +1,32 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Upstream OpenSSL linking exception in ../LICENSE applies.
++#pragma once
++#include "local_client.h"
++#include <QHash>
++#include <QJsonArray>
++#include <QTimer>
++
++// Memory-only bridge. Native encrypted Account storage remains authoritative.
++// Numeric identifiers below never enter a D-MASH network/credential request.
++class SessionAdapter final:public QObject {
++ Q_OBJECT
++public:
++ explicit SessionAdapter(QString nativeProfile,QObject* parent=nullptr);
++ void unlock(const QString& pin);void login(const QString& identity,const QString& password);
++ void refreshContacts();bool busy()const{return client_.busy();}
++ void logout();void lockRoot();void loadHistory(const QString& nativePeer);
++ void sendText(const QString& nativePeer,const QString& operationId,const QString& text);
++ quint64 localPeerId(const QString& nativePeer);QString nativePeer(quint64 localId)const;
++ static QString newOperationId();
++Q_SIGNALS:
++ void accounts(const QJsonArray& rows);void authenticated(const QJsonObject& account);void cleared();
++ void contacts(const QJsonArray& rows);void history(const QString& nativePeer,const QJsonArray& rows);
++ void accepted(const QJsonObject& value);void failed(const QString& code);void busyChanged(bool busy);
++private:
++ void activate(const QJsonObject&);
++ void request(const QString&,const QJsonObject& params={});
++ quint64 epoch_=0,requestEpoch_=0;QString pendingControl_;
++ void response(const QString&,bool,const QString&,const QJsonObject&);void clear();
++ LocalClient client_;QTimer sync_;QHash<QString,quint64> peers_;QHash<quint64,QString> nativePeers_;
++ QHash<QString,qint32> messages_;quint64 nextPeer_=1;qint64 nextMessage_=1;QString account_,historyPeer_,wantedPeer_,activePeer_;bool loggedIn_=false;
++};

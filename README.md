@@ -93,4 +93,6 @@ those properties.
 
 ## License
 
-MIT
+Original D-MASH core: [MIT](LICENSE). Telegram-derived clients and third-party
+code retain their own licenses; see [license scope](LICENSES.md) and each client's
+pinned upstream notices. The repository-level license does not relicense them.

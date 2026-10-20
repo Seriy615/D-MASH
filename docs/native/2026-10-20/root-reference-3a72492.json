@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "scope": "UNIT/component repository reference runner; not Telegram fork app build or UI acceptance",
+  "sourceCommit": "3a7249230d245da703e3c3540591baa3ee137873",
+  "sourceTree": "a0d4b0ed35e0709774776aac253dfb6d0f5295ac",
+  "sourceArchiveSha256": "8dc15defa671415f52d2d95f07956de6da529c59c3873d618263f5e8ad111b97",
+  "logSha256": "9f9444fdbbfa83b71867bb95a707ee905a5f35ec985886ab0e41f4529dbf331d",
+  "exitCode": 0,
+  "python": "3.12.3",
+  "node": "24.19.0",
+  "requirements": "requirements-test.txt",
+  "command": ".venv/bin/python <immutable-source>/tools/test_all.py",
+  "environment": {
+    "NODE_PATH": "pinned reference test-node-modules",
+    "PATH": "Node 24.19.0 prefix"
+  },
+  "results": {
+    "backendTests": 303,
+    "originTests": 22,
+    "javascriptSuites": 162,
+    "failedSuites": 0
+  },
+  "limits": [
+    "Frozen source checkpoint, not current dirty HEAD",
+    "Not browser button/menu/flow acceptance",
+    "Not Android, Windows or full Telegram Desktop fork compilation/runtime",
+    "No deployment or real user data changes"
+  ]
+}

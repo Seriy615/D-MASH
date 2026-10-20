@@ -139,9 +139,9 @@ D-MASH не требует Telegram SMS/login. Форки воспроизвод
 
 ## 4. Source publication, environments и активные проверки
 
-Latest published GitHub snapshot **7f6560122ebb744b4d09d75cbbe052c747793008** is
-exact local **85b0443d5a13614d0ebfd62b8ddd8226f14a602c** tree
-**6f7f76720f4db5e94f07bd300d4f4accc33d7589**. create_tree exact + git ls-remote
+Latest published GitHub snapshot **214c5c5aced874cdc2e9e08e09688f3525112a05** is
+exact local **3a7249230d245da703e3c3540591baa3ee137873** tree
+**a0d4b0ed35e0709774776aac253dfb6d0f5295ac**. create_tree exact + git ls-remote
 verified. Branch `codex/native-clients-ci-20261020`, draft
 [PR8](https://github.com/Seriy615/D-MASH/pull/8), attached to task.
 Later source/docs, actual upstream fork checkouts and WIP are not implicitly published.
@@ -149,23 +149,30 @@ Root independently verified Desktop86262333 and Android0aae9598 HEAD+licenses;
  actual fork patch recipes now tracked39b5f02 Desktop and40c6c3b/e2053c7 Android.
  Desktop LocalClient real-core probe59223 PASS after standalonecompile15103;
  [IPC-only proof](docs/native/2026-10-20/root-actual-fork-ipc.json). No full fork
- compile/render/egress/UI claim. Android actual fork Java compile32593 pending;
+ compile/render/egress/UI claim. Android actual fork Java03 compile43687 terminal0 PASS (compiler only);
 exact paths/hashes in FORGE_SYNC. Actual fork integration/build/runtime NOT RUN.
 See [FORGE_SYNC.md](FORGE_SYNC.md). No deployment or runtime-state backup.
 
-Last actual REST check:22a snapshot Android39447633575/job118713660813 LIVE
-(scoped emulator service test); Windows39447632824/job118713657263 terminal FAIL (artifact above).
-4ed Android39446127764 and Windows39446127350 terminal FAIL. ec66 Android39449711991/job118720957614 terminal FAIL (loader reason above);
-Windows39449711886/job118720960622 was LIVE on last check. Latest177 snapshot includes normal AndroidUI+CI and
-Desktop fresh creation; new outcome not yet inspected. All are development checks.
-Use fresh public REST Cache-Control:no-cache: connector statuses may be stale.
-Transient log failure does not prove a process/job stopped; poll the same handle.
+Current source checkpoint: latest published exact3a72492 snapshot214c5c5
+(integrity/remote head recorded below), actual fork recipes are SOURCE/WIP only.
+Old native component CI still uses intermediate UI harnesses; its results are
+not final Telegram fork app acceptance. Last7f Windows directfilelogger proves
+QtTest3PASS for disconnected GUI; full mandatory CTest still failed. Fullsuite
+filelogger2a7df00 is in next source checkpoint. Android oldQtloader failure remains
+unresolved; actual fork package/service must be tested independently.
+
+Root reference runner **20832 terminal0 PASS**, immutable reference-3a72492:
+Python3.12.3 + requirements-test.txt, Node24.19.0; 303backend +22Origin tests,
+162JS suites, zero failed suites. Sourcearchive8dc15defa671415f52d2d95f07956de6da529c59c3873d618263f5e8ad111b97.
+[Exact evidence](docs/native/2026-10-20/root-reference-3a72492.json). Frozen3a72492
+UNIT/component runner only; not dirtyHEAD/fullfork/app/browser acceptance.
+Reverse author62742 terminal0 PASS42forwards; root independent53677 terminal0 PASS26forwards, activation38.449/24.267s. [Actual root proof](docs/native/2026-10-20/root-browser-native-interop.json). Mesh quiet; platform one-worker builds released.
 
 Toolchains/private pins: `/home/jcode/.cache/dmash-native-20261020`.
 Node `/home/jcode/.cache/dmash-tools/node-v24.19.0-linux-x64/bin/node`24.19.0;
 Python `/home/jcode/.cache/dmash-tools/python-s03-20261020/bin/python`3.12.
 Reference full runner: `.venv/bin/python tools/test_all.py`, requirements-test.txt.
-No fresh full exact-HEAD runner PASS. Focused checks supplement actual UI/network.
+Frozen3a72492 full runner PASS; no dirtyHEAD/fullfork app PASS. Focused checks supplement actual UI/network.
 
 Local Android software AVD failed OS boot watchdog before APK install and was
 intentionally stopped; synthetic AVD data retained. Do not restart it merely
@@ -182,63 +189,50 @@ normal unlock/login recorded in BROWSER_QA. No user/production data touched.
 
 ## 5. Команда и ближайшая работа
 
-Пользователь требует delegation. Root — оркестратор/интегратор/тестировщик;
-реализацию выполняют агенты с разделённым владением. Все три текущих агента
-известно созданы с явным gpt-6.1-sol. Разрешены только gpt-6.1-sol/gpt-6-luna;
-новых создавать с явной моделью, старых неизвестной модели не возобновлять.
+Root — оркестратор/интегратор/тестировщик; реализацию выполняют агенты.
+Все три известны с явным gpt-6.1-sol; разрешены только gpt-6.1-sol/gpt-6-luna.
+Не возобновлять старых неизвестных агентов. Source pins не являются backup
+runtime DB/keys. Не reset и не очищать пользовательские данные ради PASS.
 
-- **broker_store_sol:** NEW ownership actual Telegram Android upstreamfork in
-  private worktree; reproducible clients/telegram-android patches/build+GPL.
-  Preserve old Windows artifacts, stop old scaffold diagnosis at checkpoint.
-  isolated credential-host worktree. Accepted recovery
-  integrated. Fresh Root-only/optional Account1930b80 independently accepted. Next isolated
-  transport-only node.pause/resume preserves unlocked Root/Account/queued jobs;
-  current node.disable=fullRootlock unchanged until coherent UI migration. Immutable
-  pause-dd3c640 root90170 PASS actual child exit/pause/Saved/same identity/resume
-  withoutPIN/failed-resume-retainsRootAccount;278source/14artifacts/8libs exact.
-  [Process proof](docs/native/2026-10-20/root-native-pause-process.json). Independent root62953 queuedjob mesh PASS: freshsynthetic signed contacts,
-  actual default22transit; sameacceptedjob/opaqueexpiry throughpause/SIGKILL/
-  floors1,3,5/reconnect; recipienthistory1, identities preserved. OrdinaryUI
-  pairing/visiblepause/WindowsAndroid not inferred. Integrated5f3fa4d/6448583/41606d8. Platform frozen TelegramUI binary predates
-  pause; visiblepause API integration follows separately.
-  Windows two scripts old scaffold preserved:24c+2a7df00 integrated; actual
- 7f directfilelogger proves QtTest3PASS, fullCTest stillFAIL. Furtheroldscaffold
- diagnosis paused for actualAndroidfork priority.
-- **native_runtime_sol:** native actor/localIPC, isolated remote Account worktree,
-  Android CI diagnostics. 3cf/9e independent parent54951 PASS, source integratedf187474/9308218. Diagnose
-  admission failure using retained metadata, no cause guess. Fresh foreign transit fixture accepted independently, integrated05dd2cc. Now
-  ordinary private pairing/contact DTOs + existing bootstrap runtime/dispatcher
-  via separate encrypted SQLite; optional trusted store/KEM +private-v1 seams
-  integrated006814a–a1bc16c after root62234 actualbilateral PASS; sourceproof
-  table above. Next Account-owned pendingfirstsend durablequeue/autoflush (gap
-  above); browser-native interop helper offline, not actual acceptance yet.
-  Platform now owns Android CI UI/instrumentation files.
-- **native_platforms_sol:** NEW ownership actual Telegram Desktop upstreamfork,
-  reproducible clients/telegram-desktop patches/build+GPL. Old imitation UI work
-  STOPPED; preserve WIP and observe already-live builds to terminal. Old scoped
-  checkpoints below are infrastructure only, not final design acceptance;
-  pinned original Desktop86262333/Android0aae9598 references; Desktop7aaccb3
-  root97893 scoped actualXCB PASS (table above), first layout PARTIAL; implement
-  Android Telegram layout/runtime and next pause/explicitLock menu,
-  move daemon technical controls into menu/settings. Existing functional UI tests
-  do not accept current arbitrary layout as requested design. Desktop Node-control stage diagnostics, Android normal
-  Views/credential service and Windows compile/runtime fixes.9988 entry published.
-  Coherent Androidv5 frozen on4bdf1da includes fresh1930/f187/host87 +ownedUIWIP;
-  native4448/package65976 both exit0. Immutable android-account-v5 root verified329source/7artifact hashes, APK signature/ZIP16K/18ELF16K. [Package only](docs/native/2026-10-20/root-android-account-v5-package.json); runtime NOT RUN. Desktop freshCreate build57970 exit0, sourceeea5c69 root fresh UI accepted (table above). Next CI must exercise
-  ordinary Createprofile/optionalAccount/Saved UI, technical Node checks via
-  explicit NodeTools screen. Preserve strict assertions. Next freeze includes distinct owner
-  epoch vs transport generation, real child-exit recovery and lease-extension
-  hooks. Do not package unaccepted captured WIP as final app.
-- **Root:** inspect current CI actual outcomes/artifacts, independently
-  test immutable app/UI/runtime checkpoints, integrate accepted source, update this
-  one current summary and QA. Avoid concurrent heavy mesh fixtures on2CPU; do not
-  change protocol work/deadlines to get PASS.
+- **broker_store_sol:** actual Telegram Android fork pinned0aae9598. Java03
+  full original module43687 terminal0,8m42s/137tasks, fork16b2cbf; exported
+  two-patch recipe integrated70f5513. Root reconstructed21files from upstream+
+  bothpatches, all hashes match; prepare8tests PASS. [Source proof](docs/native/2026-10-20/root-android-fork-source-roundtrip.json).
+  No APK/service/UI claim. Known send uncertainty, session fencing and explicit
+  DNS/proxy/updater guards assigned next focused patch. Coherent native source
+ 139795f frozen, native compile released after root53677 terminal. Old v6 jars
+  were compiler dependencies only, not a coherent runtime acceptance.
+- **native_platforms_sol:** actual Telegram Desktop pinned86262333. Sourcec6db2fa
+  includes original Intro/Main::Account/DataSession/History/primaryComposer,
+  sameoperation until accepted, idle disconnect invalidation/epoch fences and
+  reproducible preflight. Root independently reconstructs27files from upstream+
+  patch, all hashes match. [Proof](docs/native/2026-10-20/root-desktop-fork-source-roundtrip.json).
+  StandaloneSessionAdapter84864 compiled; full app uncompiled/unrendered. Owned
+  Qt/Ada/Boost/protobuf/FFmpeg deps now resolve; GLib/GIR/full configure ongoing.
+  Fresh Intro create/chooser, full persistence fencing and all platform/UI
+  acceptance remain open. Root permits low-worker compile after mesh finishes.
+- **native_runtime_sol:** private pairing/durable first-send already integrated
+  and root accepted. Browser/native helper/proof series integrated8ed2e46–8dd090d;
+  sameimmutable6e96pin1188files/30runtime/2browserfiles +48servedJS/WASM root
+  hashverified. Author default67599/reverse62742 terminal0; root53677 terminal0
+  actual default direction PASS26forwards/history2/relogin. SW0/component HTML,
+  Core.launchWorkspace presentation stub; no ordinaryUI/.45/deployed/NAT claim.
+  Next authorized scope: original public bootstrap runtime with separate bounded
+  root-owned encrypted store and typed Node/Account IPC. Contract/compatibility
+  inspection before implementation; preserve private support. No public support
+  advertisement or new mesh until actual integration/tests are ready.
+- **Root:** actual fork source review and independent integration/acceptance;
+  frozen3a reference full runner PASS303backend/22Origin/162JS. Current MIT text/
+  GPL scope formalizede6f1c13. Known source findings assigned in BROWSER_QA;
+  no full fork app or exact dirtyHEAD release claim. No production/deploy/EMS/
+  backend migration or user-storage reset.
 
-Main remaining product work: fresh usable setup; contacts/private+public pairing,
-ordinary bilateral remote chat in both UIs; Node controls/policies with transport
-pause distinct from full Root lock; complete N4 state/mailbox migration/recovery;
-NAT/direct/relay mobility, encrypted buffered files, configurable policies and full
-three-platform packaging/lifecycle acceptance. DHT remains out of scope.
+Main remaining work: actually build/render/test original Telegram forks on Android,
+Windows and Linux with our real Account/Node, ordinary pairing/chat/menus/error/
+cancel/reopen/notifications; full UI inventory; public contacts; full N4 mailbox/
+state recovery; selforganization/NAT/direct/relay mobility; buffered encrypted
+files and flexible policies; complete packaging/licenses/docs/threat model.
+DHT stays outside scope. Do not replace these goals with a green component suite.
 
 ## 6. Документация и отчётность
 

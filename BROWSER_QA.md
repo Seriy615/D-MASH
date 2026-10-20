@@ -965,3 +965,19 @@ layout. Old Widgets/Views rendering and its scoped functional PASS do not accept
 the final frontend. Actual Telegram Desktop/Android fork UI acceptance NOT RUN.
 Owners: native_platforms_sol Desktop, broker_store_sol Android; root integration/
 actual UI acceptance. Preserve old WIP/evidence, no fallback to imitation UI.
+
+
+Actual-fork integration review, 20 October 2026 (source review; no rendered
+fork page/APK or SW version yet):
+
+| ID | Finding / required visible retest | Owner | Source state | Actual UI retest |
+| --- | --- | --- | --- | --- |
+| TG-ANDROID-SEND-01 | IPC disconnect/unknown reply can drop local operation ID/text before reconciliation. Send once, interrupt reply, reconnect same Account, verify one row and usable retry without duplicate. Definite rejection must retain text or error row. | broker_store_sol | Confirmed in initial DmashClient/SendMessagesHelper source; correction assigned | NOT RUN |
+| TG-DESKTOP-IDLE-01 | Idle host disconnect did not invalidate plaintext presentation. Kill synthetic owner while no RPC is pending; visible session must clear, stale callbacks must not restore it. | native_platforms_sol | Confirmed initial LocalClient gap; author correction compiled standalone84864 | NOT RUN |
+| TG-ANDROID-BACKEND-01 | Fallback DNS/proxy/custom-update entrypoints lack explicit D-MASH guards. Native init/socket guards exist, so active egress is not established by this source finding. Exercise startup/settings/update/proxy with captured network attempts. | broker_store_sol | Additional guards assigned | NOT RUN |
+| TG-DESKTOP-FRESH-01 | Draft original Intro currently unlocks existing Root/login only. A fresh synthetic installation needs profile.create with PIN confirmation and optional Account creation/chooser. | native_platforms_sol | Missing fresh flow assigned | NOT RUN |
+
+These source findings do not change historical 178-control PASS counts. The
+actual selected forks must have their own rendered control inventory, package
+versions/source hashes, screenshots and error/loading/disabled/cancel/reopen
+acceptance. Component adapter compilation is not a substitute for those actions.

@@ -13,7 +13,8 @@ test -f "$DMASH_CORE_ANDROID_BUILD/libs/Qt6Android.jar"
 test -f "$DMASH_CORE_ANDROID_BUILD/libs/$DMASH_TELEGRAM_ABI/libdmash_credential_service_$DMASH_TELEGRAM_ABI.so"
 test -f "$DMASH_CORE_ANDROID_BUILD/libs/$DMASH_TELEGRAM_ABI/libdmash_node_service_$DMASH_TELEGRAM_ABI.so"
 # Qt's deployment arrays must describe the same core binaries packaged below.
-cp -- "$DMASH_CORE_ANDROID_BUILD/res/values/libs.xml" "$DMASH_TELEGRAM_CHECKOUT/TMessagesProj/src/main/res/values/dmash_qt_libs.xml"
+mkdir -p -- "$DMASH_TELEGRAM_CHECKOUT/TMessagesProj/build/generated/dmashQt/res/values"
+cp -- "$DMASH_CORE_ANDROID_BUILD/res/values/libs.xml" "$DMASH_TELEGRAM_CHECKOUT/TMessagesProj/build/generated/dmashQt/res/values/libs.xml"
 printf 'sdk.dir=%s\n' "$ANDROID_HOME" > "$DMASH_TELEGRAM_CHECKOUT/local.properties"
 cd -- "$DMASH_TELEGRAM_CHECKOUT"
 ./gradlew :TMessagesProj_App:assembleAfatDebug \
