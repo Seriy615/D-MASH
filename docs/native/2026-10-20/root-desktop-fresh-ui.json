@@ -1,0 +1,44 @@
+{
+  "kind": "ROOT actual Qt Desktop fresh profile and optional Account controls",
+  "status": "PASS_SCOPED_UI",
+  "sourceCommit": "eea5c69372354c31d3308fd25d8692f916c33f7f",
+  "frozenSourceBase": "f63999927916daee7fd7c7f2baae4e55bf46fb61",
+  "sourceFilesVerified": 241,
+  "artifactsVerified": 8,
+  "checkpointSha256": "0c6c6be83abe9ae0f76095fe3f9789a223f65cce8e4ce425c4759a8f8580afbf",
+  "uiBinarySha256": "aaba9f9db6a4dd3497f222f6fa01f215b8675ad56fefecd1b5272293411fc5fa",
+  "hostBinarySha256": "335c6e9a37768c804526885c5883957b8a75771637581bd67e8da8783c694f4f",
+  "runs": [
+    {
+      "handle": 87643,
+      "platform": "offscreen",
+      "exitCode": 0,
+      "passed": 3,
+      "failed": 0,
+      "elapsedMs": 3035
+    },
+    {
+      "handle": 71212,
+      "platform": "xcb via Xvfb",
+      "exitCode": 0,
+      "passed": 3,
+      "failed": 0,
+      "elapsedMs": 4076
+    }
+  ],
+  "checks": [
+    "Actual Create profile Cancel/empty/mismatched PIN/valid PIN controls",
+    "Optional Account Cancel leaves Root-only UI with Node enabled and compose disabled",
+    "Actual Create Account empty/mismatch/valid submission and sign-in",
+    "Actual Saved compose/Send, visible history, close/reopen same profile, sign-out",
+    "Root visually inspected fresh XCB screenshot"
+  ],
+  "screenshotSha256": "237c1fa59fcec96ea09844000339b2bc57eeb8e79aeca83ba028e1266eeefdc4",
+  "initialEnvironmentFailure": "XCB launch exit134 before QtTest due missing host XCB dependencies; unchanged binary passes with existing emulator XCB dependency directory appended after Qt6.12/OpenSSL libraries",
+  "limits": [
+    "Synthetic fresh profiles only, no real user data",
+    "Fresh Node option not enabled; no Node-button/transit/remote chat acceptance",
+    "No physical display, Windows or Android runtime claim",
+    "Same-host window reopen, not full host crash or complete recovery matrix"
+  ]
+}

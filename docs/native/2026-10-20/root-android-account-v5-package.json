@@ -1,0 +1,24 @@
+{
+  "kind": "ROOT independent Android ordinary UI v5 package inspection",
+  "status": "PASS_PACKAGE_ONLY",
+  "sourceBase": "4bdf1da6693adacfb18cd975d7ce1645f54c79fc",
+  "checkpointManifestSha256": "a46a32e8038607be7821d6f0a09404b571ff769728158fa6f289f16011f7d1c2",
+  "sourceFilesVerified": 329,
+  "artifactsVerified": 7,
+  "apkSha256": "129f77fba7bf869f55ec82cc809c8761a76b163ab715113d9849cca2ebaa2ae5",
+  "apkBytes": 41408392,
+  "checks": [
+    "All frozen source and artifact hashes independently matched",
+    "Actual apksigner verify exit0, v2 verified",
+    "Actual zipalign -c -P16 4 exit0",
+    "All18 bundled ELF PT_LOAD alignment >=16384 independently parsed",
+    "Actual aapt badging: min28 target36 x86_64 MainActivity",
+    "Packaged dependency notices present"
+  ],
+  "runtime": "NOT RUN",
+  "limits": [
+    "Build includes explicit platform-owned WIP on4bdf; not published CI source or accepted app",
+    "Unstripped standalone service binaries differ from packaged stripped ELF; both artifact sets separately hashed",
+    "No fresh UI, Account, Node lifecycle or ARM/Windows claim"
+  ]
+}

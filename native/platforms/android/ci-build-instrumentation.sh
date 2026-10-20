@@ -41,7 +41,7 @@ public final class SmokeInstrumentation extends Instrumentation {
  private JSONObject receive(DataInputStream stream)throws Exception{
   int count=stream.readInt();check(count>0&&count<=524288,"reply-size");byte[] bytes=new byte[count];stream.readFully(bytes);return object(new String(bytes,StandardCharsets.UTF_8));
  }
- private Activity openActivity(){return startActivitySync(new Intent().setClassName(target,"org.dmash.client.MainActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));}
+ private Activity openActivity(){return startActivitySync(new Intent().setClassName(target,"org.dmash.client.NodeDiagnosticsActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));}
  private void install(int generation,int revision)throws Exception{
   phase+="-activity-open";activity=openActivity();
   ParcelFileDescriptor[] pair=ParcelFileDescriptor.createSocketPair();lease=pair[0];

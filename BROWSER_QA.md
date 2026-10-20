@@ -930,3 +930,24 @@ Windows actual39443521913 compiled/linked all75Desktop targets, including UI tes
 but desktop-controls failed0.06s with no QtTest banner. UI actions NOT RUN; owner
 platforms collecting startup exit/DLL/plugin diagnostics10c5743. [Exact merge-tree
 compile/launch evidence](docs/native/2026-10-20/root-windows-compile-launch-attempt.json).
+
+Desktop fresh setup sourceeea5c69: root actual Qt UI PASS offscreen87643 (3/0,
+3035ms), XCB/Xvfb71212 (3/0,4076ms). Createprofile Cancel/empty/mismatch/valid,
+optionalAccount Cancel/Root-only, Accountcreate validation/signin, Saved Send,
+visible history/windowreopen/signout.241source/8artifacts exact, screenshot
+visually inspected. Initial XCB environment lacked dependencies and exited134
+before QtTest; same binary passed with existing XCB dependencies appended to
+library path. Nodebutton option OFF; remotechat/full UI/Windows NOT RUN.
+[Root scoped proof](docs/native/2026-10-20/root-desktop-fresh-ui.json).
+
+Android run39446127764: launcher/Details/resume scoped controls remain PASS;
+first-install scoped service FAIL, Binder alive/STARTING/nativeExited=false and
+nativeStartupStages empty.325source/APK hashes exact. No loader cause established.
+[Root evidence](docs/native/2026-10-20/root-android-empty-entry-retest.json).
+
+User design correction: «я просил дизайн из тг взять». Current Desktop fresh
+functional controls PASS does NOT accept the shown arbitrary layout. Telegram
+Desktop/Android reference fidelity is NOT RUN; owner native_platforms_sol.
+Required next checks: Telegram-style chatlist/search/menu, header/bubbles/compact
+composer/settings on both clients, existing flows retained, real UI screenshots
+compared with pinned upstream references. No fake enabled unimplemented actions.

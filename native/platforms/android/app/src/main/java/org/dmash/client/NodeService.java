@@ -13,7 +13,7 @@ public final class NodeService extends QtService {
  private static volatile NodeService active;
  private volatile String state="Starting Node…";
  private static volatile boolean processNativeExited=false;
- private boolean installed=false;
+ private boolean installed=false,credentialOwned=false;
  private ParcelFileDescriptor pending;
  private String profile;
  private final Binder localBinder=new BrokerBinder();
@@ -29,6 +29,8 @@ public final class NodeService extends QtService {
    }
    if(code==FIRST_CALL_TRANSACTION+1){input.enforceInterface("org.dmash.client.NodeBroker.v1");if(Binder.getCallingUid()!=android.os.Process.myUid())throw new SecurityException("caller");output.writeNoException();output.writeString(state);return true;}
    if(code==FIRST_CALL_TRANSACTION+2){input.enforceInterface("org.dmash.client.NodeBroker.v1");if(Binder.getCallingUid()!=android.os.Process.myUid())throw new SecurityException("caller");if(input.dataAvail()!=0)throw new IllegalArgumentException("trailing data");output.writeNoException();output.writeInt(android.os.Process.myPid());output.writeInt(processNativeExited?1:0);output.writeString(state);return true;}
+   if(code==FIRST_CALL_TRANSACTION+3){input.enforceInterface("org.dmash.client.NodeBroker.v1");if(Binder.getCallingUid()!=android.os.Process.myUid())throw new SecurityException("caller");if(input.dataAvail()!=0)throw new IllegalArgumentException("trailing data");output.writeNoException();output.writeInt(android.os.Process.myPid());output.writeLong(android.os.Process.getStartElapsedRealtime());output.writeInt(android.provider.Settings.Global.getInt(getContentResolver(),android.provider.Settings.Global.BOOT_COUNT,-1));return true;}
+   if(code==FIRST_CALL_TRANSACTION+4){input.enforceInterface("org.dmash.client.NodeBroker.v1");if(Binder.getCallingUid()!=android.os.Process.myUid())throw new SecurityException("caller");if(input.dataAvail()!=0)throw new IllegalArgumentException("trailing data");handler.post(()->requestStop());output.writeNoException();return true;}
    return super.onTransact(code,input,output,flags);
   }
   // Only a local, same-app credential owner can supply a transport-only bootstrap.
@@ -51,17 +53,17 @@ public final class NodeService extends QtService {
  private static native boolean nativeInstall(int fd,String privateProfile);
  private void updateState(String value){state=value;ServiceStatus.write(this,value);}
  private static void nativeStopped(int code){processNativeExited=true;NodeService service=active;if(service!=null)service.handler.post(()->{service.updateState(code==0?"Node stopped":"Node could not start");service.stopForeground(STOP_FOREGROUND_REMOVE);service.stopSelf();});}
+ private Notification notification(){Intent stopIntent=credentialOwned?new Intent(this,CredentialService.class).setAction(CredentialService.ACTION_STOP):new Intent(this,NodeService.class).setAction(ACTION_STOP);PendingIntent stop=PendingIntent.getService(this,0,stopIntent,PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);PendingIntent open=PendingIntent.getActivity(this,11,new Intent(this,MainActivity.class),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);return new Notification.Builder(this,"node").setSmallIcon(android.R.drawable.stat_notify_sync).setContentTitle("D-MASH Node").setContentText("Node transport service").setContentIntent(open).setOngoing(true).addAction(new Notification.Action.Builder(null,credentialOwned?"Stop Node and lock":"Stop Node",stop).build()).build();}
  @Override public void onCreate(){
   processNativeExited=false;active=this;updateState("Starting Node…");
   NotificationManager manager=getSystemService(NotificationManager.class);
   manager.createNotificationChannel(new NotificationChannel("node","Node transport",NotificationManager.IMPORTANCE_LOW));
-  PendingIntent stop=PendingIntent.getService(this,0,new Intent(this,NodeService.class).setAction(ACTION_STOP),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
-  Notification notification=new Notification.Builder(this,"node").setSmallIcon(android.R.drawable.stat_notify_sync).setContentTitle("D-MASH Node").setContentText("Starting transport service").setOngoing(true).addAction(new Notification.Action.Builder(null,"Stop Node",stop).build()).build();
+  Notification notification=notification();
   if(Build.VERSION.SDK_INT>=34)startForeground(1,notification,ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);else startForeground(1,notification);
   super.onCreate();
  }
  @Override public IBinder onBind(Intent intent){return localBinder;}
- @Override public int onStartCommand(Intent intent,int flags,int startId){if(intent!=null&&ACTION_STOP.equals(intent.getAction())){requestStop();return START_NOT_STICKY;}super.onStartCommand(intent,flags,startId);return START_NOT_STICKY;}
+ @Override public int onStartCommand(Intent intent,int flags,int startId){if(intent!=null&&ACTION_STOP.equals(intent.getAction())){requestStop();return START_NOT_STICKY;}if(intent!=null&&intent.getBooleanExtra("credentialOwner",false)){credentialOwned=true;getSystemService(NotificationManager.class).notify(1,notification());}super.onStartCommand(intent,flags,startId);return START_NOT_STICKY;}
  @Override public void onTimeout(int startId,int foregroundServiceType){updateState("Android stopped the Node service");stopSelf();}
  @Override public void onDestroy(){if(state.equals("Starting Node…"))updateState("Node could not start");else if(state.equals("Node service is running"))updateState("Node stopped");active=null;handler.removeCallbacksAndMessages(null);if(pending!=null)try{pending.close();}catch(java.io.IOException ignored){}super.onDestroy();}
 }

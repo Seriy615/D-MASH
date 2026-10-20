@@ -21,6 +21,7 @@ from nacl.signing import SigningKey
 OUT = pathlib.Path(os.environ['DMASH_ANDROID_EVIDENCE'])
 BUILD = pathlib.Path(os.environ['DMASH_ANDROID_BUILD'])
 SERIAL = os.environ.get('ANDROID_SERIAL', 'emulator-5582')
+UI_STAGE = 'install'
 
 
 def classify_loader(text):
@@ -69,12 +70,156 @@ def tap(node, enabled=True):
     adb('shell', 'input', 'tap', str((left + right) // 2), str((top + bottom) // 2))
 
 
+def read_nodes():
+    adb('shell', 'uiautomator', 'dump', '/sdcard/dmash-ci-window.xml')
+    return list(ET.fromstring(adb('exec-out', 'cat', '/sdcard/dmash-ci-window.xml')).iter('node'))
+
+
+def wait_ui(name, predicate, timeout=30):
+    global UI_STAGE
+    UI_STAGE = name
+    until = time.monotonic() + timeout
+    while time.monotonic() < until:
+        nodes = read_nodes()
+        if predicate(nodes):
+            return snapshot(name)
+        time.sleep(.25)
+    snapshot(name + '-timeout')
+    raise TimeoutError('visible UI stage: ' + name)
+
+
+def has(nodes, text, enabled=None):
+    return any(n.get('text', '').casefold() == text.casefold() and
+               (enabled is None or n.get('enabled') == str(enabled).lower()) for n in nodes)
+
+
+def fill_fields(values):
+    nodes = read_nodes()
+    fields = [n for n in nodes if n.get('class') == 'android.widget.EditText']
+    assert len(fields) == len(values), 'unexpected visible form fields'
+    for node, value in zip(fields, values):
+        tap(node)
+        adb('shell', 'input', 'keyevent', 'KEYCODE_MOVE_END')
+        # Long press select-all is device dependent; these forms start empty.
+        if value:
+            assert re.fullmatch(r'[A-Za-z0-9_-]+', value)
+            adb('shell', 'input', 'text', value)
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+
+
+def ordinary_ui(result):
+    nodes = wait_ui('01-messenger-ready', lambda n: has(n, 'Create profile', True))
+    for label in ['Sign in', 'Start Node', 'Connections']:
+        assert element(nodes, label).get('enabled') == 'false'
+    assert not any(n.get('content-desc') == 'Message' and n.get('enabled') == 'true' for n in nodes)
+    tap(element(nodes, 'Details'))
+    tap(element(snapshot('02-messenger-details'), 'Node tools'))
+    nodes = snapshot('03-node-tools')
+    assert has(nodes, 'Node is off')
+    for label in ['Stop Node', 'Send']:
+        tap(element(nodes, label), enabled=False)
+    message = next(n for n in nodes if n.get('content-desc') == 'Message')
+    tap(message, enabled=False)
+    tap(element(nodes, 'Application details'))
+    details = snapshot('04-node-tools-details')
+    assert any('Account integration is in progress' in n.get('text', '') for n in details)
+    tap(element(details, 'Close'))
+    nodes = snapshot('05-node-tools-details-closed')
+    assert not any('Account integration is in progress' in n.get('text', '') for n in nodes)
+    tap(element(nodes, 'Application details'))
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+    assert has(snapshot('06-node-tools-back'), 'Application details')
+    adb('shell', 'input', 'keyevent', 'KEYCODE_HOME')
+    adb('shell', 'am', 'start', '-W', '-n', 'org.dmash.client/.MainActivity')
+    nodes = read_nodes()
+    tap(element(nodes, 'Details'))
+    tap(element(read_nodes(), 'Node tools'))
+    assert has(snapshot('07-node-tools-resume'), 'Node is off')
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+    adb('shell', 'am', 'start', '-W', '-n', 'org.dmash.client/.MainActivity')
+    nodes = wait_ui('08-main-return', lambda n: has(n, 'Create profile', True))
+    result['checks'].append('ordinary launcher + explicit Node tools: unchanged disabled controls/details Close/Back/background checks')
+    tap(element(nodes, 'Create profile'))
+    tap(element(snapshot('09-create-profile-cancel'), 'Cancel'))
+    nodes = snapshot('10-profile-cancelled')
+    assert has(nodes, 'Create profile', True) and has(nodes, 'Start Node', False)
+    tap(element(nodes, 'Create profile'))
+    tap(element(snapshot('11-profile-empty'), 'Create profile'))
+    assert has(snapshot('12-profile-validation'), 'Enter the same PIN in both fields.')
+    # Cancel creates fresh empty fields for the next actual form entry.
+    tap(element(read_nodes(), 'Cancel'))
+    tap(element(read_nodes(), 'Create profile'))
+    fill_fields(['773411', 'mismatch'])
+    tap(element(read_nodes(), 'Create profile'))
+    assert has(snapshot('13-profile-mismatch'), 'Enter the same PIN in both fields.')
+    tap(element(read_nodes(), 'Cancel'))
+    tap(element(read_nodes(), 'Create profile'))
+    fill_fields(['773411', '773411'])
+    tap(element(read_nodes(), 'Create profile'))
+    nodes = wait_ui('14-optional-account', lambda n: has(n, 'Create and sign in'))
+    tap(element(nodes, 'Cancel'))
+    nodes = wait_ui('15-zero-accounts', lambda n: has(n, 'Create Account', True) and has(n, 'Start Node', True))
+    assert not any(n.get('content-desc') == 'Message' and n.get('enabled') == 'true' for n in nodes)
+    result['checks'].append('actual fresh Root profile Cancel/empty/mismatched PIN/valid creation; optional Account cancelled, Node available without Account')
+    tap(element(nodes, 'Start Node'))
+    nodes = wait_ui('16-zero-account-node', lambda n: has(n, 'Node running · 0 connected peers') or has(n, 'Could not complete this action. Your stored messages were kept.'), timeout=180)
+    assert has(nodes, 'Node running · 0 connected peers'), 'actual Node enable failed'
+    # Kill only the UI process, preserving separate credential/Node services.
+    main_pid = adb('shell', 'pidof', 'org.dmash.client').decode().strip()
+    credential_pid = adb('shell', 'pidof', 'org.dmash.client:credentials').decode().strip()
+    node_pid = adb('shell', 'pidof', 'org.dmash.client:node').decode().strip()
+    assert all(re.fullmatch(r'[0-9]+', pid) for pid in [main_pid, credential_pid, node_pid])
+    assert len({main_pid, credential_pid, node_pid}) == 3
+    adb('shell', 'run-as', 'org.dmash.client', 'kill', '-9', main_pid)
+    adb('shell', 'am', 'start', '-W', '-n', 'org.dmash.client/.MainActivity')
+    nodes = wait_ui('17-ui-process-reconnect', lambda n: has(n, 'Node running · 0 connected peers'))
+    assert adb('shell', 'pidof', 'org.dmash.client:credentials').decode().strip() == credential_pid
+    assert adb('shell', 'pidof', 'org.dmash.client:node').decode().strip() == node_pid
+    tap(element(nodes, 'Stop Node and lock'))
+    nodes = wait_ui('18-node-stopped-locked', lambda n: has(n, 'Node is off') and has(n, 'Unlock device', True))
+    assert not adb('shell', 'sh', '-c', "'pidof org.dmash.client:node || true'").decode().strip(), 'Node process still alive after explicit stop'
+    result['checks'].append('visible zero-Account Start Node; exact separate services survive UI SIGKILL/reconnect; visible Stop Node and lock verifies Node process exit')
+    tap(element(nodes, 'Create Account'))
+    fill_fields(['773411'])
+    tap(element(read_nodes(), 'Unlock'))
+    nodes = wait_ui('19-create-account', lambda n: has(n, 'Create and sign in'))
+    tap(element(nodes, 'Create and sign in'))
+    assert has(snapshot('20-account-empty'), 'Enter an Account name and the same password in both fields.')
+    tap(element(read_nodes(), 'Cancel'))
+    tap(element(read_nodes(), 'Create Account'))
+    fill_fields(['android-new-ui', 'Android_New_Profile', 'android-profile-password', 'mismatch'])
+    tap(element(read_nodes(), 'Create and sign in'))
+    assert has(snapshot('21-account-mismatch'), 'Enter an Account name and the same password in both fields.')
+    tap(element(read_nodes(), 'Cancel'))
+    tap(element(read_nodes(), 'Create Account'))
+    fill_fields(['android-new-ui', 'Android_New_Profile', 'android-profile-password', 'android-profile-password'])
+    tap(element(read_nodes(), 'Create and sign in'))
+    nodes = wait_ui('22-account-created', lambda n: has(n, 'Android_New_Profile') and has(n, 'Избранное'))
+    tap(element(nodes, 'Избранное'))
+    nodes = wait_ui('23-saved', lambda n: any(x.get('content-desc') == 'Message' and x.get('enabled') == 'true' for x in n))
+    assert element(nodes, 'Send').get('enabled') == 'false'
+    fill_fields(['Saved_from_Android_UI'])
+    nodes = read_nodes()
+    tap(element(nodes, 'Send'))
+    nodes = wait_ui('24-saved-write', lambda n: has(n, 'Saved_from_Android_UI'))
+    adb('shell', 'input', 'keyevent', 'KEYCODE_HOME')
+    adb('shell', 'am', 'start', '-W', '-n', 'org.dmash.client/.MainActivity')
+    nodes = wait_ui('25-account-resume', lambda n: has(n, 'Android_New_Profile'))
+    if not has(nodes, 'Saved_from_Android_UI'):
+        tap(element(nodes, 'Избранное'))
+        nodes = wait_ui('26-history-reopened', lambda n: has(n, 'Saved_from_Android_UI'))
+    tap(element(nodes, 'Sign out'))
+    nodes = wait_ui('27-signed-out', lambda n: has(n, 'Sign in', True))
+    assert not any(n.get('content-desc') == 'Message' and n.get('enabled') == 'true' for n in nodes)
+    result['checks'].append('actual Account create validation/signin, encrypted Saved send/history, background/reopen and signout')
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     result = dict(kind='ANDROID_API35_ACTUAL_UI_AND_SCOPED_SERVICE', status='FAIL', checks=[],
-                  limits=['No Account import/login/history/contacts/remote chat acceptance',
+                  limits=['Fresh synthetic profile only; no retained profile import, contacts or remote chat acceptance',
                           'No mesh peers, transit/delivery, Doze, reboot or physical device acceptance',
-                          'Synthetic same-UID instrumentation grant; resident credential owner not tested'])
+                          'Separate synthetic same-UID scoped instrumentation grant is not Account transport acceptance'])
     try:
         apk = BUILD / 'dmash-x86_64-debug.apk'
         result['apkSha256'] = hashlib.sha256(apk.read_bytes()).hexdigest()
@@ -86,32 +231,7 @@ def main():
         assert 'package:' in adb('shell', 'pm', 'path', 'org.dmash.client').decode()
         result['checks'].append('actual APK installed and package path verified')
         adb('shell', 'am', 'start', '-W', '-n', 'org.dmash.client/.MainActivity')
-        nodes = snapshot('01-launcher')
-        assert element(nodes, 'Node is off') is not None
-        for label in ['Stop Node', 'Send']:
-            assert element(nodes, label).get('enabled') == 'false'
-            tap(element(nodes, label), enabled=False)
-        message = next(node for node in nodes if node.get('content-desc') == 'Message')
-        assert message.get('enabled') == 'false'
-        tap(message, enabled=False)
-        nodes = snapshot('01-disabled-controls')
-        assert element(nodes, 'Node is off') is not None
-        tap(element(nodes, 'Application details'))
-        details = snapshot('02-details')
-        assert any('Account integration is in progress' in node.get('text', '') for node in details)
-        tap(element(details, 'Close'))
-        nodes = snapshot('03-details-closed')
-        assert not any('Account integration is in progress' in node.get('text', '') for node in nodes)
-        # Reopen and cancel with the Android Back control as a separate UI path.
-        tap(element(nodes, 'Application details'))
-        snapshot('04-details-reopened')
-        adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
-        nodes = snapshot('05-details-back')
-        assert element(nodes, 'Application details') is not None
-        adb('shell', 'input', 'keyevent', 'KEYCODE_HOME')
-        adb('shell', 'am', 'start', '-W', '-n', 'org.dmash.client/.MainActivity')
-        assert element(snapshot('06-resume'), 'Node is off') is not None
-        result['checks'].extend(['actual details open/Close/reopen/Back taps', 'disabled Stop Node/compose/Send', 'Activity background/resume preserves honest off state'])
+        ordinary_ui(result)
         # Existing 0520 identity work; distinct from session activation target22.
         deadline = time.monotonic() + 120
         while time.monotonic() < deadline:
@@ -142,6 +262,7 @@ def main():
         result['status'] = 'PASS'
     except BaseException as error:
         result['failureClass'] = type(error).__name__
+        result['uiStage'] = UI_STAGE
         # Fixed code only; never echo transport frames or capabilities.
         raise
     finally:

@@ -4,7 +4,11 @@
 
 Последнее указание пользователя: «аккуратно думай не сильно о кибербезе».
 Приоритет — обычная переписка, автономная фоновая Node, простой UI и сохранность
-данных. Исправлять подтверждённые ошибки; не добавлять гипотетические проверки
+данных. Повторное явное требование пользователя: «я просил дизайн из тг взять».
+Telegram Desktop и Telegram Android из исходно указанных репозиториев — образцы
+обоих интерфейсов. Текущий произвольный teal/Widgets экран — промежуточный,
+НЕ приёмка дизайна; воспроизвести Telegram компоновку/navigation/chatlist/chat/
+composer/settings, проверять реальными UI actions и сравнением скриншотов. Исправлять подтверждённые ошибки; не добавлять гипотетические проверки
 и пользовательские церемонии. Этот файл — единственная текущая сводка.
 Исторические checkpoints/deployments доступны в Git и docs/archive; они не
 задают текущие SHA, указания или критерии DONE.
@@ -53,6 +57,7 @@
 | Host crash/recovery | Immutablea52e9f5, root44213 exit0:183source/19artifact/7libs exact; SIGKILL host/Node lease EOF; sameRoot/Node/gens1,3,5,7/Saved2; authenticated floor merge; cancel stops verified suspended oldchild. Process/cancel/logout/reopen/ACTIVE grant lease PASS | [Recovery](docs/native/2026-10-20/root-resident-host-recovery.json). Integrated f8b17d2/1a5f179/87fc172. Не full N4; pin Account resources older remote integration. |
 | Fresh setup | Immutableca849fd root65965/54456 PASS:187source/27artifact/7libs exact; Root-only/zeroAccounts, optional compatible Account, cancellation, duplicates refuse overwrite, Saved/reopen/missing-key refusal; original JS/WASM Root+registry interop | [Fresh](docs/native/2026-10-20/root-fresh-root-account.json). Integrated1930b80; Root fresh transit accepted separately above; fresh UI still open. |
 | Desktop Account controls | Actual Widgets chooser/import/PIN/Account cancel/wrong/busy/correct/Saved/reopen on owning copy. Clipboard test-only correction33a6273 root20183 PASS3/0/22.644s, unchanged pinned product | [Chooser retest](docs/native/2026-10-20/root-desktop-chooser-retest.json). Visible Node controls ещё не root PASS. |
+| Desktop fresh setup | Root actual Qt mouse/key controls PASS offscreen3035ms and XCB/Xvfb4076ms; Createprofile Cancel/empty/mismatch/valid, optionalAccount Cancel, CreateAccount/signin/Saved/windowreopen/signout | [Fresh UI](docs/native/2026-10-20/root-desktop-fresh-ui.json).241source/8artifacts exact. Sourceeea5c69; no Node-button/remote/Windows acceptance. |
 | Android package/UI | ARM64 package/signature/16K ELF inspection; actual x86 API35 KVM install/launch, Stop/compose/Send disabled when off, Details Close/Back, background/resume | [Package](docs/native/2026-10-20/root-android-package-inspection.json), [actual UI retest](docs/native/2026-10-20/root-android-kvm-launcher-retest.json). Node service/Account/UI/full app acceptance ещё нет. |
 
 ## 3. Текущие FAIL, неподтверждённые причины и незавершённые checkpoints
@@ -82,8 +87,12 @@
  nativeExited=false, serviceState STARTING. [Retest](docs/native/2026-10-20/root-android-service-bootstrap-retest.json).
  Timer fix is not runtime-accepted; platform investigates pre-JNI startup stage.
   Diagnostic471ca1c distinguishes activity/binder/bootstrap phases and fixed states.
- c145656/5d1d2ce fixed native startup markers now in published4ed snapshot; actual
- next stage evidence pending.
+ c145656/5d1d2ce actual run39446127764: all325 source hashes match4bdf1da,
+ APK hash verified; same timeout with nativeStartupStages=[] (no ENTRY observed).
+ [Run8 proof](docs/native/2026-10-20/root-android-empty-entry-retest.json).
+ No specific loader cause established.8bd1c88/f639999 bounded Qt-loader reason
+ collector published for next actual runner; includes QtLoader warning severity.
+
 - **Windows:** actual run39443521913 source9988c73 exact merge tree confirmed:
   all75 Desktop/host/UI-test targets compiled and linked. desktop-controls then
   failed0.06s with empty output before QtTest banner. Cause unknown; no UI action
@@ -106,21 +115,20 @@
 
 ## 4. Source publication, environments и активные проверки
 
-Latest published GitHub snapshot **4edab65caa3d0d7d2c4a27f827c5e167887babbe** is
-exact local **4bdf1da6693adacfb18cd975d7ce1645f54c79fc** tree
-**5b6c9a4cc725b615bd04bd4d10ebc51db7c5b395**. create_tree exact + git ls-remote
+Latest published GitHub snapshot **ec66d1142cdc94a8859cec4e29f6b72c4baef45b** is
+exact local **f63999927916daee7fd7c7f2baae4e55bf46fb61** tree
+**7223bc5867c8df77abdc7e16cec1a567fcbcb8b8**. create_tree exact + git ls-remote
 verified. Branch `codex/native-clients-ci-20261020`, draft
 [PR8](https://github.com/Seriy615/D-MASH/pull/8), attached to task.
-Later root docs/source not automatically published; see Git and FORGE_SYNC.
-Git direct HTTPS/SSH write unavailable; connector writes exact tracked tree only.
-No force/reset, private cache, keys, DB or credential logs in Git.
+Later source/docs and live platform WIP are not implicitly published.
+See [FORGE_SYNC.md](FORGE_SYNC.md). No deployment or runtime-state backup.
 
-Actual live CI last checked on4ed snapshot: Android39446127764/job118708398804
-(build APK/instrumentation) and Windows39446127350/job118708396974 (dependencies).
-Prior Android39443522111 and Windows39443521913 terminal FAIL as recorded above.
-GitHub connector status can be stale: use fresh public REST Cache-Control:no-cache
-and terminal job timestamps to resolve contradictions. 404 job log/transient poll
-failure does not prove job stopped. Do not restart observation-timeout jobs.
+Last actual REST check:22a snapshot Android39447633575/job118713660813 LIVE
+(scoped emulator service test); Windows39447632824/job118713657263 LIVE.
+4ed Android39446127764 and Windows39446127350 terminal FAIL. New ec66 snapshot
+contains loader diagnosis/scope changes; new run outcome not yet inspected.
+Use fresh public REST Cache-Control:no-cache: connector statuses may be stale.
+Transient log failure does not prove a process/job stopped; poll the same handle.
 
 Toolchains/private pins: `/home/jcode/.cache/dmash-native-20261020`.
 Node `/home/jcode/.cache/dmash-tools/node-v24.19.0-linux-x64/bin/node`24.19.0;
@@ -159,10 +167,13 @@ normal unlock/login recorded in BROWSER_QA. No user/production data touched.
   via separate encrypted SQLite; optional trusted store/KEM +private-v1 seams
   isolated f50e82c UNIT only, not shared yet; actual native pairing pending.
   Platform now owns Android CI UI/instrumentation files.
-- **native_platforms_sol:** Desktop Node-control stage diagnostics, Android normal
+- **native_platforms_sol:** PRIORITY: Telegram Desktop/Android design requirement above;
+  inspect/pin original reference source, implement both native client layouts,
+  move daemon technical controls into menu/settings. Existing functional UI tests
+  do not accept current arbitrary layout as requested design. Desktop Node-control stage diagnostics, Android normal
   Views/credential service and Windows compile/runtime fixes.9988 entry published.
   Coherent Androidv5 frozen on4bdf1da includes fresh1930/f187/host87 +ownedUIWIP;
-  actualnative build running4448, no app runtime claim. Next CI must exercise
+  native4448/package65976 both exit0. Immutable android-account-v5 root verified329source/7artifact hashes, APK signature/ZIP16K/18ELF16K. [Package only](docs/native/2026-10-20/root-android-account-v5-package.json); runtime NOT RUN. Desktop freshCreate build57970 exit0, sourceeea5c69 root fresh UI accepted (table above). Next CI must exercise
   ordinary Createprofile/optionalAccount/Saved UI, technical Node checks via
   explicit NodeTools screen. Preserve strict assertions. Next freeze includes distinct owner
   epoch vs transport generation, real child-exit recovery and lease-extension

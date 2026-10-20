@@ -1,0 +1,7 @@
+{
+  "status": "PASS compile/dex/link/sign only",
+  "mainApkSha256": "c63d75badc182ae9a334d41d439a7d1771728cfb8f92c046af0dbd4dfa13250b",
+  "instrumentationApkSha256": "63989ecb07c6fca0ea8d5ce9a2cb6955fbae11cbe81a79a0a6462ed86092f1b3",
+  "sameDisposableDebugSigner": true,
+  "runtime": "NOT_RUN until runtime.json"
+}

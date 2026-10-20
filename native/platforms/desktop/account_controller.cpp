@@ -8,10 +8,12 @@ AccountController::AccountController(QString path,QObject* parent):QObject(paren
  connect(client_.get(),&CredentialClient::hostStatusReady,this,&AccountController::hostStatusReady);
  connect(client_.get(),&CredentialClient::busyChanged,this,&AccountController::busyChanged);
  connect(client_.get(),&CredentialClient::response,this,[this](const QString& method,bool ok,const QString& code,const QJsonObject& result){
-  if(!ok){if(code=="ROOT_UNLOCK_REQUIRED"){emit signedOut();emit rootUnlockRequired();}else{if(code=="CREDENTIAL_HOST_DISCONNECTED"||code=="CREDENTIAL_HOST_UNAVAILABLE")emit signedOut();emit failed(code);}return;}
+  if(!ok){createPassword_.clear();createIdentity_.clear();if(code=="ROOT_UNLOCK_REQUIRED"){emit signedOut();emit rootUnlockRequired();}else{if(code=="CREDENTIAL_HOST_DISCONNECTED"||code=="CREDENTIAL_HOST_UNAVAILABLE")emit signedOut();emit failed(code);}return;}
   const auto value=result.value("value").toObject();const auto rows=result.value("rows").toArray();
   if(method=="account.listAccounts"||method=="profile.import"||method=="root.unlock"){emit accountsReady(rows);const auto active=value.value("activeAccount").toObject();if(!active.isEmpty()){emit signedIn(active);contacts();}else if(method!="account.listAccounts")nodeStatus();}
   else if(method=="host.status")emit hostStatusReady(value);
+  else if(method=="profile.create"){emit hostStatusReady({{"profileExists",true},{"rootLocked",false}});emit accountsReady(rows);emit profileCreated();}
+  else if(method=="account.create"){const auto identity=value.value("identity").toString(createIdentity_);auto password=createPassword_;createPassword_.clear();createIdentity_.clear();emit accountAdded(value);if(!password.isEmpty())login(identity,password);else loadAccounts();}
   else if(method=="node.enable"){emit hostStatusReady(value);nodeStatus();}
   else if(method=="node.disable"){emit signedOut();emit hostStatusReady(value);emit nodeStopped();nodeStatus();}
   else if(method=="account.login"){emit signedIn(value);contacts();}
@@ -24,9 +26,11 @@ AccountController::AccountController(QString path,QObject* parent):QObject(paren
 void AccountController::loadAccounts(){client_->request("account.listAccounts");}
 void AccountController::importProfile(const QJsonObject& profile,const QString& pin){client_->request("profile.import",{{"profile",profile},{"pin",pin}});}
 void AccountController::unlockRoot(const QString& pin){client_->request("root.unlock",{{"pin",pin}});}
+void AccountController::createProfile(const QString& pin){client_->request("profile.create",{{"pin",pin}});}
+void AccountController::createAndSignIn(const QString& identity,const QString& password,const QString& displayName){if(busy())return;createIdentity_=identity;createPassword_=password;client_->request("account.create",{{"identity",identity},{"password",password},{"displayName",displayName}});}
 void AccountController::login(const QString& identity,const QString& password){client_->request("account.login",{{"identity",identity},{"password",password}});}
 void AccountController::logout(){client_->request("account.logout");}
-void AccountController::cancel(){client_->cancel();}
+void AccountController::cancel(){createIdentity_.clear();createPassword_.clear();client_->cancel();}
 void AccountController::contacts(){client_->request("account.contacts");}
 void AccountController::history(const QString& peer){client_->request("account.history",{{"peer",peer},{"before",0},{"limit",50}});}
 void AccountController::send(const QString& peer,const QString& text){if(busy())return;if(operationId_.isEmpty()||peer!=pendingPeer_||text!=pendingText_)operationId_=QUuid::createUuid().toString(QUuid::Id128)+QUuid::createUuid().toString(QUuid::Id128);pendingPeer_=peer;pendingText_=text;client_->request("account.sendText",{{"peer",peer},{"operationId",operationId_},{"text",text}});}

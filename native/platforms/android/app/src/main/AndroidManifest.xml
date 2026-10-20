@@ -6,6 +6,13 @@
  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
  <application android:label="D-MASH" android:allowBackup="false" android:theme="@android:style/Theme.Material.Light.NoActionBar">
   <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
+  <activity android:name=".NodeDiagnosticsActivity" android:exported="false"/>
+  <service android:name=".CredentialService" android:process=":credentials" android:exported="false" android:foregroundServiceType="specialUse">
+   <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-enabled local encrypted messaging session and supervision of the peer-to-peer Node while the chat window is closed. The ongoing notification offers Lock and stop."/>
+   <meta-data android:name="android.app.lib_name" android:value="dmash_credential_service"/>
+   <meta-data android:name="android.app.background_running" android:value="true"/>
+   <meta-data android:name="android.app.arguments" android:value="-platform android"/>
+  </service>
   <service android:name=".NodeService" android:process=":node" android:exported="false" android:foregroundServiceType="specialUse">
    <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-enabled continuous peer-to-peer mesh Node routing and encrypted message forwarding for other devices while the Account interface is closed. The user can stop Node transport from its ongoing notification."/>
    <meta-data android:name="android.app.lib_name" android:value="dmash_node_service"/>
