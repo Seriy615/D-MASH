@@ -182,13 +182,18 @@
       "path": "patches/0001-local-core-boundary.patch",
       "sha256": "f4841c74dee4099182acea0ead7788ba91cae3b0ac893122e94733af89e4766e",
       "status": "DRAFT full app integration: standalone IPC/projection built and CTest1/1 passed; full original app configured and UI-object build active, not linked/rendered"
+    },
+    {
+      "path": "patches/0002-owned-profile-launcher.patch",
+      "sha256": "a4687bc4c87653de0ba8fab7b03b71e83774d138d855835e79603f05f5008d31",
+      "status": "SOURCE; force owned namespace before logs/platform legacy lookup, full app compile/runtime acceptance pending"
     }
   ],
   "patchedFiles": {
     "CMakeLists.txt": "c74e2d8e82347e8d915cb336af56a3a637b520eaed1d4b1f84fcba18456d69ed",
     "Telegram/CMakeLists.txt": "b0869543b90a02fd13e11710330dfa77220fca2315ea49c2a24c3ed1d588604b",
     "Telegram/SourceFiles/apiwrap.cpp": "c5b33064193c60cfa018f9adbcea7707ef65695e6e16f3017f353957bb2300a8",
-    "Telegram/SourceFiles/core/launcher.cpp": "76e348195c3e1207b3bd72f0471e3ee2e7fa3ee34a03993b641fb9b4e4e32e18",
+    "Telegram/SourceFiles/core/launcher.cpp": "297cb62f2cf5eca842d4a8f9bab1f4e20688fc374c664a684048cfee6e0c7229",
     "Telegram/SourceFiles/history/history_item.cpp": "19e588943b016cebc7813c5ef191dbab67f4399225d91de1de78ad8a2de5a5d9",
     "Telegram/SourceFiles/history/history_item.h": "81e757a4880127148e2ba79d0bf79984f371444030ff2ceef147af281113c1f3",
     "Telegram/SourceFiles/history/history_widget.cpp": "85c1fe5f8a6e8ad9329f21d5a1c1e0ace1fbc2b9166d33938f51414ef5de61cc",
@@ -216,7 +221,8 @@
     "dmash/session_adapter.cpp": "994c35ea36cd04d1f05d67f92c1ad56cc50c6f724b51de3bbe7811f8dee93be3",
     "dmash/session_adapter.h": "a1d4b8a2eda7b1191846e91ef017b005b1280f8b50cd90f61d37c9062d7d68e7",
     "dmash/tests/generate_id_contract.py": "d2da307f2ef2c775bfd535d75a4a69674a1285713e69adb6d5d1e7da89a7d74d",
-    "dmash/tests/projection_test.cpp": "6838b4e8177551e523a01b99ec6c17951c73fd495bf7389fd22ba08042d2765f"
+    "dmash/tests/projection_test.cpp": "6838b4e8177551e523a01b99ec6c17951c73fd495bf7389fd22ba08042d2765f",
+    "Telegram/SourceFiles/platform/linux/specific_linux.cpp": "7109d6f978b5f371c3f484825ffdbea38ed8ec604498b52039e8a01022b3a260"
   },
   "legalSha256": "d99f86f0c2b7f2057f2d6c2122a303af2171d778210b47159090ff9501511bea"
 }

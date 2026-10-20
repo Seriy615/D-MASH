@@ -30,6 +30,7 @@ while queue:
   if not target.exists():shutil.copy2(pathlib.Path(original).resolve(),target);origins[name]=original;queue.append(target)
 # Include exact project/core provenance and actual upstream/dependency notices.
 shutil.copytree(root/'native/platforms/licenses',notices/'native-third-party')
+for name in ['LICENSE','LICENSES.md']:shutil.copy2(root/name,notices/('D-MASH-'+name))
 for path in ['PROVENANCE.json','README.md','vendor/wasm2c/LICENSE']:
  target=notices/'account'/path;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(root/'native/account'/path,target)
 for path in ['LICENSE.upstream','LEGAL.upstream','LICENSES.md','UPSTREAM.json','SOURCE_DEPENDENCIES.json','LINUX_DEPENDENCIES.json']:

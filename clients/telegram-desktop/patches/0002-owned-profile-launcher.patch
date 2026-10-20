@@ -1,0 +1,39 @@
+diff --git a/Telegram/SourceFiles/core/launcher.cpp b/Telegram/SourceFiles/core/launcher.cpp
+--- a/Telegram/SourceFiles/core/launcher.cpp
++++ b/Telegram/SourceFiles/core/launcher.cpp
+@@ -447,7 +447,12 @@
+ }
+ 
+ bool Launcher::checkPortableVersionFolder() {
+-	return CheckPortableVersionFolder();
++#ifdef TDESKTOP_DMASH_CLIENT
++ // Do not inspect or migrate a Telegram portable installation.
++ return true;
++#else
++ return CheckPortableVersionFolder();
++#endif
+ }
+ 
+ QStringList Launcher::readArguments(int argc, char *argv[]) const {
+@@ -591,6 +596,7 @@
+ 	_customWorkingDir = QStandardPaths::writableLocation(
+ 		QStandardPaths::GenericDataLocation) + u"/D-MASH/telegram-ui/"_q;
+ 	QDir().mkpath(_customWorkingDir);
++ cForceWorkingDir(_customWorkingDir); // Before Logs::start and platform fallback.
+ #else
+ 	_customWorkingDir = parseResult.value("-workdir", {}).join(QString());
+ #endif
+diff --git a/Telegram/SourceFiles/platform/linux/specific_linux.cpp b/Telegram/SourceFiles/platform/linux/specific_linux.cpp
+--- a/Telegram/SourceFiles/platform/linux/specific_linux.cpp
++++ b/Telegram/SourceFiles/platform/linux/specific_linux.cpp
+@@ -638,6 +638,10 @@
+ } // namespace Platform
+ 
+ QString psAppDataPath() {
++#ifdef TDESKTOP_DMASH_CLIENT
++ return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)
++  + u"/D-MASH/telegram-ui/"_q;
++#endif
+ 	// Previously we used ~/.TelegramDesktop, so look there first.
+ 	// If we find data there, we should still use it.
+ 	auto home = QDir::homePath();

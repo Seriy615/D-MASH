@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 recipe=$(cd "$(dirname "$0")/.." && pwd)
-prefix=${DMASH_TELEGRAM_DESKTOP_SOURCE:-"$HOME/.cache/dmash-native-20261020/telegram-desktop-fork"}
+cache=${DMASH_TOOLCHAIN_CACHE:-"$HOME/.cache/dmash-native-20261020"}
+prefix=${DMASH_TELEGRAM_DESKTOP_SOURCE:-"$cache/telegram-desktop-fork"}
 revision=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["commit"])' "$recipe/UPSTREAM.json")
 repository=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["repository"])' "$recipe/UPSTREAM.json")
 if [ ! -d "$prefix/.git" ]; then
@@ -13,6 +14,8 @@ if [ ! -d "$prefix/.git" ]; then
 fi
 python3 "$recipe/scripts/verify-source.py" "$recipe" "$prefix" preflight
 git -C "$prefix" submodule update --init --recursive --depth 1 --jobs 2
+# A later patch may alter an earlier hunk: recognize the whole final series.
+if python3 "$recipe/scripts/verify-source.py" "$recipe" "$prefix" final >/dev/null 2>&1; then exit 0; fi
 while IFS= read -r patch; do
  if git -C "$prefix" apply --reverse --check "$recipe/$patch" >/dev/null 2>&1; then continue; fi
  git -C "$prefix" apply --check "$recipe/$patch"

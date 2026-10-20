@@ -34,7 +34,7 @@ env=os.environ.copy();env.update({'XDG_DATA_HOME':str(private/'appdata'),'DMASH_
 process=None
 try:
  with (out/'full-app-runtime.log').open('wb') as log:
-  process=subprocess.Popen([str(bundle/'DMash'),'-many','-noupdate'],env=env,stdout=log,stderr=log)
+  process=subprocess.Popen([str(bundle/'DMash'),'-many','-noupdate'],env=env,cwd=private,stdout=log,stderr=log)
   deadline=time.monotonic()+60;window=None
   while time.monotonic()<deadline:
    if process.poll() is not None:raise RuntimeError('Full app exited before its own X11 window: '+str(process.returncode))

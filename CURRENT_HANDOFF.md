@@ -139,10 +139,18 @@ D-MASH не требует Telegram SMS/login. Форки воспроизвод
 
 ## 4. Source publication, environments и активные проверки
 
-Latest published GitHub snapshot **aa30fb2cafa8198665f41f406af58c01c29d3022** is
-exact local **6c1bbbc4ff80ad865959b0d13eff236b1b001b51** tree
-**d7dafc0697a349e8941de7164e1baae621776d83**. create_tree exact + git ls-remote
-verified. Branch `codex/native-clients-ci-20261020`, draft
+Latest published GitHub snapshot **4929fa6e8cd09c1854e9b56a8d7adbcffe407287** is
+exact local **88756340d787f6bcb726afb2ff7535aa62677153** tree
+**224c1cde415e1460d09ad509fa21e8e9cf4b9dd6**. create_tree exact + git ls-remote
+verified. Actual Linux run39466512625/job118779217412 is IN_PROGRESS at
+owned dependency build; previous stages checkout/cache passed. Existing Windows
+run39466512564/job118779217204 and Android39466512504/job118779217330 are
+IN_PROGRESS intermediate harnesses, not actual fork GUI acceptance. Observe the
+same jobs before rerun. Root review found checkout.sh ignoring cache override;
+platform followup e740454 fixes it and includes owned UI paths/MIT notices.
+Root independently reconstructed33files from both patches; [proof](docs/native/2026-10-20/root-desktop-owned-profile-source.json).
+Local build13001 keeps earlier32file source; no mutation under the live compiler. No new screenshot exists yet.
+Branch `codex/native-clients-ci-20261020`, draft
 [PR8](https://github.com/Seriy615/D-MASH/pull/8). Full fork applications not
 accepted; later source/docs/WIP are not implicitly published. See FORGE_SYNC.
 
