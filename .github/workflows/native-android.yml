@@ -20,6 +20,8 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - name: Prepare isolated paths and Linux tools
         shell: bash
         run: |
@@ -41,6 +43,18 @@ jobs:
           test -c /dev/kvm
           sudo chmod 666 /dev/kvm
           bash native/platforms/android/ci-run.sh
+      - name: Record pipeline outcome even if SDK setup failed
+        if: always()
+        shell: bash
+        env:
+          DMASH_JOB_STATUS: ${{ job.status }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/dmash-android-evidence"
+          python3 - <<'PY'
+          import json,os,pathlib
+          out=pathlib.Path(os.environ['RUNNER_TEMP'])/'dmash-android-evidence'
+          (out/'pipeline.json').write_text(json.dumps({'jobStatus':os.environ['DMASH_JOB_STATUS'],'runtimeReportExists':(out/'runtime.json').exists(),'note':'Only runtime.json PASS establishes the scoped Android runtime checks; setup/build alone does not.'},indent=2)+'\n')
+          PY
       - name: Preserve package and bounded public evidence
         if: always()
         uses: actions/upload-artifact@v4
