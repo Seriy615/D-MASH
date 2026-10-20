@@ -26,7 +26,7 @@ public final class MainActivity extends Activity {
   LinearLayout page=new LinearLayout(this);page.setOrientation(LinearLayout.VERTICAL);page.setPadding(24,24,24,24);
   TextView title=new TextView(this);title.setText("D-MASH");title.setTextSize(26);page.addView(title);
   status=new TextView(this);status.setText("Node is off");status.setContentDescription("Node status");page.addView(status);
-  stopNode=new Button(this);stopNode.setText("Stop Node");stopNode.setEnabled(false);stopNode.setOnClickListener(v->{stopService(new Intent(this,NodeService.class));stopNode.setEnabled(false);});page.addView(stopNode);
+  stopNode=new Button(this);stopNode.setText("Stop Node");stopNode.setEnabled(false);stopNode.setOnClickListener(v->{startService(new Intent(this,NodeService.class).setAction(NodeService.ACTION_STOP));status.setText("Stopping Node…");stopNode.setEnabled(false);});page.addView(stopNode);
   Button details=new Button(this);details.setText("Application details");details.setOnClickListener(v->new AlertDialog.Builder(this).setTitle("D-MASH").setMessage("Development version. Account integration is in progress. Your existing messages and identity will be preserved during import.").setNegativeButton("Close",null).show());page.addView(details);
   TextView chats=new TextView(this);chats.setText("Conversations");chats.setTextSize(20);page.addView(chats);
   TextView empty=new TextView(this);empty.setText("Connect your existing Account to see conversations. Account import is not available in this checkpoint.");page.addView(empty,new LinearLayout.LayoutParams(-1,0,1));

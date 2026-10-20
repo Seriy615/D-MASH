@@ -1,8 +1,10 @@
 #include "daemon_rpc.h"
 #include "legacy_kyber.h"
+#include <QDateTime>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QRegularExpression>
 #include <QtEndian>
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -136,6 +138,44 @@ void DaemonRpc::install(const QJsonObject& ready) {
     std::lock_guard<std::mutex> lock(mutex_);
     ready_ = ready;
 }
+QJsonArray DaemonRpc::refreshCapabilities(const std::function<QJsonArray()>& renew) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    // Rotation and installation serialize with new route authentication.
+    const auto renewed = renew();
+    auto caps = ready_.value("capabilities").toArray();
+    need(renewed.size() == caps.size(), "NODE_CAPABILITY_RENEWAL_FAILED");
+    for (auto value : renewed) {
+        const auto row = value.toObject();
+        bool found = false;
+        need(row.value("generation") == ready_.value("generation") &&
+                 QRegularExpression("^[0-9a-f]{64}$")
+                     .match(row.value("token").toString())
+                     .hasMatch() &&
+                 row.value("expiresAt").toInteger() > QDateTime::currentMSecsSinceEpoch(),
+             "NODE_CAPABILITY_RENEWAL_FAILED");
+        for (qsizetype i = 0; i < caps.size(); ++i) {
+            auto old = caps[i].toObject();
+            if (old.value("id") == row.value("id")) {
+                need(old.value("role") == row.value("role"), "NODE_CAPABILITY_RENEWAL_FAILED");
+                caps[i] = row;
+                found = true;
+                break;
+            }
+        }
+        need(found, "NODE_CAPABILITY_RENEWAL_FAILED");
+    }
+    // Retain authenticated route connections and their owner grants/history.
+    ready_["capabilities"] = caps;
+    return renewed;
+}
+void DaemonRpc::closeScope(const QString& scope) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    const auto found = sockets_.find("owner:" + scope);
+    if (found != sockets_.end()) {
+        closeSocket(found->second);
+        sockets_.erase(found);
+    }
+}
 QJsonObject DaemonRpc::call(const QString& scope, const QString& method, const QJsonObject& params,
                             bool broker) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -162,7 +202,12 @@ QJsonObject DaemonRpc::call(const QString& scope, const QString& method, const Q
         found = sockets_.emplace(key, fd).first;
     }
     try {
-        return request(found->second, method, params);
+        auto result = request(found->second, method, params);
+        if (method == "owner.release") {
+            closeSocket(found->second);
+            sockets_.erase(found);
+        }
+        return result;
     } catch (...) {
         closeSocket(found->second);
         sockets_.erase(found);

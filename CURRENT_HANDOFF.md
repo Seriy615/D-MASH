@@ -95,10 +95,27 @@ exact. [Proof](docs/native/2026-10-20/root-account-import-recovery.json).
 This is initial import recovery, not full N4.
 These do not establish remote messaging or resident daemon integration.
 
-Desktop переносит реальный Account UI/import/Root PIN/login/Saved/cancel/reopen;
-resident credential host/Node supervisor и настоящий Account→Node Transport
-callback пока не подключены. BrokerService как библиотека в UI не обеспечивает
-UI-process-death acceptance; отдельный тестовый broker lifetime не подменяет это.
+**Resident host e11611d/1139dd3 принят root в process/IPC scope:**177archived
+source/12artifact/7runtime library hashes exact, committed main dependencies match.
+Actual pinned Node child; private IPC import/login/Saved1→2, detach/reconnect,
+Account logout preserves Node, fullRoot lock stops child, clean restart Saved2,
+accepted missingDB/key refuse replay/reset PASS. Root found HOST-ACCOUNT-CANCEL-01;
+1139dd3 scopes Account cancel without erasing Root/stopping Node and fences stale
+signin replies. Independent process cancel/relogin and Rootcancel/stop PASS.
+[Proof](docs/native/2026-10-20/root-resident-credential-host.json).
+**Visible resident Desktop cab8fa6 accepted independently by root:** immutable
+stable103source/11artifact/8library hashes exact. Actual retained owning profile
+copy through real Widgets controls:6PASS/0FAIL/1liveServiceSKIP,4.757s; same original
+Saved and native write after clean host restart. Same pinned UI binary actual
+SIGKILL: host/Node remain; explicit Rootlock stops Node. Nodeenable/Rootlock in
+lifetime test use harnessIPC, not UI buttons. [Proof](docs/native/2026-10-20/root-desktop-resident-ui.json).
+Earlier desktop-resident-1139 pin invalidated because shared AccountJS WIP raced
+resource build; stablepin rebuilt after exact tracked restore. Remote Account work
+now isolated in `.cache/.../worktrees/native-remote-account`; first live test found
+missing structuredClone adapter in QuickJS, being fixed, not accepted remotechat.
+Renewal6a5b50a integrated bf77a5a after stable UI freeze release; author actual
+renewal PASS, independent root renewal check pending. Unclean host crash floors,
+fresh Root-only/optional Account setup and visible Node controls remain open.
 
 Android1cbc3f0: final ARM64 APK Gradle/package author PASS; root независимо
 APK SHA/signaturev2/ZIP16K/all17 AArch64 ELF16K/manifest SDK28–36/specialUse/
@@ -110,9 +127,23 @@ APK streamed install exited1 before app launch. Root intentionally stopped own
 QEMU620628 (74134 terminal143), preserved AVD/data; not an observation timeout
 or app failure. x86_64 APK b553586a independently inspected signature/ZIP16K/ELF/
 manifest PASS; [attempt](docs/native/2026-10-20/root-android-x86-runtime-attempt.json).
-Android runtime/UI acceptance remains NOT RUN; native_runtime_sol prepares
-KVM CI route. Root retained Chromium remains closed after owning backup,
-profile preserved. Windows actual runtime remains NOT RUN.
+Android runtime/UI acceptance remains NOT RUN. 0db48f3 adds real KVM CI route;
+first39434621456 fails obsolete setup-android default tools package before build.
+98dc563 explicit platform-tools fix uploaded remote ca5ec59. Actual run2
+39435151797 SDK/Qt/native28targets/GradleAPKbuild PASS; instrumentation failed
+missing default debug.keystore before runtime. d52567b owns disposableCI key,
+signs both APKs, verifies same cert and refreshes actual package hash; author
+actual private-copy fullscript PASS. Next CI publication/run pending.
+Root retained Chromium reopened only on synthetic profile. Operator accidentally
+entered emergency wipe combination; actual owning backup SHA verified and
+setStorageState restoration yielded exact same entire origin/11stores/6records/
+localStorage, followed by real unlock/login/original Saved visible. No user or
+production data touched. Scope/cause recorded explicitly, not reset-for-PASS.
+Then actual chat password set/cancel/wrong/correct/remove and mismatch/back/reopen
+checks PASS; final Root/secure registry unchanged, original row1,195responses exact,
+0errors, SW/external traffic blocked. [Proof](docs/native/2026-10-20/root-browser-history-controls.json).
+Fresh owning backup root-after-history-qa.json0600/private receipt retained.
+Windows actual runtime remains NOT RUN.
 
 Runtime foreign-transit fixture initially FAIL: second peer not admitted180s.
 aff6a0b/a0f54a9 native nonce batch preserves default22, author actual foreign
@@ -127,8 +158,12 @@ is exact localb553586a tree. Git push HTTPS/SSH unavailable; GitHub connector
 uploaded tracked tree without secrets/private cache or deployment. First Actions39432120160 rejected invalid runner.temp job.env before jobs.
 Platform fixed32e18be; remote210701cf exact local32e18be tree now includes
 9b5a4ba Windows bootstrap helper. Actions39432602934 was actually queued.
-Qt6.12 aqt3.3 metadata path incompatibility found; platform prepares exact official
-archive installer. No Windows compile/runtime PASS claim.
+Qt6.12 aqt3.3 metadata incompatibility fixed fdac612; run3 then failed archive
+layout before compiler. Actual6archive layout verified/fixed9ba9bd9. Remote
+d75ad01 exact local1139dd3 tree includes host and Android CI. Windowsrun4
+39434621318 actually installed Qt successfully and proceeds through owned OpenSSL
+build; no Windows compiler/runtime PASS yet. Remote ca5ec59 additionally98dc563
+changes Android workflow only; prior Windowsrun remains live, not restarted.
 
 ## Текущая командная работа и основной остаток
 

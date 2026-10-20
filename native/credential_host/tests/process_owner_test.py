@@ -53,6 +53,9 @@ with tempfile.TemporaryDirectory(prefix='dmh-',dir=pathlib.Path.home()/'.cache')
   node_survived=False
   if node:
    enabled=good('node.enable',dict(endpoints=[],directEnabled=False));assert enabled['value']['nodeRunning']
+   assert good('host.status')['value']['nodeRunning']
+   assert good('node.renew')['value']['capabilitiesRenewed']==2
+   assert good('host.status')['value']['nodeRunning'],'broker context survives capability renewal'
    cancel_pending('account.login',dict(identity=fixture['identity'],password=fixture['password']))
    state=good('host.status')['value'];assert state['nodeRunning'] and not state['rootLocked'] and not state['accountSessionActive'],'Account cancel preserves prepared Root and approved Node'
    good('account.login',dict(identity=fixture['identity'],password=fixture['password']))
@@ -74,7 +77,7 @@ with tempfile.TemporaryDirectory(prefix='dmh-',dir=pathlib.Path.home()/'.cache')
   assert not key.exists() and hashlib.sha256((profile/'credentials.sqlite').read_bytes()).hexdigest()==db_hash,'missing key must not create new installation'
   saved_key.rename(key)
   assert hashlib.sha256(json.dumps(package,sort_keys=True).encode()).hexdigest()==digest
-  print(json.dumps(dict(ok=True,scope='native process IPC; no remote/UI acceptance',sameAccount=True,retainedSavedBefore=1,savedAfterReopen=2,uiDetachPreservesOwner=True,logoutAndDetachPreservesNode=node_survived,rootLockStopsOwnedNode=True,cleanRestartPreservesHistory=True,acceptedMissingDatabaseRefusesReplay=True,missingKeyRefusesNewInstallation=True,accountCancelPreservesRootAndNode=True,rootUnlockCancelActuallyLocksAndStops=True)))
+  print(json.dumps(dict(ok=True,scope='native process IPC; no remote/UI acceptance',sameAccount=True,retainedSavedBefore=1,savedAfterReopen=2,uiDetachPreservesOwner=True,logoutAndDetachPreservesNode=node_survived,rootLockStopsOwnedNode=True,cleanRestartPreservesHistory=True,acceptedMissingDatabaseRefusesReplay=True,missingKeyRefusesNewInstallation=True,accountCancelPreservesRootAndNode=node_survived,rootUnlockCancelActuallyLocksAndStops=True,capabilityRenewalRetainsNodeAndContexts=node_survived)))
  finally:
   if s:s.close()
   if process and process.poll() is None:process.terminate();process.wait(15)

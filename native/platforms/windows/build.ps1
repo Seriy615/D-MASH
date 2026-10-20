@@ -29,10 +29,14 @@ if ($LASTEXITCODE) { throw 'Node build failed' }
 ctest --test-dir "$BuildRoot/node" --output-on-failure
 if ($LASTEXITCODE) { throw 'Windows native tests failed' }
 cmake --install "$BuildRoot/desktop" --prefix "$BuildRoot/package"
+$credentialHost="$BuildRoot/desktop/dmash-credential-host.exe"
+Copy-Item $credentialHost "$BuildRoot/package/bin/"
 Copy-Item "$BuildRoot/node/dmash-node-host.exe" "$BuildRoot/package/bin/"
 Copy-Item "$OpenSSLRoot/bin/libcrypto-3-x64.dll","$OpenSSLRoot/bin/libssl-3-x64.dll" "$BuildRoot/package/bin/"
 & "$QtRoot/bin/windeployqt.exe" --no-translations --compiler-runtime "$BuildRoot/package/bin/dmash-desktop.exe"
 if ($LASTEXITCODE) { throw 'Desktop deploy failed' }
+& "$QtRoot/bin/windeployqt.exe" --no-translations --compiler-runtime "$BuildRoot/package/bin/dmash-credential-host.exe"
+if ($LASTEXITCODE) { throw 'Credential host deploy failed' }
 & "$QtRoot/bin/windeployqt.exe" --no-translations --compiler-runtime "$BuildRoot/package/bin/dmash-node-host.exe"
 if ($LASTEXITCODE) { throw 'Node deploy failed' }
 Write-Output 'Development package built/tested. Real Account/Node integration and Windows lifecycle acceptance are separate gates.'

@@ -9,7 +9,7 @@ import org.qtproject.qt.android.bindings.QtService;
 /** Separate :node process. The broker owns the duplex lease, never this Activity. */
 public final class NodeService extends QtService {
  private final Handler handler=new Handler(Looper.getMainLooper());
- private static final String ACTION_STOP="org.dmash.client.STOP_NODE";
+ static final String ACTION_STOP="org.dmash.client.STOP_NODE";
  private static volatile NodeService active;
  private volatile String state="Starting Node…";
  private static volatile boolean processNativeExited=false;
@@ -45,9 +45,12 @@ public final class NodeService extends QtService {
   catch(UnsatisfiedLinkError ignored){}catch(java.io.IOException e){stopSelf();return;}
   if(++tries<100)handler.postDelayed(this,100);else stopSelf();
  }};
+ private static native void nativeRequestStop();
+ private final Runnable stopWhenLoaded=new Runnable(){int tries=0;public void run(){try{nativeRequestStop();}catch(UnsatisfiedLinkError ignored){if(++tries<100)handler.postDelayed(this,100);else updateState("Node stop could not be confirmed");}}};
+ private void requestStop(){handler.removeCallbacks(installWhenLoaded);if(pending!=null)try{pending.close();}catch(java.io.IOException ignored){}pending=null;updateState("Stopping Node…");handler.post(stopWhenLoaded);}
  private static native boolean nativeInstall(int fd,String privateProfile);
  private void updateState(String value){state=value;ServiceStatus.write(this,value);}
- private static void nativeStopped(int code){processNativeExited=true;NodeService service=active;if(service!=null)service.handler.post(()->{service.updateState(code==0?"Node stopped":"Node could not start");service.stopSelf();});}
+ private static void nativeStopped(int code){processNativeExited=true;NodeService service=active;if(service!=null)service.handler.post(()->{service.updateState(code==0?"Node stopped":"Node could not start");service.stopForeground(STOP_FOREGROUND_REMOVE);service.stopSelf();});}
  @Override public void onCreate(){
   processNativeExited=false;active=this;updateState("Starting Node…");
   NotificationManager manager=getSystemService(NotificationManager.class);
@@ -58,7 +61,7 @@ public final class NodeService extends QtService {
   super.onCreate();
  }
  @Override public IBinder onBind(Intent intent){return localBinder;}
- @Override public int onStartCommand(Intent intent,int flags,int startId){if(intent!=null&&ACTION_STOP.equals(intent.getAction())){updateState("Node stopped");stopSelf();return START_NOT_STICKY;}super.onStartCommand(intent,flags,startId);return START_NOT_STICKY;}
+ @Override public int onStartCommand(Intent intent,int flags,int startId){if(intent!=null&&ACTION_STOP.equals(intent.getAction())){requestStop();return START_NOT_STICKY;}super.onStartCommand(intent,flags,startId);return START_NOT_STICKY;}
  @Override public void onTimeout(int startId,int foregroundServiceType){updateState("Android stopped the Node service");stopSelf();}
  @Override public void onDestroy(){if(state.equals("Starting Node…"))updateState("Node could not start");else if(state.equals("Node service is running"))updateState("Node stopped");active=null;handler.removeCallbacksAndMessages(null);if(pending!=null)try{pending.close();}catch(java.io.IOException ignored){}super.onDestroy();}
 }

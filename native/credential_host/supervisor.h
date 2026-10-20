@@ -12,6 +12,7 @@ class Supervisor final : public NodeSupervisor {
     Supervisor(QString binary, QString profile);
     ~Supervisor();
     QJsonObject start(const broker::BrokerResult& session) override;
+    QJsonArray renewCapabilities() override;
     bool running() const override;
     void stop() override;
 

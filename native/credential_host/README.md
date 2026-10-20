@@ -48,9 +48,14 @@ UI detach/reconnect, Account logout, Root lock, clean restart, accepted missing
 Account database and missing development-key refusal. This is not remote-chat
 or visible UI acceptance. Windows bootstrap helper has crosscompile evidence;
 actual Windows host execution and Android service integration are separate.
-Current owner capabilities use their existing bounded lifetime (one hour for
-Account owner, one day for broker); renewal is a remaining resident-service
-step. Crash recovery after an unclean host/daemon exit must reconcile existing
+Owner capabilities retain their bounded lifetime (one hour for Account owner,
+one day for broker). The resident owner renews both over its private bootstrap
+lease every thirty minutes, with bounded five-second retries after failure.
+Rotation serializes with new route authentication and retains existing owner
+connections/grants. `node.renew` exercises the same renewal immediately; the
+process gate checks actual capability rotation, a new owner connection and the
+existing broker connection. Android supervisor adapters implement the additive
+`renewCapabilities()` hook on their retained bootstrap FD. Crash recovery after an unclean host/daemon exit must reconcile existing
 durable floors before another session; it must not reset the Node profile.
 
 Account cancellation fences/logs out only Account work and preserves the unlocked

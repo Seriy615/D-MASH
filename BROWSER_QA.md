@@ -1,3 +1,29 @@
+**2026-10-20 native resident Desktop ROOT PASS (cab8fa6 stablepin):**
+Actual retained owning package/import/RootPIN/Account/login error/cancel/Saved/send/
+signout/hostrestart/relogin:6PASS/0FAIL/1liveServiceSKIP,4.757s,103sources/11artifacts/
+8runtime hashes exact. Same UI binary SIGKILL leaves actual host/Node alive;
+Rootlock stops Node. Nodeenable/Rootlock here are harnessIPC, not UIbuttonflow.
+[Evidence](docs/native/2026-10-20/root-desktop-resident-ui.json).
+Remotechat/freshsetup/visibleNodecontrols/Android/Windows NOT RUN. Earlier
+resident candidate invalidated for shared dependency WIP; stablepin rebuilt.
+
+**2026-10-20 MEDIA-07/08 negative branches scoped PASS (.43):** actual
+microphone/camera permission denial configured in Chromium, actual buttons/visible
+alerts/OK, controls restored, original history retained,0pageerrors/195source
+responses exact. Positive capture/send/playback and remote media NOT RUN.
+[Evidence](docs/native/2026-10-20/root-browser-media-denied.json).
+
+**2026-10-20 root local history .43 / HOST cancellation checkpoint:**
+Actual browser rename cancel/empty-name, chat-password cancel/set/confirmation
+mismatch/wrong-password/correct-password/remove, Back/reopen with original Saved1.
+195source responses exact,0errors; blocked SW/externalnetwork. CHAT-03/05/01
+remain PARTIAL, CHAT-04 scoped PASS only. Operator emergency-wipe mistake on
+synthetic profile was recovered from verified owning export: entire origin exact,
+then UI unlock/login/history; no user/production data. Final Root/registry same.
+[Evidence and exact cases](docs/native/2026-10-20/root-browser-history-controls.json).
+Native host cancellation bug assigned broker, fixed1139dd3, independent process
+retest PASS; visible resident UI retest remains pending.
+
 <!-- Native UI checkpoint; historical browser matrix below remains scoped. -->
 **2026-10-20 native Desktop27a28e7 ROOT PASS (Linux offscreen Qt clicks):**
 actual retained owning-profile copy, import/RootPIN/login choice/cancel/wrong/

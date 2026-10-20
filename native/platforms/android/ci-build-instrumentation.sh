@@ -3,6 +3,8 @@
 set -euo pipefail
 : "${DMASH_ANDROID_BUILD:?}"
 : "${ANDROID_SDK_ROOT:?}"
+: "${DMASH_TOOLCHAIN_CACHE:?}"
+: "${DMASH_ANDROID_EVIDENCE:?}"
 testdir="$DMASH_ANDROID_BUILD/ci-instrumentation"
 mkdir -p "$testdir/src/org/dmash/ci" "$testdir/classes" "$testdir/dex"
 cat > "$testdir/src/org/dmash/ci/SmokeInstrumentation.java" <<'JAVA'
@@ -150,5 +152,25 @@ with zipfile.ZipFile(base/'unsigned.apk','a') as apk:
     apk.write(base/'dex/classes.dex','classes.dex')
 PY
 "$tools/zipalign" -f 4 "$testdir/unsigned.apk" "$testdir/aligned.apk"
-"$tools/apksigner" sign --ks "$HOME/.android/debug.keystore" --ks-pass pass:android --key-pass pass:android --out "$testdir/instrumentation.apk" "$testdir/aligned.apk"
+# Use one explicit disposable CI key for both packages. AGP's generated debug
+# keystore location varies with Android user-home settings on hosted runners.
+keystore="$DMASH_TOOLCHAIN_CACHE/private/ci-debug.keystore"
+if [ ! -f "$keystore" ]; then
+  keytool -genkeypair -noprompt -keystore "$keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 30 -dname 'CN=D-MASH CI synthetic debug'
+  chmod 600 "$keystore"
+fi
+"$tools/apksigner" sign --ks "$keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out "$DMASH_ANDROID_BUILD/ci-signed-main.apk" "$DMASH_ANDROID_BUILD/dmash-x86_64-debug.apk"
+mv "$DMASH_ANDROID_BUILD/ci-signed-main.apk" "$DMASH_ANDROID_BUILD/dmash-x86_64-debug.apk"
+"$tools/apksigner" sign --ks "$keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out "$testdir/instrumentation.apk" "$testdir/aligned.apk"
 "$tools/apksigner" verify "$testdir/instrumentation.apk"
+"$DMASH_TOOLCHAIN_CACHE/venv/bin/python" "$(dirname "$0")/verify_apk.py" "$DMASH_ANDROID_BUILD/dmash-x86_64-debug.apk" "$DMASH_TOOLCHAIN_CACHE" > "$DMASH_ANDROID_EVIDENCE/package.json"
+python3 - "$tools/apksigner" "$DMASH_ANDROID_BUILD" "$DMASH_ANDROID_EVIDENCE" <<'PY'
+import hashlib,json,pathlib,subprocess,sys
+signer,build,out=sys.argv[1],pathlib.Path(sys.argv[2]),pathlib.Path(sys.argv[3])
+main=build/'dmash-x86_64-debug.apk';test=build/'ci-instrumentation/instrumentation.apk'
+def certificate(apk):
+    lines=subprocess.check_output([signer,'verify','--print-certs',str(apk)],text=True).splitlines()
+    return next(line.split(': ',1)[1] for line in lines if 'certificate SHA-256 digest:' in line)
+assert certificate(main)==certificate(test),'Instrumentation signer differs from target app'
+(out/'instrumentation-package.json').write_text(json.dumps({'status':'PASS compile/dex/link/sign only','mainApkSha256':hashlib.sha256(main.read_bytes()).hexdigest(),'instrumentationApkSha256':hashlib.sha256(test.read_bytes()).hexdigest(),'sameDisposableDebugSigner':True,'runtime':'NOT_RUN until runtime.json'},indent=2)+'\n')
+PY
