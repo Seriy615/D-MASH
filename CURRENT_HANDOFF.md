@@ -5,9 +5,29 @@
 `gpt-6.1-sol` и `gpt-6-luna`. Прежние агенты не возобновляются; новые
 `node_sol` и `public_sol` созданы с явным `gpt-6.1-sol`.
 Предыдущие full UNIT были намеренно прерваны по СТОП: итоговый PASS отсутствует.
-ProductionPWA37 exact3a784 deployed и scoped browserPASS; fullgoal НЕ DONE, детали ниже.
+Production PWA `.38` exact `51b35ff2de810af5ccdf9ebac0839b812f1de38c` deployed with scoped private UI browser PASS; fullgoal НЕ DONE.
 
-Дата среза: **16 октября 2026 года, UTC**. Этот файл — единственная
+**Deployment checkpoint — 20 October 2026 UTC:** exact candidate
+`51b35ff2de810af5ccdf9ebac0839b812f1de38c` pushed fast-forward to
+`transport-v3` and deployed on the agreed EMS. `/tools/verify_ems_revision.py`
+verified **331/331 PWA+backend files** with zero missing/changed files. HTTPS
+page and active SW/cache report release `.38`; `dmash-node` is active. The
+production browser gate used the ordinary HTTPS page and actual controlling SW,
+without source overlay: **14/14 UI steps PASS** on two new synthetic Accounts,
+including PRIVATE QR/copy/inspect/request, bilateral confirmation, text both
+ways, logout preserving Node, and reload preserving identity/history. All
+1,447 captured source responses matched; 216 SW-served response bodies were
+verified through the active Cache API. Separate read-only cache check: 182/182
+cached PWA files match source, only `.38` cache present; page errors 0.
+This is scoped private UI acceptance, not media/public-route/full-plan DONE.
+Deployment backups are recorded in the evidence note. Raw reports and protected
+synthetic profile snapshots remain outside Git under `/tmp/dmash-deploy-qa/`.
+The full unit rerun in this transient checkout was blocked by missing local test
+packages; the same product candidate had previously passed 293 Python, 11 Origin,
+and all JavaScript suites individually on Node 24.19.0. See the evidence note
+for exact limits and the preserved initial instrumentation-only FAIL.
+
+Дата среза: **20 октября 2026 года, UTC**. Этот файл — единственная
 текущая сводка состояния. Старые checkpoints сохранены в
 [docs/archive/2026-10-08](docs/archive/2026-10-08/). Они не задают текущий план.
 

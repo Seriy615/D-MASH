@@ -6,6 +6,18 @@
 интегрированный результат. Этот файл — журнал и начальная матрица, не утверждение,
 что полный обход UI уже выполнен.
 
+**Fresh deployed `.38` ordinary PRIVATE UI — scoped PASS, 20 October 2026:** exact
+`51b35ff2de810af5ccdf9ebac0839b812f1de38c`; normal production HTTPS and
+controlling SW, no source overlay. 14/14 visible browser steps passed on two
+synthetic Accounts: setup, Node connect, signed PRIVATE QR/copy/inspect/request,
+bilateral completion, text both directions, logout preserves Node, reload
+preserves identity/history. Source verifier: 331/331 PWA+backend exact. Browser
+captured 1,447 source responses exact (216 SW responses checked against Cache
+API); active cache `dmash-static-transport-v3-node-preparation-20261020.38`,
+182/182 cache entries exact, page errors 0. Deployed report and limits:
+[`.38 deployed gate`](docs/evidence/2026-10-20/qa-private-ui38-deployed-summary.md).
+Media, public-route, physical Android, full N0–N8/A–M/E6 remain open.
+
 **Возобновление: 15 октября 2026, UTC. Цель ACTIVE, НЕ DONE.**
 Проверены Forge hostname/path, сохранённые isolated candidates и remote
 `transport-v3=38a67a56b7db3878197e4aafaf1b878e2a1f8765`; source refs fetched.
