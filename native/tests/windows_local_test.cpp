@@ -10,7 +10,26 @@
 #include <stdexcept>
 #include <vector>
 void check(bool ok) { if (!ok) throw std::runtime_error("Windows local test failed"); }
-int main() {
+void transfer(HANDLE pipe, bool write, char& byte) {
+    OVERLAPPED operation{}; operation.hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr); check(operation.hEvent);
+    DWORD count = 0;
+    const bool immediate = write ? WriteFile(pipe, &byte, 1, &count, &operation) : ReadFile(pipe, &byte, 1, &count, &operation);
+    if (!immediate) { check(GetLastError() == ERROR_IO_PENDING); check(WaitForSingleObject(operation.hEvent, 5000) == WAIT_OBJECT_0); check(GetOverlappedResult(pipe, &operation, &count, FALSE)); }
+    CloseHandle(operation.hEvent); check(count == 1);
+}
+int main(int argc, char** argv) {
+    if (argc > 1 && std::string(argv[1]) == "--spawn-test") {
+        check(argc == 6 && std::string(argv[4]) == "--bootstrap-handle");
+        check(std::string(argv[3]) == "spaces and \"quotes\" ending\\");
+        const auto inherited = reinterpret_cast<HANDLE>(std::stoull(argv[5]));
+        DWORD flags = 0;
+        check(GetHandleInformation(inherited, &flags));
+        check(!GetHandleInformation(reinterpret_cast<HANDLE>(std::stoull(argv[2])), &flags));
+        dmash::windowsLocal::requireSameUserPipe(reinterpret_cast<std::uintptr_t>(inherited));
+        dmash::windowsLocal::requirePrivatePipe(reinterpret_cast<std::uintptr_t>(inherited));
+        char byte = 0; transfer(inherited, false, byte); check(byte == 'Q'); byte = 'A'; transfer(inherited, true, byte);
+        CloseHandle(inherited); return 42;
+    }
     using namespace dmash::windowsLocal;
     HANDLE token = nullptr; check(OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token));
     DWORD size = 0; GetTokenInformation(token, TokenUser, nullptr, 0, &size);
@@ -46,6 +65,23 @@ int main() {
     LocalFree(descriptor);
     bool rejected = false; try { requirePrivateFile(file); } catch (const std::exception&) { rejected = true; } check(rejected);
     check(DeleteFileW(file.c_str())); check(RemoveDirectoryW(profile.c_str()));
-    std::cout << "Windows same-user private namedpipe and retained-profile ACL checks PASS\n";
+    wchar_t executable[32768]; check(GetModuleFileNameW(nullptr, executable, 32768));
+    SECURITY_ATTRIBUTES inherit{sizeof(inherit), nullptr, TRUE};
+    HANDLE excluded = CreateEventW(&inherit, TRUE, FALSE, nullptr); check(excluded);
+    auto spawned = spawnDaemon(executable, {L"--spawn-test", std::to_wstring(reinterpret_cast<std::uintptr_t>(excluded)), L"spaces and \"quotes\" ending\\"});
+    check(spawned.process && spawned.parentPipe && spawned.pid);
+    auto moved = std::move(spawned); check(!spawned.process && !spawned.parentPipe);
+    HANDLE lease = reinterpret_cast<HANDLE>(moved.releaseParentPipe()); check(!moved.parentPipe);
+    char byte = 'Q'; transfer(lease, true, byte); transfer(lease, false, byte); check(byte == 'A');
+    check(WaitForSingleObject(reinterpret_cast<HANDLE>(moved.process), 5000) == WAIT_OBJECT_0);
+    DWORD exitCode = 0; check(GetExitCodeProcess(reinterpret_cast<HANDLE>(moved.process), &exitCode)); check(exitCode == 42);
+    // Parent retained no child endpoint: after draining, child exit breaks lease.
+    DWORD available = 0; check(!PeekNamedPipe(lease, nullptr, 0, nullptr, &available, nullptr)); check(GetLastError() == ERROR_BROKEN_PIPE);
+    CloseHandle(lease); CloseHandle(excluded);
+    bool duplicateRejected = false;
+    try { auto invalid = spawnDaemon(executable, {L"--bootstrap-handle=123"}); }
+    catch (const std::exception&) { duplicateRejected = true; }
+    check(duplicateRejected);
+    std::cout << "Windows same-user private namedpipe, child-only inheritance, duplex lease, argument quoting and retained-profile ACL checks PASS\n";
 }
 #endif

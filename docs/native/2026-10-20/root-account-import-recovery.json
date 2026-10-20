@@ -1,0 +1,31 @@
+{
+  "kind": "ROOT_INDEPENDENT_INITIAL_ACCOUNT_IMPORT_RECOVERY",
+  "source": "510d8726bbd5e6766a682097d617c7ab881383fd",
+  "integratedAs": "a8f8dbf",
+  "verification": {
+    "sources": 161,
+    "artifacts": 11,
+    "runtimeLibraries": 3,
+    "mismatches": []
+  },
+  "testSha256": "5994697a0db417413ff948ddc55779995830a6944c0e5aae035255b20141fdff",
+  "processExit": 0,
+  "result": "PASS",
+  "checks": [
+    "real child exits before stage commit/after stage commit/after final publication",
+    "broker durable PENDING resumes authenticated inventory after restart",
+    "atomic no-overwrite publication",
+    "COMMITTED refuses silent snapshot replay",
+    "native writes retained after retry",
+    "old schema UNVERIFIED requires receipt",
+    "changed inventory digest refused",
+    "validation failure leaves no partial final DB",
+    "concurrent publishers converge"
+  ],
+  "limits": [
+    "Initial import component recovery only; not full N4 credential/lifecycle recovery",
+    "Synthetic test profiles only; original retained source never reset",
+    "No Android/Windows recovery runtime acceptance",
+    "Desktop UI checkpoint predates this recovery source; integrated host/UI retest remains required"
+  ]
+}

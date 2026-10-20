@@ -10,11 +10,13 @@ on:
 jobs:
   windows-apps:
     runs-on: windows-2025
-    env:
-      DMASH_WINDOWS_BUILD: ${{ runner.temp }}/dmash-windows
-      DMASH_MINGW: ${{ runner.temp }}/dmash-qt/Tools/mingw1310_64
     steps:
       - uses: actions/checkout@v4
+      - name: Initialize owned build paths
+        shell: pwsh
+        run: |
+          "DMASH_WINDOWS_BUILD=$env:RUNNER_TEMP/dmash-windows" >> $env:GITHUB_ENV
+          "DMASH_MINGW=$env:RUNNER_TEMP/dmash-qt/Tools/mingw1310_64" >> $env:GITHUB_ENV
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

@@ -1,0 +1,94 @@
+{
+  "kind": "ROOT_INDEPENDENT_NATIVE_FOREIGN_TRANSIT_AND_DURABILITY",
+  "source": "a0f54a9",
+  "binarySha256": "5a198531198010d5d90d6258d1f7c55d650b40d3f09ad00ec01b129533d9983a",
+  "sourceFilesVerified": 262,
+  "processExit": {
+    "foreignTransit": 0,
+    "deliveryConsumption": 0
+  },
+  "foreignTransit": {
+    "suite": "native-foreign-transit",
+    "status": "PASS",
+    "admissionDifficulty": 22,
+    "wireRole": "NODE",
+    "middleOwnerCapabilities": 0,
+    "middleAccountRegistrations": 0,
+    "middleRestoredBindings": 0,
+    "pythonPeersConnectedOnlyToMiddle": true,
+    "sourcePackets": 2,
+    "recipientWirePackets": 1,
+    "recipientHandlerCalls": 1,
+    "hopLabelChanged": true,
+    "replyOfferChanged": true,
+    "probeTtlBefore": 8,
+    "probeTtlAfter": 7,
+    "probeNcrhChanged": true,
+    "expiredPacketForwarded": false,
+    "nonceSearchBenchmarks": [
+      {
+        "attempts": 4096,
+        "crossingMs": 54.517891999999996,
+        "batchMs": 6.815508999999992
+      },
+      {
+        "attempts": 4096,
+        "crossingMs": 65.2267,
+        "batchMs": 8.780933000000005
+      }
+    ],
+    "mappedBinarySha256": "5a198531198010d5d90d6258d1f7c55d650b40d3f09ad00ec01b129533d9983a",
+    "payloadDigest": "568b390a889794f5cbb9181b71b51f5a2a4f6c50ef85c9ce044c7b3af4e91987",
+    "checks": [
+      "two-real-authorized-pinned-channels",
+      "ordinary-discovery-cross-native-middle",
+      "unchanged500ms-aggregation",
+      "opaque-foreign-Account-box-forward",
+      "per-hop-label-offer-rewrite",
+      "probe-hop-budget-and-NCRH",
+      "duplicate-suppressed-before-recipient-wire",
+      "expired-wire-packet-dropped",
+      "no-Account-callback-or-owner-capability"
+    ],
+    "limits": [
+      "configured real WS loopback peers; self-organizing discovery/NAT NOT_RUN",
+      "ACK-free loss window unchanged",
+      "Linux executable only; Windows/Android runtime NOT_RUN"
+    ]
+  },
+  "deliveryConsumption": {
+    "suite": "native-real-job-delivery",
+    "status": "PASS",
+    "admissionDifficulty": 22,
+    "wireRole": "NODE",
+    "checks": [
+      "Account-proof-managed-bindings",
+      "durable-ACCEPTED",
+      "policy-blocked-accept-UI-SIGKILL-then-resume",
+      "unchanged-discovery-transit-batching",
+      "recipient-durable-Inbox",
+      "transport-sent-only",
+      "identical-submit-dedupe",
+      "changed-bytes-conflict",
+      "sender-SIGKILL-before-send-retained-accepted-job",
+      "sender-restart-retained-job",
+      "recipient-packet-id-dedupe",
+      "recipient-SIGKILL-reopen-same-Inbox-record",
+      "atomic-app-commit-token-consumption",
+      "consumption-idempotent-conflict-reopen"
+    ],
+    "peerStartupDelaySeconds": 0,
+    "backendForwarded": 4,
+    "payloadDigest": "64575f5f279384f2ccd722099786e3e8d3f9b0eb0ef07929b69903fcf4263ab7",
+    "limitations": [
+      "ACK-free recipient crash window unchanged",
+      "Windows/Android runtime NOT_RUN"
+    ]
+  },
+  "limits": [
+    "Real loopback WS peers with actual default22 NODE auth; self-organization/NAT remain NOT RUN",
+    "Synthetic opaque payloads; no remote Account UI messaging or E2EE acceptance",
+    "Linux runtime only; Android/Windows separate acceptance",
+    "Benchmark timings are individual observations on shared host, not a throughput guarantee"
+  ]
+}

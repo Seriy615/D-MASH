@@ -89,8 +89,10 @@ profile copy:82source/7artifact hashes exact, actual file chooser/import, RootPI
 Account selection/cancel/wrong password/busy cancel/correct login, Saved send,
 signout/window reopen retained history;6PASS/0FAIL/1liveServiceSKIP,14.8s.
 [Proof](docs/native/2026-10-20/root-desktop-account-ui.json).
-N4 atomic initial import/recovery510d872 integrated as a8f8dbf; author focused
-crash/concurrent-publisher tests PASS, root independent recovery verification pending.
+N4 atomic initial import/recovery510d872 integrated as a8f8dbf; author and root independent
+crash/concurrent-publisher tests PASS;161source/11artifact/3runtime library hashes
+exact. [Proof](docs/native/2026-10-20/root-account-import-recovery.json).
+This is initial import recovery, not full N4.
 These do not establish remote messaging or resident daemon integration.
 
 Desktop переносит реальный Account UI/import/Root PIN/login/Saved/cancel/reopen;
@@ -113,8 +115,15 @@ Runtime foreign-transit fixture initially FAIL: second peer not admitted180s.
 aff6a0b/a0f54a9 native nonce batch preserves default22, author actual foreign
 transit PASS: two Python NODE peers through native middle, no Account/owner
 registration, hop rewrite, duplicate/expiry checks. Author8CTest PASS. Root
-independent pinned runtime fixture now running; no root PASS claim yet.
-Windows8ca1b79 adds actual fullbuild/UI/Account/Node CI workflow; not yet run.
+independent pinned runtime fixture PASS plus real durable delivery/consumption
+regression PASS:262source hashes exact, same pinned binary hash.
+[Proof](docs/native/2026-10-20/root-native-foreign-transit.json).
+Windows8ca1b79 fullbuild/UI/Account/Node workflow submitted through draft
+[PR8](https://github.com/Seriy615/D-MASH/pull/8); remote921e5fb tree3a3ff830
+is exact localb553586a tree. Git push HTTPS/SSH unavailable; GitHub connector
+uploaded tracked tree without secrets/private cache or deployment. Root monitors
+CI; real Windows PASS not yet established. Later9b5a4ba Windows bootstrap helper
+is not in this first remote snapshot.
 
 ## Текущая командная работа и основной остаток
 
