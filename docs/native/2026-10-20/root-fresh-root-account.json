@@ -1,0 +1,39 @@
+{
+  "kind": "ROOT independent explicit fresh Root and optional compatible Account",
+  "status": "PASS_PROCESS_AND_ORIGINAL_JS_INTEROP",
+  "sourceCommit": "ca849fd",
+  "integratedCommit": "1930b80",
+  "manifestSha256": "3017f2663056af70a541110d9ac5e1d53d65e6191e0e114ef2b88978fa930485",
+  "verifiedSources": 187,
+  "verifiedArtifacts": 27,
+  "verifiedRuntimeLibraries": 7,
+  "hostSha256": "d9add01b5219827b022fe6f4e734ebecfcbd3f3282a246cebd152c5a52796e3b",
+  "actualFreshProcess": {
+    "ok": true,
+    "scope": "explicit native fresh Root and optional Account; UI/foreign transit separate",
+    "freshRootWithoutAccount": true,
+    "nodeBeforeAccount": false,
+    "sameAccountAsExistingJsFixture": true,
+    "duplicateRefusesOverwrite": true,
+    "savedRetainedAfterReopen": true,
+    "missingKeyRefusesReset": true
+  },
+  "processObservationHandle": 65965,
+  "interopObservationHandle": 54456,
+  "terminalExit": 0,
+  "interop": [
+    "Actual pinned native RootCodec legacy/v2/fresh checks",
+    "Actual shipped Argon2 WASM and JS DeviceRoot decrypt native fresh Root with same DeviceID",
+    "Actual native registry HKDF/HMAC alias and AES-GCM blob accepted by original JS WebCrypto"
+  ],
+  "integrationChecks": [
+    "Five modified broker/Account/host C++ files match accepted manifest",
+    "Latest f187 stable transport expiry line preserved after cherry-pick"
+  ],
+  "limits": [
+    "No Node in this root fresh process test; foreign transit before any Account is separate pending runtime fixture",
+    "No fresh UI, Android or Windows runtime acceptance",
+    "Pin uses older283 Account remote resources; current source merges stable expiry separately",
+    "Only synthetic fresh profiles; missing-key accepted profile refused rather than reset"
+  ]
+}

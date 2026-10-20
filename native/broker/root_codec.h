@@ -38,6 +38,9 @@ class PreparedRoot final {
 class RootCodec final {
   public:
     using Current = std::function<bool()>;
+    // Explicit fresh installation only; coordinator must refuse existing stores.
+    static QJsonObject createFreshRecord(const QByteArray& pinUtf8, Current current);
+    static QJsonObject sealAccountRegistry(PreparedRoot&, const QJsonObject& publicRecord);
     static PreparedRoot openExisting(const QJsonObject& encryptedRecord, const QByteArray& pinUtf8,
                                      Current current);
     // Produces verified wrap fields merged into an unchanged encrypted record;

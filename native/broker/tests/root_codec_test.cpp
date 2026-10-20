@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
             auto reopened =
                 RootCodec::openExisting(rewritten, "synthetic-only-next-master", current);
             check(reopened.deviceId() == prepared.deviceId());
-            if (argc == 2 && QString(name) == "modern_id") {
+            if (argc >= 2 && QString(name) == "modern_id") {
                 QSaveFile exported(QString::fromLocal8Bit(argv[1]));
                 check(exported.open(QIODevice::WriteOnly));
                 const auto data = QJsonDocument(rewritten).toJson();
@@ -126,6 +126,20 @@ int main(int argc, char** argv) {
         auto disposed = RootCodec::openExisting(modern, pin, current);
         disposed.dispose();
         rejects([&] { disposed.deviceId(); }, "CREDENTIAL_CANCELLED");
+        const auto fresh = RootCodec::createFreshRecord("synthetic-fresh-master", current);
+        auto freshRoot = RootCodec::openExisting(fresh, "synthetic-fresh-master", current);
+        check(fresh.value("materials").toObject().size() == 1);
+        rejects([&] { RootCodec::existingTransportBundle(freshRoot, {}, 1, false); }, "NODE_MATERIAL_MISSING");
+        const QJsonObject publicAccount{{"id", "synthetic-fresh-account"}, {"pk", QString(128, 'a')}, {"displayName", "Fresh test"}};
+        const auto registryRow = RootCodec::sealAccountRegistry(freshRoot, publicAccount);
+        check(RootCodec::readAccountRegistry(freshRoot, {registryRow}) == QJsonArray{publicAccount});
+        if (argc >= 3) {
+            QSaveFile exported(QString::fromLocal8Bit(argv[2]));
+            check(exported.open(QIODevice::WriteOnly));
+            check(exported.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+            const auto data = QJsonDocument(QJsonObject{{"record", fresh}, {"deviceId", freshRoot.deviceId()}, {"account", publicAccount}, {"registryRow", registryRow}}).toJson();
+            check(exported.write(data) == data.size() && exported.commit());
+        }
         std::cout << "PASS native broker legacyD/legacyID/v2 exact JS compatibility; same "
                      "DeviceID/materials; verified rewrap; missingRoot/schema/cancel refusal; "
                      "existing scoped transport only\n";

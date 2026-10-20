@@ -1,0 +1,45 @@
+{
+  "kind": "ROOT inspected actual Android bootstrap retest",
+  "status": "FAIL_SERVICE",
+  "runId": 39443522111,
+  "jobId": 118699296943,
+  "artifactId": 12275244575,
+  "zipSha256": "34c20f4cbe51932dafe4cf8fce3f45a90127af5520e9ed42d80789acfa18e691",
+  "publishedHead": "6a8de2038911ff389633f159038663ca5ee4df76",
+  "localExactTreeCommit": "9988c73",
+  "actualCiSourceCommit": "67e9d3e2c125b4abab400a840c5b2c82676ac5bb",
+  "verifiedSourceFiles": 321,
+  "runtime": {
+    "kind": "ANDROID_API35_ACTUAL_UI_AND_SCOPED_SERVICE",
+    "status": "FAIL",
+    "checks": [
+      "actual APK installed and package path verified",
+      "actual details open/Close/reopen/Back taps",
+      "disabled Stop Node/compose/Send",
+      "Activity background/resume preserves honest off state"
+    ],
+    "limits": [
+      "No Account import/login/history/contacts/remote chat acceptance",
+      "No mesh peers, transit/delivery, Doze, reboot or physical device acceptance",
+      "Synthetic same-UID instrumentation grant; resident credential owner not tested"
+    ],
+    "apkSha256": "31963ffb09ba23582d49cd2ae25ad80d0dee1bd843a40dadb90f495314cc9dfc",
+    "api": "35",
+    "abi": "x86_64",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "instrumentation": "FAIL first-install-bootstrap-read TimeoutException",
+    "serviceDiagnostic": {
+      "binderAlive": true,
+      "nativeExited": false,
+      "serviceState": "STARTING"
+    },
+    "failureClass": "AssertionError"
+  },
+  "assessment": "9988c73 event-loop source correction compiles but first scoped service install still fails; not accepted as solved",
+  "owner": "native_platforms_sol",
+  "limits": [
+    "No service runtime PASS; STARTING diagnosis is bounded fixed-state observation",
+    "No raw credential-bearing frames/logs published",
+    "Normal Account UI/new credential Android WIP not in tested package"
+  ]
+}

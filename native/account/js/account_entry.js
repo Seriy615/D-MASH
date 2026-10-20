@@ -31,6 +31,19 @@
  function logout(){++generation;runtime?.close();runtime=null;sealed?.close();sealed=null;journal?.close();journal=null;for(const p of peers.values()){try{host('transport',p.route,'owner.release',{});}catch(_){}}peers.clear();preparations=new WeakMap();if(session){session.controller.abort();session.db.close();session.keys.sign.secretKey.fill(0);session.keys.box.secretKey.fill(0);session.blindSalt.fill(0);}session=core=root=null;if(g.DMashStorage){DMashStorage.db=null;DMashStorage.masterKey=null;}return {loggedOut:true};}
  async function registryAccounts(){const secure=host('hasSecureRegistry'),db=new NativeAccountDatabase(secure?'dm_registry_secure_v1':'dm_registry_v1');try{const rows=await all(db,'accounts');return secure?host('registryRead',rows):rows;}finally{db.close();}}
  async function listAccounts(){return (await registryAccounts()).map(a=>({identity:a.id,accountPublicId:typeof a.pk==='string'?a.pk.slice(0,64):null}));}
+ async function createAccount({identity,password,displayName='',expectedEpoch}){
+  const epoch=expectedEpoch,check=()=>{if(host('epoch')!==epoch)fail('ACCOUNT_SESSION_CHANGED');};
+  check();
+  if(typeof identity!=='string'||!identity||identity.trim()!==identity||utf(identity).length>128||typeof password!=='string'||!password||utf(password).length>4096||typeof displayName!=='string'||utf(displayName).length>256)fail('ACCOUNT_CREATE_INPUT');
+  if(!host('hasSecureRegistry'))fail('ACCOUNT_SECURE_REGISTRY_REQUIRED');
+  if((await registryAccounts()).some(a=>a.id===identity))fail('ACCOUNT_ALREADY_SAVED');
+  check();let full,sign,box;
+  try{full=host('accountKdf',identity,password);check();sign=nacl.sign.keyPair.fromSeed(full.slice(64,96));box=nacl.box.keyPair.fromSecretKey(full.slice(96,128));
+   const account={id:identity,pk:hex(sign.publicKey)+hex(box.publicKey),displayName:displayName||identity};
+   const row=host('registrySeal',account);check();host('registryInsert',row);
+   return {created:true,identity,accountPublicId:hex(sign.publicKey),displayName:account.displayName};
+  }finally{full?.fill(0);sign?.secretKey.fill(0);box?.secretKey.fill(0);}
+ }
  async function login({identity,password}){
   logout();const epoch=host('epoch');let full;
   try{const saved=(await registryAccounts()).find(a=>a.id===identity);if(!saved||typeof saved.pk!=='string'||!/^[0-9a-f]{128}/i.test(saved.pk))fail('ACCOUNT_NOT_SAVED');
@@ -53,7 +66,7 @@
    const transport={readRouteSnapshot:peer=>journal.readRouteSnapshot(peer),prepareAndSubmitIntent:submitIntent};
    runtime=new DmashAccountSessionRuntimeV4({core,transport,kem,persistAuthenticated:v=>history.persistAuthenticated(v),persistOutgoing:v=>history.persistOutgoing(v),persistOutgoingAck:v=>history.ackOutgoing(v),outgoingDeliveryStatus:v=>history.outgoingDeliveryStatus(v),verifyOutgoingDeliveryStatus:(v,e)=>history.verifyOutgoingDeliveryStatus(v,e)});
    controller.signal.addEventListener('abort',()=>history.close(),{once:true});
-   return {accountPublicId:hex(sign.publicKey),displayName:identity};
+   return {accountPublicId:hex(sign.publicKey),displayName:saved.displayName||identity};
   }catch(e){logout();throw e;}finally{full?.fill(0);}
  }
  async function listContacts(){const s=current(),rows=await wait(all(s.db,'blind_peers')),out=[];for(const row of rows){try{const p=await plain(row);if(typeof p?.id==='string'&&typeof p.name==='string')out.push({id:p.id,name:p.name,state:p.securityAlert?'SECURITY_ALERT':p.transportProfile||'LEGACY',chatLocked:!!p.chatLock});}catch(e){current();/* Different Accounts share encrypted blind rows; no plaintext is exposed. */}}return DmashSavedMessages.peers(out);}
@@ -103,7 +116,7 @@
  async function submitIntent(intent){let snapshot=await wait(journal.readRouteSnapshot(intent.peer));if(!snapshot||snapshot.readiness!=='NODE_PROOF_REQUIRED')fail(snapshot?.readiness||'ACCOUNT_ROUTE_REQUIRED');if(snapshot.digest!==intent.bindingDigest||snapshot.generation!==intent.generation)fail('ACCOUNT_ROUTE_CHANGED');const p=await owner(intent.peer,snapshot);snapshot=await wait(journal.readRouteSnapshot(intent.peer));
   if(!snapshot.preparation)fail('NODE_PREPARATION_REQUIRED');const actual=host('transport',p.route,'owner.query',{migrationId:snapshot.preparation.migrationId});if(actual?.state!=='ACTIVE')fail('NODE_ROUTE_NOT_ACTIVE');
   const sealedOperation=await wait(sealed.materialize(intent)),destination=host('transport',p.route,'destination.install',{certificate:snapshot.remoteCertificate,replyRouteId:p.route});
-  const expiresAt=Math.min(destination.expiresAt,Date.now()+86400000),result=host('transport',p.route,'job.submit',{destination:destination.handle,operationId:intent.operationId,blob:sealedOperation.blob,expiresAt});if(result.accepted!==true)fail('LOCAL_NODE_REFUSED');return {queued:true,state:result.state,jobId:result.id};
+  const expiresAt=destination.expiresAt,result=host('transport',p.route,'job.submit',{destination:destination.handle,operationId:intent.operationId,blob:sealedOperation.blob,expiresAt});if(result.accepted!==true)fail('LOCAL_NODE_REFUSED');return {queued:true,state:result.state,jobId:result.id};
  }
  async function sendText({peer,operationId,text}){current();if(DmashSavedMessages.isLocal(peer)){
   if(!key(operationId)||typeof text!=='string'||!text||utf(text).length>8192)fail('ACCOUNT_MESSAGE_INPUT');
@@ -125,5 +138,5 @@
    }catch(e){current();results.push({peer,code:e.code||'ACCOUNT_SYNC_FAILED',debugStack:String(e.stack).slice(0,2048)});}
   }return results;
  }
- g.NativeAccount=Object.freeze({listAccounts,login,listContacts,listHistory,sendText,sync,logout});
+ g.NativeAccount=Object.freeze({listAccounts,createAccount,login,listContacts,listHistory,sendText,sync,logout});
 })(globalThis);

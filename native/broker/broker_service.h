@@ -25,6 +25,8 @@ class BrokerService final {
   public:
     BrokerService(QString credentialPath, QByteArray osStorageKey, QString controlPath);
     ~BrokerService();
+    std::future<BrokerResult> createProfile(QByteArray pin, QString backupPath);
+    std::future<BrokerResult> sealAccountRegistry(QJsonObject publicRecord);
     std::future<BrokerResult> importProfile(QJsonObject completeProfile, QByteArray pin,
                                             QString backupPath);
     std::future<BrokerResult> unlock(QByteArray pin);

@@ -61,8 +61,8 @@ QByteArray bytes(JSContext *c, JSValueConst v) {
     return out;
 }
 JSValue buffer(JSContext *c, QByteArray b, bool typed = false) {
-    auto v = JS_NewArrayBufferCopy(c, reinterpret_cast<const uint8_t *>(b.constData()),
-                                   size_t(b.size()));
+    auto v =
+        JS_NewArrayBufferCopy(c, reinterpret_cast<const uint8_t*>(b.constData()), size_t(b.size()));
     OPENSSL_cleanse(b.data(), b.size());
     if (!typed || JS_IsException(v))
         return v;
@@ -111,8 +111,8 @@ QByteArray accountKdf(const QByteArray &password, const QByteArray &salt) {
          "ACCOUNT_CREDENTIAL_REQUIRED");
     uint32_t lanes = 1, threads = 1, iter = 3, mem = 65536, version = 19;
     OSSL_PARAM params[] = {
-        OSSL_PARAM_construct_octet_string(
-            OSSL_KDF_PARAM_PASSWORD, const_cast<char *>(password.constData()), password.size()),
+        OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+                                          const_cast<char*>(password.constData()), password.size()),
         OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, const_cast<char *>(salt.constData()),
                                           salt.size()),
         OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_THREADS, &threads),
@@ -141,6 +141,7 @@ struct AccountService::State {
     QString path;
     Transport transport;
     RegistryReader registryReader;
+    RegistryWriter registryWriter;
     std::atomic<quint64> epoch{1};
     std::atomic<bool> stopping{false};
     std::mutex mutex;
@@ -152,8 +153,9 @@ struct AccountService::State {
     std::unique_ptr<AccountSqlStore> store;
     QElapsedTimer clock;
     QHash<int, qint64> timers;
-    State(QString p, Transport t, RegistryReader r)
-        : path(std::move(p)), transport(std::move(t)), registryReader(std::move(r)) {
+    State(QString p, Transport t, RegistryReader r, RegistryWriter w)
+        : path(std::move(p)), transport(std::move(t)), registryReader(std::move(r)),
+          registryWriter(std::move(w)) {
         worker = std::thread([this] {
             clock.start();
             for (;;) {
@@ -476,7 +478,9 @@ struct AccountService::State {
             }
             if (op == "hkdf" || op == "hkdfKey")
                 return buffer(
-                    c, CryptoPort::hkdfSha256(key(c, arg(1), "HKDF", op == "hkdfKey" ? "deriveKey" : "deriveBits")->secret.bytes(),
+                    c, CryptoPort::hkdfSha256(
+                           key(c, arg(1), "HKDF", op == "hkdfKey" ? "deriveKey" : "deriveBits")
+                               ->secret.bytes(),
                                               bytes(c, arg(2)), bytes(c, arg(3)), number(4)));
             if (op == "encrypt" || op == "decrypt")
                 return buffer(c,
@@ -515,6 +519,14 @@ struct AccountService::State {
             if (op == "registryRead") {
                 need(bool(self->registryReader), "ROOT_UNLOCK_REQUIRED");
                 return json(c, self->registryReader(jsonValue(c, arg(1)).toArray()));
+            }
+            if (op == "registrySeal") {
+                need(bool(self->registryWriter), "ROOT_UNLOCK_REQUIRED");
+                return json(c, self->registryWriter(jsonValue(c, arg(1)).toObject()));
+            }
+            if (op == "registryInsert") {
+                self->store->insertRegistryRecord(jsonValue(c, arg(1)).toObject());
+                return JS_UNDEFINED;
             }
             if (op == "idbStores")
                 return json(c, self->store->stores(string(1)));
@@ -559,8 +571,10 @@ struct AccountService::State {
         }
     }
 };
-AccountService::AccountService(QString path, Transport transport, RegistryReader reader)
-    : state_(std::make_unique<State>(std::move(path), std::move(transport), std::move(reader))) {}
+AccountService::AccountService(QString path, Transport transport, RegistryReader reader,
+                               RegistryWriter writer)
+    : state_(std::make_unique<State>(std::move(path), std::move(transport), std::move(reader),
+                                     std::move(writer))) {}
 AccountService::~AccountService() = default;
 std::future<AccountResult> AccountService::importProfile(QJsonObject p) {
     const auto token = state_->epoch.load();
@@ -598,6 +612,22 @@ std::future<AccountResult> AccountService::verifyPublishedImport() {
 }
 std::future<AccountResult> AccountService::listAccounts() {
     return state_->enqueue([s = state_.get()] { return s->invoke("listAccounts"); });
+}
+std::future<AccountResult> AccountService::createAccount(QString identity, QByteArray password,
+                                                         QString displayName) {
+    auto secret = std::make_shared<SecretBytes>(std::move(password));
+    const auto token = state_->epoch.load();
+    return state_->enqueue([s = state_.get(), identity, secret, displayName, token] {
+        need(s->epoch == token, "ACCOUNT_SESSION_CHANGED");
+        auto result = s->invoke("createAccount", {{"identity", identity},
+                                                  {"password", QString::fromUtf8(secret->bytes())},
+                                                  {"displayName", displayName}, {"expectedEpoch", qint64(token)}});
+        if (s->epoch != token) {
+            result.ok = false;
+            result.code = "ACCOUNT_SESSION_CHANGED";
+        }
+        return result;
+    });
 }
 std::future<AccountResult> AccountService::login(QString identity, QByteArray password) {
     auto secret = std::make_shared<SecretBytes>(std::move(password));

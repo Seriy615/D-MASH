@@ -1,0 +1,37 @@
+{
+  "suite": "native-Account-recipient-Node-crash-recovery",
+  "status": "AUTHOR_COMPONENT_PASS",
+  "observationHandle": 15328,
+  "terminalExit": 0,
+  "nodeSourceCommit": "a0f54a9",
+  "accountProbeSourceCommit": "3cf41d9",
+  "accountProbeSha256": "85bab6f17ab71171b5b7e867abe17dfb4831e0fc852d2faaab995f46530501fe",
+  "backendForwarded": 33,
+  "recipientAccountExitBeforeConsumption": 73,
+  "recipientNodeTermination": "SIGKILL",
+  "retainedNodeProfile": true,
+  "retainedNodeSeedStorageKeyBaseNcrh": true,
+  "newPolicyRevision": 3,
+  "ownerAcquisitionGenerationIncreased": true,
+  "recipientHistoryBeforeReplay": 1,
+  "recipientHistoryAfterReplay": 1,
+  "recipientHistoryAfterReopen": 1,
+  "senderHistoryAfterReopen": 1,
+  "lostSubmitReplyRetryProven": true,
+  "plaintextDigest": "ad5addc8a20cae94c07bc647e21028efd351472c50cdb7b7a6780fc750dc7a54",
+  "checks": [
+    "Account durable commit before owner exit73",
+    "actual recipient Node SIGKILL without consumption",
+    "same retained Node profile and keys restored binding and authenticated default22 peer",
+    "Account history retained before restored Inbox replay",
+    "replay dedupe and atomic Inbox consumption",
+    "Account reopen and sender reopen exact history1",
+    "accepted reply loss idempotent retry remains PASS"
+  ],
+  "limits": [
+    "author Linux component only; independent acceptance pending",
+    "preselected synthetic signed contact pairs; UI pairing NOT_RUN",
+    "Root independent3cf parallel run failed180s native admission before Account owners; diagnosis pending, no idempotence acceptance from that run",
+    "ACK-free mesh baseline unchanged"
+  ]
+}

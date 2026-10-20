@@ -86,3 +86,14 @@ status. Pending replies are fenced too, so an already computed login result
 cannot publish a stale successful session after cancellation. The actual process
 gate pipelines login/cancel with Node enabled and retries login without another
 Root unlock; it separately pipelines Root unlock/cancel and checks stopped state.
+
+Fresh setup is explicit: `profile.create {pin}` accepts only a profile with no
+accepted credential store and creates a new DeviceRoot, its authenticated empty
+Account registry and the empty vault inventory through the same durable
+publication gate. It creates no Account and logs into none. Node enable remains
+independent. `account.create {identity,password,displayName?}` is an optional
+separate action. It uses the existing Account derivation and stores only the
+public signing/box identities in the Root-encrypted registry. The publication
+transaction inserts a new identity alias and refuses duplicates; it cannot
+replace an existing Account or its history. Account creation does not sign in.
+Missing keys or an existing credential database never select fresh setup.

@@ -919,3 +919,9 @@ PIN/Account/cancel/wrong/busy/Saved/reopen. [Evidence](docs/native/2026-10-20/ro
 This closes the import selector test failure only. Full optional Node-controls
 gate still timed out240s after selector; its owner is adding fail-fast stage
 diagnostics. No root visible Node-controls PASS is inferred from Account-only.
+
+Android actual KVM39443522111 on9988c73 event-loop correction: launcher/Details/
+background-resume still PASS, first scoped service bootstrap still FAIL. Fixed
+state diagnostic Binder alive, nativeExited=false, STARTING; no accepted Node
+service runtime. Owner platforms; next stage diagnosis/retest pending. Root exact
+source/APK inspection: [evidence](docs/native/2026-10-20/root-android-service-bootstrap-retest.json).

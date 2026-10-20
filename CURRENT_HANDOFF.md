@@ -1,1207 +1,207 @@
 # D-MASH — текущий хендофф
 
-**20 октября 2026 UTC: цель ACTIVE, приложения Android/Windows/Linux НЕ ГОТОВЫ.**
+**20 октября 2026 UTC. Цель ACTIVE. Android, Windows и Linux приложения НЕ ГОТОВЫ.**
+
 Последнее указание пользователя: «аккуратно думай не сильно о кибербезе».
-Приоритет — работающие приложения, простая обычная переписка, фоновые доставка
-и восстановление. Исправлять подтверждённые ошибки и риск потери данных; не
-раздувать работу гипотетическим hardening и дополнительными пользовательскими
-церемониями. Сохранение identities/history и разделение Account/Node остаются.
-Production/deploy и reset пользовательского storage не выполняются.
+Приоритет — обычная переписка, автономная фоновая Node, простой UI и сохранность
+данных. Исправлять подтверждённые ошибки; не добавлять гипотетические проверки
+и пользовательские церемонии. Этот файл — единственная текущая сводка.
+Исторические checkpoints/deployments доступны в Git и docs/archive; они не
+задают текущие SHA, указания или критерии DONE.
 
-Checkout `/home/jcode/D-MASH`, branch `codex/native-clients-20261020`.
-`/home/jcode/D-MASH-Gamma` — прежний WIP, не изменять. Product baseline
-`9446c22f27309131456942870971d477f6f2358f`. Runtime checkpoint `a0f54a9`, Desktop Account UI `27a28e7`, N4 import recovery `a8f8dbf`, Android package `1cbc3f0`;
-рабочее дерево содержит незавершённые broker/platform/Inbox изменения агентов.
-[Аудит](docs/audits/2026-10-20/README.md),
+## 1. Цель, checkout и обязательные границы
+
+- Checkout `/home/jcode/D-MASH`, branch `codex/native-clients-20261020`, host
+  `forgeai.isgood.host`. `/home/jcode/D-MASH-Gamma` — прежний WIP, не менять.
+- Полная цель: проверенные Android + Windows + Linux приложения, общий Node
+  daemon, обычные Account/contacts/chat flows, самоорганизация без DHT,
+  NAT/direct/policy relay, durable очереди/Inbox, временные encrypted file
+  providers, гибкие политики, MIT ядро/GPL заимствования и полная документация.
+- [План N0–N8/A–M/E6](D-MASH_Codex_Development_Plan.md) остаётся обязательным.
+  Не подменять его зелёной v3 регрессией или отдельным component PASS.
+- Единственная wire role NODE; устройство пересылает реальный чужой transit без
+  Account login. Account владеет E2EE/контактами/plaintext/history; Node работает
+  с упакованными ciphertext. DeviceRoot — локальный secret, не сетевая Device.
+  V3 Device gateway — временный migration path, не скрытый итоговый fallback.
+- Направленные локальные маршруты; не придумывать глобальный Account transport ID.
+  Transit не использует Account E2EE keys. DHT вне scope. Не заявлять анонимность,
+  PCS/PFS/PQ или full DONE без соответствующей приёмки.
+- Сохранять Root, Node/Account identities, history, keys, encrypted DB и ownership.
+  Не reset storage ради PASS. Destructive/fault сценарии только synthetic profiles.
+- Production/deploy/сброс пользовательских данных в этой native работе не
+  выполняются. Source/context sync не переносит EMS/PWA/backend runtime.
+  Фактический опубликованный checkpoint — [FORGE_SYNC.md](FORGE_SYNC.md).
+
+## 2. Независимо принятые результаты и их точный scope
+
+Все ссылки ниже описывают собственные source/binary hashes и ограничения.
+Это не новый full exact-HEAD PASS и не приёмка трёх готовых приложений.
+
+| Область | Проверенный результат | Evidence / граница |
+| --- | --- | --- |
+| Credentials/browser | Versioned Root wrap/legacy migration, тот же Root/Account/original Saved, cancel/retry; Account legacy Argon2d type0 сохранён для identity | [Retained migration](docs/native/2026-10-20/root-s01-retained-migration.json), [worker cancel](docs/native/2026-10-20/root-s01-worker-cancel.json). Hardware/full crash matrix отдельно. |
+| Browser UI fixes | Stored Node URL treated as data; chat delete× confirmation/cancel works; history password set/wrong/correct/remove, denied microphone/camera preserve controls and original row | [URL](docs/native/2026-10-20/root-node-url-xss-green.json), [chat](docs/native/2026-10-20/root-chat-delegation-green.json), [history](docs/native/2026-10-20/root-browser-history-controls.json), [media denied](docs/native/2026-10-20/root-browser-media-denied.json). Не all-controls/media positive PASS. |
+| Native Node | Qt/QuickJS actor, actual default22 Python interop, NodeID retained, second owner refused, SIGTERM/SIGINT exit0 | [Actor](docs/native/2026-10-20/root-native-actor-interop.json). |
+| Inbox/queues | Encrypted SQLite Inbox/CAS/quota/recovery, unchanged JS consumer/70 IDB differential ops; real opaque delivery, recipient SIGKILL/reopen, atomic app consumption/idempotence | [Inbox](docs/native/2026-10-20/root-native-inbox-verification.json), [delivery](docs/native/2026-10-20/root-native-delivery-consumption.json). Не новый network custody ACK. |
+| Foreign transit | Actual two Python peers only through native middle, no Account/owner registration, hop rewrite/duplicate/expiry; immutable a0f54a9 Node | [Transit](docs/native/2026-10-20/root-native-foreign-transit.json). NAT/alternate-route failover отдельно. |
+| Account retained data | Secure-only registry, тот же Account public ID, original Saved1→native write2, logout/relogin, source owning export unchanged | [Account](docs/native/2026-10-20/root-native-account-retained.json). |
+| Initial import recovery | Atomic staged publish/retry, crash before/after stage/publish, concurrent publisher, no overwrite of accepted DB/keys | [Import](docs/native/2026-10-20/root-account-import-recovery.json). Это initial import, не full N4. |
+| Resident host | Separate credential/Account process, UI death/Account logout preserve Node; Root lock stops Node; Account cancel preserves unlocked Root/Node | [Host](docs/native/2026-10-20/root-resident-credential-host.json), [resident UI](docs/native/2026-10-20/root-desktop-resident-ui.json). |
+| Actual remote E2EE | Immutable283ba51 integrated3e3e845:2245 archived files/18 libs exact, fresh signed pairs, nativeNodes→Python transit20forwards. Recipient Account exit73 after durable history before consume; before/replay/reopen1, both identities/history retained | [Remote Account](docs/native/2026-10-20/root-native-remote-account.json). Known synthetic signed pair/scoped grants; ordinary UI pairing NOT RUN. Node binary explicitly older a0f54a9. |
+| Local capability lease | Runtime64e6933 + test875c679: real TTL10→30, past original expiry same token/socket/ACTIVE tuple, initialized Node, fresh auth | [Lease](docs/native/2026-10-20/root-native-capability-lease.json). Mint deliberately rotates/drops old contexts; не использовать вместо lease extension. |
+| Host crash/recovery | Immutablea52e9f5, root44213 exit0:183source/19artifact/7libs exact; SIGKILL host/Node lease EOF; sameRoot/Node/gens1,3,5,7/Saved2; authenticated floor merge; cancel stops verified suspended oldchild. Process/cancel/logout/reopen/ACTIVE grant lease PASS | [Recovery](docs/native/2026-10-20/root-resident-host-recovery.json). Integrated f8b17d2/1a5f179/87fc172. Не full N4; pin Account resources older remote integration. |
+| Fresh setup | Immutableca849fd root65965/54456 PASS:187source/27artifact/7libs exact; Root-only/zeroAccounts, optional compatible Account, cancellation, duplicates refuse overwrite, Saved/reopen/missing-key refusal; original JS/WASM Root+registry interop | [Fresh](docs/native/2026-10-20/root-fresh-root-account.json). Integrated1930b80; Node-before-Account foreign transit and fresh UI separate. |
+| Desktop Account controls | Actual Widgets chooser/import/PIN/Account cancel/wrong/busy/correct/Saved/reopen on owning copy. Clipboard test-only correction33a6273 root20183 PASS3/0/22.644s, unchanged pinned product | [Chooser retest](docs/native/2026-10-20/root-desktop-chooser-retest.json). Visible Node controls ещё не root PASS. |
+| Android package/UI | ARM64 package/signature/16K ELF inspection; actual x86 API35 KVM install/launch, Stop/compose/Send disabled when off, Details Close/Back, background/resume | [Package](docs/native/2026-10-20/root-android-package-inspection.json), [actual UI retest](docs/native/2026-10-20/root-android-kvm-launcher-retest.json). Node service/Account/UI/full app acceptance ещё нет. |
+
+## 3. Текущие FAIL, неподтверждённые причины и незавершённые checkpoints
+
+- **Host initial bootstrap observation:** root405263e first node.enable failed
+  NODE_BOOTSTRAP_FAILED before intended crash. Diagnostic-only a52e9f5 successor
+  later passed all three independent fixtures. Причина первого FAIL не установлена;
+  не выдавать последующий PASS за доказательство устранения причины. Новые fixed
+  codes distinguish READ_TIMEOUT/CHILD_CLOSED/WRITE_FAILED/FRAME/RESPONSE_INVALID;
+  deadlines unchanged. Failed synthetic profiles/logs now retained privately.
+- **Renewal history:** original6a5b50a was integratedbf77a5a then REVERTEDabf1c16:
+  MintCapability silently dropped old owner contexts, initial nodeRunning-only
+  test was insufficient. Corrected set now integratedf8b17d2+1a5f179+87fc172,
+  uses explicit64e private lease extension and actual ACTIVE-grant checks.
+- **Desktop Node controls:** cf41678 author synthetic actual-button PASS27.696s.
+  Root43987 FAIL at chooser canonical path then240s modal timeout. Test-only
+ 33a6273 fixes paste/cleanup, Account-only independent retest passes. Full retained
+  optional Node gate still240s timeout after chooser; no root Node-button PASS.
+  Platform adds stage diagnostics before another run. Do not claim timeout proves
+  Node provisioning failed without stage evidence.
+- **Android service first install:** KVM run39439689745 actual launcher fix2b293db
+  PASS, then scoped first-install TimeoutException. Exact Qt6.12 source shows
+  QAndroidService startup singleShot(0) releases Java service semaphore; old entry
+  blocked eventloop on condition variable. Fix9988c73 pumps bounded QEventLoop,
+  exact x86 native compile PASS, original15s unchanged. Actual KVM retest
+ 39443522111 still FAIL first-install-bootstrap-read TimeoutException: Binder alive,
+ nativeExited=false, serviceState STARTING. [Retest](docs/native/2026-10-20/root-android-service-bootstrap-retest.json).
+ Timer fix is not runtime-accepted; platform investigates pre-JNI startup stage.
+  Diagnostic471ca1c distinguishes activity/binder/bootstrap phases and fixed states.
+- **Windows:** actual OpenSSL finder fixed d0d41d9; QuickJS VERSION shadowing
+  C++ <version> fixed069c360/3728b20. Actual run39442027820 compiled58/75 then
+  failed credential_host.cpp openssl/crypto.h missing. Direct dependencya551368
+  already included in newer published6a8de203; next actual run must prove it.
+  Windows runtime NOT RUN. c145656 adds fixed native startup stage markers for
+  Android next diagnosis; capture/actual CI pending, not a product-fix claim.
+- **Long certificate retry/recipient Node restart accepted:**3cf41d9 stable expiresAt
+  +9e23a60 fixture independently passed root54951 exit0,31forwards, lost accepted
+  submit reply→samejobID/expiry; Account73→NodeSIGKILL→same profile/key/bundle,
+  reconnect/history1 before/replay/reopen, both owners retained.2247files/19libs
+  exact, same retained long-certificate Account fixture as earlier root attempt.
+  Integrated f187474/9308218. [Proof](docs/native/2026-10-20/root-native-account-retry-node-restart.json).
+  Earlier12040 native-authorize180s FAIL remains an unexplained admission
+  observation; quiet subsequent PASS does not prove its cause. [FAIL](docs/native/2026-10-20/root-native-account-retry-attempt.json).
+  Known signed pairs/scoped grants/old a0f Node; not UI pairing or full N4.
+- Android Account Views/credential service remain platform-owned WIP, not the
+  published launcher. Current build checkpoints may predate accepted host/Account;
+  require coherent frozen source/binary/resource provenance before acceptance.
+
+## 4. Source publication, environments и активные проверки
+
+Latest published GitHub snapshot **6a8de2038911ff389633f159038663ca5ee4df76** is
+exact local **9988c737b88871e81ebbd5dfa5ec2fede0a02159** tree
+**53833da23b565a5d62450f059f88bfa4cb49accc**. create_tree exact + git ls-remote
+verified. Branch `codex/native-clients-ci-20261020`, draft
+[PR8](https://github.com/Seriy615/D-MASH/pull/8), attached to task.
+Later root docs/source not automatically published; see Git and FORGE_SYNC.
+Git direct HTTPS/SSH write unavailable; connector writes exact tracked tree only.
+No force/reset, private cache, keys, DB or credential logs in Git.
+
+Actual CI: Android39443522111/job118699296943 terminal FAIL as above;
+Windows39443521913/job118699296005 on6a8de203 confirmed live at last check. Prior Android39442027952 also
+live at last check (older entry); prior Windows39442027820 terminal FAIL above.
+GitHub connector status can be stale: use fresh public REST Cache-Control:no-cache
+and terminal job timestamps to resolve contradictions. 404 job log/transient poll
+failure does not prove job stopped. Do not restart observation-timeout jobs.
+
+Toolchains/private pins: `/home/jcode/.cache/dmash-native-20261020`.
+Node `/home/jcode/.cache/dmash-tools/node-v24.19.0-linux-x64/bin/node`24.19.0;
+Python `/home/jcode/.cache/dmash-tools/python-s03-20261020/bin/python`3.12.
+Reference full runner: `.venv/bin/python tools/test_all.py`, requirements-test.txt.
+No fresh full exact-HEAD runner PASS. Focused checks supplement actual UI/network.
+
+Local Android software AVD failed OS boot watchdog before APK install and was
+intentionally stopped; synthetic AVD data retained. Do not restart it merely
+because an old observation timed out. Actual runtime route is GitHub KVM.
+Owning browser CLI `dmash-root-retained`, profile
+`/home/jcode/.cache/dmash-qa-20261020/root-retained-profile`, loopback9181,
+source004fa12/.43, SW/external HTTP/WS blocked. Revalidate live page/process before
+use. Credentials/access receipts/exports0600 are private, never print or commit.
+Latest owning backup root-after-history-qa.json; complete native import input
+root-complete-profile-43.json SHA7f35126664d3f4828b9ed5e93e55eb27da70e5d5dc7f38cfd9af7448609ce9b6.
+Original Saved row preserved. Operator previously entered emergency combination
+in synthetic QA; exact owning backup restore/origin verification and subsequent
+normal unlock/login recorded in BROWSER_QA. No user/production data touched.
+
+## 5. Команда и ближайшая работа
+
+Пользователь требует delegation. Root — оркестратор/интегратор/тестировщик;
+реализацию выполняют агенты с разделённым владением. Все три текущих агента
+известно созданы с явным gpt-6.1-sol. Разрешены только gpt-6.1-sol/gpt-6-luna;
+новых создавать с явной моделью, старых неизвестной модели не возобновлять.
+
+- **broker_store_sol:** isolated credential-host worktree. Accepted recovery
+  integrated. Fresh Root-only/optional Account1930b80 independently accepted. Next isolated
+  transport-only node.pause/resume preserves unlocked Root/Account/queued jobs;
+  current node.disable=fullRootlock unchanged until coherent UI migration.
+- **native_runtime_sol:** native actor/localIPC, isolated remote Account worktree,
+  Android CI diagnostics. 3cf/9e independent parent54951 PASS, source integratedf187474/9308218. Diagnose
+  admission failure using retained metadata, no cause guess. Prepare actual fresh
+  foreign transit fixture through profile.create + node.enable with accounts0/
+  sessionfalse, no Account creation. After that implement ordinary Account
+  pairing/contact DTOs using existing orchestrators; platform owns UI.
+- **native_platforms_sol:** Desktop Node-control stage diagnostics, Android normal
+  Views/credential service and Windows compile/runtime fixes.9988 entry published.
+  Next coherent Android freeze must include current Account/host, distinct owner
+  epoch vs transport generation, real child-exit recovery and lease-extension
+  hooks. Do not package unaccepted captured WIP as final app.
+- **Root:** inspect current CI actual outcomes/artifacts, independently
+  test immutable app/UI/runtime checkpoints, integrate accepted source, update this
+  one current summary and QA. Avoid concurrent heavy mesh fixtures on2CPU; do not
+  change protocol work/deadlines to get PASS.
+
+Main remaining product work: fresh usable setup; contacts/private+public pairing,
+ordinary bilateral remote chat in both UIs; Node controls/policies with transport
+pause distinct from full Root lock; complete N4 state/mailbox migration/recovery;
+NAT/direct/relay mobility, encrypted buffered files, configurable policies and full
+three-platform packaging/lifecycle acceptance. DHT remains out of scope.
+
+## 6. Документация и отчётность
+
+[Implementation delta](docs/native/2026-10-20/CURRENT_IMPLEMENTATION_DELTA.md),
+[threat model](docs/native/2026-10-20/THREAT_MODEL.md),
+[frozen audit](docs/audits/2026-10-20/README.md),
 [backlog](docs/audits/2026-10-20/IMPLEMENTATION_BACKLOG.md),
-[платформы](docs/native/2026-10-20/TARGETS.md),
-[implementation delta](docs/native/2026-10-20/CURRENT_IMPLEMENTATION_DELTA.md),
-[модель угроз](docs/native/2026-10-20/THREAT_MODEL.md).
-Файлы срезов описывают собственные SHA/ограничения, не весь текущий HEAD.
-
-## Реализовано и проверено в ограниченном scope
-
-- Общий нативный Qt/QuickJS Node actor: encrypted NODE v4 peering с существующим
-  Python peer/default22, без Account login. Scoped TransportBundle; Account
-  plaintext/E2EE и полный Root вне network process. Root самостоятельно повторил
-  два запуска одного retained synthetic profile, сохранение NodeID, запрет второго
-  owner, SIGTERM/SIGINT exit0: [proof](docs/native/2026-10-20/root-native-actor-interop.json).
-- SQLite NodeInbox: atomic promote, quotas и recovery. Независимые root CTest,
-  неизменённый JS consumer и70 differential IndexedDB операций PASS на d81d356:
-  [proof](docs/native/2026-10-20/root-native-inbox-verification.json).
-- Durable encrypted JobLedger, authenticated local IPC/broker control, generation
-  fencing и bounded jobs. dd977fd/bd1290c: авторская реальная передача opaque job
-  через Python transit после закрытия submitter UI в retained native Inbox.
-  Root самостоятельно CTest8/8 PASS на bd1290c, но independent delivery fixture
-  FAIL: recipient bind timeout5s до передачи. Не считать этот запуск PASS.
-- e749234 исправляет остановку reconnect после трёх неудач и добавляет node.status.
-  Авторский реальный peer65s late, >3 failed attempts, sender SIGKILL/restart с тем
-  же job и recipient SIGKILL/reopen с тем же Inbox PASS; CTest8/8 PASS. Начальные
-  intermittent bind timeouts сохранены как открытое наблюдение responsiveness.
-  [Evidence](../../../native/tests/evidence/ipc-reconnect-crash-linux-20261020.json).
-- Web credential migration сохраняет тот же Root/Account/history. Root same-profile
-  browser PASS master/wipe changes, old reject/new unlock, worker cancel/retry;
-  owning pre-migration backup реально restored отдельно. Не менять Account legacy
-  KDF: фактический Argon2d/type0 нужен для прежней identity, root rewrap versioned.
-- NODE-URL-XSS-01 исправлен690cb1b, root подтвердил реальными UI действиями на том
-  же сохранённом URL/profile, identities/history сохранены,107 source responses
-  exact,0 page errors: [proof](docs/native/2026-10-20/root-node-url-xss-green.json).
-  Plain modal sinks исправлены a22b2db, release.41; incoming-call branch пока
-  SOURCE+UNIT, не полный browser PASS.
-- Dependency pins/SBOM d123325: root23 focused tests/pipcheck/114 hashes PASS;
-  авторские303 backend/22Origin. Legacy PHP boundary0645ec3 unconditional410;
-  root независимо повторил8/8 actual PHP tests PASS. Legacy Core d8c27b0 теперь
-  не показывает ложный SENT при410. Нового общего exact-HEAD full PASS нет.
-
-**Свежая root приёмка:** ce3f83d broker CTest3/3 PASS53.80s,17 source
-files exact: [proof](docs/native/2026-10-20/root-broker-service-verification.json).
-7589b92 Desktop actual Widgets controls/lifecycle PASS,11source/3binary hashes
-exact: [proof](docs/native/2026-10-20/root-desktop-controls.json). Нативная
-Account переписка ещё не готова. bca447a добавляет атомарный app token Inbox CAS;
-UNIT PASS, реальный consume/reopen пока не принят из-за5s RPC stalls.
-Измерено: большая часть owner RPC времени — synchronous NaCl verify/scalarMult;
-агент runtime переносит эти операции в существующий OpenSSL без wire изменений.
-
-**UI-CHAT-DELEGATION-01 исправлен004fa12/.43:** root actual retained
-same-data retest: × открывает modal, НЕТ сохраняет обе строки, ДА удаляет только
-новую тестовую; Back/reopen Saved original1/test0. DeviceID/signing Account ID
-совпадают,107 source responses exact/errors0. [RED](docs/native/2026-10-20/root-chat-delegation-red.json),
-[GREEN](docs/native/2026-10-20/root-chat-delegation-green.json).
-
-**b62304d принят root в executable Linux scope:** immutable binary hash и320
-source files exact. Реальная default22/Python transit передача, UI/sender/
-recipient SIGKILL/reopen, durable Inbox, atomic consumption/idempotence/conflict
-и второй reopen PASS, process exit0.5s socket deadline не увеличен. Прежние
-FAIL сохранены. [Proof](docs/native/2026-10-20/root-native-delivery-consumption.json).
-Это synthetic opaque payload, не готовая Account переписка/nativeGUI acceptance.
-
-**Текущая Account интеграция:** aa2cc63 добавляет настоящий Account owner,
-защищённый registry reader после Root unlock и existing JS/WASM/Storage path.
-Root независимо проверил160source/8artifact/3runtime library hashes и запустил
-private probe на новом изолированном target с фактическим owning package004fa12.
-SECURE registry, тот же Account public ID, original Saved1, native write+
-logout/relogin2, source package SHA неизменён — PASS:
-[proof](docs/native/2026-10-20/root-native-account-retained.json).
-Полный owning export/package0600 остаётся вне Git;4DB/11stores/6records:
-[inventory](docs/native/2026-10-20/root-retained-native-import-input.json).
-Root independently accepted actual Desktop Widgets UI27a28e7 on the same owning
-profile copy:82source/7artifact hashes exact, actual file chooser/import, RootPIN,
-Account selection/cancel/wrong password/busy cancel/correct login, Saved send,
-signout/window reopen retained history;6PASS/0FAIL/1liveServiceSKIP,14.8s.
-[Proof](docs/native/2026-10-20/root-desktop-account-ui.json).
-N4 atomic initial import/recovery510d872 integrated as a8f8dbf; author and root independent
-crash/concurrent-publisher tests PASS;161source/11artifact/3runtime library hashes
-exact. [Proof](docs/native/2026-10-20/root-account-import-recovery.json).
-This is initial import recovery, not full N4.
-These do not establish remote messaging or resident daemon integration.
-
-**Resident host e11611d/1139dd3 принят root в process/IPC scope:**177archived
-source/12artifact/7runtime library hashes exact, committed main dependencies match.
-Actual pinned Node child; private IPC import/login/Saved1→2, detach/reconnect,
-Account logout preserves Node, fullRoot lock stops child, clean restart Saved2,
-accepted missingDB/key refuse replay/reset PASS. Root found HOST-ACCOUNT-CANCEL-01;
-1139dd3 scopes Account cancel without erasing Root/stopping Node and fences stale
-signin replies. Independent process cancel/relogin and Rootcancel/stop PASS.
-[Proof](docs/native/2026-10-20/root-resident-credential-host.json).
-**Visible resident Desktop cab8fa6 accepted independently by root:** immutable
-stable103source/11artifact/8library hashes exact. Actual retained owning profile
-copy through real Widgets controls:6PASS/0FAIL/1liveServiceSKIP,4.757s; same original
-Saved and native write after clean host restart. Same pinned UI binary actual
-SIGKILL: host/Node remain; explicit Rootlock stops Node. Nodeenable/Rootlock in
-lifetime test use harnessIPC, not UI buttons. [Proof](docs/native/2026-10-20/root-desktop-resident-ui.json).
-Earlier desktop-resident-1139 pin invalidated because shared AccountJS WIP raced
-resource build; stablepin rebuilt after exact tracked restore. Remote Account work
-now isolated in `.cache/.../worktrees/native-remote-account`. Actual runs found
-missing structuredClone, HKDF deriveKey→AES-GCM, then queueMicrotask browser APIs.
-Author4412 now real native two-Account E2EE text PASS through actual Node/Python
-transit: recipient Account exits73 after durable plaintext commit before Inbox
-consumption; reopen/replay/dedupe stays1, both owners reopen retain history.
-Immutable283ba51 integrated3e3e845 independently accepted by root:2245 archived
-files/18runtime libs exact, fresh synthetic pairs, actual default22 transit20forwards,
-recipient Account exit73 after durable history before consume, reopen/replay1, both
-owners retain same identities/history. [Proof](docs/native/2026-10-20/root-native-remote-account.json).
-Known signed pair fixture; actual UI pairing/remotechat acceptance remains open.
-Renewal6a5b50a integrated bf77a5a then **REVERTED abf1c16**: author stronger
-check found MintCapability deliberately drops existing contexts; initial test only
-checked nodeRunning and was insufficient. No root renewal PASS was claimed.
-Current stable host keeps bounded existing TTL; automatic renewal is not accepted.
-Runtime explicit lease-extension64e6933 independently accepted by root using875c679
-real-clock test: TTL10→30, past original expiry same token/socket/ACTIVE tuple,
-initialized Node and fresh authentication PASS. [Proof](docs/native/2026-10-20/root-native-capability-lease.json).
-Resident host corrected renewal/recovery a52e9f5 independently accepted by root,
-integrated f8b17d2/1a5f179/87fc172:183source/19artifact/7libs exact, actual
-hostSIGKILL/NodeleaseEOF, sameNode/Root, generations1/3/5/7, Saved2, authenticated
-floor merge/retry and cancellation stops verified suspended oldchild; process
-logout/Rootlock/cancel/reopen and ACTIVE grants/lease PASS, terminal44213 exit0.
-[Proof](docs/native/2026-10-20/root-resident-host-recovery.json).
-Prior405 root first-enable NODE_BOOTSTRAP_FAILED remains unexplained responsiveness
-observation; diagnostic-only successor passes, no claimed causal product fix.
-Pinned host Account resources predate3e3e845 remote Account; coherent final
-application rebuild/runtime remains separate. Also crash recovery found bootstrap owner epoch differs from transport
-generation, previously equal by chance. Unclean floors, Root-only fresh setup,
-optional Account create and independently accepted visible Node controls remain open.
-
-Android1cbc3f0: final ARM64 APK Gradle/package author PASS; root независимо
-APK SHA/signaturev2/ZIP16K/all17 AArch64 ELF16K/manifest SDK28–36/specialUse/
-4notice entries PASS: [proof](docs/native/2026-10-20/root-android-package-inspection.json).
-Это не install/runtime; frozen common source имеет отдельный manifest и не
-получает новых desktop worker/PoW гарантий. Root API35 software emulator failed OS boot stability: actual log watchdog killed
-system_server(main81s); package/activity service appeared then disappeared,
-APK streamed install exited1 before app launch. Root intentionally stopped own
-QEMU620628 (74134 terminal143), preserved AVD/data; not an observation timeout
-or app failure. x86_64 APK b553586a independently inspected signature/ZIP16K/ELF/
-manifest PASS; [attempt](docs/native/2026-10-20/root-android-x86-runtime-attempt.json).
-Android runtime/UI acceptance remains NOT RUN. 0db48f3 adds real KVM CI route;
-first39434621456 fails obsolete setup-android default tools package before build.
-98dc563 explicit platform-tools fix uploaded remote ca5ec59. Actual run2
-39435151797 SDK/Qt/native28targets/GradleAPKbuild PASS; instrumentation failed
-missing default debug.keystore before runtime. d52567b owns disposableCI key,
-signs both APKs, verifies same cert and refreshes actual package hash; author
-actual private-copy fullscript PASS. Remote84b63e2 matches local4d7f81a tree
-(e9a5037c...), actual git ls-remote and public REST PR8 head verified. New
-Android39437324295/Windows39437324143 started; these precede abf1c16 renewal
-revert and64e6933 lease-extension. No full runtime PASS yet.
-**Actual KVM run3 39437324295:** complete fresh build/sign/package, API35
-installation and Activity launch established. Root downloaded artifact12272812725,
-verified306source hashes againstlocal4d7f81a plus actualAPKhash
-bcf30976cbaa6bcfcc43bde584096be4aa2fd7e158b7c8ed28db564110664eea.
-Launcher FAIL: Nodeisoff but STOPNODE enabled; strict CI stops before Details or
-service lifecycle. AssignedANDROID-STOP-STATE-01; minimalMainActivity2b293db
-fix passed actual KVM run5 launcher/Details/background-resume controls. Next stage
-FAIL: scoped native service first-install TimeoutException (ANDROID-SERVICE-INSTALL-01).
-Root verified306 source hashes vs ec858a8 and actualAPKfcf753c34de9... from
-artifact12274165901. [Retest](docs/native/2026-10-20/root-android-kvm-launcher-retest.json). [RED](docs/native/2026-10-20/root-android-kvm-launcher-red.json).
-Remote0ae16ea exactlocalec858a8 tree publishesfix+evidence; no assertion weakened.
-Latest published83709da exact local3728b20 tree8605797 includes nativeAccount
-3e3e845 and both QuickJS include fixes; newCI pending, no deployment.
-Public current snapshot branch remainsdraftPR8.
-Root retained Chromium reopened only on synthetic profile. Operator accidentally
-entered emergency wipe combination; actual owning backup SHA verified and
-setStorageState restoration yielded exact same entire origin/11stores/6records/
-localStorage, followed by real unlock/login/original Saved visible. No user or
-production data touched. Scope/cause recorded explicitly, not reset-for-PASS.
-Then actual chat password set/cancel/wrong/correct/remove and mismatch/back/reopen
-checks PASS; final Root/secure registry unchanged, original row1,195responses exact,
-0errors, SW/external traffic blocked. [Proof](docs/native/2026-10-20/root-browser-history-controls.json).
-Fresh owning backup root-after-history-qa.json0600/private receipt retained.
-Windows actual runtime remains NOT RUN. Run7 39438222413 reached actual C++
-compile25/75 after OpenSSL finder fix; failed QuickJS source version file shadowing
-standard C++ <version>. Top-native fix069c360 verified Linux build; Account target
-fix and actual Windows rerun pending. Desktop visible Node controls cf41678 author
-PASS, root attempt43987 FAIL at file chooser canonical-path check before import,
-then callback modal remained open until harness240s timeout. No actualNode-button
-root acceptance claimed; test-only selector/cleanup correction33a6273 root actual retained Account gate
-PASS3/0/22.644s on same owning wrapper and unchanged pinned product;
-[proof](docs/native/2026-10-20/root-desktop-chooser-retest.json). Full optionalNode
-gate still240s timeout with no accepted root Node-button result; platform adding
-stage diagnostics before another run.
-
-Runtime foreign-transit fixture initially FAIL: second peer not admitted180s.
-aff6a0b/a0f54a9 native nonce batch preserves default22, author actual foreign
-transit PASS: two Python NODE peers through native middle, no Account/owner
-registration, hop rewrite, duplicate/expiry checks. Author8CTest PASS. Root
-independent pinned runtime fixture PASS plus real durable delivery/consumption
-regression PASS:262source hashes exact, same pinned binary hash.
-[Proof](docs/native/2026-10-20/root-native-foreign-transit.json).
-Windows8ca1b79 fullbuild/UI/Account/Node workflow submitted through draft
-[PR8](https://github.com/Seriy615/D-MASH/pull/8); remote921e5fb tree3a3ff830
-is exact localb553586a tree. Git push HTTPS/SSH unavailable; GitHub connector
-uploaded tracked tree without secrets/private cache or deployment. First Actions39432120160 rejected invalid runner.temp job.env before jobs.
-Platform fixed32e18be; remote210701cf exact local32e18be tree now includes
-9b5a4ba Windows bootstrap helper. Actions39432602934 was actually queued.
-Qt6.12 aqt3.3 metadata incompatibility fixed fdac612; run3 then failed archive
-layout before compiler. Actual6archive layout verified/fixed9ba9bd9. Remote
-d75ad01 exact local1139dd3 tree includes host and Android CI. Windowsrun4
-39434621318 actually installed Qt and compiled/installed OpenSSL. It ended
-FAIL14:12 at Desktop CMake: FindOpenSSL exact3.5.9 found, missing Crypto library,
-despite log proving libcrypto.dll.a installed at requested path. GNU13.1 compiler
-correct. Platform diagnoses CMake4.2 MinGW variable handling. No native Windows
-C++ or runtime PASS. Repeated connector getjobs returned stale in_progress after
-terminal logs; use fresh public GitHub REST status/log timestamps to resolve
-conflicts. OlderWindowsrun5 also endedFAIL; new84run6 uses newerUI but no OpenSSL
-finder fix yet. Do not restart jobs on observation timeout.
-
-## Текущая командная работа и основной остаток
-
-Все новые исполнители созданы явно как `gpt-6.1-sol`; старых неизвестной модели
-не возобновлять. Владение файлами разделено:
-
-- `broker_store_sol`: isolated credential-host worktree. Root/component import and
-  resident host/cancel accepted in bounded scope. Now correct context-preserving
-  renewal, old-child exit/STALE_FLOOR recovery, then fresh Root-only setup with
-  independent Node enable and optional Account create. No reset of accepted state.
-- `native_runtime_sol`: native ports/localIPC, isolated remote Account worktree.
-  Real two-Account handshake crossed actual default22 nativeNodes/Python transit;
-  initial text failures found structuredClone/HKDF deriveKey/queueMicrotask gaps.
-  Author4412 actual text/history/consumption crash-dedupe PASS after narrow ports;
-  immutable283ba51 freeze independently root accepted as described above.
-  Also scoped Android KVM CI and explicit capability lease extension64e6933.
-- `native_platforms_sol`: resident Desktop accepted stablepin cab8fa6; now actual
-  visible Node controls and connections policy on frozen305file candidate. That
-  candidate captured reverted renewal; pair only with stable bb host unless
-  corrected shared protocol is accepted. Android bound-service Stop fixedfe05d15,
-  actual runtime still NOT RUN; Android Account/credential service UI next.
-  Windows actual compiler/CI fixes owned here. No WIP source mixing in pins.
-- Root: integrate/review, independent process/UI/browser gates, publish bounded
-  evidence, manage draftPR8 and current handoff. Initial host/renewal claims
-  invalidated by stronger evidence stay marked withdrawn; fullgoal ACTIVE.
-
-Нужны обычные Account/contacts/chat flows в обоих клиентах, реальная упаковка/
-запуск Android и Windows, полное N4 recovery, самоорганизация/NAT/direct/relay,
-буферные файлы и гибкие пользовательские настройки. Android ARM64 actor/JNI link
-доказан, APK/service/runtime ещё нет; Windows build/runtime NOT RUN. Сохранить
-существующий Kyber/history формат при Account port; QuickJS не исполняет WASM.
-Не заменять N0–N8/A–M/E6 целью зелёной v3 регрессии. DHT вне scope.
-
-## QA и сохранение состояния
-
-[BROWSER_QA.md](BROWSER_QA.md):178 control classes; historical67 scoped PASS,
-4FAIL,107 NOT RUN. Отдельные новые исправления имеют собственные retests;
-это не all-controls PASS. Обязательный подробный обход — раздел7 ниже.
-Browser actions/видимый результат обязательны; для native дополнительно actual
-widget clicks/device acceptance. UNIT/BROWSER/DEPLOYED/compile не смешивать.
-
-После прежнего reboot `/tmp` исчез; всё новое хранить в постоянном `.cache`
-вне Git. Toolchain `/home/jcode/.cache/dmash-native-20261020`.
-Root synthetic browser profile `.cache/dmash-qa-20261020/root-retained-profile`,
-CLI `dmash-root-retained`, loopback9181, SW/external traffic blocked. Последний
-проверенный source004fa12/.43; реальные secrets/access metadata/exports0600 вне
-Git. Same-profile identities, original Saved row, QuickName/public route сохранены;
-проблемный временный Node URL удалён реальной UI confirm после retest. Перед
-использованием проверить живой процесс/page; observation timeout не доказывает
-остановку. Source/context sync и прежний EMS deployment — разные операции.
-
-Ниже сохранён прежний production/reference context; он не является приёмкой
-новых приложений и не меняет текущий приоритет daemon + три клиента.
-
-**15 октября 2026: работа возобновлена, цель ACTIVE, НЕ DONE.**
-Пользователь подтвердил продолжение и запретил остальные модели: только
-`gpt-6.1-sol` и `gpt-6-luna`. Прежние агенты не возобновляются; новые
-`node_sol` и `public_sol` созданы с явным `gpt-6.1-sol`.
-Предыдущие full UNIT были намеренно прерваны по СТОП: итоговый PASS отсутствует.
-Production PWA `.38` exact `51b35ff2de810af5ccdf9ebac0839b812f1de38c` deployed with scoped private UI browser PASS; fullgoal НЕ DONE.
-
-**Deployment checkpoint — 20 October 2026 UTC:** exact candidate
-`51b35ff2de810af5ccdf9ebac0839b812f1de38c` pushed fast-forward to
-`transport-v3` and deployed on the agreed EMS. `/tools/verify_ems_revision.py`
-verified **331/331 PWA+backend files** with zero missing/changed files. HTTPS
-page and active SW/cache report release `.38`; `dmash-node` is active. The
-production browser gate used the ordinary HTTPS page and actual controlling SW,
-without source overlay: **14/14 UI steps PASS** on two new synthetic Accounts,
-including PRIVATE QR/copy/inspect/request, bilateral confirmation, text both
-ways, logout preserving Node, and reload preserving identity/history. All
-1,447 captured source responses matched; 216 SW-served response bodies were
-verified through the active Cache API. Separate read-only cache check: 182/182
-cached PWA files match source, only `.38` cache present; page errors 0.
-This is scoped private UI acceptance, not media/public-route/full-plan DONE.
-
-**WebSocket route hotfix — 20 October 2026:** reproduced browser URL
-`wss://proxy.d-mash.ru/dmash-client/v3` returning nginx404; backend direct
-`/dmp-c/v3` returned 101/WELCOME. Added the exact alias on EMS to the existing
-backend route, preserved the other nginx locations, made a protected config
-backup, passed `nginx -t`, and reloaded nginx. Fresh real Chromium with deployed
-`.38` active SW used the actual `DeviceClientV3`: pinned WELCOME/CHALLENGE/AUTH,
-`connected`, encrypted `STATUS` response with matching Node pin and S-TURN true,
-page errors 0. Regression: `python3 tools/test_ems_domain_migration.py` 5/5 PASS;
-config generator now manages this fifth exact API path. PWA/backend source remains
-exact `.38`. [Route repair evidence](docs/evidence/2026-10-20/qa-proxy-v3-websocket-route-fix.md).
-
-Deployment backups are recorded in the evidence note. Raw reports and protected
-synthetic profile snapshots remain outside Git under `/tmp/dmash-deploy-qa/`.
-The full unit rerun in this transient checkout was blocked by missing local test
-packages; the same product candidate had previously passed 293 Python, 11 Origin,
-and all JavaScript suites individually on Node 24.19.0. See the evidence note
-for exact limits and the preserved initial instrumentation-only FAIL.
-
-Дата среза: **20 октября 2026 года, UTC**. Этот файл — единственная
-текущая сводка состояния. Старые checkpoints сохранены в
-[docs/archive/2026-10-08](docs/archive/2026-10-08/). Они не задают текущий план.
-
-## 1. Что требуется в итоге
-
-**Решение пользователя уже принято: устройство работает как полноценная Node.**
-В новой сетевой модели есть одна роль `NODE`; браузер принимает и пересылает
-чужие пакеты, участвует в тех же auth/routing/queue алгоритмах, что и Python Node.
-Account отвечает за контакты, E2EE и свою историю; transit не обращается к
-активному Account. Account logout и полная локальная блокировка различаются:
-первое не должно выключать разблокированную Node, второе закрывает runtime/keys.
-`DeviceRoot` может оставаться названием локального root secret; это не отдельная
-сетевая роль и не основание сохранять `ROLE_DEVICE` в итоговом протоколе.
-
-Устройство не должно объявлять себя особым клиентом/endpoint. Одно название
-`NODE` ещё не доказывает сокрытие начала/конца маршрута: нужны проверки wire,
-control plane, timing, resource access и границ browser/media fingerprinting.
-
-Полное задание: [D-MASH_Codex_Development_Plan.md](D-MASH_Codex_Development_Plan.md),
-**N0–N8 и совместимые A–M/E6**. Не сокращать его до исправлений в текущем v3.
-Не останавливать разработку на локальном PASS. DHT не входит в текущий scope.
-Дополнительные указания пользователя: NCRH привязан к маршруту; случайный hop
-TTL для Probe; route-carried DUMMY/cover с корректным terminal discard; Probe
-может прийти до импорта contribution/QR; самостоятельно проверять UI контактов.
-Текущее поручение пользователя — автономно завершить N0–N8 и совместимые A–M/E6
-на Forge с делегированной реализацией и полной браузерной приёмкой. Постоянная
-цель возобновлена 15 октября 2026; полный DONE не достигнут.
-Пользователь назначил `forge-vps` для синхронизации source/context. Проверить
-существующий checkout и работать оттуда; итоговые path/branch/SHA фиксируются
-в FORGE_SYNC.md после операции. Перенос production runtime/доменов/секретов
-не следует из синхронизации репозитория. EMS не является новым dev-хостом.
-
-**Forge source sync выполнен:** checkout `/home/jcode/D-MASH`, user `codex`,
-ветка `transport-v3`. Базовый handoff `c14b0b07f9229988f8bbb83f88b3b73504784272`
-проверен по HEAD/tree и file hashes; локальный прежний context сохранён в
-protected off-checkout backup. Итог и GitHub SSH limitation —
-[FORGE_SYNC.md](FORGE_SYNC.md). Origin fetch теперь HTTPS, write auth требует
-настройки; production runtime/данные не переносились. Последний documentation
-commit также доставляется на Forge, его полный SHA получить из Git.
-
-**Возобновление: 15 октября 2026, UTC. Цель ACTIVE, НЕ DONE.**
-Проверены Forge hostname/path, сохранённые isolated candidates и remote
-`transport-v3=38a67a56b7db3878197e4aafaf1b878e2a1f8765`; source refs fetched.
-Shared `/home/jcode/D-MASH` HEAD62f97d7 с WIP сохранён без reset/clean.
-Root integration/context: `/tmp/dmash-oct15-integration`, `codex/oct15-integration`.
-Read-only fresh EMS verifier:214/214 PWA exact6a,missing/changed/extras0,
-HTTPS index/SW/release exact; это source proof, не новая browser acceptance.
-[Fresh deployed source check](docs/evidence/2026-10-15/production35-exact-source.json).
-Текущие исполнители (явноgpt-6.1-sol): node_sol N4 browser, public_sol
-canonical/fullUNIT, node_ui_sol minimal endpoint PWA. Старые агенты не возобновлены.
-PWA37 и API infrastructure обновлены, backend code прежний; см. scopedприёмку ниже.
-Предыдущая остановка была8октября; ниже сохранены scoped результаты и остаток.
-
-**Текущая production PWA (15–16 октября 2026, UTC):** stock
-`/home/jcode/D-MASH/tools/get_commit.sh` exit0 deployed exact
-`3a784714060f5645d1b6317c87c59285e1f95b39`, pushed `transport-v3`, `.37`.
-Source216/216PWA exact, extras/missing/changed0; combinedPWA/backend264/264 exact,
-HTTPSindex/SW/release exact. Backend code/schema unchanged from6a;
-API/signaling/TURN canonical `proxy.d-mash.ru`, existingEMS85.198.64.183.
-Full UNIT exact3a784:286Python/11Origin/101JS PASS; no failedsuites.
-Root **DEPLOYED scopedPASS** on SAME retained35→36→37 syntheticprofile:
-normal page/activeSW37,100phase1responsehashes exact, unhandledpageerrors0;
-wrappedRoot/pairing preserved, visible pinnedcanonicalNode+DNSSready;
-Saved4oldrows readable +newSEND/reopen once (5rows) PASS. Normal controlled
-catalogfetch SHA ff4979… and ONLYcache37, no manualcache/storageclear.
-SW-CATALOG-STALE-36 закрыт этим exact37retest; original36FAIL сохранён.
-Local genuineSW36→37 fixture PASS: stale1yHTTPcatalog bypassed, ownversion
-fallbackoffline, ghostoldscriptdenied, syntheticlocalStorage+IDBsentinels preserved.
-OriginallocalfixtureFAILs были prematureasyncpolling; corrected harness329f62d
-проверен, sourceproduct неизменён. Current docs/toolhead может быть новее
-production productSHA; PWA/backend/testinput trees сравниваются отдельно.
-FreshOWNINGsnapshot13577B/1origin/4DB protected, rootChrome9484 closed.
-Это endpoint/SW/localhistory acceptance, **не fullNode/contact/media/N8DONE**.
-[Source](docs/evidence/2026-10-15/production37-exact-source.json),
-[UNIT](docs/evidence/2026-10-15/proxy37-unit-summary.json),
-[deployedprofile](docs/evidence/2026-10-15/qa-proxy37-deployed-profile.json),
-[genuineSWupdate](docs/evidence/2026-10-15/qa-sw37-local-update.json).
-
-**N4 на текущем Node candidate:** fresh UTF8 CONTROL gate **BROWSER PASS**
-на exact `b6ad115e26179b154ac0d4825a760f07ad50157f`, harness
-`829bfb2bbaf7f5cd55e2f426394b807684b0fb09`: два настоящих Chromium Workers
-через отдельную Python Node, 13/13 mechanism checks, 136/136 fetched responses
-byte-exact, 46 source inputs match Git. Lost FINAL/CONTROL_ACK, tamper reject,
-durable typed commit/APPLIED once, one-sided loss→authenticated gen2 (107.753s),
-fresh ciphertext/outer operation с тем же logical op, old-root replay reject,
-verified receipt→sender outbox retirement PASS. Difficulty/timeouts не ослаблялись.
-Owning snapshots protected; browser9493/hub/runner закрыты, slot передан Root.
-Предыдущий32182 общий FAILsourcegate (8/136 nonASCII responses Windows1252)
-сохранён; fixture UTF8fix829 принят только после нового полного прогона.
-Senderoffline/newterminal/collision/fullN4 matrix, ordinary UI/production и media
-**NOT RUN/OPEN**; это не полный N4 DONE. Root начал отдельный ordinary PRIVATE
-UI gate на canonical9748 через proxy без DNS override, CDP9485.
-[Fresh scoped PASS](docs/evidence/2026-10-15/qa-n4-control-utf8-browser.json),
-[previous source gate](docs/evidence/2026-10-15/qa-n4-control-encoding-source-gate.json).
-
-**Ordinary PRIVATE Node UI baseline (16 октября):** exact canonical9748,
-explicit managed-v4/source overlay, SW BLOCKED, real proxyTLS без DNSoverride.
-Два synthetic root/Account setup и Nodeconnect PASS; actual PRIVATE QR visibleIMG,
-copy→inspect correctAccountID→request→повторные Confirm/Refresh clicks PASS.
-Original hidden-first canvas locator и premature PUBLIC_SESSION_REQUIRED getter
-harnessFAILs сохранены, не product bugs. Captured264appresponses byte-exact.
-**N3-PRIVATE-KEY-LATENCY-01 FAIL:** bilateralkey gate244.777s >240s;
-позднее оба ESTABLISHED/gen1, оба authenticated bootstrap receipts имеются.
-Это eventual recovery, не ретроактивный latencyPASS и не permanentdeadlock.
-**N3-COMPOSER-LATENCY-01 FAIL:** после visible keysconfirmed/closepanel/sidebar
-select composerhidden >20s; позднее первый composer visible. Точная причина
-ещё исследуется; не приписывать её шифрованию без измерений.
-**N3-LOCAL-SEND-LATENCY-01 FAIL:** actual SEND не показал senderrow за5s;
-позднее одна localrow PENDING, у receiver0rows (00:20:47Z). OriginalFAIL
-не переименован. Owner node_sol: assigned bounded authenticated validation-reuse fix after profiling;
-mainpage NaCl hotfunctions77–81% samples, Workers96–98%idle;
-RouteJournal100/104completedreads average~1.95s (overlap, не суммировать какwalltime).
-Fresh coherentDB/AESauth/CAS/owner/expiry/root checks должны сохраняться.
-[Diagnostic and limits](docs/evidence/2026-10-15/qa-node-main-thread-validation-diagnostic.json).
-Recipient delivery/reload/no-chat ещё NOT RUN. SAME identities/root/Node сохранены, browser9485/keeper77016 live.
-[Baseline and limits](docs/evidence/2026-10-15/qa-private-node-ui-baseline.json).
-
-**Ordinary retained Node UI retest PASS (16 октября00:36–00:38UTC):** exact
-`8330be8eb89af5e5eb212c6ea6380495b4cb587a`, clean isolated
-`/tmp/dmash-account-journal-validation-reuse` from canonical37candidate40854a6.
-Small journal-only historical validation reuse; RED6ca2780→GREEN5d35830,
-expiryfollowup8330; independent security review ACCEPT, fivefocused suites PASS.
-Root actual SAME two synthetic profiles, normal reload/PIN/Accountlogin/NodeConnect/
-sidebar/contact/SEND; identities/root/Node/history preserved, no reset.
-Composer3.918/3.552s, localSEND1.398/1.876s, actualrecipient19.517/8.561s;
-visible texts exactlyonce bothways;266capturedappresponses exact, pageerrors0.
-N3-COMPOSER-LATENCY-01 / N3-LOCAL-SEND-LATENCY-01 closed ONLY for this retained
-sourceUI scope. OriginalFAILs remain recorded; coldPRIVATE key244s gate NOT retested.
-Source overlay/managedoptin/SW BLOCKED, **not DEPLOYED or full N3/N4 DONE**.
-Full UNIT8330 **PASS exit0:293Python/11Origin/143JS**, sourceclean;
-protectedlog /tmp/dmash-8330-full-unit.log SHA2561b3414f10a7deb38ee220dc97b563222a6ab828f8a0fe317499cce077452a549.
-[UNIT scope](docs/evidence/2026-10-16/journal8330-full-unit-summary.json).
-Root subsequentno-chat runs80227/83102/12215 **INVALID exactsourceproof**:
-after8330UIrunner disconnected, its page routes disappeared and receiverreload
-fell back to originalkeeper9748/.35. Retained8330gate above remainedgenuine
-266hashPASS whilethatclientheldroutes. Originalmixedsourcefailurespreserved.
-[Disposition](docs/evidence/2026-10-16/qa-nochat-prior-source-gate-invalid.json).
-Correctednochat SAME93360 completed genuineFAIL/manualrecoveryPASS below;
-Original8330overlaykeeper42369 waslive atthatgate; nowreleased, see74fbelow,
-originalbrowserkeeper77016/CDP9485stilllive. Compilejournalfunctionhash+release
-checkedonbothpages beforefreshuniqueauthenticatedACK-before-chatopengate.
-Do NOT restart/close anykeeper before freshprotectedexports and root handback.
-Freshcustomrawstorageexports133303/140859B,7DBeach600 outsideGit; restoreNOTRUN,
-not validatedrollback backups. Originalowningsnapshots beforepair preserved.
-[Retained actual UI and exact source](docs/evidence/2026-10-16/qa-journal-validation-retained-ui.json).
-
-**N3-ACCOUNT-RECEIVER-STARTUP-01 exact8330 BROWSER FAIL:** corrected genuine
-93360 terminal after source-pinned overlay42369; both pagesrelease37+compiled
-journalSHA7159acc3… match8330,133/133 freshreceiverresponses exact/errors0.
-Afterreload/PIN/login/actualNodeConnect/Saved, Nodealive but AccountadapterNOTopen.
-UniqueNEWoperation authenticatedsenderACK absent180.041s; SAMEprofiles actual
-manualcontactopen then newmessageonce +authenticatedsenderDELIVERED PASS.
-Identities/root/Node preserved. Earliergenericunread/mixedsource runs INVALID
-remainseparate; this is fresh exactsource failure, notretroactive acceptance.
-Ownernode_sol candidate **74f9449b535ba30f158920a3b10e89c6111f357b**, clean
-/tmp/dmash-account-receiver-startup; REDbd663a9→41446c2, review found fulfilled
-rehydrate.pending liveness gap; REDfa76ab5→GREEN74f9449, independent ACCEPT.
-Seven focused UNIT suites PASS; root independently startup suite PASS.
-Root same-profile actual reload/login/NodeConnect/Saved→uniqueSEND→authenticated
-NEWsenderACK BEFORE receivercontactopen **PASS**, thencontentonce.266/266appresponses
-exact incl changedCore/UI bothpages; compiledjournalhash/release37/subscription
-checkedbothpages. IDs/root/Node preserved, no reset. LocalSEND2.845s, composerclear
-2.402s, ACK87.923s afterlocalrow (~90.8s afterSEND) **performance FAIL remainsOPEN**.
-Functional startup closed ONLY retainedsourceUI scope; cold/private/public/multiAccount/
-locked/reconnect/migration/fullN3 NOT DONE. Sourceoverlay/managedoptin/SW BLOCKED,
-NOT DEPLOYED. Root browser9485/originalkeeper77016 stilllive; persistent8330keeper
-42369 gracefullyreleased and replaced by **74fkeeper4617(pid1770187)**; new runner73731
-closed only itsCDPclient. Fresh protected raw syntheticexports229862/226360B7DB
-before source switch, live-separate captures, restoreNOTRUN, notvalidatedrollbackbackup.
-[Retained startup fix and remaining latency](docs/evidence/2026-10-16/qa-startup74f-retained-nochat.json).
-
-**N3-RETRY-TIMER-OVERLAP-01 OPEN, owner node_sol:** root numeric-only
-actual74f UI diagnostic observed Runtime.resume maxoverlap **65sender/34receiver**,
-376/380calls duringcapture; repeated SessionStore/journal reads inthousands.
-startRetries clears timerownership BEFORE awaitresume; UI polling canstartanother
-train, oldcompletion thenarmsanother unownedtimer. Independent actualscheduler
-fakeclock REDdb57a17 proves overlap2/futuretimers2/pendingafterclose1 vs1/1/0.
-Small timerownership fix **6ff5515fa253a3f177ebce41cd7b12d5d06dffd0** frozen clean
-/tmp/dmash-account-retry-timer-red; independent ACCEPT, sixfocused UNIT +root
-scheduler suite PASS. SameRED2/2/1→GREEN1/1/0,5scadence/manualresume preserved.
-Cadence5s/auth/backoff/difficulty unchanged; no broad queue removal/reset.
-Observed diagnosticSEND local11.169s/authACK25.915s hasobserveroverhead and doesNOT
-erase uninstrumented90.8s performanceFAIL. Perpageprototype totals aggregateinstances;
-onlyonecurrentAccount/adapterexpected; dropped rawring notfulltrace, totalsretained.
-Allwrappersrestored. Exact90s causality/afterfix latency acceptance stillOPEN.
-[Diagnostic and limits](docs/evidence/2026-10-16/qa-retry-timer-overlap74f-diagnostic.json).
-
-**Exact6ff ordinaryUI retained reload/no-chat scoped PASS:** root actual both
-reload/PIN/login/NodeConnect/Saved→SEND→NEWauthenticatedACK BEFOREcontactopen,
-thencontentonce; identities/root/Nodepreserved.532/532capturedresponsesexact,
-compiledruntimeSHA beb35a33…+journalSHA7159acc3… bothpages matchfrozen6ff.
-ColdSEND0.988s/composerclear0.770s, ACK19.495s afterrow(~20.5s afterSEND),
-versus74f baseline~90.8s. **Remaining latency OPEN**, not allspeedfixed.
-Original6ffrunner79455 stoppedBEFORESEND dueSavedtitleassertrace; eventualSaved
-DOMconfirmed, sameprofilecontinuation84700PASS local1.888s/ACK13.373s, then
-NEWcorrectedbothreload75517PASS above. OriginalFAILretained, no timeoutchanges.
-Sourceoverlay/SWblocked/managedoptin, NOTDEPLOYED/fullN3/fullgoal.
-Old74fkeeper4617 gracefullyreleased; **6ffpersistentkeeper36605(pid1785825)**
-keepsroutes acrossCDPclients; originalbrowser77016/CDP9485stilllive.
-Freshprotectedcustomrawexports259296/242664B7DBeachbeforenewsource, live-separate
-captures/restoreNOTRUN, notvalidatedrollbackbackups. Short60sRuntimeobserver **PASS: maxoverlap1bothpages**,11/12resume calls despite
-42/40startRetries requests; zero rawevents dropped, automaticexpiry/restored both.
-Actualdiagnostic UI local0.996s/authACK16.213s, observeroverhead/notperformancePASS.
-[Browser retry ownership](docs/evidence/2026-10-16/qa-timer6ff-browser-overlap.json).
-Full exact6ff UNIT **PASS exit0:293Python/11Origin/145JS**, clean source;
-started onlyafterall latency/diagnostics ended. Agentpublic_sol samehandle12693
-completed, rootlogSHA/tail/source reviewed. Python3.12.14/Node24.19.0;
-logSHA d42027b21c2cd97b504df784bfb4261bfb4605e673678abfbf9876a930c061a0.
-[Full UNIT scope](docs/evidence/2026-10-16/timer6ff-full-unit-summary.json).
-[Corrected browser source/flow/limits](docs/evidence/2026-10-16/qa-timer6ff-retained-nochat.json).
-
-**Exact6ff Accountlogout/relogin ordinaryUI scopedPASS:** sameexistingprofiles,
-actualSaved→Accountlogout keeps sameNode/current/root; uniqueSENDtoA hasNOauthACK
-for30s whileAloggedout. LoginA→Saved autostart receivesauthenticatedACK BEFORE
-contactopen; newtextonce/all12previousvisibletexts retained eachside, samekeys/root/Node.
-RootcompiledRuntimeclassSHA c43be9d4… matchesfrozen6ff bothpages. FiveactualUIsteps
-PASS (47356exit0); UNITcompletedbeforegate. Nodealive isNOTnewforeigntransitproof.
-Initial89101harnessbaselinefailedBEFORElogout/SEND (readhistorybeforeasyncpaint);
-sameDOMlater12rowseach, originalFAILpreserved; correctedtoolaa1 waitsrealvisibletext,
-no storage/network shortcuts or timeoutincrease. Bswitch/fullrootlock NOTRUNnext.
-Protectedcustomrawexports291803/268694B7DBeachbeforegate, restoreNOTRUN.
-[Logout source/flow/limits](docs/evidence/2026-10-16/qa-account-logout6ff.json),
-[Original harnessFAIL](docs/evidence/2026-10-16/qa-account-logout6ff-initial-harness-fail.json).
-
-**Exact6ff A→B→A ordinaryUI scopedPASS:** root47356logoutgate followedby
-46653switchgate, actualnewsyntheticB viaNewLogin+registrycheckbox; Bidentitydiffers
-A/sender, sameNode/root. WhileBactiveSavedempty, noAplaintext and NOauthACKfor
-uniqueSENDtoA30s. LogoutB→loginA→Saved autostart authenticatesnewACK BEFORE
-contactopen; newtextonce+all13priorvisibletexts eachside retained.6stepsPASS,
-Bstillregistered/no deletion/reset. Full rootlock/unlock NOTRUN; nodealive isnot
-foreigntransitproof. Freshcustomrawexports306069/281589B7DB beforeBcreation,
-restoreNOTRUN; rootwillpreservepostBstate beforeclosingkeepers.
-[Switch isolation/source/limits](docs/evidence/2026-10-16/qa-account-switchB6ff.json).
-
-**LocalSEND25.827s whenpriorreceiver-inactive retriesqueued remainsOPEN**, despite
-cleanerretainedUI1.4–1.9s PASS; do notclaimall latencyfixed. FullUNIT endedbefore
-this correctedrun; stale copiedconcurrentlimit notcurrentevidence.
-[Exact-source no-chat failure/manual recovery](docs/evidence/2026-10-16/qa-nochat-exact8330-fail.json).
-
-**Актуальная инфраструктура API (15 октября):** пользователь назначил
-`proxy.d-mash.ru` на прежнем EMS `85.198.64.183`; прежние stage/API hostnames
-удалены/не использовать. Root применил проверенные tools из published
-`codex/canonical-ems-domain=9748e95ab54d48987efb8822ed3ad0db6fb32398`:
-отдельный ACME/TLS-vhost, четыре exact API location, затем scoped migration
-двух существующих конфигов signaling/TURN. На этапе infra backend/PWA не менялись; позже PWA36→37 deployed отдельно, см. выше.
-Protected consistent runtime backup:16files/4SQLite quick_check PASS;
-5identity/key/secret files byte-identical, TURN realm/sharedsecret сохранены.
-nginx/dmash-node/dmash-sturn active. Public normalTLS +все4WS101 PASS;
-real external signaling roundtrip и TURN3479 UDP/TCP relay integrity PASS.
-После операции PWA214/214 exact6a/.35, extras/missing/changed0.
-Это **DEPLOYED INFRA**, не UI/media/fullNode PASS. Canonical PWA emergency
-release готовит node_ui_sol отдельно от broadNode candidate; старые клиенты
-до автоматического обновления могут содержать retiredhost; stale SW catalog исправлен37; initialphase0 старогоSW не считать новымsourcePASS.
-[Проверки и protected rollback paths](docs/evidence/2026-10-15/proxy-domain-infrastructure.json).
-
-**Node/Public candidates:** broad canonical9748 (изb6 +reviewed PUBLIC authority)
-published только в отдельной ветке, НЕ deployed; default legacy review mode и
-NodeControl capability ограничения сохранены. FullUNIT9748 завершён FAIL, детали ниже.
-CorrectedPUBLIC9d099aa уже fullUNIT287Python/11Origin/99JS PASS, browser HOLD.
-Root realChromium IndexedDB FileVault legacy→b6:15/15mechanism checks PASS,
-сохраняет body/mode/ownership/outcomeCAS; это не UI/transport acceptance.
-[Real IDB scope](docs/evidence/2026-10-15/qa-node-file-mode-real-idb.json).
-N4CONTROL gateb6:initial lostFINAL recovery PASS; subsequent originalfixture
-FAIL из-за assert общего числа новыхretryrows вместо consumption originalhandle.
-Read-only proof:5outer retries/1innerop,1dispatch,errors0. Harness-onlyfix83c5ad3;
-Same-profile continuation закончилась по исходному300s expiry, без его продления;
-rekey/sender-offline NOT RUN. Protected snapshots сохранены, owned browser/hub
-закрыты. Новый UTF8 rerun829 выше PASS scoped CONTROL mechanism; FullN4 OPEN.
-[Границы N4 проверки](docs/evidence/2026-10-15/qa-n4-control-harness-race.json).
-
-**Проверенная база emergency endpoint PWA36:** minimal production6a→
-`bfff0caa7cbde2d64f974fab22d4c64a67c71d41`,6files, page/SW `.36`, без
-PUBLICauthority/FileRuntime/newNode изменений. Полный UNIT PASS286Python,
-11Origin,100JS (Python3.12.14/Node24.19.0), clean exact source.
-Root same retained35profile: wrappedRoot+encrypted identity/pairing rows unchanged,
-known pinned endpoint migrated, actual normalTLS autoConnect и eventual DNSS ready;
-old Saved history readable +new actualSEND once PASS;68captured source hashes exact.
-**Latency FAIL сохраняется:** DNSSdifficulty22 не ready за180s; позже тот же
-session стал ready. Причина долгого PoW/влияния harness ещё не доказана; no timeout
-or difficulty relaxation, не объявлять latency PASS. ExistingSW source-overlay
-interception и absent Request-button после autoConnect — отдельные harnessFAILs,
-не исправления продукта. SecondaryCDP36B emptyorigins НЕ backup; owning persistent
-profile сохраняется. Before deploy нужны точный source/normal SW и real UI checks.
-[UNIT](docs/evidence/2026-10-15/proxy36-unit-summary.json),
-[root source upgrade](docs/evidence/2026-10-15/qa-proxy36-preserved-source-upgrade.json).
-Broad9748 fullUNIT **FAIL**:293Python/11Origin/140JS passed, unchanged
-file_channel buffered-pressure100ms fixture failed; focused rerunPASS отдельно.
-Не подменять этот FAIL минимальным `.36` PASS.
-
-**Свежие проверки 15 октября:** production `.35` bounded inventory27 initial
-checks +7 corrected same-profile continuation PASS; original biometric-Cancel
-harness expectation ошибочна, штатный возврат в чат. Initial45 responses exact,
-это не весь lazy-loaded набор. Root отдельно сверил65 compiled main-page JS
-через read-only CDP Debugger с exact6a:65/65 PASS (не Worker/HTML/CSS audit).
-Root actual Saved SEND/empty SEND/file unsupported/mic denial/camera denial/OK
-и Back/reopen history PASS; старый #back-btn locator исправлен в same-profile
-continuation, не продуктовый баг.
-[Inventory](docs/evidence/2026-10-15/qa-inventory35-first-slice.json),
-[root local UI](docs/evidence/2026-10-15/qa-root35-local-ui.json),
-[root actual loaded JS](docs/evidence/2026-10-15/qa-root35-loaded-script-hashes.json).
-
-**N3-NODE-PANEL-OVERFLOW-01 FAIL baseline / fix retest идёт:** genuine c42
-root unlock/Worker + Account create PASS. Desktop1280×720 и mobile390×844:
-modal h1028/overflowvisible, Node Connect нижеviewport и wheel не помогает.
-Owner node_ui_sol fix74282af limits modal height and enables native scrolling;
-same-profile preserved identity/root and desktop reachability PASS. Mobile
-normal click теперь принят, но реальная Node вернула `Node worker operation
-failed`: это следующий отдельный blocker, НЕ green full N3.
-[Baseline](docs/evidence/2026-10-15/qa-node-panel-overflow-baseline.json).
-
-**Текущий Node integration:** `/tmp/dmash-node-oct15-integration`, branch
-`codex/node-oct15-integration`, clean `b6ad115e26179b154ac0d4825a760f07ad50157f`:
-c42 + UI742 + retry-session/per-peer outcomes fix4ccdfb6 (RED008150b).
-New7 liveness cases and six targeted suites PASS; capability absent/default
-legacy review restriction сохранены. Exactc42 combined UNIT coverage завершено:
-backend292/Origin11 +37 JS before STOP +102 resumed JS =139 total; **не один
-непрерывный test_all run**. Full ordinary UI/real IDB/N4 acceptance ещё NOT PASS.
-
-**N7-FILE-AFTER-CALL-35 OPEN / intermittent FAIL, owner qa_remaining:**
-root fresh PRIVATE pair: реальный звонок/hangup PASS, следующий tiny file не
-появился у получателя за120s,134/134source exact6a,page/activeSW35,error0.
-Старый harness закрыл этот FAIL profile, точный этап потери не доказан.
-Retained новая synthetic pair: звонок + шесть отдельных18B файлов actual UI
-**22/22 PASS**,134/134source exact6a,page/activeSW35, шесть download SHA equal,
-обе encrypted FileVault DELIVERED; tap→DELIVERED2.1–2.9s. Это не отменяет FAIL.
-Root на ТОЙ ЖЕ retained pair: voice запись→доставка→decrypt→playback PASS
-за5.052s, circle аналогично PASS за6.480s.16MiB WAV sender/receiver encrypted
-FileVault DELIVERED, но inline preview/hash **НЕ ACCEPTED**: initial Open
-intercepted completion panel; после normal Close continuation потерял card
-locator. Raw failures и pre-media owned synthetic IDB snapshots сохранены без reset; причину
-UI/rerender исследовать после resume.
-[Root media checkpoint](docs/evidence/2026-10-08/qa-mobile35-root-retained-media-checkpoint.json).
-[Original failure](docs/evidence/2026-10-08/qa-mobile35-root-deployed-file-after-call-fail.json),
-[Retained repeats](docs/evidence/2026-10-08/qa-mobile35-retained-six-files.json).
-Physical Android >minute и full deployed media matrix остаются OPEN.
-
-**PUBLIC-WAIT-35 OPEN:** root deployed `.35` наблюдал DNSS/ENTRY_GRANT PoW
-(~7.8/39.7s), recipient route ещё unavailable и sender retry5/10/20/40/80/160s;
-после registration тот же PUBLIC flow13/13PASS. CDP logpoints влияют на timing:
-это causal observation, не latency acceptance. Persistent pull-failure gate
-не дошёл до Accept (180s request_pending/route readiness), signed expiry ещё
-NOT RUN. Не сводить perpetual waiting к одному потерянному CONFIRM.
-
-**PUBLIC authority HOLD (прежнее proposed `.36`, не emergency endpoint release):** `/tmp/dmash-public36-integration`, `codex/public36`,
-`cf02d9420bad623c0e26b54b5b07d87069fca0ad`: Python286/Origin11/всеJS PASS,
-НО root review нашёл небезопасное совместное использование одноразового PoW
-для разных RouteRegistration candidates. НЕ deploy и НЕ cherry initiald576
-отдельно. Исправление агента `/tmp/dmash-public-authority-red`,
-`codex/public-authority-red`, clean `bb7b5e71995b970735d493bdd0dfce070d5f0a9d`:
-backend-contract RED57e0878 → GREENbb7b5e7, полный registration tuple в key,
-random independent nonce/collision guard, один bounded REPLAYED retry.
-Node24 six targeted/Python registry9 PASS; root integration/full exact/browser
-NOT RUN. Следующий шаг: review+cherry57e0878/bb7b5e7, затем PUBLIC real UI.
-
-**Ordinary NODE candidate, НЕ final cutover:** clean worktree
-`/tmp/dmash-node-file-control-integrated`, branch `codex/node-file-control-integrated`,
-HEAD `c42f0360986e387211abc89a8a8c5f286aaaf667`.
-Собраны base19fb290 + receiver APPLIED retention346 + Core outcome expiry029 /
-per-peer drain742 + sender terminal369/e9 + losing INIT collisiona032 +
-Node file adapter8987/018/e470 и его authority/mode foundations.
-Объединённый c42: diff-check PASS, **общие tests/browser NOT RUN**.
-Последний полный exact19fb290 UNIT292+11+135 PASS, не переносить на c42.
-`managed-v4` всё ещё controlled opt-in; default legacy migration, это OPEN.
-File capability `nodeControlAuthorityV4` отсутствует: не включать до root
-cross-layer review, real IDB, ordinary PRIVATE UI и verified service gate.
-
-Node file отдельный clean candidate `/tmp/dmash-file-node-v4-control`,
-`codex/file-node-v4-control`, `8987daf2cbc1502fc75aaa429a69374bee87aada`;
-fixed expiry/operationId CAS follow-up018bb68, Node24 file_runtime/file_vault_mode
-PASS. Real IDB fixture `/tmp/dmash-file-node-mode-idb.browser.cjs` syntax PASS,
-**NOT RUN**. Ordinary PRIVATE fixture `tools/qa_node_private_ui.cjs` и real
-N4 CONTROL/lostACK/offline receipt fault fixtures ещё требуют browser gate.
-Все identities/keys/DB сохранять; никаких reset/force push.
-
-## 2. Текущий Forge и EMS checkpoint
-
-**Source и production PWA:** exact product commit
-`6a01feb252c1b94772a2b19503c9e1576a8c6356`, release
-`transport-v3-node-preparation-20261008.35`, pushed fast-forward и deployed
-штатным EMS `get_commit.sh`. Read-only verifier **214/214** tracked PWA files,
-missing/changed/extras 0; HTTPS index/SW/release byte-exact. Backup PWA:
-`/srv/messenger.d-mash.ru/backups/manual-rollback-20261008T133221Z`.
-Production Node backend, identities, DB/keys не менялись. Shared Forge checkout
-`/home/jcode/D-MASH` сохраняет WIP агентов; release интегрирован отдельно в
-`/tmp/dmash-n7-integration`. Последующий docs-only commit может сдвинуть branch
-HEAD; production SHA всегда сверять отдельно.
-
-`.35` добавляет automatic receive для подтверждённых контактов, Account-owned
-зашифрованные inline file cards, previews/save, durable WAITING/cancel/failed,
-8 bounded fragments in flight и authenticated BUSY/retry для двух отправителей.
-Ordinary Node v4 media CONTROL ещё не включён; этот release не закрывает N3/N7.
-Exact source full UNIT Python286/Origin11/все JS PASS; root real EMS/S-TURN
-source-overlay mobile **19/19** и video **21/21**, 134/134 loaded source responses
-в каждом, page errors 0; expanded file **21/21**, Saved **6/6** и concurrent
-receiver **23/23** scoped agent gates PASS.
-[Root source evidence](docs/evidence/2026-10-08/qa-media35-root-source.json).
-
-Root retained synthetic `.34` → `.35` active controlling SW/page upgrade:
-**6/6 actual UI PASS**, identities обоих Accounts, DeviceRoot row и ciphertext
-истории/peer/secrets/outbox/pairing сохранены; новые file stores добавлены,
-registry Accounts штатно перешифрованы при login. Первый harness reload пересёк
-автоматический controllerchange navigation и дал ERR_ABORTED; тот же профиль
-без reset повторно проверен PASS. Deployed media/file gates `.35` частичные, остановлены на checkpoint;
-Android latency и full Node cutover не объявлены завершёнными.
-
-**PUBLIC-WAIT-35 OPEN:** пользователь снова сообщил бесконечное
-«Ожидаем подтверждения». Root на exact deployed `.34` обычный PUBLIC
-Request/Accept/Confirm/key/two-way chat **13/13 PASS**, page/SW34,140/140 source
-exact. Отдельный labelled drop-one-CONFIRM seam дал временный accept_sent;
-автоматический повтор ACCEPT восстановил обе стороны за **36,668 с**, затем
-actual key/two-way messages PASS. Это не доказанная причина постоянного
-зависания. Один navigation harness race до Accept сохранён отдельно; на тех же
-retained profiles continuation **7/7 PASS**. Owner n4_recovery проверяет coupling
-pull/drain/resume и signed expiry; отсутствие ответа о версии/стороне не
-заменяется предположением и не закрывает bug.
-
-`.33` грузит `call_session.js` детерминированно и закрывает Android
-`CallSignalingSession` при звонке/файле; video-toggle запрашивает камеру по клику
-и согласует видео в текущем S-TURN звонке. Независимая deployed Chromium
-приёмка на двух fresh synthetic PRIVATE Accounts: **21/21 video UI** и **19/19
-mobile media UI** PASS; page/active SW `.33`, каждая проверка сверила 130
-загруженных source responses с exact SHA, page errors 0. Receiver декодировал
-38 RTP video frames через relay, fingerprint сохранился; call подключился,
-file download hash совпал, voice/circle расшифрованы и доставлены.
-[Публичный deployed отчёт](docs/evidence/2026-10-08/qa-media33-root-deployed.json).
-До публикации source-overlay mobile seam выявил один intermittent voice timeout
-после звонка/файла: decrypt button не появился за 180 с; повторные seam/normal
-source и deployed mobile прошли. Причина не доказана, latency bug **OPEN**;
-Android пользователя `.33` отдельно не проверен. Профиль и данные пользователя
-не сбрасывались. Full `tools/test_all.py` на release source: Python 286,
-Origin 11 и все JS suites PASS с Python3.12/Node24.19.0.
-
-Исторические состояния до `.30`
-[архивированы](docs/archive/2026-10-08/CURRENT_HANDOFF_PRE30_SECTIONS_2_3.md).
-
-**ACCOUNT-DELETE-01 после `.34` deploy:** прежняя кнопка обещала полное
-удаление, но удаляла только registry pin. Изолированный узкий
-fail-closed fix `4f65473...` интегрирован как `e67860a...` и вместе с release
-`.34` опубликован в source и production exact `afab8ed187c6312a81b7dda46c29ff9e45da6d9e`:
-видимый отказ без изменения DB, keys, registry. Root independent source-overlay
-на двух fresh synthetic Accounts **8/8 UI PASS**, 58 local source hashes exact
-Git, page errors 0; [evidence](docs/evidence/2026-10-08/qa-account-delete33-integrated-source.json).
-Deployed fresh synthetic Account A/B **8/8 actual UI PASS**, wrong key denied,
-оба history и identity pin сохранены, page errors 0, page/active SW `.34`;
-[deployed evidence](docs/evidence/2026-10-08/qa-account-delete34-deployed.json).
-Full `tools/test_all.py` на release source PASS (Python286/Origin11/все JS).
-Полное authenticated Account erasure
-остаётся OPEN. Нельзя стирать общий `dm_gamma_vault` или терять signing identity
-pin другого/того же Account ради косметического PASS.
-
-**Тесты `.32` source:** Python **286**, Origin **11** и все JS suites
-`tools/test_all.py` PASS с Python3.12/Node24.19.0, включая MIME, captured
-recorder/chat alias, late file terminal state и exact PoW proof suites. В synthetic
-Chromium/IndexedDB history-counter fixture PASS: сохранение счётчика при 0x01/0x03,
-запрет перезаписи занятого alias, atomic CAS, fail-closed на чужих/неполных
-строках. Initial 0x01 раньше обнулял `msgCount` при оставшихся ciphertext —
-реальный дефект воспроизведён и закрыт для новых переходов.
-
-**Реальный тестовый Account пользователя в CDP9449:** обновлён на `.30` без
-reset. ID, pairing contribution и контакт неизменны. Перед ручной операцией
-сделан protected encrypted raw-vault backup вне Git (`0600`); read-only proof
-подтвердил ровно три непрерывные принадлежащие этому чату зашифрованные строки
-и `msgCount=0`. Guarded CAS поднял только счётчик до 3; ciphertext сообщений
-и peer-row остались побайтно прежними. Все три строки снова видны в UI,
-входящее audio расшифровывается по реальной кнопке. Одна отправка реальной
-кнопкой SEND добавила seq4, старые строки сохранены. Статус **SENT**, не
-аутентифицированное DELIVERED/READ; ответа собеседника пока нет. Не повторять
-отправку автоматически на основании одного этого статуса.
-
-**Баг пользователя `readAlias`/«Запись не отправлена»:** реальный fresh
-source-overlay `.31` browser до исправления воспроизвёл задержанный modal
-`Cannot read properties of undefined (reading 'getAlias')` после записи и
-перехода в «Избранное». Запись уже сохранялась в encrypted pending intent;
-ошибка возникала при добавлении истории через captured vault, которого нет
-в WeakMap `DmashChatPassword`. Исправлен `location` для собственного guarded
-alias snapshot и сохранён парольный L3 alias. Простой `install(vault)` вызвал бы
-вложенный shared history lock. Предыдущий `.30` MIME parser также отвергал
-допустимые параметры MediaRecorder; `.31` исправил его без изменения байтов
-записи. Никакой reset реальных Account/keys не выполнялся.
-
-**Независимая deployed `.31` browser acceptance:** два новых synthetic PRIVATE
-Account, реальные QR/[+]/key exchange/text/voice/circle/Saved/reload UI actions
-**22/22 PASS**. Page и active controlling SW `.31` до/после reload,
-**268/268** загруженных файлов exact `be6a1d9...`, ошибок страницы/консоли 0.
-Audio/mp4 29,565 B и circle 162,353 B прошли durable intent → EMS S-TURN →
-receiver decrypt/playback; sender увидел два authenticated DELIVERED, сохранил
-по одному voice/circle в истории обеих сторон после Master+Account reload,
-освободил retained media bytes. Задержанный FileReader завершился при открытом
-«Избранном» без modal. Это media/alias приёмка, не полный Node/N4 DONE.
-Пользователь подтвердил: на Android `.31` голосовое отправляется без прежней
-ошибки, но доставляется **более минуты**. В отдельном exact `.31` desktop
-браузерном замере 29–31 KiB voice дошло за 11,625 с, из них 9,489 с заняло
-S-TURN admission/PoW, а локальная запись/история — около 0,1 с. Причина именно
-минутной задержки на Android пока не доказана; performance bug открыт.
-
-**Независимая deployed `.32` browser acceptance:** exact `042d580...`, два
-новых synthetic PRIVATE Account, реальные QR/[+]/key/text/voice/file UI actions
-**24/24 PASS**, 128/128 обычных загруженных файлов exact SHA, page и active
-controlling SW `.32`, ошибок страницы/консоли 0. Для `call_admission_worker.js`
-и импортируемого `resource_pow.js` отдельно сверены served bytes и active SW
-CacheStorage с exact SHA; browser Worker выполнил WebCrypto-проверенный proof.
-Voice 30,532 B дошло и воспроизведено у получателя с sender receipt за 4,127 с
-от завершения записи; ticket/admission занял 2,052 с. File 1 MiB+13 B был
-проверен на обеих сторонах, receiver download SHA совпал с исходным. Поздний
-нативный DataChannel error через 90 мс после verified completion больше не
-стирает успешный статус. Первый deployed QA запуск завершился ошибкой только
-из-за чтения response body уже закрытого Worker; исправленный independent
-collector прошёл exit0 на новых профилях. Физический Android `.32` ещё ждёт
-ответа пользователя; N3/N4/N7 целиком и весь план не DONE.
-
-**Предыдущая `.29` independent deployed acceptance:** 27/27 continued actual
-controls PASS для public Request/Accept/Confirm, текста, трёх voice notes,
-кружка, offline/reload/retry и защищённого удаления чата; page/active SW `.29`,
-206 loaded responses exact `5a2439834a2fc22db8f6ecd0b9674d533397ea8a`.
-Это v3 migration path и N4 safety-only, не ordinary Node DONE. Дополнительный
-fresh `.29` browser-first проход: calculator 24/24, Account lifecycle 9 PASS/1
-FAIL, Saved Messages/media/master 27/27, Node remove-retry 6/6 PASS. Отдельный
-1 MiB+13 B реальный file transfer — sender показывал «Передано и проверено»,
-receiver `File channel failed`: этот terminal-state баг закрыт узкой deployed
-`.32` browser приёмкой выше, но общий N7 остаётся PARTIAL. Account remove UI обещает
-стереть всю историю, но повторное создание того же synthetic Account показывает
-старое сообщение: `ACCOUNT-DELETE-01` открыт; production данные не удалялись.
-Полная матрица и ограничения — [BROWSER_QA.md](BROWSER_QA.md).
-
-**Backend S-TURN:** EMS capability `DMASH_CAN_S_TURN=1`,
-`DMASH_CAN_RELAY_BLOB=1` только при реальном health. Предыдущие protected
-backend snapshots `/root/dmash-runtime-backups/sturn-gateway-gate-20261008T034751Z`
-и `/root/dmash-runtime-backups/backend-exact-20261008T035123Z` вне Git;
-три SQLite quick_check и identity hashes были проверены при обновлении.
-`.32` не изменил Node backend/DB/keys. Production exact Node profile —
-`wss://stage-api-ems.d-mash.ru/mesh/v4` с отдельно проверенным NodeID pin;
-старый `/dmp-c/v3` остаётся временным migration path, не скрытым fallback.
-
-## 3. Реальный прогресс и незакрытые блокеры
-
-Unified Node foundation и реальный Python→browser→Python transit уже есть.
-Новый изолированный **Core/public→NodeHost→N4→AppCipher/history** synthetic
-Chromium прогон exact candidate `0274789...` PASS: signed public pairing,
-post-ACTIVE restart, two-party confirmed N4, encrypted text с durable history,
-Account switch/root reopen; 100 source hashes unchanged. У него пока
-presentation stub: обычный production Account/contacts/chat UI **не** переведён
-на NodeRuntimeHostV4. Existing contact/state/mailbox authenticated migration,
-locked Account, receipt-backed durable outbox и запрет v3 fallback остаются
-обязательными для N3. Агент продолжает isolated UI/loader cutover; интеграцию
-и browser/deployed acceptance проверяет лид отдельно.
-
-Изолированный full-shell UI candidate `4b7f407...` проверен настоящими
-кнопками на synthetic профилях: managed Node пережила Account logout,
-публичный запрос появился в глобальной панели до Account login, существующий
-Account принял и подтвердил его. Ранее обнаруженный повторный `CONNECT` к уже
-authenticated Node устранён с idempotent reuse только того же URL/peer и
-fail-closed password repeat. Продолжение подтвердило genuine N4 `ESTABLISHED`
-и активный route proof у обеих сторон. Оба направления текста фактически
-расшифрованы и durable committed, но B→A не появился за 45 с в UI; один текст
-дублировался в DOM. Protected snapshot доказал две разные operation ID и по
-две корректные history rows, без DB-дублей. Причина UI: Node callback вызывал
-`Core.loadChat(true)` (загрузку старой страницы), а не обновление текущей;
-узкий fix `4b7f407...` теперь прошёл same-state source-overlay browser:
-8 реальных UI этапов PASS, прежние identities/wrapped root сохранены, два
-старых сообщения и новые тексты в обе стороны видны ровно по одному разу;
-230/230 loaded response hashes exact, page errors 0. Это не deployed cutover.
-Browser profiles сохранены в protected off-Git snapshots; reset реальных
-identities не выполнялся. Текущий Node App contract пропускает только
-text: typed media/call S-TURN control через N4 ещё не проведён; полный cutover
-контактов в production не готов, скрытый v3 fallback запрещён.
-
-Полный N4 recovery **не завершён**. Новый genuine two-Worker/Python loss fixture
-прошёл lost FINAL/ACK-only и restart, но при one-sided state loss застрял:
-requester `INIT_PREPARED`, responder `RESPONDER_PENDING`, финального
-подтверждения нет. Timestamp trace показал: после reload challenge был queued
-немедленно, но requester получил его лишь через ~169 с; после доставки
-INIT/PROOF/FINAL прошли примерно за 12 с. Старая grant/route cache — гипотеза,
-подтверждённая транспортная задержка, а не остановка криптографического автомата.
-Изолированный bounded grant refresh candidate `d678d9a...` сохраняет pinned
-cert/binding, ограничивает reuse 15 с и освобождает owner-scoped старые handles
-после in-flight send. UNIT/quota и real two-Worker/Python browser PASS:
-one-sided active-state loss восстановлен gen1→2 за 46,7 с вместо прежнего
-timeout180 с; prepared grants по одному на сторону. Это узкий recovery gate,
-не весь N4 fault matrix и не deployed ordinary UI. Node Inbox `seen`
-tombstone не позволяет выдавать повтор старого application envelope за новый
-доставленный ACK; нужен аутентифицированный bounded ACK request/replay либо
-эквивалентное durable решение, без удаления tombstone или повторного seal.
-Изолированный ACK/outbox candidate имеет synthetic Chromium/IndexedDB и Node
-UNIT для authenticated receipt, lost ACK replay и fault/crash ordering. Отдельный
-real browser с двумя managed Worker, Python Node и synthetic Account проверил
-потерю первого ACK после recipient history: свежий outer op с тем же inner
-ciphertext и grant прошёл через Inbox tombstone, аутентифицированный ACK
-перевёл sender PENDING→DELIVERED и освободил outbox; page errors 0. Это isolated
-browser PASS, ещё не merged/deployed ordinary UI acceptance. Pending intent
-для нового offline peer теперь изолированным candidate `608abcb...` записывается
-вместе с atomic PENDING history до сети и отдаёт UI результат за ~0,23 с на
-genuine browser fixture. Но расширенный real rekey gate выявил старый `APP_ACK`
-во время восстановления: Inbox повторил кадр, а ещё не ESTABLISHED App session
-вернул `APP_SESSION_NOT_ESTABLISHED`. Узкий `a5541e3...` сохраняет такой
-authenticated frame до retry. Combined exact `f0ece74aa3dc872d5eb5e1e9872e6ba134448f23`
-включает bounded route re-probe 0/5/15 с, deadline30 с и owner cancellation.
-Два genuine Chromium/two managed Worker/separate Python Node gates **PASS**:
-lost FINAL/first ACK и односторонняя потеря активного состояния восстановлены
-как gen2, один логический recipient history, новый ciphertext и authenticated
-ACK→DELIVERED; отдельно первое сообщение при offline recipient возвращает
-local encrypted PENDING <5 с, после same-identity rejoin доставлено один раз и
-ACK освобождает outbox. [Публичные metadata](docs/evidence/2026-10-08/qa-n4-fast-pending-rekey-offline-browser.json).
-Это direct synthetic runtime, не обычный UI; full fault matrix, CONTROL,
-authenticated state/mailbox migration и deployed acceptance остаются OPEN.
-N4 candidate не интегрирован/не опубликован.
-
-N0 endpoint/privacy и threat model, N2 no-bypass failover на текущем SHA,
-N5 verifier/legacy exposure/PCS/PQ/security, N6 password/installer, N7 file/call
-полная приёмка и N8 migration/rollback/полный UI01–UI14 остаются PARTIAL.
-N7 video-toggle на deployed `.32` воспроизведён реальными кнопками: audio call
-через relay работает, но после 📷 `getUserMedia` не вызывается повторно,
-локальных и удалённых video tracks нет и ошибки в UI нет. Причина в audio-only
-`_setupMedia` плюс `toggleVideo`, который только переключает уже существующий
-track; mid-call renegotiation не было. `.33` уже прошёл independent deployed
-video RTP/browser gate выше; физический Android и Node-integrated N7 остаются
-непроверенными.
-Новое явное требование пользователя для N7: подтверждённый контакт получает
-файлы автоматически, без согласия на каждый файл; файл остаётся в переписке
-как долговечный зашифрованный элемент с доступным preview/open, а отправитель
-видит durable статус/повтор после offline/reload. Никакой тихой загрузки в ОС.
-Агент готовит отдельный Account-owned encrypted file store/intent и quota,
-receiver commit должен предшествовать authenticated ACK; текущая ephemeral
-панель «Принять/Сохранить файл» это требование не выполняет. Изолированный
-first real UI gate auto-receive/inline generic 1 MiB+13 B и WAV 16 MiB прошёл,
-но 16 MiB заняли **163,6 с**: ~154,6 с из них 512 stop-and-wait ACK по 32 KiB,
-а AES/vault/hash — доли секунды. Candidate `79974e7...` допускает до 8
-bounded фрагментов в полёте; targeted UNIT и повторный genuine browser gate
-**17/17 PASS**, 16 MiB за **27,330 с** (~6× быстрее), внутри file-chunk ACK
-13,222 с (~1,27 MB/s), source overlay `.32`/SW blocked, page errors 0.
-Window16 отдельно дал 17/17, но ACK span 14,750 с и file-send→complete 19,158 с
-против 19,335 с у Window8: существенного byte-phase выигрыша нет, выбран
-Window8. Root independently cherry-picked Window8 into `.34` base as
-`b4db71b...`; full Python286/Origin11/все JS PASS и integrated source-overlay
-actual UI **17/17 PASS**, 268/268 loaded source responses exact, page errors 0,
-1 MiB+13 B за 3,684 с и 16 MiB WAV за 19,518 с в этом прогоне;
-[metadata](docs/evidence/2026-10-08/qa-n7-integrated34-root-source.json).
-После него `b8f285f...` добавил authenticated bounded `RECEIVER_BUSY`: three-profile
-source gate23/23 PASS, второй sender WAITING→auto retry→one delivered card.
-На exact6a `.35` expanded generic/audio/image/video previews/saveSHA, receiver
-low-free estimate seam, offlinecancel и reload21/21 PASS, Saved6/6 PASS;
-[metadata](docs/evidence/2026-10-08/N7_EXPANDED_SOURCE35_QA.md). На
-Android и deployed Node это пока не проверено. Пользователь просит
-рассмотреть передачу файлов без WebRTC. Текущий браузер не имеет raw TURN
-socket API; `/signal/v1` ограничен signaling JSON, не bulk bytes. Отдельный
-bounded binary WSS `/relay/v1` в EMS backend технически возможен, но требует
-нового протокола/деплоя и может не ускорить передачу из-за TCP. Сравнить
-ещё один bounded window/chunk gate и физический Android до транспортного
-выбора; сохранить authenticated Account CONTROL, E2EE, локальное хранение и
-sender-held offline bytes.
-[Публичные metadata](docs/evidence/2026-10-08/N7_PIPELINED_FILE_SOURCE_QA.md).
-N7 OPEN.
-`CURRENT_HANDOFF.md` и [BROWSER_QA.md](BROWSER_QA.md) обновлять на следующем
-checkpoint по фактам, не подменяя deployed результат UNIT или synthetic PASS.
-
-## 4. Полный остаток N0–N8
-
-| Этап | Статус | Остаток до настоящего DONE |
-|---|---|---|
-| N0 | PARTIAL | Endpoint/runtime threat model и наблюдаемые различители; миграционные gates; доказательства приватности, а не только общий role |
-| N1 | PARTIAL, ядро реализовано | Свежая full interop/production policy матрица, provision/config integration, общий descriptor; закрепить текущие fixtures в CI |
-| N2 | PARTIAL, browser transit реализован/исторически проверен | Повторить no-bypass browser transit на текущем SHA; failure/alternative path, fairness/load/loops, local terminal/transit trace comparison |
-| N3 | PARTIAL, основной следующий этап | Ordinary UI→Node host; public/private Account/contact mapping; multi-account/locked/public event; durable Node mailbox grants; ownership-preserving existing-state migration |
-| N4 | PARTIAL | Full per-peer state machine, replay-safe recovery, stable ordinary outbox IDs/receipts/backoff, quarantine/retry; exhaustive fault/collision/epoch/crash matrix |
-| N5 | PARTIAL | Exposure/verifier/dependency/sidecar audit; authenticated storage/mailbox migration; fresh X25519 PCS + verified hybrid PQ suite/provenance; compromise tests/crypto review |
-| N6 | PARTIAL | Node resource password policy до/после auth, directory/descriptor/UI wiring, installer password/STURN flags, repeat install/credential change/rollback; минимальные service privileges |
-| N7 | PARTIAL | Calls/files/wake/invitations через единую Node; signaling privacy/fingerprint binding; video/mobile, files integrity/resume/cancel/streaming, ringtone/caller policy, truthful statuses |
-| N8 | PARTIAL | Вся таблица раздела 13 плана на exact SHA; реальные migration/backup/restore/rollback; CI/vendor/security; итоговая приёмка без подмены узкого PASS полным DONE |
-
-Compatible A/B→N1; C/D→N3 (directional auth и universal mailbox);
-E→N3 (local delivery, сетевой Device убирается); F/G→N2/privacy;
-H→N6 (password gate для Nodes, не DEVICE-only); I/J/K→N7;
-L→N4/N5; M→N8. Эти группы не считаются завершёнными из-за зелёного v3 regression.
-E6: Saved Messages и password-protected local history сохранять; отдельный
-compromise model, versioned Argon2id/opaque handles/Worker/WASM/storage migration
-ещё требуют доказанной реализации. Вложения Saved Messages — отдельный backlog,
-не новое обязательное требование. Полный процент выполнения не установлен:
-план не завершён, самый большой architectural blocker — N3 cutover/migration.
-
-Приоритетные неисправности/риски после переноса:
-
-1. Долгая готовность private routes после public/private pairing: повторяющиеся
-   Route unavailable/SOS, затем eventual success. Снять timeline REGISTER_ROUTE,
-   probe/bind/status, expiry/reconnect и initial ownership; не просто увеличить timeout.
-2. Existing stale contacts / requests без сохранённого initial ciphertext:
-   readable compatibility есть, автоматическая recovery/migration не доказана.
-3. Offline revoke locator, sender/recipient lock/restart на реальных vaults,
-   encrypted Inbox migration и poisoned-record quarantine/backoff.
-4. Recorded-note max quota/tombstone capacity/expiry/cancellation/mobile storage;
-   mixed versions, full reorder/crash points и actual v4 delivery. Current unit
-   fault storage controlled, не production disk/full-browser crash proof.
-5. SDP/ICE confidentiality/authenticated fingerprint binding; capability health
-   должна опираться на real relay health, не только env flag/open port.
-6. Master verifier/repair/emergency/sys_m paths, old BaseNCRH sidecar history и
-   deployed inventory: repository removal не отзывает когда-либо раскрытый secret.
-7. В свежем EMS inventory **dmash-node работает User=root**. Новый installer
-   должен обеспечить минимальные права с доступом к нужному runtime state.
-8. GitHub при последнем push сообщил 7 default-branch dependency advisories
-   (3 high, 1 moderate, 3 low); сами advisories не разбирались. Это не готовый
-   аудит ветки или bundled WASM. Проверить current vendor inventory/provenance.
-
-## 5. Перенос на новый сервер
-
-Перенос source checkout и перенос работающей production Node — разные операции.
-Для новой dev-машины достаточно Git + новая среда; для замены EMS runtime нужны
-отдельные protected state/config transfer и приёмка. Пользователь указал forge-vps как target source/context sync. Этот сеанс
-синхронизирует checkout; migration production runtime/state остаётся отдельной
-операцией.
-
-### Source и среда разработки
-
-Клонировать `transport-v3` с последним handoff commit, зафиксировать `git rev-parse
-HEAD` и убедиться, что runtime base `.24` присутствует в ancestry. Не копировать
-старую macOS `.venv`, `node_modules`, __pycache__, generated files и локальные
-SSH credentials. Python reference: **3.12** (локально 3.12.14), Node.js
-**24.19.0**; браузерные scripts требуют Playwright и Chromium/Chrome.
-
-```bash
-git clone --branch transport-v3 git@github.com:Seriy615/D-MASH.git
-cd D-MASH
-git status --short
-git rev-parse HEAD
-python3.12 -m venv .venv
-.venv/bin/python -m pip install -r requirements-test.txt
-.venv/bin/python tools/test_all.py
-```
-
-Зависимости test runner в requirements-test.txt, backend/Origin requirements;
-`tools/vendor/package-lock.json` — vendor build lock. Python test dependencies
-не являются полным frozen dependency lock: воспроизводимость нужно усилить.
-На Linux задать `DMASH_CHROME` и `DMASH_PLAYWRIGHT_MODULE` по фактически установленным
-путям; пути `/Users/afsvu/...` из архивных команд не переносимы. Browser harness
-loopback и real WSS должны оставаться отдельными видами evidence.
-
-### Что хранится вне Git и обязательно сохраняется при runtime migration
-
-- Node identity и её sidecars/BaseNCRH; существующие runtime DB, registration /
-  peer directory / mailbox / lease state и соответствующие encryption keys.
-- `/var/lib/dmash-node-v4`: keys/BaseNCRH/relationships/persistent state; directory
-  сейчас 0700. Existing DB без соответствующих keys должна fail closed.
-- Host credentials/password equivalents, notification secrets, nginx/TLS,
-  systemd units/drop-ins, firewall, service owner/permissions.
-- `/etc/dmash-sturn/rest.secret`, `node.env`, `turnserver.conf`, unit; TURN shared
-  secret не генерировать заново, если переносится существующая конфигурация.
-- Browser Account/root/registry/history/inbox state остаётся на устройстве.
-  Git clone не переносит IndexedDB. Смена origin/domain теряет доступ браузера к
-  прежнему storage namespace; нужен явный authenticated export/import plan.
-
-SQLite backup должен быть согласованным: корректный backup API/остановка writers,
-учесть WAL/SHM. Не копировать только один `.db` из live-changing directory и не
-удалять старый ciphertext «для успешного старта». Сначала доказать чтение и owner
-proof на новом runtime, затем переводить трафик. Все secrets передавать protected
-каналом вне Git; в хендоффе сохранены только paths/mode/metadata, не значения.
-
-### EMS reference inventory, не шаблон безусловного deploy на новый хост
-
-- dmash-node: `/etc/systemd/system/dmash-node.service`, WorkingDirectory
-  `/opt/dmash-node/backend`; drop-ins `40-node-v4.conf`, `50-sturn.conf`,
-  `notifications.conf`, `routing-discovery-v1.conf`.
-- v4 enabled via `DMASH_NODE_V4_ENABLED=1`, state directory above; TLS proxy
-  `/mesh/v4` → local backend. Детали: [NODE_V4_DEPLOYMENT.md](NODE_V4_DEPLOYMENT.md).
-- dmash-sturn: User/Group turnserver; UDP/TCP **3479**, relay UDP **55000–55999**,
-  current external IP **85.198.64.183**; nginx `/signal/v1` → `127.0.0.1:18080`.
-  Existing global coturn **3478** оставлен отдельно; не заменить его static auth
-  shared-secret mode. Детали: [EMS_STURN_DEPLOYMENT.md](EMS_STURN_DEPLOYMENT.md).
-- node.env/rest.secret 0600 root; turnserver.conf 0640 root:turnserver. Новый
-  external IP, TLS names, firewall/NAT и TURN URLs должны быть проверены заново.
-- EMS Git owner — codex, хотя path содержит jcode. Историческую команду
-  `su - jcode` не повторять вслепую; проверить реального пользователя нового хоста.
-- EMS `tools/get_commit.sh` — host-local operational script, **не tracked в Git**.
-  Его нужно отдельно сохранить/проверить перед переносом operational workflow.
-  Текущий checksum и mode лежат в сохранённом inventory. Скрипт не включался
-  автоматически в source bundle, его содержимое не проверялось на secrets.
-- PWA backup `.24`:
-  `/srv/messenger.d-mash.ru/backups/manual-rollback-20261007T231929Z` (UTC имя).
-  STURN backup root `/root/dmash-sturn-backups`; отдельные Node/backend backups
-  описаны в deploy utility. Это paths существующего EMS, не готовый off-host backup.
-
-Если только dev переносится — не запускать старые hardcoded EMS utilities как
-installer нового сервера. Если переносится runtime, адаптировать paths/service
-owner/proxy/ports, сохранить identities и state, проверить rollback до cutover.
-Публичные NodeID pin брать независимо от WSS peer, не из неподтверждённого
-самопредставления. Production identity не клонировать в случайные test Nodes.
-
-## 6. Как воспроизвести и что делать первым
-
-Продолжение после явного resume: сначала проверить сохранённые worktrees и
-точные SHAs контрольной точки выше. Production PWA `.37` проверять против
-`3a784714060f5645d1b6317c87c59285e1f95b39`, не против более нового docs/tools HEAD.
-Reference Node24: `/tmp/dmash-browser-tools/node-v24.19.0-linux-x64/bin/node`,
-Playwright `/tmp/dmash-browser-tools/node_modules/playwright`, Chromium
-`/home/jcode/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome`.
-Полный suite: `.venv/bin/python tools/test_all.py` с Node24 в PATH.
-Production verifier и безопасный fast-forward publisher:
-`/tmp/dmash-verify37.py`; publisher использует temporary bare + incremental
-Git bundle через EMS, normal fast-forward. Старые expected-base/publish SHAs
-не переиспользовать без проверки фактического remote.
-
-Raw evidence и encrypted synthetic snapshots вне Git,0600:
-`/tmp/dmash-qa-mobile35-inline-repeat.json`,
-`/tmp/dmash-mobile35-inline-profile{0..5}-{0,1}.json`,
-`/tmp/dmash-root35-retained-media.json`,
-`/tmp/dmash-root35-retained-profile-{0,1}.json` — **НЕ backup**: secondary
-CDP storageState вернул пустые origins (36B). Использовать только реальные
-owned-context snapshots выше. Post-media read-only raw IDB export:
-`/tmp/dmash-root35-manual-profile-{0,1}.json`,22.6MB каждый,0600, четыреDB
-на профиль; Blob/typed bytes закодированы, restore fixture НЕ проверен. Не импортировать пустую secondaryCDP запись как restore.
-Browser helper `/tmp/dmash-root35-retained-media.cjs`: настоящие клики,
-synthetic ONLY; snapshots нельзя применять к реальным Accounts.
-Завершённые старые browser/test processes закрыты; старые handles не считать
-живыми без проверки. Root текущий ordinary PRIVATE gate сохраняет CDP9485/
-keeper77016, same-profile continuation60861; НЕ закрывать до свежего protected
-экспорта и явного handback. Raw reports /tmp/dmash-private-canonical-oct16/.
-Original QR hidden-first locator FAIL сохранён; visibleIMG/copy/inspect/request
-PASS в same-profile continuation. Это не product QR failure. Ordinary text,
-reload/no-chat delivery ещё не приняты.
-
-Основные scripts: `tools/test_node_transit_browser.cjs` +
-`node_transit_v4_browser_server.py`; `test_node_worker_ownership_browser.cjs`;
-`test_node_inbox_browser.cjs`; `test_worker_v4_remote.cjs` (explicit WSS + pinned
-NodeID); `test_node_v4_remote.py`; `test_secure_registry_browser.cjs`;
-`test_recorded_media_browser.cjs`; `test_call_browser.cjs`; `test_file_browser.cjs`.
-Перед запуском прочитать их env/arguments: это не общий одинаковый CLI.
-`diagnose_recorded_media_size.cjs` намеренно воспроизводит старый oversized
-single-packet failure и может выходить 1; не считать его release regression PASS.
-`tools/verify_ems_revision.py FULLSHA --host HOST --pwa-root PATH --node-root PATH`
-проверяет deployed source, но не state/security/поведение.
-
-Порядок продолжения с нового сервера:
-
-1. Прочитать этот файл, AGENTS.md, полный план и v4 specs; организовать работу
-   агентов и browser-first обход каждой кнопки по разделу 7. Проверить ветку/source,
-   новый runtime target и protected state inventory. Повторить baseline tests,
-   real browser transit/Worker/inbox и exact deployed acceptance.
-2. Сделать **реальное ordinary Account→local Node Worker→EMS→Worker→Account**:
-   root lifecycle, local binding/certificate/peer mapping и Account-owned payload.
-   Не ограничиваться ручным attach в test harness и не засчитать v3 delivery.
-3. Перенести private/public contact Request/Accept/Confirm и old binding/mailbox
-   ownership с versioned migration, restart/locked/multi-account tests. Согласовать
-   removal horizon v3 migration gateway; не оставить скрытый постоянный fallback.
-4. Закрыть N4 recovery/state machine и persist/send fault matrix; затем N5
-   криптографические/security gates, N6 provisioning, N7 Node-integrated media/wake,
-   N8 full matrix. Сохранять совместимые A–M/E6, не вводить DHT/UI redesign.
-5. Commit/push без force; deploy только exact tested SHA на актуально назначенный
-   host, проверка source + page/SW + real acceptance + documented rollback. Не
-   сливать main только из-за unit PASS и не отмечать полный план DONE по `.24`.
-
-## 7. Обязательный способ работы следующего сеанса
-
-**Работать через агентов.** Основной агент — оркестратор, тимлид, интегратор и
-тестировщик. Пользователь явно разрешил и потребовал delegation: тимлид разбивает
-работу на конкретные участки, выдаёт агентам задачи по protocol/Node, Account/
-contacts/ratchet, UI/media, tests/migration и собирает результат. Не заставлять
-одного исполнителя самостоятельно реализовывать весь план. Модели выбирать из
-доступных без выдуманных требований к конкретной модели; каждый агент получает
-актуальный full scope и выделенный участок. Параллельные edits изолировать
-worktrees/branches либо явно непересекающимися файлами, не затирать чужую работу.
-Тимлид проверяет diffs, конфликты контрактов и итоговый product flow; сообщение
-агента «done» не заменяет самостоятельную приёмку и не означает весь план DONE.
-
-**Всё проверять браузером. Перед началом новой разработки проверить каждую
-кнопку и доступный пользовательский сценарий.** Не ограничиваться unit tests
-или вызовами Core из console. Оркестратор ведёт BROWSER_QA.md: inventory controls,
-исходные условия/версия страницы и active SW, action, expected/actual, evidence,
-severity, назначенный агент, fix SHA и browser retest. Динамические controls,
-модальные окна, dropdown/context menu, disabled/loading/error/cancel состояния
-тоже входят в inventory. Не засчитывать недоступное/непроверенное как PASS.
-
-Минимальный обход: calculator setup/unlock/master/wipe (wipe только fresh test
-profile), Account create/login/logout/switch/recovery, navigation/settings,
-node request/connect/disconnect/password, QR create/scan/import, private/public
-route create/disable/delete, Request/Accept/Confirm/pending cards, every chat
-button/SEND/history/delete/read, Saved Messages/local history password,
-voice/circle record/SEND/cancel/playback/retry/download, call start/accept/decline/
-hangup/audio/video, files request/consent/progress/cancel/complete, notifications
-и все дополнительные найденные controls. Для destructive сценариев использовать
-тестовые Accounts/profiles и согласованный staging target, не пользовательские
-production данные. Реальные click/input плюс видимый результат обязательны;
-console/RTC stats/transport logs — дополнительное доказательство, не замена UI.
-
-Найденные баги воспроизвести, назначить агентам, исправить и повторно проверить
-в браузере на интегрированном состоянии. Проверить два Accounts, public/private
-flows, denied permissions, offline/locked/reconnect, stale SW и актуальные mobile
-limits. Physical phone/WebAuthn и недоступные среды отмечать NOT RUN до настоящей
-проверки. Использовать имеющиеся browser harnesses там, где они покрывают action;
-расширять инвентарь и тесты для непокрытых кнопок. Общая регрессия/crypto tests
-сохраняются; browser-first аудит не сокращает архитектурный N0–N8 scope.
-
-В текущем аудите добавляются QA harnesses/evidence; ui_inventory получил
-изолированное владение node_manager.js/acceptance_fixes.js для UI blockers.
-Полная цель не завершена; после browser-first gate продолжить архитектурный переход.
-Проверять живые handles текущего chat прежде повторного запуска test processes.
+[platform targets](docs/native/2026-10-20/TARGETS.md).
+Документы различают IMPLEMENTED/PARTIAL/PLANNED, UNIT/PROCESS/BROWSER/DEPLOYED,
+historical evidence и новый exact source PASS. Runtime DB/keys/ownership backup
+и rollback не заменяются Git checkout. Лицензии vendor/старого Kyber/WABT/Qt
+не превращать автоматически в MIT; Telegram GPL заимствования учитывать отдельно.
+
+## 7. Обязательный UI-аудит и правила приёмки
+
+Всё проверять реальными browser/UI actions и видимым результатом. Перед новой
+разработкой инвентаризировать и нажать каждую кнопку/меню/modal control, включая
+error/loading/disabled/cancel. [BROWSER_QA.md](BROWSER_QA.md) содержит inventory,
+PASS/FAIL/NOT RUN, page/SW version, reproduction/evidence, bug owner/fix/retest.
+Historical178 control classes:67 scoped PASS/4FAIL/107 NOT RUN; новые узкие retests
+не превращают эту матрицу в all-controls PASS.
+
+Обязательный обход: calculator setup/unlock/master/wipe (wipe только fresh test),
+Account create/login/logout/switch/recovery; navigation/settings; Node request/
+connect/disconnect/password; QR create/scan/import; private/public route create/
+disable/delete; Request/Accept/Confirm/pending cards; все chat SEND/history/delete/
+read и Saved/history password; voice/circle record/SEND/cancel/playback/retry/
+download; calls start/accept/decline/hangup/audio/video; files request/consent/
+progress/cancel/complete; notifications и все найденные дополнительные controls.
+
+Найденные баги назначать агентам, исправлять и повторно проверять на интеграции.
+Проверять два Accounts, public/private, offline/locked/reconnect, denied permissions,
+stale SW/mobile limits. Console/Core calls/RTC stats/unit tests дополняют клики,
+но не заменяют их. Physical phone/WebAuthn отмечать NOT RUN без реального устройства.
+Browser-first аудит не отменяет Node архитектуру и N0–N8. Local done агента не
+закрывает общую цель; не объявлять full DONE по отдельному зелёному тесту.

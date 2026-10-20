@@ -93,7 +93,7 @@ struct JobResult {
 };
 } // namespace
 struct CredentialHost::State {
-    QString profile, accountPath, endpoint;
+    QString profile, accountPath, endpoint, publicNodeId;
     QLockFile lock;
     QLocalServer server;
     QTimer poll;
@@ -138,7 +138,13 @@ struct CredentialHost::State {
             [rpc = daemon](const QString& scope, const QString& method, const QJsonObject& params) {
                 return rpc->call(scope, method, params);
             },
-            registry);
+            registry,
+            [this](const QJsonObject& publicRecord) {
+                auto sealed = broker->sealAccountRegistry(publicRecord).get();
+                if (!sealed.ok || sealed.accountRegistry.size() != 1)
+                    throw account::AccountError(sealed.code.toUtf8().constData());
+                return sealed.accountRegistry.first().toObject();
+            });
         const auto hash = QString::fromLatin1(
             QCryptographicHash::hash(profile.toUtf8(), QCryptographicHash::Sha256)
                 .toHex()
@@ -218,7 +224,9 @@ struct CredentialHost::State {
                               : (supervisor ? "stopped" : "unavailable")}};
         if (supervisor && supervisor->running()) {
             try {
-                r.value["node"] = daemon->call("status", "node.status", {}, true);
+                auto node = daemon->call("status", "node.status", {}, true);
+                node["nodeId"] = publicNodeId;
+                r.value["node"] = node;
             } catch (...) {
                 r.value["nodeState"] = "unavailable";
             }
@@ -385,8 +393,8 @@ struct CredentialHost::State {
         }
         if (method == "account.cancel") {
             const bool rootJob =
-                busy() && (pendingMethod == "profile.import" || pendingMethod == "root.unlock" ||
-                           pendingMethod == "node.enable");
+                busy() && (pendingMethod == "profile.import" || pendingMethod == "profile.create" ||
+                           pendingMethod == "root.unlock" || pendingMethod == "node.enable");
             if (rootJob) {
                 respond(socket, id, lockAndStop());
             } else {
@@ -422,11 +430,27 @@ struct CredentialHost::State {
         pendingId = id;
         pendingMethod = method;
         pendingEpoch = jobEpoch;
+        // Capture the Account operation epoch on the request thread, before a
+        // queued cancellation can run and before the coordinator thread starts.
+        std::shared_ptr<std::future<account::AccountResult>> creation;
+        if (method == "account.create")
+            creation = std::make_shared<std::future<account::AccountResult>>(
+                account->createAccount(params.value("identity").toString(),
+                    params.value("password").toString().toUtf8(), params.value("displayName").toString()));
+        std::shared_ptr<std::future<broker::BrokerResult>> freshRoot;
+        if (method == "profile.create")
+            freshRoot = std::make_shared<std::future<broker::BrokerResult>>(
+                broker->createProfile(params.value("pin").toString().toUtf8(),
+                    QDir(profile).filePath("original-profile.backup")));
         const bool currentNodeRunning = supervisor && supervisor->running();
-        pending = std::async(std::launch::async, [this, method, params, currentNodeRunning] {
+        pending = std::async(std::launch::async, [this, method, params, currentNodeRunning, creation, freshRoot] {
             JobResult out;
             try {
-                if (method == "profile.import") {
+                if (method == "profile.create") {
+                    auto opened = freshRoot->get();
+                    out.result = gate(opened);
+                    out.unlocked = out.result.ok;
+                } else if (method == "profile.import") {
                     auto opened =
                         broker
                             ->importProfile(params.value("profile").toObject(),
@@ -470,6 +494,8 @@ struct CredentialHost::State {
                     }
                 } else if (method == "account.listAccounts")
                     out.result = account->listAccounts().get();
+                else if (method == "account.create")
+                    out.result = creation->get();
                 else if (method == "account.login")
                     out.result = account
                                      ->login(params.value("identity").toString(),
@@ -567,6 +593,8 @@ struct CredentialHost::State {
                          authenticatedStatus.value("policyRevision").toInteger() ==
                              qint64(finished.transport.control.policyRevision),
                      "NODE_TRANSPORT_POLICY_MISMATCH");
+                publicNodeId = credential::nodePublicId(QByteArray::fromHex(
+                    finished.transport.transportBundle.value("nodeSeed").toString().toLatin1()));
                 renewalClock.start();
                 QSaveFile policyFile(QDir(profile).filePath("node-policy.json"));
                 need(policyFile.open(QIODevice::WriteOnly) && policyFile.setPermissions(ownerOnly),

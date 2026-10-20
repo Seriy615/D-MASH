@@ -327,6 +327,27 @@ void AccountSqlStore::put(const QString &s, const QJsonValue &key, const QJsonOb
     q.addBindValue(encode(row));
     need(q.exec(), "ACCOUNT_STORE_IO_FAILED");
 }
+void AccountSqlStore::insertRegistryRecord(const QJsonObject& row) {
+    need(!active_ && secureRegistry(), "ACCOUNT_SECURE_REGISTRY_REQUIRED");
+    const auto alias = row.value("alias");
+    need(alias.isString() && !alias.toString().isEmpty() && row.value("blob").isString(),
+         "ACCOUNT_REGISTRY_CORRUPT");
+    begin("dm_registry_secure_v1", {"accounts"}, true);
+    try {
+        need(get("accounts", alias).isNull(), "ACCOUNT_ALREADY_SAVED");
+        QSqlQuery q(db_);
+        q.prepare("INSERT INTO account_rows VALUES(?,?,?,?)");
+        q.addBindValue(database_);
+        q.addBindValue("accounts");
+        q.addBindValue(encode(alias));
+        q.addBindValue(encode(row));
+        need(q.exec(), "ACCOUNT_STORE_IO_FAILED");
+        commit();
+    } catch (...) {
+        abort();
+        throw;
+    }
+}
 void AccountSqlStore::remove(const QString &s, const QJsonValue &key) {
     check(s, true);
     QSqlQuery q(db_);

@@ -1,0 +1,35 @@
+{
+  "suite": "native-Account-idempotent-submit-retry",
+  "status": "AUTHOR_COMPONENT_PASS",
+  "observationHandle": 68856,
+  "terminalExit": 0,
+  "nodeSourceCommit": "a0f54a9",
+  "accountProbeSha256": "85bab6f17ab71171b5b7e867abe17dfb4831e0fc852d2faaab995f46530501fe",
+  "certificateLifetimeSeconds": 172800,
+  "pairingOfferLifetimeSeconds": 3600,
+  "actualAcceptedReplyLost": true,
+  "actualSameOperationRetrySameJobIdAndExpiry": true,
+  "backendForwarded": 16,
+  "recipientAccountExitBeforeConsumption": 73,
+  "historyBeforeReplay": 1,
+  "historyAfterReplay": 1,
+  "historyAfterReopen": 1,
+  "plaintextDigest": "46f45c9dc1c7c981655e96ac92bd18e283054fa51b366714d6dcc477e85fd744",
+  "checks": [
+    "actual job accepted then callback loses reply",
+    "existing handshake outbox retries after actual5s cadence",
+    "same operation returns same native JobLedger id and expiresAt",
+    "long-lived destination expiry is stable across retries",
+    "full actual E2EE and durable Account replay baseline remains PASS"
+  ],
+  "earlierFailure": {
+    "handle": 10693,
+    "phase": "Account-lost-reply-retry",
+    "cause": "test asserted before existing5s handshake retry cadence; no product change or existing deadline increase"
+  },
+  "limits": [
+    "known synthetic signed contact pair, UI pairing NOT_RUN",
+    "Node actor remains pinned a0f54a9",
+    "recipient Node SIGKILL/restart not yet covered"
+  ]
+}

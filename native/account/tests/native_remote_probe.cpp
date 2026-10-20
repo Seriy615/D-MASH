@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QSet>
+#include <QThread>
 #include <atomic>
 #include <cstdlib>
 #include <iostream>
@@ -28,11 +29,17 @@ int main(int argc,char** argv){
    auto imported=broker::CredentialStore::importProfile(credentials,storage,profile,proof,directory.filePath("original.backup"),[]{return true;});
   }
   broker::BrokerService broker(credentials,storage,directory.filePath("control.db"));need(broker.unlock(pin).get().ok,"REMOTE_ROOT_UNLOCK");
-  credential::DaemonRpc rpc;rpc.install(ready);std::atomic<bool> crashBeforeConsume{false};QSet<QString> applications;
+  credential::DaemonRpc rpc;rpc.install(ready);std::atomic<bool> crashBeforeConsume{false};QSet<QString> applications;bool loseSubmitReply=false;QHash<QString,QJsonObject> submitted;int identicalRetries=0;
   account::AccountService::RegistryReader registry=[&](const QJsonArray& rows){auto r=broker.readAccountRegistry(rows).get();need(r.ok,"REMOTE_REGISTRY");return r.accountRegistry;};
   account::AccountService::Transport transport=[&](const QString& scope,const QString& method,const QJsonObject& params){
    if(method=="inbox.commitConsumption"&&crashBeforeConsume&&applications.contains(params.value("recordHandle").toString()))std::_Exit(73);
    auto value=rpc.call(scope,method,params);
+   if(method=="job.submit"){
+    const auto operation=params.value("operationId").toString();
+    if(submitted.contains(operation)){const auto previous=submitted.value(operation);need(previous.value("expiresAt")==params.value("expiresAt")&&previous.value("id")==value.value("id"),"REMOTE_RETRY_CHANGED");++identicalRetries;}
+    else submitted.insert(operation,{{"expiresAt",params.value("expiresAt")},{"id",value.value("id")}});
+    if(loseSubmitReply){loseSubmitReply=false;QThread::msleep(25);throw account::AccountError("ACCOUNT_TRANSPORT_FAILED");}
+   }
    if(method=="inbox.list")for(const auto& row:value.value("records").toArray()){
     const auto record=row.toObject();const auto payload=QJsonDocument::fromJson(record.value("payload").toString().toUtf8()).object();
     if(payload.value("type")=="ACCOUNT_APP_V4")applications.insert(record.value("handle").toString());
@@ -55,6 +62,8 @@ int main(int argc,char** argv){
    else if(method=="send")output(result(service->sendText(peer,command.value("operationId").toString(),command.value("text").toString()).get()));
    else if(method=="history")output(result(service->listHistory(peer).get()));
    else if(method=="contacts")output(result(service->listContacts().get()));
+   else if(method=="armLostSubmitReply"){loseSubmitReply=true;output({{"ok",true}});}
+   else if(method=="retryStats")output({{"ok",true},{"identicalRetries",identicalRetries}});
    else if(method=="armCrashBeforeConsume"){crashBeforeConsume=true;output({{"ok",true}});}
    else if(method=="reopen"){need(service->logout().get().ok,"REMOTE_LOGOUT");service.reset();rpc.install(ready);open();output({{"ok",true},{"sameAccountPublicId",true}});}
    else if(method=="logout"){output(result(service->logout().get()));}

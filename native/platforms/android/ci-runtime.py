@@ -125,6 +125,14 @@ def main():
         # Fixed code only; never echo transport frames or capabilities.
         raise
     finally:
+        # Native host emits only these fixed milestones under this dedicated
+        # tag. Keep no raw logcat, paths, frames or unrelated process messages.
+        stages = {'ENTRY', 'CORE_READY', 'BOOTSTRAP_LOOP', 'BOOTSTRAP_TIMEOUT', 'INSTALL_CALLED', 'INSTALL_REJECTED', 'FD_INSTALLED', 'STOP_REQUEST', 'HOST_ENTER', 'HOST_RETURN'}
+        try:
+            raw = adb('logcat', '-d', '-v', 'raw', '-s', 'DMASH_STAGE:I', '*:S', timeout=10).decode()
+            result['nativeStartupStages'] = [line.strip() for line in raw.splitlines() if line.strip() in stages]
+        except BaseException as error:
+            result['nativeStageCollectionFailureClass'] = type(error).__name__
         (OUT / 'runtime.json').write_text(json.dumps(result, indent=2) + '\n')
 
 

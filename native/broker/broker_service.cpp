@@ -1,4 +1,5 @@
 #include "broker_service.h"
+#include <QDateTime>
 #include <QFileInfo>
 #include <openssl/crypto.h>
 namespace dmash::broker {
@@ -96,6 +97,66 @@ void BrokerService::cancel() {
 bool BrokerService::isCurrentTransportResult(const BrokerResult& result) const {
     return result.ok && result.control.phase == "ACTIVE" && result.operationEpoch == epoch_ &&
            !stopping_;
+}
+std::future<BrokerResult> BrokerService::createProfile(QByteArray pin, QString backup) {
+    const auto requested = epoch_.load();
+    auto secret = std::make_shared<Pin>(std::move(pin));
+    return enqueue([this, requested, secret, backup] {
+        need(epoch_ == requested && !stopping_, "CREDENTIAL_CANCELLED");
+        need(!store_ && !root_ && !QFileInfo::exists(path_), "CREDENTIAL_FILE_EXISTS");
+        const auto token = ++epoch_;
+        auto current = [this, token] { return epoch_ == token && !stopping_; };
+        const auto root = RootCodec::createFreshRecord(secret->bytes, current);
+        auto store = [](const QString& name, const QString& key, QJsonArray rows = {}) {
+            return QJsonObject{{"name", name}, {"keyPath", key}, {"records", rows}};
+        };
+        auto database = [](const QString& name, QJsonArray stores) {
+            return QJsonObject{{"name", name}, {"stores", stores}};
+        };
+        QJsonArray vault;
+        for (const auto& name :
+             {"blind_peers", "blind_secrets", "blind_messages", "pairing_material", "blind_outbox",
+              "blind_files", "blind_file_owners"})
+            vault.append(store(name, "alias"));
+        const QJsonObject marker{{"key", "legacy-migrated"},
+                                 {"done", true},
+                                 {"at", QDateTime::currentMSecsSinceEpoch()}};
+        const QJsonArray rootRows{QJsonObject{{"key", "root"}, {"value", root}}};
+        const QJsonArray metaRows{QJsonObject{{"key", "legacy-migrated"}, {"value", marker}}};
+        QJsonObject profile{
+            {"version", 1},
+            {"inventoryComplete", true},
+            {"root", root},
+            {"ancillary", QJsonObject{{"nativeFreshInstallation", true}}},
+            {"databases",
+             QJsonArray{database("dmash_device_root_v1", {store("device_root", "id", rootRows)}),
+                        database("dm_registry_secure_v1",
+                                 {store("accounts", "alias"), store("meta", "key", metaRows)}),
+                        database("dm_gamma_vault", vault)}}};
+        auto proof = RootCodec::openExisting(root, secret->bytes, current);
+        store_ = CredentialStore::importProfile(path_, key_, profile, proof, backup, current);
+        auto result = success(store_->read());
+        result.committed = true;
+        if (current())
+            root_ = std::make_unique<PreparedRoot>(std::move(proof));
+        else {
+            result.ok = false;
+            result.code = "CREDENTIAL_CANCELLED";
+        }
+        return result;
+    });
+}
+std::future<BrokerResult> BrokerService::sealAccountRegistry(QJsonObject publicRecord) {
+    const auto token = epoch_.load();
+    return enqueue([this, token, publicRecord] {
+        need(token == epoch_ && bool(root_), "ROOT_UNLOCK_REQUIRED");
+        const auto snapshot = store_->read();
+        need(root_->matchesRecord(snapshot.root), "CREDENTIAL_CONFLICT");
+        auto result = success(snapshot);
+        result.accountRegistry = QJsonArray{RootCodec::sealAccountRegistry(*root_, publicRecord)};
+        need(token == epoch_, "CREDENTIAL_CANCELLED");
+        return result;
+    });
 }
 std::future<BrokerResult> BrokerService::importProfile(QJsonObject profile, QByteArray pin,
                                                        QString backup) {

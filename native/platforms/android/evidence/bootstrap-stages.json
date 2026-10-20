@@ -1,0 +1,35 @@
+{
+  "kind": "Android native startup fixed stage diagnostics",
+  "previousRuntime": {
+    "run": 39443522111,
+    "status": "FAIL",
+    "phase": "first-install-bootstrap-read",
+    "failureClass": "TimeoutException",
+    "binderAlive": true,
+    "nativeExited": false,
+    "serviceState": "STARTING"
+  },
+  "logTag": "DMASH_STAGE",
+  "allowedMessages": [
+    "ENTRY",
+    "CORE_READY",
+    "BOOTSTRAP_LOOP",
+    "BOOTSTRAP_TIMEOUT",
+    "INSTALL_CALLED",
+    "INSTALL_REJECTED",
+    "FD_INSTALLED",
+    "STOP_REQUEST",
+    "HOST_ENTER",
+    "HOST_RETURN"
+  ],
+  "checks": {
+    "androidX86NativeCompile": "PASS Qt6.12/CorePrivate NDK27c API28",
+    "runtime": "NOT RUN; diagnostics distinguish missing entry/Qt constructor/bootstrap wait/JNI install/host entry"
+  },
+  "compiledObjectSha256": "55c2699f9ac558fac7540db6be5b489846fd654e6ea73c84c512011fa93ed033",
+  "limits": [
+    "No paths, credentials, frames, descriptors or identities are logged",
+    "No timeout or ready-state semantics changed",
+    "Earlier event-loop fix remains runtime-unaccepted"
+  ]
+}

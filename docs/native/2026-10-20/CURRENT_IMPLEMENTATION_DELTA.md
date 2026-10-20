@@ -41,6 +41,23 @@ The following is the current bounded native state, through integration
 | Android | Actual API35 KVM APK install/launch, disabled Stop/compose/Send, Details controls and background/resume pass after2b293db. [Retest](root-android-kvm-launcher-retest.json). | First native service installation times out. New Account Views/credential service are still WIP; physical ARM64, Doze and full app acceptance NOT RUN. |
 | Windows build | Actual CI now installs Qt/OpenSSL and reaches native C++ compilation. QuickJS VERSION shadowed standard C++ <version>; both target include paths corrected and Linux compile checked. | Fresh actual Windows compile/runtime CI is running; no Windows runtime PASS. |
 
+Remote follow-up `f187474`/`9308218` independently passes root54951 using
+immutable3cf Account/old a0f Node:2day certificate, lost accepted-job reply,
+stable samejobID/expiry, recipient Account73 then NodeSIGKILL/sameprofile restart,
+actual reconnect and history1 across replay/reopen;31transit forwards.
+[Proof](root-native-account-retry-node-restart.json). Earlier root12040 failed
+native admission180s before Account; this remains an unexplained availability
+observation. The accepted fixture uses the same retained Account input, without
+resetting its identity. Ordinary UI pairing and complete N4 are still open.
+
+Fresh setup1930b80 adds explicit profile.create(pin) with zero Accounts and a
+separate optional account.create using existing identity derivation. Root independent
+fresh process and original JS/WASM Root/registry interoperability pass,187sources/
+27artifacts/7libs exact. Cancellation/duplicate/missing-key cases preserve accepted
+state; Saved survives reopen. [Proof](root-fresh-root-account.json). This process
+fixture contains no Node; actual fresh foreign transit before Account and normal
+Create buttons require separate acceptance.
+
 No new file provider, Account crypto suite, network custody ACK or global identity
 scheme is introduced by this checkpoint. The user-facing end state remains three
 usable applications; these component results do not replace that requirement.

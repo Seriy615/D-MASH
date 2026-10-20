@@ -25,13 +25,16 @@ class AccountService final {
     using Transport = std::function<QJsonObject(const QString &routeScope, const QString &method,
                                                 const QJsonObject &params)>;
     using RegistryReader = std::function<QJsonArray(const QJsonArray &encryptedRows)>;
+    using RegistryWriter = std::function<QJsonObject(const QJsonObject& publicRecord)>;
     AccountService(QString accountDatabasePath, Transport transport = {},
-                   RegistryReader registryReader = {});
+                   RegistryReader registryReader = {}, RegistryWriter registryWriter = {});
     ~AccountService();
     // Explicit full inventory package from CredentialStore; never overwrites a target.
     std::future<AccountResult> importProfile(QJsonObject completeProfile);
     std::future<AccountResult> verifyPublishedImport();
     std::future<AccountResult> listAccounts();
+    std::future<AccountResult> createAccount(QString identity, QByteArray password,
+                                             QString displayName = {});
     std::future<AccountResult> login(QString savedAccountIdentity, QByteArray accountPassword);
     std::future<AccountResult> listContacts();
     std::future<AccountResult> sync();

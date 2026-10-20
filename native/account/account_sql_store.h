@@ -17,6 +17,8 @@ class AccountSqlStore final {
     ~AccountSqlStore();
     QString sourceDigest();
     dmash::broker::PublishedAccountImport publishedImportProof();
+    // Insert-only secure registry publication: duplicate identity aliases never overwrite.
+    void insertRegistryRecord(const QJsonObject& row);
     bool secureRegistry();
     QJsonArray stores(const QString &database);
     void begin(const QString &database, const QStringList &stores, bool write);
