@@ -892,3 +892,23 @@ Account; production vault ради QA не удалять.
 Старый exact verifier и независимая deployed gate дополняют это наблюдение.
 Обычная переписка через NodeRuntimeHostV4, полный N4 recovery/migration и
 общий inventory UI01–UI14 остаются **NOT RUN** как целостные матрицы.
+
+
+## 20 October 2026 — native platform follow-up
+
+- Android actual API35 KVM run39439689745: ANDROID-STOP-STATE-01 fix2b293db
+  retest PASS; disabled Stop/compose/Send, Details open/Close/reopen/Back and
+  background/resume visible controls checked. Root306source hashes and APK exact.
+  Overall FAIL at first scoped service install TimeoutException; owner runtime +
+  platforms, retest NOT RUN. [Evidence](docs/native/2026-10-20/root-android-kvm-launcher-retest.json).
+- Desktop cf41678 immutable visible Node control candidate: root FAIL43987
+  before import, QFileDialog selectedFiles canonical path mismatch after keyboard
+  typing+Tab; assertion inside modal callback left dialog open until240s timeout.
+  Actual process terminal1, no remaining owned child found. Owner platforms: fix
+  test input/cleanup, preserve initial failure and retest real actions. Snapshot
+  hashes307/11artifacts/8libs exact; four snapshot entries differ from committed
+  cf41678 (three Android WIP files + QA metadata), Desktop/common tested files
+  match. No broad tracked307source or visibleNode root PASS claimed.
+- Native Account E2EE root component PASS is separate from UI acceptance:
+  [proof](docs/native/2026-10-20/root-native-remote-account.json). Ordinary pairing,
+  contacts and remote conversation UI remain NOT RUN.

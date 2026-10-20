@@ -43,7 +43,7 @@ public final class SmokeInstrumentation extends Instrumentation {
  }
  private Activity openActivity(){return startActivitySync(new Intent().setClassName(target,"org.dmash.client.MainActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));}
  private void install(int generation,int revision)throws Exception{
-  activity=openActivity();
+  phase+="-activity-open";activity=openActivity();
   ParcelFileDescriptor[] pair=ParcelFileDescriptor.createSocketPair();lease=pair[0];
   // Duplicate only the Java stream owner; both broker references close on EOF.
   input=new DataInputStream(new ParcelFileDescriptor.AutoCloseInputStream(lease));
@@ -63,7 +63,8 @@ public final class SmokeInstrumentation extends Instrumentation {
   };
   Intent service=new Intent().setClassName(target,"org.dmash.client.NodeService");
   runOnMainSync(()->{target.startForegroundService(service);check(target.bindService(service,connection,Context.BIND_AUTO_CREATE),"bind");});
-  check(bound.await(15,TimeUnit.SECONDS),"bind-timeout");if(failure[0]!=null)throw new IllegalStateException("binder-install",failure[0]);
+  phase=phase.replace("-activity-open","-binder-install");check(bound.await(15,TimeUnit.SECONDS),"bind-timeout");if(failure[0]!=null)throw new IllegalStateException("binder-install",failure[0]);
+  phase=phase.replace("-binder-install","-bootstrap-read");
   ExecutorService reader=Executors.newSingleThreadExecutor();
   try{ready=reader.submit(()->receive(input)).get(15,TimeUnit.SECONDS);}finally{reader.shutdownNow();}
   check(ready.getString("type").equals("TransportSessionReady"),"transport-not-ready");
@@ -105,6 +106,22 @@ public final class SmokeInstrumentation extends Instrumentation {
   check(stopped,"native-stop-unconfirmed");
   runOnMainSync(()->{if(connection!=null)target.unbindService(connection);});connection=null;
  }
+ private String diagnostic(){
+  JSONObject value=new JSONObject();
+  try{
+   value.put("binderAlive",binder!=null&&binder.isBinderAlive());
+   if(binder!=null&&binder.isBinderAlive()){
+    Parcel request=Parcel.obtain(),reply=Parcel.obtain();
+    try{request.writeInterfaceToken("org.dmash.client.NodeBroker.v1");if(binder.transact(IBinder.FIRST_CALL_TRANSACTION+2,request,reply,0)){
+     reply.readException();reply.readInt();value.put("nativeExited",reply.readInt()==1);String state=reply.readString();
+     String code="OTHER";
+     if("Starting Node…".equals(state))code="STARTING";else if("Node service is running".equals(state))code="JNI_INSTALLED";else if("Node could not start".equals(state))code="START_FAILED";else if("Node stopped".equals(state))code="STOPPED";else if("Stopping Node…".equals(state))code="STOPPING";
+     value.put("serviceState",code);
+    }}finally{request.recycle();reply.recycle();}
+   }
+  }catch(Throwable ignored){try{value.put("diagnosticUnavailable",true);}catch(JSONException impossible){}}
+  return value.toString();
+ }
  @Override public void onCreate(Bundle arguments){super.onCreate(arguments);start();}
  @Override public void onStart(){
   Bundle result=new Bundle();target=getTargetContext();
@@ -123,7 +140,7 @@ public final class SmokeInstrumentation extends Instrumentation {
    finish(Activity.RESULT_OK,result);
   }catch(Throwable error){
    // Fixed phase/class only: transport frames/capabilities are never reported.
-   result.putString("dmash","FAIL "+phase+" "+error.getClass().getSimpleName());finish(Activity.RESULT_CANCELED,result);
+   result.putString("dmashDiagnostic",diagnostic());result.putString("dmash","FAIL "+phase+" "+error.getClass().getSimpleName());finish(Activity.RESULT_CANCELED,result);
   }finally{
    closeLease();seedBundle=null;ready=null;
    try{if(connection!=null)target.unbindService(connection);}catch(Throwable ignored){}

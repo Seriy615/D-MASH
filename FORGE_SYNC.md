@@ -7,9 +7,9 @@
 | Actual host | forgeai.isgood.host (`hostname` проверен) |
 | Checkout | `/home/jcode/D-MASH` |
 | Branch | `codex/native-clients-20261020` |
-| Последний опубликованный local checkpoint | `d0d41d99784b75846f27d3dc740eb82d91879e2c` |
-| Его Git tree | `23c7f6224c254dadec8781e9326a8373e170450b` |
-| GitHub CI snapshot | `39c8790657393bf7be967f7a8549b76528c31d28` |
+| Последний опубликованный local checkpoint | `ec858a813efee5d4b8b700ff7138f3fdd39efbc9` |
+| Его Git tree | `df5845dac7d86d5c17f04082201a5185ccf50796` |
+| GitHub CI snapshot | `0ae16ea92aa2bd888b9c1bc8350f55095850c168` |
 | Remote branch | `codex/native-clients-ci-20261020` |
 | Draft PR | https://github.com/Seriy615/D-MASH/pull/8 |
 | Source sync | Exact tracked tree uploaded through connected GitHub app; create_tree SHA exactly matches local tree; remote head independently checked with `git ls-remote` |

@@ -12,12 +12,12 @@ public:
  void openAccountProfile(const QString&);
  void importAccountProfile(const QJsonObject&);
 private:
- void loginDialog();void rootUnlockDialog(const QJsonObject& profile = {});void showHistory(const QJsonArray&);void updateControls();
+ void loginDialog();bool rootUnlockDialog(const QJsonObject& profile = {});void nodeSettings();void requestNodeStart(const QJsonArray&,bool);void updateNodeStatus(const QJsonObject&);void showHistory(const QJsonArray&);void updateControls();
  SessionClient session_;
  std::unique_ptr<AccountController> accountOwner_;
- QJsonArray accounts_;
+ QJsonArray accounts_;QJsonObject hostStatus_;QJsonArray pendingEndpoints_;bool pendingDirect_=false,startNodeAfterUnlock_=false;
  QString peer_;bool loggedIn_=false,working_=false,needRoot_=false;
  QLabel *status_,*account_,*chatTitle_,*notice_;
- QPushButton *refresh_,*detach_,*login_,*logout_,*import_,*send_,*cancel_;
+ QPushButton *nodeToggle_,*nodeSettings_,*refresh_,*detach_,*login_,*logout_,*import_,*send_,*cancel_;
  QListWidget* chats_;MessageHistory* history_;QTextEdit* compose_;
 };

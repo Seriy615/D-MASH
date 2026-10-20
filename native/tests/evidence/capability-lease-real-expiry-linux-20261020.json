@@ -1,0 +1,26 @@
+{
+  "suite": "native-capability-lease-real-expiry",
+  "status": "AUTHOR_COMPONENT_PASS",
+  "observationHandle": 19233,
+  "terminalExit": 0,
+  "nodeSourceCommit": "64e6933",
+  "binarySha256": "2b31d6aa69ff214d090a87df6d03924a380f703933ab37417e6b63a477008802",
+  "initialTtlSeconds": 10,
+  "extendedTtlSeconds": 30,
+  "checks": [
+    "real clock beyond original expiry plus600ms",
+    "same authenticated socket and actual registered owner active preparation tuple remains identical",
+    "token principal and generation unchanged",
+    "initialized Node remains alive",
+    "fresh authentication with unchanged token after original expiry",
+    "broker EOF actual exit0"
+  ],
+  "testDevelopmentFailures": [
+    "first attempt omitted required owner.query migrationId",
+    "second attempt used unknown migrationId; both rejected before renewal; product unchanged"
+  ],
+  "limits": [
+    "Linux component only; resident host renewal loop separately owned and tested",
+    "synthetic private scoped material; no mesh delivery exercised"
+  ]
+}

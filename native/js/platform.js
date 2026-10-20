@@ -10,6 +10,7 @@
   throw TypeError('BufferSource required');
  };
  const copy=value=>new Uint8Array(buffer(value));
+ g.queueMicrotask=callback=>{if(typeof callback!=='function')throw TypeError('Microtask callback required');void Promise.resolve().then(callback);};
  // Installed only in a trusted compute engine. No endpoint/IPC can install a factory.
  if(host('isWorker'))Object.defineProperty(g,'DmashNativeNonceHasher',{value:prefix=>{
   try{
@@ -88,7 +89,7 @@
   if(format!=='raw')throw fail('NotSupportedError','Raw transport key required');
   const alg=name(algorithm);if(!['HMAC','HKDF','AES-GCM'].includes(alg))throw fail('NotSupportedError','Transport algorithm unavailable');
   if(!Array.isArray(usages)||!usages.length)throw fail('SyntaxError','Key usages required');
-  const allowed=alg==='HMAC'?['sign','verify']:alg==='HKDF'?['deriveBits']:['encrypt','decrypt'];
+  const allowed=alg==='HMAC'?['sign','verify']:alg==='HKDF'?['deriveBits','deriveKey']:['encrypt','decrypt'];
   if(usages.some(x=>!allowed.includes(x)))throw fail('SyntaxError','Invalid key usage');
   if(alg==='HMAC'&&name(algorithm.hash)!=='SHA-256')throw fail('NotSupportedError','HMAC SHA256 required');
   if(alg==='HKDF'&&extractable)throw fail('SyntaxError','HKDF key must be nonextractable');
@@ -104,6 +105,13 @@
   async sign(algorithm,key,data){if(name(algorithm)!=='HMAC')throw fail('NotSupportedError','HMAC required');return host('hmac',access(key,'HMAC','sign'),buffer(data));},
   async verify(algorithm,key,signature,data){if(name(algorithm)!=='HMAC')throw fail('NotSupportedError','HMAC required');return host('hmacVerify',access(key,'HMAC','verify'),buffer(signature),buffer(data));},
   async deriveBits(algorithm,key,length){if(name(algorithm)!=='HKDF'||name(algorithm.hash)!=='SHA-256')throw fail('NotSupportedError','HKDF SHA256 required');if(!Number.isSafeInteger(length)||length<8||length%8||length>65280)throw fail('OperationError','Invalid HKDF length');return host('hkdf',access(key,'HKDF','deriveBits'),buffer(algorithm.salt),buffer(algorithm.info),length/8);},
+  async deriveKey(algorithm,key,type,extractable,usages){
+   if(name(algorithm)!=='HKDF'||name(algorithm.hash)!=='SHA-256'||name(type)!=='AES-GCM')throw fail('NotSupportedError','HKDF SHA256 to AES-GCM required');
+   if(![128,192,256].includes(type.length))throw fail('OperationError','Invalid derived AES length');
+   if(!Array.isArray(usages)||!usages.length||usages.some(value=>!['encrypt','decrypt'].includes(value)))throw fail('SyntaxError','Invalid derived key usage');
+   const raw=new Uint8Array(host('hkdfKey',access(key,'HKDF','deriveKey'),buffer(algorithm.salt),buffer(algorithm.info),type.length/8));
+   try{return await importKey('raw',raw,type,extractable,usages);}finally{raw.fill(0);}
+  },
   async encrypt(algorithm,key,data){return aes(true,algorithm,key,data);},
   async decrypt(algorithm,key,data){return aes(false,algorithm,key,data);}
  };

@@ -599,9 +599,9 @@ class Engine final : public QObject {
                                          CRYPTO_memcmp(signature.constData(), expected.constData(),
                                                        size_t(expected.size())) == 0);
             }
-            if (op == "hkdf")
+            if (op == "hkdf" || op == "hkdfKey")
                 return arrayBuffer(
-                    c, CryptoPort::hkdfSha256(key(c, arg(1), "HKDF", "deriveBits")->bytes,
+                    c, CryptoPort::hkdfSha256(key(c, arg(1), "HKDF", op == "hkdfKey" ? "deriveKey" : "deriveBits")->bytes,
                                               bytes(c, arg(2)), bytes(c, arg(3)),
                                               integer(c, arg(4), 1, 8160)));
             if (op == "encrypt" || op == "decrypt")

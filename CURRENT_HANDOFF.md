@@ -111,15 +111,24 @@ SIGKILL: host/Node remain; explicit Rootlock stops Node. Nodeenable/Rootlock in
 lifetime test use harnessIPC, not UI buttons. [Proof](docs/native/2026-10-20/root-desktop-resident-ui.json).
 Earlier desktop-resident-1139 pin invalidated because shared AccountJS WIP raced
 resource build; stablepin rebuilt after exact tracked restore. Remote Account work
-now isolated in `.cache/.../worktrees/native-remote-account`; first live test found
-missing structuredClone adapter in QuickJS, being fixed, not accepted remotechat.
+now isolated in `.cache/.../worktrees/native-remote-account`. Actual runs found
+missing structuredClone, HKDF deriveKey→AES-GCM, then queueMicrotask browser APIs.
+Author4412 now real native two-Account E2EE text PASS through actual Node/Python
+transit: recipient Account exits73 after durable plaintext commit before Inbox
+consumption; reopen/replay/dedupe stays1, both owners reopen retain history.
+Immutable283ba51 integrated3e3e845 independently accepted by root:2245 archived
+files/18runtime libs exact, fresh synthetic pairs, actual default22 transit20forwards,
+recipient Account exit73 after durable history before consume, reopen/replay1, both
+owners retain same identities/history. [Proof](docs/native/2026-10-20/root-native-remote-account.json).
+Known signed pair fixture; actual UI pairing/remotechat acceptance remains open.
 Renewal6a5b50a integrated bf77a5a then **REVERTED abf1c16**: author stronger
 check found MintCapability deliberately drops existing contexts; initial test only
 checked nodeRunning and was insufficient. No root renewal PASS was claimed.
 Current stable host keeps bounded existing TTL; automatic renewal is not accepted.
-Runtime adds explicit lease-extension command64e6933 retaining existing context;
-broker will combine corrected renewal/recovery only after actual grant/initialized
-checks. Also crash recovery found bootstrap owner epoch differs from transport
+Runtime explicit lease-extension64e6933 independently accepted by root using875c679
+real-clock test: TTL10→30, past original expiry same token/socket/ACTIVE tuple,
+initialized Node and fresh authentication PASS. [Proof](docs/native/2026-10-20/root-native-capability-lease.json).
+Resident host corrected renewal/recovery remains pending coherent integration. Also crash recovery found bootstrap owner epoch differs from transport
 generation, previously equal by chance. Unclean floors, Root-only fresh setup,
 optional Account create and visible Node controls remain open.
 
@@ -142,7 +151,19 @@ signs both APKs, verifies same cert and refreshes actual package hash; author
 actual private-copy fullscript PASS. Remote84b63e2 matches local4d7f81a tree
 (e9a5037c...), actual git ls-remote and public REST PR8 head verified. New
 Android39437324295/Windows39437324143 started; these precede abf1c16 renewal
-revert and64e6933 lease-extension. No newer runtime PASS yet.
+revert and64e6933 lease-extension. No full runtime PASS yet.
+**Actual KVM run3 39437324295:** complete fresh build/sign/package, API35
+installation and Activity launch established. Root downloaded artifact12272812725,
+verified306source hashes againstlocal4d7f81a plus actualAPKhash
+bcf30976cbaa6bcfcc43bde584096be4aa2fd7e158b7c8ed28db564110664eea.
+Launcher FAIL: Nodeisoff but STOPNODE enabled; strict CI stops before Details or
+service lifecycle. AssignedANDROID-STOP-STATE-01; minimalMainActivity2b293db
+fix passed actual KVM run5 launcher/Details/background-resume controls. Next stage
+FAIL: scoped native service first-install TimeoutException (ANDROID-SERVICE-INSTALL-01).
+Root verified306 source hashes vs ec858a8 and actualAPKfcf753c34de9... from
+artifact12274165901. [Retest](docs/native/2026-10-20/root-android-kvm-launcher-retest.json). [RED](docs/native/2026-10-20/root-android-kvm-launcher-red.json).
+Remote0ae16ea exactlocalec858a8 tree publishesfix+evidence; no assertion weakened.
+Public current snapshot branch remainsdraftPR8, no deployment.
 Root retained Chromium reopened only on synthetic profile. Operator accidentally
 entered emergency wipe combination; actual owning backup SHA verified and
 setStorageState restoration yielded exact same entire origin/11stores/6records/
@@ -152,7 +173,13 @@ Then actual chat password set/cancel/wrong/correct/remove and mismatch/back/reop
 checks PASS; final Root/secure registry unchanged, original row1,195responses exact,
 0errors, SW/external traffic blocked. [Proof](docs/native/2026-10-20/root-browser-history-controls.json).
 Fresh owning backup root-after-history-qa.json0600/private receipt retained.
-Windows actual runtime remains NOT RUN.
+Windows actual runtime remains NOT RUN. Run7 39438222413 reached actual C++
+compile25/75 after OpenSSL finder fix; failed QuickJS source version file shadowing
+standard C++ <version>. Top-native fix069c360 verified Linux build; Account target
+fix and actual Windows rerun pending. Desktop visible Node controls cf41678 author
+PASS, root attempt43987 FAIL at file chooser canonical-path check before import,
+then callback modal remained open until harness240s timeout. No actualNode-button
+root acceptance claimed; test-only selector/cleanup correction assigned platform.
 
 Runtime foreign-transit fixture initially FAIL: second peer not admitted180s.
 aff6a0b/a0f54a9 native nonce batch preserves default22, author actual foreign
@@ -190,9 +217,9 @@ finder fix yet. Do not restart jobs on observation timeout.
   independent Node enable and optional Account create. No reset of accepted state.
 - `native_runtime_sol`: native ports/localIPC, isolated remote Account worktree.
   Real two-Account handshake crossed actual default22 nativeNodes/Python transit;
-  text delivery not accepted: structuredClone missing then HKDF deriveKey absent
-  in native Crypto facade. Implementing correct bounded clone/HKDF→AES-GCM port
-  with parity tests, then actual durable Account history/consumption/crash retest.
+  initial text failures found structuredClone/HKDF deriveKey/queueMicrotask gaps.
+  Author4412 actual text/history/consumption crash-dedupe PASS after narrow ports;
+  immutable283ba51 freeze independently root accepted as described above.
   Also scoped Android KVM CI and explicit capability lease extension64e6933.
 - `native_platforms_sol`: resident Desktop accepted stablepin cab8fa6; now actual
   visible Node controls and connections policy on frozen305file candidate. That

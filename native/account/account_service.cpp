@@ -474,9 +474,9 @@ struct AccountService::State {
                                          CRYPTO_memcmp(signature.constData(), expected.constData(),
                                                        signature.size()) == 0);
             }
-            if (op == "hkdf")
+            if (op == "hkdf" || op == "hkdfKey")
                 return buffer(
-                    c, CryptoPort::hkdfSha256(key(c, arg(1), "HKDF", "deriveBits")->secret.bytes(),
+                    c, CryptoPort::hkdfSha256(key(c, arg(1), "HKDF", op == "hkdfKey" ? "deriveKey" : "deriveBits")->secret.bytes(),
                                               bytes(c, arg(2)), bytes(c, arg(3)), number(4)));
             if (op == "encrypt" || op == "decrypt")
                 return buffer(c,

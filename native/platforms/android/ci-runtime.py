@@ -109,6 +109,14 @@ def main():
         summary = re.search(r'^INSTRUMENTATION_RESULT: dmash=(PASS scoped Node service:[^\n]*|FAIL [a-z-]+ [A-Za-z]+)\r?$', outcome, re.MULTILINE)
         if summary:
             result['instrumentation'] = summary.group(1).strip()
+        diagnostic = re.search(r'^INSTRUMENTATION_RESULT: dmashDiagnostic=(\{[^\n]*\})\r?$', outcome, re.MULTILINE)
+        if diagnostic:
+            detail = json.loads(diagnostic.group(1))
+            allowed = {'binderAlive', 'nativeExited', 'serviceState', 'diagnosticUnavailable'}
+            assert set(detail) <= allowed
+            assert detail.get('serviceState', 'OTHER') in {'STARTING', 'JNI_INSTALLED', 'START_FAILED', 'STOPPED', 'STOPPING', 'OTHER'}
+            assert all(isinstance(value, bool) for name, value in detail.items() if name != 'serviceState')
+            result['serviceDiagnostic'] = detail
         assert 'INSTRUMENTATION_CODE: -1' in outcome and 'PASS scoped Node service:' in outcome, 'scoped service instrumentation failed'
         result['checks'].extend(['same-UID inherited transport FD install', 'actual separate :node process + authenticated scoped node.status', 'Activity close + local IPC reconnect leaves Node running', 'FULL_ROOT_LOCK durable revoke and verified native exit', 'same private Node profile reopened under newer explicit grant', 'broker lease EOF and verified native exit'])
         result['status'] = 'PASS'

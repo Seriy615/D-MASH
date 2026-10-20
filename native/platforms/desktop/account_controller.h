@@ -9,9 +9,11 @@ public:
  explicit AccountController(QString profile,QObject* parent=nullptr);
  void loadAccounts();void importProfile(const QJsonObject&,const QString& rootPin);void unlockRoot(const QString&);
  void login(const QString&,const QString&);void logout();void cancel();
+ void nodeStatus();void enableNode(const QJsonArray& endpoints,bool direct);void disableNode();
  void contacts();void history(const QString&);void send(const QString&,const QString&);
  bool busy()const{return client_->busy();}
 signals:
+ void nodeStopped();void hostStatusReady(const QJsonObject&);
  void busyChanged(bool);void rootUnlockRequired();
  void accountsReady(const QJsonArray&);void signedIn(const QJsonObject&);void signedOut();
  void contactsReady(const QJsonArray&);void historyReady(const QJsonArray&);

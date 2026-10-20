@@ -13,6 +13,7 @@ public:
  bool busy()const{return !method_.isEmpty();}
 signals:
  void busyChanged(bool);
+ void hostStatusReady(const QJsonObject&);
  void response(const QString& method,bool ok,const QString& code,const QJsonObject& result);
 private:
  void connectHost();void read();void send(const QString&,const QString&,const QJsonObject&);void fail(const QString&);
