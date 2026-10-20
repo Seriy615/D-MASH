@@ -3,7 +3,7 @@
 // One visible release identifier for the page and Service Worker generation.
 // Review opt-in must be set before loading this script; never inferred from data.
 window.DMASH_NODE_PROFILE = window.DMASH_NODE_PROFILE === "managed-v4" ? "managed-v4" : "legacy-migration";
-window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-20261008.37" });
+window.DMASH_RELEASE = Object.freeze({ id: "transport-v3-node-preparation-20261020.38" });
 
 /*
  * Runtime repair loader.
