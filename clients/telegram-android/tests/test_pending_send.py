@@ -46,8 +46,19 @@ public class PendingSendProbe {
  static JSONObject obj(Object... pairs){return DmashClient.object(pairs);}
  static void check(boolean b,String m){if(!b)throw new AssertionError(m);}
  static CredentialConnection channel(){return CredentialConnection.current;}
- static JSONObject account(String id){return obj("accountSessionActive",true,"rootLocked",false,"account",obj("accountPublicId",id,"displayName","Unit owner"));}
- static void connect(String id){DmashClient.connect(new Context());channel().listener.ready(account(id));}
+ static JSONObject account(String id){return obj("accountSessionActive",true,"rootLocked",false,"account",obj("accountPublicId",id,"displayName","Unit owner","sessionEpoch",1));}
+ static void connect(String id){
+  DmashClient.connect(new Context());channel().listener.ready(account(id));
+  if(channel().pending==null) {
+   check(!DmashClient.active(),"global status never adopts an Account");
+   DmashClient.request("account.attach",obj("accountPublicId",id),(ok,c,r)->check(ok,"explicit attach"));
+  }
+  check(channel().method.equals("account.attach"),"reattach uses explicit retained identity");
+  check(channel().params.optString("accountPublicId").equals(id),"attachment expected identity");
+  channel().answer(true,"",obj("value",account(id).optJSONObject("account")));
+  // Same-Account reconnect refreshes contacts and watched history.
+  while(channel().pending!=null){if(channel().method.equals("account.contacts"))channel().answer(true,"",obj("rows",new JSONArray().put(obj("id","b".repeat(64),"name","Unit peer"))));else if(channel().method.equals("account.history"))answerHistory();else throw new AssertionError("unexpected reattach job");}
+ }
  static JSONObject row(String op,int seq,String state,String text){return obj("operationId",op,"sequence",seq,"state",state,"text",text,"time",1000000L,"direction","out");}
  static void answerHistory(JSONObject... rows){JSONArray a=new JSONArray();for(JSONObject r:rows)a.put(r);check(channel().method.equals("account.history"),"history RPC");channel().answer(true,"",obj("rows",a));}
  static void history(long peer){DmashClient.loadHistory(MessagesController.getInstance(0),peer,30,0,12,2,1,0);}
@@ -85,6 +96,30 @@ public class PendingSendProbe {
   check(channel().params.optString("operationId").equals(rejected),"failed-row retry identity");
   channel().disconnect();connect("c".repeat(64));
   check(NotificationCenter.getInstance(0).messages.isEmpty(),"Account switch clears old plaintext projection");
+  // A locally queued old-Account job cannot adopt a newer same-socket login binding.
+  int[] rejectedQueue={0};
+  DmashClient.request("account.login",obj("identity","unit-next","password","synthetic"),(ok,c,r)->check(ok,"login result"));
+  DmashClient.request("account.sendText",obj("peer","b".repeat(64),"operationId","d".repeat(64),"text","must not be sent as another Account"),(ok,c,r)->{check(!ok&&c.equals("ACCOUNT_SESSION_CHANGED"),"queued send fenced");rejectedQueue[0]++;});
+  DmashClient.request("account.history",obj("peer","b".repeat(64)),(ok,c,r)->{check(!ok&&c.equals("ACCOUNT_SESSION_CHANGED"),"queued history fenced");rejectedQueue[0]++;});
+  int beforeSwitchCalls=channel().calls;
+  channel().answer(true,"",obj("value",account("e".repeat(64)).optJSONObject("account")));
+  check(rejectedQueue[0]==2&&channel().calls==beforeSwitchCalls,"no old-Account job dispatched under new binding");
+  // Even the same public identity with a new worker epoch invalidates queued old work.
+  DmashClient.request("account.login",obj("identity","unit-next","password","synthetic"),(ok,c,r)->check(ok,"same-account relogin"));
+  DmashClient.request("account.history",obj("peer","b".repeat(64)),(ok,c,r)->{check(!ok&&c.equals("ACCOUNT_SESSION_CHANGED"),"same Account old epoch fenced");rejectedQueue[0]++;});
+  JSONObject nextEpoch=account("e".repeat(64)).optJSONObject("account");nextEpoch.put("sessionEpoch",2);
+  channel().answer(true,"",obj("value",nextEpoch));check(rejectedQueue[0]==3,"old epoch rejected");
+  // An already-dispatched reply cannot publish data after its local Account context changes.
+  int[] staleReply={0};
+  DmashClient.request("account.history",obj("peer","b".repeat(64)),(ok,c,r)->{check(!ok&&c.equals("ACCOUNT_SESSION_CHANGED"),"in-flight callback fenced");staleReply[0]++;});
+  channel().listener.ready(account("f".repeat(64)));
+  channel().answer(true,"",obj("rows",new JSONArray().put(row("1".repeat(64),9,"LOCAL","stale plaintext"))));
+  check(staleReply[0]==1&&!DmashClient.active()&&NotificationCenter.getInstance(0).messages.isEmpty(),"late result does not publish old plaintext or adopt observed Account");
+  DmashClient.request("account.attach",obj("accountPublicId","f".repeat(64)),(ok,c,r)->check(ok,"explicit same identity reattach"));
+  channel().answer(true,"",obj("value",account("f".repeat(64)).optJSONObject("account")));
+  DmashClient.request("account.history",obj("peer","b".repeat(64)),(ok,c,r)->check(!ok&&c.equals("ACCOUNT_CONTEXT_REQUIRED"),"server missing context is surfaced"));
+  channel().answer(false,"ACCOUNT_CONTEXT_REQUIRED",obj());
+  check(!DmashClient.active()&&UserConfig.getInstance(0).user==null,"server context refusal clears local binding and plaintext");
   MemoryPreferences drafts=MemoryPreferences.create();drafts.edit().putString("draft","plaintext").commit();MemoryPreferences.clearAll();
   check(drafts.getAll().isEmpty(),"Account fence clears volatile drafts");
   channel().listener.ready(obj("accountSessionActive",false,"rootLocked",true));

@@ -1,0 +1,37 @@
+{
+  "status": "PASS",
+  "scope": "ROOT exact final patch-series reconstruction; Android actual Java state machine unit only, no GUI result",
+  "localSourceBeforeEvidence": "c8ecfc8",
+  "clients": {
+    "telegram-android": {
+      "manifestSha256": "b8ac2bf96619ce53c0dc1adb008d6c88021ced5627b1f525000c98eda85284c6",
+      "patches": 8,
+      "verifiedSourceFiles": 30
+    },
+    "telegram-desktop": {
+      "manifestSha256": "9091154beff95aec32968480e2b3e1530b6890017860f1e9d0191e1f6f399fac",
+      "patches": 4,
+      "verifiedSourceFiles": 34
+    }
+  },
+  "androidUnit": {
+    "handle": 23123,
+    "checks": [
+      "unchanged pending-send reconciliation cases",
+      "worker Account epoch and local generation fenced at enqueue dispatch/callback",
+      "ACCOUNT_CONTEXT_REQUIRED clears binding/UserConfig/plaintext"
+    ],
+    "actualJavaSources": [
+      "DmashClient.java",
+      "MemoryPreferences.java"
+    ],
+    "collaborators": "Android/IPC/model doubles; real android.jar SharedPreferences interface"
+  },
+  "limits": [
+    "No full Java008/APK/Android service/UI acceptance",
+    "Desktop four-patch final application link/runtime not accepted; only focused image_prepare original object author PASS",
+    "Existing local Android e89 source remains frozen while compiling",
+    "Windows key fix awaits real Windows runtime CI",
+    "No change to network role/identities or Account E2EE/transit separation"
+  ]
+}

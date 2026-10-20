@@ -17,6 +17,7 @@ cmake -S "$source_dir" -B "$build_dir" -G Ninja \
  -DPKG_CONFIG_EXECUTABLE="$recipe/scripts/pkg-config" \
  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE='-O1 -DNDEBUG' \
  -DCMAKE_PREFIX_PATH="$cache/Qt/6.12.0/gcc_64;$cache/platform-sysroot/usr;$cache/telegram-dependencies;$cache/telegram-dependencies/usr" \
+ -DDMASH_JPEG_MULTIARCH_INCLUDE="$cache/telegram-dependencies/usr/include/x86_64-linux-gnu" \
  -DOPENGL_INCLUDE_DIR="$gl_prefix/include" \
  -DOPENGL_opengl_LIBRARY="$gl_prefix/lib/x86_64-linux-gnu/libOpenGL.so.0" \
  -DOPENGL_glx_LIBRARY="$glx_library" \

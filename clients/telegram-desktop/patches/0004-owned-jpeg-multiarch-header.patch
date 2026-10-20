@@ -1,0 +1,18 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -66,6 +66,14 @@
+     set(DESKTOP_APP_DISABLE_X11_INTEGRATION ON)
+ endif()
+ add_subdirectory(cmake)
++# A relocated Debian JPEG development package has architecture-specific headers
++# outside its common include root. Keep the original JPEG target and real header.
++if (TDESKTOP_DMASH_CLIENT AND DMASH_JPEG_MULTIARCH_INCLUDE)
++    if (NOT EXISTS "${DMASH_JPEG_MULTIARCH_INCLUDE}/jconfig.h")
++        message(FATAL_ERROR "Owned JPEG architecture header missing")
++    endif()
++    target_include_directories(external_jpeg SYSTEM INTERFACE "${DMASH_JPEG_MULTIARCH_INCLUDE}")
++endif()
+ if (TDESKTOP_DMASH_UI_BOOTSTRAP)
+     add_subdirectory(Telegram/lib_rpl)
+     add_subdirectory(Telegram/lib_crl)

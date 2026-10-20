@@ -187,10 +187,20 @@
       "path": "patches/0002-owned-profile-launcher.patch",
       "sha256": "a4687bc4c87653de0ba8fab7b03b71e83774d138d855835e79603f05f5008d31",
       "status": "SOURCE; force owned namespace before logs/platform legacy lookup, full app compile/runtime acceptance pending"
+    },
+    {
+      "path": "patches/0003-selected-account-binding.patch",
+      "sha256": "6780a94570448f847cef1115cea799c9c9275080f022a3b16545452834437e53",
+      "scope": "Explicit expected-Account attachment, no inventory activation, local epoch fences and IPC component regression; full UI runtime NOT_RUN"
+    },
+    {
+      "path": "patches/0004-owned-jpeg-multiarch-header.patch",
+      "sha256": "d5e4e65e9fa93aa2ebd1bb86201fb5ce640ad1e8d1362a4eede008d022bdc107",
+      "scope": "Original JPEG target uses real architecture header from owned Debian prefix"
     }
   ],
   "patchedFiles": {
-    "CMakeLists.txt": "c74e2d8e82347e8d915cb336af56a3a637b520eaed1d4b1f84fcba18456d69ed",
+    "CMakeLists.txt": "43d9eec13111499e63d9b04e5feeff3cd64c477f2843fde8bd13a4c35f454c79",
     "Telegram/CMakeLists.txt": "b0869543b90a02fd13e11710330dfa77220fca2315ea49c2a24c3ed1d588604b",
     "Telegram/SourceFiles/apiwrap.cpp": "c5b33064193c60cfa018f9adbcea7707ef65695e6e16f3017f353957bb2300a8",
     "Telegram/SourceFiles/core/launcher.cpp": "297cb62f2cf5eca842d4a8f9bab1f4e20688fc374c664a684048cfee6e0c7229",
@@ -206,7 +216,7 @@
     "Telegram/SourceFiles/mtproto/mtp_instance.cpp": "b644fbd8e57b71f03bdd1f0c9d4d7dc32827e0afd07438b4b90d63d8b95841ec",
     "Telegram/SourceFiles/storage/storage_account.cpp": "8021308ea16e087292c7255baa87b4941b37395fb61b92c77d55478a3344c0ad",
     "Telegram/cmake/telegram_options.cmake": "25a0d782864e602c193278e94e60b6dff3205d20c6e75a0b558ea1249ca3e792",
-    "dmash/CMakeLists.txt": "4aecbc75749fe6d67c892886778e9a12a76c8ccc09b8cbe32e2508fca68c7ef4",
+    "dmash/CMakeLists.txt": "52d8ab8bf9d41c85d2d69e4838a973ab8baecd07991d935e8f91189de1145e9d",
     "dmash/bootstrap_root.cpp": "e92f6fa834867cb694e4d6e699f339dc99772e466f7368212e527c0027db56a5",
     "dmash/history_projection.cpp": "d8ed6ff60e9a0a90f2be61cdbe07099bb0355aec115a433ef3d20f3fe0a53eb7",
     "dmash/history_projection.h": "b3e65b923475776aa8caf0a65402dbb68d94960afcf89e7f3654a96fabfa7df0",
@@ -218,11 +228,12 @@
     "dmash/model_bridge.h": "9265fce3e10803d839dab55db6fc125ee95639ff734d00722b045ef481f0fb94",
     "dmash/os_windows.cpp": "03c082ac3cb698478d03f158b12a4ebba2021563a68f8abc5b6dc66ec9477811",
     "dmash/os_windows.h": "73e6b542027009598bdb8762c30b8051fe222492da1d8509d33756ffc3dbb537",
-    "dmash/session_adapter.cpp": "994c35ea36cd04d1f05d67f92c1ad56cc50c6f724b51de3bbe7811f8dee93be3",
-    "dmash/session_adapter.h": "a1d4b8a2eda7b1191846e91ef017b005b1280f8b50cd90f61d37c9062d7d68e7",
+    "dmash/session_adapter.cpp": "aca270e4978969dcba0c46f7fa7f6b904d82bb97843228f665438b1a2857f4a6",
+    "dmash/session_adapter.h": "c204dbe26542862ded6b9cf4bc110c936c15e8ded1e5cab7dae09a567b5a08d4",
     "dmash/tests/generate_id_contract.py": "d2da307f2ef2c775bfd535d75a4a69674a1285713e69adb6d5d1e7da89a7d74d",
     "dmash/tests/projection_test.cpp": "6838b4e8177551e523a01b99ec6c17951c73fd495bf7389fd22ba08042d2765f",
-    "Telegram/SourceFiles/platform/linux/specific_linux.cpp": "7109d6f978b5f371c3f484825ffdbea38ed8ec604498b52039e8a01022b3a260"
+    "Telegram/SourceFiles/platform/linux/specific_linux.cpp": "7109d6f978b5f371c3f484825ffdbea38ed8ec604498b52039e8a01022b3a260",
+    "dmash/tests/session_binding_test.cpp": "c6947ce2673faf668e5b108ef03fd944977de3b3961437d8dda84679fc4d28f8"
   },
   "legalSha256": "d99f86f0c2b7f2057f2d6c2122a303af2171d778210b47159090ff9501511bea"
 }

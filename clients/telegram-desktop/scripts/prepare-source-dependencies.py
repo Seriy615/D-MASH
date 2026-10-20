@@ -32,7 +32,7 @@ for spec in json.loads((recipe/'SOURCE_DEPENDENCIES.json').read_text())['sources
   print('PASS pinned source/license/submodules: '+spec['name']);continue
  flags=['-DCMAKE_BUILD_TYPE=Release','-DCMAKE_POLICY_VERSION_MINIMUM=3.5','-DCMAKE_CXX_FLAGS_RELEASE=-O1 -DNDEBUG','-DCMAKE_C_FLAGS_RELEASE=-O1 -DNDEBUG',f'-DCMAKE_INSTALL_PREFIX={prefix}',f'-DCMAKE_PREFIX_PATH={prefix};{prefix}/usr',f'-DPKG_CONFIG_EXECUTABLE={recipe}/scripts/pkg-config',f'-DOPENSSL_INCLUDE_DIR={cache}/openssl-desktop/include',f'-DOPENSSL_CRYPTO_LIBRARY={cache}/openssl-desktop/lib/libcrypto.so',f'-DOPENSSL_SSL_LIBRARY={cache}/openssl-desktop/lib/libssl.so']
  target=[]
- if spec['name']=='ada':flags+=['-DADA_TESTING=OFF','-DADA_BENCHMARKS=OFF']
+ if spec['name']=='ada':flags+=['-DADA_TESTING=OFF','-DADA_BENCHMARKS=OFF','-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG','-DCMAKE_C_FLAGS_RELEASE=-O3 -DNDEBUG']
  if spec['name']=='tde2e':flags+=['-DTD_E2E_ONLY=ON'];target=['--target','tde2e']
  run('cmake','-S',source,'-B',build,'-G','Ninja',*flags)
  run('nice','-n','10','cmake','--build',build,*target,'-j'+os.environ.get('DMASH_BUILD_JOBS','1'))

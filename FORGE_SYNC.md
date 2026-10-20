@@ -7,9 +7,9 @@
 | Actual host | forgeai.isgood.host (`hostname` проверен) |
 | Checkout | `/home/jcode/D-MASH` |
 | Branch | `codex/native-clients-20261020` |
-| Последний опубликованный local checkpoint | `dc41fb30ed3d928278f2b445222066a1933736cb` |
-| Его Git tree | `8b11394e0fff654b7d2e84f7826962dec9f48176` |
-| GitHub CI snapshot | `274419f969d036c8352fbb5b968c10c927ac9ba1` |
+| Последний опубликованный local checkpoint | `e00db0abb1baddc4c18bfd2ec6dd757c398f3d5e` |
+| Его Git tree | `5ec547e905de8c901645ce6eab4be278f2525188` |
+| GitHub CI snapshot | `0783fd0440767e76433c2902b5c8c80a918f0883` |
 | Remote branch | `codex/native-clients-ci-20261020` |
 | Draft PR | https://github.com/Seriy615/D-MASH/pull/8 |
 | Source sync | Exact tracked tree uploaded through connected GitHub app; create_tree SHA exactly matches local tree; remote head independently checked with `git ls-remote` |
@@ -32,16 +32,19 @@ verified by root:
 | Telegram Desktop | `/home/jcode/.cache/dmash-native-20261020/telegram-desktop-fork` | `86262333a457f62709726ee4ab9c48fa58824da4` | `30e52a0e4d8207c631458d98be89adcadf5b60e2608fe9c9a3eff1cde1877c8e` (GPLv3 + OpenSSL exception) |
 | Telegram Android | `/home/jcode/.cache/dmash-native-20261020/worktrees/telegram-android` | `0aae959806c57be8ad457980f2a5c6277ff18635` | `8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643` (GPLv2) |
 
-Publisheddc41fb3 includes actual Desktop full-application Linux CI c8b393c,
+Publishede00db0a includes actual Desktop full-application Linux CI c8b393c,
 Desktop projection/storage fencing0917d37, Android six-patch recipe cd7cc30,
 Account connection/worker binding0288bff and root independent process acceptance.
 Root reconstructed all30Android patched files from exact upstream+six patches.
 Existing native Android/Windows workflows remain intermediate component harnesses;
-new Linux workflow builds the selected actual Telegram application. Owned launch paths/MIT notices and CI cache-location correction e740454 are
-included. A workflow being published does not imply its build/runtime passed.
+new Linux workflow builds the selected actual Telegram application. Owned launch paths/MIT notices/cache-location correction e740454, exact pool
+URLs02250ac and actual Android KVM workflow e00db0a are included. Root confirmed
+all131 Linux package versions/hashes unchanged and downloaded failing protobuf
+archive with matching pinned hash. Actual Android39467452315/Linux39467452496
+CI runs are in progress; no runtime/screenshot PASS yet. A workflow being published does not imply its build/runtime passed.
 
-Root create_tree equals tracked local tree8b11394e... and git ls-remote independently
-confirms274419f9...; PR8 remains draft. This source snapshot excludes unstaged old
+Root create_tree equals tracked local tree5ec547e9... and git ls-remote independently
+confirms0783fd04...; PR8 remains draft. This source snapshot excludes unstaged old
 UI WIP. Actual fork render/ordinary messaging/three-platform acceptance remain
 open. No production, release or runtime-state backup follows from publication.
 

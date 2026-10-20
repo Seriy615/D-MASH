@@ -1,0 +1,31 @@
+{
+  "status": "FAIL_WITH_SOURCE_FIX",
+  "scope": "ROOT independently inspected actual Windows intermediate retained-key failure; focused fix awaits Windows rerun",
+  "runId": 39466512564,
+  "jobId": 118779217204,
+  "sourceSnapshot": "4929fa6e8cd09c1854e9b56a8d7adbcffe407287",
+  "artifactSha256": "58275d7ff32e84e863a8221c348676fd0e6a734c7eb6c50356df1ec035690a38",
+  "observedStage": "first-key-open",
+  "observedError": "PROFILE_KEY_PUBLISH_WIN32:32",
+  "rootInspection": "Retained ZIP hash verified; direct.qtest.txt explicitly shows stage/error, Qt6.12.0 GCC15.1 Windows Server2025",
+  "fixCommit": "1b66709",
+  "change": "Use QTemporaryFile.rename no-overwrite publication and setAutoRemove(false) after success; retain key ownership/size/recovery checks",
+  "limits": [
+    "Windows fix runtime NOT_RUN",
+    "Author Linux Qt6.12 API probe is supplemental, not Windows acceptance",
+    "Intermediate Widgets harness is not the selected original Telegram frontend",
+    "Full crash/power-loss durability and final packaging remain separate"
+  ],
+  "supplementalRootProbe": {
+    "status": "PASS",
+    "scope": "Linux Qt6.12 API semantics, not Windows product runtime",
+    "probeSourceSha256": "2f823530ad49b6bf88ffb3ad02d61916b692460a35731547b9d9b3319382b7ba",
+    "probeBinarySha256": "ac882b1724de1f479dc96dc695100aaa13f8d6f96c4b9ddc280f31862b07c4f5",
+    "qtSourceSha256": "5c2573ccb9e9bd3af3dd93e7e42e21e63a908c4f076a30060bbc47ef8f12dbfe",
+    "checks": [
+      "close then rename retains original32bytes after destructor",
+      "competing rename refuses existing destination and keeps original32bytes",
+      "binary imports __assert_fail and Qt QTemporaryFile.rename; assertions active"
+    ]
+  }
+}

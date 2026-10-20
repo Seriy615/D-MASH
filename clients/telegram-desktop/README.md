@@ -38,8 +38,13 @@ selected messenger. Upstream media/call implementation remains intact.
 Account auth/self/settings/draft Telegram persistence is bypassed in D-MASH mode;
 the remaining storage/media audit is open. The RAM session invalidates on idle
 host disconnect and tracks account epochs. A periodic identity check supplements
-this; it does not replace the pending native-host connection binding fix for
-multiple UI windows. Draft text/operation IDs remain when a send RPC reports an
+this. The host enforces connection-bound Account identity and worker epoch;
+login binds the same persistent socket. The adapter never activates an Account
+from inventory/status alone. Explicit `attach(expectedAccount)` can bind only
+that selected Account, and typed context errors clear the old RAM projection.
+Deferred history/callbacks retain their local selection epoch. The component
+regression covers inventory, exact/mismatched attachment, stale history and idle
+disconnect; actual full-window two-client acceptance remains NOT RUN. Draft text/operation IDs remain when a send RPC reports an
 error without session loss; preserving an unsent draft across host/session loss
 requires an Account-owned encrypted draft API and is not implemented.
 

@@ -1,0 +1,175 @@
+From c7dcebc79cb18c04cccf065ee9366a1ff2dd4bbd Mon Sep 17 00:00:00 2001
+From: Codex <codex@d-mash.ru>
+Date: Tue, 20 Oct 2026 17:43:17 +0000
+Subject: [PATCH] Bind Android UI requests to explicit Account session context
+
+---
+ .../telegram/messenger/dmash/DmashClient.java | 59 ++++++++++++++++---
+ .../telegram/ui/dmash/DmashLoginActivity.java | 14 ++++-
+ 2 files changed, 61 insertions(+), 12 deletions(-)
+
+diff --git a/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java b/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
+index a930cb3..f1a5f06 100644
+--- a/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
++++ b/TMessagesProj/src/main/java/org/telegram/messenger/dmash/DmashClient.java
+@@ -24,7 +24,11 @@ public final class DmashClient {
+     private static final ArrayList<Observer> observers = new ArrayList<>();
+     private static final class Request {
+         final String method; final JSONObject params; final Reply callback;
+-        Request(String m, JSONObject p, Reply c) { method=m;params=p;callback=c; }
++        final String expectedAccount; final long expectedEpoch;
++        Request(String m, JSONObject p, Reply c) {
++            method=m;params=p;callback=c;
++            expectedAccount=scoped(m)?self:null;expectedEpoch=scoped(m)?sessionEpoch:0;
++        }
+     }
+     private static final ArrayDeque<Request> requests = new ArrayDeque<>();
+     // Volatile presentation state only. The credential owner remains the sole durable outbox.
+@@ -41,7 +45,8 @@ public final class DmashClient {
+     private static final HashMap<Integer,String> pendingIds = new HashMap<>();
+     private static CredentialConnection connection;
+     private static JSONObject status = new JSONObject();
+-    private static boolean ready, busy, accountActive;
++    private static boolean ready, busy, accountActive, bound, attaching;
++    private static long sessionEpoch;
+     private static String self;
+     private static final HashMap<Long,int[]> histories=new HashMap<>();
+     private static final android.os.Handler main=new android.os.Handler(android.os.Looper.getMainLooper());
+@@ -68,7 +73,7 @@ public final class DmashClient {
+             public void ready(JSONObject initial) { ready=true; applyStatus(initial); drain(); }
+             public void busy(boolean value) { busy=value;publish(""); }
+             public void disconnected(String code) {
+-                ready=false;busy=false;connection=null;
++                ready=false;busy=false;bound=false;connection=null;
+                 // EOF is not an Account logout or a negative durability acknowledgement.
+                 ArrayList<Request> unsent=new ArrayList<>(requests);requests.clear();
+                 for(Request request:unsent)request.callback.done(false,"CREDENTIAL_HOST_NOT_SENT",object());
+@@ -79,15 +84,31 @@ public final class DmashClient {
+     private static void drain() {
+         if(!ready||busy||requests.isEmpty()||connection==null)return;
+         Request job=requests.removeFirst();
++        if(scoped(job.method)&&(!bound||!Objects.equals(job.expectedAccount,self)||job.expectedEpoch!=sessionEpoch)) {
++            job.callback.done(false,"ACCOUNT_SESSION_CHANGED",object());drain();return;
++        }
+         connection.request(job.method,job.params,(ok,code,result)->{
+-            if(ok&&job.method.equals("account.login"))bind(result.optJSONObject("value"));
++            if(scoped(job.method)&&(!bound||!Objects.equals(job.expectedAccount,self)||job.expectedEpoch!=sessionEpoch)) {
++                job.callback.done(false,"ACCOUNT_SESSION_CHANGED",object());drain();return;
++            }
++            if(ok&&(job.method.equals("account.login")||job.method.equals("account.attach"))) {
++                JSONObject identity=result.optJSONObject("value");
++                if((job.method.equals("account.attach")&&(identity==null||!job.params.optString("accountPublicId").equals(identity.optString("accountPublicId"))))||!bind(identity)) {job.callback.done(false,"ACCOUNT_BINDING_UNAVAILABLE",object());drain();return;}
++            }
++            if(code.equals("ACCOUNT_SESSION_CHANGED")&&Objects.equals(job.expectedAccount,self)&&job.expectedEpoch==sessionEpoch) {
++                accountActive=false;clearProjection();
++            }
+             if(ok&&(job.method.equals("account.logout")||job.method.equals("root.lock"))) {
+                 accountActive=false;clearProjection();
+             }
+             job.callback.done(ok,code,result);drain();
+         });
+     }
++    private static boolean scoped(String method) {
++        return method.equals("account.contacts")||method.equals("account.history")||method.equals("account.sendText")||method.equals("account.sync")||method.equals("account.logout")||method.startsWith("account.pairing");
++    }
+     public static void request(String method, JSONObject params, Reply callback) {
++        if(scoped(method)&&!bound) {callback.done(false,"ACCOUNT_CONTEXT_REQUIRED",object());return;}
+         if(!ready) { callback.done(false,"CREDENTIAL_HOST_UNAVAILABLE",object());return; }
+         requests.add(new Request(method,params,callback));drain();
+     }
+@@ -95,7 +116,25 @@ public final class DmashClient {
+     public static void refresh() { request("host.status",object(),(ok,code,result)->{if(ok)applyStatus(result.optJSONObject("value"));else publish(code);}); }
+     private static void applyStatus(JSONObject value) {
+         status=value==null?new JSONObject():value;
+-        if(status.optBoolean("accountSessionActive"))bind(status.optJSONObject("account"));else if(accountActive){accountActive=false;clearProjection();}
++        JSONObject selected=status.optJSONObject("account");
++        String selectedId=selected==null?"":selected.optString("accountPublicId");
++        if(status.optBoolean("accountSessionActive")) {
++            if(self!=null&&(!self.equals(selectedId)||(bound&&selected.optLong("sessionEpoch")!=sessionEpoch))) {
++                accountActive=false;clearProjection();
++            }
++            // Inspecting global status grants no Account context. Only resume this UI's retained identity.
++            if(self!=null&&self.equals(selectedId)&&!bound&&!attaching) {
++                attaching=true;final String expected=self;final long epoch=accountEpoch;
++                request("account.attach",object("accountPublicId",expected),(ok,code,result)->{
++                    attaching=false;
++                    if(!ok) {if(epoch==accountEpoch){accountActive=false;clearProjection();}publish(code);return;}
++                    loadDialogs(MessagesController.getInstance(0));
++                    for(Map.Entry<Long,int[]> entry:new HashMap<>(histories).entrySet()) {
++                        int[] h=entry.getValue();loadHistory(MessagesController.getInstance(0),entry.getKey(),h[0],0,h[1],2,h[2],h[3]);
++                    }
++                });
++            }
++        } else if(accountActive||self!=null) {accountActive=false;clearProjection();}
+         publish("");
+     }
+     private static long peerId(String id) {
+@@ -110,16 +149,18 @@ public final class DmashClient {
+     private static TLRPC.TL_user user(String id,String name,boolean own) {
+         TLRPC.TL_user u=new TLRPC.TL_user();u.id=peerId(id);u.first_name=name;u.last_name="";u.phone="";u.self=own;u.contact=!own;u.flags|=2;u.status=new TLRPC.TL_userStatusOffline();return u;
+     }
+-    private static void bind(JSONObject account) {
+-        if(account==null||account.optString("accountPublicId").isEmpty())return;
++    private static boolean bind(JSONObject account) {
++        if(account==null||!account.optString("accountPublicId").matches("[0-9a-f]{64}")||account.optLong("sessionEpoch")<=0)return false;
+         String incoming=account.optString("accountPublicId");
+         if(self!=null&&!self.equals(incoming))clearProjection();
+-        self=incoming;accountActive=true;
++        if(sessionEpoch!=account.optLong("sessionEpoch"))accountEpoch++;
++        sessionEpoch=account.optLong("sessionEpoch");self=incoming;accountActive=true;bound=true;
+         TLRPC.User u=user(self,account.optString("displayName"),true);
+         UserConfig.getInstance(0).setCurrentUser(u);MessagesController.getInstance(0).putUser(u,false);
++        return true;
+     }
+     public static void clearProjection() {
+-        accountEpoch++;
++        accountEpoch++;bound=false;attaching=false;sessionEpoch=0;
+         self=null;peers.clear();pendingIds.clear();histories.clear();historyRows.clear();intents.clear();
+         MemoryPreferences.clearAll();
+         UserConfig.getInstance(0).clearDmashCurrentUser();
+diff --git a/TMessagesProj/src/main/java/org/telegram/ui/dmash/DmashLoginActivity.java b/TMessagesProj/src/main/java/org/telegram/ui/dmash/DmashLoginActivity.java
+index 76d4ece..df45ae4 100644
+--- a/TMessagesProj/src/main/java/org/telegram/ui/dmash/DmashLoginActivity.java
++++ b/TMessagesProj/src/main/java/org/telegram/ui/dmash/DmashLoginActivity.java
+@@ -27,7 +27,7 @@ public final class DmashLoginActivity extends BaseFragment implements DmashClien
+     private TextView notice;
+     private LinearLayout content;
+     private boolean navigating, requestBusy;
+-    private TextSettingsCell unlock,login,createRoot,createAccount,importProfile;
++    private TextSettingsCell unlock,login,resume,createRoot,createAccount,importProfile;
+     @Override public View createView(Context context) {
+         actionBar.setTitle("D-MASH");
+         ScrollView scroll=new ScrollView(context);fragmentView=scroll;
+@@ -37,6 +37,10 @@ public final class DmashLoginActivity extends BaseFragment implements DmashClien
+         pin=field(context,"Device PIN",true);identity=field(context,"Account identity",false);password=field(context,"Account password",true);name=field(context,"Display name",false);
+         unlock=button(context,"Unlock device",()->call("root.unlock",DmashClient.object("pin",take(pin)),true));
+         login=button(context,"Sign in",()->call("account.login",DmashClient.object("identity",identity.getText().toString().trim(),"password",take(password)),false));
++        resume=button(context,"Continue selected Account",()->{
++            JSONObject selected=DmashClient.status().optJSONObject("account");
++            if(selected!=null)call("account.attach",DmashClient.object("accountPublicId",selected.optString("accountPublicId")),false);
++        });
+         createRoot=button(context,"Create device Root",()->confirmPin(context));
+         createAccount=button(context,"Create Account",()->call("account.create",DmashClient.object("identity",identity.getText().toString().trim(),"password",take(password),"displayName",name.getText().toString().trim()),false));
+         importProfile=button(context,"Import complete profile",()->{Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(intent,501);});
+@@ -60,12 +64,16 @@ public final class DmashLoginActivity extends BaseFragment implements DmashClien
+             notice.setText("Ready");if(DmashClient.active())openDialogs();else DmashClient.refresh();
+         });
+     }
+-    private void setBusy(boolean value){requestBusy=value;for(TextSettingsCell cell:new TextSettingsCell[]{unlock,login,createRoot,createAccount,importProfile})cell.setEnabled(!value&&DmashClient.isReady());}
++    private void setBusy(boolean value){requestBusy=value;for(TextSettingsCell cell:new TextSettingsCell[]{unlock,login,resume,createRoot,createAccount,importProfile})cell.setEnabled(!value&&DmashClient.isReady());}
+     public void changed(JSONObject status,String error){
+         if(notice==null)return;if(!error.isEmpty()){notice.setText(error);return;}
+-        for(TextSettingsCell cell:new TextSettingsCell[]{unlock,login,createRoot,createAccount,importProfile})cell.setEnabled(!requestBusy&&!DmashClient.isBusy()&&DmashClient.isReady());
++        for(TextSettingsCell cell:new TextSettingsCell[]{unlock,login,resume,createRoot,createAccount,importProfile})cell.setEnabled(!requestBusy&&!DmashClient.isBusy()&&DmashClient.isReady());
+         if(!DmashClient.isReady()){notice.setText("Connecting to the messages service…");return;}
+         boolean exists=status.optBoolean("profileExists"),locked=status.optBoolean("rootLocked",true);
++        JSONObject selected=status.optJSONObject("account");
++        boolean canAttach=exists&&!locked&&status.optBoolean("accountSessionActive")&&selected!=null&&!DmashClient.active();
++        resume.setVisibility(canAttach?View.VISIBLE:View.GONE);
++        if(canAttach)resume.setText("Continue as "+selected.optString("displayName"),true);
+         createRoot.setVisibility(exists?View.GONE:View.VISIBLE);unlock.setVisibility(exists&&locked?View.VISIBLE:View.GONE);login.setVisibility(exists&&!locked?View.VISIBLE:View.GONE);createAccount.setVisibility(exists&&!locked?View.VISIBLE:View.GONE);
+         if(DmashClient.active())openDialogs();else notice.setText(!exists?"Create a device Root or import your complete profile.":locked?"Unlock your device Root.":"Sign in to your Account. Node can run independently.");
+     }
+-- 
+2.43.0
+

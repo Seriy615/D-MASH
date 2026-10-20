@@ -139,9 +139,9 @@ D-MASH не требует Telegram SMS/login. Форки воспроизвод
 
 ## 4. Source publication, environments и активные проверки
 
-Latest published GitHub snapshot **274419f969d036c8352fbb5b968c10c927ac9ba1** is
-exact local **dc41fb30ed3d928278f2b445222066a1933736cb** tree
-**8b11394e0fff654b7d2e84f7826962dec9f48176**. create_tree exact + git ls-remote
+Latest published GitHub snapshot **0783fd0440767e76433c2902b5c8c80a918f0883** is
+exact local **e00db0abb1baddc4c18bfd2ec6dd757c398f3d5e** tree
+**5ec547e905de8c901645ce6eab4be278f2525188**. create_tree exact + git ls-remote
 verified. Actual Linux run39466512625/job118779217412 TERMINAL FAIL at
 owned dependencies: exact libprotobuf-dev=3.21.12-8.2ubuntu0.4 absent from apt
 index (agent artifact12285456677; no full application compile). No silent version
@@ -153,7 +153,20 @@ Platform followup e740454 corrects checkout cache and includes owned UI paths/MI
 notices. Root independently reconstructed33files from both patches;
 [proof](docs/native/2026-10-20/root-desktop-owned-profile-source.json).
 Local build13001 keeps earlier32file source; no mutation under live compiler,
-last author149/822. No new screenshot exists yet.
+local13001 terminalFAIL240/822: owned jpeglib.h cannot find multiarchjconfig.h.
+Platform targeted include fix in progress; old32source/cache/log preserved. No new screenshot exists yet.
+Latest published source includes Android actual KVM workflow e00db0a and Linux
+same-version official pool downloader02250ac. Root compared all131 pins unchanged,
+independently downloaded libprotobuf-dev1413370bytes/SHAacc0ec3dee7e496451656170e0210c56efd49ffcff243df8ce9893aa55f44e24.
+New actual Android39467452315 and Linux39467452496 IN_PROGRESS. Old harness
+Windows39467452592/Android39467452074 remain distinct. Do not rerun from timeouts.
+Android incremental source e89d376 resumed under durable supervisor1120853,
+client1120881; root independently /proc verified start tokens3568783/3568824.
+State private/telegram-android-assemble-04-state.json terminalFAIL EXIT1: upstream
+WamrCoreBackend.h missing wasm_export.h. Root verified state/log and both PIDs
+absent. Exact WAMR gitlink required initialization added0f7c79e, all19pins unchanged;
+root prepare8tests PASS3.405s. New durable assemble05 supervisor1129220/start3598517,
+client1129248/start3598533 authorLIVE, same source/cache. No final APK yet.
 Branch `codex/native-clients-ci-20261020`, draft
 [PR8](https://github.com/Seriy615/D-MASH/pull/8). Full fork applications not
 accepted; later source/docs/WIP are not implicitly published. See FORGE_SYNC.
@@ -166,6 +179,15 @@ both QtServiceBase subclasses. [Artifact evidence](docs/native/2026-10-20/root-a
 No independentGradlererun/APK/service/UI/no-egress acceptance. Coherent Android
 core source139795 build10125 terminal0 (61targets), Qt aux deployment terminal0; root359source/40artifact hashes verified, bothELF64x86_64, pending_sends/pairing_host included. [Proof](docs/native/2026-10-20/root-android-coherent-core-inspection.json). No APK/service/runtime yet. Actual Desktopfull configure
 reached tde2e/tg_owt; both configurePASS, tde2e build83170 terminal0,124targets/installPASS; selectedmainapp objects13001 nowactive after GIR/pkg-config environment fixes. tg_owt archives notyetbuilt. Original media/calls retained; no fullappcompile/render yet.
+
+Windows4929 run39466512564 terminalFAIL is now root-inspected: retainedAppLocalKey
+first-key-open PROFILE_KEY_PUBLISH_WIN32:32 (sharing violation), ZIP58275d7f... .
+Fix1b66709 uses Qt-owned no-overwrite rename and keeps published key; Windows
+runtime retest pending. [Evidence](docs/native/2026-10-20/root-windows-key-sharing-failure.json).
+Desktop selected-session source bc76ed0 independently reconstructed all34files/
+3patches; production adapter+projection frozen components root2PASS,11pin files
+hashverified. [Evidence](docs/native/2026-10-20/root-desktop-binding-adapter.json).
+Actual two windows/render/chat NOT_RUN; Android adapter separately pending.
 
 Latest aa30 Windows39460137863/job118757157412 terminalFAIL; rootartifact12282556614
 now pinpoints retainedAppLocalKey caughtunhandledexception (1PASS1FAIL4ms), CTest
@@ -259,7 +281,12 @@ runtime DB/keys. Не reset и не очищать пользовательск�
   deadline. Earlier neutral registration/reattach/profile validation/public reopen
   phases passed; not full profile acceptance. Same failed profile retained; exact
   owner/child PIDs and /proc scan confirm stopped before any retry. Bounded startup/
-  cleanup diagnostics in progress; no timeout changes/reset/heavy retry authorized.
+  diagnostic probe88756 terminal1: same original profile, public3697ms→pause82ms→
+  private4025ms PASS→pause92ms→returnpublic5773ms READ_TIMEOUT. Failed child
+  READY5525ms after parent leaseclose5054ms; child exit confirmed5665ms/noKill,
+  zero profile processes remain. Native parity2741/3176/2935ms; JS stamps reflect
+  queued delivery and cannot attribute remaining time. Emission timestamps next;
+  no second probe/mesh authorized, deadlines/storage/identity unchanged.
   Do not advertise public or
   bump metadata untilcoherenttests. No newmesh whileplatformcompiles.
 - **Root:** actual fork source review and independent integration/acceptance;

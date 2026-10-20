@@ -89,3 +89,17 @@ core or 16-KiB alignment; available UI capture can run after that failure so its
 separate observation is not lost. No existing app/profile is uninstalled/reset.
 Final Account/UI acceptance requires the shared worker session binding and its
 explicit attach adapter, not the older core139 compile checkpoint.
+
+Patch seven adds the shared credential service Account/session binding contract. A fresh UI
+never adopts the Account seen in global status: the user explicitly chooses Continue, which
+attaches the expected public ID. A reconnect only reattaches this UI’s retained identity.
+Selected Account requests capture identity and worker epoch when queued, and check them
+before dispatch and before publishing callbacks. Logging in another Account, or relogging
+the same Account with a new epoch, invalidates queued work. The focused actual-source unit
+also covers late replies after a local Account fence. This patch has unit verification;
+full Android module compilation and actual UI acceptance of it remain pending. The older
+frozen six-patch local APK build is preserved separately and does not prove this adapter.
+
+Upstream JNI also requires its exact pinned WAMR source headers even when using prebuilt
+libraries. It is included in requiredSubmodules; missing dependencies are initialized at
+the recorded gitlink rather than removed from compilation.

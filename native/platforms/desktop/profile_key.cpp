@@ -32,7 +32,11 @@ QByteArray openAppLocalKey(const QString& directory,const QString& accountDataba
 #ifdef Q_OS_UNIX
   if(::fsync(temporary.handle())||::link(QFile::encodeName(temporary.fileName()).constData(),QFile::encodeName(path).constData()))throw std::runtime_error("PROFILE_KEY_UNAVAILABLE");
 #else
-  temporary.close();if(!MoveFileExW(reinterpret_cast<LPCWSTR>(temporary.fileName().utf16()),reinterpret_cast<LPCWSTR>(path.utf16()),MOVEFILE_WRITE_THROUGH)){const auto error=GetLastError();throw std::runtime_error(std::string("PROFILE_KEY_PUBLISH_WIN32:")+std::to_string(error));}
+  // QTemporaryFile::close() retains its native handle; external MoveFileEx fails
+  // with ERROR_SHARING_VIOLATION. Its atomic, no-overwrite rename closes the
+  // engine handle before publishing. Keep the published key after destruction.
+  if(!temporary.rename(path))throw std::runtime_error("PROFILE_KEY_PUBLISH_FAILED");
+  temporary.setAutoRemove(false);
 #endif
  }
  QFileInfo info(path);if(info.isSymLink()||!info.isFile())throw std::runtime_error("PROFILE_KEY_RECOVERY_REQUIRED");

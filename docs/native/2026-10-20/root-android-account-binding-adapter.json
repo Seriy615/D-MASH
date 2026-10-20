@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "scope": "ROOT seven-patch exact source reconstruction and actual Java client state machine with Android/IPC/model doubles; no Android UI result",
+  "recipeCommit": "9f8a50d",
+  "forkSourceCommit": "c7dcebc79cb18c04cccf065ee9366a1ff2dd4bbd",
+  "upstreamCommit": "0aae959806c57be8ad457980f2a5c6277ff18635",
+  "patchCount": 7,
+  "reconstructedFiles": 30,
+  "rootUnitHandle": 98846,
+  "unitSource": "DmashClient.java and MemoryPreferences.java compiled against Android36 interface with deterministic collaborators",
+  "checks": [
+    "Global host status cannot activate observed Account",
+    "Explicit expected Account attachment",
+    "LoginB rejects already queued AccountA send/history before dispatch",
+    "SameAccount new worker epoch rejects queued old operation",
+    "Late old reply cannot project data after Account changed",
+    "Uncertain send IDs retained and reconciled without duplication",
+    "RAM drafts clear on Account/Root fences"
+  ],
+  "limits": [
+    "Full Java007 compilation/APK/service/UI NOT_RUN",
+    "Current local six-patch APK source remains frozen e89 and does not include this adapter",
+    "Followup must also explicitly clear ACCOUNT_CONTEXT_REQUIRED and review local generation capture",
+    "No real two-window GUI or network acceptance"
+  ]
+}

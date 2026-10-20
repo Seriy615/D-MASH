@@ -1,0 +1,149 @@
+diff --git a/dmash/CMakeLists.txt b/dmash/CMakeLists.txt
+--- a/dmash/CMakeLists.txt
++++ b/dmash/CMakeLists.txt
+@@ -22,5 +22,8 @@
+   target_include_directories(dmash_projection_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+   target_link_libraries(dmash_projection_test PRIVATE Qt6::Core)
+   add_test(NAME dmash-presentation-projection COMMAND dmash_projection_test)
++  add_executable(dmash_session_binding_test tests/session_binding_test.cpp)
++  target_link_libraries(dmash_session_binding_test PRIVATE dmash_ipc_adapter)
++  add_test(NAME dmash-selected-account-binding COMMAND dmash_session_binding_test)
+  endif()
+ endif()
+diff --git a/dmash/session_adapter.h b/dmash/session_adapter.h
+--- a/dmash/session_adapter.h
++++ b/dmash/session_adapter.h
+@@ -15,6 +15,7 @@
+  explicit SessionAdapter(QString nativeProfile,QObject* parent=nullptr);
+  ~SessionAdapter() override;
+  void unlock(const QString& pin);void login(const QString& identity,const QString& password);
++ void attach(const QString& expectedAccount);
+  void refreshContacts();bool busy()const{return client_.busy();}
+  void logout();void lockRoot();void loadHistory(const QString& nativePeer);
+  void sendText(const QString& nativePeer,const QString& operationId,const QString& text);
+@@ -27,7 +28,8 @@
+ private:
+  void activate(const QJsonObject&);
+  void request(const QString&,const QJsonObject& params={});
+- quint64 epoch_=0,requestEpoch_=0;QString pendingControl_;
++ quint64 epoch_=0,requestEpoch_=0,sessionEpoch_=0,requestSessionEpoch_=0,wantedEpoch_=0;
++ QString requestAccount_,wantedAccount_,pendingControl_;
+  void response(const QString&,bool,const QString&,const QJsonObject&);void clear();
+  LocalClient client_;QTimer sync_;QHash<QString,quint64> peers_;QHash<quint64,QString> nativePeers_;
+  HistoryProjection projection_;quint64 nextPeer_=1;QString account_,historyPeer_,wantedPeer_,activePeer_;bool loggedIn_=false;
+diff --git a/dmash/session_adapter.cpp b/dmash/session_adapter.cpp
+--- a/dmash/session_adapter.cpp
++++ b/dmash/session_adapter.cpp
+@@ -16,39 +16,51 @@
+  sync_.setInterval(2000);connect(&sync_,&QTimer::timeout,this,[this]{if(loggedIn_&&!client_.busy())request("host.status");});request("account.listAccounts");
+ }
+ SessionAdapter::~SessionAdapter(){sync_.stop();client_.disconnect(this);}
+-void SessionAdapter::request(const QString& method,const QJsonObject& params){if(client_.busy())return;requestEpoch_=epoch_;client_.request(method,params);}
+-void SessionAdapter::clear(){++epoch_;sync_.stop();loggedIn_=false;account_.clear();historyPeer_.clear();wantedPeer_.clear();activePeer_.clear();peers_.clear();nativePeers_.clear();projection_.clear();nextPeer_=1;Q_EMIT cleared();}
++void SessionAdapter::request(const QString& method,const QJsonObject& params){if(client_.busy())return;requestEpoch_=epoch_;requestSessionEpoch_=sessionEpoch_;requestAccount_=method=="account.attach"?params.value("accountPublicId").toString():account_;client_.request(method,params);}
++void SessionAdapter::clear(){++epoch_;sync_.stop();loggedIn_=false;sessionEpoch_=0;account_.clear();wantedAccount_.clear();wantedEpoch_=0;historyPeer_.clear();wantedPeer_.clear();activePeer_.clear();peers_.clear();nativePeers_.clear();projection_.clear();nextPeer_=1;Q_EMIT cleared();}
+ QString SessionAdapter::newOperationId(){return QUuid::createUuid().toString(QUuid::Id128)+QUuid::createUuid().toString(QUuid::Id128);}
+ quint64 SessionAdapter::localPeerId(const QString& peer){if(peer.isEmpty()||peer.size()>2048)throw std::runtime_error("INVALID_CORE_PEER");if(peers_.contains(peer))return peers_.value(peer);if(!nextPeer_||nextPeer_>quint64(std::numeric_limits<qint64>::max()))throw std::runtime_error("LOCAL_PEER_LIMIT");const auto local=nextPeer_++;if(nativePeers_.contains(local))throw std::runtime_error("LOCAL_PEER_COLLISION");peers_.insert(peer,local);nativePeers_.insert(local,peer);return local;}
+ QString SessionAdapter::nativePeer(quint64 id)const{return nativePeers_.value(id);}
+ void SessionAdapter::unlock(const QString& pin){request("root.unlock",{{"pin",pin}});}
+-void SessionAdapter::login(const QString& identity,const QString& password){request("account.login",{{"identity",identity},{"password",password}});}
++void SessionAdapter::login(const QString& identity,const QString& password){if(client_.busy())return;clear();request("account.login",{{"identity",identity},{"password",password}});}
++void SessionAdapter::attach(const QString& expectedAccount){
++ if(client_.busy())return;
++ if(!QRegularExpression("^[0-9a-f]{64}$").match(expectedAccount).hasMatch()){Q_EMIT failed("INVALID_CORE_ACCOUNT");return;}
++ // Explicit caller selection only: never attach an Account observed in status/inventory.
++ clear();request("account.attach",{{"accountPublicId",expectedAccount}});
++}
+ void SessionAdapter::logout(){clear();if(client_.busy()){pendingControl_="account.logout";client_.cancel();}else request("account.logout");}
+ void SessionAdapter::lockRoot(){clear();if(client_.busy()){pendingControl_="root.lock";client_.cancel();}else request("root.lock");}
+-void SessionAdapter::loadHistory(const QString& peer){if(!loggedIn_)return;activePeer_=peer;if(client_.busy()){wantedPeer_=peer;return;}historyPeer_=peer;request("account.history",{{"peer",peer},{"before",0},{"limit",50}});}
++void SessionAdapter::loadHistory(const QString& peer){if(!loggedIn_)return;activePeer_=peer;if(client_.busy()){wantedPeer_=peer;wantedAccount_=account_;wantedEpoch_=epoch_;return;}historyPeer_=peer;request("account.history",{{"peer",peer},{"before",0},{"limit",50}});}
+ void SessionAdapter::sendText(const QString& peer,const QString& operationId,const QString& text){if(!loggedIn_||client_.busy())return;if(!QRegularExpression("^[0-9a-f]{64}$").match(operationId).hasMatch()){Q_EMIT failed("INVALID_OPERATION_ID");return;}request("account.sendText",{{"peer",peer},{"operationId",operationId},{"text",text}});}
+ void SessionAdapter::response(const QString& method,bool ok,const QString& code,const QJsonObject& result){
+  if(!pendingControl_.isEmpty()){const auto next=std::exchange(pendingControl_,{});request(next);return;}
+  if(requestEpoch_!=epoch_)return;
+- if(!ok){if(code=="ROOT_UNLOCK_REQUIRED"||code=="CREDENTIAL_HOST_DISCONNECTED"||code=="CREDENTIAL_HOST_UNAVAILABLE")clear();Q_EMIT failed(code);return;}
++ if(method!="account.attach"&&method!="account.login"&&!requestAccount_.isEmpty()
++    &&(requestAccount_!=account_||requestSessionEpoch_!=sessionEpoch_))return;
++ if(!ok){if(code=="ROOT_UNLOCK_REQUIRED"||code=="CREDENTIAL_HOST_DISCONNECTED"||code=="CREDENTIAL_HOST_UNAVAILABLE"||code=="ACCOUNT_CONTEXT_REQUIRED"||code=="ACCOUNT_SESSION_CHANGED")clear();Q_EMIT failed(code);return;}
+  const auto value=result.value("value").toObject();const auto rows=result.value("rows").toArray();
+  try{
+   if(method=="host.status"){
+    if(loggedIn_&&(value.value("rootLocked").toBool()||!value.value("accountSessionActive").toBool()||value.value("account").toObject().value("accountPublicId").toString()!=account_)){clear();Q_EMIT failed("ACCOUNT_SESSION_CHANGED");return;}
+    if(loggedIn_)request("account.sync");
+-  }else if(method=="root.unlock"||method=="account.listAccounts"){Q_EMIT accounts(rows);const auto active=value.value("activeAccount").toObject();if(!active.isEmpty())activate(active);}
+-  else if(method=="account.login"){
++  }else if(method=="root.unlock"||method=="account.listAccounts"){Q_EMIT accounts(rows);}
++  else if(method=="account.login"||method=="account.attach"){
++   if(method=="account.attach"&&value.value("accountPublicId").toString()!=requestAccount_)throw std::runtime_error("ACCOUNT_SESSION_CHANGED");
+    activate(value);
+   }else if(method=="account.contacts"){
+    QJsonArray projected;for(const auto& item:rows){auto row=item.toObject();row["localPeerId"]=qint64(localPeerId(row.value("id").toString()));projected.append(row);}Q_EMIT contacts(projected);
+   }else if(method=="account.history"){
+-   const auto peer=std::exchange(historyPeer_,{});const auto projected=projection_.project(peer,rows);Q_EMIT history(peer,projected);if(!wantedPeer_.isEmpty()){const auto next=std::exchange(wantedPeer_,{});loadHistory(next);}
++   const auto peer=std::exchange(historyPeer_,{});const auto projected=projection_.project(peer,rows);Q_EMIT history(peer,projected);if(!wantedPeer_.isEmpty()){const auto next=std::exchange(wantedPeer_,{});if(wantedEpoch_==epoch_&&wantedAccount_==account_)loadHistory(next);}
+   }else if(method=="account.sendText"){Q_EMIT accepted(value);if(value.value("accepted").toBool()&&!activePeer_.isEmpty())loadHistory(activePeer_);}
+   else if(method=="account.sync"&&!activePeer_.isEmpty())loadHistory(activePeer_);
+   else if(method=="account.logout"||method=="root.lock")clear();
+  }catch(const std::exception& error){clear();Q_EMIT failed(QString::fromLatin1(error.what()));}
+ }
+ 
+-void SessionAdapter::activate(const QJsonObject& value){clear();account_=value.value("accountPublicId").toString();if(!QRegularExpression("^[0-9a-f]{64}$").match(account_).hasMatch())throw std::runtime_error("INVALID_CORE_ACCOUNT");loggedIn_=true;const auto self=localPeerId("local:saved-messages:v1");peers_.insert(account_,self);Q_EMIT authenticated(value);request("account.contacts");sync_.start();}
++void SessionAdapter::activate(const QJsonObject& value){
++ const auto authoritativeEpoch=value.value("sessionEpoch").toInteger(-1);
++ if(authoritativeEpoch<=0)throw std::runtime_error("INVALID_CORE_SESSION_EPOCH");
++ clear();sessionEpoch_=quint64(authoritativeEpoch);account_=value.value("accountPublicId").toString();if(!QRegularExpression("^[0-9a-f]{64}$").match(account_).hasMatch())throw std::runtime_error("INVALID_CORE_ACCOUNT");loggedIn_=true;const auto self=localPeerId("local:saved-messages:v1");peers_.insert(account_,self);Q_EMIT authenticated(value);request("account.contacts");sync_.start();}
+ 
+ void SessionAdapter::refreshContacts(){if(loggedIn_&&!client_.busy())request("account.contacts");}
+diff --git a/dmash/tests/session_binding_test.cpp b/dmash/tests/session_binding_test.cpp
+new file mode 100644
+--- /dev/null
++++ b/dmash/tests/session_binding_test.cpp
+@@ -0,0 +1,47 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Upstream OpenSSL linking exception in ../../LICENSE applies.
++#include "session_adapter.h"
++#include <QCoreApplication>
++#include <QLocalServer>
++#include <QTemporaryDir>
++#include <QFile>
++#include <QDir>
++#include <QJsonDocument>
++#include <QElapsedTimer>
++#include <QThread>
++#include <QtEndian>
++#include <stdexcept>
++#include <iostream>
++namespace {
++void check(bool ok,const char* why){if(!ok)throw std::runtime_error(why);}
++template<typename F>void wait(F predicate){QElapsedTimer t;t.start();while(!predicate()&&t.elapsed()<3000){QCoreApplication::processEvents();QThread::msleep(1);}check(predicate(),"event deadline");}
++struct Peer:QObject{
++ QLocalServer server;QLocalSocket* socket=nullptr;QByteArray input;QString active=QString(64,'a');qint64 epoch=1;
++ QList<QJsonObject> requests;QJsonObject held;bool holdHistory=false;
++ Peer(const QString& path){check(server.listen(QDir(path).filePath("peer")),"listen");QFile locator(QDir(path).filePath("credential-endpoint.json"));check(locator.open(QIODevice::WriteOnly),"locator");locator.write(QJsonDocument(QJsonObject{{"v",1},{"endpoint",server.fullServerName()}}).toJson());locator.close();QObject::connect(&server,&QLocalServer::newConnection,this,[this]{socket=server.nextPendingConnection();input.clear();QObject::connect(socket,&QLocalSocket::readyRead,this,[this]{read();});});}
++ QJsonObject identity()const{return {{"accountPublicId",active},{"sessionEpoch",epoch},{"displayName","Synthetic"}};}
++ void reply(const QJsonObject& request,bool ok,QJsonObject result={},QString code={}){auto body=QJsonDocument(QJsonObject{{"v",1},{"id",request.value("id")},{"ok",ok},{"code",code},{"result",result}}).toJson(QJsonDocument::Compact);QByteArray frame(4,0);qToBigEndian<quint32>(body.size(),frame.data());frame+=body;socket->write(frame);socket->flush();}
++ int count(const QString& method)const{int n=0;for(const auto& r:requests)if(r.value("method")==method)++n;return n;}
++ void read(){input+=socket->readAll();while(input.size()>=4){const auto length=qFromBigEndian<quint32>(input.constData());if(input.size()<4+int(length))return;const auto r=QJsonDocument::fromJson(input.mid(4,length)).object();input.remove(0,4+length);requests.append(r);const auto method=r.value("method").toString();
++  if(method=="host.status")reply(r,true,{{"value",QJsonObject{{"rootLocked",false},{"accountSessionActive",true},{"account",identity()}}}});
++  else if(method=="account.listAccounts")reply(r,true,{{"value",QJsonObject{{"activeAccount",identity()}}},{"rows",QJsonArray{QJsonObject{{"identity","Synthetic"},{"accountPublicId",active}}}}});
++  else if(method=="account.login")reply(r,true,{{"value",identity()}});
++  else if(method=="account.attach"){if(r.value("params").toObject().value("accountPublicId")!=active)reply(r,false,{},"ACCOUNT_SESSION_CHANGED");else reply(r,true,{{"value",identity()}});}
++  else if(method=="account.history"&&holdHistory)held=r;
++  else reply(r,true,{{"rows",QJsonArray{}}});
++ }}
++};
++}
++int main(int argc,char**argv){QCoreApplication app(argc,argv);try{
++ QTemporaryDir profile;check(profile.isValid(),"profile");Peer peer(profile.path());SessionAdapter adapter(profile.path());int authenticated=0,cleared=0,histories=0;QString lastAccount,lastError;
++ QObject::connect(&adapter,&SessionAdapter::authenticated,&app,[&](const QJsonObject& a){++authenticated;lastAccount=a.value("accountPublicId").toString();});
++ QObject::connect(&adapter,&SessionAdapter::cleared,&app,[&]{++cleared;});QObject::connect(&adapter,&SessionAdapter::failed,&app,[&](const QString& e){lastError=e;});QObject::connect(&adapter,&SessionAdapter::history,&app,[&]{++histories;});
++ wait([&]{return peer.count("account.listAccounts")==1&&!adapter.busy();});check(authenticated==0,"inventory must not bind observed Account");check(peer.count("account.contacts")==0,"unbound inventory read");
++ adapter.login("Synthetic","Synthetic password");wait([&]{return authenticated==1&&!adapter.busy();});check(lastAccount==QString(64,'a'),"login identity");check(peer.count("account.contacts")==1,"bound contacts");
++ peer.holdHistory=true;adapter.loadHistory("local:saved-messages:v1");wait([&]{return !peer.held.isEmpty();});adapter.loadHistory("old-delayed-peer");adapter.logout();peer.reply(peer.held,true,{{"rows",QJsonArray{QJsonObject{{"text","old RAM row"},{"sequence",1}}}}});wait([&]{return peer.count("account.logout")==1&&!adapter.busy();});check(histories==0,"stale callback projected rows");check(peer.count("account.history")==1,"deferred old Account history dispatched");
++ peer.active=QString(64,'b');peer.epoch=2;adapter.attach(QString(64,'a'));wait([&]{return !adapter.busy();});check(authenticated==1&&lastError=="ACCOUNT_SESSION_CHANGED","wrong attachment followed observed Account");
++ peer.active=QString(64,'a');peer.epoch=3;adapter.attach(QString(64,'a'));wait([&]{return authenticated==2&&!adapter.busy();});check(lastAccount==QString(64,'a'),"exact explicit attachment");
++ const auto beforeClear=cleared;peer.socket->disconnectFromServer();wait([&]{return cleared>beforeClear;});check(lastError=="CREDENTIAL_HOST_DISCONNECTED","idle disconnect did not invalidate");
++ peer.active=QString(64,'b');peer.epoch=4;adapter.refreshContacts();QCoreApplication::processEvents();check(authenticated==2,"idle reconnect followed other Account");
++ std::cout<<"PASS inventory cannot bind; login/explicit exact attach; wrong attach; deferred old history/callback fenced; idle disconnect clears RAM\n";return 0;
++ }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
