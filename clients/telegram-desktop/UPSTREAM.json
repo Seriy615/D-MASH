@@ -180,38 +180,43 @@
   "patches": [
     {
       "path": "patches/0001-local-core-boundary.patch",
-      "sha256": "391d3c0624397a9b9b8076ed7485a012fd1641c151865adf9d39cf16887a2749",
-      "status": "DRAFT; standalone IPC/SessionAdapter compiled; original Intro/DataSession/History/Composer wiring source present, full application not compiled or rendered"
+      "sha256": "f4841c74dee4099182acea0ead7788ba91cae3b0ac893122e94733af89e4766e",
+      "status": "DRAFT full app integration: standalone IPC/projection built and CTest1/1 passed; full original app configured and UI-object build active, not linked/rendered"
     }
   ],
   "patchedFiles": {
-    "CMakeLists.txt": "5ddb89d50fbc172c1915f0c8e0a167bd26ea1186820c219f818fef1e4baac850",
+    "CMakeLists.txt": "c74e2d8e82347e8d915cb336af56a3a637b520eaed1d4b1f84fcba18456d69ed",
     "Telegram/CMakeLists.txt": "b0869543b90a02fd13e11710330dfa77220fca2315ea49c2a24c3ed1d588604b",
     "Telegram/SourceFiles/apiwrap.cpp": "c5b33064193c60cfa018f9adbcea7707ef65695e6e16f3017f353957bb2300a8",
     "Telegram/SourceFiles/core/launcher.cpp": "76e348195c3e1207b3bd72f0471e3ee2e7fa3ee34a03993b641fb9b4e4e32e18",
     "Telegram/SourceFiles/history/history_item.cpp": "19e588943b016cebc7813c5ef191dbab67f4399225d91de1de78ad8a2de5a5d9",
     "Telegram/SourceFiles/history/history_item.h": "81e757a4880127148e2ba79d0bf79984f371444030ff2ceef147af281113c1f3",
-    "Telegram/SourceFiles/history/history_widget.cpp": "dfcd423e45d4c04b93304980dd0436c44d230910a3d330148181a60d2f246cbe",
-    "Telegram/SourceFiles/intro/intro_start.cpp": "a1dde61756a7cb1696338bd286624d51eeecb6e64badf0c9a064ceb8b19f1c2a",
-    "Telegram/SourceFiles/main/main_account.cpp": "0f4385fe9dafcc731e201c62d92ce0bcf7c65fb10bfba20bce04b29ec57fe90c",
+    "Telegram/SourceFiles/history/history_widget.cpp": "85c1fe5f8a6e8ad9329f21d5a1c1e0ace1fbc2b9166d33938f51414ef5de61cc",
+    "Telegram/SourceFiles/intro/intro_start.cpp": "2a86829454a34fc68b773288fdf143093ebc455a26470a05172dc47d45034b7e",
+    "Telegram/SourceFiles/main/main_account.cpp": "6e02497de9c04a5441303e10f6a700b0b31f253dfc59e01252f7779b75ab0ac7",
     "Telegram/SourceFiles/main/main_account.h": "633515685a034bba620649358b3a1c94b7419d36a9cc8fb62e3c741dc4d11a3a",
     "Telegram/SourceFiles/mtproto/connection_http.cpp": "313f7789acd9c383168e069787e2275e56d0741438256a9fa529beba96f3a9c8",
     "Telegram/SourceFiles/mtproto/connection_resolving.cpp": "8042957a4fa84d150f9e047e57c6131dca4e5032d227a30396ba3e962b17e167",
     "Telegram/SourceFiles/mtproto/connection_tcp.cpp": "b06f1fdc021063b5529f6406dc78be239966aeb08e61b34c9da3cbd55c0d8301",
     "Telegram/SourceFiles/mtproto/mtp_instance.cpp": "b644fbd8e57b71f03bdd1f0c9d4d7dc32827e0afd07438b4b90d63d8b95841ec",
+    "Telegram/SourceFiles/storage/storage_account.cpp": "8021308ea16e087292c7255baa87b4941b37395fb61b92c77d55478a3344c0ad",
     "Telegram/cmake/telegram_options.cmake": "25a0d782864e602c193278e94e60b6dff3205d20c6e75a0b558ea1249ca3e792",
-    "dmash/CMakeLists.txt": "8ba4227e00fb3e9224dc28cb4706e4471d6141b09b75cc796120f47cf026cbad",
+    "dmash/CMakeLists.txt": "4aecbc75749fe6d67c892886778e9a12a76c8ccc09b8cbe32e2508fca68c7ef4",
     "dmash/bootstrap_root.cpp": "e92f6fa834867cb694e4d6e699f339dc99772e466f7368212e527c0027db56a5",
+    "dmash/history_projection.cpp": "d8ed6ff60e9a0a90f2be61cdbe07099bb0355aec115a433ef3d20f3fe0a53eb7",
+    "dmash/history_projection.h": "b3e65b923475776aa8caf0a65402dbb68d94960afcf89e7f3654a96fabfa7df0",
     "dmash/intro_step.cpp": "c3187c6e3b607e506c2494ba19f0bb183d360f6c366e8643abe8841c4268fb91",
     "dmash/intro_step.h": "3f70048a1527a6f2fdc11163383b9033c1efecc1c4ebdf5c40f5485c003f9234",
-    "dmash/local_client.cpp": "3383f4addf5ad97c1d408f4c54d3b8d6ec1c111a4e46d8da686f9da4806a6e4e",
-    "dmash/local_client.h": "b2794dd08fbbb90360206d1edcaa5724a64f5029cc685819a14c7c46437fd1b1",
-    "dmash/model_bridge.cpp": "dacbad89d35451da2ed5d0489624d410743b5cae57488fd1b864d4dff644548a",
+    "dmash/local_client.cpp": "db0bb95b1e2ce6dc5327ab76d89431c6c414b70ab45f838f0a4afc9b63ebf21b",
+    "dmash/local_client.h": "15e14b976c134baeeb2f4074839fa4e82c3b46e9896c5a2a7ede3fb8069d7bb1",
+    "dmash/model_bridge.cpp": "f9d944e31384b033b3105d8966b826773e8da3304e7b015104ab9073635815b4",
     "dmash/model_bridge.h": "9265fce3e10803d839dab55db6fc125ee95639ff734d00722b045ef481f0fb94",
     "dmash/os_windows.cpp": "03c082ac3cb698478d03f158b12a4ebba2021563a68f8abc5b6dc66ec9477811",
     "dmash/os_windows.h": "73e6b542027009598bdb8762c30b8051fe222492da1d8509d33756ffc3dbb537",
-    "dmash/session_adapter.cpp": "8dd5f0941fd59075cf4503d886700b94d05d03d9b0d0bc3dd0c1ce0c43ad0119",
-    "dmash/session_adapter.h": "d003966bf74b918a81b2921ac046d6a7f260543688ceeba059d1975b0545d6ec"
+    "dmash/session_adapter.cpp": "994c35ea36cd04d1f05d67f92c1ad56cc50c6f724b51de3bbe7811f8dee93be3",
+    "dmash/session_adapter.h": "a1d4b8a2eda7b1191846e91ef017b005b1280f8b50cd90f61d37c9062d7d68e7",
+    "dmash/tests/generate_id_contract.py": "d2da307f2ef2c775bfd535d75a4a69674a1285713e69adb6d5d1e7da89a7d74d",
+    "dmash/tests/projection_test.cpp": "6838b4e8177551e523a01b99ec6c17951c73fd495bf7389fd22ba08042d2765f"
   },
   "legalSha256": "d99f86f0c2b7f2057f2d6c2122a303af2171d778210b47159090ff9501511bea"
 }

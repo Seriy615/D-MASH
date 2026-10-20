@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QHash>
 #include <QJsonDocument>
+#include <QRegularExpression>
 #include <QResource>
 #include <QStringConverter>
 #include <QUrl>
@@ -143,6 +144,9 @@ struct AccountService::State {
     RegistryReader registryReader;
     RegistryWriter registryWriter;
     std::atomic<quint64> epoch{1};
+    // Worker-owned selected identity; public session metadata only.
+    QJsonObject selectedAccount;
+    quint64 selectedEpoch = 0;
     std::atomic<bool> stopping{false};
     std::mutex mutex;
     std::condition_variable ready;
@@ -639,8 +643,51 @@ std::future<AccountResult> AccountService::login(QString identity, QByteArray pa
     auto token = ++state_->epoch;
     return state_->enqueue([s = state_.get(), identity, secret, token] {
         need(s->epoch == token, "ACCOUNT_SESSION_CHANGED");
-        return s->invoke(
+        s->selectedAccount = {};
+        s->selectedEpoch = 0;
+        auto result = s->invoke(
             "login", {{"identity", identity}, {"password", QString::fromUtf8(secret->bytes())}});
+        if (s->epoch != token) {
+            result.ok = false; result.code = "ACCOUNT_SESSION_CHANGED";
+            result.value = {}; result.rows = {};
+        } else if (result.ok) {
+            result.value["sessionEpoch"] = qint64(token);
+            s->selectedAccount = result.value;
+            s->selectedEpoch = token;
+        }
+        return result;
+    });
+}
+std::future<AccountResult> AccountService::attach(QString expectedAccountPublicId) {
+    return state_->enqueue([s=state_.get(),expectedAccountPublicId] {
+        need(QRegularExpression("^[0-9a-f]{64}$").match(expectedAccountPublicId).hasMatch(),
+             "ACCOUNT_CONTEXT_REQUIRED");
+        need(s->selectedEpoch != 0 && s->epoch == s->selectedEpoch &&
+                 s->selectedAccount.value("accountPublicId") == expectedAccountPublicId,
+             "ACCOUNT_SESSION_CHANGED");
+        AccountResult result; result.ok = true; result.value = s->selectedAccount;
+        return result;
+    });
+}
+std::future<AccountResult> AccountService::invokeBound(AccountBinding binding, QString operation,
+                                                       QJsonObject params) {
+    return state_->enqueue([s=state_.get(),binding,operation,params] {
+        need(!binding.accountPublicId.isEmpty() && binding.epoch != 0, "ACCOUNT_CONTEXT_REQUIRED");
+        need(s->epoch == binding.epoch && s->selectedEpoch == binding.epoch &&
+                 s->selectedAccount.value("accountPublicId") == binding.accountPublicId,
+             "ACCOUNT_SESSION_CHANGED");
+        const QStringList methods = {"sync", "listContacts", "listHistory", "sendText",
+            "pairingCreate", "pairingInspect", "pairingRequest", "pairingOffers", "pairingAdvance", "logout"};
+        need(methods.contains(operation), "ACCOUNT_OPERATION_UNSUPPORTED");
+        auto result = s->invoke(operation.toUtf8().constData(), params);
+        if (s->epoch != binding.epoch) {
+            result.ok = false; result.code = "ACCOUNT_SESSION_CHANGED";
+            result.value = {}; result.rows = {};
+        } else if (operation == "logout") {
+            ++s->epoch;
+            s->selectedAccount = {}; s->selectedEpoch = 0;
+        }
+        return result;
     });
 }
 std::future<AccountResult> AccountService::sync() {
@@ -676,11 +723,12 @@ std::future<AccountResult> AccountService::pairingAdvance(QJsonObject selection)
 }
 std::future<AccountResult> AccountService::logout() {
     ++state_->epoch;
-    return state_->enqueue([s = state_.get()] { return s->invoke("logout"); });
+    return state_->enqueue([s = state_.get()] { s->selectedAccount = {}; s->selectedEpoch = 0; return s->invoke("logout"); });
 }
 void AccountService::cancel() {
     ++state_->epoch;
     state_->enqueue([s = state_.get()] {
+        s->selectedAccount = {}; s->selectedEpoch = 0;
         if (s->ctx)
             return s->invoke("logout");
         AccountResult r;

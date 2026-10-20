@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "scope": "ROOT source roundtrip and actual Java DmashClient unit; no Android UI/service result",
+  "recipeSourceCommit": "ca2c128",
+  "forkSourceCommit": "c6dfe2fdfb7eecb706d069a321a424aa1e988943",
+  "upstreamCommit": "0aae959806c57be8ad457980f2a5c6277ff18635",
+  "patchCount": 3,
+  "patchedSourceFilesVerified": 25,
+  "authorJavaResult": {
+    "exitCode": 0,
+    "tasks": 137,
+    "executed": 2,
+    "upToDate": 135,
+    "duration": "8m14s"
+  },
+  "authorJavaManifestSha256": "fae954e76fcd517e117b42d8d7ea6861340a557d90204a9c5d71fb5c9a67526a",
+  "authorArtifactFilesVerified": 16,
+  "rootUnit": {
+    "runtimeHandle": 11493,
+    "exitCode": 0,
+    "tests": 1,
+    "seconds": 3.769,
+    "actualSource": [
+      "DmashClient.java",
+      "MemoryPreferences.java"
+    ],
+    "doubles": "Android/core IPC/model collaborators; real android.jar SharedPreferences interface",
+    "checks": [
+      "unknown local reply preserves logical operation/text",
+      "history reconciles same operation without another send",
+      "sequence-zero to positive history row has no duplicate",
+      "positive APPLICATION_PENDING remains pending",
+      "Node acceptance does not fabricate recipient READ",
+      "definite failure retries same ID",
+      "Account switch and Root lock clear volatile projection/drafts"
+    ]
+  },
+  "limits": [
+    "Full Java compilation is author result with root artifact hashes, no independent Gradle rerun",
+    "No APK/service/UI/no-egress acceptance",
+    "Server Account context binding still separate confirmed open gap",
+    "Further Firebase/direct proxy guards are a later source patch"
+  ]
+}

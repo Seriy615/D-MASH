@@ -8,7 +8,7 @@ Telegram or its dependencies. The upstream GPL text is included, and the pinned
 checkout retains original notices and third-party licenses.
 
 **Checkpoint status: complete Telegram Java module compilation passed at fork
-`16b2cbf` (137 Gradle tasks, 8m42s). No APK, Android service startup, Account/chat
+`c6dfe2f` (137 Gradle tasks, 8m14s). No APK, Android service startup, Account/chat
 or UI acceptance is claimed.**
 
 `UPSTREAM.json` pins source, submodules, toolchain, license digest and the exact
@@ -16,9 +16,11 @@ patch series. `prepare.py NEW_CHECKOUT` clones and applies it without resetting
 an existing checkout. `build.sh` builds a single arm64-v8a or x86_64 debug variant
 with a supplied coherent D-MASH native Android deployment directory. It requires
 SDK36, build-tools36, NDK27.2.12479018 and JDK21; upstream uses Gradle8.13 and
-AGP8.13.2. MTProto initialization, request dispatch and native sockets are blocked. Explicit
-legacy DNS/proxy/update entrypoint guards are a follow-up; no network acceptance
-is claimed. Initial authentication uses Root/Account rather than phone/SMS.
+AGP8.13.2. MTProto initialization, request dispatch and native sockets are blocked. The focused third patch explicitly blocks fallback DNS, proxy probes and the upstream
+update entrypoint. Patch four additionally blocks direct proxy setup, removes the library
+Google-services plugin and Firebase initializer/push components, and gives the separately
+namespaced app the D-MASH label. Patch four is awaiting the actual APK build; no network
+acceptance is claimed. Initial authentication uses Root/Account rather than phone/SMS.
 
 The actual UI reads Account contacts/history over the credential IPC and maps
 public IDs to local numeric projection IDs with collision checks. Account
@@ -37,6 +39,27 @@ must use the coherent core containing pairing_host.js and pending_sends.js, and
 must pass actual service/UI tests on an owned profile. The initial Java compile
 uses the old v6 Qt jars solely for compiler dependencies, with no runtime claim.
 
+The focused third patch retains in-memory pending/error rows and the original operation/text
+after an unknown IPC reply. The original composer clears only after durable acceptance.
+A same-Account reconnect reconciles by operation ID; positive sequence alone does not mark
+a message sent. Account fences clear plaintext projections and memory-only drafts.
+`tests/test_pending_send.py CHECKOUT` exercises the actual projection source using deterministic
+IPC/Android doubles; it is a unit gate, not service/UI acceptance. The full compile of this
+patch passed the full Java compilation (137 tasks, 8m14s).
+
+The matching D-MASH native credential and Node services compiled successfully for x86_64
+from core source `139795f`, including pairing and durable first-send modules. No APK or
+service startup result is implied by compiling those libraries.
+
 Known unfinished areas include complete APK/native build verification, complete core deployment,
 contact pairing controls, independent Node controls in the actual menu, full
-error/cancel/reopen flows, and original message-composer state reconciliation.
+error/cancel/reopen flows, and actual UI verification of the composer reconciliation.
+
+Local builds may set `DMASH_TELEGRAM_CMAKE_DIR` to an exact CMake 3.22.1 installation.
+The build recipe uses one shared Ninja job pool for compile/link tasks as well as one
+Gradle worker. Initialized source is never reset to repair a failed build.
+
+The first APK configuration attempts exposed a missing Ninja PATH entry and the
+nonportable AndroidNdkModules CMake import. Patch six compiles the unchanged
+pinned NDK CPU-features files directly. These are build findings, not service/UI
+results. Ninja and NASM must be available on PATH.

@@ -1,8 +1,19 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index fc7b239..25b171a 100644
+index fc7b239..a8d204a 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -52,5 +52,26 @@ set(desktop_app_skip_libs
+@@ -46,11 +46,37 @@ include(cmake/target_prepare_qrc.cmake)
+ 
+ include(cmake/options.cmake)
+ include(cmake/external/qt/package.cmake)
++# Qt 6.12 packages private modules separately; the original UI uses their
++# real public CMake targets and private headers, not substitute declarations.
++if (TDESKTOP_DMASH_CLIENT OR TDESKTOP_DMASH_UI_BOOTSTRAP)
++    find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS CorePrivate GuiPrivate WidgetsPrivate)
++endif()
+ 
+ set(desktop_app_skip_libs
+     glibmm
      variant
  )
  
@@ -177,7 +188,7 @@ index 7431124..2088fb4 100644
  	void applyEffectWatchedOnUnreadKnown();
  
 diff --git a/Telegram/SourceFiles/history/history_widget.cpp b/Telegram/SourceFiles/history/history_widget.cpp
-index 1fa75f6..5b8ca85 100644
+index 1fa75f6..6820bfc 100644
 --- a/Telegram/SourceFiles/history/history_widget.cpp
 +++ b/Telegram/SourceFiles/history/history_widget.cpp
 @@ -6,6 +6,9 @@ For license and copyright information please follow this link:
@@ -190,7 +201,7 @@ index 1fa75f6..5b8ca85 100644
  
  #include "api/api_editing.h"
  #include "api/api_bot.h"
-@@ -4678,6 +4681,35 @@ void HistoryWidget::send(Api::SendOptions options) {
+@@ -4678,6 +4681,40 @@ void HistoryWidget::send(Api::SendOptions options) {
  		return;
  	}
  
@@ -203,6 +214,11 @@ index 1fa75f6..5b8ca85 100644
 + if (native.isEmpty() || text.trimmed().isEmpty() || adapter.busy()) return;
 + if (!property("dmashAcceptedConnected").toBool()) {
 +  setProperty("dmashAcceptedConnected", true);
++  QObject::connect(&adapter, &SessionAdapter::failed, this,
++   [=](const QString&) {
++    if (!property("dmashSendOp").toString().isEmpty())
++     controller()->showToast(u"Message could not be sent. Your text is still here."_q);
++   });
 +  QObject::connect(&adapter, &SessionAdapter::accepted, this,
 +   [=](const QJsonObject& value) {
 +    if (!value.value("accepted").toBool()
@@ -227,7 +243,7 @@ index 1fa75f6..5b8ca85 100644
  		_cornerButtons.clearReplyReturns();
  	}
 diff --git a/Telegram/SourceFiles/intro/intro_start.cpp b/Telegram/SourceFiles/intro/intro_start.cpp
-index d4ebdec..3fd78b8 100644
+index d4ebdec..1bcaaa9 100644
 --- a/Telegram/SourceFiles/intro/intro_start.cpp
 +++ b/Telegram/SourceFiles/intro/intro_start.cpp
 @@ -6,6 +6,9 @@ For license and copyright information please follow this link:
@@ -240,7 +256,18 @@ index d4ebdec..3fd78b8 100644
  
  #include "lang/lang_keys.h"
  #include "intro/intro_qr.h"
-@@ -30,8 +33,12 @@ StartWidget::StartWidget(
+@@ -24,14 +27,23 @@ StartWidget::StartWidget(
+ 	not_null<Data*> data)
+ : Step(parent, account, data, true) {
+ 	setMouseTracking(true);
++	#ifdef TDESKTOP_DMASH_CLIENT
++ setTitleText(rpl::single(u"D-MASH"_q));
++ setDescriptionText(u"Messages through your independent D-MASH Node."_q);
++#else
+ 	setTitleText(rpl::single(u"Telegram Desktop"_q));
+ 	setDescriptionText(tr::lng_intro_about());
++#endif
+ 	show();
  }
  
  void StartWidget::submit() {
@@ -254,7 +281,7 @@ index d4ebdec..3fd78b8 100644
  
  rpl::producer<QString> StartWidget::nextButtonText() const {
 diff --git a/Telegram/SourceFiles/main/main_account.cpp b/Telegram/SourceFiles/main/main_account.cpp
-index 5a2f894..032e4d9 100644
+index 5a2f894..60bf3dc 100644
 --- a/Telegram/SourceFiles/main/main_account.cpp
 +++ b/Telegram/SourceFiles/main/main_account.cpp
 @@ -6,6 +6,9 @@ For license and copyright information please follow this link:
@@ -293,6 +320,16 @@ index 5a2f894..032e4d9 100644
  	if (_loggingOut) {
  		return;
  	}
+@@ -533,6 +547,9 @@ bool Account::loggingOut() const {
+ }
+ 
+ void Account::forcedLogOut() {
++#ifdef TDESKTOP_DMASH_CLIENT
++ Dmash::Adapter(this).logout();return;
++#endif
+ 	if (sessionExists()) {
+ 		resetAuthorizationKeys();
+ 		loggedOut();
 diff --git a/Telegram/SourceFiles/main/main_account.h b/Telegram/SourceFiles/main/main_account.h
 index ba09159..371cf20 100644
 --- a/Telegram/SourceFiles/main/main_account.h
@@ -435,6 +472,87 @@ index 1890c44..fdff1e5 100644
  	const auto session = getSession(shiftedDcId);
  
  	request->requestId = requestId;
+diff --git a/Telegram/SourceFiles/storage/storage_account.cpp b/Telegram/SourceFiles/storage/storage_account.cpp
+index e39e6ba..7eb8044 100644
+--- a/Telegram/SourceFiles/storage/storage_account.cpp
++++ b/Telegram/SourceFiles/storage/storage_account.cpp
+@@ -993,6 +993,10 @@ void Account::writeSessionSettings() {
+ }
+ 
+ void Account::writeSessionSettings(Main::SessionSettings *stored) {
++#ifdef TDESKTOP_DMASH_CLIENT
++ // Native Account storage is authoritative; no parallel Telegram auth/draft store.
++ return;
++#endif
+ 	if (_readingUserSettings) {
+ 		LOG(("App Error: attempt to write settings while reading them!"));
+ 		return;
+@@ -1124,6 +1128,10 @@ std::unique_ptr<Main::SessionSettings> Account::applyReadContext(
+ }
+ 
+ void Account::writeMtpData() {
++#ifdef TDESKTOP_DMASH_CLIENT
++ // Native Account storage is authoritative; no parallel Telegram auth/draft store.
++ return;
++#endif
+ 	Expects(_localKey != nullptr);
+ 
+ 	const auto serialized = _owner->serializeMtpAuthorization();
+@@ -1136,6 +1144,10 @@ void Account::writeMtpData() {
+ }
+ 
+ void Account::readMtpData() {
++#ifdef TDESKTOP_DMASH_CLIENT
++ // Native Account storage is authoritative; no parallel Telegram auth/draft store.
++ return;
++#endif
+ 	auto context = prepareReadSettingsContext();
+ 
+ 	FileReadDescriptor mtp;
+@@ -1260,6 +1272,10 @@ void Account::unregisterDraftSource(
+ }
+ 
+ void Account::writeDrafts(not_null<History*> history) {
++#ifdef TDESKTOP_DMASH_CLIENT
++ // Native Account storage is authoritative; no parallel Telegram auth/draft store.
++ return;
++#endif
+ 	const auto peerId = history->peer->id;
+ 	const auto &map = history->draftsMap();
+ 	const auto supportMode = history->session().supportMode();
+@@ -1359,6 +1375,10 @@ void Account::writeDrafts(not_null<History*> history) {
+ }
+ 
+ void Account::writeDraftCursors(not_null<History*> history) {
++#ifdef TDESKTOP_DMASH_CLIENT
++ // Native Account storage is authoritative; no parallel Telegram auth/draft store.
++ return;
++#endif
+ 	const auto peerId = history->peer->id;
+ 	const auto &map = history->draftsMap();
+ 	const auto supportMode = history->session().supportMode();
+@@ -1509,6 +1529,10 @@ void Account::readDraftCursorsLegacy(
+ }
+ 
+ void Account::readDraftsWithCursors(not_null<History*> history) {
++#ifdef TDESKTOP_DMASH_CLIENT
++ // Native Account storage is authoritative; no parallel Telegram auth/draft store.
++ return;
++#endif
+ 	const auto guard = gsl::finally([&] {
+ 		if (const auto migrated = history->migrateFrom()) {
+ 			readDraftsWithCursors(migrated);
+@@ -3201,6 +3225,10 @@ void Account::readSearchSuggestions() {
+ }
+ 
+ void Account::writeSelf() {
++#ifdef TDESKTOP_DMASH_CLIENT
++ // Native Account storage is authoritative; no parallel Telegram auth/draft store.
++ return;
++#endif
+ 	writeMapDelayed();
+ }
+ 
 diff --git a/Telegram/cmake/telegram_options.cmake b/Telegram/cmake/telegram_options.cmake
 index 18fa736..281f1bc 100644
 --- a/Telegram/cmake/telegram_options.cmake
@@ -464,10 +582,10 @@ index 18fa736..281f1bc 100644
      " PROVIDE: -D TDESKTOP_API_ID=[API_ID] -D TDESKTOP_API_HASH=[API_HASH]\n"
 diff --git a/dmash/CMakeLists.txt b/dmash/CMakeLists.txt
 new file mode 100644
-index 0000000..2c8c2ac
+index 0000000..7676813
 --- /dev/null
 +++ b/dmash/CMakeLists.txt
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,26 @@
 +cmake_minimum_required(VERSION 3.25)
 +if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 + project(DMashTelegramAdapter LANGUAGES CXX)
@@ -475,13 +593,24 @@ index 0000000..2c8c2ac
 + set(CMAKE_AUTOMOC ON)
 + find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Core Network)
 +endif()
-+add_library(dmash_ipc_adapter STATIC local_client.cpp local_client.h session_adapter.cpp session_adapter.h)
++add_library(dmash_ipc_adapter STATIC local_client.cpp local_client.h session_adapter.cpp session_adapter.h history_projection.cpp history_projection.h)
 +set_target_properties(dmash_ipc_adapter PROPERTIES AUTOMOC ON)
 +target_link_libraries(dmash_ipc_adapter PUBLIC Qt6::Core Qt6::Network)
-+target_include_directories(dmash_ipc_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
++target_include_directories(dmash_ipc_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/..)
 +if(WIN32)
 + target_sources(dmash_ipc_adapter PRIVATE os_windows.cpp os_windows.h)
 + target_link_libraries(dmash_ipc_adapter PRIVATE advapi32)
++endif()
++if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
++ include(CTest)
++ if(BUILD_TESTING)
++  find_package(Python3 REQUIRED COMPONENTS Interpreter)
++  execute_process(COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/generate_id_contract.py ${CMAKE_CURRENT_SOURCE_DIR}/../Telegram/SourceFiles/data/data_msg_id.h ${CMAKE_CURRENT_BINARY_DIR}/upstream_id_contract.h COMMAND_ERROR_IS_FATAL ANY)
++  add_executable(dmash_projection_test tests/projection_test.cpp history_projection.cpp)
++  target_include_directories(dmash_projection_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
++  target_link_libraries(dmash_projection_test PRIVATE Qt6::Core)
++  add_test(NAME dmash-presentation-projection COMMAND dmash_projection_test)
++ endif()
 +endif()
 diff --git a/dmash/bootstrap_root.cpp b/dmash/bootstrap_root.cpp
 new file mode 100644
@@ -526,6 +655,51 @@ index 0000000..5b0390f
 + client->request(u"host.status"_q);
 +}
 +}
+diff --git a/dmash/history_projection.cpp b/dmash/history_projection.cpp
+new file mode 100644
+index 0000000..ed94228
+--- /dev/null
++++ b/dmash/history_projection.cpp
+@@ -0,0 +1,21 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Upstream OpenSSL linking exception in ../LICENSE applies.
++#include "history_projection.h"
++#include <QJsonObject>
++#include <algorithm>
++#include <limits>
++#include <stdexcept>
++QJsonArray HistoryProjection::project(const QString& peer,const QJsonArray& rows){
++ QHash<QString,QJsonObject> unique;
++ for(const auto& entry:rows){auto row=entry.toObject();const auto op=row.value("operationId").toString();const auto seq=row.value("sequence").toInteger();
++  if(seq<0||(seq==0&&op.isEmpty()))throw std::runtime_error("INVALID_CORE_HISTORY_ID");
++  const auto key=peer+"/"+(op.isEmpty()?"sequence:"+QString::number(seq):"operation:"+op);
++  if(!indices_.contains(key)){if(next_>std::numeric_limits<qint32>::max())throw std::runtime_error("LOCAL_MESSAGE_LIMIT");indices_.insert(key,qint32(next_++));}
++  row["localMessageIndex"]=indices_.value(key);
++  const auto state=row.value("state").toString();row["pending"]=state=="HANDSHAKE_PENDING"||state=="APPLICATION_PENDING"||state=="NODE_ACCEPTED";
++  row["recipientDelivered"]=state=="DELIVERED";
++  if(!unique.contains(key)||seq>unique.value(key).value("sequence").toInteger()||(seq==unique.value(key).value("sequence").toInteger()&&row.value("time").toInteger()>=unique.value(key).value("time").toInteger()))unique.insert(key,row);
++ }
++ auto ordered=unique.values();std::sort(ordered.begin(),ordered.end(),[](const auto& a,const auto& b){const auto at=a.value("time").toInteger(),bt=b.value("time").toInteger();return at!=bt?at<bt:a.value("localMessageIndex").toInt()<b.value("localMessageIndex").toInt();});
++ QJsonArray out;for(const auto& row:ordered)out.append(row);return out;
++}
+diff --git a/dmash/history_projection.h b/dmash/history_projection.h
+new file mode 100644
+index 0000000..4e02830
+--- /dev/null
++++ b/dmash/history_projection.h
+@@ -0,0 +1,12 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Upstream OpenSSL linking exception in ../LICENSE applies.
++#pragma once
++#include <QHash>
++#include <QJsonArray>
++// RAM-only indices, converted by the real UI through ClientMsgByIndex.
++class HistoryProjection final {
++public:
++ QJsonArray project(const QString& nativePeer,const QJsonArray& rows);
++ void clear(){indices_.clear();next_=1;}
++private:QHash<QString,qint32> indices_;qint64 next_=1;
++};
 diff --git a/dmash/intro_step.cpp b/dmash/intro_step.cpp
 new file mode 100644
 index 0000000..04069e8
@@ -594,7 +768,7 @@ index 0000000..de9a98e
 +}
 diff --git a/dmash/local_client.cpp b/dmash/local_client.cpp
 new file mode 100644
-index 0000000..35be4a4
+index 0000000..0e888ff
 --- /dev/null
 +++ b/dmash/local_client.cpp
 @@ -0,0 +1,58 @@
@@ -650,7 +824,7 @@ index 0000000..35be4a4
 +}
 +void LocalClient::send(const QString& id,const QString& method,const QJsonObject& params){auto bytes=QJsonDocument(QJsonObject{{"v",1},{"id",id},{"method",method},{"params",params}}).toJson(QJsonDocument::Compact);if(bytes.size()>MaximumFrame){fail("CREDENTIAL_REQUEST_TOO_LARGE");return;}QByteArray frame(4,0);qToBigEndian<quint32>(bytes.size(),frame.data());frame+=bytes;const bool accepted=socket_.write(frame)==frame.size();bytes.fill(0);frame.fill(0);if(!accepted)fail("CREDENTIAL_HOST_WRITE_FAILED");}
 +void LocalClient::cancel(){if(!busy())return;if(ready_)send("cancel","account.cancel",{});else fail("ACCOUNT_SESSION_CHANGED");}
-+void LocalClient::fail(const QString& code){connectTimer_.stop();deadline_.stop();ready_=false;auto method=std::move(method_);method_.clear();{QSignalBlocker blocked(&socket_);socket_.abort();}input_.fill(0);input_.clear();length_=0;params_={};Q_EMIT sessionInvalidated();if(!method.isEmpty()){Q_EMIT busyChanged(false);Q_EMIT response(method,false,code,{});}}
++void LocalClient::fail(const QString& code){connectTimer_.stop();deadline_.stop();ready_=false;auto method=std::move(method_);method_.clear();{QSignalBlocker blocked(&socket_);socket_.abort();}input_.fill(0);input_.clear();length_=0;params_={};Q_EMIT sessionInvalidated(code);if(!method.isEmpty()){Q_EMIT busyChanged(false);Q_EMIT response(method,false,code,{});}}
 +void LocalClient::read(){while(socket_.bytesAvailable()){
 + if(!length_){input_+=socket_.read(4-input_.size());if(input_.size()<4)return;length_=qFromBigEndian<quint32>(input_.constData());input_.clear();if(!length_||length_>MaximumFrame){fail("CREDENTIAL_HOST_BAD_FRAME");return;}}
 + input_+=socket_.read(length_-input_.size());if(input_.size()<length_)return;QStringDecoder utf8(QStringDecoder::Utf8);utf8.decode(input_);QJsonParseError error;auto message=QJsonDocument::fromJson(input_,&error).object();input_.fill(0);input_.clear();length_=0;if(utf8.hasError()||error.error!=QJsonParseError::NoError||message.value("v").toInt()!=1){fail("CREDENTIAL_HOST_BAD_REPLY");return;}
@@ -658,10 +832,10 @@ index 0000000..35be4a4
 +}}
 diff --git a/dmash/local_client.h b/dmash/local_client.h
 new file mode 100644
-index 0000000..7a27704
+index 0000000..af53203
 --- /dev/null
 +++ b/dmash/local_client.h
-@@ -0,0 +1,27 @@
+@@ -0,0 +1,28 @@
 +// SPDX-License-Identifier: GPL-3.0-only
 +// The upstream OpenSSL linking exception in ../LICENSE applies.
 +// Original D-MASH MIT-origin IPC/platform helper retained in this GPL client fork.
@@ -679,10 +853,11 @@ index 0000000..7a27704
 + explicit LocalClient(QString directory,QObject* parent=nullptr);
 + void request(const QString& method,const QJsonObject& params={});
 + void cancel();
++ void invalidate(const QString& code){fail(code);}
 + bool busy()const{return !method_.isEmpty();}
 +Q_SIGNALS:
 + void busyChanged(bool);
-+ void sessionInvalidated();
++ void sessionInvalidated(const QString& code);
 + void hostStatusReady(const QJsonObject&);
 + void response(const QString& method,bool ok,const QString& code,const QJsonObject& result);
 +private:
@@ -691,7 +866,7 @@ index 0000000..7a27704
 +};
 diff --git a/dmash/model_bridge.cpp b/dmash/model_bridge.cpp
 new file mode 100644
-index 0000000..d33f614
+index 0000000..6b83f62
 --- /dev/null
 +++ b/dmash/model_bridge.cpp
 @@ -0,0 +1,45 @@
@@ -720,7 +895,7 @@ index 0000000..d33f614
 +}
 +void ProjectHistory(Main::Account* account,SessionAdapter* adapter,const QString& native,const QJsonArray& rows){
 + if(!account->sessionExists())return;auto& data=account->session().data();const auto peer=peerFromUser(UserId(adapter->localPeerId(native)));auto history=data.history(peer);history->clearFolder();
-+ for(const auto& entry:rows){const auto row=entry.toObject();const auto id=MsgId(row.value("localMessageId").toInt());auto item=data.message(FullMsgId(peer,id));const bool pending=row.value("pending").toBool();if(item){item->setText(TextWithEntities{.text=row.value("text").toString()});item->setDmashPending(pending);}else{
++ for(const auto& entry:rows){const auto row=entry.toObject();const auto id=ClientMsgByIndex(row.value("localMessageIndex").toInt());auto item=data.message(FullMsgId(peer,id));const bool pending=row.value("pending").toBool();if(item){item->setText(TextWithEntities{.text=row.value("text").toString()});item->setDmashPending(pending);}else{
 +  auto flags=MessageFlags(MessageFlag::HasFromId);const bool out=row.value("direction").toString()==u"out"_q;if(out)flags|=MessageFlag::Outgoing;if(pending)flags|=MessageFlag::BeingSent;
 +  item=history->addNewLocalMessage({.id=id,.flags=flags,.from=out?peerFromUser(UserId(1)):peer,.date=TimeId(row.value("time").toInteger()/1000)},TextWithEntities{.text=row.value("text").toString()},MTP_messageMediaEmpty());
 + }history->setLastMessage(item);history->setChatListMessage(item);}
@@ -1009,7 +1184,7 @@ index 0000000..658f5fb
 +#endif
 diff --git a/dmash/session_adapter.cpp b/dmash/session_adapter.cpp
 new file mode 100644
-index 0000000..11df51c
+index 0000000..82e9498
 --- /dev/null
 +++ b/dmash/session_adapter.cpp
 @@ -0,0 +1,54 @@
@@ -1025,13 +1200,14 @@ index 0000000..11df51c
 +
 +SessionAdapter::SessionAdapter(QString profile,QObject* parent):QObject(parent),client_(std::move(profile),this){
 + connect(&client_,&LocalClient::response,this,&SessionAdapter::response);
-+ connect(&client_,&LocalClient::sessionInvalidated,this,[this]{pendingControl_.clear();clear();});
++ connect(&client_,&LocalClient::sessionInvalidated,this,[this](const QString& code){pendingControl_.clear();clear();Q_EMIT failed(code);});
 + connect(&client_,&LocalClient::busyChanged,this,&SessionAdapter::busyChanged);
-+ connect(&client_,&LocalClient::hostStatusReady,this,[this](const QJsonObject& value){if(loggedIn_&&(value.value("rootLocked").toBool()||!value.value("accountSessionActive").toBool()))clear();});
-+ sync_.setInterval(2000);connect(&sync_,&QTimer::timeout,this,[this]{if(loggedIn_&&!client_.busy())request("account.sync");});request("account.listAccounts");
++ connect(&client_,&LocalClient::hostStatusReady,this,[this](const QJsonObject& value){if(loggedIn_&&(value.value("rootLocked").toBool()||!value.value("accountSessionActive").toBool()||value.value("account").toObject().value("accountPublicId").toString()!=account_))client_.invalidate("ACCOUNT_SESSION_CHANGED");});
++ sync_.setInterval(2000);connect(&sync_,&QTimer::timeout,this,[this]{if(loggedIn_&&!client_.busy())request("host.status");});request("account.listAccounts");
 +}
++SessionAdapter::~SessionAdapter(){sync_.stop();client_.disconnect(this);}
 +void SessionAdapter::request(const QString& method,const QJsonObject& params){if(client_.busy())return;requestEpoch_=epoch_;client_.request(method,params);}
-+void SessionAdapter::clear(){++epoch_;sync_.stop();loggedIn_=false;account_.clear();historyPeer_.clear();wantedPeer_.clear();activePeer_.clear();peers_.clear();nativePeers_.clear();messages_.clear();nextPeer_=1;nextMessage_=1;Q_EMIT cleared();}
++void SessionAdapter::clear(){++epoch_;sync_.stop();loggedIn_=false;account_.clear();historyPeer_.clear();wantedPeer_.clear();activePeer_.clear();peers_.clear();nativePeers_.clear();projection_.clear();nextPeer_=1;Q_EMIT cleared();}
 +QString SessionAdapter::newOperationId(){return QUuid::createUuid().toString(QUuid::Id128)+QUuid::createUuid().toString(QUuid::Id128);}
 +quint64 SessionAdapter::localPeerId(const QString& peer){if(peer.isEmpty()||peer.size()>2048)throw std::runtime_error("INVALID_CORE_PEER");if(peers_.contains(peer))return peers_.value(peer);if(!nextPeer_||nextPeer_>quint64(std::numeric_limits<qint64>::max()))throw std::runtime_error("LOCAL_PEER_LIMIT");const auto local=nextPeer_++;if(nativePeers_.contains(local))throw std::runtime_error("LOCAL_PEER_COLLISION");peers_.insert(peer,local);nativePeers_.insert(local,peer);return local;}
 +QString SessionAdapter::nativePeer(quint64 id)const{return nativePeers_.value(id);}
@@ -1047,17 +1223,16 @@ index 0000000..11df51c
 + if(!ok){if(code=="ROOT_UNLOCK_REQUIRED"||code=="CREDENTIAL_HOST_DISCONNECTED"||code=="CREDENTIAL_HOST_UNAVAILABLE")clear();Q_EMIT failed(code);return;}
 + const auto value=result.value("value").toObject();const auto rows=result.value("rows").toArray();
 + try{
-+  if(method=="root.unlock"||method=="account.listAccounts"){Q_EMIT accounts(rows);const auto active=value.value("activeAccount").toObject();if(!active.isEmpty())activate(active);}
++  if(method=="host.status"){
++   if(loggedIn_&&(value.value("rootLocked").toBool()||!value.value("accountSessionActive").toBool()||value.value("account").toObject().value("accountPublicId").toString()!=account_)){clear();Q_EMIT failed("ACCOUNT_SESSION_CHANGED");return;}
++   if(loggedIn_)request("account.sync");
++  }else if(method=="root.unlock"||method=="account.listAccounts"){Q_EMIT accounts(rows);const auto active=value.value("activeAccount").toObject();if(!active.isEmpty())activate(active);}
 +  else if(method=="account.login"){
 +   activate(value);
 +  }else if(method=="account.contacts"){
 +   QJsonArray projected;for(const auto& item:rows){auto row=item.toObject();row["localPeerId"]=qint64(localPeerId(row.value("id").toString()));projected.append(row);}Q_EMIT contacts(projected);
 +  }else if(method=="account.history"){
-+   QJsonArray projected;const auto peer=std::exchange(historyPeer_,{});for(const auto& item:rows){auto row=item.toObject();const auto operation=row.value("operationId").toString();const auto sequence=row.value("sequence").toInteger();if(sequence<0||(sequence==0&&operation.isEmpty()))throw std::runtime_error("INVALID_CORE_HISTORY_ID");
-+    const auto key=peer+"/"+(operation.isEmpty()?"sequence:"+QString::number(sequence):"operation:"+operation);
-+    if(!messages_.contains(key)){if(nextMessage_>std::numeric_limits<qint32>::max())throw std::runtime_error("LOCAL_MESSAGE_LIMIT");messages_.insert(key,qint32(nextMessage_++));}
-+    row["localMessageId"]=-messages_.value(key);const auto state=row.value("state").toString();row["pending"]=state=="HANDSHAKE_PENDING"||state=="APPLICATION_PENDING"||state=="NODE_ACCEPTED";row["recipientDelivered"]=state=="DELIVERED";projected.append(row);
-+   }Q_EMIT history(peer,projected);if(!wantedPeer_.isEmpty()){const auto next=std::exchange(wantedPeer_,{});loadHistory(next);}
++   const auto peer=std::exchange(historyPeer_,{});const auto projected=projection_.project(peer,rows);Q_EMIT history(peer,projected);if(!wantedPeer_.isEmpty()){const auto next=std::exchange(wantedPeer_,{});loadHistory(next);}
 +  }else if(method=="account.sendText"){Q_EMIT accepted(value);if(value.value("accepted").toBool()&&!activePeer_.isEmpty())loadHistory(activePeer_);}
 +  else if(method=="account.sync"&&!activePeer_.isEmpty())loadHistory(activePeer_);
 +  else if(method=="account.logout"||method=="root.lock")clear();
@@ -1069,14 +1244,15 @@ index 0000000..11df51c
 +void SessionAdapter::refreshContacts(){if(loggedIn_&&!client_.busy())request("account.contacts");}
 diff --git a/dmash/session_adapter.h b/dmash/session_adapter.h
 new file mode 100644
-index 0000000..796d1b2
+index 0000000..0906a49
 --- /dev/null
 +++ b/dmash/session_adapter.h
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,34 @@
 +// SPDX-License-Identifier: GPL-3.0-only
 +// Upstream OpenSSL linking exception in ../LICENSE applies.
 +#pragma once
 +#include "local_client.h"
++#include "history_projection.h"
 +#include <QHash>
 +#include <QJsonArray>
 +#include <QTimer>
@@ -1087,6 +1263,7 @@ index 0000000..796d1b2
 + Q_OBJECT
 +public:
 + explicit SessionAdapter(QString nativeProfile,QObject* parent=nullptr);
++ ~SessionAdapter() override;
 + void unlock(const QString& pin);void login(const QString& identity,const QString& password);
 + void refreshContacts();bool busy()const{return client_.busy();}
 + void logout();void lockRoot();void loadHistory(const QString& nativePeer);
@@ -1103,5 +1280,52 @@ index 0000000..796d1b2
 + quint64 epoch_=0,requestEpoch_=0;QString pendingControl_;
 + void response(const QString&,bool,const QString&,const QJsonObject&);void clear();
 + LocalClient client_;QTimer sync_;QHash<QString,quint64> peers_;QHash<quint64,QString> nativePeers_;
-+ QHash<QString,qint32> messages_;quint64 nextPeer_=1;qint64 nextMessage_=1;QString account_,historyPeer_,wantedPeer_,activePeer_;bool loggedIn_=false;
++ HistoryProjection projection_;quint64 nextPeer_=1;QString account_,historyPeer_,wantedPeer_,activePeer_;bool loggedIn_=false;
 +};
+diff --git a/dmash/tests/generate_id_contract.py b/dmash/tests/generate_id_contract.py
+new file mode 100644
+index 0000000..4beee17
+--- /dev/null
++++ b/dmash/tests/generate_id_contract.py
+@@ -0,0 +1,14 @@
++# SPDX-License-Identifier: GPL-3.0-only
++# Upstream OpenSSL linking exception applies.
++"""Select unchanged public ID definitions from the real upstream header.
++
++This narrow contract probe avoids the complete app PCH/generated MTProto schema.
++The production bridge includes the complete original data_msg_id.h normally.
++"""
++import hashlib,pathlib,sys
++source=pathlib.Path(sys.argv[1]);out=pathlib.Path(sys.argv[2]);text=source.read_text()
++msg=text[text.index('struct MsgId {'):text.index('using StoryId =')]
++constants=text[text.index('constexpr auto StartClientMsgId'):text.index('constexpr auto StartStoryMsgId')]
++start=text.index('[[nodiscard]] constexpr inline bool IsClientMsgId(')
++functions=text[start:text.index('[[nodiscrd]]',start)]
++out.write_text('// Unmodified excerpts of upstream data_msg_id.h; GPL upstream notices apply.\n#include <QtCore/QMetaType>\n#include <compare>\n#include <cassert>\nusing int64=qint64;using int32=qint32;\n#define Expects(condition) assert(condition)\n'+msg+constants+functions+'\n#undef Expects\n#define DMASH_ID_CONTRACT_SHA "'+hashlib.sha256(source.read_bytes()).hexdigest()+'"\n')
+diff --git a/dmash/tests/projection_test.cpp b/dmash/tests/projection_test.cpp
+new file mode 100644
+index 0000000..b89a3d6
+--- /dev/null
++++ b/dmash/tests/projection_test.cpp
+@@ -0,0 +1,21 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Upstream OpenSSL linking exception in ../../LICENSE applies.
++#include "history_projection.h"
++#include "upstream_id_contract.h"
++#include <QJsonObject>
++#include <iostream>
++#include <stdexcept>
++static_assert(IsClientMsgId(ClientMsgByIndex(0)));
++static_assert(!IsClientMsgId(MsgId(-1)));
++static void check(bool value,const char* reason){if(!value)throw std::runtime_error(reason);}
++static QJsonObject row(qint64 seq,const char* op,qint64 time,const char* state){return {{"sequence",seq},{"operationId",op},{"time",time},{"state",state},{"text","synthetic"},{"direction","out"}};}
++int main(){try{
++ HistoryProjection projection;const QString peer(64,'a');
++ const auto pending=row(0,"operation-a",200,"HANDSHAKE_PENDING"),older=row(1,"operation-old",100,"APPLICATION_PENDING"),final=row(2,"operation-a",200,"APPLICATION_PENDING");
++ auto rows=projection.project(peer,{pending,older});check(rows.size()==2,"initial size");check(rows.at(0).toObject().value("time").toInteger()==100,"oldest first");
++ const auto index=rows.at(1).toObject().value("localMessageIndex").toInt();const auto actual=ClientMsgByIndex(index);check(IsClientMsgId(actual),"actual upstream ClientMsg range");check(rows.at(1).toObject().value("pending").toBool(),"pending visible");
++ rows=projection.project(peer,{pending,final,older});check(rows.size()==2,"pending/final duplicate");const auto projected=rows.at(1).toObject();check(projected.value("sequence").toInteger()==2,"final selected");check(ClientMsgByIndex(projected.value("localMessageIndex").toInt())==actual,"stable actual upstream MsgId");check(!projected.value("recipientDelivered").toBool(),"no invented recipient acknowledgement");
++ rows=projection.project(peer,{row(2,"operation-a",200,"DELIVERED"),older});check(rows.at(1).toObject().value("recipientDelivered").toBool(),"actual receipt preserved");check(!rows.at(1).toObject().value("pending").toBool(),"final state");check(ClientMsgByIndex(rows.at(1).toObject().value("localMessageIndex").toInt())==actual,"no replacement on final receipt");
++ const auto another=projection.project(QString(64,'b'),{pending});check(another.at(0).toObject().value("localMessageIndex").toInt()!=index,"peer collision");
++ std::cout<<"PASS actual upstream ID contract="<<DMASH_ID_CONTRACT_SHA<<" pendingMsgId="<<actual.bare<<" stable pending/final, chronological unique rows\n";return 0;
++}catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}}

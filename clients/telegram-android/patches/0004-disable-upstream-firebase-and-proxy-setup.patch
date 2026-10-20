@@ -1,0 +1,78 @@
+From 6f75cb48ada93c92178da744ae046391775490bb Mon Sep 17 00:00:00 2001
+From: Codex <codex@d-mash.ru>
+Date: Tue, 20 Oct 2026 17:02:02 +0000
+Subject: [PATCH] Disable upstream Firebase initialization and direct Telegram
+ proxy setup
+
+---
+ TMessagesProj/build.gradle                               | 2 +-
+ .../main/java/org/telegram/tgnet/ConnectionsManager.java | 6 ++++++
+ TMessagesProj_App/src/main/AndroidManifest.xml           | 9 +++++++++
+ TMessagesProj_App/src/main/res/values/dmash.xml          | 5 +++++
+ 4 files changed, 21 insertions(+), 1 deletion(-)
+ create mode 100644 TMessagesProj_App/src/main/res/values/dmash.xml
+
+diff --git a/TMessagesProj/build.gradle b/TMessagesProj/build.gradle
+index cb226ea..88bfd75 100644
+--- a/TMessagesProj/build.gradle
++++ b/TMessagesProj/build.gradle
+@@ -253,7 +253,7 @@ def getProps(String propName) {
+         return "";
+     }
+ }
+-apply plugin: 'com.google.gms.google-services'
++// D-MASH has no upstream Telegram/Firebase application registration.
+ 
+ task checkVisibility {
+     doFirst {
+diff --git a/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java b/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
+index eb23111..ab16c90 100644
+--- a/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
++++ b/TMessagesProj/src/main/java/org/telegram/tgnet/ConnectionsManager.java
+@@ -979,6 +979,12 @@ public class ConnectionsManager extends BaseController {
+     }
+ 
+     public static void setProxySettings(boolean enabled, ProxySettings settings) {
++        if (org.telegram.messenger.dmash.DmashClient.ENABLED) {
++            WebProxyTransport.stop();
++            MessagesController.getGlobalMainSettings().edit().putBoolean("proxy_enabled", false).apply();
++            if (enabled) AndroidUtilities.runOnUIThread(() -> android.widget.Toast.makeText(ApplicationLoader.applicationContext, "DMASH_TELEGRAM_PROXY_UNSUPPORTED: configure the D-MASH Node instead.", android.widget.Toast.LENGTH_LONG).show());
++            return;
++        }
+         String address = "";
+         int port = 0;
+         String username = "";
+diff --git a/TMessagesProj_App/src/main/AndroidManifest.xml b/TMessagesProj_App/src/main/AndroidManifest.xml
+index 4b8c84e..eb13ca6 100644
+--- a/TMessagesProj_App/src/main/AndroidManifest.xml
++++ b/TMessagesProj_App/src/main/AndroidManifest.xml
+@@ -4,6 +4,15 @@
+     android:installLocation="auto">
+ 
+     <application android:name="org.telegram.messenger.ApplicationLoaderImpl" tools:replace="name">
++        <!-- Independent credential/Node services own messaging. Never initialize upstream push. -->
++        <provider android:name="com.google.firebase.provider.FirebaseInitProvider" tools:node="remove"/>
++        <service android:name="org.telegram.messenger.GcmPushListenerService" android:enabled="false" tools:replace="android:enabled"/>
++        <service android:name="com.google.firebase.messaging.FirebaseMessagingService" tools:node="remove"/>
++        <receiver android:name="com.google.firebase.iid.FirebaseInstanceIdReceiver" tools:node="remove"/>
++        <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false"/>
++        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false"/>
++        <meta-data android:name="firebase_data_collection_default_enabled" android:value="false"/>
++
+         <service
+             android:name="org.telegram.messenger.GoogleVoiceClientService"
+             android:exported="true"
+diff --git a/TMessagesProj_App/src/main/res/values/dmash.xml b/TMessagesProj_App/src/main/res/values/dmash.xml
+new file mode 100644
+index 0000000..041bfdd
+--- /dev/null
++++ b/TMessagesProj_App/src/main/res/values/dmash.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="AppName">D-MASH</string>
++    <string name="AppNameBeta">D-MASH</string>
++</resources>
+-- 
+2.43.0
+

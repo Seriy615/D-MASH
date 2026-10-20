@@ -26,7 +26,38 @@ class Controls:public QObject{
  Q_OBJECT
 private slots:
  void initTestCase(){QApplication::setAttribute(Qt::AA_DontUseNativeDialogs);}
- void retainedAppLocalKey(){QTemporaryDir dir(QDir::homePath()+"/.cache/dmash-native-20261020/ui-key-XXXXXX");QVERIFY(dir.isValid());auto directory=dir.filePath("profile");auto path=directory+"/custom-account.db";auto original=openAppLocalKey(directory,path);QCOMPARE(original.size(),32);QCOMPARE(openAppLocalKey(directory,path),original);QFile db(path);QVERIFY(db.open(QIODevice::WriteOnly));db.write("synthetic retained ciphertext");db.close();QVERIFY(QFile::remove(directory+"/app-local.key"));bool refused=false;try{openAppLocalKey(directory,path);}catch(const std::exception& e){refused=QString::fromUtf8(e.what())=="PROFILE_KEY_RECOVERY_REQUIRED";}QVERIFY(refused);QVERIFY(!QFile::exists(directory+"/app-local.key"));QVERIFY(db.open(QIODevice::ReadOnly));QCOMPARE(db.readAll(),QByteArray("synthetic retained ciphertext"));}
+ void retainedAppLocalKey(){
+  const char* stage="temporary-profile";
+  try {
+   QTemporaryDir dir(QDir::homePath()+"/.cache/dmash-native-20261020/ui-key-XXXXXX");
+   QVERIFY(dir.isValid());
+   const auto directory=dir.filePath("profile");
+   const auto path=directory+"/custom-account.db";
+   stage="first-key-open";
+   const auto original=openAppLocalKey(directory,path);
+   QCOMPARE(original.size(),32);
+   stage="retained-key-reopen";
+   QCOMPARE(openAppLocalKey(directory,path),original);
+   stage="synthetic-retained-db";
+   QFile db(path);QVERIFY(db.open(QIODevice::WriteOnly));
+   db.write("synthetic retained ciphertext");db.close();
+   stage="remove-owned-test-key";
+   QVERIFY(QFile::remove(directory+"/app-local.key"));
+   stage="missing-key-refusal";
+   bool refused=false;
+   try{openAppLocalKey(directory,path);}
+   catch(const std::exception& e){refused=QString::fromUtf8(e.what())=="PROFILE_KEY_RECOVERY_REQUIRED";}
+   QVERIFY(refused);
+   QVERIFY(!QFile::exists(directory+"/app-local.key"));
+   stage="retained-db-unchanged";
+   QVERIFY(db.open(QIODevice::ReadOnly));
+   QCOMPARE(db.readAll(),QByteArray("synthetic retained ciphertext"));
+  } catch(const std::exception& e) {
+   const auto message=QString("retainedAppLocalKey stage=%1 error=%2").arg(QString::fromLatin1(stage),QString::fromUtf8(e.what()).left(160));
+   QTest::qFail(qPrintable(message),__FILE__,__LINE__);
+  }
+ }
+
  void disconnectedInventory(){MessengerWindow w;w.show();QTest::qWait(30);QVERIFY(!w.findChild<QPushButton*>("refresh")->isEnabled());QVERIFY(!w.findChild<QPushButton*>("detach")->isEnabled());QVERIFY(!w.findChild<QPushButton*>("send")->isEnabled());QVERIFY(!w.findChild<QTextEdit*>("compose")->isEnabled());QVERIFY(w.findChild<MessageHistory*>("history")->editTriggers()==QAbstractItemView::NoEditTriggers);QTimer::singleShot(50,[&]{auto* dialog=w.findChild<QDialog*>("aboutDialog");QVERIFY(dialog);auto* b=dialog->findChild<QDialogButtonBox*>();QVERIFY(b);QTest::mouseClick(b->button(QDialogButtonBox::Close),Qt::LeftButton);});clickControl(w,"about");QVERIFY(w.isVisible());if(!qEnvironmentVariable("DMASH_UI_SCREENSHOT").isEmpty())QVERIFY(w.grab().save(qEnvironmentVariable("DMASH_UI_SCREENSHOT")));w.close();}
  void accountRoundtrip(){
   QFile fixture(qEnvironmentVariable("DMASH_ACCOUNT_UI_FIXTURE",QString::fromUtf8(ACCOUNT_UI_FIXTURE)));QVERIFY(fixture.open(QIODevice::ReadOnly));const auto f=QJsonDocument::fromJson(fixture.readAll()).object();QTemporaryDir dir(QDir::homePath()+"/.cache/dmash-native-20261020/ui-account-XXXXXX");QVERIFY(dir.isValid());const auto profile=dir.filePath("profile/account.sqlite");const auto exportPath=dir.filePath("complete-profile.json");QFile output(exportPath);QVERIFY(output.open(QIODevice::WriteOnly));output.write(QJsonDocument(f.value("profile").toObject()).toJson());output.close();

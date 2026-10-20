@@ -15,7 +15,7 @@
 #include <utility>
 namespace dmash::windowsLocal {
 namespace {
-void require(bool yes) { if (!yes) throw std::runtime_error("Windows local ownership rejected"); }
+void require(bool yes, const char* stage = "Windows local ownership rejected") { if (!yes) throw std::runtime_error(stage); }
 struct Handle {
     HANDLE value = nullptr;
     explicit Handle(HANDLE h = nullptr) : value(h) {}
@@ -38,24 +38,24 @@ std::vector<unsigned char> tokenUser(HANDLE process) {
 }
 PSID sid(std::vector<unsigned char>& user) { return reinterpret_cast<TOKEN_USER*>(user.data())->User.Sid; }
 void privateDacl(PACL acl, PSID current) {
-    require(acl && IsValidAcl(acl));
+    require(acl && IsValidAcl(acl), "WINDOWS_PRIVATE_DACL_INVALID");
     unsigned char system[SECURITY_MAX_SID_SIZE]; DWORD size = sizeof(system);
-    require(CreateWellKnownSid(WinLocalSystemSid, nullptr, system, &size));
+    require(CreateWellKnownSid(WinLocalSystemSid, nullptr, system, &size), "WINDOWS_PRIVATE_DACL_SYSTEM_SID");
     bool ownerAllowed = false;
     for (DWORD i = 0; i < acl->AceCount; ++i) {
         void* raw = nullptr;
-        require(GetAce(acl, i, &raw));
+        require(GetAce(acl, i, &raw), "WINDOWS_PRIVATE_DACL_READ_ACE");
         const auto* header = static_cast<ACE_HEADER*>(raw);
         if (header->AceType == ACCESS_DENIED_ACE_TYPE) continue;
-        require(header->AceType == ACCESS_ALLOWED_ACE_TYPE);
+        require(header->AceType == ACCESS_ALLOWED_ACE_TYPE, "WINDOWS_PRIVATE_DACL_ACE_TYPE");
         const auto* ace = static_cast<ACCESS_ALLOWED_ACE*>(raw);
         auto* allowed = const_cast<DWORD*>(&ace->SidStart);
-        require(IsValidSid(allowed));
-        require(EqualSid(allowed, current) || EqualSid(allowed, system));
+        require(IsValidSid(allowed), "WINDOWS_PRIVATE_DACL_ACE_SID");
+        require(EqualSid(allowed, current) || EqualSid(allowed, system), "WINDOWS_PRIVATE_DACL_OTHER_PRINCIPAL");
         if (EqualSid(allowed, current) && !(header->AceFlags & INHERIT_ONLY_ACE) && ace->Mask)
             ownerAllowed = true;
     }
-    require(ownerAllowed);
+    require(ownerAllowed, "WINDOWS_PRIVATE_DACL_OWNER_ACCESS");
 }
 void verifyFile(const std::wstring& path, bool missing, bool directory) {
     Handle file(CreateFileW(path.c_str(), READ_CONTROL | FILE_READ_ATTRIBUTES,
@@ -64,16 +64,16 @@ void verifyFile(const std::wstring& path, bool missing, bool directory) {
                            nullptr));
     if (file.value == INVALID_HANDLE_VALUE && missing && GetLastError() == ERROR_FILE_NOT_FOUND)
         return;
-    require(file.value != INVALID_HANDLE_VALUE);
+    require(file.value != INVALID_HANDLE_VALUE, "WINDOWS_PROFILE_FILE_OPEN");
     BY_HANDLE_FILE_INFORMATION info{};
-    require(GetFileInformationByHandle(file.value, &info));
-    require(!(info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT));
-    require(bool(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == directory);
+    require(GetFileInformationByHandle(file.value, &info), "WINDOWS_PROFILE_FILE_INFORMATION");
+    require(!(info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT), "WINDOWS_PROFILE_FILE_REPARSE");
+    require(bool(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == directory, "WINDOWS_PROFILE_FILE_TYPE");
     auto current = tokenUser(GetCurrentProcess());
     PSID owner = nullptr; PACL acl = nullptr; Local descriptor;
     require(GetSecurityInfo(file.value, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-                            &owner, nullptr, &acl, nullptr, reinterpret_cast<PSECURITY_DESCRIPTOR*>(&descriptor.value)) == ERROR_SUCCESS);
-    require(owner && EqualSid(owner, sid(current)));
+                            &owner, nullptr, &acl, nullptr, reinterpret_cast<PSECURITY_DESCRIPTOR*>(&descriptor.value)) == ERROR_SUCCESS, "WINDOWS_PROFILE_SECURITY_INFORMATION");
+    require(owner && EqualSid(owner, sid(current)), "WINDOWS_PROFILE_OWNER_MISMATCH");
     privateDacl(acl, sid(current));
 }
 }
@@ -190,7 +190,7 @@ void ensurePrivateProfile(const std::wstring& path) {
         require(ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl.c_str(), SDDL_REVISION_1,
                     reinterpret_cast<PSECURITY_DESCRIPTOR*>(&descriptor.value), nullptr));
         SECURITY_ATTRIBUTES attributes{sizeof(attributes), descriptor.value, FALSE};
-        require(CreateDirectoryW(path.c_str(), &attributes));
+        require(CreateDirectoryW(path.c_str(), &attributes), "WINDOWS_PROFILE_DIRECTORY_CREATE");
     }
     verifyFile(path, false, true);
     for (const auto* file : {L"node.sqlite", L"node.sqlite-wal", L"node.sqlite-shm", L"owner.lock"})

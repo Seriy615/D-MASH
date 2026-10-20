@@ -1,0 +1,28 @@
+From e89d37695a2a3c3743fa6a7f8904b3a0ea214b19 Mon Sep 17 00:00:00 2001
+From: Codex <codex@d-mash.ru>
+Date: Tue, 20 Oct 2026 17:14:37 +0000
+Subject: [PATCH] Build the exact NDK CPU features implementation with portable
+ CMake
+
+---
+ TMessagesProj/jni/CMakeLists.txt | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/TMessagesProj/jni/CMakeLists.txt b/TMessagesProj/jni/CMakeLists.txt
+index f1fd720..f7c1c8f 100644
+--- a/TMessagesProj/jni/CMakeLists.txt
++++ b/TMessagesProj/jni/CMakeLists.txt
+@@ -330,5 +330,8 @@ target_link_libraries(${NATIVE_LIB}
+ #            c)
+ #endif()
+ 
+-include(AndroidNdkModules)
+-android_ndk_import_module_cpufeatures()
++# Build the unchanged pinned NDK implementation without a Google-SDK-only CMake helper.
++add_library(cpufeatures STATIC "${ANDROID_NDK}/sources/android/cpufeatures/cpu-features.c")
++set_target_properties(cpufeatures PROPERTIES POSITION_INDEPENDENT_CODE ON)
++target_include_directories(cpufeatures PUBLIC "${ANDROID_NDK}/sources/android/cpufeatures")
++target_link_libraries(cpufeatures dl)
+-- 
+2.43.0
+

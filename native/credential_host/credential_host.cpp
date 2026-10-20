@@ -113,6 +113,7 @@ struct CredentialHost::State {
     struct Client {
         QByteArray input;
         quint32 length = 0;
+        account::AccountBinding binding;
     };
     std::map<QLocalSocket*, Client> clients;
     State(QString directory, std::shared_ptr<NodeSupervisor> node)
@@ -416,21 +417,27 @@ struct CredentialHost::State {
             respond(socket, id, renewNodeCapabilities());
             return;
         }
-        if (method == "account.cancel") {
-            const bool rootJob =
-                busy() && (pendingMethod == "profile.import" || pendingMethod == "profile.create" ||
-                           pendingMethod == "root.unlock" || pendingMethod == "node.enable");
-            if (rootJob) {
-                respond(socket, id, lockAndStop());
-            } else {
-                ++jobEpoch;
-                account->cancel();
-                activeAccount = {};
-                account::AccountResult result;
-                result.ok = true;
+        if (method == "account.cancel" && busy()) {
+            if (pendingSocket != socket) {
+                respond(socket, id, failure("ACCOUNT_CONTEXT_REQUIRED"));
+                return;
+            }
+            const bool rootJob = pendingMethod == "profile.import" || pendingMethod == "profile.create" ||
+                                 pendingMethod == "root.unlock" || pendingMethod == "node.enable";
+            if (rootJob) respond(socket, id, lockAndStop());
+            else {
+                const auto& binding = clients.at(socket).binding;
+                const bool currentContext = !activeAccount.isEmpty() && binding.epoch != 0 &&
+                    activeAccount.value("accountPublicId") == binding.accountPublicId &&
+                    activeAccount.value("sessionEpoch").toInteger() == qint64(binding.epoch);
+                if (pendingMethod != "account.login" && !activeAccount.isEmpty() && !currentContext) {
+                    respond(socket, id, failure("ACCOUNT_SESSION_CHANGED"));
+                    return;
+                }
+                ++jobEpoch; account->cancel(); activeAccount = {};
+                account::AccountResult result; result.ok = true;
                 result.value = {{"rootLocked", rootLocked},
-                                {"nodeRunning", supervisor && supervisor->running()},
-                                {"accountSessionActive", false}};
+                    {"nodeRunning", supervisor && supervisor->running()}, {"accountSessionActive", false}};
                 respond(socket, id, result);
             }
             return;
@@ -447,6 +454,26 @@ struct CredentialHost::State {
             respond(socket, id, pauseAndStop());
             return;
         }
+        const QHash<QString, QString> boundMethods = {
+            {"account.contacts", "listContacts"}, {"account.history", "listHistory"},
+            {"account.sendText", "sendText"}, {"account.sync", "sync"},
+            {"account.pairingCreate", "pairingCreate"}, {"account.pairingInspect", "pairingInspect"},
+            {"account.pairingRequest", "pairingRequest"}, {"account.pairingOffers", "pairingOffers"},
+            {"account.pairingAdvance", "pairingAdvance"}, {"account.logout", "logout"},
+            {"account.cancel", "logout"}};
+        const auto operation = boundMethods.value(method);
+        const auto binding = clients.at(socket).binding;
+        if (!operation.isEmpty() && (binding.epoch == 0 || binding.accountPublicId.isEmpty())) {
+            respond(socket, id, failure("ACCOUNT_CONTEXT_REQUIRED"));
+            return;
+        }
+        if (method == "account.login") activeAccount = {};
+        if (method == "account.history") {
+            if (!params.contains("before")) params["before"] = 0;
+            if (!params.contains("limit")) params["limit"] = 100;
+        }
+        if (method == "account.pairingCreate" || method == "account.pairingInspect")
+            if (params.value("expectedPeer").toString().isEmpty()) params["expectedPeer"] = QJsonValue::Null;
         if (method == "node.enable") {
             if (!params.contains("endpoints"))
                 params["endpoints"] = policy.value("endpoints").toArray();
@@ -472,7 +499,7 @@ struct CredentialHost::State {
                 broker->createProfile(params.value("pin").toString().toUtf8(),
                     QDir(profile).filePath("original-profile.backup")));
         const bool currentNodeRunning = supervisor && supervisor->running();
-        pending = std::async(std::launch::async, [this, method, params, currentNodeRunning, creation, freshRoot] {
+        pending = std::async(std::launch::async, [this, method, params, currentNodeRunning, creation, freshRoot, operation, binding] {
             JobResult out;
             try {
                 if (method == "profile.create") {
@@ -521,7 +548,11 @@ struct CredentialHost::State {
                         out.result.ok = out.transport.ok;
                         out.result.code = out.transport.code;
                     }
-                } else if (method == "account.listAccounts")
+                } else if (method == "account.attach")
+                    out.result = account->attach(params.value("accountPublicId").toString()).get();
+                else if (!operation.isEmpty())
+                    out.result = account->invokeBound(binding, operation, params).get();
+                else if (method == "account.listAccounts")
                     out.result = account->listAccounts().get();
                 else if (method == "account.create")
                     out.result = creation->get();
@@ -530,34 +561,6 @@ struct CredentialHost::State {
                                      ->login(params.value("identity").toString(),
                                              params.value("password").toString().toUtf8())
                                      .get();
-                else if (method == "account.sync")
-                    out.result = account->sync().get();
-                else if (method == "account.contacts")
-                    out.result = account->listContacts().get();
-                else if (method == "account.history")
-                    out.result = account
-                                     ->listHistory(params.value("peer").toString(),
-                                                   params.value("before").toInteger(),
-                                                   params.value("limit").toInt(100))
-                                     .get();
-                else if (method == "account.sendText")
-                    out.result = account
-                                     ->sendText(params.value("peer").toString(),
-                                                params.value("operationId").toString(),
-                                                params.value("text").toString())
-                                     .get();
-                else if (method == "account.pairingCreate")
-                    out.result = account->pairingCreate(params.value("expectedPeer").toString()).get();
-                else if (method == "account.pairingInspect")
-                    out.result = account->pairingInspect(params.value("bundle").toString(),params.value("expectedPeer").toString()).get();
-                else if (method == "account.pairingRequest")
-                    out.result = account->pairingRequest(params.value("bundle").toString(),params.value("expectedPeer").toString()).get();
-                else if (method == "account.pairingOffers")
-                    out.result = account->pairingOffers().get();
-                else if (method == "account.pairingAdvance")
-                    out.result = account->pairingAdvance(params).get();
-                else if (method == "account.logout")
-                    out.result = account->logout().get();
                 else
                     out.result = failure("CREDENTIAL_METHOD_UNKNOWN");
             } catch (const std::exception& e) {
@@ -584,6 +587,8 @@ struct CredentialHost::State {
             finished.result.code = pendingMethod.startsWith("account.") ? "ACCOUNT_SESSION_CHANGED"
                                                                         : "CREDENTIAL_CANCELLED";
             finished.result.rows = {};
+            if (pendingMethod.startsWith("account.") && pendingMethod != "account.create" &&
+                pendingMethod != "account.listAccounts") finished.result.value = {};
             // Existing accepted value/operation receipts remain truthful; a late
             // cancelled login must never publish a new session or Node install.
             finished.startNode = false;
@@ -655,7 +660,13 @@ struct CredentialHost::State {
         }
         if (finished.result.ok && pendingMethod == "account.login" && pendingEpoch == jobEpoch)
             activeAccount = finished.result.value;
-        if (finished.result.ok && pendingMethod == "account.logout")
+        if (finished.result.ok && (pendingMethod == "account.login" || pendingMethod == "account.attach") &&
+            pendingEpoch == jobEpoch && pendingSocket && clients.count(pendingSocket.data())) {
+            auto& binding = clients.at(pendingSocket.data()).binding;
+            binding.accountPublicId = finished.result.value.value("accountPublicId").toString();
+            binding.epoch = quint64(finished.result.value.value("sessionEpoch").toInteger());
+        }
+        if (finished.result.ok && (pendingMethod == "account.logout" || pendingMethod == "account.cancel"))
             activeAccount = {};
         if (finished.result.ok && pendingMethod == "account.listAccounts")
             finished.result.value["activeAccount"] = activeAccount;

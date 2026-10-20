@@ -5,6 +5,7 @@
 #include <QRandomGenerator>
 #include <QTemporaryFile>
 #include <stdexcept>
+#include <string>
 #include <cstring>
 #ifdef Q_OS_UNIX
 #include <unistd.h>
@@ -16,7 +17,8 @@
 QByteArray openAppLocalKey(const QString& directory,const QString& accountDatabasePath){
 #ifdef Q_OS_WIN
  if(!QDir(QFileInfo(directory).absolutePath()).exists()&&!QDir().mkpath(QFileInfo(directory).absolutePath()))throw std::runtime_error("PROFILE_DIRECTORY_UNAVAILABLE");
- dmash::windowsLocal::ensurePrivateProfile(directory.toStdWString());
+ try{dmash::windowsLocal::ensurePrivateProfile(directory.toStdWString());}
+ catch(const std::exception& e){throw std::runtime_error(std::string("PROFILE_KEY_DIRECTORY:")+e.what());}
 #else
  if(!QDir(directory).exists()&&!QDir().mkpath(directory))throw std::runtime_error("PROFILE_DIRECTORY_UNAVAILABLE");
  if(!QFile::setPermissions(directory,QFileDevice::ReadOwner|QFileDevice::WriteOwner|QFileDevice::ExeOwner))throw std::runtime_error("PROFILE_DIRECTORY_UNAVAILABLE");
@@ -30,12 +32,13 @@ QByteArray openAppLocalKey(const QString& directory,const QString& accountDataba
 #ifdef Q_OS_UNIX
   if(::fsync(temporary.handle())||::link(QFile::encodeName(temporary.fileName()).constData(),QFile::encodeName(path).constData()))throw std::runtime_error("PROFILE_KEY_UNAVAILABLE");
 #else
-  temporary.close();if(!MoveFileExW(reinterpret_cast<LPCWSTR>(temporary.fileName().utf16()),reinterpret_cast<LPCWSTR>(path.utf16()),MOVEFILE_WRITE_THROUGH))throw std::runtime_error("PROFILE_KEY_UNAVAILABLE");
+  temporary.close();if(!MoveFileExW(reinterpret_cast<LPCWSTR>(temporary.fileName().utf16()),reinterpret_cast<LPCWSTR>(path.utf16()),MOVEFILE_WRITE_THROUGH)){const auto error=GetLastError();throw std::runtime_error(std::string("PROFILE_KEY_PUBLISH_WIN32:")+std::to_string(error));}
 #endif
  }
  QFileInfo info(path);if(info.isSymLink()||!info.isFile())throw std::runtime_error("PROFILE_KEY_RECOVERY_REQUIRED");
 #ifdef Q_OS_WIN
- dmash::windowsLocal::requirePrivateFile(path.toStdWString(),false);
+ try{dmash::windowsLocal::requirePrivateFile(path.toStdWString(),false);}
+ catch(const std::exception& e){throw std::runtime_error(std::string("PROFILE_KEY_FILE:")+e.what());}
 #else
  if(info.ownerId()!=getuid()||(info.permissions()&(QFileDevice::ReadGroup|QFileDevice::WriteGroup|QFileDevice::ExeGroup|QFileDevice::ReadOther|QFileDevice::WriteOther|QFileDevice::ExeOther)))throw std::runtime_error("PROFILE_KEY_RECOVERY_REQUIRED");
 #endif

@@ -9,6 +9,10 @@
 #include <memory>
 #include <optional>
 namespace dmash::account {
+struct AccountBinding {
+    QString accountPublicId;
+    quint64 epoch = 0;
+};
 struct AccountResult {
     bool ok = false;
     QString code;
@@ -38,6 +42,8 @@ class AccountService final {
     std::future<AccountResult> login(QString savedAccountIdentity, QByteArray accountPassword);
     std::future<AccountResult> listContacts();
     std::future<AccountResult> sync();
+    std::future<AccountResult> attach(QString expectedAccountPublicId);
+    std::future<AccountResult> invokeBound(AccountBinding binding, QString operation, QJsonObject params = {});
     std::future<AccountResult> listHistory(QString peer, int beforeSequence = 0, int limit = 50);
     std::future<AccountResult> sendText(QString peer, QString operationId, QString text);
     std::future<AccountResult> pairingCreate(QString expectedPeer = {});

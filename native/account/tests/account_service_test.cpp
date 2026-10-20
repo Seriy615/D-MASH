@@ -69,6 +69,27 @@ int main(int argc, char **argv) {
                 std::cerr << "login code " << login.code.toStdString() << "\n";
             check(login.ok && login.value.value("accountPublicId") == f.value("accountPublicId"),
                   "same signing identity");
+            const AccountBinding oldBinding{login.value.value("accountPublicId").toString(),
+                quint64(login.value.value("sessionEpoch").toInteger())};
+            check(!service.invokeBound({}, "listContacts").get().ok, "unbound worker read refused");
+            auto wrongBinding = oldBinding;
+            wrongBinding.accountPublicId = QString(64, '0');
+            auto wrong = service.invokeBound(wrongBinding, "sendText", {{"peer", "local:saved-messages:v1"},
+                {"operationId", QString(64, 'a')}, {"text", "wrong Account must not commit"}}).get();
+            check(!wrong.ok && wrong.code == "ACCOUNT_SESSION_CHANGED", "worker checks Account as well as epoch");
+            check(!service.attach(QString(64, '0')).get().ok, "attach wrong Account refused");
+            // Login increments the cancellation epoch before its queued worker
+            // execution. This older queued write must never reach JS storage.
+            auto selectedAgain = service.login(identity, password);
+            auto queuedOldWrite = service.invokeBound(oldBinding, "sendText", {{"peer", "local:saved-messages:v1"},
+                {"operationId", QString(64, 'b')}, {"text", "old epoch must not commit"}});
+            auto relogged = selectedAgain.get();
+            auto refused = queuedOldWrite.get();
+            check(relogged.ok && !refused.ok && refused.code == "ACCOUNT_SESSION_CHANGED" &&
+                refused.rows.isEmpty() && refused.value.isEmpty(), "queued worker stale write fenced");
+            auto attached = service.attach(oldBinding.accountPublicId).get();
+            check(attached.ok && attached.value.value("sessionEpoch") != login.value.value("sessionEpoch"),
+                "same Account relogin creates a new binding epoch");
             auto contacts = service.listContacts().get();
             if (!contacts.ok)
                 std::cerr << contacts.code.toStdString() << "\n";

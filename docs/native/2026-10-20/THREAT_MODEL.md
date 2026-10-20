@@ -243,6 +243,20 @@ original Saved row; old/new master reload. See
 [retained evidence](root-s01-retained-migration.json). Hardware-backed unlock,
 every historical profile and power-loss persistence are NOT RUN acceptance.
 
+### Native clients sharing the selected Account
+
+Credential IPC binds each connection to the exact Account and worker session epoch.
+Sensitive operations validate that binding inside the worker; switching Account,
+logout and same-Account relogin invalidate stale connections. A reconnect must
+explicitly attach to the Account the user previously selected. Independent
+[two-client process and worker checks](root-account-client-binding.json) PASS,
+including stale reads/writes/cancel and retained histories after restart.
+
+Actual Telegram frontend integration remains open. Clients must capture Account
+and local generation when enqueuing an action and check them before dispatch and
+callback; rebinding one socket cannot identify an old queued action by itself.
+Component acceptance does not establish visible two-window UI correctness.
+
 ### Concurrent tabs, cancellation, OS biometrics and wipe
 
 **Current:** credential operations use one shared Web Lock, abort/generation
@@ -423,7 +437,7 @@ Secure deletion of flash, swap, backups or remote copies has not been establishe
 
 | Gate | Required evidence before stronger claims |
 | --- | --- |
-| Native products/process boundary | Real Android service/Views, Windows/Linux daemon+Widgets; authenticated IPC; scoped broker bundle; permission/lifetime/reboot tests and retained migration. Current foundation CTest/Android packaging is not this acceptance. |
+| Native products/process boundary | Actual Telegram Android/Desktop forks over separate Account/Node services on Android/Windows/Linux; authenticated IPC, scoped broker bundle, permission/lifetime/reboot tests and retained migration. Intermediate Widgets/Views tests and compilation alone do not accept the final apps. |
 | Node reliability and ownership | Disconnect supervision, stable accepted jobs, crash/retry/dedupe, active network mailbox, replay/grant migration, multi-peer offline Account transit and no false delivered states. |
 | Policies/direct/NAT | Effective hierarchy with monotonic revisions; relay-only switch during queued direct sends, observable DNS/ICE/egress tests, actual mobility/phone/NAT/OS lifecycle. |
 | Files/custody | Account-free accepted ciphertext retry/failover; immutable invitation; provider/anchor commitments and failure matrix; final Account verification; disk/RAM/network measurements. |

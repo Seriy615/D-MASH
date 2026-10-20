@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-20",
+  "status": "AUTHOR PASS",
+  "scope": "Actual two credential clients plus Account worker boundary and retained Saved; no UI, Node or mesh",
+  "sourceCommit": "717a73493fa1d442050a123804435cda482441b1",
+  "pinManifestSha256": "66f2e92e04c51a3c91820eb0e966999be4d814897876d8101ec370d077fa4f1e",
+  "sourceAndArtifactFiles": 1260,
+  "runtimeLibraries": 29,
+  "binaries": {
+    "dmash-credential-host": "ea49c53ea265f8cb5dc730d9d9e341bac9d71535b603a9876f9a4040bde6f36c",
+    "dmash_account_service_test": "acb282b124d5e8ac1e21a3413a5aebe8ad8f3d6a05ebb567b6b6e54059eb00f9"
+  },
+  "validation": {
+    "twoClientFixture": {
+      "handle": 30627,
+      "exit": 0,
+      "privateDirectory": "client-binding-h_sw6bzp"
+    },
+    "workerRetainedTest": {
+      "handle": 57941,
+      "exit": 0
+    },
+    "earlierFailure": {
+      "handle": 79305,
+      "exit": 1,
+      "phase": "foreign-cancel/selection ordering assertion; reply code not retained, cause unproven",
+      "privateDirectory": "client-binding-ptysvhv4"
+    },
+    "fixtureCorrection": "Observe selection has started through public host status before foreign Cancel; no product binary or deadline change"
+  },
+  "checks": [
+    "Unbound selected-Account RPC refused",
+    "Exact active Account and service epoch checked inside Account worker before read/write",
+    "Old Account client history/send/contacts/sync/pairing/logout rejected",
+    "Stale queued read then own Cancel cannot log out new Account",
+    "Foreign window cannot cancel accepted pending login",
+    "Explicit expectedAccount attach validated by worker",
+    "Same Account relogin changes epoch and fences old context",
+    "Wrong Account ID with current epoch cannot commit write",
+    "Queued old epoch write after login request refused with empty outcome",
+    "Original Saved and separate second Saved retained after owner reopen",
+    "Original synthetic source fixture unchanged"
+  ],
+  "limits": [
+    "No UI/mesh/Node acceptance",
+    "Retained C++ test uses its compiled original fixture path, hashed in buildDependencies and identical to archived fixture",
+    "Earlier first harness failure retained; no identified product cause claim"
+  ]
+}

@@ -139,27 +139,30 @@ D-MASH не требует Telegram SMS/login. Форки воспроизвод
 
 ## 4. Source publication, environments и активные проверки
 
-Latest published GitHub snapshot **214c5c5aced874cdc2e9e08e09688f3525112a05** is
-exact local **3a7249230d245da703e3c3540591baa3ee137873** tree
-**a0d4b0ed35e0709774776aac253dfb6d0f5295ac**. create_tree exact + git ls-remote
+Latest published GitHub snapshot **aa30fb2cafa8198665f41f406af58c01c29d3022** is
+exact local **6c1bbbc4ff80ad865959b0d13eff236b1b001b51** tree
+**d7dafc0697a349e8941de7164e1baae621776d83**. create_tree exact + git ls-remote
 verified. Branch `codex/native-clients-ci-20261020`, draft
-[PR8](https://github.com/Seriy615/D-MASH/pull/8), attached to task.
-Later source/docs, actual upstream fork checkouts and WIP are not implicitly published.
-Root independently verified Desktop86262333 and Android0aae9598 HEAD+licenses;
- actual fork patch recipes now tracked39b5f02 Desktop and40c6c3b/e2053c7 Android.
- Desktop LocalClient real-core probe59223 PASS after standalonecompile15103;
- [IPC-only proof](docs/native/2026-10-20/root-actual-fork-ipc.json). No full fork
- compile/render/egress/UI claim. Android actual fork Java03 compile43687 terminal0 PASS (compiler only);
-exact paths/hashes in FORGE_SYNC. Actual fork integration/build/runtime NOT RUN.
-See [FORGE_SYNC.md](FORGE_SYNC.md). No deployment or runtime-state backup.
+[PR8](https://github.com/Seriy615/D-MASH/pull/8). Full fork applications not
+accepted; later source/docs/WIP are not implicitly published. See FORGE_SYNC.
 
-Current source checkpoint: latest published exact3a72492 snapshot214c5c5
-(integrity/remote head recorded below), actual fork recipes are SOURCE/WIP only.
-Old native component CI still uses intermediate UI harnesses; its results are
-not final Telegram fork app acceptance. Last7f Windows directfilelogger proves
-QtTest3PASS for disconnected GUI; full mandatory CTest still failed. Fullsuite
-filelogger2a7df00 is in next source checkpoint. Android oldQtloader failure remains
-unresolved; actual fork package/service must be tested independently.
+Actual source pins/licenses independently verified; Desktop c6db2fa27files and
+Android70f5513 two-patch21files reconstructed/hashverified by root. Actual Android
+Java43687 terminal0 authorPASS8m42s: root verified13files/3compilerQtjars,
+21patchedsources and14037classarchiveentries, inspected original Activities and
+both QtServiceBase subclasses. [Artifact evidence](docs/native/2026-10-20/root-android-fork-java-inspection.json).
+No independentGradlererun/APK/service/UI/no-egress acceptance. Coherent Android
+core source139795 build10125 terminal0 (61targets), Qt aux deployment terminal0; root359source/40artifact hashes verified, bothELF64x86_64, pending_sends/pairing_host included. [Proof](docs/native/2026-10-20/root-android-coherent-core-inspection.json). No APK/service/runtime yet. Actual Desktopfull configure
+reached tde2e/tg_owt; both configurePASS, tde2e build83170 terminal0,124targets/installPASS; selectedmainapp objects13001 nowactive after GIR/pkg-config environment fixes. tg_owt archives notyetbuilt. Original media/calls retained; no fullappcompile/render yet.
+
+Latest aa30 Windows39460137863/job118757157412 terminalFAIL; rootartifact12282556614
+now pinpoints retainedAppLocalKey caughtunhandledexception (1PASS1FAIL4ms), CTest
+0.05s. Exactstage/causeunknown; boundeddiagnostics assignedbroker. [Proof](docs/native/2026-10-20/root-windows-retained-key-failure.json).
+Latest aa30 Android39460138103 terminalFAIL in oldharness visibleUI01-messenger-ready,
+before servicegate; no inference that oldQtloader cause fixed. Actualfork separate.
+Earlier Windows directQtTest3PASS and fullCTestFAIL remain component evidence;
+existing native CI uses intermediate harnesses, not finalforkapp acceptance.
+Android oldQtloader cause remains unresolved. No source publication is deployment.
 
 Root reference runner **20832 terminal0 PASS**, immutable reference-3a72492:
 Python3.12.3 + requirements-test.txt, Node24.19.0; 303backend +22Origin tests,
@@ -198,8 +201,17 @@ runtime DB/keys. Не reset и не очищать пользовательск�
   full original module43687 terminal0,8m42s/137tasks, fork16b2cbf; exported
   two-patch recipe integrated70f5513. Root reconstructed21files from upstream+
   bothpatches, all hashes match; prepare8tests PASS. [Source proof](docs/native/2026-10-20/root-android-fork-source-roundtrip.json).
-  No APK/service/UI claim. Known send uncertainty, session fencing and explicit
-  DNS/proxy/updater guards assigned next focused patch. Coherent native source
+  Patch003 integratedca2c128: retained uncertain-send IDs/text, Account-local
+  callback fences, RAM drafts, DNS/proxy/update guards; fullJava65110 terminal0
+  authorPASS8m14s. Root25filethreepatchroundtrip +actualJavaunit11493 PASS3.769s;
+  [proof](docs/native/2026-10-20/root-android-pending-send-unit.json). ServerAccount
+  contextbinding implemented/root process PASS separately below; Android frontend
+  attach and enqueue guards staged separately. Six-patch recipe integratedcd7cc30.
+  Actual APK83912 exited143 after346 JNI entries: agent verified exact Gradle/
+  Ninja processes exited after client disconnect. No C++ failure or APK result.
+  Incremental resume in same source/cache under durable supervisor authorized;
+  actual fork KVM CI draft is next route to genuine screenshots. Local /dev/kvm
+  and attached adb device absent. No APK/service/UI/no-egress claim. Coherent native source
  139795f frozen, native compile released after root53677 terminal. Old v6 jars
   were compiler dependencies only, not a coherent runtime acceptance.
 - **native_platforms_sol:** actual Telegram Desktop pinned86262333. Sourcec6db2fa
@@ -207,8 +219,13 @@ runtime DB/keys. Не reset и не очищать пользовательск�
   sameoperation until accepted, idle disconnect invalidation/epoch fences and
   reproducible preflight. Root independently reconstructs27files from upstream+
   patch, all hashes match. [Proof](docs/native/2026-10-20/root-desktop-fork-source-roundtrip.json).
-  StandaloneSessionAdapter84864 compiled; full app uncompiled/unrendered. Owned
-  Qt/Ada/Boost/protobuf/FFmpeg deps now resolve; GLib/GIR/full configure ongoing.
+  Full selectedappconfigure44697 PASS; actualmainapp objects13001 -j1 nice10
+  nowactive (originalUI/codegen/PCH+ModelBridge/Intro/HistoryWidget). No binary/link/
+  render claim; tg_owt archives stillunbuilt. tde2e83170 terminal0 all124/install
+  PASS; projectionCTest1/1 authorPASS (validupstreamClientMsgByIndex, sameop IDs).
+  Projection/storage fences integrated0917d37; root32file patch reconstruction and
+  frozen production projection test PASS, not full app compile or UI acceptance. Owned deps fd197cd
+  tracked; cleanmachinefullrecipe execution NOT_RUN.
   Fresh Intro create/chooser, full persistence fencing and all platform/UI
   acceptance remain open. Root permits low-worker compile after mesh finishes.
 - **native_runtime_sol:** private pairing/durable first-send already integrated
@@ -217,14 +234,29 @@ runtime DB/keys. Не reset и не очищать пользовательск�
   hashverified. Author default67599/reverse62742 terminal0; root53677 terminal0
   actual default direction PASS26forwards/history2/relogin. SW0/component HTML,
   Core.launchWorkspace presentation stub; no ordinaryUI/.45/deployed/NAT claim.
-  Next authorized scope: original public bootstrap runtime with separate bounded
-  root-owned encrypted store and typed Node/Account IPC. Contract/compatibility
-  inspection before implementation; preserve private support. No public support
-  advertisement or new mesh until actual integration/tests are ready.
+  Account-context fix integrated0288bff/a205017. Root42502 actual two-client IPC
+  and45778 actual worker regression terminal0 PASS: stale/unbound reads/writes/
+  logout/sync/pairing/cancel refused, explicit expected-Account attach, same-Account
+  relogin epoch rejection, histories retained after restart. [Evidence](docs/native/2026-10-20/root-account-client-binding.json).
+  Actual fork frontend attach/enqueue/callback guards and visible two-window flows
+  remain NOT RUN; same-socket queued old intent needs frontend generation checks.
+  Public work stays isolated: contract9563459/store947faff root36191 unitPASS,
+  [proof](docs/native/2026-10-20/root-public-store-parity.json); typedports/profile/
+  credential/Account publicWIP builds18799/18660 terminal0. Offline79354 FAIL
+  at public→pause→private start: NODE_BOOTSTRAP_READ_TIMEOUT under unchanged5s
+  deadline. Earlier neutral registration/reattach/profile validation/public reopen
+  phases passed; not full profile acceptance. Same failed profile retained; exact
+  owner/child PIDs and /proc scan confirm stopped before any retry. Bounded startup/
+  cleanup diagnostics in progress; no timeout changes/reset/heavy retry authorized.
+  Do not advertise public or
+  bump metadata untilcoherenttests. No newmesh whileplatformcompiles.
 - **Root:** actual fork source review and independent integration/acceptance;
   frozen3a reference full runner PASS303backend/22Origin/162JS. Current MIT text/
   GPL scope formalizede6f1c13. Known source findings assigned in BROWSER_QA;
-  no full fork app or exact dirtyHEAD release claim. No production/deploy/EMS/
+  no full fork app or exact dirtyHEAD release claim. Actual Windows Telegram UI
+  uses upstream MSVC/clang-cl while old core CI is MinGW; final package needs
+  separate UI/core Qt DLL/plugin directories over IPC, not shared Qt binaries.
+  No production/deploy/EMS/
   backend migration or user-storage reset.
 
 Main remaining work: actually build/render/test original Telegram forks on Android,
